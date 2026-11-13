@@ -22,10 +22,10 @@ export const Tooltip = () => (
           <Text variant="labels">Tooltip</Text>
           <Flex gap="3" align="center">
             <TooltipDesign content="HELLO" open>
-              <Button>With tooltip</Button>
+              <Button color="primary">With tooltip</Button>
             </TooltipDesign>
             <TooltipDesign content={undefined}>
-              <Button>No tooltip content</Button>
+              <Button color="primary">No tooltip content</Button>
             </TooltipDesign>
           </Flex>
         </Flex>
@@ -50,7 +50,9 @@ export const Tooltip = () => (
                 side="right"
                 open={true}
               >
-                <Button css={{ width: "100%", my: 10 }}>Tooltip 1</Button>
+                <Button color="primary" css={{ width: "100%", my: 10 }}>
+                  Tooltip 1
+                </Button>
               </InputErrorsTooltip>
               <br />
               <InputErrorsTooltip
@@ -58,7 +60,9 @@ export const Tooltip = () => (
                 side="right"
                 open={true}
               >
-                <Button css={{ width: "100%", my: 10 }}>Tooltip 2</Button>
+                <Button color="primary" css={{ width: "100%", my: 10 }}>
+                  Tooltip 2
+                </Button>
               </InputErrorsTooltip>
             </Box>
           </Box>
@@ -69,16 +73,16 @@ export const Tooltip = () => (
     <StorySection title="Side placements">
       <Flex gap="6" wrap="wrap" css={{ padding: 60 }}>
         <TooltipDesign content="Top tooltip" side="top" open>
-          <Button>Top</Button>
+          <Button color="primary">Top</Button>
         </TooltipDesign>
         <TooltipDesign content="Right tooltip" side="right" open>
-          <Button>Right</Button>
+          <Button color="primary">Right</Button>
         </TooltipDesign>
         <TooltipDesign content="Bottom tooltip" side="bottom" open>
-          <Button>Bottom</Button>
+          <Button color="primary">Bottom</Button>
         </TooltipDesign>
         <TooltipDesign content="Left tooltip" side="left" open>
-          <Button>Left</Button>
+          <Button color="primary">Left</Button>
         </TooltipDesign>
       </Flex>
     </StorySection>
@@ -92,7 +96,7 @@ export const Tooltip = () => (
             variant="wrapped"
             open
           >
-            <Button>Wrapped</Button>
+            <Button color="primary">Wrapped</Button>
           </TooltipDesign>
         </Flex>
         <Flex direction="column" gap="2">
@@ -102,7 +106,7 @@ export const Tooltip = () => (
             variant="large"
             open
           >
-            <Button>Large</Button>
+            <Button color="primary">Large</Button>
           </TooltipDesign>
         </Flex>
       </Flex>

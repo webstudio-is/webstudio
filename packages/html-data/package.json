@@ -8,7 +8,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "build:elements": "tsx --conditions=webstudio ./bin/elements.ts && oxfmt ./src/__generated__",
-    "build:attributes": "tsx --conditions=webstudio ./bin/attributes.ts && oxfmt ./src/__generated__ && (cd ../react-sdk && oxfmt src/__generated__)",
+    "build:attributes": "tsx --conditions=webstudio ./bin/attributes.ts && oxfmt ./src/__generated__ && (cd ../content-engine && oxfmt src/__generated__/standard-attributes.ts)",
     "build:aria": "tsx --conditions=webstudio ./bin/aria.ts && oxfmt ./src/__generated__"
   },
   "devDependencies": {

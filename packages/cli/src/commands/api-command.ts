@@ -1,9 +1,9 @@
 import { readFile } from "node:fs/promises";
 import * as httpClient from "@webstudio-is/http-client";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
-import type { PageRedirect } from "@webstudio-is/sdk";
+import type { AssetType, PageRedirect } from "@webstudio-is/sdk";
 import { isFileExists } from "../fs-utils";
-import { HandledCliError } from "../errors";
+import { CliError, HandledCliError } from "../errors";
 import {
   createLocalUploadAssetInput,
   createLocalUploadAssetsInput,
@@ -39,6 +39,7 @@ type ApiCommandDependencies = typeof apiCommandHttpClient & {
   readFile: typeof readFile;
   createCliProjectSession: typeof createCliProjectSession;
   getServerApiContract: typeof getCliServerApiContract;
+  pause: (durationMs: number) => Promise<void>;
 };
 
 const defaultDependencies: ApiCommandDependencies = {
@@ -47,6 +48,8 @@ const defaultDependencies: ApiCommandDependencies = {
   readFile,
   createCliProjectSession,
   getServerApiContract: getCliServerApiContract,
+  pause: (durationMs) =>
+    new Promise((resolve) => setTimeout(resolve, durationMs)),
 };
 
 export type ApiCommandName = ProjectSessionApiCommand;
@@ -181,8 +184,15 @@ export const pathCommandOptions = (yargs: CommonYargsArgv) =>
 export const pagesCommandOptions = (yargs: CommonYargsArgv) =>
   outputDetailCommandOptions(apiCommandOptions(yargs));
 
+const pageExpressionModeOption = (yargs: CommonYargsArgv) =>
+  yargs.option("expressions", {
+    type: "boolean",
+    describe:
+      "Treat page title and metadata text flags as JavaScript expressions; quote fixed text",
+  });
+
 export const createPageCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  pageExpressionModeOption(apiCommandOptions(yargs))
     .option("name", {
       type: "string",
       describe: "Required page name shown in Builder",
@@ -195,7 +205,7 @@ export const createPageCommandOptions = (yargs: CommonYargsArgv) =>
     })
     .option("title", {
       type: "string",
-      describe: "Page title text or expression; defaults to --name",
+      describe: "Fixed page title text; defaults to --name",
     })
     .option("parent-folder", {
       type: "string",
@@ -203,7 +213,7 @@ export const createPageCommandOptions = (yargs: CommonYargsArgv) =>
     });
 
 export const updatePageCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  pageExpressionModeOption(apiCommandOptions(yargs))
     .option("page", {
       type: "string",
       describe: "Required page id to update",
@@ -219,23 +229,23 @@ export const updatePageCommandOptions = (yargs: CommonYargsArgv) =>
     })
     .option("title", {
       type: "string",
-      describe: "Update page title text or expression",
+      describe: "Update fixed page title text",
     })
     .option("description", {
       type: "string",
-      describe: "Update page meta description text or expression",
+      describe: "Update fixed page meta description text",
     })
     .option("language", {
       type: "string",
-      describe: "Update page language text or expression",
+      describe: "Update fixed page language text",
     })
     .option("redirect", {
       type: "string",
-      describe: "Update page redirect expression",
+      describe: "Update fixed page redirect URL",
     })
     .option("social-image-url", {
       type: "string",
-      describe: "Update page social image URL expression",
+      describe: "Update fixed page social image URL",
     })
     .option("social-image-asset", {
       type: "string",
@@ -275,6 +285,27 @@ export const projectSettingsCommandOptions = (yargs: CommonYargsArgv) =>
 
 export const paginatedListCommandOptions = (yargs: CommonYargsArgv) =>
   outputDetailCommandOptions(apiCommandOptions(yargs));
+
+const responseHeaderCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs)
+    .option("route", {
+      type: "string",
+      describe: "Route pattern; omit for all paths",
+    })
+    .option("name", {
+      type: "string",
+      describe: "Response header name",
+      demandOption: true,
+    });
+
+export const setResponseHeaderCommandOptions = (yargs: CommonYargsArgv) =>
+  responseHeaderCommandOptions(yargs).option("value", {
+    type: "string",
+    describe: "Response header value",
+    demandOption: true,
+  });
+
+export const deleteResponseHeaderCommandOptions = responseHeaderCommandOptions;
 
 export const updateProjectSettingsCommandOptions = (yargs: CommonYargsArgv) =>
   requiredInputOption(
@@ -458,7 +489,7 @@ const pageTemplateFieldsCommandOptions = (
   yargs: CommonYargsArgv,
   options: { requireName?: boolean } = {}
 ) =>
-  yargs
+  pageExpressionModeOption(yargs)
     .option("name", {
       type: "string",
       describe: "Page template name shown in Builder",
@@ -466,19 +497,19 @@ const pageTemplateFieldsCommandOptions = (
     })
     .option("title", {
       type: "string",
-      describe: "Page template title text or expression",
+      describe: "Fixed page template title text",
     })
     .option("description", {
       type: "string",
-      describe: "Page template meta description text or expression",
+      describe: "Fixed page template meta description text",
     })
     .option("language", {
       type: "string",
-      describe: "Page template language text or expression",
+      describe: "Fixed page template language text",
     })
     .option("social-image-url", {
       type: "string",
-      describe: "Social image URL expression",
+      describe: "Fixed social image URL",
     })
     .option("social-image-asset", {
       type: "string",
@@ -1130,6 +1161,10 @@ const publishDomainsOption = (yargs: CommonYargsArgv) =>
 
 export const publishCommandOptions = (yargs: CommonYargsArgv) =>
   publishDomainsOption(publishTargetOption(apiCommandOptions(yargs)))
+    .option("wait", {
+      type: "boolean",
+      describe: "Wait for publishing to finish",
+    })
     .option("message", {
       type: "string",
       describe: "Optional human-readable publish message",
@@ -1153,19 +1188,22 @@ export const publishCommandOptions = (yargs: CommonYargsArgv) =>
         "Static export template. Repeat to request multiple templates; defaults to ssg.",
     });
 
+export const validatePublishCommandOptions = (yargs: CommonYargsArgv) =>
+  publishDomainsOption(publishTargetOption(apiCommandOptions(yargs)));
+
 export const publishJobCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs).option("job", {
     type: "string",
-    describe: "Required publish job id returned by publish or unpublish",
+    describe: "Required publish job id returned by publish",
     demandOption: true,
   });
 
 export const publishReportCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs).option("attempt-id", {
-    type: "string",
-    describe: "Required publish attempt id returned by publish Activity",
-    demandOption: true,
-  });
+  apiCommandOptions(yargs)
+    .option("build-id", { type: "string", demandOption: true })
+    .option("attempt-id", { type: "string", demandOption: true })
+    .option("execution-handle", { type: "string", demandOption: true })
+    .option("cursor", { type: "number" });
 
 export const unpublishCommandOptions = (yargs: CommonYargsArgv) =>
   confirmOption(
@@ -1368,6 +1406,7 @@ export type ApiCommandOptions = {
   template?: string;
   folder?: string;
   path?: string;
+  route?: string;
   name?: string;
   variable?: string;
   resource?: string;
@@ -1377,7 +1416,10 @@ export type ApiCommandOptions = {
   domainId?: string;
   target?: "staging" | "production" | "static";
   job?: string;
+  buildId?: string;
   attemptId?: string;
+  executionHandle?: string;
+  wait?: boolean;
   idempotencyKey?: string;
   from?: string;
   to?: string;
@@ -1385,6 +1427,7 @@ export type ApiCommandOptions = {
   dataSourceName?: string;
   slug?: string;
   title?: string;
+  expressions?: boolean;
   description?: string;
   language?: string;
   redirect?: string;
@@ -1445,7 +1488,7 @@ export type ApiCommandOptions = {
   withUsage?: boolean;
   includeSystem?: boolean;
   scopeInstance?: string;
-  type?: "image" | "font" | "file";
+  type?: AssetType;
   sort?: "name" | "usage" | "size" | "createdAt";
   cursor?: string;
   limit?: number;
@@ -1543,7 +1586,7 @@ type UpdateDomainInput = Parameters<
 
 const requireOption = (value: string | undefined, name: string) => {
   if (value === undefined || value.length === 0) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
   return value;
 };
@@ -1560,14 +1603,14 @@ const requireSingleOption = (
 
 const requireStringOption = (value: string | undefined, name: string) => {
   if (value === undefined) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
   return value;
 };
 
 const requireTrueOption = (value: boolean | undefined, name: string) => {
   if (value !== true) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
 };
 
@@ -1578,7 +1621,8 @@ const rejectOptionConflict = (
   valueOptionName: string
 ) => {
   if (clearOption === true && valueOption !== undefined) {
-    throw new Error(
+    throw new CliError(
+      "INVALID_ARGUMENT",
       `${clearOptionName} cannot be used with ${valueOptionName}.`
     );
   }
@@ -1586,7 +1630,7 @@ const rejectOptionConflict = (
 
 const requireNumberOption = (value: number | undefined, name: string) => {
   if (value === undefined) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
   return value;
 };
@@ -1610,7 +1654,7 @@ const requireListOption = (
 ) => {
   const values = listStringOption(value);
   if (values === undefined || values.length === 0) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
   return values;
 };
@@ -1626,7 +1670,7 @@ const optionalChoice = <Choice extends string>(
   if ((choices as readonly string[]).includes(value)) {
     return value as Choice;
   }
-  throw new Error(`Unsupported ${name} "${value}".`);
+  throw new CliError("INVALID_ARGUMENT", `Unsupported ${name} "${value}".`);
 };
 
 const requiredChoice = <Choice extends string>(
@@ -1636,7 +1680,7 @@ const requiredChoice = <Choice extends string>(
 ) => {
   const choice = optionalChoice(value, choices, name);
   if (choice === undefined) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
   return choice;
 };
@@ -1704,7 +1748,10 @@ const readOptionalJsonObject = async (
   }
   const value = await readJsonFile(dependencies, path, "--input");
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error("--input must contain a JSON object.");
+    throw new CliError(
+      "INVALID_ARGUMENT",
+      "--input must contain a JSON object."
+    );
   }
   return value as Record<string, unknown>;
 };
@@ -1716,7 +1763,10 @@ const readJsonArray = async (
 ) => {
   const value = await readJsonFile(dependencies, path, name);
   if (Array.isArray(value) === false) {
-    throw new Error(`${name} must contain a JSON array.`);
+    throw new CliError(
+      "INVALID_ARGUMENT",
+      `${name} must contain a JSON array.`
+    );
   }
   return value;
 };
@@ -1743,13 +1793,19 @@ const parseVariableValue = (
   if (valueType === "number") {
     const number = Number(rawValue);
     if (Number.isFinite(number) === false) {
-      throw new Error("--value must be a finite number.");
+      throw new CliError(
+        "INVALID_ARGUMENT",
+        "--value must be a finite number."
+      );
     }
     return { type: valueType, value: number };
   }
   if (valueType === "boolean") {
     if (rawValue !== "true" && rawValue !== "false") {
-      throw new Error('--value must be "true" or "false".');
+      throw new CliError(
+        "INVALID_ARGUMENT",
+        '--value must be "true" or "false".'
+      );
     }
     return { type: valueType, value: rawValue === "true" };
   }
@@ -1764,7 +1820,10 @@ const parseOptionalVariableValue = (
     return;
   }
   if (options.value === undefined || options.valueType === undefined) {
-    throw new Error("--value and --value-type must be provided together.");
+    throw new CliError(
+      "INVALID_ARGUMENT",
+      "--value and --value-type must be provided together."
+    );
   }
   return parseVariableValue(options.valueType, options.value);
 };
@@ -1802,6 +1861,9 @@ const getResourceFields = async (
   return fields;
 };
 
+const pageTextInput = (value: string | undefined, expressions?: boolean) =>
+  value === undefined || expressions === true ? value : JSON.stringify(value);
+
 const getPageMetaOptions = (options: ApiCommandOptions) => {
   const auth =
     options.authLogin !== undefined || options.authPassword !== undefined
@@ -1812,15 +1874,15 @@ const getPageMetaOptions = (options: ApiCommandOptions) => {
         }
       : undefined;
   const meta = {
-    description: options.description,
-    language: options.language,
-    redirect: options.redirect,
+    description: pageTextInput(options.description, options.expressions),
+    language: pageTextInput(options.language, options.expressions),
+    redirect: pageTextInput(options.redirect, options.expressions),
     status: options.status,
-    socialImageUrl: options.socialImageUrl,
+    socialImageUrl: pageTextInput(options.socialImageUrl, options.expressions),
     socialImageAssetId: options.socialImageAsset,
     excludePageFromSearch: options.excludePageFromSearch,
     documentType: options.documentType,
-    content: options.content,
+    content: pageTextInput(options.content, options.expressions),
     auth,
   };
   return Object.values(meta).some((value) => value !== undefined)
@@ -1832,7 +1894,6 @@ const redirectStatusOption = (status: ApiCommandOptions["status"]) =>
   status === "301" || status === "302" ? status : undefined;
 
 const getErrorCode = (error: unknown) => {
-  const message = getCliErrorMessage(error);
   const stableCode = getStableErrorCode(error);
   if (isMissingApiAccessError(error)) {
     return "UNAUTHORIZED";
@@ -1851,24 +1912,6 @@ const getErrorCode = (error: unknown) => {
   }
   if (error instanceof SyntaxError) {
     return "INVALID_JSON";
-  }
-  if (
-    message.includes("Local config file") ||
-    message.includes("Project config")
-  ) {
-    return "NOT_INITIALIZED";
-  }
-  if (message.includes(" is required")) {
-    return "INVALID_ARGUMENT";
-  }
-  if (message.includes("does not support --dry-run")) {
-    return "INVALID_ARGUMENT";
-  }
-  if (message.includes("Invalid patch JSON")) {
-    return "INVALID_PATCH";
-  }
-  if (message.includes("version") || message.includes("CONFLICT")) {
-    return "VERSION_CONFLICT";
   }
   return "API_COMMAND_FAILED";
 };
@@ -1899,6 +1942,194 @@ const runProjectSessionCommand = async (
     dryRun: options.dryRun ?? activeApiCommandDryRun,
     refresh: activeApiCommandRefresh,
   });
+
+const publishWaitDelayMs = 5_000;
+const publishWaitPolls = 360;
+const publishReportGracePolls = 12;
+
+const waitForPublish = async (
+  publishResult: unknown,
+  connection: ApiCommandConnection,
+  dependencies: ApiCommandDependencies
+) => {
+  if (
+    isPlainRecord(publishResult) === false ||
+    publishResult.status !== "pending"
+  ) {
+    return publishResult;
+  }
+  const { jobId, buildId, attemptId, executionHandle } = publishResult;
+  if (typeof jobId !== "string") {
+    return { ...publishResult, waitStatus: "unavailable" };
+  }
+  let canReadExecution =
+    typeof buildId === "string" &&
+    typeof attemptId === "string" &&
+    typeof executionHandle === "string";
+  let job: unknown;
+  let terminalJobPolls = 0;
+  console.error(
+    JSON.stringify({ event: "publish.wait", jobId, status: "pending" })
+  );
+  for (let poll = 0; poll < publishWaitPolls; poll++) {
+    let execution: unknown;
+    if (canReadExecution) {
+      try {
+        execution = await dependencies.getPublishReport({
+          ...connection,
+          buildId: buildId as string,
+          attemptId: attemptId as string,
+          executionHandle: executionHandle as string,
+        });
+      } catch {
+        canReadExecution = false;
+      }
+      if (isPlainRecord(execution) && execution.availability === "available") {
+        let cursor: number | undefined;
+        const chunks: Buffer[] = [];
+        const issues: unknown[] = [];
+        let issuesOmitted = 0;
+        let fullLogAllowed = true;
+        let complete = false;
+        const firstExecution = execution;
+        while (
+          isPlainRecord(execution) &&
+          execution.availability === "available"
+        ) {
+          const log = isPlainRecord(execution.log) ? execution.log : undefined;
+          if (Array.isArray(log?.issues)) {
+            issues.push(...log.issues);
+          }
+          if (typeof log?.issuesOmitted === "number") {
+            issuesOmitted += log.issuesOmitted;
+          }
+          if (
+            log?.encoding === "base64url" &&
+            typeof log.chunk === "string" &&
+            fullLogAllowed
+          ) {
+            chunks.push(Buffer.from(log.chunk, "base64url"));
+          } else {
+            fullLogAllowed = false;
+            chunks.length = 0;
+          }
+          complete = log?.complete === true;
+          if (
+            complete ||
+            log?.complete !== false ||
+            typeof log.nextCursor !== "number" ||
+            log.nextCursor <= (cursor ?? -1)
+          ) {
+            break;
+          }
+          cursor = log.nextCursor;
+          try {
+            execution = await dependencies.getPublishReport({
+              ...connection,
+              buildId: buildId as string,
+              attemptId: attemptId as string,
+              executionHandle: executionHandle as string,
+              cursor,
+            });
+          } catch {
+            execution = undefined;
+          }
+        }
+        return {
+          ...publishResult,
+          status: firstExecution.outcome === "succeeded" ? "success" : "failed",
+          execution: {
+            ...firstExecution,
+            logAvailability:
+              complete && fullLogAllowed
+                ? firstExecution.logAvailability
+                : "unavailable",
+            log: { complete, issues, issuesOmitted },
+            ...(complete && fullLogAllowed
+              ? { logText: new TextDecoder().decode(Buffer.concat(chunks)) }
+              : {}),
+          },
+        };
+      }
+      if (
+        isPlainRecord(execution) &&
+        execution.availability === "unavailable"
+      ) {
+        canReadExecution = false;
+      }
+    }
+    try {
+      job = await dependencies.getPublishJob({ ...connection, jobId });
+    } catch {
+      if (
+        isPlainRecord(job) &&
+        (job.status === "success" || job.status === "failed")
+      ) {
+        return {
+          ...publishResult,
+          status: job.status,
+          job,
+          execution: { availability: "unavailable" },
+        };
+      }
+      return { ...publishResult, waitStatus: "unavailable" };
+    }
+    const status = isPlainRecord(job) ? job.status : undefined;
+    if (
+      poll === 0 ||
+      poll % 6 === 5 ||
+      status === "success" ||
+      status === "failed"
+    ) {
+      console.error(
+        JSON.stringify({
+          event: "publish.wait",
+          jobId,
+          status: status ?? "unknown",
+        })
+      );
+    }
+    if (status === "success" || status === "failed" || status === "removed") {
+      terminalJobPolls++;
+      if (status === "removed") {
+        return { ...publishResult, job, waitStatus: "unavailable" };
+      }
+      if (
+        canReadExecution === false ||
+        terminalJobPolls >= publishReportGracePolls
+      ) {
+        return {
+          ...publishResult,
+          status,
+          job,
+          execution: { availability: "unavailable" },
+        };
+      }
+    }
+    if (poll < publishWaitPolls - 1) {
+      await dependencies.pause(publishWaitDelayMs);
+    }
+  }
+  if (
+    isPlainRecord(job) &&
+    (job.status === "success" || job.status === "failed")
+  ) {
+    return {
+      ...publishResult,
+      status: job.status,
+      job,
+      execution: { availability: "unavailable" },
+    };
+  }
+  return {
+    ...publishResult,
+    job,
+    waitStatus:
+      isPlainRecord(job) && job.status === "pending"
+        ? "timeout"
+        : "unavailable",
+  };
+};
 
 type ApiCommandHandler = (
   options: ApiCommandOptions,
@@ -2090,7 +2321,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = {
       name: requireOption(options.name, "--name"),
       path: requireOption(options.path, "--path"),
-      title: options.title,
+      title: pageTextInput(options.title, options.expressions),
       parentFolderId: options.parentFolder,
       meta: getPageMetaOptions(options),
     };
@@ -2107,7 +2338,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       values: {
         name: options.name,
         path: options.path,
-        title: options.title,
+        title: pageTextInput(options.title, options.expressions),
         parentFolderId: options.parentFolder,
         meta: getPageMetaOptions(options),
       },
@@ -2171,6 +2402,38 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
         cursor: options.cursor,
         limit: options.limit,
         verbose: options.verbose,
+      },
+      connection,
+      dependencies
+    ),
+  "list-response-headers": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "list-response-headers",
+      {
+        cursor: options.cursor,
+        limit: options.limit,
+        verbose: options.verbose,
+      },
+      connection,
+      dependencies
+    ),
+  "set-response-header": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "set-response-header",
+      {
+        route: options.route,
+        name: requireOption(options.name, "--name"),
+        value: requireOption(options.value, "--value"),
+      },
+      connection,
+      dependencies
+    ),
+  "delete-response-header": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "delete-response-header",
+      {
+        route: options.route,
+        name: requireOption(options.name, "--name"),
       },
       connection,
       dependencies
@@ -2349,7 +2612,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
   "create-page-template": async (options, connection, dependencies) => {
     const input = {
       name: requireOption(options.name, "--name"),
-      title: options.title,
+      title: pageTextInput(options.title, options.expressions),
       meta: getPageMetaOptions(options),
     };
     return runProjectSessionCommand(
@@ -2364,7 +2627,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       templateId: requireOption(options.template, "--template"),
       values: {
         name: options.name,
-        title: options.title,
+        title: pageTextInput(options.title, options.expressions),
         meta: getPageMetaOptions(options),
       },
     };
@@ -2959,6 +3222,13 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       connection,
       dependencies
     ),
+  "simulate-form-submission": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "simulate-form-submission",
+      await readInputObject(dependencies, options),
+      connection,
+      dependencies
+    ),
   "create-resource": async (options, connection, dependencies) => {
     const input = {
       resource: (await getResourceFields(
@@ -3008,8 +3278,9 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
   },
   publish: async (options, connection, dependencies) => {
     const target = publishTargetValue(options.target);
+    let envelope;
     if (target === "static") {
-      return runProjectSessionCommand(
+      envelope = await runProjectSessionCommand(
         "publish",
         {
           target,
@@ -3019,14 +3290,42 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
         connection,
         dependencies
       );
+    } else {
+      const input = {
+        target,
+        domains: listStringOption(options.domain),
+        message: options.message,
+        idempotencyKey: options.idempotencyKey,
+      };
+      envelope = await runProjectSessionCommand(
+        "publish",
+        input,
+        connection,
+        dependencies
+      );
     }
+    return options.wait === true
+      ? {
+          ...envelope,
+          result: await waitForPublish(
+            envelope.result,
+            connection,
+            dependencies
+          ),
+        }
+      : envelope;
+  },
+  "validate-publish": async (options, connection, dependencies) => {
     const input = {
-      target,
+      target: publishTargetValue(options.target),
       domains: listStringOption(options.domain),
-      message: options.message,
-      idempotencyKey: options.idempotencyKey,
     };
-    return runProjectSessionCommand("publish", input, connection, dependencies);
+    return runProjectSessionCommand(
+      "validate-publish",
+      input,
+      connection,
+      dependencies
+    );
   },
   "list-publishes": async (options, connection, dependencies) =>
     runProjectSessionCommand(
@@ -3050,7 +3349,13 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
   },
   "get-publish-report": async (options, connection, dependencies) => {
     const input = {
+      buildId: requireOption(options.buildId, "--build-id"),
       attemptId: requireOption(options.attemptId, "--attempt-id"),
+      executionHandle: requireOption(
+        options.executionHandle,
+        "--execution-handle"
+      ),
+      cursor: options.cursor === undefined ? undefined : Number(options.cursor),
     };
     return runProjectSessionCommand(
       "get-publish-report",
@@ -3064,8 +3369,6 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = {
       target: deploymentTargetValue(options.target),
       domains: listStringOption(options.domain),
-      message: options.message,
-      idempotencyKey: options.idempotencyKey,
     };
     return runProjectSessionCommand(
       "unpublish",
@@ -3302,14 +3605,43 @@ export const apiCommand = async (
     const result = isProjectSessionEnvelope(response)
       ? response.result
       : response;
+    const publishFailure =
+      options.command === "publish" &&
+      options.wait === true &&
+      isPlainRecord(result)
+        ? result.status === "blocked" ||
+          result.waitStatus === "timeout" ||
+          result.waitStatus === "unavailable" ||
+          (isPlainRecord(result.execution) &&
+            result.execution.outcome === "failed") ||
+          (isPlainRecord(result.job) && result.job.status === "failed")
+        : false;
     if (options.command === "audit" && options.json !== true) {
       printAuditReport(result);
     } else if (options.command === "permissions" && options.json !== true) {
       printPermissions(result);
     } else {
       printJson({
-        ok: true,
+        ok: publishFailure === false,
         data: result,
+        ...(publishFailure
+          ? {
+              error: {
+                code:
+                  isPlainRecord(result) && result.waitStatus === "timeout"
+                    ? "PUBLISH_WAIT_TIMEOUT"
+                    : isPlainRecord(result) &&
+                        result.waitStatus === "unavailable"
+                      ? "PUBLISH_WAIT_UNAVAILABLE"
+                      : isPlainRecord(result) && result.status === "blocked"
+                        ? "PUBLISH_BLOCKED"
+                        : "PUBLISH_FAILED",
+                ...(isPlainRecord(result) && result.waitStatus === "timeout"
+                  ? { message: "Publishing is still running. Stopped waiting." }
+                  : {}),
+              },
+            }
+          : {}),
         meta: {
           command: options.command,
           projectId: connection.projectId,
@@ -3318,7 +3650,13 @@ export const apiCommand = async (
         },
       });
     }
+    if (publishFailure) {
+      throw new HandledCliError();
+    }
   } catch (error) {
+    if (error instanceof HandledCliError) {
+      throw error;
+    }
     const issues = getCliErrorIssues(error);
     if (options.json === true) {
       const code = getErrorCode(error);

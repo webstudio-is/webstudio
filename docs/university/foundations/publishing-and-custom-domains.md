@@ -8,10 +8,10 @@ description: Learn how to connect a custom domain to your Project.
 Many DNS providers do not allow adding a CNAME at the root/apex. If yours doesn’t, jump to [this section](publishing-and-custom-domains.md#dns-provider-doesnt-allow-cname-flattening) for alternate options.
 {% endhint %}
 
-## Pre-publish checks
+## Publish validation
 
-Webstudio checks publishable pages before starting a cloud publish or static
-export. These checks detect broken Resource references and invalid HTML nesting
+Choose **Validate** in the publish dialog before publishing or exporting. Webstudio
+checks publishable pages for broken Resource references and invalid HTML nesting
 that could make the generated site fail or behave unexpectedly.
 
 - **Errors** stop publishing until you resolve them.
@@ -25,20 +25,19 @@ of the generated site.
 
 ## Publish details
 
-Click the status icon beside a domain in the publish dialog to open its publish
-details. **Activity** shows publish attempts for that domain, their status, and
-short errors or warnings. This includes saved warnings about content omitted
-from the published database. Filter the list by all, errors, or warnings.
-**Audit** shows checks for the current project before you publish; it is not a
-saved report from an earlier publish.
+Choose **Validate** to see findings in the **Warnings** and **Errors** tabs.
+Click the status icon beside a domain to open the same dialog on the
+**Publish** tab for that domain. For a static export, click its status icon.
 
-Free plans show the latest activity for each domain. Paid plans can show up to
-30 days of activity. Where available, **View detailed report** opens the audit
-at publish time, build diagnostics, and any available build logs. Detailed
-reports are kept for one day on Pro and up to 30 days on plans with longer
-report retention.
-Report access also depends on your current plan; upgrading does not restore a
-report that was never created or has expired.
+The **Publish** tab shows up to 10 recent attempts started in the current Builder tab. It keeps
+results when you close the dialog, but clears them when you reload or close the
+Builder tab. Results for other domains stay separate. An older published status
+may still appear after reload, without a session report.
+
+Free plans show short findings and publish status. Pro plans can open the
+detailed report and, when GitHub provides them, view the full build logs.
+Unavailable logs cannot be restored by upgrading. Build logs may be unavailable
+even when publishing succeeds or fails.
 
 ## Adding a custom domain
 
@@ -52,7 +51,8 @@ Enter the domain or subdomain you want the site to be available at, for example,
 
 After entering your domain, you will be provided with DNS records, which can be manually added to your DNS or automatically through Entri.
 
-<figure><img src="../../.gitbook/assets/add-new-domain.png" alt="CNAME and TXT records from new domain" width="362"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/add-new-domain.png" alt="CNAME and TXT records for a new custom domain" width="362"><figcaption></figcaption></figure>
+
 
 ### 2. Add the DNS records
 
@@ -95,9 +95,12 @@ Verification may take up to 24 hours but usually takes only a few minutes.
 You must publish your site _after_ the domain is verified, or else "[Worker not found](publishing-and-custom-domains.md#domain-issues)" will show on the site.
 {% endhint %}
 
-{% hint style="info" %}
-Publishing currently takes around 45 seconds. During publishing, your Project is built into a JavaScript app and deployed to 300+ servers around the world.
-{% endhint %}
+You can close the Publish dialog while the build runs. Reopen it to see the
+latest status. Resolve any reported error before trying again.
+
+Each domain shows a yellow progress icon while publishing and a green checkmark
+once publishing finishes. A red icon indicates a failure. Hover over the icon
+to see the status and when publishing started.
 
 Once your site is live, you can visit it by clicking the open icon next to the green checkmark.
 
@@ -105,7 +108,11 @@ Once your site is live, you can visit it by clicking the open icon next to the g
 
 ## Publish to Staging
 
-<figure><img src="../../.gitbook/assets/staging-domain.png" alt="Publish to staging with production unchecked"><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/staging-domain-dark.png">
+  <img src="../../.gitbook/assets/staging-domain-light.png" alt="Publish dialog with a verified wstd.io staging domain and Validate and Publish actions" width="322">
+</picture>
+
 
 You can publish your Project to a separate domain for testing before going live by only checking your staging domain, which can be the default Project subdomain or a custom domain.
 
@@ -255,7 +262,7 @@ DNS propagation typically takes 10-15 minutes, but can take up to 72 hours in ra
 
 #### Option 2: Publish your website on a `www` subdomain
 
-Go back to [Step 1](publishing-and-custom-domains.md#id-1.-add-a-new-domain-to-your-project), but this time, prefix your domain with `www`.
+Go back to [Step 1](publishing-and-custom-domains.md#1-add-a-new-domain-to-your-project), but this time, prefix your domain with `www`.
 
 #### Video Tutorial
 
@@ -281,7 +288,8 @@ To publish to a subdomain:
 
 You may see "Worker not Found" message when opening the site, like this:
 
-<figure><img src="../../.gitbook/assets/worker-not-found.png" alt="Worker not found"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/worker-not-found-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/worker-not-found-light.png" alt="Published site showing a Worker not found error" width="768"></picture></figure>
+
 
 Worker not found is due to one of the following reasons:
 

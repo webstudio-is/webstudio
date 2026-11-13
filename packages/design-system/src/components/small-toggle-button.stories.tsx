@@ -5,6 +5,7 @@ import {
 } from "./small-toggle-button";
 import { StorySection, StoryGrid } from "./storybook";
 import { theme } from "../stitches.config";
+import { cssVar } from "../css-var";
 
 export const SmallToggleButton = () => (
   <>
@@ -15,7 +16,7 @@ export const SmallToggleButton = () => (
             css={
               variant === "contrast"
                 ? {
-                    backgroundColor: theme.colors.backgroundActive,
+                    backgroundColor: cssVar("--background-accent"),
                     padding: theme.spacing[5],
                   }
                 : {
@@ -57,7 +58,7 @@ export const SmallToggleButton = () => (
             css={
               variant === "contrast"
                 ? {
-                    backgroundColor: theme.colors.backgroundActive,
+                    backgroundColor: cssVar("--background-accent"),
                     padding: theme.spacing[5],
                   }
                 : {

@@ -7,28 +7,27 @@ import {
   type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
+import { DotIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import {
-  DotIcon,
-  InfoCircleIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@webstudio-is/icons";
-import {
+  PanelContent,
   Box,
   Button,
-  CssValueListArrowFocus,
-  CssValueListItem,
+  cssVar,
+  declareCssVar,
+  InteractiveListArrowFocus,
+  InteractiveListItem,
   DialogTitleActions,
   DialogClose,
   DialogTitle,
   FloatingPanel,
   Flex,
   Label,
-  ScrollArea,
   ScrollAreaNative,
   SmallIconButton,
   Text,
   Tooltip,
+  InputErrorsTooltip,
+  InfoTooltip,
   theme,
 } from "@webstudio-is/design-system";
 import { getExpressionIdentifiers } from "@webstudio-is/expression";
@@ -44,8 +43,9 @@ import {
   type EditorApi,
 } from "./expression-editor";
 import { normalizeEditorValue } from "~/shared/code-editor-base";
+import { useAsyncValue } from "~/shared/use-async-value";
 
-export const evaluateExpressionWithinScope = (
+export const evaluateExpressionWithinScope = async (
   expression: string,
   scope: Record<string, unknown>
 ) => computeExpressionWithinScope(expression, scope);
@@ -82,6 +82,7 @@ const BindingPanel = ({
       availableVariables: new Set(aliases.keys()),
     });
     setErrorsCount(errors.length);
+    return errors.length > 0;
   };
 
   const updateExpression = (newExpression: string) => {
@@ -91,25 +92,28 @@ const BindingPanel = ({
   };
 
   return (
-    <ScrollArea
+    <ScrollAreaNative
       css={{
         display: "flex",
         flexDirection: "column",
-        width: theme.spacing[30],
+        // The floating panel includes a border, so its content is narrower
+        // than the sidebar width. A fixed sidebar width overflows the dialog
+        // itself and makes its title scroll horizontally.
+        width: "100%",
+        minWidth: 0,
+        overflowX: "hidden",
       }}
     >
       <Box css={{ paddingBottom: theme.spacing[5] }}>
-        <Flex gap="1" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="1">
           <Text variant="labels">Variables</Text>
-          <Tooltip
-            variant="wrapped"
+          <InfoTooltip
+            label="About available variables"
             content={
               "Click on the available variables in this scope to insert them into the Expression Editor."
             }
-          >
-            <InfoCircleIcon tabIndex={0} />
-          </Tooltip>
-        </Flex>
+          />
+        </PanelContent>
         {scopeEntries.length === 0 && (
           <Flex justify="center" align="center" css={{ py: theme.spacing[5] }}>
             <Text variant="labels" align="center">
@@ -118,7 +122,7 @@ const BindingPanel = ({
           </Flex>
         )}
         <ScrollAreaNative css={{ maxHeight: theme.spacing[25] }}>
-          <CssValueListArrowFocus>
+          <InteractiveListArrowFocus>
             {scopeEntries.map(([identifier, value], index) => {
               const name = aliases.get(identifier);
               const label =
@@ -126,7 +130,7 @@ const BindingPanel = ({
                   ? name
                   : `${name}: ${formatValuePreview(value)}`;
               return (
-                <CssValueListItem
+                <InteractiveListItem
                   key={identifier}
                   id={identifier}
                   index={index}
@@ -149,13 +153,13 @@ const BindingPanel = ({
                 />
               );
             })}
-          </CssValueListArrowFocus>
+          </InteractiveListArrowFocus>
         </ScrollAreaNative>
       </Box>
-      <Flex gap="1" css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Flex} gap="1">
         <Text variant="labels">Expression editor</Text>
-        <Tooltip
-          variant="wrapped"
+        <InfoTooltip
+          label="About the expression editor"
           content={
             <Text>
               Use JavaScript syntax to access variables along with comparison
@@ -165,37 +169,41 @@ const BindingPanel = ({
               <Text variant="mono">Variable.nested.value</Text>
             </Text>
           }
-        >
-          <InfoCircleIcon tabIndex={0} />
-        </Tooltip>
-      </Flex>
-      <Box css={{ padding: theme.panel.padding, pt: 0 }}>
-        <ExpressionEditor
-          editorApiRef={editorApiRef}
-          scope={scope}
-          aliases={aliases}
-          color={
-            (touched && errorsCount > 0) || valueError !== undefined
-              ? "error"
-              : undefined
-          }
-          autoFocus={true}
-          value={expression}
-          onChange={(value) => {
-            updateExpression(value);
-            setTouched(false);
-          }}
-          onChangeComplete={() => {
-            onSave(expression, errorsCount > 0);
-            setTouched(true);
-          }}
         />
-      </Box>
-    </ScrollArea>
+      </PanelContent>
+      <PanelContent as={Box} css={{ pt: 0 }}>
+        <InputErrorsTooltip
+          errors={valueError === undefined ? undefined : [valueError]}
+        >
+          <ExpressionEditor
+            editorApiRef={editorApiRef}
+            scope={scope}
+            aliases={aliases}
+            color={
+              (touched && errorsCount > 0) || valueError !== undefined
+                ? "error"
+                : undefined
+            }
+            autoFocus={true}
+            value={expression}
+            onChange={(value) => {
+              updateExpression(value);
+              setTouched(false);
+            }}
+            onChangeComplete={(value) => {
+              onSave(value, validate(value));
+              setTouched(true);
+            }}
+          />
+        </InputErrorsTooltip>
+      </PanelContent>
+    </ScrollAreaNative>
   );
 };
 
-const bindingOpacityProperty = "--ws-binding-opacity";
+const bindingOpacityProperty = declareCssVar("--binding-opacity");
+const dotDisplay = declareCssVar("--dot-display");
+const plusDisplay = declareCssVar("--plus-display");
 
 export const BindingControl = ({ children }: { children: ReactNode }) => {
   return (
@@ -231,7 +239,7 @@ const BindingButton = forwardRef<
         bleed={false}
         css={{
           // hide by default
-          opacity: `var(${bindingOpacityProperty}, 0)`,
+          opacity: cssVar(bindingOpacityProperty, "0"),
           position: "absolute",
           top: 0,
           left: 0,
@@ -243,8 +251,8 @@ const BindingButton = forwardRef<
           transition: "transform 60ms, opacity 0ms 60ms",
           // https://easings.net/#easeInOutSine
           transitionTimingFunction: "cubic-bezier(0.37, 0, 0.63, 1)",
-          "--dot-display": "block",
-          "--plus-display": "none",
+          [dotDisplay]: "block",
+          [plusDisplay]: "none",
           "&[data-variant=bound]": {
             opacity: 1,
           },
@@ -252,8 +260,8 @@ const BindingButton = forwardRef<
             // always show when interacted with
             opacity: 1,
             transform: `translate(-50%, -50%) scale(1.5)`,
-            "--dot-display": "none",
-            "--plus-display": "block",
+            [dotDisplay]: "none",
+            [plusDisplay]: "block",
           },
           "&:disabled": {
             display: "none",
@@ -266,26 +274,34 @@ const BindingButton = forwardRef<
               width: 12,
               height: 12,
               borderRadius: "50%",
-              backgroundColor: theme.colors.backgroundStyleSourceSelected,
+              backgroundColor: cssVar("--background-accent"),
+              color: cssVar("--foreground-on-accent"),
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               "&[data-variant=bound]": {
-                backgroundColor: theme.colors.backgroundStyleSourceSelected,
+                backgroundColor: cssVar("--background-accent"),
               },
               "&[data-variant=error]": {
-                backgroundColor: theme.colors.backgroundDestructiveMain,
+                backgroundColor: cssVar("--background-negative"),
+                color: cssVar("--foreground-on-negative"),
               },
             }}
             data-variant={error ? "error" : variant}
           >
             <DotIcon
               size={7}
-              style={{ display: `var(--dot-display)`, color: "white" }}
+              style={{
+                display: cssVar(dotDisplay),
+                color: "currentColor",
+              }}
             />
             <PlusIcon
               size={8}
-              style={{ display: `var(--plus-display)`, color: "white" }}
+              style={{
+                display: cssVar(plusDisplay),
+                color: "currentColor",
+              }}
             />
           </Box>
         }
@@ -316,15 +332,16 @@ export const BindingPopover = ({
   const hasUnsavedChange = useRef<boolean>(false);
   const preventedClosing = useRef<boolean>(false);
   const isDesignMode = useStore($isDesignMode);
-
+  const normalizedValue = normalizeEditorValue(value);
+  const evaluatedValue = useAsyncValue(
+    () => evaluateExpressionWithinScope(normalizedValue, scope),
+    [normalizedValue, scope],
+    undefined
+  );
+  const valueError = validate?.(evaluatedValue);
   if (!isDesignMode) {
     return;
   }
-
-  const normalizedValue = normalizeEditorValue(value);
-  const valueError = validate?.(
-    evaluateExpressionWithinScope(normalizedValue, scope)
-  );
   return (
     <FloatingPanel
       placement="left-start"
@@ -355,16 +372,17 @@ export const BindingPopover = ({
                     prefix={<TrashIcon />}
                     color="ghost"
                     disabled={variant === "default" || onRemove === undefined}
-                    onClick={(event) => {
+                    onClick={async (event) => {
                       event.preventDefault();
                       if (onRemove === undefined) {
                         return;
                       }
                       // inline variables and close dialog
-                      const evaluatedValue = evaluateExpressionWithinScope(
-                        normalizedValue,
-                        scope
-                      );
+                      const evaluatedValue =
+                        await evaluateExpressionWithinScope(
+                          normalizedValue,
+                          scope
+                        );
 
                       onRemove(evaluatedValue);
                       preventedClosing.current = false;

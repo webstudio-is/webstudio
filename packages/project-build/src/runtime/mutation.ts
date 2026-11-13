@@ -31,6 +31,37 @@ export const createRuntimeMutation = <
   noop: payload.length === 0,
 });
 
+const appendBuilderPatchChanges = <
+  Change extends { namespace: string; patches: unknown[] },
+>(
+  changes: Map<Change["namespace"], Change>,
+  payload: readonly Change[]
+) => {
+  for (const change of payload) {
+    const accumulated = changes.get(change.namespace);
+    if (accumulated === undefined) {
+      changes.set(change.namespace, {
+        ...change,
+        patches: [...change.patches],
+      });
+    } else {
+      accumulated.patches.push(...change.patches);
+    }
+  }
+};
+
+export const mergeBuilderPatchChanges = <
+  Change extends { namespace: string; patches: unknown[] },
+>(
+  ...payloads: readonly (readonly Change[])[]
+) => {
+  const changes = new Map<Change["namespace"], Change>();
+  for (const payload of payloads) {
+    appendBuilderPatchChanges(changes, payload);
+  }
+  return Array.from(changes.values());
+};
+
 export const createRuntimeMutationAccumulator = (
   initialState: BuilderState
 ) => {
@@ -41,17 +72,7 @@ export const createRuntimeMutationAccumulator = (
   const stage = <Result extends Record<string, unknown>>(
     mutation: BuilderRuntimeMutation<Result>
   ) => {
-    for (const change of mutation.payload) {
-      const accumulated = changes.get(change.namespace);
-      if (accumulated === undefined) {
-        changes.set(change.namespace, {
-          namespace: change.namespace,
-          patches: [...change.patches],
-        });
-      } else {
-        accumulated.patches.push(...change.patches);
-      }
-    }
+    appendBuilderPatchChanges(changes, mutation.payload);
     for (const namespace of mutation.invalidatesNamespaces) {
       invalidatesNamespaces.add(namespace);
     }

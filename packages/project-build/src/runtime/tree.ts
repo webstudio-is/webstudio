@@ -1,5 +1,4 @@
 import {
-  blockComponent,
   collectionComponent,
   elementComponent,
   type Instance,
@@ -16,6 +15,8 @@ import {
 import { findClosestInstanceMatchingFragment } from "./matcher";
 import { getSlotFragmentDropTargetMutable } from "./slot";
 import type { InstancePath, InstanceSelector } from "./instance-path";
+import { canMoveInstanceInContentMode } from "./block";
+import { throwBuilderRuntimeError } from "./errors";
 
 export type { InstanceSelector } from "./instance-path";
 
@@ -114,18 +115,26 @@ const adjustChildrenPosition = (
   return newPosition + 1;
 };
 
-export const wrapEditableChildrenAroundDropTargetMutable = (
-  instances: Instances,
-  props: Props,
-  metas: Map<string, WsComponentMeta>,
-  dropTarget: DroppableTarget,
-  createId: () => string
-) => {
-  const [parentId] = dropTarget.parentSelector;
+export const wrapEditableChildrenAroundInsertIndexMutable = ({
+  instances,
+  props,
+  metas,
+  parentId,
+  position,
+  createId,
+}: {
+  instances: Instances;
+  props: Props;
+  metas: Map<string, WsComponentMeta>;
+  parentId: Instance["id"];
+  position: number;
+  createId: () => string;
+}) => {
   const parentInstance = instances.get(parentId);
-  if (parentInstance === undefined || parentInstance.children.length === 0) {
+  if (parentInstance === undefined || !parentInstance.children?.length) {
     return;
   }
+  const children = parentInstance.children;
   const isParentRichText = isRichTextTree({
     instances,
     props,
@@ -135,40 +144,75 @@ export const wrapEditableChildrenAroundDropTargetMutable = (
   if (!isParentRichText) {
     return;
   }
-  const position =
-    dropTarget.position === "end"
-      ? parentInstance.children.length
-      : adjustChildrenPosition(parentInstance.children, dropTarget.position);
-
   const newChildren: Instance["children"] = [];
+  const createWrapperId = () => {
+    const id = createId();
+    if (instances.has(id)) {
+      return throwBuilderRuntimeError(
+        "CONFLICT",
+        "Generated record ID already exists in instances."
+      );
+    }
+    return id;
+  };
   let newPosition = 0;
   if (position !== 0) {
     const leftSpan: Instance = {
-      id: createId(),
+      id: createWrapperId(),
       type: "instance",
       component: elementComponent,
       tag: "span",
-      children: parentInstance.children.slice(0, position),
+      children: children.slice(0, position),
     };
     newChildren.push({ type: "id", value: leftSpan.id });
     instances.set(leftSpan.id, leftSpan);
     newPosition = 1;
   }
-  if (position < parentInstance.children.length) {
+  if (position < children.length) {
     const rightSpan: Instance = {
-      id: createId(),
+      id: createWrapperId(),
       type: "instance",
       component: elementComponent,
       tag: "span",
-      children: parentInstance.children.slice(position),
+      children: children.slice(position),
     };
     newChildren.push({ type: "id", value: rightSpan.id });
     instances.set(rightSpan.id, rightSpan);
   }
   parentInstance.children = newChildren;
+  return newPosition;
+};
+
+export const wrapEditableChildrenAroundDropTargetMutable = (
+  instances: Instances,
+  props: Props,
+  metas: Map<string, WsComponentMeta>,
+  dropTarget: DroppableTarget,
+  createId: () => string
+) => {
+  const [parentId] = dropTarget.parentSelector;
+  const parent = instances.get(parentId);
+  if (parent === undefined) {
+    return;
+  }
+  const position =
+    dropTarget.position === "end"
+      ? (parent.children?.length ?? 0)
+      : adjustChildrenPosition(parent.children ?? [], dropTarget.position);
+  const wrappedPosition = wrapEditableChildrenAroundInsertIndexMutable({
+    instances,
+    props,
+    metas,
+    parentId,
+    position,
+    createId,
+  });
+  if (wrappedPosition === undefined) {
+    return;
+  }
   return {
     parentSelector: dropTarget.parentSelector,
-    position: newPosition,
+    position: wrappedPosition,
   };
 };
 
@@ -211,14 +255,15 @@ export const canDropInstanceSelector = ({
   htmlTagsByInstanceId?: Map<Instance["id"], string>;
   contentMode?: boolean;
 }) => {
-  if (contentMode) {
-    const parentInstance = instances.get(dropSelector[0]);
-    if (parentInstance?.component !== blockComponent) {
-      return false;
-    }
-    if (dropSelector[0] !== dragSelector[1]) {
-      return false;
-    }
+  if (
+    contentMode &&
+    canMoveInstanceInContentMode({
+      instanceSelector: dragSelector,
+      parentSelector: dropSelector,
+      instances,
+    }) === false
+  ) {
+    return false;
   }
   const containerSelector = findClosestContainer({
     metas,

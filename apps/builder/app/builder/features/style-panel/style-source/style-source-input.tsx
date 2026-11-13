@@ -15,6 +15,7 @@ import { useFocusWithin } from "@react-aria/interactions";
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  cssVar,
   ComboboxListbox,
   ComboboxListboxItem,
   ComboboxRoot,
@@ -30,12 +31,14 @@ import {
   ComboboxScrollArea,
 } from "@webstudio-is/design-system";
 import type { StyleSource } from "@webstudio-is/sdk";
+import { parseWebstudioPragma } from "@webstudio-is/project-build/transfer";
 import {
   forwardRef,
   useState,
   Fragment,
   type ComponentProps,
   type ForwardRefRenderFunction,
+  type KeyboardEvent,
   type RefObject,
   type ReactNode,
   useRef,
@@ -52,8 +55,7 @@ import {
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
-import { $computedStyleDeclarations } from "../shared/model";
-import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { $stylesIndex } from "~/shared/nano-states";
 import { StyleSourceMenu, type SelectorConfig } from "./style-source-menu";
 
 type IntermediateItem = {
@@ -71,17 +73,17 @@ const TextFieldContainer = styled("div", {
   display: "flex",
   flexWrap: "wrap",
   alignItems: "center",
-  backgroundColor: theme.colors.backgroundControls,
+  backgroundColor: cssVar("--background-secondary"),
   gap: theme.spacing[2],
   padding: theme.spacing[2],
   borderRadius: theme.borderRadius[4],
   minWidth: 0,
   border: `1px solid transparent`,
   "&:hover": {
-    borderColor: theme.colors.borderMain,
+    borderColor: cssVar("--border-default"),
   },
   "&:focus-within": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: cssVar("--border-focus"),
   },
 });
 
@@ -100,6 +102,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
       hasStyles: boolean;
       open: boolean;
       onOpenChange: (open: boolean) => void;
+      onReturnToInput: () => void;
     }) => ReactNode;
     onChangeItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
@@ -115,6 +118,7 @@ const StyleSourceControlWithMenu = <Item extends IntermediateItem>({
   item,
   hasStyles,
   renderMenu,
+  onReturnToInput,
   ...props
 }: Omit<
   ComponentProps<typeof StyleSourceControl>,
@@ -122,11 +126,13 @@ const StyleSourceControlWithMenu = <Item extends IntermediateItem>({
 > & {
   item: Item;
   hasStyles: boolean;
+  onReturnToInput: () => void;
   renderMenu: (params: {
     item: Item;
     hasStyles: boolean;
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onReturnToInput: () => void;
   }) => ReactNode;
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -141,27 +147,21 @@ const StyleSourceControlWithMenu = <Item extends IntermediateItem>({
         hasStyles,
         open: menuOpen,
         onOpenChange: setMenuOpen,
+        onReturnToInput,
       })}
     />
   );
 };
 
-// Returns true if style source has defined styles including on the states.
+// Returns true if a style source has declarations on any state or breakpoint.
 const getHasStylesMap = <Item extends IntermediateItem>(
   styleSourceItems: Array<Item>,
-  computedStyleDeclarations: Array<ComputedStyleDecl>
+  stylesByStyleSourceId: ReadonlyMap<string, readonly unknown[]>
 ) => {
   const map = new Map<Item["id"], boolean>();
   for (const item of styleSourceItems) {
-    // Style source has styles on states.
-    if (item.states.length > 0) {
+    if ((stylesByStyleSourceId.get(item.id)?.length ?? 0) > 0) {
       map.set(item.id, true);
-    }
-    for (const style of computedStyleDeclarations) {
-      if (item.id === style.source.styleSourceId) {
-        map.set(item.id, true);
-        break;
-      }
     }
   }
   return map;
@@ -197,25 +197,61 @@ const TextFieldBase: ForwardRefRenderFunction<
     onSort,
   });
   const internalInputRef = useRef<HTMLInputElement>(null);
+  const sourceButtonRefs = useRef(new Map<string, HTMLButtonElement>());
 
-  const { focusWithinProps } = useFocusWithin({
-    onFocusWithin: onFocus,
-    onBlurWithin: onBlur,
-  });
+  const { focusWithinProps } = useFocusWithin({ onBlurWithin: onBlur });
 
   const onClickCapture = useCallback(() => {
     internalInputRef.current?.focus();
   }, [internalInputRef]);
 
-  const computedStyleDeclarations = useStore($computedStyleDeclarations);
+  const { stylesByStyleSourceId } = useStore($stylesIndex);
+  const hasStylesMap = getHasStylesMap(value, stylesByStyleSourceId);
+  const focusOrder = [
+    ...value.filter((item) => item.source !== "local"),
+    undefined,
+    ...value.filter((item) => item.source === "local"),
+  ];
+  const focusAdjacent = (id: string | undefined, direction: -1 | 1) => {
+    let index = focusOrder.findIndex((item) => item?.id === id) + direction;
+    while (index >= 0 && index < focusOrder.length) {
+      const item = focusOrder[index];
+      if (item === undefined) {
+        internalInputRef.current?.focus();
+        return true;
+      }
+      const button = sourceButtonRefs.current.get(item.id);
+      if (button && button.disabled === false) {
+        button.focus();
+        return true;
+      }
+      index += direction;
+    }
+    return false;
+  };
 
-  const hasStyles = useCallback(
-    (styleSourceId: string) => {
-      const hasStylesMap = getHasStylesMap(value, computedStyleDeclarations);
-      return hasStylesMap.get(styleSourceId) ?? false;
-    },
-    [value, computedStyleDeclarations]
-  );
+  const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    const input = internalInputRef.current;
+    if (!event.defaultPrevented && !event.shiftKey && input) {
+      const moveLeft =
+        event.key === "ArrowLeft" &&
+        input.selectionStart === 0 &&
+        input.selectionEnd === 0;
+      const moveRight =
+        event.key === "ArrowRight" &&
+        input.selectionStart === input.value.length &&
+        input.selectionEnd === input.value.length;
+      if (
+        (moveLeft || moveRight) &&
+        focusAdjacent(undefined, moveLeft ? -1 : 1)
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+    }
+    onKeyDown?.(event);
+  };
 
   return (
     <TextFieldContainer
@@ -231,7 +267,6 @@ const TextFieldBase: ForwardRefRenderFunction<
       style={
         dragItemId ? menuCssVars({ show: false, override: true }) : undefined
       }
-      onKeyDown={onKeyDown}
     >
       {/* We want input to be the first element in DOM so it receives the focus first */}
       <InputField
@@ -250,15 +285,18 @@ const TextFieldBase: ForwardRefRenderFunction<
         size="1"
         value={label}
         onClick={onClick}
+        onFocus={onFocus}
         inputRef={mergeRefs(internalInputRef, inputRef)}
+        onKeyDown={handleInputKeyDown}
         spellCheck={false}
-        aria-label="New Style Source Input"
+        aria-label="New style source input"
       />
       {value.map((item) => (
         <StyleSourceControlWithMenu
           key={item.id}
           item={item}
           renderMenu={renderMenu}
+          onReturnToInput={() => internalInputRef.current?.focus()}
           selected={item.id === selectedItemSelector?.styleSourceId}
           state={
             item.id === selectedItemSelector?.styleSourceId
@@ -277,7 +315,17 @@ const TextFieldBase: ForwardRefRenderFunction<
           disabled={item.disabled}
           isDragging={item.id === dragItemId}
           isEditing={item.id === editingItemId}
-          hasStyles={hasStyles(item.id)}
+          buttonRef={(element) => {
+            if (element) {
+              sourceButtonRefs.current.set(item.id, element);
+            } else {
+              sourceButtonRefs.current.delete(item.id);
+            }
+          }}
+          onArrowToSource={(direction) =>
+            focusAdjacent(item.id, direction === "left" ? -1 : 1)
+          }
+          hasStyles={hasStylesMap.get(item.id) ?? false}
           source={item.source}
           locked={item.locked}
           onChangeEditing={(isEditing) => {
@@ -311,6 +359,8 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onDeleteItem?: (id: Item["id"]) => void;
   onClearStyles?: (id: Item["id"]) => void;
   onDuplicateItem?: (id: Item["id"]) => void;
+  onCopyItem?: (id: Item["id"]) => void;
+  onPasteStyleSource?: (data: string) => void;
   onToggleLockItem?: (id: Item["id"], locked: boolean) => void;
   onConvertToToken?: (id: Item["id"]) => void;
   onCreateItem?: (label: string) => void;
@@ -336,7 +386,7 @@ const matchOrSuggestToCreate = (
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
-  const order: ItemSource[] = ["token"];
+  const order: ItemSource[] = ["tag", "token"];
   matched.sort((leftItem, rightItem) => {
     return order.indexOf(leftItem.source) - order.indexOf(rightItem.source);
   });
@@ -345,7 +395,7 @@ const matchOrSuggestToCreate = (
     itemToString(matched[0]).toLocaleLowerCase() !==
       search.toLocaleLowerCase().trim()
   ) {
-    matched.unshift({
+    matched.splice(matched[0]?.source === "tag" ? 1 : 0, 0, {
       id: newItemId,
       label: search.trim(),
       disabled: false,
@@ -357,7 +407,7 @@ const matchOrSuggestToCreate = (
   }
   // skip already added values
   return matched
-    .filter((item) => item.isAdded === false)
+    .filter((item) => item.isAdded === false || item.source === "tag")
     .slice(0, maxSuggestedTokens);
 };
 
@@ -377,6 +427,8 @@ export const StyleSourceInput = (
 ) => {
   const value = props.value ?? [];
   const [label, setLabel] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const escapePressed = useRef(false);
 
   const {
     items,
@@ -385,6 +437,7 @@ export const StyleSourceInput = (
     getMenuProps,
     getItemProps,
     isOpen,
+    openMenu,
   } = useCombobox<IntermediateItem>({
     getItems: () => markAddedValues(props.items ?? [], value),
     value: {
@@ -412,7 +465,11 @@ export const StyleSourceInput = (
   });
 
   const inputProps = getInputProps({
+    onFocus: () => openMenu(),
     onKeyDown(event) {
+      if (event.key === "Escape") {
+        escapePressed.current = true;
+      }
       if (
         event.key === "Backspace" &&
         label === "" &&
@@ -427,6 +484,7 @@ export const StyleSourceInput = (
   });
 
   let hasNewTokenItem = false;
+  let hasTagStyleItem = false;
   let hasGlobalTokenItem = false;
 
   const states = props.componentStates ?? [];
@@ -438,12 +496,38 @@ export const StyleSourceInput = (
           <TextField
             // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
-            inputRef={props.inputRef}
+            onPaste={(event) => {
+              const data = event.clipboardData.getData("text/plain");
+              if (
+                props.onPasteStyleSource !== undefined &&
+                (
+                  ["token-css", "tag-style-css", "local-style-css"] as const
+                ).some(
+                  (namespace) =>
+                    parseWebstudioPragma({
+                      source: data,
+                      syntax: "css",
+                      namespace,
+                    }).owned
+                )
+              ) {
+                event.preventDefault();
+                props.onPasteStyleSource(data);
+              }
+            }}
+            inputRef={mergeRefs(inputRef, props.inputRef)}
             error={props.error}
-            renderMenu={({ item, hasStyles, open, onOpenChange }) => (
+            renderMenu={({
+              item,
+              hasStyles,
+              open,
+              onOpenChange,
+              onReturnToInput,
+            }) => (
               <StyleSourceMenu
                 open={open}
                 onOpenChange={onOpenChange}
+                onReturnToInput={onReturnToInput}
                 selectedItemSelector={props.selectedItemSelector}
                 item={item}
                 hasStyles={hasStyles}
@@ -456,6 +540,7 @@ export const StyleSourceInput = (
                 }}
                 onSelect={props.onSelectItem}
                 onDuplicate={props.onDuplicateItem}
+                onCopy={props.onCopyItem}
                 onToggleLock={props.onToggleLockItem}
                 onConvertToToken={props.onConvertToToken}
                 onEnable={props.onEnableItem}
@@ -478,7 +563,21 @@ export const StyleSourceInput = (
             editingItemId={props.editingItemId}
           />
         </ComboboxAnchor>
-        <ComboboxContent align="start" sideOffset={5}>
+        <ComboboxContent
+          align="start"
+          sideOffset={5}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            escapePressed.current = false;
+          }}
+          onCloseAutoFocus={(event) => {
+            if (escapePressed.current) {
+              event.preventDefault();
+              escapePressed.current = false;
+              inputRef.current?.focus();
+            }
+          }}
+        >
           <ComboboxListbox {...getMenuProps()}>
             <ComboboxScrollArea>
               {isOpen &&
@@ -510,12 +609,18 @@ export const StyleSourceInput = (
                   }
 
                   let label = null;
+                  if (item.source === "tag" && hasTagStyleItem === false) {
+                    hasTagStyleItem = true;
+                    label = <ComboboxLabel>Tag</ComboboxLabel>;
+                  }
                   if (item.source === "token" && hasGlobalTokenItem === false) {
                     hasGlobalTokenItem = true;
                     label = (
                       <>
-                        {hasNewTokenItem && <ComboboxSeparator />}
-                        <ComboboxLabel>Global tokens</ComboboxLabel>
+                        {(hasNewTokenItem || hasTagStyleItem) && (
+                          <ComboboxSeparator />
+                        )}
+                        <ComboboxLabel>Tokens</ComboboxLabel>
                       </>
                     );
                   }
@@ -543,3 +648,5 @@ export const StyleSourceInput = (
     </ComboboxRoot>
   );
 };
+
+export const __testing__ = { getHasStylesMap };

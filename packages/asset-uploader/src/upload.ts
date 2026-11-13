@@ -5,8 +5,8 @@ import {
   getProjectPlanFeatures,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createHash } from "node:crypto";
-import { nanoid } from "nanoid";
 import {
+  createId as createSdkId,
   getFileExtension,
   getFileNameParts,
   type Asset,
@@ -16,7 +16,7 @@ import type { AssetInfoFallback, AssetObjectWriter } from "./client";
 import type { AssetDataOverride } from "./utils/get-asset-data";
 import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
-import { formatAsset } from "./utils/format-asset";
+import { formatAsset, formatAssetForRead } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
 import type { UploadTicket } from "./types";
 
@@ -29,6 +29,14 @@ export type CreateUploadTicketInput = {
   folderId?: string;
   contentHash?: string;
 };
+
+export class AssetUploadCountLimitError extends Error {
+  constructor(maxAssetsPerProject: number) {
+    super(
+      `The maximum number of assets per project is ${maxAssetsPerProject}.`
+    );
+  }
+}
 
 const UPLOADING_STALE_TIMEOUT = 1000 * 60 * 30; // 30 minutes
 const maxCreateUploadTicketAttempts = 3;
@@ -81,9 +89,7 @@ const assertAssetCapacity = async (projectId: string, context: AppContext) => {
     );
   const count = (assetCount.count ?? 0) + (uploadingCount.count ?? 0);
   if (count >= maxAssetsPerProject) {
-    throw new Error(
-      `The maximum number of assets per project is ${maxAssetsPerProject}.`
-    );
+    throw new AssetUploadCountLimitError(maxAssetsPerProject);
   }
 };
 
@@ -180,35 +186,64 @@ const findContentHashUploadTicket = async ({
       return;
     }
     if (file.status === "UPLOADED") {
-      let asset = await findAsset({
+      const existingAsset = await findAsset({
         projectId,
         name: file.name,
         identity: assetIdentity,
         context,
       });
-      if (asset === undefined) {
+      let asset = existingAsset ?? {
+        id: getDeduplicatedAssetId(projectId, file.name, assetIdentity),
+        projectId,
+        ...assetIdentity,
+      };
+      const { asset: formattedAsset, fontMetaIssues } = formatAssetForRead({
+        assetId: asset.id,
+        projectId: asset.projectId,
+        filename: asset.filename,
+        description: asset.description,
+        folderId: asset.folderId,
+        file,
+      });
+      if (fontMetaIssues !== undefined) {
+        // Keep existing references, but free the unique content hash so a new
+        // upload can parse valid metadata instead of reusing the broken file.
+        const excludedFile = await context.postgrest.client
+          .from("File")
+          .update({ contentHash: null })
+          .eq("name", file.name)
+          .eq("uploaderProjectId", projectId)
+          .eq("contentHash", contentHash)
+          .eq("status", "UPLOADED")
+          .eq("format", file.format)
+          .eq("meta", file.meta)
+          .select("name")
+          .maybeSingle();
+        assertPostgrestSuccess(excludedFile);
+        if (excludedFile.data === null) {
+          // Another request changed the file; reconsider its current metadata.
+          continue;
+        }
+        return;
+      }
+      if (existingAsset === undefined) {
         await assertAssetCapacity(projectId, context);
-        const restoredAsset = {
-          id: getDeduplicatedAssetId(projectId, file.name, assetIdentity),
-          projectId,
-          ...assetIdentity,
-        };
         const insertedAsset = await context.postgrest.client
           .from("Asset")
-          .insert({ ...restoredAsset, name: file.name });
+          .insert({ ...asset, name: file.name });
         if (insertedAsset.error?.code === "23505") {
-          asset = await findAsset({
+          const concurrentAsset = await findAsset({
             projectId,
             name: file.name,
             identity: assetIdentity,
             context,
           });
-          if (asset === undefined) {
+          if (concurrentAsset === undefined) {
             throw new Error("Concurrent deduplicated asset is missing.");
           }
+          asset = concurrentAsset;
         } else {
           assertPostgrestSuccess(insertedAsset);
-          asset = restoredAsset;
         }
       }
       if (file.isDeleted) {
@@ -219,19 +254,11 @@ const findContentHashUploadTicket = async ({
           .eq("uploaderProjectId", projectId);
         assertPostgrestSuccess(restoredFile);
       }
-      const formattedAsset = formatAsset({
-        assetId: asset.id,
-        projectId: asset.projectId,
-        filename: asset.filename,
-        description: asset.description,
-        folderId: asset.folderId,
-        file,
-      });
       return {
         assetId: asset.id,
         name: file.name,
         deduplicated: true,
-        asset: formattedAsset,
+        asset: { ...formattedAsset, id: asset.id },
       };
     }
     if (
@@ -281,7 +308,7 @@ const cleanupUploadError = async (
 export const createUploadTicket = async (
   data: CreateUploadTicketInput,
   context: AppContext,
-  createId: () => Asset["id"] = nanoid
+  createId: () => Asset["id"] = () => createSdkId("nano")
 ): Promise<UploadTicket> => {
   const {
     projectId,

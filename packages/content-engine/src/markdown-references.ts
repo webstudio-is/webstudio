@@ -1,45 +1,14 @@
-export type MarkdownAssetReference = {
+import { mergeAssetUrlSuffix } from "./asset-value-references";
+import type { ResolvedAssetReference } from "./asset-reference-utils";
+
+export type MarkdownAssetReference = ResolvedAssetReference & {
   start: number;
   end: number;
-  assetId: string;
-  suffix?: string;
 };
 
 export type MarkdownAssetReferences = Readonly<
   Record<string, readonly MarkdownAssetReference[]>
 >;
-
-const appendMarkdownReferenceSuffix = (
-  assetUrl: string,
-  suffix: string | undefined
-) => {
-  if (suffix === undefined || suffix.length === 0) {
-    return assetUrl;
-  }
-  const base = new URL("https://content.webstudio.invalid/__assets__/");
-  const target = new URL(assetUrl, base);
-  const reference = new URL(suffix, base);
-  for (const [name, value] of reference.searchParams) {
-    target.searchParams.append(name, value);
-  }
-  if (reference.hash !== "") {
-    target.hash = reference.hash;
-  }
-  if (URL.canParse(assetUrl)) {
-    return target.href;
-  }
-  if (assetUrl.startsWith("//")) {
-    return `//${target.host}${target.pathname}${target.search}${target.hash}`;
-  }
-  if (assetUrl.startsWith("/")) {
-    return `${target.pathname}${target.search}${target.hash}`;
-  }
-  const basePath = base.pathname;
-  const pathname = target.pathname.startsWith(basePath)
-    ? target.pathname.slice(basePath.length)
-    : target.pathname;
-  return `${pathname}${target.search}${target.hash}`;
-};
 
 export const rewriteMarkdownAssetReferenceRanges = ({
   markdown,
@@ -68,10 +37,7 @@ export const rewriteMarkdownAssetReferenceRanges = ({
     if (assetUrl === undefined) {
       continue;
     }
-    const resolvedUrl = appendMarkdownReferenceSuffix(
-      assetUrl,
-      reference.suffix
-    );
+    const resolvedUrl = mergeAssetUrlSuffix(assetUrl, reference.suffix);
     result = `${result.slice(0, reference.start)}${resolvedUrl}${result.slice(reference.end)}`;
   }
   return result;

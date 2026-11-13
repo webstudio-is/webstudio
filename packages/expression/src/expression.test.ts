@@ -13,11 +13,35 @@ import {
   parseJsonExpression,
   parseExpressionObject,
   parseArrayExpression,
+  parseDirectPathExpression,
   parseStaticMemberPath,
   parseStringLiteralExpression,
+  parseStaticStringExpression,
   allowedArrayMethods,
   allowedStringMethods,
+  hasPropertyAssignment,
 } from "./index";
+
+test.each([
+  ["errors = result.errors", true],
+  ["errors = result['errors']", true],
+  ['errors = result["errors"]', true],
+  ["const text = 'errors = result.errors'", false],
+  ["// errors = result.errors", false],
+  ["errors = result.other", false],
+  ["errors = other.errors", false],
+  ["errors += result.errors", false],
+  ["errors = result[dynamic]", false],
+])("identifies actual property assignment in %s", (code, expected) => {
+  expect(
+    hasPropertyAssignment({
+      code,
+      target: "errors",
+      source: "result",
+      property: "errors",
+    })
+  ).toBe(expected);
+});
 
 test("validates complete expressions", () => {
   expect(isValidExpression("post.title ?? 'Untitled'")).toBe(true);
@@ -41,6 +65,35 @@ describe("static member paths", () => {
   });
 });
 
+describe("direct path expressions", () => {
+  test.each([
+    "document.frontmatter.author?.name",
+    "document?.frontmatter?.author?.name",
+    'document.frontmatter?.["author"].name',
+    "(document.frontmatter?.author).name",
+  ])("preserves the writable location of %s", (expression) => {
+    expect(parseDirectPathExpression(expression)).toEqual({
+      type: "direct-path",
+      expression,
+      path: ["document", "frontmatter", "author", "name"],
+    });
+  });
+
+  test("distinguishes a writable location from a derived expression", () => {
+    expect(parseDirectPathExpression("document.frontmatter.title")).toEqual({
+      type: "direct-path",
+      expression: "document.frontmatter.title",
+      path: ["document", "frontmatter", "title"],
+    });
+    expect(
+      parseDirectPathExpression('document.frontmatter.title + "!"')
+    ).toBeUndefined();
+    expect(
+      parseDirectPathExpression("document.frontmatter[fieldName]")
+    ).toBeUndefined();
+  });
+});
+
 describe("string literal expressions", () => {
   test.each([
     ['"assets"', "assets"],
@@ -53,6 +106,19 @@ describe("string literal expressions", () => {
   });
 });
 
+describe("static JavaScript string expressions", () => {
+  test.each([
+    ['"assets"', "assets"],
+    ["'assets'", "assets"],
+    ["`assets`", "assets"],
+    ["`assets-${name}`", undefined],
+    ["'assets' + suffix", undefined],
+    ["'assets' trailing", undefined],
+  ])("parses %s", (source, expected) => {
+    expect(parseStaticStringExpression(source)).toBe(expected);
+  });
+});
+
 describe("lint expression", () => {
   const error = (from: number, to: number, message: string): Diagnostic => ({
     from,
@@ -61,11 +127,18 @@ describe("lint expression", () => {
     message,
   });
 
-  const warn = (from: number, to: number, message: string): Diagnostic => ({
+  const warn = (
+    from: number,
+    to: number,
+    message: string,
+    identifier: string
+  ): Diagnostic => ({
     from,
     to,
     severity: "warning",
     message,
+    code: "unknown-identifier",
+    identifier,
   });
 
   test("forbid empty expression", () => {
@@ -180,7 +253,7 @@ describe("lint expression", () => {
         allowAssignment: true,
         availableVariables: new Set(["c"]),
       })
-    ).toEqual([warn(1, 2, `"a" is not defined in the scope`)]);
+    ).toEqual([warn(1, 2, `"a" is not defined in the scope`, "a")]);
   });
 
   test("lint assignment operators and targets", () => {
@@ -240,8 +313,8 @@ describe("lint expression", () => {
     expect(
       lintExpression({ expression: ` a = b + 1`, allowAssignment: true })
     ).toEqual([
-      warn(5, 6, `"b" is not defined in the scope`),
-      warn(1, 2, `"a" is not defined in the scope`),
+      warn(5, 6, `"b" is not defined in the scope`, "b"),
+      warn(1, 2, `"a" is not defined in the scope`, "a"),
     ]);
     expect(
       lintExpression({
@@ -515,6 +588,7 @@ describe("expression value kinds", () => {
     ["{}", "object"],
     ['"text"', "string"],
     ["`text`", "string"],
+    ['"text" + value', "string"],
     ['"text" /* trailing comment */', "string"],
     ["value +", "unknown"],
     ['"text" trailing', "unknown"],

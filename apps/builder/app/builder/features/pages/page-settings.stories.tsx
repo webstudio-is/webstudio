@@ -2,6 +2,7 @@ import { $pages } from "~/shared/sync/data-stores";
 import { PageSettings as PageSettingsComponent } from "./page-settings/page-settings";
 import {
   Grid,
+  cssVar,
   theme,
   Dialog,
   DialogContent,
@@ -91,9 +92,9 @@ export const PageSettings = () => {
             css={{
               width: theme.spacing[35],
               margin: "auto",
-              border: `1px solid ${theme.colors.borderMain}`,
+              border: `1px solid ${cssVar("--border-default")}`,
               boxShadow: theme.shadows.menuDropShadow,
-              background: theme.colors.backgroundPanel,
+              background: cssVar("--background-primary"),
               borderRadius: theme.borderRadius[4],
             }}
           >

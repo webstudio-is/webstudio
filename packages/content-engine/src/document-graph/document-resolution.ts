@@ -1,13 +1,16 @@
 import { LRUCache } from "lru-cache";
+import { awaitWithSignal, createConcurrencyLimiter } from "../async-utils";
 import { ByteLimitExceededError, readBytePrefix } from "../byte-stream";
 import { contentEngineLimits } from "../limits";
 import {
   assembleDocument,
+  getAdaptedDocumentProperties,
   parseDocumentSource,
+  resolveAdaptedDocumentAssetReferences,
   selectDocumentRepresentation,
   type AdaptedDocument,
-  type DocumentFormat,
 } from "./document-adapter";
+import type { DocumentFormat } from "./document-format";
 import {
   getDocumentGraphClosure,
   type DocumentGraph,
@@ -25,6 +28,10 @@ import {
   getDocumentGraphErrorCode,
   type DocumentGraphRuntimeObserver,
 } from "./observability";
+import type {
+  AssetRuntimeData,
+  AssetValueReferences,
+} from "../asset-value-references";
 
 export type DocumentResolutionLimitErrorCode =
   | "DOCUMENT_COUNT_EXCEEDED"
@@ -88,6 +95,10 @@ type ResolveDocumentGraphInput = {
   maximumDocuments?: number;
   onEvent?: DocumentGraphRuntimeObserver;
   allowUnresolvedReferences?: boolean;
+  transformDocument?: (input: {
+    node: DocumentGraphNode;
+    document: AdaptedDocument;
+  }) => AdaptedDocument;
 };
 
 export type DocumentResolutionSession = Readonly<{
@@ -97,72 +108,17 @@ export type DocumentResolutionSession = Readonly<{
   ) => Promise<ResolvedDocumentGraph<AdaptedDocument>>;
 }>;
 
-const createConcurrencyLimiter = (
-  concurrency: number,
-  signal: AbortSignal | undefined
-) => {
-  let active = 0;
-  const waiters: Array<{ start: () => void }> = [];
-
-  const acquire = async () => {
-    signal?.throwIfAborted();
-    if (active < concurrency) {
-      active += 1;
-      return;
-    }
-    await new Promise<void>((resolve, reject) => {
-      let waiter: { start: () => void };
-      const onAbort = () => {
-        const index = waiters.indexOf(waiter);
-        if (index !== -1) {
-          waiters.splice(index, 1);
-        }
-        try {
-          signal?.throwIfAborted();
-        } catch (error) {
-          reject(error);
-        }
-      };
-      waiter = {
-        start: () => {
-          signal?.removeEventListener("abort", onAbort);
-          resolve();
-        },
-      };
-      waiters.push(waiter);
-      signal?.addEventListener("abort", onAbort, { once: true });
-    });
-  };
-
-  const release = () => {
-    const next = waiters.shift();
-    if (next === undefined) {
-      active -= 1;
-      return;
-    }
-    next.start();
-  };
-
-  return async <Result>(run: () => Promise<Result>) => {
-    await acquire();
-    try {
-      return await run();
-    } finally {
-      release();
-    }
-  };
-};
-
 const resolveWithSessionDocumentLoader = async ({
   graph,
   rootIds,
   concurrency,
   maximumBytes,
   maximumTotalBytes = contentEngineLimits.hydratedTotalBytes,
-  maximumDocuments = contentEngineLimits.hydratedFileCount,
+  maximumDocuments = contentEngineLimits.documentGraphDocuments,
   signal,
   onEvent,
   allowUnresolvedReferences = false,
+  transformDocument,
   load,
 }: ResolveDocumentGraphInput & {
   concurrency: number;
@@ -246,12 +202,14 @@ const resolveWithSessionDocumentLoader = async ({
           document: value,
           representation: reference.representation,
         }),
-      assemble: ({ source, references }) =>
-        assembleDocument({
+      assemble: ({ node, source, references }) => {
+        const document = assembleDocument({
           document: source,
           references,
           allowUnresolvedReferences,
-        }),
+        });
+        return transformDocument?.({ node, document }) ?? document;
+      },
     });
     emitDocumentGraphRuntimeEvent(onEvent, {
       type: "resolution-completed",
@@ -303,7 +261,7 @@ export const createDocumentResolutionSession = ({
     sizeCalculation: ({ byteLength }) => Math.max(1, byteLength),
   });
   const pending = new Map<string, Promise<SessionDocumentSource>>();
-  const limit = createConcurrencyLimiter(concurrency, signal);
+  const limit = createConcurrencyLimiter({ concurrency, signal });
 
   const assertSessionSignal = (requestedSignal?: AbortSignal) => {
     if (requestedSignal !== undefined && requestedSignal !== signal) {
@@ -314,34 +272,7 @@ export const createDocumentResolutionSession = ({
 
   const waitForSessionTask = async <Result>(task: Promise<Result>) => {
     assertSessionSignal();
-    if (signal === undefined) {
-      return await task;
-    }
-    return await new Promise<Result>((resolve, reject) => {
-      const cleanup = () => signal.removeEventListener("abort", onAbort);
-      const onAbort = () => {
-        cleanup();
-        try {
-          signal.throwIfAborted();
-        } catch (error) {
-          reject(error);
-        }
-      };
-      signal.addEventListener("abort", onAbort, { once: true });
-      task.then(
-        (value) => {
-          cleanup();
-          resolve(value);
-        },
-        (error) => {
-          cleanup();
-          reject(error);
-        }
-      );
-      if (signal.aborted) {
-        onAbort();
-      }
-    });
+    return await awaitWithSignal(task, signal);
   };
 
   const loadSessionDocument = async (
@@ -425,6 +356,39 @@ export const createDocumentResolutionSession = ({
   });
 };
 
+/** Resolves one document's graph-backed properties and local Asset references. */
+export const resolveDocumentGraphProperties = async ({
+  graph,
+  rootId,
+  load,
+  assetValueReferences,
+  runtimeAssets,
+  concurrency = contentEngineLimits.concurrentContentReads,
+}: {
+  graph: DocumentGraph;
+  rootId: string;
+  load: DocumentSourceLoader;
+  assetValueReferences?: AssetValueReferences;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+  concurrency?: number;
+}) => {
+  const resolution = await createDocumentResolutionSession({
+    load,
+    concurrency,
+  }).resolve({
+    graph,
+    rootIds: [rootId],
+    allowUnresolvedReferences: true,
+    transformDocument: ({ node, document }) =>
+      resolveAdaptedDocumentAssetReferences({
+        document,
+        references: assetValueReferences?.[node.id],
+        runtimeAssets,
+      }),
+  });
+  return getAdaptedDocumentProperties(resolution.roots[0]);
+};
+
 /** Resolves parsed JSON and Markdown values without depending on storage. */
 export const resolveAdaptedDocumentGraph = async ({
   graph,
@@ -432,7 +396,7 @@ export const resolveAdaptedDocumentGraph = async ({
   concurrency,
   maximumBytes = contentEngineLimits.hydratedFileBytes,
   maximumTotalBytes = contentEngineLimits.hydratedTotalBytes,
-  maximumDocuments = contentEngineLimits.hydratedFileCount,
+  maximumDocuments = contentEngineLimits.documentGraphDocuments,
   signal,
   load,
   onEvent,

@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { createPollingClient } from "./polling-client";
 

@@ -2,14 +2,20 @@ import { describe, expect, test, vi } from "vitest";
 import {
   assetQuery,
   type AssetFileDocument,
+  type AssetQueryFilter,
   type BuilderAssetFieldCatalog,
 } from "./schema";
 import {
   executeAssetQuery,
   executeAssetQueries,
   getAssetQueryFieldValue,
+  matchesAssetQueryFilter,
+  supportsAssetQueryContent,
+  validateAssetQuery,
   validateAssetQueryAgainstCatalog,
 } from "./structured-query";
+import { contentEngineLimits } from "./limits";
+import { createCanonicalAssetPath } from "./asset-path";
 
 const document = ({
   id,
@@ -72,6 +78,25 @@ const documents = [
   }),
 ];
 
+test("supports referenced bodies for Markdown and MDX documents", () => {
+  const content = { mode: "markdown-body-ref" } as const;
+  expect(supportsAssetQueryContent({ document: documents[0], content })).toBe(
+    true
+  );
+  expect(
+    supportsAssetQueryContent({
+      document: {
+        ...documents[0],
+        name: "alpha.mdx",
+        path: "blog/alpha.mdx",
+        extension: "mdx",
+        mimeType: "text/mdx",
+      },
+      content,
+    })
+  ).toBe(true);
+});
+
 const catalog: BuilderAssetFieldCatalog = {
   format: "webstudio-builder-asset-field-catalog",
   version: 1,
@@ -94,6 +119,110 @@ const runtimeAssets = Object.fromEntries(
 );
 
 describe("structured asset query", () => {
+  test.each([
+    ["eq", "Tutorial posts/Article #1? & 100%.mdx", ["significant"]],
+    [
+      "eq",
+      "Tutorial%20posts/Article%20%231%3F%20%26%20100%25.mdx",
+      ["significant"],
+    ],
+    ["ne", "Tutorial posts/Article #1? & 100%.mdx", ["percent", "slash"]],
+    [
+      "in",
+      ["missing.mdx", "Tutorial posts/Article #1? & 100%.mdx"],
+      ["significant"],
+    ],
+    ["contains", "Article #1? & 100%", ["significant"]],
+    ["startsWith", "Tutorial posts/", ["significant"]],
+    ["endsWith", "Article #1? & 100%.mdx", ["significant"]],
+    ["eq", "%2520/Literal%2520value.mdx", ["percent"]],
+    ["eq", "Folder%2Fname/file.mdx", ["slash"]],
+  ] as const)(
+    "normalizes path operands for %s filters",
+    async (operator, filterValue, expectedIds) => {
+      const pathDocuments = [
+        {
+          ...documents[0],
+          _id: "significant",
+          path: createCanonicalAssetPath({
+            folderNames: ["Tutorial posts"],
+            name: "Article #1? & 100%.mdx",
+          }),
+        },
+        {
+          ...documents[1],
+          _id: "percent",
+          path: createCanonicalAssetPath({
+            folderNames: ["%20"],
+            name: "Literal%20value.mdx",
+          }),
+        },
+        {
+          ...documents[2],
+          _id: "slash",
+          path: createCanonicalAssetPath({
+            folderNames: ["Folder/name"],
+            name: "file.mdx",
+          }),
+        },
+      ];
+      const result = await executeAssetQuery({
+        documents: pathDocuments,
+        query: assetQuery.parse({
+          where: {
+            field: ["path"],
+            operator,
+            value: filterValue,
+          },
+          sort: [{ field: ["id"], direction: "asc" }],
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "none" },
+        }),
+      });
+
+      if ("items" in result === false) {
+        throw new Error("Expected a many-result path query");
+      }
+      expect(result.items.map(({ id }) => id)).toEqual(expectedIds);
+    }
+  );
+
+  test("preserves visible dot fragments in path string filters", () => {
+    const hiddenDocument = {
+      ...documents[0],
+      path: createCanonicalAssetPath({
+        folderNames: [],
+        name: ".hidden.mdx",
+      }),
+    };
+    const dotFolderDocument = {
+      ...documents[1],
+      path: createCanonicalAssetPath({ folderNames: ["."], name: "file" }),
+    };
+    const visibleDotFilter: AssetQueryFilter = {
+      field: ["path"],
+      operator: "startsWith",
+      value: ".",
+    };
+
+    expect(matchesAssetQueryFilter(hiddenDocument, visibleDotFilter)).toBe(
+      true
+    );
+    expect(matchesAssetQueryFilter(dotFolderDocument, visibleDotFilter)).toBe(
+      true
+    );
+    expect(
+      matchesAssetQueryFilter(hiddenDocument, {
+        ...visibleDotFilter,
+        value: "%2E",
+      })
+    ).toBe(false);
+  });
+
   test("returns direct items for single-result modes", async () => {
     const empty = await executeAssetQuery({
       documents,
@@ -459,6 +588,203 @@ describe("structured asset query", () => {
     ]);
   });
 
+  test("expands selected asset reference metadata without changing legacy queries", async () => {
+    const legacyPost = document({
+      id: "post",
+      properties: { title: "Post", featureImage: "./hero.png" },
+    });
+    const runtimeAssets = {
+      hero: {
+        url: "/cgi/image/hero.png?format=raw",
+        name: "hero.png",
+        description: "A person presenting Webstudio",
+        mimeType: "image/png",
+        size: 1024,
+        meta: { width: 1600, height: 900 },
+        width: 1600,
+        height: 900,
+      },
+    };
+
+    await expect(
+      executeAssetQuery({
+        documents: [legacyPost],
+        assetValueReferences: {
+          post: [
+            {
+              path: ["properties", "featureImage"],
+              assetId: "hero",
+            },
+          ],
+        },
+        runtimeAssets,
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "featureImage"]],
+          },
+        },
+      })
+    ).resolves.toMatchObject({
+      items: [
+        {
+          properties: {
+            featureImage: "/cgi/image/hero.png?format=raw",
+          },
+        },
+      ],
+    });
+
+    const structuredPost = document({
+      id: "post",
+      properties: {
+        title: "Post",
+        featureImage: { $ref: "./hero.png" },
+      },
+    });
+    await expect(
+      executeAssetQuery({
+        documents: [structuredPost],
+        assetValueReferences: {
+          post: [
+            {
+              path: ["properties", "featureImage"],
+              assetId: "hero",
+              structured: true,
+            },
+          ],
+        },
+        runtimeAssets,
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "featureImage", "src"],
+              ["properties", "featureImage", "description"],
+              ["properties", "featureImage", "size"],
+            ],
+          },
+        },
+      })
+    ).resolves.toEqual({
+      items: [
+        {
+          id: "post",
+          properties: {
+            featureImage: {
+              src: "/cgi/image/hero.png?format=raw",
+              description: "A person presenting Webstudio",
+              size: 1024,
+            },
+          },
+        },
+      ],
+      totalCount: 1,
+      hasMore: false,
+    });
+  });
+
+  test("counts expanded metadata toward the result byte limit", async () => {
+    await expect(
+      executeAssetQuery({
+        documents: [
+          document({
+            id: "post",
+            properties: { featureImage: { $ref: "./hero.png" } },
+          }),
+        ],
+        assetValueReferences: {
+          post: [
+            {
+              path: ["properties", "featureImage"],
+              assetId: "hero",
+              structured: true,
+            },
+          ],
+        },
+        runtimeAssets: {
+          hero: {
+            url: "/hero.png",
+            description: "x".repeat(contentEngineLimits.resultBytes),
+          },
+        },
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "featureImage", "src"],
+              ["properties", "featureImage", "description"],
+            ],
+          },
+        },
+      })
+    ).rejects.toThrow("Asset query result exceeds the byte limit");
+  });
+
+  test("projects selected metadata from asset references nested in arrays", async () => {
+    await expect(
+      executeAssetQuery({
+        documents: [
+          document({
+            id: "post",
+            properties: {
+              showcase: {
+                images: [
+                  { src: { $ref: "./one.png" } },
+                  { src: { $ref: "./two.png" } },
+                ],
+              },
+            },
+          }),
+        ],
+        assetValueReferences: {
+          post: [
+            {
+              path: ["properties", "showcase", "images", 0, "src"],
+              assetId: "one",
+              structured: true,
+            },
+            {
+              path: ["properties", "showcase", "images", 1, "src"],
+              assetId: "two",
+              structured: true,
+            },
+          ],
+        },
+        runtimeAssets: {
+          one: { url: "/one.png", description: "First image" },
+          two: { url: "/two.png", description: "Second image" },
+        },
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [
+              ["properties", "showcase", "images", "*", "src", "src"],
+              ["properties", "showcase", "images", "*", "src", "description"],
+            ],
+          },
+        },
+      })
+    ).resolves.toMatchObject({
+      items: [
+        {
+          properties: {
+            showcase: {
+              images: [
+                { src: { src: "/one.png", description: "First image" } },
+                { src: { src: "/two.png", description: "Second image" } },
+              ],
+            },
+          },
+        },
+      ],
+    });
+  });
+
   test("accepts only referenced Markdown body queries", () => {
     expect(
       assetQuery.safeParse({ content: { mode: "markdown-body-ref" } }).success
@@ -610,6 +936,129 @@ describe("structured asset query", () => {
 
     expect(result.items).toEqual([]);
     expect(result.totalCount).toBe(0);
+  });
+
+  test("reports every fatal query operation together with nonfatal warnings", () => {
+    expect(() =>
+      validateAssetQueryAgainstCatalog({
+        catalog,
+        query: {
+          where: {
+            all: [
+              { field: ["width"], operator: "contains", value: 1 },
+              { field: ["height"], operator: "startsWith", value: "1" },
+              {
+                field: ["properties", "missing"],
+                operator: "eq",
+                value: true,
+              },
+            ],
+          },
+        },
+      })
+    ).toThrowError(
+      expect.objectContaining({
+        message: "2 invalid query operations found",
+        issues: [
+          expect.objectContaining({
+            severity: "error",
+            path: ["query", "where", "all", "0", "operator"],
+            message: "Operator contains is incompatible with width",
+          }),
+          expect.objectContaining({
+            severity: "error",
+            path: ["query", "where", "all", "1", "operator"],
+            message: "Operator startsWith is incompatible with height",
+          }),
+          expect.objectContaining({
+            severity: "warning",
+            path: ["query", "where", "all", "2", "field"],
+            message: "Asset field properties.missing is not currently observed",
+          }),
+        ],
+      })
+    );
+  });
+
+  test("reports invalid standard-field values without warning about output-only fields", () => {
+    expect(() =>
+      validateAssetQueryAgainstCatalog({
+        catalog,
+        query: {
+          where: {
+            all: [
+              { field: ["size"], operator: "gt", value: "large" },
+              { field: ["extension"], operator: "in", value: ["md", 1] },
+            ],
+          },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "summary"]],
+          },
+        },
+      })
+    ).toThrowError(
+      expect.objectContaining({
+        message: "2 invalid query operations found",
+        issues: [
+          expect.objectContaining({
+            severity: "error",
+            code: "INCOMPATIBLE_VALUE",
+            path: ["query", "where", "all", "0", "value"],
+          }),
+          expect.objectContaining({
+            severity: "error",
+            code: "INCOMPATIBLE_VALUE",
+            path: ["query", "where", "all", "1", "value", "1"],
+          }),
+        ],
+      })
+    );
+  });
+
+  test("preserves structural issue codes and warns about observed value types", () => {
+    expect(
+      validateAssetQuery({
+        catalog,
+        query: {
+          limit: -1,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [],
+          },
+        },
+      })
+    ).toMatchObject({
+      success: false,
+      issues: [
+        { code: "too_small", path: ["query", "limit"] },
+        { code: "custom", path: ["query"] },
+      ],
+    });
+
+    expect(
+      validateAssetQuery({
+        catalog,
+        query: {
+          where: {
+            field: ["properties", "draft"],
+            operator: "eq",
+            value: "yes",
+          },
+        },
+      })
+    ).toMatchObject({
+      success: true,
+      issues: [
+        {
+          severity: "warning",
+          code: "INCOMPATIBLE_OBSERVED_VALUE",
+          path: ["query", "where", "value"],
+        },
+      ],
+    });
   });
 
   test("keeps sorting deterministic when a dynamic field becomes mixed", async () => {
@@ -855,7 +1304,7 @@ describe("structured asset query", () => {
     });
   });
 
-  test("omits empty properties from query results", async () => {
+  test("returns IDs for all-fields results without properties", async () => {
     const empty = document({ id: "empty", properties: {} });
     const withExcerpt = document({
       id: "excerpt",
@@ -872,7 +1321,7 @@ describe("structured asset query", () => {
       query: {
         where: { all: [] },
         sort: [],
-        limit: 1,
+        limit: 2,
         offset: 0,
         output: { mode: "all", includeMetadata: false },
         content: { mode: "none" },
@@ -880,8 +1329,8 @@ describe("structured asset query", () => {
     });
 
     expect(result).toMatchObject({
-      items: [{ id: "excerpt", excerpt: "Excerpt" }],
-      totalCount: 1,
+      items: [{ id: "empty" }, { id: "excerpt", excerpt: "Excerpt" }],
+      totalCount: 2,
       hasMore: false,
     });
   });

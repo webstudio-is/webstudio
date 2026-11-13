@@ -6,7 +6,7 @@
   xmlns="http://www.w3.org/2000/svg"
 >
   <g clip-path="url(#paint0_angular_9413_9319_clip_path)">
-    <g fill="#11181C">
+    <g fill="currentColor">
       <path d="M8 8 L8 0 A8 8 0 0 1 12 1.072 Z" fill-opacity="1" />
       <path d="M8 8 L12 1.072 A8 8 0 0 1 14.928 4 Z" fill-opacity="0.909" />
       <path d="M8 8 L14.928 4 A8 8 0 0 1 16 8 Z" fill-opacity="0.818" />

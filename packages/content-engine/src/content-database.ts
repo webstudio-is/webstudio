@@ -20,7 +20,7 @@ import {
   matchesAssetQueryFilter,
   type AssetRuntimeData,
 } from "./structured-query";
-import { encodeUtf8, getUtf8ByteLength, toByteChunks } from "./byte-stream";
+import { encodeUtf8, getUtf8ByteLength, selectByteRange } from "./byte-stream";
 import type { AssetResourceContentReader } from "./hydration";
 import { getMaterializedAssetQueryResult } from "./materialized-query";
 import {
@@ -29,6 +29,7 @@ import {
   getAdaptedDocumentProperties,
   isDocumentGraphFieldAffected,
   getDocumentGraphQueryRootIds,
+  resolveAdaptedDocumentAssetReferences,
   selectDocumentGraphForQuery,
   type AdaptedDocument,
   type DocumentResolutionSession,
@@ -39,10 +40,7 @@ import {
   assertDocumentSourceIdentity,
 } from "./document-graph";
 import { contentEngineLimits } from "./limits";
-import {
-  getRuntimeAssetUrls,
-  resolveAssetValueReferences,
-} from "./asset-value-references";
+import { resolveAssetValueReferences } from "./asset-value-references";
 
 type ContentDatabaseQueryArguments = [
   request: AssetQueryRequestInput,
@@ -82,40 +80,6 @@ export type RuntimeContentDatabase = Pick<
   ContentDatabase,
   "query" | "queryManyWithDocumentGraph" | "queryWithDocumentGraph"
 >;
-
-const selectByteRange = (
-  source: Parameters<typeof toByteChunks>[0],
-  range?: { offset: number; length: number }
-): AsyncIterable<Uint8Array> => {
-  if (range === undefined) {
-    return toByteChunks(source);
-  }
-  return {
-    async *[Symbol.asyncIterator]() {
-      let skipped = 0;
-      let emitted = 0;
-      for await (const chunk of toByteChunks(source)) {
-        if (emitted === range.length) {
-          return;
-        }
-        if (skipped + chunk.byteLength <= range.offset) {
-          skipped += chunk.byteLength;
-          continue;
-        }
-        const start = Math.max(0, range.offset - skipped);
-        const length = Math.min(
-          chunk.byteLength - start,
-          range.length - emitted
-        );
-        if (length > 0) {
-          yield chunk.subarray(start, start + length);
-          emitted += length;
-        }
-        skipped += chunk.byteLength;
-      }
-    },
-  };
-};
 
 const createDocumentContentReader = ({
   graph,
@@ -169,6 +133,7 @@ const createQueryableContentDatabase = ({
     | "documents"
     | "contents"
     | "assetReferences"
+    | "assetPaths"
     | "assetValueReferences"
     | "queries"
   >;
@@ -240,6 +205,7 @@ const createQueryableContentDatabase = ({
       read: createContentReader(queryContentReader),
       runtimeAssets,
       assetReferences: artifact.assetReferences,
+      assetPaths: artifact.assetPaths,
       assetValueReferences: artifact.assetValueReferences,
     });
   const executeDynamicQuery = async ({
@@ -271,7 +237,6 @@ const createQueryableContentDatabase = ({
     const results: Array<
       PromiseSettledResult<AssetQueryExecutionResult> | undefined
     > = Array.from({ length: requests.length });
-    const assetUrls = getRuntimeAssetUrls(runtimeAssets);
     const pendingIndexes: number[] = [];
     for (const [index, request] of requests.entries()) {
       try {
@@ -280,7 +245,7 @@ const createQueryableContentDatabase = ({
           queries: artifact.queries,
           query: request.query,
           assetValueReferences: artifact.assetValueReferences,
-          assetUrls,
+          runtimeAssets,
         });
         if (materialized !== undefined) {
           results[index] = { status: "fulfilled", value: materialized };
@@ -350,7 +315,6 @@ const createQueryableContentDatabase = ({
     query: ReturnType<typeof assetQuery.parse>;
     runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   }) => {
-    const assetUrls = getRuntimeAssetUrls(runtimeAssets);
     return getDocumentGraphQueryRootIds({ graph, query }).filter((rootId) => {
       const storedDocument = documentsById.get(rootId);
       const document =
@@ -359,7 +323,7 @@ const createQueryableContentDatabase = ({
           : resolveAssetValueReferences({
               value: storedDocument,
               references: artifact.assetValueReferences?.[rootId],
-              assetUrls,
+              runtimeAssets: runtimeAssets ?? {},
             });
       if (document === undefined) {
         return false;
@@ -443,6 +407,12 @@ const createQueryableContentDatabase = ({
       rootIds,
       onEvent,
       allowUnresolvedReferences: true,
+      transformDocument: ({ node, document }) =>
+        resolveAdaptedDocumentAssetReferences({
+          document,
+          references: artifact.assetValueReferences?.[node.id],
+          runtimeAssets,
+        }),
     });
     const documents = replaceResolvedRootProperties({
       rootIds,

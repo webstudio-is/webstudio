@@ -1,5 +1,6 @@
 import warnOnce from "warn-once";
-import type { Asset } from "./schema/assets";
+import type { AssetRuntimeData } from "@webstudio-is/content-engine";
+import type { Asset, AssetType } from "./schema/assets";
 
 export const MIME_CATEGORIES = [
   "image",
@@ -54,6 +55,26 @@ export const getAssetContentHash = async (
     byte.toString(16).padStart(2, "0")
   ).join("");
 };
+
+const contentHashPattern = /^[0-9a-f]{64}$/;
+
+export const isContentHash = (value: unknown): value is string =>
+  typeof value === "string" && contentHashPattern.test(value);
+
+export const createAssetContentRevision = ({
+  storageName,
+  updatedAt,
+  size,
+  contentHash,
+}: {
+  storageName: string;
+  updatedAt: string;
+  size: number;
+  contentHash?: string | null;
+}) =>
+  isContentHash(contentHash)
+    ? `sha256:${contentHash}`
+    : `file:${encodeURIComponent(storageName)}:${updatedAt}:${size}`;
 
 export type ParsedAssetName = {
   basename: string;
@@ -138,7 +159,9 @@ const assetFileTypes = {
   // Code
   txt: textFile("text/plain", "plain"),
   md: textFile("text/markdown", "markdown"),
+  mdx: textFile("text/mdx", "markdown"),
   js: textFile("text/javascript", "javascript"),
+  mjs: textFile("text/javascript", "javascript"),
   css: textFile("text/css", "css"),
   json: textFile("application/json", "json"),
   html: textFile("text/html", "html"),
@@ -311,6 +334,10 @@ export const getAssetTextEditorLanguage = (
 export const isTextFileAsset = (asset: Pick<Asset, "format">): boolean =>
   getAssetTextEditorLanguage(asset) !== undefined;
 
+export const isMdxFileAsset = (
+  asset: Readonly<{ type: string; format: string }>
+) => asset.type === "file" && asset.format.toLowerCase() === "mdx";
+
 /**
  * Get MIME type from a filename
  */
@@ -402,7 +429,7 @@ export const getAssetMime = ({
   type,
   format,
 }: {
-  type: "image" | "font" | "file";
+  type: AssetType;
   format: string;
 }): string | undefined => {
   const lowerFormat = format.toLowerCase();
@@ -459,9 +486,11 @@ export const doesAssetMatchMimePatterns = (
   return false;
 };
 
+export class InvalidAssetFileNameError extends Error {}
+
 /**
  * Validate a filename and return its extension and MIME type
- * @throws Error if file extension is not allowed
+ * @throws InvalidAssetFileNameError if file extension is not allowed
  */
 export const validateFileName = (
   fileName: string
@@ -469,11 +498,11 @@ export const validateFileName = (
   const extension = getFileExtension(fileName)?.toLowerCase();
 
   if (!extension) {
-    throw new Error("File must have an extension");
+    throw new InvalidAssetFileNameError("File must have an extension");
   }
 
   if (!isAllowedExtension(extension)) {
-    throw new Error(
+    throw new InvalidAssetFileNameError(
       `File type "${extension}" is not allowed. Allowed types: ${Array.from(
         ALLOWED_FILE_EXTENSIONS
       ).join(", ")}`
@@ -482,7 +511,7 @@ export const validateFileName = (
 
   const mimeType = getMimeTypeByExtension(extension);
   if (!mimeType) {
-    throw new Error(
+    throw new InvalidAssetFileNameError(
       `Could not determine MIME type for extension: ${extension}`
     );
   }
@@ -493,9 +522,7 @@ export const validateFileName = (
 /**
  * Detect the asset type from a file based on its extension
  */
-export const detectAssetType = (
-  fileName: string
-): "image" | "font" | "video" | "file" => {
+export const detectAssetType = (fileName: string): AssetType => {
   const ext = getFileExtension(fileName)?.toLowerCase();
   if (!ext) {
     return "file";
@@ -586,13 +613,25 @@ const extractFontMetadata = (asset: Asset): RuntimeMetadata => {
   }
   const metadata: Omit<RuntimeAsset, "url"> = {
     family: asset.meta.family,
+    style: asset.meta.style,
   };
-  // Static fonts have style and weight, variable fonts have variationAxes
-  if ("style" in asset.meta) {
-    metadata.style = asset.meta.style;
+  // Static fonts have weight, variable fonts have variationAxes
+  if ("weight" in asset.meta) {
     metadata.weight = asset.meta.weight;
   }
   return metadata;
+};
+
+const extractVideoMetadata = (asset: Asset): RuntimeMetadata => {
+  if (asset.type !== "video") {
+    return;
+  }
+  if (asset.meta.width && asset.meta.height) {
+    return {
+      width: asset.meta.width,
+      height: asset.meta.height,
+    };
+  }
 };
 
 const extractFileMetadata = (_asset: Asset): RuntimeMetadata => {
@@ -606,6 +645,7 @@ const metadataExtractors: Record<
 > = {
   image: extractImageMetadata,
   font: extractFontMetadata,
+  video: extractVideoMetadata,
   file: extractFileMetadata,
 };
 
@@ -632,4 +672,15 @@ export const toRuntimeAsset = (asset: Asset, origin: string): RuntimeAsset => {
     url: relativeUrl,
     ...metadata,
   };
+};
+
+/** Runtime data used only when an Assets query expands a local asset reference. */
+export const toAssetReferenceRuntimeData = (asset: Asset, origin: string) => {
+  const name = formatAssetName(asset);
+  return {
+    ...asset,
+    ...toRuntimeAsset(asset, origin),
+    name,
+    mimeType: getAssetMime(asset) ?? getMimeTypeByFilename(name),
+  } satisfies AssetRuntimeData;
 };

@@ -2,15 +2,29 @@ import {
   reparentInstance,
   toggleInstanceShow,
 } from "~/shared/instance-utils/mutation";
-import { useEffect, useMemo, useRef } from "react";
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+} from "react";
+import { shallowEqual } from "shallow-equal";
 import { atom, computed } from "nanostores";
 import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  InfoTooltip,
+  PanelBanner,
+  cssVar,
   keyframes,
-  rawTheme,
-  ScrollArea,
+  ScrollAreaNative,
   SmallIconButton,
   styled,
   Text,
@@ -27,18 +41,23 @@ import { showAttribute, getCollectionEntries } from "@webstudio-is/react-sdk";
 import {
   ROOT_INSTANCE_ID,
   collectionComponent,
+  blockBodyComponent,
+  contentBlockSourceProp,
+  getContentBlockSource,
   blockComponent,
   rootComponent,
   blockTemplateComponent,
   descendantComponent,
   type Instance,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { animationCanPlayOnCanvasProperty } from "@webstudio-is/sdk/runtime";
 import { showAttributeMeta } from "@webstudio-is/project-build/runtime";
 import {
   EyeClosedIcon,
   EyeOpenIcon,
-  InfoCircleIcon,
+  MarkdownEmbedIcon,
+  SettingsIcon,
 } from "@webstudio-is/icons";
 import {
   $allSelectedInstanceSelectors,
@@ -74,13 +93,98 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import {
+  executeRuntimeMutation,
+  getDuplicateTemplateNameMessage,
+} from "~/shared/instance-utils/data";
 import { isRichTextContent } from "@webstudio-is/project-build/runtime";
+import {
+  $externalContentRoots,
+  externalContentInstanceNameMessage,
+  isExternalContentInstance,
+  resolveExternalContentOccurrence,
+  findExternalContentRoot,
+} from "~/shared/external-content-mutations";
 import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
 import { InstanceContextMenu } from "~/builder/shared/instance-context-menu";
+import { TextFileEditor } from "../text-file-editor/text-file-editor";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
+
+const getMdxContentSource = (selector: InstanceSelector) => {
+  const instances = $instances.get();
+  if (instances.get(selector[0])?.component !== blockBodyComponent) {
+    return;
+  }
+  const blockIndex = selector.findIndex(
+    (id) => instances.get(id)?.component === blockComponent
+  );
+  if (blockIndex === -1) {
+    return;
+  }
+  const blockSelector = selector.slice(blockIndex);
+  const root =
+    Array.from($externalContentRoots.get().values()).find(
+      (root) =>
+        root.contentInstanceId === selector[0] &&
+        root.blockInstanceId === blockSelector[0]
+    ) ??
+    findExternalContentRoot(
+      $externalContentRoots.get(),
+      blockSelector[0],
+      JSON.stringify(blockSelector)
+    );
+  const source = getContentBlockSource({
+    blockInstanceId: root?.sourceBlockInstanceId ?? blockSelector[0],
+    props: $props.get().values(),
+  });
+  if (source === undefined) {
+    return;
+  }
+  const value = $propValuesByInstanceSelector
+    .get()
+    .get(getInstanceKey(blockSelector))
+    ?.get(contentBlockSourceProp);
+  return {
+    assetId:
+      source.type === "asset"
+        ? source.assetId
+        : (root?.assetId ??
+          (typeof value === "string" && value !== "" ? value : undefined)),
+  };
+};
+
+const MdxContentMenu = ({ assetId }: { assetId?: string }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <SmallIconButton
+            aria-label="MDX content settings"
+            icon={<SettingsIcon />}
+          />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          onCloseAutoFocus={(event) => {
+            if (open) {
+              event.preventDefault();
+            }
+          }}
+        >
+          <DropdownMenuItem disabled={!assetId} onSelect={() => setOpen(true)}>
+            Open MDX file
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {open && assetId && (
+        <TextFileEditor assetId={assetId} onOpenChange={setOpen} />
+      )}
+    </>
+  );
+};
 
 type TreeItemAncestor =
   | undefined
@@ -224,6 +328,7 @@ export const $flatTree = computed(
     $propValuesByInstanceSelector,
     $dropTarget,
     $isContentMode,
+    $externalContentRoots,
   ],
   (
     page,
@@ -231,7 +336,8 @@ export const $flatTree = computed(
     expandedItems,
     propValuesByInstanceSelector,
     dropTarget,
-    isContentMode
+    isContentMode,
+    externalContentRoots
   ) => {
     const flatTree: TreeItem[] = [];
     if (page === undefined) {
@@ -246,11 +352,27 @@ export const $flatTree = computed(
       isLastChild = false,
       indexWithinChildren = 0
     ) => {
-      const instance = instances.get(instanceId);
+      let instance = instances.get(instanceId);
       if (instance === undefined) {
         // log instead of failing navigator tree
         console.error(`Unknown instance ${instanceId}`);
         return;
+      }
+      if (
+        isContentMode &&
+        (instance.component === blockComponent ||
+          instance.component === blockBodyComponent)
+      ) {
+        const occurrence = resolveExternalContentOccurrence({
+          sourceInstance: instance,
+          sourceSelector: selector,
+          instances,
+          roots: externalContentRoots,
+        });
+        if (occurrence !== undefined) {
+          instance = occurrence.instance;
+          selector = occurrence.selector;
+        }
       }
       const propValues = propValuesByInstanceSelector.get(
         getInstanceKey(selector)
@@ -457,7 +579,7 @@ const ShowToggle = ({
           {isAnimating && value && (
             <>
               <br />
-              <Text css={{ color: theme.colors.foregroundPrimary }}>
+              <Text css={{ color: cssVar("--foreground-accent") }}>
                 Animation is running on canvas.
               </Text>
             </>
@@ -471,9 +593,9 @@ const ShowToggle = ({
         css={
           value && isAnimating
             ? {
-                color: theme.colors.foregroundPrimary,
+                color: cssVar("--foreground-accent"),
                 "&:hover": {
-                  color: theme.colors.foregroundPrimary,
+                  color: cssVar("--foreground-accent"),
                   filter: "brightness(80%)",
                 },
               }
@@ -492,14 +614,19 @@ const EditableTreeNodeLabel = styled("div", {
   variants: {
     isEditing: {
       true: {
-        background: theme.colors.backgroundControls,
+        background: cssVar("--background-secondary"),
         padding: theme.spacing[3],
         borderRadius: theme.spacing[3],
-        color: theme.colors.foregroundMain,
+        color: cssVar("--foreground-primary"),
         outline: "none",
         cursor: "auto",
         textOverflow: "clip",
         userSelect: "text",
+      },
+    },
+    hasError: {
+      true: {
+        outline: `1px solid ${cssVar("--border-negative")}`,
       },
     },
   },
@@ -507,39 +634,75 @@ const EditableTreeNodeLabel = styled("div", {
 
 const TreeNodeContent = ({
   instance,
+  mdx = false,
   isEditing,
+  isNameEditable,
   onIsEditingChange,
 }: {
   instance: Instance;
+  mdx?: boolean;
   isEditing: boolean;
+  isNameEditable: boolean;
   onIsEditingChange: (isEditing: boolean) => void;
 }) => {
   const editableRef = useRef<HTMLDivElement | null>(null);
+  const [error, setError] = useState<string>();
 
-  const label = getInstanceLabel(instance);
+  const label = mdx ? "MDX content" : getInstanceLabel(instance);
   const { ref, handlers } = useContentEditable({
     value: label,
-    isEditable: true,
-    isEditing,
+    isEditable: isNameEditable,
+    isEditing: isNameEditable && isEditing,
     onChangeValue: (value: string) => {
-      executeRuntimeMutation({
-        id: "instances.setLabel",
-        input: { instanceId: instance.id, label: value },
-      });
-      editableRef.current?.closest("button")?.focus();
+      if (isExternalContentInstance($externalContentRoots.get(), instance.id)) {
+        return;
+      }
+      try {
+        executeRuntimeMutation({
+          id: "instances.setLabel",
+          input: { instanceId: instance.id, label: value },
+        });
+        setError(undefined);
+        editableRef.current?.closest("button")?.focus();
+      } catch (error) {
+        const message = getDuplicateTemplateNameMessage(error);
+        if (message === undefined) {
+          throw error;
+        }
+        setError(message);
+        onIsEditingChange(true);
+      }
     },
     onChangeEditing: onIsEditingChange,
   });
 
   return (
-    <TreeNodeLabel prefix={<InstanceIcon instance={instance} />}>
-      <EditableTreeNodeLabel
-        ref={mergeRefs(editableRef, ref)}
-        {...handlers}
-        isEditing={isEditing}
+    <TreeNodeLabel
+      prefix={
+        mdx ? <MarkdownEmbedIcon /> : <InstanceIcon instance={instance} />
+      }
+    >
+      <Tooltip
+        content={
+          mdx
+            ? "Content inside this region is saved to the connected MDX file. Other instances in this Content Block are saved in the project."
+            : isNameEditable
+              ? error
+              : externalContentInstanceNameMessage
+        }
+        delayDuration={0}
       >
-        {label}
-      </EditableTreeNodeLabel>
+        <EditableTreeNodeLabel
+          ref={mergeRefs(editableRef, ref)}
+          {...handlers}
+          isEditing={isEditing}
+          hasError={error !== undefined}
+          aria-invalid={error === undefined ? undefined : true}
+          onInput={() => setError(undefined)}
+        >
+          {label}
+        </EditableTreeNodeLabel>
+      </Tooltip>
     </TreeNodeLabel>
   );
 };
@@ -701,9 +864,166 @@ const commitNavigatorDrop = ({
   return true;
 };
 
+const NavigatorRow = memo(
+  ({
+    item,
+    isSelected,
+    isSelectedDescendant,
+    isHighlighted,
+    isEditing,
+    isNameEditable,
+    show,
+    isAnimating,
+    isMdx,
+    mdxAssetId,
+    onPointerDown,
+    onClick,
+    onFocus,
+    onKeyDown,
+    onKeyUp,
+  }: {
+    item: TreeItem;
+    // Invalidate labels when registered component metadata changes.
+    meta: WsComponentMeta;
+    isSelected: boolean;
+    isSelectedDescendant: boolean;
+    isHighlighted: boolean;
+    isEditing: boolean;
+    isNameEditable: boolean;
+    show: boolean;
+    isAnimating: boolean;
+    isMdx: boolean;
+    mdxAssetId?: string;
+    onPointerDown: (
+      selector: InstanceSelector,
+      event: React.PointerEvent
+    ) => void;
+    onClick: (selector: InstanceSelector, event: React.MouseEvent) => void;
+    onFocus: (selector: InstanceSelector, event: React.FocusEvent) => void;
+    onKeyDown: (
+      selector: InstanceSelector,
+      event: React.KeyboardEvent<HTMLButtonElement>
+    ) => void;
+    onKeyUp: (event: React.KeyboardEvent<HTMLButtonElement>) => void;
+  }) => {
+    const level = item.visibleAncestors.length - 1;
+    return (
+      <InstanceContextMenu>
+        <TreeNode
+          level={level}
+          isSelected={isSelected}
+          isSelectedDescendant={isSelectedDescendant}
+          isHighlighted={isHighlighted}
+          isExpanded={item.isExpanded}
+          isActionVisible={isAnimating || isMdx}
+          onExpand={(isExpanded, all) => handleExpand(item, isExpanded, all)}
+          nodeProps={{
+            style: {
+              opacity: item.isHidden ? 0.4 : undefined,
+              color: item.isReusable
+                ? cssVar("--foreground-accent-secondary")
+                : undefined,
+            },
+          }}
+          buttonProps={{
+            onPointerDown: (event) => onPointerDown(item.selector, event),
+            onMouseEnter: () => {
+              $hoveredInstanceSelector.set(item.selector);
+              $blockChildOutline.set(undefined);
+            },
+            onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
+            onClick: (event) => onClick(item.selector, event),
+            onFocus: (event) => onFocus(item.selector, event),
+            onKeyDown: (event) => {
+              onKeyDown(item.selector, event);
+              if (event.defaultPrevented) {
+                return;
+              }
+              if (event.key === "Enter") {
+                emitCommand("editInstanceText");
+              }
+            },
+            onKeyUp,
+          }}
+          action={
+            isMdx ? (
+              <MdxContentMenu assetId={mdxAssetId} />
+            ) : (
+              <ShowToggle
+                instance={item.instance}
+                value={show}
+                isAnimating={isAnimating}
+              />
+            )
+          }
+        >
+          <TreeNodeContent
+            instance={item.instance}
+            mdx={isMdx}
+            isNameEditable={isNameEditable}
+            isEditing={isEditing}
+            onIsEditingChange={(isEditing) => {
+              $editingItemSelector.set(
+                isEditing === true ? item.selector : undefined
+              );
+            }}
+          />
+        </TreeNode>
+      </InstanceContextMenu>
+    );
+  },
+  // Position changes belong to the sortable wrapper. Row handlers only need
+  // the instance and selector, so unchanged controls can keep their render.
+  ({ item: previous, ...previousProps }, { item: next, ...nextProps }) =>
+    shallowEqual(previousProps, nextProps) &&
+    previous.instance === next.instance &&
+    areInstanceSelectorsEqual(previous.selector, next.selector) &&
+    previous.visibleAncestors.length === next.visibleAncestors.length &&
+    previous.isExpanded === next.isExpanded &&
+    previous.isHidden === next.isHidden &&
+    previous.isReusable === next.isReusable
+);
+
+const NavigatorSortableRow = memo(
+  ({ item, ...props }: ComponentProps<typeof NavigatorRow>) => (
+    <TreeSortableItem
+      level={item.visibleAncestors.length - 1}
+      isExpanded={item.isExpanded}
+      isLastChild={item.isLastChild}
+      data={item}
+      canDrag={() => canDrag(item.instance, item.selector)}
+      dropTarget={item.dropTarget}
+      onDropTargetChange={(dropTarget, draggingItem) => {
+        $dragAndDropState.set({
+          ...$dragAndDropState.get(),
+          ...getNavigatorDragState({
+            item,
+            dropTarget,
+            draggingItem,
+            canDropTarget: canDrop,
+          }),
+        });
+      }}
+      onDrop={(data) => {
+        commitNavigatorDrop({
+          item: data,
+          dropTarget: $dragAndDropState.get().dropTarget,
+          reparent: reparentInstance,
+        });
+        $dragAndDropState.set({ isDragging: false });
+      }}
+      onExpand={(isExpanded) => handleExpand(item, isExpanded, false)}
+    >
+      <NavigatorRow item={item} {...props} />
+    </TreeSortableItem>
+  )
+);
+
 export const NavigatorTree = () => {
   const isContentMode = useStore($isContentMode);
+  const selectedPage = useStore($selectedPage);
   const flatTree = useStore($flatTree);
+  const externalContentRoots = useStore($externalContentRoots);
   const selectedInstanceSelectors = useStore($allSelectedInstanceSelectors);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const selectedKeys = useMemo(
@@ -741,8 +1061,12 @@ export const NavigatorTree = () => {
     if (selectedInstanceSelector) {
       const newExpandedItems = new Set($expandedItems.get());
       let expanded = 0;
-      // do not expand the selected instance itself, start with parent
-      for (let index = 1; index < selectedInstanceSelector.length; index += 1) {
+      // Expand ancestors except the root, which is always expanded.
+      for (
+        let index = 1;
+        index < selectedInstanceSelector.length - 1;
+        index += 1
+      ) {
         const key = getSelectorKey(selectedInstanceSelector.slice(index));
         if (newExpandedItems.has(key) === false) {
           newExpandedItems.add(key);
@@ -782,21 +1106,23 @@ export const NavigatorTree = () => {
     }
   };
 
-  const selectInstanceOnFocus = (
-    instanceSelector: undefined | Instance["id"][],
-    event: React.MouseEvent | React.FocusEvent
-  ) => {
-    if (suppressFocusSelectionRef.current) {
-      return;
+  const selectInstanceOnFocus = useEffectEvent(
+    (
+      instanceSelector: undefined | Instance["id"][],
+      event: React.MouseEvent | React.FocusEvent
+    ) => {
+      if (suppressFocusSelectionRef.current) {
+        return;
+      }
+      if (skipFocusSelectionCountRef.current > 0) {
+        skipFocusSelectionCountRef.current -= 1;
+        return;
+      }
+      clearTextSelection(event);
+      selectInstance(instanceSelector);
+      rangeAnchorSelectorRef.current = instanceSelector;
     }
-    if (skipFocusSelectionCountRef.current > 0) {
-      skipFocusSelectionCountRef.current -= 1;
-      return;
-    }
-    clearTextSelection(event);
-    selectInstance(instanceSelector);
-    rangeAnchorSelectorRef.current = instanceSelector;
-  };
+  );
 
   const selectNavigatorInstance = (
     instanceSelector: InstanceSelector,
@@ -816,145 +1142,162 @@ export const NavigatorTree = () => {
     rangeAnchorSelectorRef.current = nextSelection.anchorSelector;
   };
 
-  const handlePointerDown = (
-    instanceSelector: InstanceSelector,
-    event: React.PointerEvent
-  ) => {
-    skipFocusSelectionCountRef.current =
-      getFocusSelectionSkipCountAfterPointerDown(event);
-    if (shouldSelectOnPointerDown(event)) {
-      event.preventDefault();
-      event.stopPropagation();
-      selectNavigatorInstance(instanceSelector, event);
+  const handlePointerDown = useEffectEvent(
+    (instanceSelector: InstanceSelector, event: React.PointerEvent) => {
+      skipFocusSelectionCountRef.current =
+        getFocusSelectionSkipCountAfterPointerDown(event);
+      if (shouldSelectOnPointerDown(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+        selectNavigatorInstance(instanceSelector, event);
+        skipNextClickSelectionRef.current = true;
+        return;
+      }
+      if (event.button !== 2) {
+        return;
+      }
       skipNextClickSelectionRef.current = true;
-      return;
+      if (selectedKeys.has(getSelectorKey(instanceSelector))) {
+        return;
+      }
+      clearTextSelection(event);
+      suppressFocusSelectionRef.current = false;
+      selectInstances(
+        getContextMenuSelectedInstanceSelectors({
+          selectedSelectors: selectedInstanceSelectors,
+          clickedSelector: instanceSelector,
+        })
+      );
+      rangeAnchorSelectorRef.current = instanceSelector;
     }
-    if (event.button !== 2) {
-      return;
-    }
-    skipNextClickSelectionRef.current = true;
-    if (selectedKeys.has(getSelectorKey(instanceSelector))) {
-      return;
-    }
-    clearTextSelection(event);
-    suppressFocusSelectionRef.current = false;
-    selectInstances(
-      getContextMenuSelectedInstanceSelectors({
-        selectedSelectors: selectedInstanceSelectors,
-        clickedSelector: instanceSelector,
-      })
-    );
-    rangeAnchorSelectorRef.current = instanceSelector;
-  };
+  );
 
-  const handleClick = (
-    instanceSelector: InstanceSelector,
-    event: React.MouseEvent
-  ) => {
-    if (skipNextClickSelectionRef.current) {
-      skipNextClickSelectionRef.current = false;
-      return;
+  const handleClick = useEffectEvent(
+    (instanceSelector: InstanceSelector, event: React.MouseEvent) => {
+      if (skipNextClickSelectionRef.current) {
+        skipNextClickSelectionRef.current = false;
+        return;
+      }
+      selectNavigatorInstance(instanceSelector, event);
     }
-    selectNavigatorInstance(instanceSelector, event);
-  };
+  );
 
-  const handleKeyDown = (
-    instanceSelector: InstanceSelector,
-    event: React.KeyboardEvent<HTMLButtonElement>
-  ) => {
-    if (
-      shouldClearNavigatorMultiSelectionOnEscape({
-        key: event.key,
-        selectedSelectors: selectedInstanceSelectors,
-      })
-    ) {
+  const handleKeyDown = useEffectEvent(
+    (
+      instanceSelector: InstanceSelector,
+      event: React.KeyboardEvent<HTMLButtonElement>
+    ) => {
+      if (
+        shouldClearNavigatorMultiSelectionOnEscape({
+          key: event.key,
+          selectedSelectors: selectedInstanceSelectors,
+        })
+      ) {
+        suppressCommandsForEvent(event.nativeEvent);
+        event.preventDefault();
+        event.stopPropagation();
+        suppressFocusSelectionRef.current = false;
+        clearInstanceSelection();
+        rangeAnchorSelectorRef.current = undefined;
+        return;
+      }
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") {
+        suppressCommandsForEvent(event.nativeEvent);
+        event.preventDefault();
+        event.stopPropagation();
+        suppressFocusSelectionRef.current = false;
+        const nextSelection = getNavigatorSiblingSelectionUpdate({
+          focusedSelector: instanceSelector,
+          flatSelectors,
+        });
+        if (nextSelection === undefined) {
+          return;
+        }
+        selectInstances(nextSelection.selectedSelectors);
+        rangeAnchorSelectorRef.current = nextSelection.anchorSelector;
+        return;
+      }
+
+      if (event.shiftKey === false) {
+        suppressFocusSelectionRef.current = false;
+        return;
+      }
+      const direction =
+        event.key === "ArrowUp"
+          ? "previous"
+          : event.key === "ArrowDown"
+            ? "next"
+            : undefined;
+      if (direction === undefined) {
+        return;
+      }
       suppressCommandsForEvent(event.nativeEvent);
       event.preventDefault();
       event.stopPropagation();
-      suppressFocusSelectionRef.current = false;
-      clearInstanceSelection();
-      rangeAnchorSelectorRef.current = undefined;
-      return;
-    }
-
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") {
-      suppressCommandsForEvent(event.nativeEvent);
-      event.preventDefault();
-      event.stopPropagation();
-      suppressFocusSelectionRef.current = false;
-      const nextSelection = getNavigatorSiblingSelectionUpdate({
+      const nextSelection = getNavigatorKeyboardSelectionUpdate({
+        selectedSelectors: selectedInstanceSelectors,
         focusedSelector: instanceSelector,
         flatSelectors,
+        anchorSelector: rangeAnchorSelectorRef.current,
+        direction,
       });
       if (nextSelection === undefined) {
         return;
       }
+      suppressFocusSelectionRef.current = true;
       selectInstances(nextSelection.selectedSelectors);
       rangeAnchorSelectorRef.current = nextSelection.anchorSelector;
-      return;
-    }
 
-    if (event.shiftKey === false) {
-      suppressFocusSelectionRef.current = false;
-      return;
+      const treeButtons = Array.from(
+        event.currentTarget
+          .closest("[data-navigator-tree]")
+          ?.querySelectorAll<HTMLButtonElement>("[data-tree-button]") ?? []
+      );
+      const buttonIndex = treeButtons.indexOf(event.currentTarget);
+      const nextFocusedButton =
+        direction === "previous" ? buttonIndex - 1 : buttonIndex + 1;
+      if (treeButtons[nextFocusedButton] !== undefined) {
+        treeButtons[nextFocusedButton]?.focus({ preventScroll: true });
+      }
     }
-    const direction =
-      event.key === "ArrowUp"
-        ? "previous"
-        : event.key === "ArrowDown"
-          ? "next"
-          : undefined;
-    if (direction === undefined) {
-      return;
-    }
-    suppressCommandsForEvent(event.nativeEvent);
-    event.preventDefault();
-    event.stopPropagation();
-    const nextSelection = getNavigatorKeyboardSelectionUpdate({
-      selectedSelectors: selectedInstanceSelectors,
-      focusedSelector: instanceSelector,
-      flatSelectors,
-      anchorSelector: rangeAnchorSelectorRef.current,
-      direction,
-    });
-    if (nextSelection === undefined) {
-      return;
-    }
-    suppressFocusSelectionRef.current = true;
-    selectInstances(nextSelection.selectedSelectors);
-    rangeAnchorSelectorRef.current = nextSelection.anchorSelector;
+  );
 
-    const treeButtons = Array.from(
-      event.currentTarget
-        .closest("[data-navigator-tree]")
-        ?.querySelectorAll<HTMLButtonElement>("[data-tree-button]") ?? []
-    );
-    const buttonIndex = treeButtons.indexOf(event.currentTarget);
-    const nextFocusedButton =
-      direction === "previous" ? buttonIndex - 1 : buttonIndex + 1;
-    if (treeButtons[nextFocusedButton] !== undefined) {
-      treeButtons[nextFocusedButton]?.focus({ preventScroll: true });
+  const handleKeyUp = useEffectEvent(
+    (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (event.key === "Shift" || event.shiftKey === false) {
+        suppressFocusSelectionRef.current = false;
+      }
     }
-  };
+  );
 
-  const handleKeyUp = (event: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === "Shift" || event.shiftKey === false) {
-      suppressFocusSelectionRef.current = false;
-    }
-  };
-
+  // oxlint-disable react-hooks/rules-of-hooks -- our useEffectEvent supplies stable callbacks with current state
   return (
-    <ScrollArea
-      direction="both"
+    <ScrollAreaNative
       css={{
         width: "100%",
-        overflow: "hidden",
         flexBasis: 0,
         flexGrow: 1,
+        minHeight: 0,
+        "& [data-tree-sortable-item]:not([data-has-drop-target])": {
+          contentVisibility: "auto",
+          containIntrinsicSize: `auto ${theme.sizes.controlHeight}`,
+        },
       }}
     >
       <TreeRoot>
-        <Box data-navigator-tree>
+        <Box data-navigator-tree css={{ minWidth: "max-content" }}>
+          {isContentMode &&
+            selectedPage !== undefined &&
+            flatTree.length === 0 && (
+              <PanelBanner variant="warning" role="status">
+                <Text>
+                  This page has no editable content. To make areas editable in
+                  content mode, wrap them in a Content block component in design
+                  mode.
+                </Text>
+              </PanelBanner>
+            )}
           {rootMeta && isContentMode === false && (
             <TreeNode
               level={0}
@@ -969,8 +1312,8 @@ export const NavigatorTree = () => {
                   selectInstanceOnFocus([ROOT_INSTANCE_ID], event),
               }}
               action={
-                <Tooltip
-                  variant="wrapped"
+                <InfoTooltip
+                  label="About Global root variables"
                   side="bottom"
                   disableHoverableContent={true}
                   content={
@@ -979,9 +1322,7 @@ export const NavigatorTree = () => {
                       instance on every page.
                     </Text>
                   }
-                >
-                  <InfoCircleIcon />
-                </Tooltip>
+                />
               }
             >
               <TreeNodeLabel
@@ -995,7 +1336,6 @@ export const NavigatorTree = () => {
           )}
 
           {flatTree.map((item) => {
-            const level = item.visibleAncestors.length - 1;
             const key = getSelectorKey(item.selector);
             const propValues = propValuesByInstanceSelectorWithMemoryProps.get(
               getInstanceKey(item.selector)
@@ -1023,118 +1363,55 @@ export const NavigatorTree = () => {
             const isAnimating = isAnimationSelected || isAnimationPinned;
 
             const meta = metas.get(item.instance.component);
+            const mdxSource = getMdxContentSource(item.selector);
 
             if (meta === undefined) {
               return;
             }
 
             return (
-              <TreeSortableItem
+              <NavigatorSortableRow
                 key={key}
-                level={level}
-                isExpanded={item.isExpanded}
-                isLastChild={item.isLastChild}
-                data={item}
-                canDrag={() => canDrag(item.instance, item.selector)}
-                dropTarget={item.dropTarget}
-                onDropTargetChange={(dropTarget, draggingItem) => {
-                  $dragAndDropState.set({
-                    ...$dragAndDropState.get(),
-                    ...getNavigatorDragState({
-                      item,
-                      dropTarget,
-                      draggingItem,
-                      canDropTarget: canDrop,
-                    }),
-                  });
-                }}
-                onDrop={(data) => {
-                  const builderDropTarget = $dragAndDropState.get().dropTarget;
-                  commitNavigatorDrop({
-                    item: data,
-                    dropTarget: builderDropTarget,
-                    reparent: reparentInstance,
-                  });
-                  $dragAndDropState.set({ isDragging: false });
-                }}
-                onExpand={(isExpanded) => handleExpand(item, isExpanded, false)}
-              >
-                <InstanceContextMenu>
-                  <TreeNode
-                    level={level}
-                    isSelected={selectedKeys.has(getSelectorKey(item.selector))}
-                    isSelectedDescendant={isSelectedDescendantItem}
-                    isHighlighted={hoveredKey === key || dropTargetKey === key}
-                    isExpanded={item.isExpanded}
-                    isActionVisible={isAnimating}
-                    onExpand={(isExpanded, all) =>
-                      handleExpand(item, isExpanded, all)
-                    }
-                    nodeProps={{
-                      style: {
-                        opacity: item.isHidden ? 0.4 : undefined,
-                        color: item.isReusable
-                          ? rawTheme.colors.foregroundReusable
-                          : undefined,
-                      },
-                    }}
-                    buttonProps={{
-                      onPointerDown: (event) =>
-                        handlePointerDown(item.selector, event),
-                      onMouseEnter: () => {
-                        $hoveredInstanceSelector.set(item.selector);
-                        $blockChildOutline.set(undefined);
-                      },
-                      onMouseLeave: () =>
-                        $hoveredInstanceSelector.set(undefined),
-                      onClick: (event) => handleClick(item.selector, event),
-                      onFocus: (event) =>
-                        selectInstanceOnFocus(item.selector, event),
-                      onKeyDown: (event) => {
-                        handleKeyDown(item.selector, event);
-                        if (event.defaultPrevented) {
-                          return;
-                        }
-                        if (event.key === "Enter") {
-                          emitCommand("editInstanceText");
-                        }
-                      },
-                      onKeyUp: handleKeyUp,
-                    }}
-                    action={
-                      <ShowToggle
-                        instance={item.instance}
-                        value={show}
-                        isAnimating={isAnimating}
-                      />
-                    }
-                  >
-                    <TreeNodeContent
-                      instance={item.instance}
-                      isEditing={areInstanceSelectorsEqual(
-                        item.selector,
-                        editingItemSelector
-                      )}
-                      onIsEditingChange={(isEditing) => {
-                        $editingItemSelector.set(
-                          isEditing === true ? item.selector : undefined
-                        );
-                      }}
-                    />
-                  </TreeNode>
-                </InstanceContextMenu>
-              </TreeSortableItem>
+                item={item}
+                meta={meta}
+                isSelected={selectedKeys.has(key)}
+                isSelectedDescendant={isSelectedDescendantItem}
+                isHighlighted={hoveredKey === key || dropTargetKey === key}
+                isEditing={areInstanceSelectorsEqual(
+                  item.selector,
+                  editingItemSelector
+                )}
+                isNameEditable={
+                  mdxSource === undefined &&
+                  isExternalContentInstance(
+                    externalContentRoots,
+                    item.instance.id
+                  ) === false
+                }
+                show={show}
+                isAnimating={isAnimating}
+                isMdx={mdxSource !== undefined}
+                mdxAssetId={mdxSource?.assetId}
+                onPointerDown={handlePointerDown}
+                onClick={handleClick}
+                onFocus={selectInstanceOnFocus}
+                onKeyDown={handleKeyDown}
+                onKeyUp={handleKeyUp}
+              />
             );
           })}
         </Box>
       </TreeRoot>
       {/* space in the end of scroll area */}
       <Box css={{ height: theme.spacing[9] }}></Box>
-    </ScrollArea>
+    </ScrollAreaNative>
   );
+  // oxlint-enable react-hooks/rules-of-hooks
 };
 
 export const __testing__ = {
+  MdxContentMenu,
+  getMdxContentSource,
   commitNavigatorDrop,
   getFocusSelectionSkipCountAfterPointerDown,
   getBuilderDropTarget,

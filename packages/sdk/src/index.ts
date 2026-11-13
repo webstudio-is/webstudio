@@ -2,9 +2,14 @@ export * from "./schema/assets";
 export * from "./schema/asset-resource";
 export * from "./schema/asset-folders";
 export * from "./schema/pages";
+export * from "./system-search";
+export * from "./schema/response-headers";
 export * from "./schema/instances";
+export * from "./schema/expression";
 export * from "./schema/data-sources";
 export * from "./schema/resources";
+export * from "./email-addresses";
+export * from "./email-resource";
 export * from "./schema/props";
 export * from "./schema/breakpoints";
 export * from "./schema/style-sources";
@@ -14,12 +19,15 @@ export * from "./schema/deployment";
 export * from "./schema/webstudio";
 export * from "./schema/prop-meta";
 export * from "./schema/component-meta";
+export * from "./schema/content-block";
 
 export * from "./assets";
 export * from "./asset-folder-hierarchy";
 export * from "./asset-folder-normalization";
 export * from "./asset-resource-config";
 export * from "./core-metas";
+export * from "./content-block";
+export * from "./code-text";
 export * from "./instances-utils";
 export * from "./page-utils";
 export * from "./scope";
@@ -29,11 +37,23 @@ export type {
   ComponentBuildImport,
 } from "./component-build";
 export * from "./expression";
-export * from "./resources-generator";
+export {
+  generateResources,
+  replaceFormActionsWithResources,
+} from "./resources-generator";
+export * from "./managed-form-resources-generator";
+export * from "./form-submission";
+export * from "./form-email-fields";
+export {
+  managedFormEndpointPrefix,
+  managedFormRequestParamName,
+} from "./form-fields";
+export * from "./resource-dependencies";
 export * from "./page-meta-generator";
 export * from "./url-pattern";
 export * from "./link-utils";
 export * from "./json-ld";
+export * from "./id";
 export * from "./css";
 export * from "./__generated__/tags";
 export {
@@ -78,3 +98,5 @@ export {
   durationUnitValue,
   RANGE_UNITS,
 } from "./schema/animation-schema";
+
+export * from "./managed-form-error-slot";

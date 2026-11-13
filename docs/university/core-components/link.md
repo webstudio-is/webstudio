@@ -26,16 +26,16 @@ You can customize the properties of a Link instance by selecting it and going to
 
 ### Href
 
-<figure><img src="../../.gitbook/assets/link-href-property.avif" alt=""><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/link-href-property-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/link-href-property-light.png" alt="Link settings with destination type choices and Href field" width="240"></picture></figure>
 
 The "href" property determines what the Link instance will lead to, such as a URL, page, phone, attachment, or email address.
 
 1. **URL**: In its most common form, the "href" property references a URL, linking to another website or page.
 2. **Page**: You can link to all of your pages within your site here. You can also link to specific sections within those pages. To link to a section on a page, first go to the section and fill out the `ID` field in Settings. Then go back to the link, select the page, and then in the next dropdown select the `ID` you just created. Like this:
 
-   <div align="center"><figure><img src="../../.gitbook/assets/section-id.png" alt="" width="375"><figcaption><p>First add the ID to the section you want to link to</p></figcaption></figure></div>
+   <div align="center"><figure><img src="../../.gitbook/assets/section-id.png" alt="Section settings with an ID entered as the anchor destination" width="375"><figcaption><p>First add the ID to the section you want to link to</p></figcaption></figure></div>
 
-   <div align="center"><figure><img src="../../.gitbook/assets/link-to-section.png" alt="" width="375"><figcaption><p>Then add a page link and select the section.</p></figcaption></figure></div>
+   <div align="center"><figure><img src="../../.gitbook/assets/link-to-section.png" alt="Link destination picker with a section selected on the current page" width="375"><figcaption><p>Then add a page link and select the section.</p></figcaption></figure></div>
 
 3. **Email**: When you specify an email address as the 'href' value, the link opens the user's default email client (such as Gmail) with the designated email address pre-filled.
 4. **Phone**: If you set the "href" property to a phone number, the link becomes a prompt for users to initiate phone calls directly from their devices.
@@ -43,15 +43,14 @@ The "href" property determines what the Link instance will lead to, such as a UR
 
 ### Target
 
-<figure><img src="../../.gitbook/assets/link-target-property.avif" alt=""><figcaption></figcaption></figure>
+The `target` property controls where the link opens. Choose one of these values:
 
-You can use the "Target" property to modify a link instance's behavior and define how linked content is displayed.
+1. **`_self`**: Opens the link in the same tab. This is the default.
+2. **`_blank`**: Opens the link in a new tab or window.
+3. **`_parent`**: Opens the link in the parent browsing context. This is mainly useful inside nested frames.
+4. **`_top`**: Opens the link in the top-level browsing context, replacing any frames.
 
-1. **Self**: When you set "Target" to "Self," the linked content will open in the same window or tab. This is the default behavior for links, and it maintains the browsing context.
-2. **Blank**: If you choose "Blank," the linked content will open in a new tab or window, providing a separate browsing context.
-3. **Parent and Top**: For web pages involving nested frames, "Parent" will direct the linked content to open in the parent frame or window, maintaining the hierarchy of frames.\
-   \
-   On the other hand, selecting "Top" will open the link instance in the top-level window, replacing all frames if there are any. This is useful when you want to break out of any frames and provide a full-page experience.
+To open a link in a new tab, set **Target** to **`_blank`**.
 
 ### Prefetch
 
@@ -71,7 +70,7 @@ You can add any Webstudio component inside a Link element to make it clickable â
 
 When using links for navigation and wanting to highlight the current page, the link component has a "Local Link" state in every style source.
 
-<figure><img src="../../.gitbook/assets/link-local-link-state.png" alt=""><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/link-local-link-state-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/link-local-link-state-light.png" alt="Style sources menu with the local-link state" width="240"></picture></figure>
 
 ## Related
 

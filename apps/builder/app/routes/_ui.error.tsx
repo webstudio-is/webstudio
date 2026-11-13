@@ -17,7 +17,7 @@ const sessionError = z.object({
 export const meta: MetaFunction<typeof loader> = () => {
   const metas: ReturnType<MetaFunction> = [];
 
-  metas.push({ title: "Webstudio Error" });
+  metas.push({ title: "Webstudio error" });
 
   return metas;
 };

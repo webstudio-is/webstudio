@@ -142,6 +142,85 @@ describe("project asset query preview", () => {
     expect(dependencies.previewAssetResourceQueries).not.toHaveBeenCalled();
   });
 
+  test("does not let an unrelated invalid saved query block a batch", async () => {
+    const validBody = createStructuredAssetQueryResourceBody({
+      where: { all: [] },
+      sort: [],
+      limit: "10",
+      offset: "0",
+      output: { mode: "base", includeMetadata: true },
+      content: { mode: "none" },
+    });
+    const build = {
+      props: [
+        {
+          id: "valid-prop",
+          instanceId: "collection",
+          name: "valid",
+          type: "resource",
+          value: "valid-resource",
+        },
+        {
+          id: "invalid-prop",
+          instanceId: "collection",
+          name: "invalid",
+          type: "resource",
+          value: "invalid-resource",
+        },
+      ],
+      dataSources: [],
+      resources: [
+        {
+          id: "valid-resource",
+          name: "Valid",
+          control: "system",
+          method: "post",
+          url: '"/$resources/assets"',
+          headers: [],
+          body: validBody,
+        },
+        {
+          id: "invalid-resource",
+          name: "Invalid",
+          control: "system",
+          method: "post",
+          url: '"/$resources/assets"',
+          headers: [],
+          body: "invalid",
+        },
+      ],
+    } as never;
+    const result = [
+      { status: "fulfilled", value: { data: { items: [] } } },
+    ] as never;
+    const previewAssetResourceQueries = vi.fn().mockResolvedValue(result);
+
+    await expect(
+      previewProjectAssetQueries(
+        {
+          projectId: "project-1",
+          requests: [{ query: { limit: 5 } }] as never,
+          context: {} as never,
+          assetClient: {} as never,
+        },
+        {
+          loadDevBuildContentEngineDataByProjectId: vi
+            .fn()
+            .mockResolvedValue(build),
+          previewAssetResourceQueries,
+        }
+      )
+    ).resolves.toBe(result);
+
+    expect(previewAssetResourceQueries).toHaveBeenCalledWith(
+      expect.objectContaining({
+        databasePlan: expect.objectContaining({
+          queries: [expect.objectContaining({ id: "valid-resource" })],
+        }),
+      })
+    );
+  });
+
   test("previews a query against the current Build database plan", async () => {
     const context = {} as never;
     const build = { props: [], dataSources: [], resources: [] } as never;
@@ -186,6 +265,90 @@ describe("project asset query preview", () => {
         ]),
       }),
     });
+  });
+
+  test("ignores an unrelated invalid saved Assets query in the current preview", async () => {
+    const validBody = createStructuredAssetQueryResourceBody({
+      where: { all: [] },
+      sort: [],
+      limit: "10",
+      offset: "0",
+      output: { mode: "base", includeMetadata: true },
+      content: { mode: "none" },
+    });
+    const build = {
+      props: [
+        {
+          id: "valid-prop",
+          instanceId: "collection",
+          name: "valid",
+          type: "resource",
+          value: "valid-resource",
+        },
+        {
+          id: "invalid-prop",
+          instanceId: "collection",
+          name: "invalid",
+          type: "resource",
+          value: "invalid-resource",
+        },
+      ],
+      dataSources: [],
+      resources: [
+        {
+          id: "valid-resource",
+          name: "Valid",
+          control: "system",
+          method: "post",
+          url: '"/$resources/assets"',
+          headers: [],
+          body: validBody,
+        },
+        {
+          id: "invalid-resource",
+          name: "Invalid",
+          control: "system",
+          method: "post",
+          url: '"/$resources/assets"',
+          headers: [],
+          body: "invalid",
+        },
+      ],
+    } as never;
+    const previewAssetResourceQuery = vi
+      .fn()
+      .mockResolvedValue({ data: { items: [] } });
+
+    await expect(
+      previewProjectAssetQuery(
+        {
+          projectId: "project-1",
+          request: { query: { limit: 5 } },
+          context: {} as never,
+          assetClient: {} as never,
+        },
+        {
+          loadDevBuildContentEngineDataByProjectId: vi
+            .fn()
+            .mockResolvedValue(build),
+          previewAssetResourceQuery,
+        }
+      )
+    ).resolves.toEqual({ data: { items: [] } });
+
+    expect(previewAssetResourceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        databasePlan: expect.objectContaining({
+          queries: [expect.objectContaining({ id: "valid-resource" })],
+        }),
+        diagnosticsPlan: expect.objectContaining({
+          queries: expect.arrayContaining([
+            expect.objectContaining({ id: "valid-resource" }),
+            expect.objectContaining({ id: "__query-preview__" }),
+          ]),
+        }),
+      })
+    );
   });
 
   test("stops a cancelled query before loading Build data", async () => {

@@ -10,7 +10,7 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { styled, theme } from "../stitches.config";
+import { rawTheme, styled, theme } from "../stitches.config";
 import {
   menuCss,
   menuItemCss,
@@ -22,16 +22,30 @@ import {
 import { SelectButton } from "./select-button";
 import { Box } from "./box";
 import { ScrollArea } from "./scroll-area";
+import { cssVar, declareCssVar } from "../css-var";
+
+const selectTriggerWidth = declareCssVar("--radix-select-trigger-width");
 
 export const SelectContent = styled(Primitive.Content, menuCss, {
-  minWidth: "var(--radix-select-trigger-width)",
+  width: cssVar(selectTriggerWidth),
+  '& [data-select-description$="separator"]': {
+    display: "none",
+  },
   "&[data-side=top]": {
-    "--ws-select-description-display-top": "block",
-    "--ws-select-description-order": 0,
+    '& [data-select-description="top-separator"]': {
+      display: "block",
+    },
+    '& [data-select-description="content"]': {
+      order: 0,
+    },
   },
   "&[data-side=bottom]": {
-    "--ws-select-description-display-bottom": "block",
-    "--ws-select-description-order": 2,
+    '& [data-select-description="bottom-separator"]': {
+      display: "block",
+    },
+    '& [data-select-description="content"]': {
+      order: 2,
+    },
   },
 });
 
@@ -52,7 +66,7 @@ const scrollButtonStyles = {
   alignItems: "center",
   justifyContent: "center",
   height: 25,
-  color: theme.colors.foregroundMain,
+  color: cssVar("--foreground-primary"),
   cursor: "default",
 };
 
@@ -99,20 +113,17 @@ export const SelectItemDescription = ({
   return (
     <>
       <SelectSeparator
-        style={{
-          display: `var(--ws-select-description-display-bottom, none)`,
-          order: "var(--ws-select-description-order)",
-        }}
+        data-select-description="bottom-separator"
+        css={{ order: 2 }}
       />
 
       <Description
+        data-select-description="content"
         css={{
           display: "grid",
+          "& > * > *": { maxWidth: "100%" },
         }}
         hint
-        style={{
-          order: "var(--ws-select-description-order)",
-        }}
       >
         {descriptions.map((descr, index) => (
           <Box
@@ -137,10 +148,8 @@ export const SelectItemDescription = ({
       </Description>
 
       <SelectSeparator
-        style={{
-          display: `var(--ws-select-description-display-top, none)`,
-          order: "var(--ws-select-description-order)",
-        }}
+        data-select-description="top-separator"
+        css={{ order: 0 }}
       />
     </>
   );
@@ -261,7 +270,10 @@ const SelectBase = <Option,>(
         </SelectButton>
       </Primitive.Trigger>
       <Primitive.Portal>
-        <SelectContent position="popper">
+        <SelectContent
+          position="popper"
+          sideOffset={Number.parseFloat(rawTheme.spacing[3])}
+        >
           <Box
             css={{
               display: "flex",

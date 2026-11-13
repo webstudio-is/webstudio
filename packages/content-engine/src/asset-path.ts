@@ -19,3 +19,22 @@ export const createCanonicalAssetPath = ({
   folderNames: readonly string[];
   name: string;
 }) => [...folderNames, name].map(encodeAssetPathSegment).join("/");
+
+/**
+ * Converts a visible asset path to its canonical form while accepting an
+ * already encoded canonical path. A valid percent escape is interpreted as
+ * encoded input; a literal percent escape must therefore use its canonical
+ * `%25` spelling. Processing each slash-delimited segment preserves encoded
+ * slashes as data instead of turning them into path separators.
+ */
+export const normalizeAssetPathQueryValue = (path: string) =>
+  path
+    .split("/")
+    .map((segment) => {
+      try {
+        return encodeAssetPathSegment(decodeURIComponent(segment));
+      } catch {
+        return encodeAssetPathSegment(segment);
+      }
+    })
+    .join("/");

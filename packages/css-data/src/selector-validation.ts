@@ -4,27 +4,47 @@ import { pseudoClasses } from "./__generated__/pseudo-classes";
 
 export type SelectorValidationResult =
   | { success: false; error: string }
-  | { success: true; type: "pseudo-class" | "pseudo-element" | "attribute" };
+  | {
+      success: true;
+      type: "pseudo-class" | "pseudo-element" | "attribute";
+      scopedState: string;
+      descendant: string;
+    }
+  | {
+      success: true;
+      type: "tag";
+      tag: string;
+      condition: string;
+      scopedState: string;
+      descendant: string;
+    };
 
 /**
  * Validates an open CSS state suffix scoped to the current element.
  *
  * Builder states are not a closed component-state enum. Valid pseudo-classes,
- * pseudo-elements, and attribute selectors may be compounded, but selector
- * lists, type/class/id selectors, and combinators are rejected because the CSS
- * engine appends this value directly to the generated instance selector.
+ * pseudo-elements, and attribute selectors may be compounded. State selectors
+ * can also target descendants or direct children. Selector lists, unanchored
+ * selectors, and sibling combinators are rejected.
  * @param selector - The selector to validate (e.g., ":hover", "::before", "[data-state=open]")
  * @returns SelectorValidationResult with success status and type or error message
  */
 export const validateSelector = (
-  selector: string
+  selector: string,
+  { allowDescendants = true }: { allowDescendants?: boolean } = {}
 ): SelectorValidationResult => {
   if (!selector || selector.trim() === "") {
     return { success: false, error: "Selector cannot be empty" };
   }
 
-  // Must start with a colon or bracket
-  if (!selector.startsWith(":") && !selector.startsWith("[")) {
+  // A leading space marks a descendant tag selector. The CSS engine appends
+  // state strings directly to the styled element's selector.
+  const isTagSelector = selector.startsWith(" ");
+  if (
+    !isTagSelector &&
+    !selector.startsWith(":") &&
+    !selector.startsWith("[")
+  ) {
     return {
       success: false,
       error:
@@ -33,7 +53,10 @@ export const validateSelector = (
   }
 
   try {
-    const ast = csstree.parse(selector, { context: "selectorList" });
+    const ast = csstree.parse(selector, {
+      context: "selectorList",
+      positions: true,
+    });
     if (ast.type !== "SelectorList" || ast.children.size !== 1) {
       return {
         success: false,
@@ -41,23 +64,69 @@ export const validateSelector = (
       };
     }
     const parsedSelector = ast.children.first;
+    const selectorNodes =
+      parsedSelector?.type === "Selector"
+        ? parsedSelector.children.toArray()
+        : [];
+    const firstCombinatorIndex = selectorNodes.findIndex(
+      (node) => node.type === "Combinator"
+    );
+    if (
+      allowDescendants === false &&
+      (isTagSelector || firstCombinatorIndex !== -1)
+    ) {
+      return {
+        success: false,
+        error: "Selector must be one state scoped to the current element",
+      };
+    }
+    const stateNodes = selectorNodes.slice(
+      0,
+      firstCombinatorIndex === -1 ? undefined : firstCombinatorIndex
+    );
+    const hasValidTagStart =
+      isTagSelector &&
+      firstCombinatorIndex === -1 &&
+      stateNodes[0]?.type === "TypeSelector" &&
+      stateNodes
+        .slice(1)
+        .every(
+          (node) =>
+            node.type === "PseudoClassSelector" ||
+            node.type === "PseudoElementSelector" ||
+            node.type === "AttributeSelector"
+        );
     if (
       parsedSelector?.type !== "Selector" ||
-      parsedSelector.children
-        .toArray()
-        .some(
+      stateNodes.length === 0 ||
+      (!hasValidTagStart &&
+        stateNodes.some(
           (node) =>
             node.type !== "PseudoClassSelector" &&
             node.type !== "PseudoElementSelector" &&
             node.type !== "AttributeSelector"
-        )
+        )) ||
+      (isTagSelector && !hasValidTagStart) ||
+      selectorNodes.some(
+        (node) =>
+          node.type === "Combinator" && node.name !== " " && node.name !== ">"
+      ) ||
+      (firstCombinatorIndex !== -1 &&
+        stateNodes.some((node) => node.type === "PseudoElementSelector"))
     ) {
       return {
         success: false,
         error:
-          "Selector must be a pseudo-class, pseudo-element, or attribute suffix scoped to the current element",
+          "Selector must be an element-scoped state, optionally followed by a descendant or child selector",
       };
     }
+
+    const scopedStateEnd =
+      stateNodes.at(-1)?.loc?.end.offset ?? selector.length;
+    const parts = {
+      scopedState: selector.slice(0, scopedStateEnd),
+      descendant: selector.slice(scopedStateEnd),
+    };
 
     const pseudoClassNames: string[] = [];
     const pseudoElementNames: string[] = [];
@@ -95,11 +164,31 @@ export const validateSelector = (
       return { success: false, error: "Invalid pseudo-class" };
     }
 
+    if (
+      isTagSelector &&
+      stateNodes[0]?.type === "TypeSelector" &&
+      pseudoElementNames.length === 0 &&
+      pseudoClassNames.length > 0 &&
+      pseudoClassNames.every((name) => isKnownSelector(name, pseudoElements))
+    ) {
+      // Keep the legacy single-colon pseudo-element classification.
+      return { success: true, type: "pseudo-element", ...parts };
+    }
+    if (isTagSelector && stateNodes[0]?.type === "TypeSelector") {
+      return {
+        success: true,
+        type: "tag",
+        tag: stateNodes[0].name,
+        condition: selector.slice(stateNodes[0].loc?.end.offset),
+        ...parts,
+      };
+    }
+
     if (pseudoElementNames.length > 0) {
       // Validate that the pseudo-element actually exists
       // Some pseudo-elements are functional (e.g., ::part(), ::slotted())
       // The list includes both "part" and "part()" variants
-      return { success: true, type: "pseudo-element" };
+      return { success: true, type: "pseudo-element", ...parts };
     }
 
     if (pseudoClassNames.length > 0) {
@@ -108,13 +197,13 @@ export const validateSelector = (
       if (
         pseudoClassNames.every((name) => isKnownSelector(name, pseudoElements))
       ) {
-        return { success: true, type: "pseudo-element" };
+        return { success: true, type: "pseudo-element", ...parts };
       }
-      return { success: true, type: "pseudo-class" };
+      return { success: true, type: "pseudo-class", ...parts };
     }
 
     if (foundAttribute) {
-      return { success: true, type: "attribute" };
+      return { success: true, type: "attribute", ...parts };
     }
 
     // If we get here, something unexpected happened

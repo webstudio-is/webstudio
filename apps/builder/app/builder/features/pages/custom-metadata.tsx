@@ -8,6 +8,7 @@ import {
   Label,
   SmallIconButton,
   Text,
+  cssVar,
   theme,
 } from "@webstudio-is/design-system";
 import { TrashIcon, PlusIcon } from "@webstudio-is/icons";
@@ -15,6 +16,7 @@ import { isLiteralExpression } from "@webstudio-is/expression";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { $pageRootScope } from "./page-utils";
+import { useAsyncValue } from "~/shared/use-async-value";
 
 type Meta = {
   property: string;
@@ -40,7 +42,11 @@ const MetadataItem = (props: {
   const contentId = useId();
   const { variableValues, scope, aliases } = useStore($pageRootScope);
 
-  const content = computeExpression(props.content, variableValues);
+  const content = useAsyncValue(
+    () => computeExpression(props.content, variableValues),
+    [props.content, variableValues],
+    undefined
+  );
 
   return (
     <Grid
@@ -105,7 +111,7 @@ const MetadataItem = (props: {
           gridArea: "button",
           justifyItems: "center",
           gap: "2px",
-          color: theme.colors.foregroundIconSecondary,
+          color: cssVar("--foreground-secondary"),
         }}
       >
         <svg
@@ -182,7 +188,6 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
 
         <Button
           type="button"
-          color="neutral"
           css={{
             justifySelf: "center",
           }}
@@ -202,3 +207,5 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
     </Grid>
   );
 };
+
+undefined;

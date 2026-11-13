@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import {
+  PanelContent,
   theme,
   Flex,
   Text,
@@ -8,9 +9,11 @@ import {
   Label,
   InputField,
   Grid,
-  CssValueListItem,
-  CssValueListArrowFocus,
+  InteractiveListItem,
+  InteractiveListArrowFocus,
   SmallIconButton,
+  SectionTitle,
+  SectionTitleLabel,
 } from "@webstudio-is/design-system";
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
 import { toValue } from "@webstudio-is/css-engine";
@@ -322,7 +325,7 @@ const AreaEditor = ({
   );
 
   return (
-    <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Flex} direction="column" gap="2">
       <Grid
         css={{
           gridTemplateColumns: "60px 1fr 1fr",
@@ -428,7 +431,7 @@ const AreaEditor = ({
           Area overlaps with another area
         </Text>
       )}
-    </Flex>
+    </PanelContent>
   );
 };
 
@@ -606,36 +609,23 @@ export const GridAreas = () => {
       onOpenChange={setIsOpen}
       fullWidth
       trigger={
-        <Flex
-          align="center"
-          justify="between"
-          css={{ padding: theme.spacing[5] }}
+        <SectionTitle
+          suffix={
+            <IconButton disabled={readonly} onClick={addArea}>
+              <PlusIcon />
+            </IconButton>
+          }
         >
-          <Text variant="labels" color="subtle">
-            Areas ({areas.length})
-          </Text>
-          <IconButton
-            disabled={readonly}
-            onClick={(e) => {
-              e.stopPropagation();
-              addArea();
-            }}
-          >
-            <PlusIcon />
-          </IconButton>
-        </Flex>
+          <SectionTitleLabel>Areas ({areas.length})</SectionTitleLabel>
+        </SectionTitle>
       }
     >
-      <CssValueListArrowFocus>
+      <InteractiveListArrowFocus>
         <Flex direction="column">
           {areas.length === 0 && (
-            <Text
-              color="subtle"
-              align="center"
-              css={{ padding: theme.panel.padding }}
-            >
+            <PanelContent as={Text} color="subtle" align="center">
               No Areas
-            </Text>
+            </PanelContent>
           )}
           {areas.map((area, index) => (
             <FloatingPanel
@@ -663,7 +653,7 @@ export const GridAreas = () => {
                 }
               }}
             >
-              <CssValueListItem
+              <InteractiveListItem
                 id={String(index)}
                 index={index}
                 onMouseEnter={() => setHoveredAreaIndex(index)}
@@ -690,7 +680,7 @@ export const GridAreas = () => {
             </FloatingPanel>
           ))}
         </Flex>
-      </CssValueListArrowFocus>
+      </InteractiveListArrowFocus>
     </CollapsibleSectionRoot>
   );
 };

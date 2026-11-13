@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  cssVar,
   keyframes,
   styled,
   Popover,
@@ -9,7 +10,10 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
 import {
   CssValueInput,
   type IntermediateStyleValue,
@@ -53,6 +57,7 @@ const Input = ({
       intermediateValue={intermediateValue}
       getOptions={() => $availableUnitVariables.get()}
       fieldSizing="content"
+      autoFocus
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
         const activeProperties = getActiveProperties();
@@ -114,7 +119,6 @@ const Input = ({
           batch.deleteProperty(property);
         }
         batch.publish();
-        onClosePopover();
       }}
     />
   );
@@ -128,9 +132,8 @@ const PopoverContentStyled = styled(PopoverContent, {
   gap: theme.spacing[5],
   minWidth: 0,
   minHeight: 0,
-  border: `1px solid ${theme.colors.borderMain}`,
+  border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[7],
-  background: theme.colors.backgroundPanel,
   padding: theme.spacing[5],
   boxShadow: theme.shadows.menuDropShadow,
   animationDuration: "200ms",
@@ -173,7 +176,7 @@ export const InputPopover = ({
       >
         <PropertyLabel
           label={humanizeString(property)}
-          description={propertyDescriptions[property]}
+          description={propertyDescriptions[camelCaseProperty(property)]}
           properties={[property]}
         />
         <Flex css={{ maxWidth: theme.spacing[30] }}>

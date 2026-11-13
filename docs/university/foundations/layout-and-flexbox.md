@@ -25,7 +25,13 @@ The **Display** property in the Layout section controls how an element and its c
 | **Inline Block** | Inline flow but respects width/height                           |
 | **None**         | Hides the element completely                                    |
 
-<figure><img src="../../.gitbook/assets/layout-section.png" alt="Layout section in the Style Panel showing display mode and flex controls"><figcaption><p>The Layout section in the Style Panel</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/layout-section-dark.png">
+    <img src="../../.gitbook/assets/layout-section-light.png" alt="Style panel Layout section with Display set to flex and flex alignment controls" width="240">
+  </picture>
+  <figcaption><p>The Layout section in the Style Panel</p></figcaption>
+</figure>
 
 ---
 

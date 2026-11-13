@@ -1,12 +1,8 @@
-import { $, type TemplateMeta } from "@webstudio-is/template";
+/** @jsxImportSource @webstudio-is/template */
+import type { TemplateMeta } from "@webstudio-is/template";
+import { CodeText } from "./base";
 
-export const CodeText: TemplateMeta = {
+export const meta: TemplateMeta = {
   category: "typography",
-  template: (
-    <$.CodeText
-      code={'const status = "ready";'}
-      language="javascript"
-      theme="github-light"
-    />
-  ),
+  template: <CodeText>{'const status = "ready";'}</CodeText>,
 };

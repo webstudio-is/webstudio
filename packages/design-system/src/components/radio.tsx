@@ -7,6 +7,7 @@ import { forwardRef, type ComponentProps, type Ref } from "react";
 import { RadioUncheckedIcon, RadioCheckedIcon } from "@webstudio-is/icons";
 import * as Primitive from "@radix-ui/react-radio-group";
 import { type CSS, css, theme } from "../stitches.config";
+import { cssVar } from "../css-var";
 
 export { CheckboxAndLabel as RadioAndLabel } from "./checkbox";
 
@@ -17,19 +18,19 @@ const itemStyle = css({
   display: "block",
   position: "relative",
   borderRadius: theme.borderRadius.round,
-  color: theme.colors.foregroundMain,
+  color: cssVar("--foreground-primary"),
 
   "&:focus-visible": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
+    outline: `2px solid ${cssVar("--border-focus")}`,
   },
 
   "&[data-state=checked]": {
-    color: theme.colors.foregroundPrimary,
+    color: cssVar("--foreground-accent"),
   },
 
   // [data-state] is needed to make selector specificity higher
   "&[data-state]:disabled": {
-    color: theme.colors.foregroundDisabled,
+    color: cssVar("--foreground-disabled"),
   },
 
   "&:not(:disabled)::before": {
@@ -41,7 +42,7 @@ const itemStyle = css({
     top: theme.spacing[2],
     left: theme.spacing[2],
     borderRadius: theme.borderRadius.round,
-    background: theme.colors.backgroundControls,
+    background: cssVar("--background-secondary"),
   },
 });
 

@@ -1,18 +1,18 @@
 ---
-description: Query Markdown and JSON Assets with the Content Engine.
+description: Query Markdown, MDX, and JSON Assets with the Content Engine.
 ---
 
 <!-- Generated from the Content Engine schemas and shared CLI documentation. Do not edit directly. -->
 
 # Content Engine reference
 
-Assets resources query Markdown and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.
+Assets resources query Markdown, MDX, and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.
 
 ## MCP workflow
 
 Use these tools in order when creating or changing an Assets resource:
 
-1. Call `get-asset-field-catalog` to inspect standard fields and the fields currently observed in Markdown frontmatter and JSON files.
+1. Call `get-asset-field-catalog` to inspect standard fields and the fields currently observed in Markdown or MDX frontmatter and JSON files.
 2. Call `validate-asset-query` to check the query structure, field paths, operators, and bounded operation counts.
 3. Call `preview-asset-query` with concrete values and inspect its results and diagnostics.
 4. Save the query with `create-assets-resource` or `update-assets-resource`.
@@ -22,7 +22,7 @@ Omit `query` when creating a resource to use the default many-result query for a
 
 ## Fields
 
-Every asset has the standard fields below. Markdown frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.
+Every asset has the standard fields below. Markdown or MDX frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.
 
 | Field | Observed type |
 | --- | --- |
@@ -62,6 +62,7 @@ Put conditions under `where.all` when every condition must match, or under `wher
 | `isEmpty` | is empty | `string`, `object`, `array` |
 
 The field catalog determines which operators fit a schemaless `properties` field. `exists` and `isEmpty` take a boolean. `in` takes an array. Other operators take one JSON value.
+When filtering `path`, enter the visible folder and file names, such as `Tutorial posts/article.mdx`; Webstudio handles canonical URL encoding. Existing encoded path filters remain supported.
 
 ## Saved values and preview values
 
@@ -107,6 +108,35 @@ Every returned item includes `id`. In `preview-asset-query`, a many result has `
 
 Choose `fields` and disable `includeMetadata` when the page needs only selected values. Fields used only for static filtering or sorting do not need to be returned. When enabled, `includeMetadata` adds `name`, `description`, `path`, `key`, `folderId`, `extension`, `mimeType`, `size`, `createdAt`, `revision`. Every result includes `id`.
 
+## Asset reference metadata
+
+A plain local asset path in Markdown or MDX frontmatter, or in JSON properties, keeps the backward-compatible URL string result. Wrap the path in an exact `$ref` object only when consumers need structured Asset Manager metadata:
+
+```yaml
+featureImage:
+  $ref: ./assets/hero.png
+```
+
+The reference declares only the relationship. The query decides which metadata enters its result and published database. A complete `properties.featureImage` selection returns the Asset Manager asset metadata together with its resolved `src`. This includes fields such as `id`, `name`, `description`, `mimeType`, `width`, and `height`; new asset metadata becomes available to references without changing the document. Select only the nested fields the page uses:
+
+```json
+{
+  "output": {
+    "mode": "fields",
+    "includeMetadata": false,
+    "fields": [
+      ["properties", "title"],
+      ["properties", "featureImage", "src"],
+      ["properties", "featureImage", "description"]
+    ]
+  }
+}
+```
+
+The selected value becomes an object. Bind an Image source to `post.properties.featureImage.src` and its alternative text to `post.properties.featureImage.description ?? post.properties.title`. A missing description therefore falls back to the article title without duplicating text in frontmatter.
+
+External URLs remain ordinary strings. Existing local path strings also keep their URL string shape, so adopting structured references does not change existing queries or bindings.
+
 ## Content modes
 
 | Value | Behavior |
@@ -114,9 +144,9 @@ Choose `fields` and disable `includeMetadata` when the page needs only selected 
 | `none` | Returns no file content. Use this for listings and any query that only needs fields or metadata. |
 | `full` | Embeds the complete UTF-8 file content in the content database. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected file is larger. |
 | `range` | Embeds a byte range selected by `offset` and `length` in the content database. `length` cannot exceed 256 KiB. |
-| `markdown-body-ref` | Stores a reference to a Markdown body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
+| `markdown-body-ref` | Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. `maxBytes` defaults to 1 MiB and cannot be set higher. The query fails if a selected source file is larger. |
 
-Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for article pages. It keeps article bodies out of the published content database and resolves relative Markdown links when the selected body is loaded.
+Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for Markdown or MDX article pages. It keeps article bodies out of the published content database and resolves relative links when the selected body is loaded.
 
 ## Preview diagnostics
 
@@ -136,10 +166,15 @@ Only `database.usedBytes` counts toward `database.maxBytes`. Do not add the quer
 | `omittedDocumentCount` | Documents omitted from the compiled database. |
 | `omissionReason` | Why documents were omitted: `size` or `unavailable`. |
 | `truncated` | Whether the compiled database omitted content. |
+| `queryIssues` | Structured nonfatal query warnings with a stable code and exact query path. |
+| `queryWarnings` | Deprecated plain-text query warnings retained for compatibility. |
+| `issues` | All content errors and warnings found in files matched by the current query. Each diagnostic identifies its phase, code, message, asset, path, and source location when available. |
+| `issueCount` | Total errors and warnings in `issues`. |
+| `issuesTruncated` | Always `false`; retained for response compatibility. |
 | `artifacts` | Optional query and merged compiled artifacts used by detailed Builder diagnostics. |
 | `unresolved` | Optional query result before document references are resolved. It helps inspect the authored `$ref` values behind resolved output. |
 
-If the merged database approaches its limit, remove duplicate reachable resources first. Then remove unused output fields or narrow the candidate documents. Prefer `markdown-body-ref` over embedded `full` content for Markdown articles.
+If the merged database approaches its limit, remove duplicate reachable resources first. Then remove unused output fields or narrow the candidate documents. Prefer `markdown-body-ref` over embedded `full` content for Markdown or MDX articles.
 
 ## Document references
 
@@ -149,7 +184,7 @@ A document reference is an exact object with one string field:
 { "$ref": "<relative-path>[#<fragment>]" }
 ```
 
-Markdown references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Either format can reference Markdown or JSON. References do not run inside a Markdown body.
+Markdown and MDX references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Any format can reference Markdown, MDX, or JSON. References do not run inside a Markdown or MDX body.
 
 | Reference | Inserted value |
 | --- | --- |
@@ -174,6 +209,7 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 | Default result count | 20 |
 | Maximum result count | 1000 |
 | Candidate documents | 1000 |
+| Documents in a reference graph | 2000 |
 | Serialized query result | 16 MiB |
 | Published content database | 500 KiB |
 
@@ -181,7 +217,7 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 
 | Limit | Value |
 | --- | --- |
-| Markdown frontmatter | 64 KiB |
+| Markdown/MDX frontmatter | 64 KiB |
 | Frontmatter nesting depth | 8 |
 | Frontmatter fields | 256 |
 | Frontmatter string | 16 KiB |
@@ -191,6 +227,9 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 | JSON string | 16 KiB |
 | Indexed properties per document | 64 KiB |
 | Generated excerpt | 2 KiB |
+| MDX nesting depth | 100 |
+| MDX nodes | 20000 |
+| MDX properties | 4000 |
 | Loaded file | 1 MiB |
 | Loaded content per query | 2 MiB |
 | Loaded files per query | 20 |
@@ -202,5 +241,5 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 - [Content Engine](content-engine.md) – Build a file-based blog in the visual editor
 - [Assets](assets.md) – Create and organize project files
 - [Webstudio MCP](../mcp.md) – Let an AI agent build and inspect a project
-- [Data variables](variables.md) – Define resources and understand their scope
+- [Variables](variables.md) – Define resources and understand their scope
 - [Collection](../core-components/collection.md) – Render a query result as repeated content

@@ -211,3 +211,49 @@ test("reads validation issues from serialized API error data", () => {
     }),
   ]);
 });
+
+test("preserves complete source diagnostic fields from serialized API errors", () => {
+  expect(
+    getValidationIssues({
+      data: {
+        issues: [
+          {
+            code: "invalid-mdx",
+            path: ["posts/broken.mdx"],
+            message: "Unexpected end of file",
+            constraint: "invalid-mdx",
+            severity: "error",
+            scope: "query",
+            phase: "source",
+            assetId: "asset-1",
+            file: "posts/broken.mdx",
+            line: 4,
+            column: 9,
+            nodeType: "mdxJsxFlowElement",
+            reason: "Closing tag is missing",
+            sourceRange: {
+              start: { line: 4, column: 1, offset: 30 },
+              end: { line: 4, column: 9, offset: 38 },
+            },
+          },
+        ],
+      },
+    })
+  ).toEqual([
+    expect.objectContaining({
+      severity: "error",
+      scope: "query",
+      phase: "source",
+      assetId: "asset-1",
+      file: "posts/broken.mdx",
+      line: 4,
+      column: 9,
+      nodeType: "mdxJsxFlowElement",
+      reason: "Closing tag is missing",
+      sourceRange: {
+        start: { line: 4, column: 1, offset: 30 },
+        end: { line: 4, column: 9, offset: 38 },
+      },
+    }),
+  ]);
+});

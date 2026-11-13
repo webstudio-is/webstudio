@@ -4,10 +4,11 @@ import {
   useState,
   type ComponentProps,
   type JSX,
+  type ReactNode,
   type PointerEvent,
 } from "react";
-import type { AssetType } from "@webstudio-is/asset-uploader";
 import {
+  PanelContent,
   ContextMenu,
   ContextMenuTrigger,
   Flex,
@@ -15,6 +16,7 @@ import {
   SearchField,
   theme,
   toast,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import {
@@ -35,7 +37,7 @@ import {
   readDroppedAssetItems,
 } from "./directory-drop";
 import { $assetFolders } from "~/shared/sync/data-stores";
-import { createAssetFolderHierarchy } from "@webstudio-is/sdk";
+import { createAssetFolderHierarchy, type AssetType } from "@webstudio-is/sdk";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import {
@@ -57,6 +59,7 @@ type AssetsShellProps = {
   isEmpty: boolean;
   emptyMessage?: string;
   emptyContent?: JSX.Element;
+  contentNotice?: ReactNode;
   folderId?: string;
   contextMenu?: JSX.Element;
   onContextMenu?: ComponentProps<typeof Flex>["onContextMenu"];
@@ -68,6 +71,7 @@ type AssetsShellProps = {
   onElementChange?: (element: HTMLDivElement | null) => void;
   autoScrollOnElementDrag?: boolean;
   allowFolderDrop?: boolean;
+  allowExternalDrop?: boolean;
 };
 
 const containsFilesOrUri = (parameter: ContainsSource) => {
@@ -112,6 +116,7 @@ export const AssetsShell = ({
   isEmpty,
   emptyMessage,
   emptyContent,
+  contentNotice,
   children,
   interactionOverlay,
   footer,
@@ -123,21 +128,27 @@ export const AssetsShell = ({
   onElementChange,
   autoScrollOnElementDrag = false,
   allowFolderDrop = false,
+  allowExternalDrop = true,
   type,
   accept,
 }: AssetsShellProps) => {
   const ref = useRef<HTMLDivElement | null>(null);
+  const externalFilesRef = useRef<File[]>([]);
   const listViewportRef = useRef<HTMLDivElement | null>(null);
   const [monitorState, setMonitorState] =
     useState<ExternalMonitorDragState>(IDLE);
 
   const [dropTargetState, setDropTargetState] = useState<DropTargetState>(IDLE);
-  const dropMessage = allowFolderDrop
-    ? "Drop files or folders here"
-    : "Drop files here";
-  const dropDescription = allowFolderDrop
-    ? "Drop files or folders from your computer into this panel."
-    : "Drop files from anywhere into this panel.";
+  const dropMessage = allowExternalDrop
+    ? allowFolderDrop
+      ? "Drop files or folders here"
+      : "Drop files here"
+    : "Uploads are unavailable here";
+  const dropDescription = allowExternalDrop
+    ? allowFolderDrop
+      ? "Drop files or folders from your computer into this panel."
+      : "Drop files from anywhere into this panel."
+    : undefined;
   const resolvedEmptyMessage = emptyMessage ?? dropMessage;
 
   useEffect(() => {
@@ -154,7 +165,8 @@ export const AssetsShell = ({
   useExternalDragStateEffect((state) => {
     const element = ref.current;
 
-    if (element == null) {
+    if (element == null || allowExternalDrop === false) {
+      setMonitorState(IDLE);
       return;
     }
 
@@ -197,7 +209,10 @@ export const AssetsShell = ({
     return combine(
       dropTargetForExternal({
         element: element,
-        canDrop: isBlockedByBackdropCallback(() => false, containsByType),
+        canDrop: isBlockedByBackdropCallback(
+          () => false,
+          allowExternalDrop ? containsByType : () => false
+        ),
         onDragEnter: () => setDropTargetState(OVER),
         onDragLeave: () => setDropTargetState(IDLE),
         onDrop: async ({ source }) => {
@@ -205,7 +220,11 @@ export const AssetsShell = ({
           setMonitorState(IDLE);
           setDropTargetState(IDLE);
 
-          const droppedItemsPromise = readDroppedAssetItems(source.items);
+          // The external adapter may expose the native DataTransferItemList.
+          // Snapshot it before awaiting so all dropped files are retained.
+          const droppedItemsPromise = readDroppedAssetItems(
+            Array.from(source.items)
+          );
           const droppedUrlsPromise = Promise.all(
             source.items
               .filter((item) => item.type === "text/uri-list")
@@ -221,6 +240,10 @@ export const AssetsShell = ({
               droppedItemsPromise,
               droppedUrlsPromise,
             ]);
+            const droppedFiles = [
+              ...externalFilesRef.current,
+              ...droppedItems.files,
+            ].filter((file, index, files) => files.indexOf(file) === index);
             let didCreateFolder = false;
             const fileGroups = allowFolderDrop
               ? await createDroppedAssetFolderStructure({
@@ -273,7 +296,7 @@ export const AssetsShell = ({
             }
 
             uploadDroppedFiles({
-              files: droppedItems.files,
+              files: droppedFiles,
               type,
               accept,
               folderId,
@@ -285,7 +308,14 @@ export const AssetsShell = ({
         },
       })
     );
-  }, [accept, allowFolderDrop, containsByType, folderId, type]);
+  }, [
+    accept,
+    allowExternalDrop,
+    allowFolderDrop,
+    containsByType,
+    folderId,
+    type,
+  ]);
 
   const dragState = Math.max(monitorState, dropTargetState);
 
@@ -297,22 +327,19 @@ export const AssetsShell = ({
       }}
       onPointerDown={(event) => onPointerDown?.(event, listViewportRef.current)}
       onContextMenu={onContextMenu}
+      onDropCapture={(event) => {
+        externalFilesRef.current = Array.from(event.dataTransfer?.files ?? []);
+      }}
       onKeyDown={onKeyDown}
       direction="column"
       css={{
         overflow: "hidden",
         paddingBlock: theme.panel.paddingBlock,
         flex: 1,
-        minHeight: 0,
         position: "relative",
       }}
     >
-      <Flex
-        css={{ padding: theme.panel.padding }}
-        gap="2"
-        wrap="wrap"
-        shrink={false}
-      >
+      <PanelContent as={Flex} gap="2" wrap="wrap" shrink={false}>
         <SearchField
           css={{ flexGrow: 1 }}
           {...searchProps}
@@ -320,13 +347,11 @@ export const AssetsShell = ({
           placeholder="Search"
         />
         {filters}
-      </Flex>
+      </PanelContent>
       <Separator />
+      {contentNotice}
       {isEmpty ? (
-        <Flex
-          direction="column"
-          css={{ flex: 1, minHeight: 0, position: "relative" }}
-        >
+        <Flex direction="column" css={{ flex: 1, position: "relative" }}>
           {emptyContent}
           <AssetPanelState
             overlay={emptyContent !== undefined}
@@ -359,11 +384,11 @@ export const AssetsShell = ({
           position: "absolute",
           inset: 0,
           display: dragState !== IDLE && isEmpty === false ? "flex" : "none",
-          backgroundColor: theme.colors.backgroundPanel,
+          backgroundColor: cssVar("--background-primary"),
           color:
             dragState === OVER
-              ? theme.colors.foregroundMain
-              : theme.colors.foregroundSubtle,
+              ? cssVar("--foreground-primary")
+              : cssVar("--foreground-secondary"),
         }}
       >
         <AssetPanelState

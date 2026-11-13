@@ -5,5 +5,13 @@ import { props } from "./__generated__/button.props";
 export const meta: WsComponentMeta = {
   presetStyle: { button },
   initialProps: ["id", "class", "type", "aria-label"],
-  props,
+  props: {
+    ...props,
+    "aria-label": {
+      type: "string",
+      control: "text",
+      required: false,
+      contentMode: true,
+    },
+  },
 };

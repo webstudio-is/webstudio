@@ -8,12 +8,15 @@ import type {
   DataSource,
   WsComponentMeta,
   IndexesWithinAncestors,
+  Resources,
 } from "@webstudio-is/sdk";
 import {
   parseComponentName,
   generateExpression,
   decodeDataSourceVariable,
+  contentBlockDocumentProp,
   blockComponent,
+  blockBodyComponent,
   blockTemplateComponent,
   collectionComponent,
   descendantComponent,
@@ -22,9 +25,46 @@ import {
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
 import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
+import { getJsxPropName } from "@webstudio-is/content-engine/jsx-attributes";
 import { isAttributeNameSafe, showAttribute } from "./props";
-import { standardAttributesToReactProps } from "./__generated__/standard-attributes";
 import { generateCollectionIterationCode } from "./collection-utils";
+
+export type PublishedContentBlock = Readonly<{
+  bodyInstanceId?: Instance["id"];
+  sourceExpression?: string;
+  candidates: readonly Readonly<{
+    assetId: string;
+    dependencyRevision: string;
+    children: Instance["children"];
+    frontmatter: Readonly<Record<string, unknown>>;
+    resourceIds?: readonly string[];
+  }>[];
+}>;
+
+export type ComponentGenerationPolicy = {
+  skipText?: (
+    child: Extract<Instance["children"][number], { type: "text" }>
+  ) => boolean;
+  resolveInstance?: (
+    instance: Instance,
+    instances: Instances,
+    dataSources: DataSources,
+    props: Props
+  ) => Instance;
+  renderResolvedExpression?: (
+    expression: string,
+    helpers?: Set<string>
+  ) => string;
+  declareDataSource?: (
+    dataSource: DataSource,
+    valueName: string,
+    instances: Instances
+  ) => string | undefined;
+  transformProps?: (
+    instance: Instance,
+    props: Map<string, Prop>
+  ) => string | undefined;
+};
 
 /**
  * (arg1) => {
@@ -149,11 +189,13 @@ export const generateJsxElement = ({
   tagsOverrides,
   instance,
   props,
+  resources,
   dataSources,
   usedDataSources,
   indexesWithinAncestors,
   children,
   classesMap,
+  policy,
 }: {
   context?: "expression" | "jsx";
   scope: Scope;
@@ -164,11 +206,13 @@ export const generateJsxElement = ({
   tagsOverrides?: Record<string, string>;
   instance: Instance;
   props: Props;
+  resources?: Resources;
   dataSources: DataSources;
   usedDataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   children: string;
   classesMap?: Map<string, Array<string>>;
+  policy?: ComponentGenerationPolicy;
 }) => {
   // descendant component is used only for styling
   // and should not be rendered
@@ -193,28 +237,78 @@ export const generateJsxElement = ({
   let collectionDataValue: undefined | string;
   let collectionItemValue: undefined | string;
   let collectionItemKeyValue: undefined | string;
-  let classNameValue: undefined | string;
-
+  const classNameValues: string[] = [];
+  const projectedResourceProps = new Map<string, unknown>();
+  const componentPropNames = new Set(Object.keys(meta?.props ?? {}));
+  const acceptsHtmlAttributes =
+    hasTags ||
+    instance.tag !== undefined ||
+    instance.component === elementComponent;
+  const getGeneratedPropName = (instancePropName: string) =>
+    getJsxPropName({
+      instancePropName,
+      componentPropNames,
+      acceptsHtmlAttributes,
+    });
+  // Older projects can contain duplicate props or both standard and React
+  // aliases. Keep the last prop for each generated JSX name. Class aliases are
+  // composable, so keep the last value for each alias and merge them below.
+  const propsByGeneratedName = new Map<string, Prop>();
+  const classProps = new Map<string, Prop>();
   for (const prop of props.values()) {
-    if (prop.instanceId !== instance.id) {
+    if (
+      prop.instanceId !== instance.id ||
+      isAttributeNameSafe(prop.name) === false
+    ) {
       continue;
     }
+    const name = getGeneratedPropName(prop.name);
+    if (name === "className") {
+      classProps.set(prop.name, prop);
+      continue;
+    }
+    propsByGeneratedName.set(name, prop);
+  }
+  generatedProps +=
+    policy?.transformProps?.(instance, propsByGeneratedName) ?? "";
+  const generatedPropNames = new Set([
+    ...propsByGeneratedName.keys(),
+    ...(classProps.size > 0 ? ["className"] : []),
+  ]);
 
-    const propValue = generatePropValue({
+  for (const [name, prop] of [
+    ...propsByGeneratedName,
+    ...Array.from(classProps.values(), (prop) => ["className", prop] as const),
+  ]) {
+    let propValue = generatePropValue({
       scope,
       prop,
       dataSources,
       usedDataSources,
     });
-
-    if (isAttributeNameSafe(prop.name) === false) {
-      continue;
+    if (
+      instance.component !== collectionComponent &&
+      meta?.props?.[prop.name]?.type === "string" &&
+      meta?.props?.[prop.name]?.control !== "json-code" &&
+      (prop.type === "expression" || prop.type === "parameter")
+    ) {
+      propValue = `${propValue} == null ? ${propValue} : String(${propValue})`;
     }
-    let name = prop.name;
-    // convert html attribute only when component has tags
-    // and does not specify own property with this name
-    if (hasTags && !meta?.props?.[prop.name]) {
-      name = standardAttributesToReactProps[prop.name] ?? prop.name;
+
+    if (prop.type === "resource") {
+      const propMeta = meta?.props?.[prop.name];
+      const resource = resources?.get(prop.value);
+      if (propMeta?.type === "resource" && resource !== undefined) {
+        for (const propName of propMeta.generatedProps ?? []) {
+          const generatedPropName = getGeneratedPropName(propName);
+          if (
+            generatedPropNames.has(generatedPropName) === false &&
+            isAttributeNameSafe(propName)
+          ) {
+            projectedResourceProps.set(generatedPropName, resource[propName]);
+          }
+        }
+      }
     }
 
     // show prop controls conditional rendering and need to be handled separately
@@ -243,14 +337,10 @@ export const generateJsxElement = ({
       }
       continue;
     }
-    // We need to merge atomic classes with user-defined className props.
-    // Webstudio JSX stores className as "class"; keep explicit component APIs
-    // without tag metadata intact so their "class" prop is not rewritten.
-    if (
-      (name === "className" || (name === "class" && meta === undefined)) &&
-      propValue !== undefined
-    ) {
-      classNameValue = propValue;
+    // Merge atomic classes with the JSX className produced by the shared
+    // instance-to-JSX property adapter.
+    if (name === "className" && propValue !== undefined) {
+      classNameValues.push(propValue);
       continue;
     }
     if (propValue !== undefined) {
@@ -258,10 +348,14 @@ export const generateJsxElement = ({
     }
   }
 
+  for (const [name, value] of projectedResourceProps) {
+    generatedProps += `\n${name}={${JSON.stringify(value)}}`;
+  }
+
   const classMapArray = classesMap?.get(instance.id);
-  if (classMapArray || classNameValue) {
+  if (classMapArray || classNameValues.length > 0) {
     let classNameTemplate = classMapArray ? classMapArray.join(" ") : "";
-    if (classNameValue) {
+    for (const classNameValue of classNameValues) {
       if (classNameTemplate) {
         classNameTemplate += " ";
       }
@@ -302,7 +396,10 @@ export const generateJsxElement = ({
     generatedElement += `)\n`;
     generatedElement += `})\n`;
     generatedElement += `}\n`;
-  } else if (instance.component === blockComponent) {
+  } else if (
+    instance.component === blockComponent ||
+    instance.component === blockBodyComponent
+  ) {
     generatedElement += children;
   } else {
     let componentVariable;
@@ -338,13 +435,17 @@ export const generateJsxElement = ({
       after = "}";
     }
     conditionalElement += `${before}(${conditionValue}) &&\n`;
-    // wrap collection with fragment when rendered inside condition
+    // Transparent components can generate multiple JSX children.
     // {dataSourceVariable &&
     //  <>
     //    {[].map(...)}
     //  </>
     // }
-    if (instance.component === collectionComponent) {
+    if (
+      instance.component === collectionComponent ||
+      instance.component === blockComponent ||
+      instance.component === blockBodyComponent
+    ) {
       conditionalElement += "<>\n";
       conditionalElement += generatedElement;
       conditionalElement += "</>\n";
@@ -365,11 +466,15 @@ export const generateJsxChildren = ({
   children,
   instances,
   props,
+  resources,
   dataSources,
   usedDataSources,
   indexesWithinAncestors,
   classesMap,
-  excludePlaceholders,
+  policy,
+  publishedContentBlocks,
+  contentBodyOverride,
+  usedRuntimeHelpers,
 }: {
   scope: Scope;
   metas: Map<Instance["component"], WsComponentMeta>;
@@ -378,16 +483,23 @@ export const generateJsxChildren = ({
   children: Instance["children"];
   instances: Instances;
   props: Props;
+  resources?: Resources;
   dataSources: DataSources;
   usedDataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   classesMap?: Map<string, Array<string>>;
-  excludePlaceholders?: boolean;
+  policy?: ComponentGenerationPolicy;
+  publishedContentBlocks?: ReadonlyMap<Instance["id"], PublishedContentBlock>;
+  usedRuntimeHelpers?: Set<string>;
+  contentBodyOverride?: Readonly<{
+    instanceId: Instance["id"];
+    children: Instance["children"];
+  }>;
 }) => {
   let generatedChildren = "";
   for (const child of children) {
     if (child.type === "text") {
-      if (excludePlaceholders && child.placeholder === true) {
+      if (policy?.skipText?.(child)) {
         continue;
       }
       // instance text can contain newlines
@@ -405,27 +517,62 @@ export const generateJsxChildren = ({
         usedDataSources,
         scope,
       });
+      usedRuntimeHelpers?.add("renderText");
       generatedChildren += `{renderText(${expression})}\n`;
       continue;
     }
     if (child.type === "id") {
       const instanceId = child.value;
-      const instance = instances.get(instanceId);
-      if (instance === undefined) {
+      const authoredInstance = instances.get(instanceId);
+      if (authoredInstance === undefined) {
         continue;
       }
-      generatedChildren += generateJsxElement({
-        context: "jsx",
-        scope,
-        metas,
-        tagsOverrides,
-        instance,
-        props,
-        dataSources,
-        usedDataSources,
-        indexesWithinAncestors,
-        classesMap,
-        children: generateJsxChildren({
+      const instance =
+        policy?.resolveInstance?.(
+          authoredInstance,
+          instances,
+          dataSources,
+          props
+        ) ?? authoredInstance;
+      const instanceRuntimeHelpers = usedRuntimeHelpers
+        ? new Set<string>()
+        : undefined;
+      const publishedContent = publishedContentBlocks?.get(instance.id);
+      let generatedInstanceChildren: string;
+      if (contentBodyOverride?.instanceId === instance.id) {
+        generatedInstanceChildren = generateJsxChildren({
+          classesMap,
+          scope,
+          metas,
+          tagsOverrides,
+          children: contentBodyOverride.children,
+          instances,
+          props,
+          resources,
+          dataSources,
+          usedDataSources,
+          indexesWithinAncestors,
+          policy,
+          publishedContentBlocks,
+          usedRuntimeHelpers: instanceRuntimeHelpers,
+        });
+      } else if (
+        instance !== authoredInstance &&
+        instance.children[0]?.type === "expression" &&
+        policy?.renderResolvedExpression
+      ) {
+        const errorsExpression = generateExpression({
+          expression: instance.children[0].value,
+          dataSources,
+          usedDataSources,
+          scope,
+        });
+        generatedInstanceChildren = policy.renderResolvedExpression(
+          errorsExpression,
+          instanceRuntimeHelpers
+        );
+      } else if (publishedContent === undefined) {
+        generatedInstanceChildren = generateJsxChildren({
           classesMap,
           scope,
           metas,
@@ -433,12 +580,138 @@ export const generateJsxChildren = ({
           children: instance.children,
           instances,
           props,
+          resources,
           dataSources,
           usedDataSources,
           indexesWithinAncestors,
-          excludePlaceholders,
-        }),
+          policy,
+          publishedContentBlocks,
+          usedRuntimeHelpers: instanceRuntimeHelpers,
+          contentBodyOverride,
+        });
+      } else {
+        const sourceExpression =
+          publishedContent.sourceExpression === undefined
+            ? undefined
+            : generateExpression({
+                expression: publishedContent.sourceExpression,
+                dataSources,
+                usedDataSources,
+                scope,
+              });
+        const documentParameter = Array.from(props.values()).find(
+          (prop): prop is Extract<Prop, { type: "parameter" }> =>
+            prop.instanceId === instance.id &&
+            prop.name === contentBlockDocumentProp &&
+            prop.type === "parameter"
+        );
+        const documentDataSource =
+          documentParameter === undefined
+            ? undefined
+            : dataSources.get(documentParameter.value);
+        if (documentDataSource !== undefined) {
+          usedDataSources.set(documentDataSource.id, documentDataSource);
+        }
+        const documentName =
+          documentDataSource === undefined
+            ? undefined
+            : scope.getName(documentDataSource.id, documentDataSource.name);
+        const generatedCandidates = publishedContent.candidates.map(
+          ({
+            assetId,
+            dependencyRevision,
+            children: candidateChildren,
+            frontmatter,
+          }) => {
+            const generated = generateJsxChildren({
+              classesMap,
+              scope,
+              metas,
+              tagsOverrides,
+              children:
+                publishedContent.bodyInstanceId === undefined
+                  ? candidateChildren
+                  : instance.children,
+              instances,
+              props,
+              resources,
+              dataSources,
+              usedDataSources,
+              indexesWithinAncestors,
+              policy,
+              publishedContentBlocks,
+              usedRuntimeHelpers: instanceRuntimeHelpers,
+              contentBodyOverride:
+                publishedContent.bodyInstanceId === undefined
+                  ? undefined
+                  : {
+                      instanceId: publishedContent.bodyInstanceId,
+                      children: candidateChildren,
+                    },
+            });
+            const withDocument =
+              documentName === undefined
+                ? generated
+                : `{((${documentName}) => <Fragment>\n${generated}</Fragment>)(${JSON.stringify(
+                    { frontmatter }
+                  )})}\n`;
+            return {
+              assetId,
+              dependencyRevision,
+              generated: withDocument,
+            };
+          }
+        );
+        if (sourceExpression === undefined) {
+          generatedInstanceChildren = generatedCandidates
+            .map(
+              ({ dependencyRevision, generated }) =>
+                `<Fragment key=${JSON.stringify(
+                  dependencyRevision
+                )}>\n${generated}</Fragment>\n`
+            )
+            .join("");
+        } else {
+          const sourceName = scope.getName(
+            `${instance.id}-published-source`,
+            "contentSource"
+          );
+          const branches = generatedCandidates
+            .map(
+              ({ assetId, dependencyRevision, generated }) =>
+                `${sourceName} === ${JSON.stringify(
+                  assetId
+                )} ? <Fragment key=${JSON.stringify(
+                  dependencyRevision
+                )}>\n${generated}</Fragment>`
+            )
+            .join(" : ");
+          generatedInstanceChildren = `{((${sourceName}) => ${
+            branches.length === 0 ? "null" : `${branches} : null`
+          })(${sourceExpression})}\n`;
+        }
+      }
+      const generatedElement = generateJsxElement({
+        context: "jsx",
+        scope,
+        metas,
+        tagsOverrides,
+        instance,
+        props,
+        resources,
+        dataSources,
+        usedDataSources,
+        indexesWithinAncestors,
+        classesMap,
+        children: generatedInstanceChildren,
+        policy,
       });
+      generatedChildren += generatedElement;
+      if (generatedElement && instanceRuntimeHelpers) {
+        for (const helper of instanceRuntimeHelpers) {
+          usedRuntimeHelpers?.add(helper);
+        }
+      }
       continue;
     }
     child satisfies never;
@@ -453,10 +726,14 @@ export const generateWebstudioComponent = ({
   parameters,
   instances,
   props,
+  resources,
   dataSources,
   metas,
   tagsOverrides,
   classesMap,
+  publishedContentBlocks,
+  usedRuntimeHelpers,
+  policy,
 }: {
   scope: Scope;
   name: string;
@@ -464,8 +741,12 @@ export const generateWebstudioComponent = ({
   parameters: Extract<Prop, { type: "parameter" }>[];
   instances: Instances;
   props: Props;
+  resources?: Resources;
   dataSources: DataSources;
   classesMap: Map<string, Array<string>>;
+  usedRuntimeHelpers?: Set<string>;
+  policy?: ComponentGenerationPolicy;
+  publishedContentBlocks?: ReadonlyMap<Instance["id"], PublishedContentBlock>;
   metas: Map<Instance["component"], WsComponentMeta>;
   /**
    * Record<tag, componentDescriptor>
@@ -481,6 +762,9 @@ export const generateWebstudioComponent = ({
   let generatedJsx = "<></>\n";
   // instance can be missing when generate xml
   if (instance) {
+    const rootRuntimeHelpers = usedRuntimeHelpers
+      ? new Set<string>()
+      : undefined;
     generatedJsx = generateJsxElement({
       context: "expression",
       scope,
@@ -488,10 +772,12 @@ export const generateWebstudioComponent = ({
       tagsOverrides,
       instance,
       props,
+      resources,
       dataSources,
       usedDataSources,
       indexesWithinAncestors,
       classesMap,
+      policy,
       children: generateJsxChildren({
         scope,
         metas,
@@ -499,12 +785,21 @@ export const generateWebstudioComponent = ({
         children: instance.children,
         instances,
         props,
+        resources,
         dataSources,
         usedDataSources,
         indexesWithinAncestors,
         classesMap,
+        publishedContentBlocks,
+        usedRuntimeHelpers: rootRuntimeHelpers,
+        policy,
       }),
     });
+    if (generatedJsx && rootRuntimeHelpers) {
+      for (const helper of rootRuntimeHelpers) {
+        usedRuntimeHelpers?.add(helper);
+      }
+    }
   }
 
   let generatedProps = "";
@@ -530,6 +825,9 @@ export const generateWebstudioComponent = ({
 
   let generatedDataSources = "";
   for (const dataSource of usedDataSources.values()) {
+    const valueName = scope.getName(dataSource.id, dataSource.name);
+    generatedDataSources +=
+      policy?.declareDataSource?.(dataSource, valueName, instances) ?? "";
     if (dataSource.type === "variable") {
       const valueName = scope.getName(dataSource.id, dataSource.name);
       const setterName = scope.getName(

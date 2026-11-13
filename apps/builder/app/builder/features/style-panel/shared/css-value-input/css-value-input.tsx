@@ -18,6 +18,7 @@ import {
   Flex,
   styled,
   ColorThumb,
+  cssVar,
 } from "@webstudio-is/design-system";
 import type {
   CssProperty,
@@ -46,6 +47,9 @@ import {
   declarationDescriptions,
   isValidDeclaration,
   parseColor,
+  parseConicGradient,
+  parseLinearGradient,
+  parseRadialGradient,
 } from "@webstudio-is/css-data";
 import { $selectedInstanceSizes } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
@@ -53,12 +57,16 @@ import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
 import type { StyleValueSourceColor } from "~/shared/style-object-model";
 import {
-  cssButtonDisplay,
+  cssValueInputMaximizeButtonDisplay,
   isComplexValue,
   ValueEditorDialog,
 } from "./value-editor-dialog";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { scrollByPointer } from "../scroll-by-pointer";
+import { useStore } from "@nanostores/react";
+import { $availableVariables, createComputedStyleDeclStore } from "../model";
+import { $isAltPressed } from "../modifier-keys";
+import { getComputedValuePreview } from "../computed-value-preview";
 
 // Subjective adjust ment based on how it feels on macbook/trackpad.
 // It won't be ideal for everyone with different input devices and preferences.
@@ -300,6 +308,7 @@ type Modifiers = {
 type ChangeCompleteEvent = {
   type:
     | "enter"
+    | "tab"
     | "blur"
     | "scrub-end"
     | "unit-select"
@@ -334,11 +343,14 @@ type CssValueInputProps = Pick<
   >;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: ChangeCompleteEvent) => void;
+  onEnter?: (event: KeyboardEvent<HTMLInputElement>) => boolean;
+  onTab?: (event: KeyboardEvent<HTMLInputElement>) => boolean;
+  onShiftEnter?: (event: KeyboardEvent<HTMLInputElement>) => void;
   onHighlight: (value: StyleValue | undefined) => void;
   // Does not reset intermediate changes.
   onAbort: () => void;
   // Resets the value to default even if it has intermediate changes.
-  onReset: () => void;
+  onReset: (reason?: ChangeCompleteEvent["type"]) => void;
   icon?: ReactNode;
   showSuffix?: boolean;
   unitOptions?: UnitOption[];
@@ -382,6 +394,21 @@ const getItemColor = (item: CssValueInputValue): string | undefined => {
   }
   if (colorString !== undefined && parseColor(colorString) !== undefined) {
     return colorString;
+  }
+};
+
+const getItemGradient = (item: CssValueInputValue): string | undefined => {
+  if (item.type !== "var" || item.fallback === undefined) {
+    return;
+  }
+  const value = toValue(item.fallback);
+  if (
+    value.includes("gradient(") &&
+    (parseLinearGradient(value) ||
+      parseConicGradient(value) ||
+      parseRadialGradient(value))
+  ) {
+    return value;
   }
 };
 
@@ -439,6 +466,11 @@ export const CssValueInput = ({
   minWidth = "2ch",
   ...props
 }: CssValueInputProps) => {
+  const isAltPressed = useStore($isAltPressed);
+  const $computedStyleDecl = useMemo(
+    () => createComputedStyleDeclStore(property),
+    [property]
+  );
   const value = props.intermediateValue ?? props.value ?? initialValue;
   const valueRef = useRef(value);
   valueRef.current = value;
@@ -477,22 +509,22 @@ export const CssValueInput = ({
     // We are resetting by setting the value to an empty string
     if (value.type === "intermediate" && value.value === "") {
       closeMenu();
-      onReset();
-      return;
+      onReset(event.type);
+      return event.type === "tab";
     }
 
     if (value.type !== "intermediate" && value.type !== "invalid") {
       // variables fallback is used for preview value while autocompleting
       // removed fallback when select variable to not pollute values
       let newValue = value;
-      if (value.type === "var") {
+      if (value.type === "var" && event.type === "keyword-select") {
         newValue = { ...value };
         delete newValue.fallback;
       }
       // The value might be valid but not selected from the combo menu. Close the menu.
       closeMenu();
       props.onChangeComplete({ ...defaultProps, ...event, value: newValue });
-      return;
+      return true;
     }
 
     const parsedValue = parseIntermediateOrInvalidValue(
@@ -503,7 +535,7 @@ export const CssValueInput = ({
 
     if (parsedValue.type === "invalid") {
       props.onChange(parsedValue);
-      return;
+      return false;
     }
 
     // The value might be valid but not selected from the combo menu. Close the menu.
@@ -513,6 +545,7 @@ export const CssValueInput = ({
       ...event,
       value: parsedValue,
     });
+    return true;
   };
 
   const {
@@ -663,10 +696,38 @@ export const CssValueInput = ({
 
   const getInputValue = () => {
     const isFocused = document.activeElement === inputRef.current;
-    // When input is not focused, we are removing var() to fit more into the small inputs.
-    return value.type === "var" && isFocused === false
-      ? `--${value.value}`
-      : inputProps.value;
+    if (
+      isAltPressed &&
+      isFocused &&
+      props.intermediateValue === undefined &&
+      props.value !== undefined
+    ) {
+      const preview = getComputedValuePreview(
+        property,
+        props.value,
+        $computedStyleDecl.get()
+      );
+      if (preview !== undefined) {
+        return preview;
+      }
+    }
+    if (value.type === "var") {
+      if (isAltPressed && isFocused) {
+        const variable = $availableVariables
+          .get()
+          .find((item) => item.value === value.value);
+        const resolved = variable?.fallback ?? value.fallback;
+        if (resolved !== undefined) {
+          return toValue(resolved);
+        }
+      }
+      if (isFocused) {
+        return toValue(value);
+      }
+      // Remove var() to fit more into the small unfocused inputs.
+      return `--${value.value}`;
+    }
+    return inputProps.value;
   };
   const handleOnBlur: KeyboardEventHandler = (event) => {
     inputProps.onBlur(event);
@@ -929,17 +990,51 @@ export const CssValueInput = ({
             value={getInputValue()}
             onFocus={(event) => {
               if (event.target instanceof HTMLInputElement) {
-                // We are setting the value on focus because we might have removed the var() from the value,
-                // but once focused, we need to show the full value
-                event.target.value =
-                  value.type === "var"
-                    ? toValue(value as StyleValue)
-                    : itemToString(value);
+                // Keep the Alt preview or the full var() value when focus changes.
+                event.target.value = getInputValue();
               }
             }}
             autoFocus={autoFocus}
             onBlur={handleOnBlur}
-            onKeyDown={inputPropsHandleKeyDown}
+            onKeyDown={(event) => {
+              if (
+                event.key === "Enter" &&
+                event.shiftKey &&
+                props.onShiftEnter
+              ) {
+                event.preventDefault();
+                props.onShiftEnter(event);
+                return;
+              }
+              if (
+                event.key === "Enter" &&
+                !isUnitsOpen &&
+                !(isOpen && !menuProps.empty) &&
+                props.onEnter?.(event)
+              ) {
+                event.preventDefault();
+                onChangeComplete({
+                  type: "enter",
+                  value,
+                  altKey: event.altKey,
+                  shiftKey: event.shiftKey,
+                });
+                return;
+              }
+              if (
+                event.key === "Tab" &&
+                !event.shiftKey &&
+                !isUnitsOpen &&
+                !(isOpen && !menuProps.empty) &&
+                props.onTab?.(event)
+              ) {
+                if (onChangeComplete({ type: "tab", value })) {
+                  event.preventDefault();
+                }
+                return;
+              }
+              inputPropsHandleKeyDown(event);
+            }}
             inputRef={mergeRefs(
               inputRef,
               props.inputRef,
@@ -957,7 +1052,7 @@ export const CssValueInput = ({
               cursor: "default",
               minWidth,
               "&:hover": {
-                [cssButtonDisplay]: "block",
+                [cssValueInputMaximizeButtonDisplay]: "block",
               },
             }}
             text={text}
@@ -975,18 +1070,38 @@ export const CssValueInput = ({
                     {(() => {
                       const label = itemToString(item);
                       const colorValue = getItemColor(item);
+                      const gradientValue = getItemGradient(item);
                       const labelElement = (
                         <Text truncate css={{ maxWidth: theme.spacing[30] }}>
                           {label}
                         </Text>
                       );
-                      if (colorValue === undefined) {
+                      if (
+                        colorValue === undefined &&
+                        gradientValue === undefined
+                      ) {
                         return labelElement;
                       }
                       return (
                         <Flex justify="between" align="center" grow gap={2}>
                           {labelElement}
-                          <ColorThumb color={colorValue} />
+                          {colorValue ? (
+                            <ColorThumb color={colorValue} />
+                          ) : (
+                            <Box
+                              as="span"
+                              aria-hidden
+                              css={{
+                                display: "block",
+                                flexShrink: 0,
+                                width: theme.spacing[9],
+                                height: theme.spacing[9],
+                                borderRadius: theme.borderRadius[2],
+                                border: `1px solid ${cssVar("--border-default")}`,
+                                backgroundImage: gradientValue,
+                              }}
+                            />
+                          )}
                         </Flex>
                       );
                     })()}

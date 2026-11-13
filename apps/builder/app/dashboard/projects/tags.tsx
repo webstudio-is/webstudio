@@ -1,12 +1,15 @@
 import { useRevalidator, useSearchParams } from "react-router-dom";
 import { useState, type ComponentProps } from "react";
+import { createId } from "@webstudio-is/sdk";
 import {
+  PanelContent,
   Text,
   theme,
   Dialog,
   DialogContent,
   DialogTitle,
   Button,
+  ToggleButton,
   DialogActions,
   DialogClose,
   Checkbox,
@@ -23,17 +26,17 @@ import {
   SmallIconButton,
   DropdownMenuContent,
   DropdownMenuItem,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
-import { nanoid } from "nanoid";
 import { EllipsesIcon, SpinnerIcon } from "@webstudio-is/icons";
 
 const tagColorPalette = Array.from({ length: 50 }, (_, index) => {
-  const lightness = 55 + (index % 3) * 3;
-  const chroma = 0.14 + (index % 2) * 0.02;
-  const hue = (index * 137.5) % 360;
-  return `oklch(${lightness}% ${chroma.toFixed(2)} ${hue.toFixed(1)})`;
+  const hueOffset = (index * 137.5) % 360;
+  return `oklch(from ${cssVar(
+    "--background-accent"
+  )} l c calc(h + ${hueOffset}))`;
 });
 
 type DeleteConfirmationDialogProps = {
@@ -57,9 +60,9 @@ const DeleteConfirmationDialog = ({
       }}
     >
       <DialogContent>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Text>{question}</Text>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <DialogClose>
             <Button
@@ -129,7 +132,7 @@ const TagsList = ({
                   gap="2"
                   css={{
                     paddingInline: theme.panel.paddingInline,
-                    outlineColor: theme.colors.borderFocus,
+                    outlineColor: cssVar("--border-focus"),
                     outlineOffset: -2,
                     paddingBlock: theme.spacing[2],
                   }}
@@ -250,7 +253,7 @@ const TagEdit = ({
         onComplete();
       }}
     >
-      <Grid css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Grid}>
         <InputField
           autoFocus
           defaultValue={tag.label}
@@ -258,9 +261,9 @@ const TagEdit = ({
           placeholder="My tag"
           minLength={1}
         />
-      </Grid>
+      </PanelContent>
       <DialogActions>
-        <Button type="submit">
+        <Button color="primary" type="submit">
           {isExisting ? "Update tag" : "Create tag"}
         </Button>
         <Button
@@ -319,7 +322,10 @@ export const TagsDialog = ({
             />
             <DialogActions>
               <Button
-                onClick={() => setEditingTag({ id: nanoid(5), label: "" })}
+                color="primary"
+                onClick={() =>
+                  setEditingTag({ id: createId("nano"), label: "" })
+                }
               >
                 Create tag
               </Button>
@@ -343,18 +349,17 @@ export const Tag = ({
   tag,
   ...props
 }: { index: number; tag: User["projectsTags"][number] } & ComponentProps<
-  typeof Button
+  typeof ToggleButton
 >) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTagsIds = searchParams.getAll("tag");
-  const color = tagColorPalette[index] ?? theme.colors.backgroundNeutralDark;
+  const color = tagColorPalette[index] ?? cssVar("--background-inverse");
   return (
-    <Button
-      color="neutral"
+    <ToggleButton
       css={{
         "&:hover[data-state='auto'], &[data-state='pressed']": {
           backgroundColor: color,
-          color: theme.colors.white,
+          color: cssVar("--foreground-on-accent"),
         },
         "&[data-state='pressed']:hover": {
           backgroundColor: `oklch(from ${color} l c h / 0.8)`,
@@ -377,3 +382,5 @@ export const Tag = ({
     />
   );
 };
+
+undefined;

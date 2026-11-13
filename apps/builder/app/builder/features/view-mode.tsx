@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { Flex, rawTheme, Tooltip, theme } from "@webstudio-is/design-system";
+import { cssVar, Flex, Tooltip, theme } from "@webstudio-is/design-system";
 import { CloudIcon } from "@webstudio-is/icons";
 import { $authPermit } from "~/shared/nano-states";
 
@@ -19,7 +19,7 @@ export const ViewMode = () => {
         shrink={false}
       >
         <CloudIcon
-          color={rawTheme.colors.backgroundAlertMain}
+          color={cssVar("--foreground-warning")}
           aria-label="View mode. Your changes will not be saved"
         />
       </Flex>

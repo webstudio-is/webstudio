@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
+  blockComponent,
+  encodeDataSourceVariable,
   getStyleDeclKey,
   type Instance,
   type Page,
@@ -9,7 +11,7 @@ import {
 import type { BuilderRuntimeMutation } from "./mutation";
 import { executeBuilderRuntimeOperation } from "./registry";
 import { setImageDescriptions } from "./assets";
-import { analyzeProject, searchProject } from "./search";
+import { analyzeProject } from "./search";
 import {
   audit,
   auditRuleId,
@@ -247,6 +249,44 @@ describe("project audit and analysis", () => {
         { projectVersion: 7 }
       )
     ).toThrow(/cursor does not match/i);
+  });
+
+  test("skips unsafe unused Asset findings for connected Content Blocks", () => {
+    const instances = new Map<string, Instance>(state.instances);
+    instances.set("content-block", {
+      type: "instance",
+      id: "content-block",
+      component: "ws:block",
+      children: [],
+    });
+    const props = new Map<string, Prop>(state.props);
+    props.set("content-block-source", {
+      id: "content-block-source",
+      instanceId: "content-block",
+      name: "src",
+      type: "asset",
+      value: "article-mdx",
+    });
+
+    const result = audit(
+      { ...state, instances, props },
+      { scopes: ["assets"], verbose: true, limit: 200 },
+      { projectVersion: 1 }
+    );
+
+    expect(result.findings).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: "unused-asset" }),
+      ])
+    );
+    expect(result.skippedChecks).toContainEqual({
+      scope: "assets",
+      checkId: "content-asset-dependencies",
+      reason: "missing-build-data",
+      message:
+        "Unused Asset findings are skipped because connected Content Blocks can reference MDX files and nested Assets that are not visible in editable project data.",
+      location: {},
+    });
   });
 
   test("returns one finding for a CSS variable declared at multiple breakpoints", () => {
@@ -1014,22 +1054,6 @@ describe("project audit and analysis", () => {
     } satisfies BuilderState;
 
     expect(
-      searchProject(searchState, { query: "video.example.com" })
-    ).toMatchObject({
-      total: 1,
-      returnedCount: 1,
-      nextCursor: null,
-      detail: "compact",
-      matches: [
-        {
-          kind: "prop",
-          propId: "embed",
-          instanceId: "heading",
-          name: "code",
-        },
-      ],
-    });
-    expect(
       analyzeProject(searchState, { query: "posts", scopes: ["resources"] })
     ).toMatchObject({
       matches: [
@@ -1039,62 +1063,6 @@ describe("project audit and analysis", () => {
           url: '"/posts"',
         },
       ],
-    });
-    const propsWithAssetReference = new Map<string, Prop>(searchState.props);
-    propsWithAssetReference.set("asset-reference", {
-      id: "asset-reference",
-      instanceId: "heading",
-      name: "src",
-      type: "asset",
-      value: "asset",
-    });
-    expect(
-      executeBuilderRuntimeOperation({
-        id: "project.search",
-        state: { ...searchState, props: propsWithAssetReference },
-        input: { query: "next", scopes: ["assets"] },
-        context,
-      })
-    ).toMatchObject({
-      total: 1,
-      matches: [
-        {
-          kind: "asset",
-          assetId: "next",
-        },
-      ],
-    });
-    const styleSourcesWithUnusedToken = new Map(searchState.styleSources);
-    styleSourcesWithUnusedToken.set("unused-token", {
-      type: "token",
-      id: "unused-token",
-      name: "Unused token",
-    });
-    expect(
-      executeBuilderRuntimeOperation({
-        id: "project.search",
-        state: { ...searchState, styleSources: styleSourcesWithUnusedToken },
-        input: { query: "unused-token", scopes: ["styles"] },
-        context,
-      })
-    ).toMatchObject({
-      total: 1,
-      matches: [
-        {
-          kind: "design-token",
-          designTokenId: "unused-token",
-          usageCount: 0,
-        },
-      ],
-    });
-    expectRuntimeValidationError("project.search", {});
-    expectRuntimeValidationError("project.search", {
-      query: "button",
-      scopes: ["accessibility"],
-    });
-    expectRuntimeValidationError("project.search", {
-      query: "button",
-      pagePat: "/pricing",
     });
     expect(
       analyzeProject(searchState, { query: "BRAND", scopes: ["styles"] })
@@ -1450,6 +1418,129 @@ describe("project audit and analysis", () => {
         expect.objectContaining({
           issue: "invalid-label-reference",
           instanceId: "post-label",
+        }),
+      ])
+    );
+  });
+
+  test("accepts a label that references a generic button", () => {
+    const instances = new Map<string, Instance>(state.instances);
+    instances.set("body", {
+      ...instances.get("body")!,
+      children: [
+        { type: "id", value: "button-label" },
+        { type: "id", value: "generic-button" },
+      ],
+    });
+    instances.set("button-label", {
+      type: "instance",
+      id: "button-label",
+      component: "Element",
+      tag: "label",
+      children: [{ type: "text", value: "Open menu" }],
+    });
+    instances.set("generic-button", {
+      type: "instance",
+      id: "generic-button",
+      component: "Element",
+      tag: "button",
+      children: [{ type: "text", value: "Open" }],
+    });
+    const props = new Map(state.props);
+    props.set("button-label-for", {
+      id: "button-label-for",
+      instanceId: "button-label",
+      name: "for",
+      type: "string",
+      value: "menu-button",
+    });
+    props.set("generic-button-id", {
+      id: "generic-button-id",
+      instanceId: "generic-button",
+      name: "id",
+      type: "string",
+      value: "menu-button",
+    });
+
+    const matches = analyzeProject(
+      { ...state, instances, props },
+      { scopes: ["accessibility"], pageId: "home" }
+    ).matches;
+    expect(matches).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ instanceId: "button-label" }),
+      ])
+    );
+    expect(matches).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          issue: "missing-form-label",
+          instanceId: "generic-button",
+        }),
+      ])
+    );
+  });
+
+  test("accepts a label that references a submit input", () => {
+    const instances = new Map<string, Instance>(state.instances);
+    instances.set("body", {
+      ...instances.get("body")!,
+      children: [
+        { type: "id", value: "submit-label" },
+        { type: "id", value: "submit-input" },
+      ],
+    });
+    instances.set("submit-label", {
+      type: "instance",
+      id: "submit-label",
+      component: "Label",
+      tag: "label",
+      children: [{ type: "text", value: "Send" }],
+    });
+    instances.set("submit-input", {
+      type: "instance",
+      id: "submit-input",
+      component: "Input",
+      tag: "input",
+      children: [],
+    });
+    const props = new Map(state.props);
+    props.set("submit-label-for", {
+      id: "submit-label-for",
+      instanceId: "submit-label",
+      name: "for",
+      type: "string",
+      value: "submit-control",
+    });
+    props.set("submit-input-id", {
+      id: "submit-input-id",
+      instanceId: "submit-input",
+      name: "id",
+      type: "string",
+      value: "submit-control",
+    });
+    props.set("submit-input-type", {
+      id: "submit-input-type",
+      instanceId: "submit-input",
+      name: "type",
+      type: "string",
+      value: "submit",
+    });
+
+    const matches = analyzeProject(
+      { ...state, instances, props },
+      { scopes: ["accessibility"], pageId: "home" }
+    ).matches;
+    expect(matches).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ instanceId: "submit-label" }),
+      ])
+    );
+    expect(matches).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          issue: "missing-form-label",
+          instanceId: "submit-input",
         }),
       ])
     );
@@ -2505,6 +2596,140 @@ describe("project audit and analysis", () => {
             resourceId: "submit",
           },
           evidence: expect.objectContaining({ method: "post" }),
+        }),
+      ])
+    );
+  });
+
+  test("does not flag an action-only Form resource as render-time data", () => {
+    const instances: NonNullable<BuilderState["instances"]> = new Map(
+      state.instances
+    );
+    instances.set("body", {
+      ...instances.get("body")!,
+      children: [
+        { type: "id", value: "form" },
+        { type: "id", value: "heading" },
+      ],
+    });
+    instances.set("form", {
+      type: "instance",
+      id: "form",
+      component: "ResourceForm",
+      children: [],
+    });
+    const resources: NonNullable<BuilderState["resources"]> = new Map(
+      state.resources
+    );
+    resources.set("submit", {
+      id: "submit",
+      name: "Submit order",
+      method: "post",
+      url: `"/orders"`,
+      headers: [],
+      searchParams: [],
+      body: encodeDataSourceVariable("formData"),
+    });
+    const dataSources: NonNullable<BuilderState["dataSources"]> = new Map(
+      state.dataSources
+    );
+    dataSources.set("formData", {
+      id: "formData",
+      type: "parameter",
+      name: "formData",
+      scopeInstanceId: "form",
+    });
+    dataSources.set("submit-data", {
+      id: "submit-data",
+      type: "resource",
+      name: "Submit order",
+      scopeInstanceId: "form",
+      resourceId: "submit",
+    });
+    const props: NonNullable<BuilderState["props"]> = new Map(state.props);
+    props.set("action", {
+      id: "action",
+      instanceId: "form",
+      name: "action",
+      type: "json",
+      value: [{ dataSourceId: "submit-data" }],
+    });
+    const project = { ...state, instances, resources, dataSources, props };
+    const securityFindings = () =>
+      audit(
+        project,
+        { scopes: ["security"], verbose: true },
+        { projectVersion: 1 }
+      ).findings.filter(
+        ({ ruleId }) => ruleId === "non-get-resource-exposed-as-data-source"
+      );
+
+    expect(securityFindings()).toEqual([]);
+
+    instances.set("block", {
+      type: "instance",
+      id: "block",
+      component: blockComponent,
+      children: [],
+    });
+    instances.set("body", {
+      ...instances.get("body")!,
+      children: [
+        ...instances.get("body")!.children,
+        { type: "id", value: "block" },
+      ],
+    });
+    props.set("block-source", {
+      id: "block-source",
+      instanceId: "block",
+      name: "src",
+      type: "asset",
+      value: "article.mdx",
+    });
+    expect(securityFindings()).toEqual([]);
+
+    const bodyWithBlock = instances.get("body")!;
+    instances.set("body", {
+      ...bodyWithBlock,
+      children: bodyWithBlock.children.filter(
+        (child) => child.type !== "id" || child.value !== "block"
+      ),
+    });
+    instances.set("form", {
+      ...instances.get("form")!,
+      children: [{ type: "id", value: "block" }],
+    });
+    expect(securityFindings()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          location: expect.objectContaining({ resourceId: "submit" }),
+        }),
+      ])
+    );
+    instances.set("form", { ...instances.get("form")!, children: [] });
+    instances.set("body", bodyWithBlock);
+
+    dataSources.set("rendered-submit-data", {
+      id: "rendered-submit-data",
+      type: "resource",
+      name: "Submit order on page",
+      scopeInstanceId: "body",
+      resourceId: "submit",
+    });
+    props.set("rendered-submit", {
+      id: "rendered-submit",
+      instanceId: "heading",
+      name: "title",
+      type: "expression",
+      value: encodeDataSourceVariable("rendered-submit-data"),
+    });
+    expect(securityFindings()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          location: expect.objectContaining({
+            dataSourceId: "rendered-submit-data",
+            resourceId: "submit",
+          }),
         }),
       ])
     );

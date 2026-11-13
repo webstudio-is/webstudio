@@ -46,7 +46,7 @@ className={`w-body`}>
 <Box
 className={`w-box`}>
 <HtmlEmbed
-code={collectionItem?.name}
+code={collectionItem?.name == null ? collectionItem?.name : String(collectionItem?.name)}
 className={`w-html-embed`} />
 </Box>
 </Fragment>

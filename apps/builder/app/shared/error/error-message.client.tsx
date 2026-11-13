@@ -1,11 +1,12 @@
 import {
   AccessibleIcon,
   css,
+  cssVar,
   Grid,
-  Link,
+  LinkButton,
   Text,
   theme,
-  buttonStyle,
+  webstudioBrand,
 } from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
 
@@ -14,11 +15,37 @@ const pageStyle = css({
   justifyItems: "center",
   alignContent: "start",
   inset: 0,
-  background: theme.colors.brandBackgroundDashboard,
+  background: webstudioBrand.backgroundGradient,
   paddingTop: "10vh",
   // prevent global root styles override error color
-  color: theme.colors.black,
+  color: `light-dark(
+    ${cssVar("--foreground-primary", "#11181c")},
+    ${cssVar("--foreground-on-inverse", "#fff")}
+  )`,
 });
+
+const standaloneButtonBackground = cssVar("--background-accent", "#096cff");
+const standaloneButtonForeground = cssVar("--foreground-on-accent", "#fff");
+const standaloneButtonHoverOverlay = `oklch(from ${standaloneButtonForeground} 0 0 h / 6.2745%)`;
+const standaloneButtonPressedOverlay = `oklch(from ${standaloneButtonForeground} 0 0 h / 10.9804%)`;
+
+const standaloneButtonStyle = {
+  background: standaloneButtonBackground,
+  color: standaloneButtonForeground,
+  "&&[data-state=auto]:hover, &&[data-state=hover]": {
+    background: `linear-gradient(${standaloneButtonHoverOverlay}, ${standaloneButtonHoverOverlay}), ${standaloneButtonBackground}`,
+    color: standaloneButtonForeground,
+  },
+  "&&[data-state=auto]:focus-visible, &&[data-state=focus]": {
+    color: standaloneButtonForeground,
+    outline: `1px solid ${cssVar("--border-focus", "#297aff")}`,
+    outlineOffset: "1px",
+  },
+  "&&[data-state=auto]:active, &&[data-state=pressed]": {
+    background: `linear-gradient(${standaloneButtonPressedOverlay}, ${standaloneButtonPressedOverlay}), ${standaloneButtonBackground}`,
+    color: standaloneButtonForeground,
+  },
+};
 
 export const ErrorMessage = ({
   error,
@@ -57,7 +84,10 @@ export const ErrorMessage = ({
       >
         <Grid
           css={{
-            background: theme.colors.backgroundPanel,
+            background: `light-dark(
+              ${cssVar("--background-primary", "#fff")},
+              ${cssVar("--background-inverse", "#11181c")}
+            )`,
             padding: theme.spacing[7],
             borderRadius: theme.spacing[5],
             minWidth: theme.spacing[34],
@@ -89,14 +119,9 @@ export const ErrorMessage = ({
             </Text>
           )}
         </Grid>
-        <Link
-          href="/"
-          className={buttonStyle()}
-          color="contrast"
-          underline="none"
-        >
-          Go Home
-        </Link>
+        <LinkButton color="primary" href="/" css={standaloneButtonStyle}>
+          Go home
+        </LinkButton>
       </Grid>
     </Grid>
   );

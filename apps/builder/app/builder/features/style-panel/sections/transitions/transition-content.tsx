@@ -6,18 +6,18 @@ import {
   type TupleValueItem,
 } from "@webstudio-is/css-engine";
 import {
+  PanelContent,
   Flex,
   Label,
+  InfoTooltip,
   TextArea,
   theme,
   textVariants,
   Separator,
-  Tooltip,
   Text,
   Grid,
   toast,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
 import { propertiesData, propertyDescriptions } from "@webstudio-is/css-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { CssValueInputContainer } from "../../shared/css-value-input";
@@ -120,10 +120,10 @@ export const TransitionContent = ({ index }: { index: number }) => {
 
   return (
     <Flex direction="column">
-      <Grid
+      <PanelContent
+        as={Grid}
         gap="2"
         css={{
-          padding: theme.panel.padding,
           gridTemplateColumns: `1fr ${theme.spacing[23]}`,
           gridTemplateRows: theme.spacing[13],
         }}
@@ -241,13 +241,13 @@ export const TransitionContent = ({ index }: { index: number }) => {
             }
           }}
         />
-      </Grid>
+      </PanelContent>
 
       <Separator css={{ gridColumn: "span 2" }} />
-      <Flex
+      <PanelContent
+        as={Flex}
         direction="column"
         css={{
-          padding: theme.panel.padding,
           gap: theme.spacing[3],
           minWidth: theme.spacing[30],
         }}
@@ -255,8 +255,8 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <Label>
           <Flex align="center" gap="1">
             Code
-            <Tooltip
-              variant="wrapped"
+            <InfoTooltip
+              label="About transition CSS code"
               content={
                 <Text>
                   Paste CSS code for a transition or part of a transition, for
@@ -266,9 +266,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
                   <Text variant="monoBold">opacity 200ms ease 0s</Text>
                 </Text>
               }
-            >
-              <InfoCircleIcon />
-            </Tooltip>
+            />
           </Flex>
         </Label>
         <TextArea
@@ -289,7 +287,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
             }
           }}
         />
-      </Flex>
+      </PanelContent>
     </Flex>
   );
 };

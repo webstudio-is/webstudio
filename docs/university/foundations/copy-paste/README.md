@@ -4,6 +4,10 @@ description: Webstudio supports copy-pasting within the platform and from extern
 
 # ↔️ Copy-Paste
 
+Cut removes selected content only after it is copied to the clipboard. If project
+data changes while the cut is pending, Webstudio keeps the copy but removes
+nothing. A message asks you to try cutting again.
+
 {% content-ref url="css.md" %}
 [css.md](css.md)
 {% endcontent-ref %}

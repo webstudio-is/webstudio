@@ -310,6 +310,87 @@ describe("style source insertion", () => {
     ]);
   });
 
+  test.each([
+    { incoming: [], expected: ["first-token", "second-token", "root-local"] },
+    {
+      incoming: ["incoming-local"],
+      expected: ["first-token", "second-token", "root-local"],
+    },
+    {
+      incoming: ["incoming-token"],
+      expected: ["first-token", "second-token", "root-local", "mapped-token"],
+    },
+    {
+      incoming: ["incoming-token", "reused-token", "incoming-local"],
+      expected: ["first-token", "second-token", "root-local", "mapped-token"],
+    },
+  ])(
+    "preserves root sources when importing $incoming",
+    ({ incoming, expected }) => {
+      const styleSources = toMap([
+        token("first-token", "Spacing"),
+        token("second-token", "Colors"),
+        token("mapped-token", "Imported"),
+        local("root-local"),
+      ]);
+      const styleSourceSelections: StyleSourceSelections = new Map([
+        [
+          ROOT_INSTANCE_ID,
+          {
+            instanceId: ROOT_INSTANCE_ID,
+            values: ["first-token", "second-token", "root-local"],
+          },
+        ],
+      ]);
+      const originalStyle = style("root-local", "base", "color", blue);
+      const styles = styleMap([originalStyle]);
+      const incomingStyles = incoming.includes("incoming-local")
+        ? [style("incoming-local", "incoming-base", "backgroundColor", red)]
+        : [];
+
+      // Repeated page imports must not detach sources or duplicate selections.
+      for (let index = 0; index < 2; index += 1) {
+        insertLocalStyleSourcesWithNewIds({
+          fragmentStyleSources: [
+            local("incoming-local"),
+            token("incoming-token", "Imported"),
+            token("reused-token", "Spacing"),
+          ],
+          fragmentStyleSourceSelections: [
+            { instanceId: ROOT_INSTANCE_ID, values: incoming },
+          ],
+          fragmentStyles: incomingStyles,
+          fragmentInstanceIds: new Set([ROOT_INSTANCE_ID]),
+          newInstanceIds: new Map([[ROOT_INSTANCE_ID, ROOT_INSTANCE_ID]]),
+          styleSources,
+          styleSourceSelections,
+          styles,
+          styleSourceIdMap: new Map([
+            ["incoming-token", "mapped-token"],
+            ["reused-token", "first-token"],
+          ]),
+          mergedBreakpointIds: new Map([["incoming-base", "base"]]),
+        });
+
+        expect(styleSourceSelections.get(ROOT_INSTANCE_ID)?.values).toEqual(
+          expected
+        );
+        expect(styles.get(getStyleDeclKey(originalStyle))).toEqual(
+          originalStyle
+        );
+        if (incomingStyles.length > 0) {
+          const mergedStyle = style(
+            "root-local",
+            "base",
+            "backgroundColor",
+            red
+          );
+          expect(styles.get(getStyleDeclKey(mergedStyle))).toEqual(mergedStyle);
+        }
+      }
+    }
+  );
+
   test("copies local style sources with new ids and maps selections", () => {
     const styleSources: StyleSources = new Map([
       ["existing-token", token("existing-token", "Primary")],

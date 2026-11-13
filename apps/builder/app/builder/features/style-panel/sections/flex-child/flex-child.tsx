@@ -1,4 +1,5 @@
 import {
+  PanelContent,
   Flex,
   Grid,
   theme,
@@ -63,7 +64,13 @@ export const Section = () => {
         )
       }
     >
-      <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
+      <Flex
+        css={{
+          paddingInline: theme.panel.paddingInline,
+          flexDirection: "column",
+          gap: theme.spacing[5],
+        }}
+      >
         <FlexChildSectionAlign />
         <FlexChildSectionSizing />
         <OrderControl />
@@ -224,11 +231,11 @@ const FlexChildSectionSizingPopover = () => {
       title="Sizing"
       placement="bottom-within"
       content={
-        <Grid
+        <PanelContent
+          as={Grid}
           gap="3"
           css={{
             gridTemplateColumns: "1fr 1fr 1.5fr",
-            padding: theme.panel.padding,
           }}
         >
           <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
@@ -255,7 +262,7 @@ const FlexChildSectionSizingPopover = () => {
             />
             <TextControl property="flex-basis" />
           </Grid>
-        </Grid>
+        </PanelContent>
       }
     >
       <Flex>

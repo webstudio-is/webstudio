@@ -101,7 +101,7 @@ export const CssVariablesGroup = ({
         name="cssVariable"
         heading={
           <CommandGroupHeading>
-            CSS Variables ({options.length})
+            CSS variables ({options.length})
           </CommandGroupHeading>
         }
         actions={[

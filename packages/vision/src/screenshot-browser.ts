@@ -29,6 +29,8 @@ export const defaultScreenshotWaitForTimeout = 250;
 
 export const defaultScreenshotTimeout = 30000;
 
+export const defaultBrowserStartupTimeout = 10000;
+
 export type ScreenshotCaptureOptions = {
   output?: string;
   viewport: { width: number; height: number };
@@ -40,6 +42,7 @@ export type ScreenshotCaptureOptions = {
   browserPath?: string;
   waitUntil?: ScreenshotWaitUntil;
   waitForSelector?: string;
+  waitForFonts?: boolean;
   waitForTimeout?: number;
   timeout?: number;
   format?: "png" | "jpeg" | "webp";

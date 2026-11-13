@@ -23,7 +23,12 @@ We recommend creating templates using [Craft](../university/craft.md) — the st
 
 Navigate to Project settings > Marketplace, fill out the required fields, select whether your Project includes pages, sections, or integrations, and submit it for review.
 
-<figure><img src="../.gitbook/assets/marketplace-submission.png" alt="Marketplace Submission"><figcaption></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../.gitbook/assets/marketplace-submission-dark.png">
+    <img src="../.gitbook/assets/marketplace-submission-light.png" alt="Blank Marketplace submission form with Product name, Category, Thumbnail, Author, and Email fields" width="626">
+  </picture>
+</figure>
 
 Once it’s submitted, Page Settings will now have the following options you can immediately use:
 
@@ -43,5 +48,5 @@ Learn more about the [Marketplace](../university/marketplace.md).
 
 - [Marketplace](../university/marketplace.md) – Browse and use marketplace templates
 - [Craft](../university/craft.md) – The recommended standard for building templates
-- [Contributing for Designers](contributing-for-designers.md) – Other ways designers can contribute
+- [Contributions](contributions.md) – Contribute to Webstudio as a designer or developer
 - [Design tokens](../university/foundations/design-tokens.md) – Create consistent, reusable styles

@@ -387,6 +387,7 @@ describe("getMenuPermissions", () => {
     });
 
     expect(permissions).toMatchObject({
+      canMove: true,
       canCopy: true,
       canPaste: true,
       canCut: false,
@@ -422,8 +423,8 @@ describe("getMenuPermissions", () => {
         isContentMode: true,
         isDesignMode: false,
         instances,
-      }).canDelete
-    ).toBe(false);
+      })
+    ).toMatchObject({ canDelete: false, canMove: false });
   });
 
   test("content mode keeps multi-copy available but disables single-instance and mutation actions", () => {

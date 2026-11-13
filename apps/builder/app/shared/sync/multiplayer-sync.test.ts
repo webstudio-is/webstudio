@@ -1,3 +1,4 @@
+import { draftPersistence } from "./draft-persistence";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import type { WebSocketEmitterOptions } from "@webstudio-is/sync-client/websocket";
 import { $collaborators, $syncStatus } from "@webstudio-is/sync-client";
@@ -35,6 +36,87 @@ const createTransportFactory = () => {
 };
 
 describe("createMultiplayerSyncEmitter", () => {
+  test("Preview waits for a visible collaborator edit to become durable", async () => {
+    draftPersistence.reset("project");
+    const transport = createTransportFactory();
+    const emitter = createMultiplayerSyncEmitter({
+      projectId: "project",
+      clientId: "local",
+      createTransport: transport.createTransport,
+      url: "localhost:1999",
+    });
+    emitter.connect("build");
+    transport.callbacks.onBroadcast({
+      type: "broadcast",
+      actorId: "remote",
+      originClientId: "remote",
+      clientSeq: 1,
+      relayTs: 10,
+      seq: 4,
+      transaction: { id: "remote-edit", object: "server", payload: [] },
+    });
+    const done = vi.fn();
+    const waiting = draftPersistence
+      .wait("project", { signal: new AbortController().signal })
+      .then(done);
+    transport.callbacks.onAck(3, 3);
+    await Promise.resolve();
+    expect(done).not.toHaveBeenCalled();
+    transport.callbacks.onAck(4, 4);
+    await waiting;
+    expect(done).toHaveBeenCalledOnce();
+    emitter.close();
+    draftPersistence.reset();
+  });
+
+  test.each(["settled", "rejected", "dropped", "failed"] as const)(
+    "Preview waits for durable acknowledgment or rejects %s",
+    async (status) => {
+      draftPersistence.reset("project");
+      const transport = createTransportFactory();
+      const emitter = createMultiplayerSyncEmitter({
+        projectId: "project",
+        clientId: "client-1",
+        createTransport: transport.createTransport,
+        url: "localhost:1999",
+      });
+      emitter.connect("build-1");
+      emitter.emit({
+        type: "apply",
+        clientId: "client-1",
+        transaction: { id: "tx-1", object: "server", payload: [] },
+      });
+      const done = vi.fn();
+      const wait = draftPersistence.wait("project", {
+        signal: new AbortController().signal,
+      });
+      const result =
+        status === "settled"
+          ? wait.then(done)
+          : expect(wait).rejects.toMatchObject({
+              name: "DraftPersistenceError",
+              reason: "save-failed",
+            });
+      transport.callbacks.onApplied("tx-1", 1, status);
+      await Promise.resolve();
+      expect(done).not.toHaveBeenCalled();
+      transport.callbacks.onAck(1, 2);
+      await result;
+      if (status !== "settled") {
+        await expect(
+          draftPersistence.wait("project", {
+            signal: new AbortController().signal,
+          })
+        ).rejects.toMatchObject({
+          name: "DraftPersistenceError",
+          reason: "save-failed",
+        });
+      }
+      emitter.close();
+      draftPersistence.reset();
+    }
+  );
+
   afterEach(() => {
     $syncStatus.set({ status: "idle" });
     $collaborators.set(new Map());

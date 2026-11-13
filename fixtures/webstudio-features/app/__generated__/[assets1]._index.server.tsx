@@ -3,19 +3,22 @@
 
 
       import type { PageMeta } from "@webstudio-is/sdk";
+      import { toWebstudioParams } from "@webstudio-is/react-sdk";
       import type { System, ResourceRequest } from "@webstudio-is/sdk";
-export const getResources = (_props: { system: System }) => {
-  const assets_1: ResourceRequest = {
-    name: "assets",
-    control: "system",
-    url: "/$resources/assets",
-    searchParams: [
-    ],
-    method: "post",
-    headers: [
-      { name: "Content-Type", value: "application/json" },
-    ],
-    body: {
+import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
+export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
+  const assets_1 = (documents: ReadonlyMap<string, unknown>): ResourceRequest => {
+    return {
+      name: "assets",
+      control: "system",
+      url: "/$resources/assets",
+      searchParams: [
+      ],
+      method: "post",
+      headers: [
+        { name: "Content-Type", value: "application/json" },
+      ],
+      body: {
   query: ({
     output: {
         mode: "fields",
@@ -34,14 +37,31 @@ export const getResources = (_props: { system: System }) => {
     offset: 0,
   }),
 },
+    }
   }
-  const _data = new Map<string, ResourceRequest>([
-    ["assets_1", assets_1],
+  const _data: ResourceRequestGraph = {
+    resources: [
+      { id: "oIYuHoIwG7GM5J9cCSsai", outputName: "assets_1", dependencies: [], createRequest: assets_1, control: "system", bodyFormat: undefined },
+    ],
+    rootIds: [
+      "oIYuHoIwG7GM5J9cCSsai",
+    ],
+  }
+  const _contentData = new Map<string, ResourceRequest>()
+  const _action = new Map<string, { id: string; outputName: string }>([
   ])
-  const _action = new Map<string, ResourceRequest>([
-  ])
-  return { data: _data, action: _action }
+  return { data: _data, action: _action, contentData: _contentData }
 }
+
+
+      import type { ManagedFormResourceGraph } from "@webstudio-is/sdk/runtime";
+import { createFormEmailDataProxy } from "@webstudio-is/sdk";
+import { createJsonStringifyProxy } from "@webstudio-is/sdk/to-string";
+export const getManagedFormResourceGraph = (formId: string, _managedFormProps: { system: System; formData: unknown; browserInfo: unknown }): ManagedFormResourceGraph | undefined => {
+  switch (formId) {
+    default: return undefined;
+  }
+};
 
 
       export const getPageMeta = ({
@@ -67,11 +87,13 @@ export const getResources = (_props: { system: System }) => {
 };
 
 
-      type Params = Record<string, string | undefined>;
-export const getRemixParams = ({ ...params }: Params): Params => {
-  return params
-}
+      export const getRemixParams = (params: Record<string, string | undefined>) => toWebstudioParams("/assets1", params);
 
+      export const getManagedFormSubmissions = () =>
+        new Map<string, { action: unknown; resourceIds: (string | null)[] }>(
+          []
+        );
 
+      /** @deprecated Generated only for saved Webhook Forms. */
       export const contactEmail = "hello@webstudio.is";
     

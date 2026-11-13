@@ -5,10 +5,17 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import type { Extension } from "@codemirror/state";
+import { linter } from "@codemirror/lint";
+import { getCollectionEntrySourceIssues } from "@webstudio-is/content-engine";
+import { validateTextAssetSource } from "@webstudio-is/content-engine/mdx";
+import { useContentCollections } from "~/builder/shared/assets/content-collections";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
+  cssVar,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -38,17 +45,39 @@ import {
   TextItalicIcon,
   TextStrikethroughIcon,
 } from "@webstudio-is/icons";
-import { formatAssetName } from "@webstudio-is/project-build/runtime";
-import { getAssetUrl, getPagePath, type Asset } from "@webstudio-is/sdk";
+import {
+  findBlockTemplates,
+  formatAssetName,
+  getMdxAssetSourceBlockInstanceIds,
+  inspectMdxAssetSource,
+  MdxAuthoredContentConflictError,
+} from "@webstudio-is/project-build/runtime";
+import { getJsxPropName } from "@webstudio-is/content-engine/jsx-attributes";
+import {
+  contentBlockMdxTemplateDescriptors,
+  getAssetDisplayNameParts,
+  getAssetUrl,
+  getComponentJsxName,
+  getContentBlockTemplateName,
+  getHtmlTagFromInstance,
+  getPagePath,
+  isMdxFileAsset,
+  type Asset,
+  type WsComponentMeta,
+} from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
+import { useAsyncValue } from "~/shared/use-async-value";
 import { EditorDialog, type EditorApi } from "~/shared/code-editor-base";
 import {
   $assetFolders,
   $assets,
+  $dataSources,
+  $instances,
   $pages,
   $props,
+  readBuilderStateStores,
 } from "~/shared/sync/data-stores";
-import { $authPermit } from "~/shared/nano-states";
+import { $authPermit, $registeredComponentMetas } from "~/shared/nano-states";
 import { AssetManager } from "~/builder/shared/asset-manager";
 import {
   AssetUpload,
@@ -61,14 +90,164 @@ import {
 } from "~/builder/features/settings-panel/controls/url";
 import {
   getTextFileEditorExtensions,
+  getMdxPersistenceFeedback,
   isMarkdownAsset,
+  type MdxCompletionComponent,
+  type MdxPersistenceFeedback,
+  normalizeTextFileContent,
 } from "./text-file-utils";
 import { MarkdownSplitView } from "./markdown-preview";
+import { getAssetContentBridge } from "~/shared/asset-content-bridge.client";
+import { $externalContentRoots } from "~/shared/external-content-mutations";
+import type { AssetContentSessionState } from "@webstudio-is/content-engine/asset-content-session";
+import {
+  replaceExternalContentAssetSource,
+  retryExternalContentAsset,
+} from "~/shared/external-content-roots";
 
 type TextFileState =
   | { status: "loading" }
   | { status: "loaded"; content: string }
   | { status: "error" };
+
+const getStaticMdxCompletionProps = (
+  meta: WsComponentMeta | undefined,
+  contentModeOnly = false
+): MdxCompletionComponent["props"] =>
+  Object.entries(meta?.props ?? {}).flatMap(([name, prop]) => {
+    if (
+      (contentModeOnly && prop.contentMode !== true) ||
+      (prop.type !== "string" &&
+        prop.type !== "number" &&
+        prop.type !== "boolean")
+    ) {
+      return [];
+    }
+    const values = "options" in prop ? prop.options : undefined;
+    return [
+      {
+        name,
+        ...(Array.isArray(values) ? { values } : {}),
+      },
+    ];
+  });
+
+const getMdxEditorSourceBlockInstanceIds = async (assetId: string) =>
+  Array.from(
+    new Set([
+      ...(await getMdxAssetSourceBlockInstanceIds({
+        assetId,
+        state: readBuilderStateStores(),
+      })),
+      ...Array.from($externalContentRoots.get().values()).flatMap((root) =>
+        root.assetId === assetId
+          ? [root.sourceBlockInstanceId ?? root.blockInstanceId]
+          : []
+      ),
+    ])
+  );
+
+const getMdxCompletionComponents = async ({
+  assetId,
+  metas,
+}: {
+  assetId: string;
+  metas: Map<string, WsComponentMeta>;
+}): Promise<MdxCompletionComponent[]> => {
+  const components = new Map<string, MdxCompletionComponent>();
+  const componentIds = Array.from(metas.keys());
+  for (const [component, meta] of metas) {
+    if (
+      contentBlockMdxTemplateDescriptors.some(
+        (descriptor) =>
+          descriptor.kind === "component" && descriptor.component === component
+      ) === false
+    ) {
+      continue;
+    }
+    const name = getComponentJsxName({
+      component,
+      components: componentIds,
+    });
+    if (name !== undefined) {
+      components.set(name, {
+        name,
+        props: getStaticMdxCompletionProps(meta),
+      });
+    }
+  }
+
+  const state = readBuilderStateStores();
+  const instances = state.instances ?? new Map();
+  const propsByInstanceId = new Map<
+    string,
+    Array<{ name: string; type: "string" | "number" | "boolean" }>
+  >();
+  for (const prop of state.props?.values() ?? []) {
+    if (
+      prop.type !== "string" &&
+      prop.type !== "number" &&
+      prop.type !== "boolean"
+    ) {
+      continue;
+    }
+    const props = propsByInstanceId.get(prop.instanceId) ?? [];
+    props.push({ name: prop.name, type: prop.type });
+    propsByInstanceId.set(prop.instanceId, props);
+  }
+  const templates = new Map<string, MdxCompletionComponent>();
+  for (const blockInstanceId of await getMdxEditorSourceBlockInstanceIds(
+    assetId
+  )) {
+    for (const [template] of findBlockTemplates({
+      anchor: [blockInstanceId],
+      instances,
+    }) ?? []) {
+      const name = getContentBlockTemplateName(template);
+      const existing = templates.get(name);
+      const meta = metas.get(template.component);
+      const componentPropNames = new Set(Object.keys(meta?.props ?? {}));
+      const acceptsHtmlAttributes =
+        getHtmlTagFromInstance({
+          instance: template,
+          metas,
+          props: state.props,
+        }) !== undefined;
+      const existingProps = (propsByInstanceId.get(template.id) ?? []).flatMap(
+        (prop) => {
+          const propMeta = meta?.props?.[prop.name];
+          if (
+            propMeta !== undefined &&
+            (propMeta.contentMode !== true || propMeta.type !== prop.type)
+          ) {
+            return [];
+          }
+          return [
+            {
+              name: getJsxPropName({
+                instancePropName: prop.name,
+                acceptsHtmlAttributes,
+                componentPropNames,
+              }),
+            },
+          ];
+        }
+      );
+      const props = new Map(
+        [
+          ...(existing?.props ?? []),
+          ...getStaticMdxCompletionProps(meta, true),
+          ...existingProps,
+        ].map((prop) => [prop.name, prop] as const)
+      );
+      templates.set(name, { name, props: Array.from(props.values()) });
+    }
+  }
+  for (const [name, template] of templates) {
+    components.set(name, template);
+  }
+  return Array.from(components.values());
+};
 
 const markdownActions = [
   {
@@ -244,6 +423,10 @@ const MarkdownImagePicker = ({
   );
 };
 
+export const __testing__ = {
+  getMdxCompletionComponents,
+};
+
 const getMarkdownHref = (value: UrlInputValue) => {
   if (value.type === "string" || value.type === "asset") {
     return value.value;
@@ -302,11 +485,7 @@ const MarkdownLinkPicker = ({
       }}
       content={
         open && (
-          <Flex
-            direction="column"
-            gap={5}
-            css={{ padding: theme.panel.padding }}
-          >
+          <PanelContent as={Flex} direction="column" gap={5}>
             <UrlInput
               instanceId="markdown-link"
               prop={value}
@@ -318,6 +497,7 @@ const MarkdownLinkPicker = ({
             />
             <Flex justify="end">
               <Button
+                color="primary"
                 type="button"
                 onClick={() => {
                   const href = getMarkdownHref(valueRef.current);
@@ -335,7 +515,7 @@ const MarkdownLinkPicker = ({
                 Insert link
               </Button>
             </Flex>
-          </Flex>
+          </PanelContent>
         )
       }
     >
@@ -370,17 +550,16 @@ const MarkdownToolbar = ({
     gap={2}
     css={{
       padding: theme.spacing[3],
-      borderBottom: `1px solid ${theme.colors.borderMain}`,
+      borderBottom: `1px solid ${cssVar("--border-default")}`,
       overflow: "hidden",
       flexShrink: 0,
-      background: theme.colors.backgroundPanel,
+      background: cssVar("--background-primary"),
     }}
   >
     <Flex
       align="center"
       gap={2}
       css={{
-        minWidth: 0,
         flex: 1,
         overflowX: "auto",
         scrollbarWidth: "none",
@@ -419,25 +598,184 @@ const MarkdownToolbar = ({
   </Flex>
 );
 
+export const MarkdownEditor = ({
+  asset,
+  ariaLabel = "Markdown source",
+  defaultPreviewOpen = true,
+  autoFocus = false,
+  value,
+  readOnly,
+  languageExtensions = [],
+  onChange,
+  onChangeComplete,
+}: {
+  asset: Asset;
+  ariaLabel?: string;
+  defaultPreviewOpen?: boolean;
+  autoFocus?: boolean;
+  value: string;
+  readOnly: boolean;
+  languageExtensions?: Extension[];
+  onChange: (value: string) => void;
+  onChangeComplete: (value: string) => void;
+}) => {
+  const assetFolders = useStore($assetFolders);
+  const { assetContainers } = useAssets();
+  const [previewOpen, setPreviewOpen] = useState(defaultPreviewOpen);
+  const editorApiRef = useRef<EditorApi>();
+
+  return (
+    <Box
+      css={{
+        display: "grid",
+        gridTemplateRows: "auto minmax(0, 1fr)",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
+      <MarkdownToolbar
+        editorApiRef={editorApiRef}
+        disabled={readOnly}
+        previewOpen={previewOpen}
+        onPreviewOpenChange={setPreviewOpen}
+      />
+      <MarkdownSplitView
+        open={previewOpen}
+        source={value}
+        sourceAsset={asset}
+        folders={assetFolders}
+        assetContainers={assetContainers}
+      >
+        <CodeEditor
+          autoFocus={autoFocus}
+          ariaLabel={ariaLabel}
+          editorApiRef={editorApiRef}
+          value={value}
+          languageExtensions={languageExtensions}
+          size="full"
+          expandable={false}
+          chromeless
+          readOnly={readOnly}
+          onChange={onChange}
+          onChangeComplete={onChangeComplete}
+        />
+      </MarkdownSplitView>
+    </Box>
+  );
+};
+
 export const TextFileEditor = ({
   assetId,
   onOpenChange,
+  readOnly = false,
 }: {
   assetId: string;
   onOpenChange: (open: boolean) => void;
+  readOnly?: boolean;
 }) => {
   const assets = useStore($assets);
-  const assetFolders = useStore($assetFolders);
+  const externalContentRoots = useStore($externalContentRoots);
+  const registeredComponentMetas = useStore($registeredComponentMetas);
+  const instances = useStore($instances);
+  const props = useStore($props);
+  const dataSources = useStore($dataSources);
   const asset = assets.get(assetId);
-  const { assetContainers } = useAssets();
-  const canEdit = useStore($authPermit) !== "view";
+  const collections = useContentCollections(asset?.folderId);
+  const collection =
+    asset?.folderId === undefined ? undefined : collections.get(asset.folderId);
+  const canEdit = useStore($authPermit) !== "view" && readOnly === false;
   const [state, setState] = useState<TextFileState>({ status: "loading" });
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [persistenceFeedback, setPersistenceFeedback] =
+    useState<MdxPersistenceFeedback>();
   const currentAssetRef = useRef<Asset>();
   const persistedContentRef = useRef<string>();
   const requestedContentRef = useRef<string>();
+  const pendingMdxSavesRef = useRef(0);
   const saveQueueRef = useRef(Promise.resolve());
-  const editorApiRef = useRef<EditorApi>();
+  const reportedConflictRef = useRef<string>();
+  const saveAttemptRef = useRef(0);
+  const mdxSession =
+    asset !== undefined &&
+    isMdxFileAsset(asset) &&
+    asset.projectId !== undefined
+      ? getAssetContentBridge().getContentSession?.(asset.projectId)
+      : undefined;
+  const languageExtensions = useAsyncValue(
+    async () => {
+      // The state reader below is intentionally refreshed when its external
+      // Content Block context or template definitions change.
+      void externalContentRoots;
+      void instances;
+      void props;
+      void dataSources;
+      if (asset === undefined) {
+        return [];
+      }
+      if (isMdxFileAsset(asset) === false || asset.projectId === undefined) {
+        return getTextFileEditorExtensions(asset);
+      }
+      const projectId = asset.projectId;
+      const extensions = getTextFileEditorExtensions(
+        asset,
+        [],
+        async ({ source }) =>
+          inspectMdxAssetSource({
+            source,
+            assetId,
+            sourceBlockInstanceIds:
+              await getMdxEditorSourceBlockInstanceIds(assetId),
+            state: readBuilderStateStores(),
+            metas: registeredComponentMetas,
+            projectId,
+          }),
+        await getMdxCompletionComponents({
+          assetId,
+          metas: registeredComponentMetas,
+        })
+      );
+      if (
+        collection?.status === "ready" &&
+        collection.config.matchesEntry(formatAssetName(asset))
+      ) {
+        extensions.push(
+          linter(async (view) => {
+            try {
+              return (
+                await getCollectionEntrySourceIssues({
+                  config: collection.config,
+                  source: view.state.doc.toString(),
+                  basename: getAssetDisplayNameParts(asset).basename,
+                })
+              ).map(({ from, to, message }) => ({
+                from,
+                to,
+                message,
+                severity: "error" as const,
+                source: "collection-field",
+              }));
+            } catch {
+              // The Markdown linter already reports malformed frontmatter.
+              return [];
+            }
+          })
+        );
+      }
+      return extensions;
+    },
+    // Recreate the linter after a Content Block is materialized or refreshed so
+    // contextual template and content-model diagnostics are recalculated.
+    [
+      asset,
+      assetId,
+      collection,
+      dataSources,
+      externalContentRoots,
+      instances,
+      props,
+      registeredComponentMetas,
+    ],
+    []
+  );
 
   useEffect(() => {
     const assetToLoad = $assets.get().get(assetId);
@@ -449,9 +787,44 @@ export const TextFileEditor = ({
 
     const controller = new AbortController();
     setState({ status: "loading" });
+    setPersistenceFeedback(undefined);
+    reportedConflictRef.current = undefined;
+
+    const applySessionState = (sessionState: AssetContentSessionState) => {
+      const feedback = getMdxPersistenceFeedback(sessionState);
+      setPersistenceFeedback(feedback);
+      if (
+        feedback?.kind === "conflicting" &&
+        reportedConflictRef.current !== feedback.message
+      ) {
+        reportedConflictRef.current = feedback.message;
+        getAssetContentBridge().requireReload(feedback.message);
+      }
+      if (feedback?.kind !== "conflicting") {
+        reportedConflictRef.current = undefined;
+      }
+    };
 
     const load = async () => {
       try {
+        if (isMdxFileAsset(assetToLoad)) {
+          const session = getAssetContentBridge().getContentSession?.(
+            assetToLoad.projectId
+          );
+          if (session === undefined) {
+            throw new Error("MDX content session is not available");
+          }
+          const opened = await session.open(assetId);
+          if (controller.signal.aborted) {
+            return;
+          }
+          currentAssetRef.current = assetToLoad;
+          persistedContentRef.current = opened.source;
+          requestedContentRef.current = opened.source;
+          applySessionState(opened);
+          setState({ status: "loaded", content: opened.source });
+          return;
+        }
         const response = await fetch(
           getAssetUrl(assetToLoad, window.location.origin),
           { signal: controller.signal }
@@ -474,14 +847,105 @@ export const TextFileEditor = ({
     };
 
     void load();
-    return () => controller.abort();
+    const unsubscribe = isMdxFileAsset(assetToLoad)
+      ? getAssetContentBridge()
+          .getContentSession?.(assetToLoad.projectId)
+          .subscribe((changedAssetId, sessionState) => {
+            if (changedAssetId !== assetId || controller.signal.aborted) {
+              return;
+            }
+            currentAssetRef.current = sessionState.asset as Asset;
+            persistedContentRef.current = sessionState.source;
+            applySessionState(sessionState);
+            if (requestedContentRef.current === sessionState.source) {
+              return;
+            }
+            if (pendingMdxSavesRef.current > 0) {
+              return;
+            }
+            requestedContentRef.current = sessionState.source;
+            setState({ status: "loaded", content: sessionState.source });
+          })
+      : undefined;
+    return () => {
+      saveAttemptRef.current += 1;
+      controller.abort();
+      unsubscribe?.();
+    };
   }, [assetId]);
 
-  const save = (content: string) => {
+  const save = async (content: string) => {
+    const attempt = ++saveAttemptRef.current;
     if (canEdit === false) {
-      return;
+      return true;
     }
-    requestedContentRef.current = content;
+    const currentAsset = currentAssetRef.current;
+    if (currentAsset === undefined) {
+      toast.error("Unable to save: asset not found");
+      return false;
+    }
+    const normalized = normalizeTextFileContent(currentAsset, content);
+    if ("error" in normalized) {
+      toast.error(normalized.error);
+      return false;
+    }
+    const normalizedContent = normalized.content;
+    if (isMdxFileAsset(currentAsset)) {
+      const { diagnostics } = await validateTextAssetSource({
+        source: normalizedContent,
+        format: "mdx",
+      });
+      if (attempt !== saveAttemptRef.current) {
+        return false;
+      }
+      const error = diagnostics.find(({ severity }) => severity === "error");
+      if (error !== undefined) {
+        setPersistenceFeedback({ kind: "invalid", message: error.message });
+        return false;
+      }
+      setPersistenceFeedback((feedback) =>
+        feedback?.kind === "invalid" ? undefined : feedback
+      );
+    }
+    if (normalizedContent !== content) {
+      setState({ status: "loaded", content: normalizedContent });
+    }
+    const expectedContent = requestedContentRef.current;
+    requestedContentRef.current = normalizedContent;
+    if (isMdxFileAsset(currentAsset) && mdxSession !== undefined) {
+      if (
+        expectedContent === undefined ||
+        currentAsset.projectId === undefined
+      ) {
+        toast.error("Unable to save: MDX content is not loaded");
+        return false;
+      }
+      pendingMdxSavesRef.current += 1;
+      void replaceExternalContentAssetSource({
+        projectId: currentAsset.projectId,
+        assetId,
+        expectedSource: expectedContent,
+        source: normalizedContent,
+      })
+        .catch((error) => {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Unable to save this file.";
+          const feedback: MdxPersistenceFeedback = {
+            kind:
+              error instanceof MdxAuthoredContentConflictError
+                ? "conflicting"
+                : "failed",
+            message,
+          };
+          setPersistenceFeedback(feedback);
+        })
+        .finally(() => {
+          pendingMdxSavesRef.current -= 1;
+        });
+      return true;
+    }
     saveQueueRef.current = saveQueueRef.current.then(async () => {
       const requestedContent = requestedContentRef.current;
       if (
@@ -491,15 +955,15 @@ export const TextFileEditor = ({
         return;
       }
 
-      const currentAsset = currentAssetRef.current;
-      if (currentAsset === undefined) {
+      const assetToUpdate = currentAssetRef.current;
+      if (assetToUpdate === undefined) {
         toast.error("Unable to save: asset not found");
         return;
       }
 
       try {
         const updatedAsset = await updateAssetContent({
-          asset: currentAsset,
+          asset: assetToUpdate,
           content: requestedContent,
         });
         currentAssetRef.current = updatedAsset;
@@ -509,24 +973,38 @@ export const TextFileEditor = ({
         toast.error(error instanceof Error ? error.message : "Unable to save");
       }
     });
+    return true;
   };
 
   const title = asset === undefined ? "Text file" : formatAssetName(asset);
   const isMarkdown = asset !== undefined && isMarkdownAsset(asset);
   let editor: ReactNode;
   if (state.status === "loaded" && asset !== undefined) {
-    editor = (
-      <CodeEditor
-        editorApiRef={editorApiRef}
+    const onChange = (content: string) => {
+      saveAttemptRef.current += 1;
+      setState({ status: "loaded", content });
+    };
+    editor = isMarkdown ? (
+      <MarkdownEditor
+        autoFocus
+        asset={asset}
         value={state.content}
-        languageExtensions={getTextFileEditorExtensions(asset)}
+        readOnly={canEdit === false}
+        languageExtensions={languageExtensions}
+        onChange={onChange}
+        onChangeComplete={save}
+      />
+    ) : (
+      <CodeEditor
+        autoFocus
+        value={state.content}
+        languageExtensions={languageExtensions}
         size="full"
         expandable={false}
         chromeless
+        showLineNumbers={languageExtensions.length > 0}
         readOnly={canEdit === false}
-        onChange={(content) => {
-          setState({ status: "loaded", content });
-        }}
+        onChange={onChange}
         onChangeComplete={save}
       />
     );
@@ -535,11 +1013,18 @@ export const TextFileEditor = ({
   return (
     <EditorDialog
       title={title}
-      contentPadding={false}
+      contentPadding={!isMarkdown}
+      width={isMarkdown ? 1280 : undefined}
+      height={isMarkdown ? 960 : undefined}
       open
       onOpenChange={(open) => {
         if (open === false && state.status === "loaded") {
-          save(state.content);
+          void save(state.content).then((saved) => {
+            if (saved) {
+              onOpenChange(false);
+            }
+          });
+          return;
         }
         onOpenChange(open);
       }}
@@ -562,33 +1047,58 @@ export const TextFileEditor = ({
             <Box
               css={{
                 display: "grid",
-                gridTemplateRows: isMarkdown
-                  ? "auto minmax(0, 1fr)"
-                  : "minmax(0, 1fr)",
+                gridTemplateRows:
+                  persistenceFeedback === undefined
+                    ? "minmax(0, 1fr)"
+                    : "auto minmax(0, 1fr)",
                 height: "100%",
               }}
             >
-              {isMarkdown && (
-                <MarkdownToolbar
-                  editorApiRef={editorApiRef}
-                  disabled={canEdit === false}
-                  previewOpen={previewOpen}
-                  onPreviewOpenChange={setPreviewOpen}
-                />
-              )}
-              {isMarkdown ? (
-                <MarkdownSplitView
-                  open={previewOpen}
-                  source={state.content}
-                  sourceAsset={asset}
-                  folders={assetFolders}
-                  assetContainers={assetContainers}
+              {persistenceFeedback !== undefined && (
+                <Flex
+                  gap="2"
+                  align="center"
+                  css={{ padding: rawTheme.spacing[5] }}
                 >
-                  {editor}
-                </MarkdownSplitView>
-              ) : (
-                editor
+                  <Text role="alert" color="destructive">
+                    {persistenceFeedback.message}
+                  </Text>
+                  {persistenceFeedback.kind === "invalid" && (
+                    <Button
+                      color="ghost"
+                      onClick={() => {
+                        saveAttemptRef.current += 1;
+                        onOpenChange(false);
+                      }}
+                    >
+                      Discard changes
+                    </Button>
+                  )}
+                  {persistenceFeedback.kind === "failed" &&
+                    mdxSession !== undefined && (
+                      <Button
+                        color="ghost"
+                        onClick={() => {
+                          void retryExternalContentAsset({
+                            projectId: asset.projectId!,
+                            assetId,
+                          }).catch((error) => {
+                            setPersistenceFeedback({
+                              kind: "failed",
+                              message:
+                                error instanceof Error
+                                  ? error.message
+                                  : "Unable to save this file.",
+                            });
+                          });
+                        }}
+                      >
+                        Retry
+                      </Button>
+                    )}
+                </Flex>
               )}
+              {editor}
             </Box>
           )}
         </Box>

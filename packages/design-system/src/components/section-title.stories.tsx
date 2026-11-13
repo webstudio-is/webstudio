@@ -6,13 +6,21 @@ import {
 import { StoryGrid, StorySection } from "./storybook";
 import type { ComponentProps } from "react";
 import { PlusIcon } from "@webstudio-is/icons";
+import { cssVar } from "../css-var";
 
 export default {
   title: "Section Title",
 };
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>{children}</div>
+  <div
+    style={{
+      width: 240,
+      border: `dashed 3px ${cssVar("--border-default")}`,
+    }}
+  >
+    {children}
+  </div>
 );
 
 const Variants = ({

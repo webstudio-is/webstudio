@@ -1,5 +1,8 @@
 import { expect, test } from "vitest";
 import {
+  blockTemplateComponent,
+  blockBodyComponent,
+  blockComponent,
   collectionComponent,
   elementComponent,
   encodeDataVariableId,
@@ -27,6 +30,7 @@ import { createEmptyWebstudioFragment } from "./component-template";
 import { insertCollectionInput } from "./collection";
 import { isLikelyWebstudioJsxFragment, parseWebstudioJsxFragment } from "./jsx";
 import { inspectWebstudioJsxFragmentSyntax } from "./jsx/syntax";
+import { applyBuilderPatchTransactions } from "../state/patch";
 
 const createPages = (
   rootInstanceId: Instance["id"],
@@ -67,6 +71,21 @@ const createState = (
   breakpoints: new Map(),
   assets: new Map(),
 });
+
+const addFragmentStyles = (
+  state: WebstudioData,
+  fragment: Awaited<ReturnType<typeof parseWebstudioJsxFragment>>
+) => {
+  for (const styleSource of fragment.styleSources) {
+    state.styleSources.set(styleSource.id, styleSource);
+  }
+  for (const style of fragment.styles) {
+    state.styles.set(getStyleDeclKey(style), style);
+  }
+  for (const breakpoint of fragment.breakpoints) {
+    state.breakpoints.set(breakpoint.id, breakpoint);
+  }
+};
 
 const createTemplateState = ({
   root,
@@ -114,6 +133,392 @@ const createIdFactory = () => {
   let index = 0;
   return () => `generated-${index++}`;
 };
+
+test("rejects Add-panel components inside MDX before changing state, but allows shell and unconnected content", () => {
+  const block: Instance = {
+    type: "instance",
+    id: "block",
+    component: blockComponent,
+    children: [
+      { type: "id", value: "mdx" },
+      { type: "id", value: "shell" },
+    ],
+  };
+  const state = createState(block);
+  state.instances.set("mdx", {
+    type: "instance",
+    id: "mdx",
+    component: blockBodyComponent,
+    children: [{ type: "id", value: "paragraph" }],
+  });
+  state.instances.set("paragraph", {
+    type: "instance",
+    id: "paragraph",
+    component: elementComponent,
+    tag: "p",
+    children: [],
+  });
+  state.instances.set("shell", {
+    type: "instance",
+    id: "shell",
+    component: elementComponent,
+    tag: "div",
+    children: [],
+  });
+  state.props.set("source", {
+    id: "source",
+    instanceId: "block",
+    name: "src",
+    type: "asset",
+    value: "article",
+  });
+  const original = structuredClone(state);
+  const component = "@webstudio-is/sdk-components-react-radix:Accordion";
+  for (const parentInstanceId of ["mdx", "paragraph"]) {
+    expect(() =>
+      insertComponent(
+        state,
+        { parentInstanceId, component },
+        { createId: createIdFactory() }
+      )
+    ).toThrow("template picker");
+    expect(state).toEqual(original);
+  }
+  expect(
+    insertComponent(
+      state,
+      { parentInstanceId: "shell", component },
+      { createId: createIdFactory() }
+    ).result.rootInstanceIds
+  ).toHaveLength(1);
+  expect(
+    insertComponent(
+      state,
+      { parentInstanceId: "mdx", component: elementComponent, tag: "p" },
+      { createId: createIdFactory() }
+    ).result.rootInstanceIds
+  ).toHaveLength(1);
+  state.instances.set("templates", {
+    type: "instance",
+    id: "templates",
+    component: blockTemplateComponent,
+    children: [],
+  });
+  block.children = [{ type: "id", value: "templates" }];
+  state.instances = new Map(state.instances);
+  expect(
+    insertComponent(
+      state,
+      { parentInstanceId: "templates", component },
+      { createId: createIdFactory() }
+    ).result.rootInstanceIds
+  ).toHaveLength(1);
+  block.children.push({ type: "id", value: "mdx" });
+  state.props.delete("source");
+  expect(
+    insertComponent(
+      state,
+      { parentInstanceId: "mdx", component },
+      { createId: createIdFactory() }
+    ).result.rootInstanceIds
+  ).toHaveLength(1);
+});
+
+test("assigns a unique name when inserting into a Templates list", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "templates",
+    component: blockTemplateComponent,
+    children: [{ type: "id", value: "existing" }],
+  };
+  const state = createState(parent);
+  state.instances.set("existing", {
+    type: "instance",
+    id: "existing",
+    component: "Box",
+    children: [],
+  });
+  const fragment = await parseWebstudioJsxFragment("<Box />");
+
+  const mutation = insertFragment(
+    state,
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory() }
+  );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+    expect.objectContaining({
+      id: "generated-0",
+      component: "Box",
+      name: "Box2",
+    })
+  );
+});
+
+test("replaces only the child at an explicit insert index", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: "Box",
+    children: [
+      { type: "id", value: "first" },
+      { type: "id", value: "second" },
+    ],
+  };
+  const state = createState(parent);
+  state.instances.set("first", {
+    type: "instance",
+    id: "first",
+    component: "Box",
+    children: [],
+  });
+  state.instances.set("second", {
+    type: "instance",
+    id: "second",
+    component: "Text",
+    children: [{ type: "text", value: "Keep me" }],
+  });
+  const fragment = await parseWebstudioJsxFragment("<Box />");
+
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment,
+      mode: "replace",
+      insertIndex: 0,
+    },
+    { createId: createIdFactory() }
+  );
+
+  expect(mutation.result.removedInstanceIds).toEqual(["first"]);
+  expect(
+    mutation.payload
+      .find(({ namespace }) => namespace === "instances")
+      ?.patches.filter(
+        ({ op, path }) =>
+          op === "remove" && path[0] === "parent" && path[1] === "children"
+      )
+  ).toEqual([{ op: "remove", path: ["parent", "children", 0] }]);
+  expect(
+    mutation.payload
+      .flatMap(({ patches }) => patches)
+      .some(({ op, path }) => op === "remove" && path.includes("second"))
+  ).toBe(false);
+});
+
+test("keeps existing text editable when inserting an element beside it", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: elementComponent,
+    tag: "div",
+    children: [{ type: "text", value: "test" }],
+  };
+  const state = createState(parent);
+  const fragment = await parseWebstudioJsxFragment("<span>bytes</span>");
+  const mutation = insertFragment(
+    state,
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory() }
+  );
+  const next = applyBuilderPatchTransactions(state, [
+    { id: "insert", payload: mutation.payload },
+  ]).state;
+  const [textChild, insertedChild] =
+    next.instances?.get(parent.id)?.children ?? [];
+  expect(textChild?.type).toBe("id");
+  expect(insertedChild).toEqual({
+    type: "id",
+    value: mutation.result.rootInstanceIds[0],
+  });
+  expect(next.instances?.get(textChild?.value ?? "")).toMatchObject({
+    tag: "span",
+    children: [{ type: "text", value: "test" }],
+  });
+  expect(mutation.result.instanceIds).toContain(textChild?.value);
+  expect(mutation.result.rootInstanceIds).toEqual([insertedChild?.value]);
+});
+
+test("wraps existing text when prepending an element", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: elementComponent,
+    tag: "div",
+    children: [{ type: "text", value: "test" }],
+  };
+  const state = createState(parent);
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment: await parseWebstudioJsxFragment("<span>first</span>"),
+      mode: "prepend",
+    },
+    { createId: createIdFactory() }
+  );
+  const next = applyBuilderPatchTransactions(state, [
+    { id: "prepend", payload: mutation.payload },
+  ]).state;
+  const [insertedChild, wrappedText] =
+    next.instances?.get(parent.id)?.children ?? [];
+  expect(insertedChild?.value).toBe(mutation.result.rootInstanceIds[0]);
+  expect(next.instances?.get(wrappedText?.value ?? "")?.children).toEqual([
+    { type: "text", value: "test" },
+  ]);
+});
+
+test("rejects wrapper ID collisions without changing the original tree", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: elementComponent,
+    tag: "div",
+    children: [{ type: "text", value: "test" }],
+  };
+  const state = createState(parent);
+  state.instances.set("generated-1", {
+    type: "instance",
+    id: "generated-1",
+    component: elementComponent,
+    tag: "span",
+    children: [],
+  });
+  const fragment = await parseWebstudioJsxFragment("<span>new</span>");
+  expect(() =>
+    insertFragment(
+      state,
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory() }
+    )
+  ).toThrow("Generated record ID already exists in instances.");
+  expect(state.instances.get(parent.id)?.children).toEqual([
+    { type: "text", value: "test" },
+  ]);
+  expect(state.instances.size).toBe(2);
+});
+
+test("keeps the raw child position when replacing inside rich text", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: elementComponent,
+    tag: "div",
+    children: [
+      { type: "text", value: "before" },
+      { type: "id", value: "old" },
+      { type: "text", value: "after" },
+    ],
+  };
+  const state = createState(parent);
+  state.instances.set("old", {
+    type: "instance",
+    id: "old",
+    component: elementComponent,
+    tag: "span",
+    children: [{ type: "text", value: "old" }],
+  });
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment: await parseWebstudioJsxFragment("<span>new</span>"),
+      mode: "replace",
+      insertIndex: 1,
+    },
+    { createId: createIdFactory() }
+  );
+  const next = applyBuilderPatchTransactions(state, [
+    { id: "replace", payload: mutation.payload },
+  ]).state;
+  const children = next.instances?.get(parent.id)?.children ?? [];
+  expect(children).toHaveLength(3);
+  expect(children[1]).toEqual({
+    type: "id",
+    value: mutation.result.rootInstanceIds[0],
+  });
+  expect(next.instances?.get(children[0]?.value ?? "")?.children).toEqual([
+    { type: "text", value: "before" },
+  ]);
+  expect(next.instances?.get(children[2]?.value ?? "")?.children).toEqual([
+    { type: "text", value: "after" },
+  ]);
+  expect(next.instances?.has("old")).toBe(false);
+});
+
+test("does not keep wrapper spans when replacing all rich text", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: elementComponent,
+    tag: "div",
+    children: [{ type: "text", value: "old" }],
+  };
+  const state = createState(parent);
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment: await parseWebstudioJsxFragment("<span>new</span>"),
+      mode: "replace",
+    },
+    { createId: createIdFactory() }
+  );
+  const next = applyBuilderPatchTransactions(state, [
+    { id: "replace", payload: mutation.payload },
+  ]).state;
+  expect(next.instances?.get(parent.id)?.children).toEqual([
+    { type: "id", value: mutation.result.rootInstanceIds[0] },
+  ]);
+  expect(mutation.result.instanceIds).toEqual(mutation.result.rootInstanceIds);
+});
+
+test("preserves intentionally mixed text inside an inserted fragment", async () => {
+  const state = createState(createParent());
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: "parent",
+      fragment: await parseWebstudioJsxFragment(
+        "<div>intro <span>emphasis</span></div>"
+      ),
+    },
+    { createId: createIdFactory() }
+  );
+  const next = applyBuilderPatchTransactions(state, [
+    { id: "insert", payload: mutation.payload },
+  ]).state;
+  expect(
+    next.instances?.get(mutation.result.rootInstanceIds[0] ?? "")?.children
+  ).toEqual([
+    { type: "text", value: "intro " },
+    { type: "id", value: expect.any(String) },
+  ]);
+});
+
+test("uses the public collision-safe component identifier as the template name", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "templates",
+    component: blockTemplateComponent,
+    children: [],
+  };
+  const fragment = await parseWebstudioJsxFragment("<RadixCheckbox />");
+
+  const mutation = insertFragment(
+    createState(parent),
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory() }
+  );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+    expect.objectContaining({
+      component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+      name: "RadixCheckbox",
+    })
+  );
+});
 
 const getAddedValues = <Value>(
   mutation: { payload: Awaited<ReturnType<typeof insertComponent>>["payload"] },
@@ -314,7 +719,7 @@ test("inserts a semantic Collection with literal data and bound item expressions
         child.type === "expression" ? [child.value] : []
       )
     )
-  ).toContain(`${encodeDataVariableId(mutation.result.itemParameterId)}?.name`);
+  ).toContain(`${encodeDataVariableId(mutation.result.itemParameterId)}.name`);
 });
 
 test("binds semantic Collection data to outer scope and item props to its parameter", async () => {
@@ -345,7 +750,7 @@ test("binds semantic Collection data to outer scope and item props to its parame
       instanceId: mutation.result.collectionInstanceId,
       name: "data",
       type: "expression",
-      value: `${encodeDataVariableId("posts")}?.data?.items`,
+      value: `${encodeDataVariableId("posts")}.data.items`,
     })
   );
   expect(props).toContainEqual(
@@ -353,7 +758,7 @@ test("binds semantic Collection data to outer scope and item props to its parame
       instanceId: mutation.result.itemRootInstanceId,
       name: "title",
       type: "expression",
-      value: `${encodeDataVariableId(mutation.result.itemParameterId)}?.title`,
+      value: `${encodeDataVariableId(mutation.result.itemParameterId)}.title`,
     })
   );
 });
@@ -387,8 +792,58 @@ test("binds semantic Collection data to an HTTP resource result", async () => {
 
   expect(dataProp).toMatchObject({
     type: "expression",
-    value: `${encodeDataVariableId("posts")}?.data?.items`,
+    value: `${encodeDataVariableId("posts")}.data.items`,
   });
+});
+
+test("requires and honors Collection item token conflict resolution", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  addFragmentStyles(state, existingFragment);
+  const itemFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="article" ws:tokens={[token("brand", css\`color: red;\`)]}>Item</ws.element>`
+  );
+
+  expect(() =>
+    insertCollection(
+      state,
+      {
+        parentInstanceId: parent.id,
+        data: { type: "json", value: [] },
+        itemFragment,
+      },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow(/explicit conflictResolution.*brand/);
+
+  const mutation = insertCollection(
+    state,
+    {
+      parentInstanceId: parent.id,
+      data: { type: "json", value: [] },
+      itemFragment,
+      conflictResolution: "ours",
+    },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(
+    getAddedValues<{ type: string; name: string }>(
+      mutation,
+      "styleSources"
+    ).filter((styleSource) => styleSource.type === "token")
+  ).toEqual([]);
+  expect(
+    getAddedValues<{ instanceId: string; values: string[] }>(
+      mutation,
+      "styleSourceSelections"
+    )
+  ).toContainEqual(
+    expect.objectContaining({ values: [existingFragment.styleSources[0]?.id] })
+  );
 });
 
 test("binds object Collection keys to the generated itemKey parameter", async () => {
@@ -414,6 +869,7 @@ test("binds object Collection keys to the generated itemKey parameter", async ()
   expect(itemRoot?.children).toContainEqual({
     type: "expression",
     value: encodeDataVariableId(mutation.result.itemKeyParameterId),
+    mode: "read",
   });
 });
 
@@ -555,7 +1011,7 @@ test("inserts fragment into page template", async () => {
     component: elementComponent,
     children: [{ type: "id", value: parent.id }],
   };
-  const fragment = await parseWebstudioJsxFragment("<$.Box />");
+  const fragment = await parseWebstudioJsxFragment("<Box />");
 
   const mutation = insertFragment(
     createTemplateState({ root, parent }),
@@ -580,7 +1036,7 @@ test("inserts fragment into page template", async () => {
 test("rejects invalid HtmlEmbed code from externally authored fragments", async () => {
   const parent = createParent();
   const fragment = await parseWebstudioJsxFragment(
-    `<$.HtmlEmbed code={"<div><span></div>"} />`
+    `<HtmlEmbed code={"<div><span></div>"} />`
   );
 
   expect(() =>
@@ -721,22 +1177,8 @@ test("rejects unknown Webstudio core components", () => {
 });
 
 test("rejects unknown Webstudio core components in JSX fragments", async () => {
-  const parent = createParent();
-  const fragment = await parseWebstudioJsxFragment(`<ws.div />`);
-
-  expect(() =>
-    insertFragment(
-      createState(parent),
-      {
-        parentInstanceId: parent.id,
-        fragment,
-      },
-      {
-        createId: createIdFactory(),
-      }
-    )
-  ).toThrow(
-    'Component "ws:div" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands.'
+  await expect(parseWebstudioJsxFragment(`<ws.div />`)).rejects.toThrow(
+    'Component "ws:div" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands. In JSX, use a lowercase HTML element such as <div>.'
   );
 });
 
@@ -789,7 +1231,7 @@ test("remaps action data source references when inserting registered component t
     createState(parent),
     {
       parentInstanceId: parent.id,
-      component: "Form",
+      component: "WebhookForm",
     },
     {
       createId: createIdFactory(),
@@ -821,6 +1263,7 @@ test("remaps action data source references when inserting registered component t
       name: "state",
       type: "expression",
       value: "$ws$dataSource$generated__DASH__9",
+      mode: "read",
     },
     {
       id: "generated-11",
@@ -852,7 +1295,7 @@ test("inserts webstudio jsx fragment with styles", async () => {
         }
       \`}>
         <ws.element ws:tag="h2">Northstar Design System</ws.element>
-        <radix.Switch><radix.SwitchThumb /></radix.Switch>
+        <Switch><SwitchThumb /></Switch>
       </ws.element>`),
     },
     {
@@ -1069,15 +1512,7 @@ test("honors fragment token conflict resolution", async () => {
   const existingFragment = await parseWebstudioJsxFragment(
     `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
   );
-  for (const styleSource of existingFragment.styleSources) {
-    state.styleSources.set(styleSource.id, styleSource);
-  }
-  for (const style of existingFragment.styles) {
-    state.styles.set(getStyleDeclKey(style), style);
-  }
-  for (const breakpoint of existingFragment.breakpoints) {
-    state.breakpoints.set(breakpoint.id, breakpoint);
-  }
+  addFragmentStyles(state, existingFragment);
 
   const mutation = await insertFragment(
     state,
@@ -1100,6 +1535,17 @@ test("honors fragment token conflict resolution", async () => {
   ).filter((styleSource) => styleSource.type === "token");
   expect(addedTokenSources).toEqual([]);
   expect(
+    getAddedValues<{ instanceId: string; values: string[] }>(
+      mutation,
+      "styleSourceSelections"
+    )
+  ).toEqual([
+    {
+      instanceId: "generated-1",
+      values: [existingFragment.styleSources[0]?.id],
+    },
+  ]);
+  expect(
     getAddedValues<{ property: string; value: unknown }>(mutation, "styles")
   ).not.toContainEqual(
     expect.objectContaining({
@@ -1115,15 +1561,7 @@ test("requires an explicit fragment token conflict resolution", async () => {
   const existingFragment = await parseWebstudioJsxFragment(
     `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
   );
-  for (const styleSource of existingFragment.styleSources) {
-    state.styleSources.set(styleSource.id, styleSource);
-  }
-  for (const style of existingFragment.styles) {
-    state.styles.set(getStyleDeclKey(style), style);
-  }
-  for (const breakpoint of existingFragment.breakpoints) {
-    state.breakpoints.set(breakpoint.id, breakpoint);
-  }
+  addFragmentStyles(state, existingFragment);
   const conflictingFragment = await parseWebstudioJsxFragment(
     `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: red;\`)]} />`
   );
@@ -1135,6 +1573,128 @@ test("requires an explicit fragment token conflict resolution", async () => {
         parentInstanceId: parent.id,
         fragment: conflictingFragment,
       },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow(/explicit conflictResolution.*brand/);
+});
+
+test("attaches an existing design token by name in a JSX fragment", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  addFragmentStyles(state, existingFragment);
+
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment: await parseWebstudioJsxFragment(
+        `<ws.element ws:tag="div" ws:tokens={[token("brand")]} />`
+      ),
+    },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(getAddedValues(mutation, "styleSources")).toEqual([]);
+  expect(getAddedValues(mutation, "styles")).toEqual([]);
+  expect(
+    getAddedValues<{ instanceId: string; values: string[] }>(
+      mutation,
+      "styleSourceSelections"
+    )
+  ).toEqual([
+    {
+      instanceId: "generated-0",
+      values: [existingFragment.styleSources[0]?.id],
+    },
+  ]);
+});
+
+test("keeps an existing design token in content-mode fragment insertion", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  addFragmentStyles(state, existingFragment);
+
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      contentMode: true,
+      fragment: await parseWebstudioJsxFragment(
+        `<ws.element ws:tag="div" ws:tokens={[token("brand")]} />`
+      ),
+    },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(getAddedValues(mutation, "styleSources")).toEqual([]);
+  expect(
+    getAddedValues<{ instanceId: string; values: string[] }>(
+      mutation,
+      "styleSourceSelections"
+    )
+  ).toEqual([
+    {
+      instanceId: "generated-0",
+      values: [existingFragment.styleSources[0]?.id],
+    },
+  ]);
+});
+
+test("reports an unknown design token reference in a JSX fragment", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("missing")]} />`
+  );
+
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow('Design token "missing" was not found');
+});
+
+test("inserts an empty token definition from a portable fragment", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: red;\`)]} />`
+  );
+  fragment.styles = [];
+
+  const mutation = insertFragment(
+    createState(parent),
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(getAddedValues(mutation, "styleSources")).toContainEqual(
+    expect.objectContaining({ type: "token", name: "brand" })
+  );
+});
+
+test("does not reuse a styled token for an empty token definition", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  addFragmentStyles(state, existingFragment);
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: red;\`)]} />`
+  );
+  fragment.styles = [];
+
+  expect(() =>
+    insertFragment(
+      state,
+      { parentInstanceId: parent.id, fragment },
       { createId: createIdFactory(), projectId: "project-id" }
     )
   ).toThrow(/explicit conflictResolution.*brand/);
@@ -1186,15 +1746,7 @@ test("merges fragment token conflicts by replacing existing token styles", async
   const existingFragment = await parseWebstudioJsxFragment(
     `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue; font-size: 16px;\`)]} />`
   );
-  for (const styleSource of existingFragment.styleSources) {
-    state.styleSources.set(styleSource.id, styleSource);
-  }
-  for (const style of existingFragment.styles) {
-    state.styles.set(getStyleDeclKey(style), style);
-  }
-  for (const breakpoint of existingFragment.breakpoints) {
-    state.breakpoints.set(breakpoint.id, breakpoint);
-  }
+  addFragmentStyles(state, existingFragment);
 
   const mutation = await insertFragment(
     state,
@@ -1236,7 +1788,7 @@ test("inserts animation action props parsed from webstudio jsx fragments", async
   const parent = createParent();
   const state = createState(parent);
   const fragment = await parseWebstudioJsxFragment(
-    `<animation.AnimateChildren action={{type:"view",animations:[{timing:{fill:"backwards",rangeStart:["entry",{type:"unit",value:0,unit:"%"}],rangeEnd:["entry",{type:"unit",value:100,unit:"%"}]},keyframes:[{styles:{opacity:{type:"unit",value:0,unit:"number"}}}]}]}}><ws.element ws:tag="h2">Reveal</ws.element></animation.AnimateChildren>`
+    `<AnimateChildren action={{type:"view",animations:[{timing:{fill:"backwards",rangeStart:["entry",{type:"unit",value:0,unit:"%"}],rangeEnd:["entry",{type:"unit",value:100,unit:"%"}]},keyframes:[{styles:{opacity:{type:"unit",value:0,unit:"number"}}}]}]}}><ws.element ws:tag="h2">Reveal</ws.element></AnimateChildren>`
   );
 
   expect(fragment.props).toContainEqual(
@@ -1272,48 +1824,109 @@ test("inserts animation action props parsed from webstudio jsx fragments", async
 });
 
 test("detects likely Webstudio JSX fragments", () => {
-  expect(isLikelyWebstudioJsxFragment("<$.Box />")).toBe(true);
-  expect(isLikelyWebstudioJsxFragment("\n  < $ .Box />")).toBe(true);
-  expect(isLikelyWebstudioJsxFragment("< $ . Box />")).toBe(true);
+  expect(isLikelyWebstudioJsxFragment("<Box />")).toBe(true);
   expect(isLikelyWebstudioJsxFragment('<ws.element ws:tag="section" />')).toBe(
     true
   );
-  expect(isLikelyWebstudioJsxFragment("<radix.Switch />")).toBe(true);
-  expect(isLikelyWebstudioJsxFragment("<animation.VideoAnimation />")).toBe(
-    true
-  );
-  expect(isLikelyWebstudioJsxFragment("<$. />")).toBe(false);
-  expect(isLikelyWebstudioJsxFragment("<$.>")).toBe(false);
-  expect(isLikelyWebstudioJsxFragment("</$.Box>")).toBe(false);
+  expect(isLikelyWebstudioJsxFragment("<Switch />")).toBe(true);
+  expect(isLikelyWebstudioJsxFragment("<VideoAnimation />")).toBe(true);
+  expect(isLikelyWebstudioJsxFragment("</Box>")).toBe(false);
   expect(isLikelyWebstudioJsxFragment("<section>HTML</section>")).toBe(false);
   expect(isLikelyWebstudioJsxFragment("## Markdown")).toBe(false);
 });
 
 test("inspects webstudio jsx fragment syntax without evaluation", () => {
   expect(() =>
-    inspectWebstudioJsxFragmentSyntax(
-      `<$.Box data-safe={{ process: "text" }} />`
-    )
+    inspectWebstudioJsxFragmentSyntax(`<Box data-safe={{ process: "text" }} />`)
   ).not.toThrow();
   expect(() =>
-    inspectWebstudioJsxFragmentSyntax(`import { Box } from "x"; <$.Box />`)
+    inspectWebstudioJsxFragmentSyntax(`import { Box } from "x"; <Box />`)
   ).toThrow("Do not use import or export in JSX fragments");
   expect(() =>
-    inspectWebstudioJsxFragmentSyntax(`<$.Box data-secret={process.env} />`)
+    inspectWebstudioJsxFragmentSyntax(`<Box data-secret={process.env} />`)
   ).toThrow('Do not access "process" in JSX fragments');
   expect(() =>
-    inspectWebstudioJsxFragmentSyntax(
-      `<$.Box data-secret={import("node:fs")} />`
-    )
+    inspectWebstudioJsxFragmentSyntax(`<Box data-secret={import("node:fs")} />`)
   ).toThrow("Do not use dynamic import() in JSX fragments");
   expect(() =>
     inspectWebstudioJsxFragmentSyntax(`<div>Hello</div>`)
   ).not.toThrow();
 });
 
+test("rejects unsupported css rules after interpolation", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      '<ws.element ws:tag="div" ws:style={css`${"@keyframes pulse { 0% { opacity: 0; } 100% { opacity: 1; } }"} animation-name: pulse;`} />'
+    )
+  ).rejects.toThrow(
+    "css templates do not support selectors or at-rules such as @keyframes"
+  );
+});
+
+test("explains unmatched jsx without implying session state", async () => {
+  const validFragment = `<Box><Heading>Title</Heading></Box>`;
+  await expect(parseWebstudioJsxFragment(validFragment)).resolves.toEqual(
+    expect.objectContaining({ children: expect.any(Array) })
+  );
+  await expect(
+    parseWebstudioJsxFragment(`<Box><Heading>Title</Box>`)
+  ).rejects.toThrow(
+    "Every opening element must use the same closing tag or end with />. Fragment parsing is stateless"
+  );
+  await expect(parseWebstudioJsxFragment(validFragment)).resolves.toEqual(
+    expect.objectContaining({ children: expect.any(Array) })
+  );
+});
+
+test("inserts font shorthand with separate line-height and variable family", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    '<ws.element ws:tag="p" ws:style={css`font: 600 16px/1.5 var(--font-body);`} />'
+  );
+  const mutation = insertFragment(
+    createState(parent),
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+  expect(getAddedValues<StyleDecl>(mutation, "styles")).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        property: "lineHeight",
+        value: { type: "unit", unit: "number", value: 1.5 },
+      }),
+      expect.objectContaining({
+        property: "fontFamily",
+        value: { type: "var", value: "font-body" },
+      }),
+    ])
+  );
+});
+
+test("inserts transition lists with unresolved variables without corrupting them", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    '<ws.element ws:tag="div" ws:style={css`transition: opacity 300ms var(--ease), transform var(--duration) ease;`} />'
+  );
+  const mutation = insertFragment(
+    createState(parent),
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(getAddedValues<StyleDecl>(mutation, "styles")).toEqual([
+    expect.objectContaining({
+      property: "transition",
+      value: {
+        type: "unparsed",
+        value: "opacity 300ms var(--ease),transform var(--duration) ease",
+      },
+    }),
+  ]);
+});
+
 test("inserts bare template-backed components from webstudio jsx fragments", async () => {
   const parent = createParent();
-  const fragment = await parseWebstudioJsxFragment(`<radix.Switch />`);
+  const fragment = await parseWebstudioJsxFragment(`<Switch />`);
 
   const mutation = insertFragment(
     createState(parent),
@@ -1337,7 +1950,7 @@ test("inserts bare template-backed components from webstudio jsx fragments", asy
 test("inserts authored template part structure from webstudio jsx fragments", async () => {
   const parent = createParent();
   const fragment = await parseWebstudioJsxFragment(
-    `<radix.Switch><ws.element ws:tag="div"><radix.SwitchThumb /></ws.element></radix.Switch>`
+    `<Switch><ws.element ws:tag="div"><SwitchThumb /></ws.element></Switch>`
   );
 
   const mutation = insertFragment(
@@ -1366,9 +1979,41 @@ test("inserts authored template part structure from webstudio jsx fragments", as
   ]);
 });
 
+test("inserts authored Content Block template structure from webstudio jsx fragments", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.block><ws.blockTemplate><ws.element ws:tag="section"><ws.element ws:tag="h2">Title</ws.element></ws.element></ws.blockTemplate></ws.block>`
+  );
+
+  const mutation = insertFragment(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      fragment,
+    },
+    {
+      createId: createIdFactory(),
+      projectId: "project-id",
+    }
+  );
+
+  const instances = getAddedValues<Instance>(mutation, "instances");
+  expect(instances).toEqual([
+    expect.objectContaining({ component: "ws:block" }),
+    expect.objectContaining({ component: "ws:block-template" }),
+    expect.objectContaining({ component: elementComponent, tag: "section" }),
+    expect.objectContaining({ component: elementComponent, tag: "h2" }),
+  ]);
+  const [block, blockTemplate, section, heading] = instances;
+  expect(block.children).toEqual([{ type: "id", value: blockTemplate.id }]);
+  expect(blockTemplate.children).toEqual([{ type: "id", value: section.id }]);
+  expect(section.children).toEqual([{ type: "id", value: heading.id }]);
+  expect(heading.children).toEqual([{ type: "text", value: "Title" }]);
+});
+
 test("supports react style props in webstudio jsx fragments", async () => {
   const fragment = await parseWebstudioJsxFragment(
-    `<$.Box style={{ padding: 24 }}>Hello</$.Box>`
+    `<Box style={{ padding: 24 }}>Hello</Box>`
   );
   expect(fragment.props.find((prop) => prop.name === "style")).toBeUndefined();
   expect(fragment.styleSources).toEqual([
@@ -1390,10 +2035,10 @@ test("supports react style props in webstudio jsx fragments", async () => {
     ])
   );
   await expect(
-    parseWebstudioJsxFragment(`<$.Box ws:style="padding: 24px;">Hello</$.Box>`)
+    parseWebstudioJsxFragment(`<Box ws:style="padding: 24px;">Hello</Box>`)
   ).rejects.toThrow(/^ws:style must come from css`...`/);
   await expect(
-    parseWebstudioJsxFragment(`<$.Box ws:style={css\`\`}>Hello</$.Box>`)
+    parseWebstudioJsxFragment(`<Box ws:style={css\`\`}>Hello</Box>`)
   ).rejects.toThrow(
     /^ws:style must include at least one valid CSS declaration/
   );
@@ -1401,16 +2046,16 @@ test("supports react style props in webstudio jsx fragments", async () => {
 
 test("rejects invalid token syntax in webstudio jsx fragments", async () => {
   await expect(
-    parseWebstudioJsxFragment(`<$.Box ws:tokens="brand">Hello</$.Box>`)
+    parseWebstudioJsxFragment(`<Box ws:tokens="brand">Hello</Box>`)
   ).rejects.toThrow(/^ws:tokens must be an array of token\(\.\.\.\) values/);
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box ws:tokens={[token("brand", "color: red;")]}>Hello</$.Box>`
+      `<Box ws:tokens={[token("brand", "color: red;")]}>Hello</Box>`
     )
   ).rejects.toThrow(/^token\(\) styles must come from css`...`/);
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box ws:tokens={[token("brand", css\`\`)]}>Hello</$.Box>`
+      `<Box ws:tokens={[token("brand", css\`\`)]}>Hello</Box>`
     )
   ).rejects.toThrow(
     /^token\(\) styles must include at least one valid CSS declaration/
@@ -1419,7 +2064,7 @@ test("rejects invalid token syntax in webstudio jsx fragments", async () => {
 
 test("rejects unsupported expressions in shared fragment inputs", async () => {
   const fragment = await parseWebstudioJsxFragment(
-    `<$.Text>{expression\`items.map(item => item.title).join(", ")\`}</$.Text>`
+    `<Text>{expression\`items.map(item => item.title).join(", ")\`}</Text>`
   );
   const result = insertFragmentInput.safeParse({
     parentInstanceId: "parent",
@@ -1456,7 +2101,7 @@ test("rejects unsupported expressions in shared fragment inputs", async () => {
 test("uses component content models to require element children", async () => {
   const parent = createParent();
   const invalidFragment = await parseWebstudioJsxFragment(
-    `<radix.Collapsible><radix.CollapsibleTrigger>Open</radix.CollapsibleTrigger></radix.Collapsible>`
+    `<Collapsible><CollapsibleTrigger>Open</CollapsibleTrigger></Collapsible>`
   );
   expect(() =>
     insertFragment(
@@ -1467,7 +2112,7 @@ test("uses component content models to require element children", async () => {
   ).toThrow('"CollapsibleTrigger" does not accept text content');
 
   const fragment = await parseWebstudioJsxFragment(
-    `<radix.Collapsible><radix.CollapsibleTrigger><ws.element ws:tag="span">Open</ws.element></radix.CollapsibleTrigger></radix.Collapsible>`
+    `<Collapsible><CollapsibleTrigger><ws.element ws:tag="span">Open</ws.element></CollapsibleTrigger></Collapsible>`
   );
   expect(() =>
     insertFragment(
@@ -1481,7 +2126,7 @@ test("uses component content models to require element children", async () => {
 test("reports unsupported existing resource references in jsx", async () => {
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Form action={new ResourceValue("resource-id")} />`
+      `<ResourceForm action={new ResourceValue("resource-id")} />`
     )
   ).rejects.toThrow(
     "ResourceValue requires a resource definition. Existing resource ids are not supported in JSX"
@@ -1490,21 +2135,31 @@ test("reports unsupported existing resource references in jsx", async () => {
 
 test("converts react prop aliases in webstudio jsx fragments", async () => {
   expect(
-    (await parseWebstudioJsxFragment(`<$.Box className="panel">Hello</$.Box>`))
-      .props
+    (
+      await parseWebstudioJsxFragment(
+        `<Box className="panel" tabIndex={2} readOnly>Hello</Box>`
+      )
+    ).props
   ).toEqual([
     expect.objectContaining({
       name: "class",
       type: "string",
       value: "panel",
     }),
+    expect.objectContaining({
+      name: "tabindex",
+      type: "number",
+      value: 2,
+    }),
+    expect.objectContaining({
+      name: "readonly",
+      type: "boolean",
+      value: true,
+    }),
   ]);
   expect(
-    (
-      await parseWebstudioJsxFragment(
-        `<$.Label htmlFor="email">Email</$.Label>`
-      )
-    ).props
+    (await parseWebstudioJsxFragment(`<Label htmlFor="email">Email</Label>`))
+      .props
   ).toEqual([
     expect.objectContaining({
       name: "for",
@@ -1516,15 +2171,13 @@ test("converts react prop aliases in webstudio jsx fragments", async () => {
 
 test("rejects javascript function props in webstudio jsx fragments", async () => {
   await expect(
-    parseWebstudioJsxFragment(
-      `<$.Button onClick={() => alert(1)}>Click</$.Button>`
-    )
+    parseWebstudioJsxFragment(`<Button onClick={() => alert(1)}>Click</Button>`)
   ).rejects.toThrow(
     'Invalid JSX prop "onClick". Do not pass JavaScript functions. Use Webstudio actions instead'
   );
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box data-config={{ onSave: () => alert(1) }}>Save</$.Box>`
+      `<Box data-config={{ onSave: () => alert(1) }}>Save</Box>`
     )
   ).rejects.toThrow(
     'Invalid JSX prop "data-config" at "onSave". Do not pass JavaScript functions. Use Webstudio actions instead'
@@ -1533,7 +2186,7 @@ test("rejects javascript function props in webstudio jsx fragments", async () =>
   expect(
     (
       await parseWebstudioJsxFragment(
-        `<$.Button onClick={new ActionValue(["event"], expression\`console.log(event)\`)}>Click</$.Button>`
+        `<Button onClick={new ActionValue(["event"], expression\`console.log(event)\`)}>Click</Button>`
       )
     ).props
   ).toEqual([
@@ -1553,49 +2206,49 @@ test("rejects javascript function props in webstudio jsx fragments", async () =>
 
 test("rejects non-serializable prop values in webstudio jsx fragments", async () => {
   await expect(
-    parseWebstudioJsxFragment(`<$.Box data-value={undefined}>Value</$.Box>`)
+    parseWebstudioJsxFragment(`<Box data-value={undefined}>Value</Box>`)
   ).rejects.toThrow(
     'Invalid JSX prop "data-value". Do not pass undefined. Omit the prop or use null instead.'
   );
   await expect(
-    parseWebstudioJsxFragment(`<$.Box data-value={NaN}>Value</$.Box>`)
+    parseWebstudioJsxFragment(`<Box data-value={NaN}>Value</Box>`)
   ).rejects.toThrow(
     'Invalid JSX prop "data-value". Do not pass NaN or Infinity. Use a finite number instead.'
   );
   await expect(
-    parseWebstudioJsxFragment(`<$.Box data-value={BigInt(1)}>Value</$.Box>`)
+    parseWebstudioJsxFragment(`<Box data-value={BigInt(1)}>Value</Box>`)
   ).rejects.toThrow(
     'Invalid JSX prop "data-value". Do not pass BigInt values. Use a string, finite number, or expression instead.'
   );
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box data-config={{ values: [1, Symbol("bad")] }}>Value</$.Box>`
+      `<Box data-config={{ values: [1, Symbol("bad")] }}>Value</Box>`
     )
   ).rejects.toThrow(
     'Invalid JSX prop "data-config" at "values.1". Do not pass Symbol values. Use a string, finite number, or expression instead.'
   );
   await expect(
-    parseWebstudioJsxFragment(`<$.Box data-value={new Date(0)}>Value</$.Box>`)
+    parseWebstudioJsxFragment(`<Box data-value={new Date(0)}>Value</Box>`)
   ).rejects.toThrow(
     'Invalid JSX prop "data-value". Do not pass Date objects. Use plain JSON-compatible values instead.'
   );
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box data-value={new Map([["a", 1]])}>Value</$.Box>`
+      `<Box data-value={new Map([["a", 1]])}>Value</Box>`
     )
   ).rejects.toThrow(
     'Invalid JSX prop "data-value". Do not pass Map objects. Use plain JSON-compatible values instead.'
   );
   await expect(
     parseWebstudioJsxFragment(
-      `{(() => { class Config {}; return <$.Box data-value={new Config()}>Value</$.Box>; })()}`
+      `{(() => { class Config {}; return <Box data-value={new Config()}>Value</Box>; })()}`
     )
   ).rejects.toThrow(
     'Invalid JSX prop "data-value". Do not pass Config objects. Use plain JSON-compatible values instead.'
   );
   await expect(
     parseWebstudioJsxFragment(
-      `{(() => { const data = {}; data.self = data; return <$.Box data-value={data}>Value</$.Box>; })()}`
+      `{(() => { const data = {}; data.self = data; return <Box data-value={data}>Value</Box>; })()}`
     )
   ).rejects.toThrow(
     'Invalid JSX prop "data-value" at "self". Do not pass circular objects. Use plain JSON-compatible values instead.'
@@ -1604,50 +2257,48 @@ test("rejects non-serializable prop values in webstudio jsx fragments", async ()
 
 test("rejects host runtime globals in webstudio jsx fragments", async () => {
   await expect(
-    parseWebstudioJsxFragment(`<$.Box data-secret={process.env}>Secret</$.Box>`)
+    parseWebstudioJsxFragment(`<Box data-secret={process.env}>Secret</Box>`)
   ).rejects.toThrow('Do not access "process" in JSX fragments');
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box data-version={globalThis.process?.versions?.node}>Version</$.Box>`
+      `<Box data-version={globalThis.process?.versions?.node}>Version</Box>`
     )
   ).rejects.toThrow('Do not access "globalThis" in JSX fragments');
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box data-secret={this.constructor.constructor("return process.env")()}>Secret</$.Box>`
+      `<Box data-secret={this.constructor.constructor("return process.env")()}>Secret</Box>`
     )
   ).rejects.toThrow('Do not access "constructor" in JSX fragments');
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box data-secret={this["constructor"]["constructor"]("return process.env")()}>Secret</$.Box>`
+      `<Box data-secret={this["constructor"]["constructor"]("return process.env")()}>Secret</Box>`
     )
   ).rejects.toThrow('Do not access "constructor" in JSX fragments');
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box data-secret={({})["con" + "structor"]["con" + "structor"]("return process.env")()}>Secret</$.Box>`
+      `<Box data-secret={({})["con" + "structor"]["con" + "structor"]("return process.env")()}>Secret</Box>`
     )
   ).rejects.toThrow("Code generation from strings disallowed");
   await expect(
-    parseWebstudioJsxFragment(`<$.Box data-secret={eval("1")}>Secret</$.Box>`)
+    parseWebstudioJsxFragment(`<Box data-secret={eval("1")}>Secret</Box>`)
   ).rejects.toThrow('Do not access "eval" in JSX fragments');
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box data-secret={Function("return process.env")()}>Secret</$.Box>`
+      `<Box data-secret={Function("return process.env")()}>Secret</Box>`
     )
   ).rejects.toThrow('Do not access "Function" in JSX fragments');
   await expect(
-    parseWebstudioJsxFragment(
-      `<$.Box data-secret={require("fs")}>Secret</$.Box>`
-    )
+    parseWebstudioJsxFragment(`<Box data-secret={require("fs")}>Secret</Box>`)
   ).rejects.toThrow('Do not access "require" in JSX fragments');
   await expect(
-    parseWebstudioJsxFragment(`<$.Box data-secret={module}>Secret</$.Box>`)
+    parseWebstudioJsxFragment(`<Box data-secret={module}>Secret</Box>`)
   ).rejects.toThrow('Do not access "module" in JSX fragments');
   await expect(
-    parseWebstudioJsxFragment(`<$.Box data-secret={exports}>Secret</$.Box>`)
+    parseWebstudioJsxFragment(`<Box data-secret={exports}>Secret</Box>`)
   ).rejects.toThrow('Do not access "exports" in JSX fragments');
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box data-secret={import("node:fs")}>Secret</$.Box>`
+      `<Box data-secret={import("node:fs")}>Secret</Box>`
     )
   ).rejects.toThrow("Do not use dynamic import() in JSX fragments");
 });
@@ -1656,7 +2307,7 @@ test("allows restricted words in non-executed jsx values", async () => {
   expect(
     (
       await parseWebstudioJsxFragment(
-        `<$.Paragraph>The constructor pattern is a JavaScript escape hatch.</$.Paragraph>`
+        `<Paragraph>The constructor pattern is a JavaScript escape hatch.</Paragraph>`
       )
     ).instances[0]?.children
   ).toEqual([
@@ -1668,7 +2319,7 @@ test("allows restricted words in non-executed jsx values", async () => {
   expect(
     (
       await parseWebstudioJsxFragment(
-        `<$.Box data-config={{ constructor: "documentation", process: "docs", eval: "docs", Function: "docs", globalThis: "docs" }}>Value</$.Box>`
+        `<Box data-config={{ constructor: "documentation", process: "docs", eval: "docs", Function: "docs", globalThis: "docs" }}>Value</Box>`
       )
     ).props
   ).toEqual([
@@ -1687,7 +2338,7 @@ test("allows restricted words in non-executed jsx values", async () => {
   expect(
     (
       await parseWebstudioJsxFragment(
-        `<$.Box data-config={{ exports: "docs", module: "docs", require: "docs" }}>Value</$.Box>`
+        `<Box data-config={{ exports: "docs", module: "docs", require: "docs" }}>Value</Box>`
       )
     ).props
   ).toEqual([
@@ -1704,7 +2355,7 @@ test("allows restricted words in non-executed jsx values", async () => {
   expect(
     (
       await parseWebstudioJsxFragment(
-        `<$.Button onClick={new ActionValue([], expression\`console.log(process)\`)}>Click</$.Button>`
+        `<Button onClick={new ActionValue([], expression\`console.log(process)\`)}>Click</Button>`
       )
     ).props
   ).toEqual([
@@ -1725,32 +2376,32 @@ test("allows restricted words in non-executed jsx values", async () => {
 test("rejects host runtime globals inside jsx expression holes", async () => {
   await expect(
     parseWebstudioJsxFragment(
-      `<$.Box data-secret={expression\`${"${process.env}"}\`}>Secret</$.Box>`
+      `<Box data-secret={expression\`${"${process.env}"}\`}>Secret</Box>`
     )
   ).rejects.toThrow('Do not access "process" in JSX fragments');
 });
 
 test("rejects manual system ids in webstudio jsx fragments", async () => {
   await expect(
-    parseWebstudioJsxFragment(`<$.Box ws:id="manual-id" />`)
+    parseWebstudioJsxFragment(`<Box ws:id="manual-id" />`)
   ).rejects.toThrow("Do not set ws:id in JSX fragments");
+  await expect(parseWebstudioJsxFragment(`<Box ws:id="0" />`)).rejects.toThrow(
+    "Do not set ws:id in JSX fragments"
+  );
   await expect(
-    parseWebstudioJsxFragment(`<$.Box ws:id="0" />`)
-  ).rejects.toThrow("Do not set ws:id in JSX fragments");
-  await expect(
-    parseWebstudioJsxFragment(`<$.Box {...{"ws:id": "0"}} />`)
+    parseWebstudioJsxFragment(`<Box {...{"ws:id": "0"}} />`)
   ).rejects.toThrow("Do not set ws:id in JSX fragments");
 });
 
 test("rejects module syntax in webstudio jsx fragments", async () => {
   await expect(
-    parseWebstudioJsxFragment(`import { Box } from "x"; <$.Box />`)
+    parseWebstudioJsxFragment(`import { Box } from "x"; <Box />`)
   ).rejects.toThrow("Do not use import or export in JSX fragments");
   await expect(
-    parseWebstudioJsxFragment(`export const view = <$.Box />`)
+    parseWebstudioJsxFragment(`export const view = <Box />`)
   ).rejects.toThrow("Do not use import or export in JSX fragments");
   await expect(
-    parseWebstudioJsxFragment(`import { Box } from "x"; <$.Box />`)
+    parseWebstudioJsxFragment(`import { Box } from "x"; <Box />`)
   ).rejects.toMatchObject({
     code: "INVALID_INPUT",
     issues: [
@@ -1758,15 +2409,14 @@ test("rejects module syntax in webstudio jsx fragments", async () => {
         code: "invalid_webstudio_jsx",
         path: ["fragment"],
         constraint: "declarative_jsx_without_modules",
-        example:
-          '<ws.element ws:tag="section"><ws.element ws:tag="h2">Title</ws.element></ws.element>',
+        example: "<section><h2>Title</h2></section>",
       }),
     ],
   });
 });
 
 test("rejects react fragment shorthand in webstudio jsx fragments", async () => {
-  await expect(parseWebstudioJsxFragment(`<><$.Box /></>`)).rejects.toThrow(
+  await expect(parseWebstudioJsxFragment(`<><Box /></>`)).rejects.toThrow(
     "Do not use React fragment shorthand <>...</> inside Webstudio JSX"
   );
   await expect(parseWebstudioJsxFragment(`<>Text</>`)).rejects.toThrow(
@@ -1774,19 +2424,20 @@ test("rejects react fragment shorthand in webstudio jsx fragments", async () => 
   );
 });
 
-test("rejects raw html tags in webstudio jsx fragments", async () => {
-  await expect(parseWebstudioJsxFragment(`<div>Hello</div>`)).rejects.toThrow(
-    "Use Webstudio components such as <$.Box>...</$.Box>"
+test("compiles lowercase html tags in webstudio jsx fragments", async () => {
+  const fragment = await parseWebstudioJsxFragment(
+    `<div>Hello</div><button>Open</button>`
   );
-  await expect(
-    parseWebstudioJsxFragment(`<button>Open</button>`)
-  ).rejects.toThrow("Use Webstudio components such as <$.Box>...</$.Box>");
+  expect(fragment.instances).toEqual([
+    expect.objectContaining({ component: "ws:element", tag: "div" }),
+    expect.objectContaining({ component: "ws:element", tag: "button" }),
+  ]);
 });
 
 test("validates ws.element tag in fragment insertion", async () => {
   const parent = createParent();
   const fragment = await parseWebstudioJsxFragment(
-    `<ws.element><$.Paragraph>Missing tag</$.Paragraph></ws.element>`
+    `<ws.element><Paragraph>Missing tag</Paragraph></ws.element>`
   );
   expect(() =>
     insertFragment(
@@ -1803,14 +2454,14 @@ test("validates ws.element tag in fragment insertion", async () => {
   ).toThrow('Component "ws:element" requires a non-empty tag');
   await expect(
     parseWebstudioJsxFragment(
-      `<ws.element ws:tag={""}><$.Paragraph>Empty tag</$.Paragraph></ws.element>`
+      `<ws.element ws:tag={""}><Paragraph>Empty tag</Paragraph></ws.element>`
     )
   ).rejects.toThrow("Tag cannot be empty");
 
   expect(
     (
       await parseWebstudioJsxFragment(
-        `<ws.element ws:tag="section"><$.Heading>Semantic Section</$.Heading></ws.element>`
+        `<ws.element ws:tag="section"><Heading>Semantic Section</Heading></ws.element>`
       )
     ).instances[0]
   ).toEqual(
@@ -1823,31 +2474,28 @@ test("validates ws.element tag in fragment insertion", async () => {
 
 test("allows html and fragment syntax inside text values", async () => {
   expect(
-    (await parseWebstudioJsxFragment(`<$.CodeText>{"<div>"}</$.CodeText>`))
+    (await parseWebstudioJsxFragment(`<CodeText>{"<div>"}</CodeText>`))
       .instances[0]?.children
   ).toEqual([{ type: "text", value: "<div>" }]);
   expect(
-    (await parseWebstudioJsxFragment(`<$.Paragraph>{"<>"}</$.Paragraph>`))
+    (await parseWebstudioJsxFragment(`<Paragraph>{"<>"}</Paragraph>`))
       .instances[0]?.children
   ).toEqual([{ type: "text", value: "<>" }]);
   expect(
-    (
-      await parseWebstudioJsxFragment(
-        `<$.CodeText>{'ws:id="demo"'}</$.CodeText>`
-      )
-    ).instances[0]?.children
+    (await parseWebstudioJsxFragment(`<CodeText>{'ws:id="demo"'}</CodeText>`))
+      .instances[0]?.children
   ).toEqual([{ type: "text", value: 'ws:id="demo"' }]);
   expect(
     (
       await parseWebstudioJsxFragment(
-        `<$.CodeText>{'ws:style="demo"'}</$.CodeText>`
+        `<CodeText>{'ws:style="demo"'}</CodeText>`
       )
     ).instances[0]?.children
   ).toEqual([{ type: "text", value: 'ws:style="demo"' }]);
   expect(
     (
       await parseWebstudioJsxFragment(
-        `<$.CodeText>{\`\nimport { Box } from "x";\nexport default Box;\n\`}</$.CodeText>`
+        `<CodeText>{\`\nimport { Box } from "x";\nexport default Box;\n\`}</CodeText>`
       )
     ).instances[0]?.children
   ).toEqual([
@@ -1858,24 +2506,32 @@ test("allows html and fragment syntax inside text values", async () => {
   ]);
 });
 
-test("suggests built-in helpers for unknown jsx identifiers", async () => {
-  await expect(parseWebstudioJsxFragment(`<Box />`)).rejects.toThrow(
-    "Use built-in helpers only: $, ws, radix, animation, css, token, expression, Variable, Parameter, ResourceValue, ActionValue, AssetValue, PageValue, and PlaceholderValue. Box is not defined"
-  );
+test("resolves direct registered component identifiers", async () => {
+  expect((await parseWebstudioJsxFragment(`<Box />`)).instances).toEqual([
+    expect.objectContaining({ component: "Box" }),
+  ]);
+});
+
+test("rejects the removed animation helper", async () => {
+  await expect(
+    parseWebstudioJsxFragment(
+      '<Box data-animation={animation("pulse", css`opacity: 1;`)} />'
+    )
+  ).rejects.toThrow("animation is not defined");
 });
 
 test("rejects empty webstudio jsx fragments", async () => {
   await expect(parseWebstudioJsxFragment("")).rejects.toThrow(
-    "JSX fragment must contain at least one Webstudio component"
+    "JSX fragment must contain at least one element or component"
   );
   await expect(parseWebstudioJsxFragment("{null}")).rejects.toThrow(
-    "JSX fragment must contain at least one Webstudio component"
+    "JSX fragment must contain at least one element or component"
   );
 });
 
 test("does not treat deprecated catalog status as fragment invalidity", async () => {
   const parent = createParent();
-  const fragment = await parseWebstudioJsxFragment(`<$.Box />`);
+  const fragment = await parseWebstudioJsxFragment(`<Box />`);
 
   const mutation = insertFragment(
     createState(parent),
@@ -1959,7 +2615,7 @@ test("does not treat hidden catalog status as component invalidity", async () =>
 
 test("rejects xml components in html webstudio jsx fragments", async () => {
   const parent = createParent();
-  const fragment = await parseWebstudioJsxFragment(`<$.XmlNode />`);
+  const fragment = await parseWebstudioJsxFragment(`<XmlNode />`);
 
   expect(() =>
     insertFragment(
@@ -2414,7 +3070,7 @@ test("inserts into instances without children field", async () => {
   });
 });
 
-test("rejects generated id collisions", async () => {
+test("reports the namespace and stage of generated id collisions", async () => {
   const parent = createParent();
   const state = createState(parent);
   state.instances.set("generated-1", {
@@ -2424,7 +3080,7 @@ test("rejects generated id collisions", async () => {
     children: [],
   });
 
-  expect(() =>
+  try {
     insertComponent(
       state,
       {
@@ -2434,6 +3090,59 @@ test("rejects generated id collisions", async () => {
       {
         createId: createIdFactory(),
       }
-    )
-  ).toThrow('Generated instance id "generated-1" already exists');
+    );
+    throw new Error("Expected insertion to reject the generated ID collision");
+  } catch (error) {
+    expect(error).toMatchObject({
+      code: "CONFLICT",
+      message: "Generated record ID already exists in instances.",
+      issues: [
+        {
+          code: "generated_id_conflict",
+          path: [],
+          constraint: "unique_generated_id:instances",
+          detail: "stage:fragment-instance-insertion",
+        },
+      ],
+    });
+    expect(JSON.stringify(error)).not.toContain("generated-1");
+  }
+});
+
+test("reports generated record collision context without exposing the id", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  state.props.set("generated-1", {
+    id: "generated-1",
+    instanceId: parent.id,
+    name: "existing",
+    type: "string",
+    value: "existing",
+  });
+  const fragment = await parseWebstudioJsxFragment(
+    '<HtmlEmbed code="<p>New</p>" />'
+  );
+
+  try {
+    insertFragment(
+      state,
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory() }
+    );
+    throw new Error("Expected insertion to reject the generated ID collision");
+  } catch (error) {
+    expect(error).toMatchObject({
+      code: "CONFLICT",
+      message: "Generated record ID already exists in props.",
+      issues: [
+        {
+          code: "generated_id_conflict",
+          path: [],
+          constraint: "unique_generated_id:props",
+          detail: "stage:fragment-record-insertion",
+        },
+      ],
+    });
+    expect(JSON.stringify(error)).not.toContain("generated-1");
+  }
 });

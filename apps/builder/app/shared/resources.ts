@@ -1,19 +1,43 @@
 import { atom, computed } from "nanostores";
-import type { DataSource, Resource, ResourceRequest } from "@webstudio-is/sdk";
-import { isAssetsResourceRequest } from "@webstudio-is/sdk/runtime";
+import {
+  getResourceDependencyIds,
+  type DataSource,
+  type DataSources,
+  type Resource,
+  type ResourceRequest,
+  type Resources,
+} from "@webstudio-is/sdk";
+import {
+  isAssetsResourceRequest,
+  resourceLoadConcurrency,
+} from "@webstudio-is/sdk/runtime";
 import { restResourcesLoader } from "./router-utils";
-import { computeExpression } from "@webstudio-is/project-build/runtime";
+import {
+  $resourcePreviewExchanges,
+  recordResourcePreviewExchange,
+  type PreviewResourceExchange,
+} from "./preview-resource-inspection";
+import {
+  computeExpression,
+  type ResolveExpressionDataSource,
+} from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
 import { getResourceKey } from "./resource-utils";
 import { type AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
-import { separateResourceDiagnostics } from "./resource-diagnostics";
-import type { ResourcePerformance } from "./resource-diagnostics";
-
-const MAX_PENDING_RESOURCES = 5;
+import {
+  createResourceDiagnosticsResponseError,
+  separateResourceDiagnostics,
+  type ResourcePerformance,
+} from "./resource-diagnostics";
 
 type InFlightResourceBatch = {
   controller: AbortController;
   versions: Map<string, number>;
+};
+
+type InFlightResourceDiagnostics = {
+  controller: AbortController;
+  promise: Promise<void>;
 };
 
 export { getResourceKey };
@@ -22,35 +46,84 @@ const queue = new Map<string, ResourceRequest>();
 const pending = new Map<string, InFlightResourceBatch>();
 const cache = new Map<string, unknown>();
 const diagnosticsCache = new Map<string, AssetQueryPreviewDiagnostics>();
+const diagnosticsErrorCache = new Map<string, unknown>();
 const performanceCache = new Map<string, ResourcePerformance>();
-const pendingDiagnostics = new Map<string, Promise<void>>();
+const pendingDiagnostics = new Map<string, InFlightResourceDiagnostics>();
 const knownRequests = new Map<string, ResourceRequest>();
+const pageRequestKeys = new Set<string>();
+const previewRequests = new Map<string, Set<symbol>>();
+const inspectionRequests = new Map<string, number>();
 const resourceVersions = new Map<string, number>();
 const inFlightBatches = new Set<InFlightResourceBatch>();
 
 export const $resourcesCache = atom(cache);
 export const $resourceDiagnosticsCache = atom(diagnosticsCache);
+export const $resourceDiagnosticsErrorCache = atom(diagnosticsErrorCache);
 export const $resourcePerformanceCache = atom(performanceCache);
 
-const updateCache = () => {
-  $resourcesCache.set(new Map(cache));
+const updateMetadataCache = () => {
   $resourceDiagnosticsCache.set(new Map(diagnosticsCache));
+  $resourceDiagnosticsErrorCache.set(new Map(diagnosticsErrorCache));
   $resourcePerformanceCache.set(new Map(performanceCache));
 };
 
-const $pendingUpdater = atom({});
+const updateCache = () => {
+  $resourcesCache.set(new Map(cache));
+  updateMetadataCache();
+};
+
+const cacheResourceMetadata = ({
+  key,
+  request,
+  result,
+  loaderDurationMs,
+}: {
+  key: string;
+  request: ResourceRequest;
+  result: unknown;
+  loaderDurationMs: number;
+}) => {
+  const separated = separateResourceDiagnostics({ request, result });
+  performanceCache.set(key, {
+    ...separated.performance,
+    loaderDurationMs: Math.max(0, loaderDurationMs),
+  });
+  if (separated.diagnostics === undefined) {
+    diagnosticsCache.delete(key);
+  } else {
+    diagnosticsCache.set(key, separated.diagnostics);
+  }
+  if (separated.diagnosticsError !== undefined) {
+    diagnosticsErrorCache.set(key, separated.diagnosticsError);
+  }
+  return separated;
+};
+
+export const $pendingResourceKeys = atom<ReadonlySet<string>>(new Set());
+export const $resourcesState = atom<"pending" | "settled">("pending");
 
 const updatePending = () => {
-  $pendingUpdater.set({});
+  $pendingResourceKeys.set(new Set([...queue.keys(), ...pending.keys()]));
+  $resourcesState.set(
+    queue.size === 0 && pending.size === 0 ? "settled" : "pending"
+  );
 };
 
 export const $hasPendingResources = computed(
-  $pendingUpdater,
-  () => queue.size > 0 || pending.size > 0
+  $pendingResourceKeys,
+  (pendingResourceKeys) => pendingResourceKeys.size > 0
 );
 
+const getInFlightResourceCount = () => {
+  let count = 0;
+  for (const batch of inFlightBatches) {
+    count += batch.versions.size;
+  }
+  return count;
+};
+
 const loadResources = async (requestFetch: typeof fetch = fetch) => {
-  const availableSlots = MAX_PENDING_RESOURCES - pending.size;
+  const availableSlots = resourceLoadConcurrency - getInFlightResourceCount();
   if (availableSlots <= 0) {
     return;
   }
@@ -74,15 +147,50 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
 
   try {
     const startedAt = performance.now();
-    const response = await requestFetch(restResourcesLoader(), {
-      method: "POST",
-      body: JSON.stringify(list),
-      signal: controller.signal,
-    });
+    const inspectionKey = list
+      .map(getResourceKey)
+      .find(
+        (key) =>
+          inspectionRequests.get(key) === batch.versions.get(key) &&
+          pending.get(key) === batch
+      );
+    const response = await requestFetch(
+      restResourcesLoader({ inspect: inspectionKey }),
+      {
+        method: "POST",
+        body: JSON.stringify(list),
+        signal: controller.signal,
+      }
+    );
     if (response.ok === false) {
       return;
     }
-    const results = new Map<string, unknown>(await response.json());
+    const payload: unknown = await response.json();
+    const isInspectionResponse =
+      typeof payload === "object" && payload !== null && "resources" in payload;
+    const results = new Map<string, unknown>(
+      (isInspectionResponse
+        ? (payload as { resources: [string, unknown][] }).resources
+        : payload) as [string, unknown][]
+    );
+    if (isInspectionResponse) {
+      const { inspection } = payload as {
+        inspection?: PreviewResourceExchange;
+      };
+      if (
+        inspection !== undefined &&
+        inspectionKey !== undefined &&
+        inspection.resourceId === inspectionKey &&
+        pending.get(inspectionKey) === batch &&
+        knownRequests.has(inspectionKey) &&
+        resourceVersions.get(inspectionKey) ===
+          batch.versions.get(inspectionKey) &&
+        inspectionRequests.get(inspectionKey) ===
+          batch.versions.get(inspectionKey)
+      ) {
+        recordResourcePreviewExchange(inspection.resourceId, inspection);
+      }
+    }
     const loaderDurationMs = performance.now() - startedAt;
     for (const [key, result] of results) {
       const request = dispatched.get(key);
@@ -94,17 +202,13 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
       ) {
         continue;
       }
-      const separated = separateResourceDiagnostics({ request, result });
-      cache.set(key, separated.result);
-      performanceCache.set(key, {
-        ...separated.performance,
+      const separated = cacheResourceMetadata({
+        key,
+        request,
+        result,
         loaderDurationMs,
       });
-      if (separated.diagnostics === undefined) {
-        diagnosticsCache.delete(key);
-      } else {
-        diagnosticsCache.set(key, separated.diagnostics);
-      }
+      cache.set(key, separated.result);
     }
   } catch {
     if (controller.signal.aborted === false) {
@@ -113,6 +217,9 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
   } finally {
     inFlightBatches.delete(batch);
     for (const key of dispatched.keys()) {
+      if (inspectionRequests.get(key) === batch.versions.get(key)) {
+        inspectionRequests.delete(key);
+      }
       if (pending.get(key) === batch) {
         pending.delete(key);
       }
@@ -127,7 +234,10 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
 };
 
 const startLoading = (requestFetch: typeof fetch = fetch) => {
-  if (pending.size >= MAX_PENDING_RESOURCES || queue.size === 0) {
+  if (
+    getInFlightResourceCount() >= resourceLoadConcurrency ||
+    queue.size === 0
+  ) {
     return;
   }
   void loadResources(requestFetch);
@@ -162,34 +272,46 @@ const preloadResource = (resource: ResourceRequest) => {
 
 const invalidateRequestState = (key: string) => {
   diagnosticsCache.delete(key);
+  diagnosticsErrorCache.delete(key);
   performanceCache.delete(key);
+  pendingDiagnostics.get(key)?.controller.abort();
   pendingDiagnostics.delete(key);
   resourceVersions.set(key, (resourceVersions.get(key) ?? 0) + 1);
 };
 
-const queueResources = (resources: readonly ResourceRequest[]) => {
-  const currentKeys = new Set(resources.map(getResourceKey));
+const removeObsoleteRequests = () => {
   let pendingChanged = false;
   let diagnosticsChanged = false;
   for (const key of knownRequests.keys()) {
-    if (currentKeys.has(key) === false) {
-      knownRequests.delete(key);
-      invalidateRequestState(key);
-      diagnosticsChanged = true;
-      pendingChanged = queue.delete(key) || pendingChanged;
-      pendingChanged = pending.delete(key) || pendingChanged;
+    if (pageRequestKeys.has(key) || previewRequests.has(key)) {
+      continue;
     }
+    knownRequests.delete(key);
+    invalidateRequestState(key);
+    diagnosticsChanged = true;
+    pendingChanged = queue.delete(key) || pendingChanged;
+    pendingChanged = pending.delete(key) || pendingChanged;
   }
   abortObsoleteBatches();
   if (diagnosticsChanged) {
-    updateCache();
+    updateMetadataCache();
   }
   if (pendingChanged) {
     updatePending();
   }
+};
+
+const queueResources = (resources: readonly ResourceRequest[]) => {
+  pageRequestKeys.clear();
+  for (const resource of resources) {
+    pageRequestKeys.add(getResourceKey(resource));
+  }
+  removeObsoleteRequests();
   for (const resource of resources) {
     preloadResource(resource);
   }
+  // Marks an empty or fully cached request set as settled too.
+  updatePending();
 };
 
 export const preloadResources = (resources: readonly ResourceRequest[]) => {
@@ -199,7 +321,11 @@ export const preloadResources = (resources: readonly ResourceRequest[]) => {
 
 const invalidateAndQueueResource = (resource: ResourceRequest) => {
   const key = getResourceKey(resource);
-  cache.delete(key);
+  // Asset saves refresh collection bindings without unmounting their content.
+  // Keep the last result until the replacement arrives, including an empty result.
+  if (isAssetsResourceRequest(resource) === false) {
+    cache.delete(key);
+  }
   invalidateRequestState(key);
   pending.delete(key);
   knownRequests.set(key, resource);
@@ -213,9 +339,32 @@ const queueInvalidatedResource = (resource: ResourceRequest) => {
   updatePending();
 };
 
-export const invalidateResource = (resource: ResourceRequest) => {
+/** Keep an explicitly requested preview alive until its dialog releases it. */
+export const loadResourcePreview = (
+  resource: ResourceRequest,
+  requestFetch: typeof fetch = fetch
+) => {
+  const key = getResourceKey(resource);
+  inspectionRequests.set(key, (resourceVersions.get(key) ?? 0) + 1);
+  const previousInspection = new Map($resourcePreviewExchanges.get());
+  previousInspection.delete(key);
+  $resourcePreviewExchanges.set(previousInspection);
+  const lease = Symbol();
+  const leases = previewRequests.get(key) ?? new Set<symbol>();
+  leases.add(lease);
+  previewRequests.set(key, leases);
   queueInvalidatedResource(resource);
-  startLoading();
+  startLoading(requestFetch);
+  return () => {
+    const activeLeases = previewRequests.get(key);
+    if (activeLeases?.delete(lease) !== true) {
+      return;
+    }
+    if (activeLeases.size === 0) {
+      previewRequests.delete(key);
+      removeObsoleteRequests();
+    }
+  };
 };
 
 /**
@@ -229,44 +378,127 @@ export const loadResourceDiagnostics = (
   const key = getResourceKey(resource);
   const existing = pendingDiagnostics.get(key);
   if (existing !== undefined) {
-    return existing;
+    return existing.promise;
   }
   const version = resourceVersions.get(key) ?? 0;
-  const promise = (async () => {
+  const controller = new AbortController();
+  const promise = Promise.resolve().then(async () => {
     try {
+      if (controller.signal.aborted) {
+        return;
+      }
+      const startedAt = performance.now();
       const response = await requestFetch(
         restResourcesLoader({ diagnostics: true }),
         {
           method: "POST",
           body: JSON.stringify([resource]),
+          signal: controller.signal,
         }
       );
       if (response.ok === false) {
+        let data: unknown;
+        try {
+          data = await response.json();
+        } catch {
+          data = undefined;
+        }
+        if (
+          controller.signal.aborted === false &&
+          pendingDiagnostics.get(key)?.controller === controller &&
+          (resourceVersions.get(key) ?? 0) === version
+        ) {
+          diagnosticsErrorCache.set(key, {
+            ok: false,
+            status: response.status,
+            statusText: response.statusText,
+            data,
+          });
+          updateMetadataCache();
+        }
         return;
       }
       const result = new Map<string, unknown>(await response.json()).get(key);
-      const { diagnostics } = separateResourceDiagnostics({
-        request: resource,
-        result,
-      });
-      if ((resourceVersions.get(key) ?? 0) !== version) {
+      const loaderDurationMs = performance.now() - startedAt;
+      if (
+        controller.signal.aborted ||
+        pendingDiagnostics.get(key)?.controller !== controller ||
+        (resourceVersions.get(key) ?? 0) !== version
+      ) {
         return;
       }
-      if (diagnostics === undefined) {
-        diagnosticsCache.delete(key);
+      const separated = cacheResourceMetadata({
+        key,
+        request: resource,
+        result,
+        loaderDurationMs,
+      });
+      if (result === undefined) {
+        diagnosticsErrorCache.set(key, {
+          ok: false,
+          data: {
+            error: {
+              message: "Resource diagnostics response is missing",
+            },
+          },
+        });
+      } else if (
+        typeof result === "object" &&
+        result !== null &&
+        ((result as { ok?: unknown }).ok === false ||
+          (typeof (result as { status?: unknown }).status === "number" &&
+            ((result as { status: number }).status ?? 0) >= 400))
+      ) {
+        diagnosticsErrorCache.set(key, result);
+      } else if (separated.diagnosticsError !== undefined) {
+        diagnosticsErrorCache.set(key, separated.diagnosticsError);
+      } else if (separated.diagnostics === undefined) {
+        diagnosticsErrorCache.set(
+          key,
+          createResourceDiagnosticsResponseError({
+            message: "Resource diagnostics response is missing",
+            issues: [
+              {
+                code: "missing_diagnostics",
+                path: ["__diagnostics__"],
+                message:
+                  "The resource response does not contain diagnostics data",
+              },
+            ],
+          })
+        );
       } else {
-        diagnosticsCache.set(key, diagnostics);
+        diagnosticsErrorCache.delete(key);
       }
-      updateCache();
-    } catch {
-      console.error("Resource diagnostics request failed");
+      updateMetadataCache();
+    } catch (error) {
+      if (controller.signal.aborted === false) {
+        console.error("Resource diagnostics request failed");
+        if (
+          pendingDiagnostics.get(key)?.controller === controller &&
+          (resourceVersions.get(key) ?? 0) === version
+        ) {
+          diagnosticsErrorCache.set(key, {
+            ok: false,
+            data: {
+              error: {
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : "Resource diagnostics request failed",
+              },
+            },
+          });
+          updateMetadataCache();
+        }
+      }
     } finally {
-      if ((resourceVersions.get(key) ?? 0) === version) {
+      if (pendingDiagnostics.get(key)?.controller === controller) {
         pendingDiagnostics.delete(key);
       }
     }
-  })();
-  pendingDiagnostics.set(key, promise);
+  });
+  pendingDiagnostics.set(key, { controller, promise });
   return promise;
 };
 
@@ -274,7 +506,7 @@ export const loadResourceDiagnostics = (
  * Invalidate the assets system resource.
  * Call this when assets are uploaded, deleted, or modified to refresh expressions using assets.
  */
-export const invalidateAssets = () => {
+export const invalidateAssets = (requestFetch: typeof fetch = fetch) => {
   for (const request of knownRequests.values()) {
     if (isAssetsResourceRequest(request) === false) {
       continue;
@@ -284,30 +516,155 @@ export const invalidateAssets = () => {
   abortObsoleteBatches();
   updateCache();
   updatePending();
-  startLoading();
+  startLoading(requestFetch);
 };
 
-export const computeResourceRequest = (
+export const computeResourceRequest = async (
   resource: Resource,
-  values: Map<DataSource["id"], unknown>
-): ResourceRequest => {
+  values: ReadonlyMap<DataSource["id"], unknown>,
+  resolveDataSource?: ResolveExpressionDataSource
+): Promise<ResourceRequest> => {
+  const resolvedDataSources = new Map<DataSource["id"], unknown>();
+  const resolve = (dataSourceId: DataSource["id"], value: unknown) => {
+    if (values.has(dataSourceId)) {
+      return values.get(dataSourceId);
+    }
+    if (resolvedDataSources.has(dataSourceId)) {
+      return resolvedDataSources.get(dataSourceId);
+    }
+    const resolved =
+      resolveDataSource === undefined
+        ? value
+        : resolveDataSource(dataSourceId, value);
+    resolvedDataSources.set(dataSourceId, resolved);
+    return resolved;
+  };
+  const [url, searchParams, headers, body] = await Promise.all([
+    computeExpression(resource.url, values, resolve),
+    Promise.all(
+      (resource.searchParams ?? []).map(async ({ name, value }) => ({
+        name,
+        value: await computeExpression(value, values, resolve),
+      }))
+    ),
+    Promise.all(
+      resource.headers.map(async ({ name, value }) => ({
+        name,
+        value: await computeExpression(value, values, resolve),
+      }))
+    ),
+    resource.body === undefined
+      ? undefined
+      : computeExpression(resource.body, values, resolve),
+  ]);
   const request: ResourceRequest = {
     name: resource.name,
     method: resource.method,
-    url: computeExpression(resource.url, values),
-    searchParams: (resource.searchParams ?? []).map(({ name, value }) => ({
-      name,
-      value: computeExpression(value, values),
-    })),
-    headers: resource.headers.map(({ name, value }) => ({
-      name,
-      value: computeExpression(value, values),
-    })),
+    url,
+    searchParams,
+    headers,
+    ...(resource.bodyFormat === undefined
+      ? {}
+      : { bodyFormat: resource.bodyFormat }),
   };
   if (resource.body !== undefined) {
-    request.body = computeExpression(resource.body, values);
+    request.body = body;
   }
   return request;
+};
+
+const getDataSourcesByResourceId = (dataSources: DataSources) => {
+  const dataSourcesByResourceId = new Map<Resource["id"], DataSource[]>();
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type !== "resource") {
+      continue;
+    }
+    const entries = dataSourcesByResourceId.get(dataSource.resourceId) ?? [];
+    entries.push(dataSource);
+    dataSourcesByResourceId.set(dataSource.resourceId, entries);
+  }
+  return dataSourcesByResourceId;
+};
+
+export type ResourceRequestPlan = Readonly<{
+  requests: readonly ResourceRequest[];
+  documents: ReadonlyMap<Resource["id"], unknown>;
+}>;
+
+export const computeResourceRequestPlan = async ({
+  rootResourceIds,
+  resources,
+  dataSources,
+  values,
+  resourceCache,
+}: {
+  rootResourceIds: Iterable<Resource["id"]>;
+  resources: Resources;
+  dataSources: DataSources;
+  values: ReadonlyMap<DataSource["id"], unknown>;
+  resourceCache: ReadonlyMap<string, unknown>;
+}): Promise<ResourceRequestPlan> => {
+  const resolvedValues = new Map(values);
+  const documents = new Map<Resource["id"], unknown>();
+  const requests = new Map<Resource["id"], ResourceRequest>();
+  const pending = new Map<Resource["id"], Promise<boolean>>();
+  const dataSourcesByResourceId = getDataSourcesByResourceId(dataSources);
+
+  const visit = (
+    resourceId: Resource["id"],
+    ancestors: ReadonlySet<Resource["id"]> = new Set()
+  ): Promise<boolean> => {
+    if (ancestors.has(resourceId)) {
+      return Promise.resolve(false);
+    }
+    const previous = pending.get(resourceId);
+    if (previous !== undefined) {
+      return previous;
+    }
+    const nextAncestors = new Set(ancestors).add(resourceId);
+    // Walk dependencies before publishing the pending promise so back edges
+    // encounter their ancestor instead of awaiting a promise in the same cycle.
+    const resolution = (async () => {
+      const resource = resources.get(resourceId);
+      if (resource === undefined) {
+        return false;
+      }
+      const dependencyIds = getResourceDependencyIds({
+        resource,
+        dataSources,
+      });
+      const dependenciesResolved = await Promise.all(
+        [...dependencyIds].map((dependencyId) =>
+          visit(dependencyId, nextAncestors)
+        )
+      );
+      if (dependenciesResolved.some((resolved) => resolved === false)) {
+        return false;
+      }
+      const request = await computeResourceRequest(resource, resolvedValues);
+      requests.set(resourceId, request);
+      const key = getResourceKey(request);
+      if (resourceCache.has(key) === false) {
+        return false;
+      }
+      const document = resourceCache.get(key);
+      documents.set(resourceId, document);
+      for (const dataSource of dataSourcesByResourceId.get(resourceId) ?? []) {
+        resolvedValues.set(dataSource.id, document);
+      }
+      return true;
+    })();
+    pending.set(resourceId, resolution);
+    return resolution;
+  };
+
+  await Promise.all(
+    [...new Set(rootResourceIds)].map((resourceId) => visit(resourceId))
+  );
+  return {
+    requests: Array.from(requests.values()),
+    documents,
+  };
 };
 
 const reset = () => {
@@ -319,9 +676,17 @@ const reset = () => {
   pending.clear();
   cache.clear();
   diagnosticsCache.clear();
+  diagnosticsErrorCache.clear();
   performanceCache.clear();
+  for (const { controller } of pendingDiagnostics.values()) {
+    controller.abort();
+  }
   pendingDiagnostics.clear();
   knownRequests.clear();
+  pageRequestKeys.clear();
+  previewRequests.clear();
+  inspectionRequests.clear();
+  $resourcePreviewExchanges.set(new Map());
   resourceVersions.clear();
   updateCache();
   updatePending();

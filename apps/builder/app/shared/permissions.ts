@@ -39,11 +39,6 @@ export const getPermissions = ({
   const isAdmin = role === "administrators";
   const isBuilder = role === "builders" || isAdmin;
   const isEditor = role === "editors" || isBuilder;
-  // Content mode is always available in shared projects (non-owner access)
-  // because content mode is a safe/restricted editing mode.
-  // authPermit is server-validated, so we trust it here.
-  const isSharedProject = authPermit !== undefined && authPermit !== "own";
-
   return {
     // Workspace role permissions
     canCreateProject: isOwn || isBuilder,
@@ -63,7 +58,7 @@ export const getPermissions = ({
     canRestoreBackups: planFeatures.canRestoreBackups,
     allowDynamicData: planFeatures.allowDynamicData,
     allowAuth: planFeatures.allowAuth,
-    allowContentMode: isSharedProject || planFeatures.allowContentMode,
+    allowContentMode: authPermit === "own" || planFeatures.allowContentMode,
     allowStagingPublish: planFeatures.allowStagingPublish,
     allowAdditionalPermissions: planFeatures.allowAdditionalPermissions,
     maxContactEmailsPerProject: planFeatures.maxContactEmailsPerProject,

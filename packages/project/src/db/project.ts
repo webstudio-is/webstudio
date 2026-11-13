@@ -1,4 +1,5 @@
-import { nanoid } from "nanoid";
+import { TRPCError } from "@trpc/server";
+import { createId } from "@webstudio-is/sdk";
 import {
   authorizeProject,
   type AppContext,
@@ -41,6 +42,16 @@ export const findProjectIdsByUserId = async (
   return result.data;
 };
 
+export class ProjectNotFoundError extends TRPCError {
+  constructor() {
+    super({
+      code: "NOT_FOUND",
+      message: "This project is unavailable or no longer exists.",
+      cause: { webstudioCode: "NOT_FOUND" },
+    });
+  }
+}
+
 export type Project = Awaited<ReturnType<typeof loadById>>;
 
 export const loadById = async (projectId: string, context: AppContext) => {
@@ -66,10 +77,13 @@ export const loadById = async (projectId: string, context: AppContext) => {
     )
     .eq("id", projectId)
     .eq("isDeleted", false)
-    .single();
+    .maybeSingle();
 
   if (data.error) {
     throw data.error;
+  }
+  if (data.data === null) {
+    throw new ProjectNotFoundError();
   }
   const { latestStaticBuild, ...project } = data.data;
 
@@ -99,7 +113,7 @@ export const create = async (
     throw new Error("The user must be authenticated to create a project");
   }
 
-  const projectId = crypto.randomUUID();
+  const projectId = createId();
 
   // When creating inside a workspace, the project is owned by the workspace
   // owner — not the creating user. This ensures the workspace owner retains
@@ -225,66 +239,12 @@ export const softDeleteProject = async (
     .update({
       isDeleted: true,
       // Free the subdomain — each project needs a unique value
-      domain: nanoid(),
+      domain: createId("nano"),
     })
     .eq("id", projectId);
 
   if (result.error) {
     throw result.error;
-  }
-
-  // Delete detailed reports only after the project was safely soft-deleted.
-  // R2 lifecycle rules remain the fallback if this best-effort cleanup fails.
-  try {
-    const table = (
-      context.postgrest.client as unknown as {
-        from: (relation: string) => {
-          select: (columns: string) => {
-            eq: (
-              column: string,
-              value: string
-            ) => {
-              order: (column: string) => {
-                range: (
-                  from: number,
-                  to: number
-                ) => Promise<{
-                  data: { id: string; retentionDays: number }[] | null;
-                  error: unknown;
-                }>;
-              };
-            };
-          };
-        };
-      }
-    ).from("PublishAttempt");
-    const pageSize = 1000;
-    for (let from = 0; ; from += pageSize) {
-      const attempts = await table
-        .select("id, retentionDays")
-        .eq("projectId", projectId)
-        .order("id")
-        .range(from, from + pageSize - 1);
-      if (attempts.error) {
-        return;
-      }
-      const rows = attempts.data ?? [];
-      const reports = rows.flatMap(({ id, retentionDays }) =>
-        retentionDays === 1 || retentionDays === 30
-          ? [{ attemptId: id, retentionDays: retentionDays as 1 | 30 }]
-          : []
-      );
-      if (reports.length > 0) {
-        await context.deployment.deploymentTrpc.deletePublishReports.mutate({
-          reports,
-        });
-      }
-      if (rows.length < pageSize) {
-        break;
-      }
-    }
-  } catch {
-    // Report deletion is best effort and must not undo project deletion.
   }
 };
 

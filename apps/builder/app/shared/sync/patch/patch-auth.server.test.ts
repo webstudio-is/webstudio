@@ -78,6 +78,7 @@ import {
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
 
 const buildRow = {
+  pages: JSON.stringify({}),
   instances: JSON.stringify([
     { id: "body-1", type: "instance", component: "Body", children: [] },
   ]),
@@ -114,7 +115,9 @@ const createContext = () => {
 
 const transaction = (namespace: string, id = `tx-${namespace}`) => ({
   id,
-  payload: [{ namespace, patches: [{ op: "replace", path: ["x"], value: 1 }] }],
+  payload: [
+    { namespace, patches: [{ op: "add", path: ["x"], value: { id: "x" } }] },
+  ],
 });
 
 describe("createWriterContext", () => {
@@ -269,8 +272,8 @@ describe("authorizePatchEntries", () => {
 
     expect(result.rejected).toEqual([]);
     expect(result.authorized).toHaveLength(2);
-    expect(getContentModeCapabilities).toHaveBeenCalledTimes(1);
-    expect(applyContentModeTransaction).toHaveBeenCalledTimes(2);
+    expect(getContentModeCapabilities).toHaveBeenCalledTimes(2);
+    expect(applyContentModeTransaction).toHaveBeenCalledTimes(1);
     expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
@@ -288,15 +291,9 @@ describe("authorizePatchEntries", () => {
         }),
       })
     );
-    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        transaction: patch.entries[1].transaction,
-        capabilities: expect.objectContaining({
-          appliedTransactionId: patch.entries[0].transaction.id,
-        }),
-      })
-    );
+    expect(
+      getContentModeCapabilities.mock.calls[1]?.[0].styles.get("x")
+    ).toEqual({ id: "x" });
     expect(hasProjectPermit).toHaveBeenNthCalledWith(
       1,
       { projectId: "project-1", permit: "build" },
@@ -347,17 +344,14 @@ describe("authorizePatchEntries", () => {
 
     expect(result.rejected).toEqual([]);
     expect(result.authorized).toHaveLength(2);
-    expect(getContentModeCapabilities).toHaveBeenCalledTimes(1);
-    expect(applyContentModeTransaction).toHaveBeenCalledTimes(2);
-    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        transaction: patch.entries[1].transaction,
-        capabilities: expect.objectContaining({
-          appliedTransactionId: patch.entries[0].transaction.id,
-        }),
-      })
+    expect(getContentModeCapabilities).toHaveBeenCalledTimes(2);
+    expect(applyContentModeTransaction).toHaveBeenCalledTimes(1);
+    expect(applyContentModeTransaction.mock.calls[0]?.[0].transaction).toBe(
+      patch.entries[1].transaction
     );
+    const props = applyContentModeTransaction.mock.calls[0]?.[0].capabilities
+      .props as Map<string, unknown>;
+    expect(props.get("x")).toEqual({ id: "x" });
     expect(hasProjectPermit).toHaveBeenNthCalledWith(
       1,
       { projectId: "project-1", permit: "build" },
@@ -373,6 +367,48 @@ describe("authorizePatchEntries", () => {
       { projectId: "project-1", permit: "edit" },
       expect.anything()
     );
+  });
+
+  test("does not authorize an Editor after a Builder patch cannot be applied to the snapshot", async () => {
+    readAccessToken
+      .mockResolvedValueOnce({ userId: "builder", projectId: "project-1" })
+      .mockResolvedValueOnce({ userId: "editor", projectId: "project-1" });
+    hasProjectPermit.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const patch: NormalizedPatchRequest = {
+      buildId: "build-1",
+      projectId: "project-1",
+      clientVersion: 1,
+      entries: [
+        {
+          transaction: {
+            id: "builder",
+            payload: [
+              {
+                namespace: "props",
+                patches: [{ op: "replace", path: ["missing"], value: 1 }],
+              },
+            ],
+          } as never,
+          writer: { type: "token", authToken: "builder-token" },
+        },
+        {
+          transaction: transaction("props", "editor") as never,
+          writer: { type: "token", authToken: "editor-token" },
+        },
+      ],
+    };
+    const result = await authorizePatchEntries(
+      createContext() as never,
+      patch,
+      () => createContentModeCapabilities(buildRow)
+    );
+    expect(result.authorized.map(({ entry }) => entry.transaction.id)).toEqual([
+      "builder",
+    ]);
+    expect(result.rejected.map(({ entry }) => entry.transaction.id)).toEqual([
+      "editor",
+    ]);
+    expect(applyContentModeTransaction).not.toHaveBeenCalled();
   });
 
   test("creates content-mode capabilities once for multiple content-mode entries", async () => {
@@ -474,7 +510,7 @@ describe("authorizePatchEntries", () => {
     expect(result.rejected).toEqual([
       expect.objectContaining({
         entry: patch.entries[0],
-        errors: "You don't have permission to build this project.",
+        errors: "build-only",
       }),
     ]);
     expect(result.authorized).toEqual([
@@ -482,19 +518,14 @@ describe("authorizePatchEntries", () => {
         entry: patch.entries[1],
       }),
     ]);
-    expect(applyContentModeTransaction).toHaveBeenCalledTimes(2);
+    expect(applyContentModeTransaction).toHaveBeenCalledTimes(1);
     expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
         transaction: patch.entries[0].transaction,
       })
     );
-    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        transaction: patch.entries[1].transaction,
-      })
-    );
+    expect(getContentModeCapabilities).toHaveBeenCalledTimes(2);
     expect(hasProjectPermit).toHaveBeenNthCalledWith(
       1,
       { projectId: "project-1", permit: "build" },
@@ -533,8 +564,9 @@ describe("authorizePatchEntries", () => {
     expect(result.authorized).toEqual([]);
     expect(result.rejected).toEqual([
       expect.objectContaining({
-        errors: "You don't have permission to build this project.",
+        errors: "You don't have permission to edit this project.",
       }),
     ]);
+    expect(applyContentModeTransaction).not.toHaveBeenCalled();
   });
 });

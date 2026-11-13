@@ -176,7 +176,7 @@ describe("ShareProject", () => {
     const onChange = vi.fn();
     renderShareProject({ onChange });
 
-    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    const optionsButton = getElement('[aria-label="Options menu"]');
     click(optionsButton);
 
     expect(hasLabel("Can publish")).toBe(false);
@@ -203,7 +203,7 @@ describe("ShareProject", () => {
     const onChange = vi.fn();
     renderShareProject({ onChange });
 
-    click(getElement('[aria-label="Menu Button for options"]'));
+    click(getElement('[aria-label="Options menu"]'));
 
     expect(getControlByLabel<HTMLButtonElement>("Can clone")).toBeInstanceOf(
       HTMLButtonElement
@@ -226,7 +226,7 @@ describe("ShareProject", () => {
     const onChange = vi.fn();
     renderShareProject({ onChange });
 
-    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    const optionsButton = getElement('[aria-label="Options menu"]');
     click(optionsButton);
 
     const apiCheckbox = getControlByLabel<HTMLButtonElement>("API");
@@ -247,7 +247,7 @@ describe("ShareProject", () => {
       onChange,
     });
 
-    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    const optionsButton = getElement('[aria-label="Options menu"]');
     click(optionsButton);
 
     const apiCheckbox = getControlByLabel<HTMLButtonElement>("API");
@@ -269,7 +269,7 @@ describe("ShareProject", () => {
       onChange,
     });
 
-    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    const optionsButton = getElement('[aria-label="Options menu"]');
     click(optionsButton);
 
     const apiCheckbox = getControlByLabel<HTMLButtonElement>("API");
@@ -291,7 +291,7 @@ describe("ShareProject", () => {
       onChange,
     });
 
-    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    const optionsButton = getElement('[aria-label="Options menu"]');
     click(optionsButton);
 
     const apiCheckbox = getControlByLabel<HTMLButtonElement>("API");
@@ -315,7 +315,7 @@ describe("ShareProject", () => {
       onChange,
     });
 
-    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    const optionsButton = getElement('[aria-label="Options menu"]');
     click(optionsButton);
     click(getControlByLabel("Builder"));
     click(optionsButton);
@@ -331,7 +331,7 @@ describe("ShareProject", () => {
     const onChange = vi.fn();
     renderShareProject({ onChange });
 
-    click(getElement('[aria-label="Menu Button for options"]'));
+    click(getElement('[aria-label="Options menu"]'));
 
     const nameInput = getElement<HTMLInputElement>('input[name="Name"]');
     const editorSwitch = getControlByLabel("Editor");
@@ -345,7 +345,7 @@ describe("ShareProject", () => {
     const onChange = vi.fn();
     renderShareProject({ onChange });
 
-    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    const optionsButton = getElement('[aria-label="Options menu"]');
     click(optionsButton);
 
     const nameInput = getElement<HTMLInputElement>('input[name="Name"]');
@@ -362,7 +362,7 @@ describe("ShareProject", () => {
     const onChange = vi.fn();
     renderShareProject({ onChange });
 
-    click(getElement('[aria-label="Menu Button for options"]'));
+    click(getElement('[aria-label="Options menu"]'));
 
     const nameInput = getElement<HTMLInputElement>('input[name="Name"]');
     input(nameInput, "Renamed link");

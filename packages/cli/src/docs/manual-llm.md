@@ -72,7 +72,7 @@ Save the readable payload in `.temp/insert-fragment.json`:
 ```json
 {
   "parentInstanceId": "parent-id",
-  "fragment": "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag='h2'>Launch Kit</ws.element><ws.element ws:tag='p'>A focused section created with Webstudio JSX.</ws.element><ws.element ws:tag='button'>Get started</ws.element></ws.element>"
+  "fragment": "<section ws:style={css`padding: 32px; display: grid; gap: 12px;`}><h2>Launch Kit</h2><p>A focused section created with Webstudio JSX.</p><button>Get started</button></section>"
 }
 ```
 
@@ -88,7 +88,34 @@ For this simple path, do not grep source files, dump full MCP resources, or writ
 
 When authoring JSX for `insert-fragment`, use Webstudio component helpers and Webstudio style syntax. Use `ws:style={css\`...\`}`for Webstudio-native CSS. For simpler cases, use React-style object syntax such as`style={{ padding: 24 }}`. Both forms create editable Webstudio style data.
 
-When the task says another user will edit a page in Content mode, use a Content Block (`ws:block`) around every editable region. Content-mode users can edit text and supported props only in descendants of that block; content outside it is read-only. Put reusable insertable options in the block's `ws:block-template` child. Do not put intended editor content inside that template container: templates are protected source material, while an inserted template copy becomes an editable direct child of the Content Block. Verify this structure before handoff.
+When the task says another user will edit a page in Content mode, use a Content Block (`ws:block`) around every editable region. Content-mode users can edit text and supported props only in descendants of that block; content outside it is read-only. Put reusable insertable options in exactly one direct `ws:block-template` child. Do not put intended editor content inside that template container: templates are protected source material, while an inserted template copy becomes editable Content Block body content. A missing or second template container makes the block invalid. Verify this structure before handoff.
+
+When MDX files belong to a content collection, connect the collection to its dynamic entry page explicitly. Read the page ID after finding or creating the page, verify that its path has exactly one URL parameter, and store the ID at `x-webstudio.entryPageId` in `collection.json`. Do not assume Webstudio infers the page from its path, Assets query, or Content Block source. Preserve the rest of `collection.json`, and verify **Open on canvas** from both an entry asset menu and **Entry settings** before handoff. If no compatible page exists, leave the field unset and report that entry navigation still needs configuration.
+
+When the Content Block body must be stored in an `.mdx` Asset, use the dedicated `connect-content-block-source`, `switch-content-block-source`, `inspect-content-block-source`, `edit-content-block-source`, `update-content-block-frontmatter`, `reload-content-block-source`, and `disconnect-content-block-source` tools. Do not manipulate its `src` with generic prop tools. Connecting replaces existing Body content, so report `requiresConfirmation:true` and retry with `confirmReplacement:true` only after user approval. Prefer Markdown for standard document content; it automatically uses unique matching semantic templates. Use lowercase JSX such as `<section>` or `<svg>` for HTML or SVG that Markdown cannot express. Capitalized JSX resolves a unique stable template **Name** or a built-in MDX adapter. Add custom components to this Content Block's Templates before referencing them in MDX. The display label is independent. JSX attributes accept quoted values and bare booleans; expressions such as `{false}` are unsupported. Legacy `ws.element` and `ws:name` forms are compatibility input only. Component namespaces such as `$.*`, `radix.*`, and `animation.*` are unsupported; use direct component identifiers. Matching explicit children overlay designed descendants and keep their template styles. A mismatched child structure replaces defaults, while an explicit empty pair clears defaults and a self-closing reference keeps them. Editing inherited default content writes it back as explicit JSX children. Template resolution is live, including when a matching template is added after the MDX element. Preserve invalid MDX and unresolved template names, inspect all source-located diagnostics, and resolve revision conflicts by reloading before reapplying the change. After a template rename or deletion, use `migrate-content-block-template-references` to preview and confirm custom-template JSX and legacy updates across selected MDX files. A confirmed removal unwraps paired references and preserves their authored children; a self-closing reference disappears because it has none.
+
+Frontmatter is part of the same MDX source. `update-content-block-frontmatter` receives the complete replacement property map, so inspect and preserve properties the user did not ask to remove. Store frontmatter images as exact `$ref` objects. Bind editable Image sources to their resolved `.src` with explicit `binding.mode:"readwrite"`; omitting the mode leaves the image visible but not replaceable in Content mode. Bind alt properties to their Asset `.description` with `mode:"read"`. Use `update-content-block-frontmatter` for MCP frontmatter edits; MDX-rendered elements are not persistent targets for generic prop or text mutations. Preserve existing `mode:"readwrite"` bindings, which are valid only for exact direct frontmatter paths. Direct bindings through a loaded Markdown or MDX `$ref` ending in `#frontmatter` save to the referenced file, with its write permissions enforced. Shared-record edits affect every document using that record. Computed expressions and JSON/body references remain read-only. Image replacement is supported: a direct Image source binding with `mode:"readwrite"` lets the picker replace the frontmatter `$ref`, while shared Asset metadata is edited in Asset settings. For an expression-bound source inside a Collection, pass the occurrence's scoped values and a distinct stable `renderScope`; for example, resolve `post.assetId` with `variables:{"post":{"assetId":"<mdxAssetId>"}}`.
+
+For an editable MDX article, use the resource to select the Content Block's source Asset (`post.data.id`), then bind article fields inside the block to its document parameter (`document.frontmatter.title`), not query-result properties. Inspect the actual document variable name first. Create writable bindings explicitly: `update-text` uses `expressionBindingMode:"readwrite"`; `bind-props` uses `binding.mode:"readwrite"`. These generic tools target persistent designed instances, such as a header outside the MDX body, not MDX-generated instances. The MDX body is editable through its source mapping; merely placing static or query-bound content inside the block does not make it editable. Use exact direct paths; property access is already safe. Direct bindings through a loaded Markdown or MDX `$ref` ending in `#frontmatter` save to the referenced file, with its write permissions enforced. Shared-record edits affect every document using that record. Computed expressions and JSON/body references remain read-only. Image replacement is supported: a direct Image source binding with `mode:"readwrite"` lets the picker replace the frontmatter `$ref`, while shared Asset metadata is edited in Asset settings. Follow the complete article editability checklist below before handoff.
+
+### Content Block completion checklist
+
+For every Content Block creation, migration, or repair—with or without MDX—treat Content-mode editability as a delivery requirement for all content the user expects editors to change. Before implementation, inventory each value, its intended UI control, and its write destination. Choose controls by meaning: date/calendar controls for dates, image pickers for image replacement, and direct text or number controls for reading time. Keep fixed punctuation and units outside a directly bound value element; never mix literal and expression children there. Preserve the existing stored type and wording: if `readTime` already stores `4 min read`, bind that whole string directly instead of assuming it stores only a number. Distinguish protected layout/templates from editable content explicitly. Test each field through Content mode, check the saved project data or source file, reload, restore test values, and record passed/failed/not tested. Testing one heading, inspecting bindings, or successfully writing through MCP does not cover the remaining fields. Report missing controls and unsupported writes as unfinished requirements, not successful delivery.
+
+### Complete article editability is required
+
+When the user asks for the whole article to be editable in Content mode, this includes every article-owned value: title, excerpt, author details and links, dates, reading time, categories, hero and inline image sources, alternative text, captions, body text, links, and custom-component content and media. Exclude only designer-owned layout, styling, templates, and shared navigation/footer unless the user asks otherwise. A correct preview, a successful MCP write, or an editable body does not prove this requirement is met.
+
+Before handoff:
+
+1. Inventory every article field, its UI control, binding, and source file/field. Header fields outside **MDX content** are still part of the article and must be editable through the Content Block's document bindings.
+2. In Content mode, edit every inventoried field through the UI, including choosing a different hero image and editing link destinations and custom-component props. Do not substitute a raw MDX/YAML edit or an MCP write for this check.
+3. Read the saved source after each edit. Confirm the intended MDX body/frontmatter or referenced author file changed, unrelated content stayed intact, and the edit survives reload. Restore test values and verify restoration.
+4. Mark each field passed, failed, or not tested. Do not claim the article is fully editable while any required field is failed or untested.
+
+**Image replacement is not shared metadata editing.** For frontmatter such as `featureImage: { $ref: "./images/hero.png" }`, bind the Image source directly to `document.frontmatter.featureImage.src` with `binding.mode:"readwrite"` using `bind-props`. In Content mode, **Choose source** replaces the article’s `featureImage.$ref`; it does not overwrite the shared Asset’s resolved `.src`. The resolved URL field stays read-only. Verify the picker, saved reference, and reload—do not infer support from the displayed image alone. Bind alternative text to `.description` to use the shared Asset description; edit it through **Choose source → asset actions → Settings → Description**, which affects every use of that Asset. Do not treat a missing write mode as a platform limitation, and do not defer image replacement over a separate shared-description question.
+
+Keep intended editable values separate from display formatting. For reading time, use three inline sibling text elements: static `— `, one value element bound directly to `document.frontmatter.readingTime` with `expressionBindingMode:"readwrite"`, and static ` min read`. The value element must contain only that binding, not mixed literal and expression children. Preserve whitespace and the stored field type. Do not concatenate labels or units, use template literals, or add fallbacks/formatting calls to an editable binding. Prefer component formatting controls with a directly bound value. Explain unsupported cases and ask before making an intended editable field read-only; do not trade away editability just to match the display.
 
 Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`. JSX fragments are declarative project data; use the built-in Webstudio helpers instead.
 
@@ -97,17 +124,14 @@ Use Webstudio prop names in JSX: `class`, `for`, `aria-label`, and other HTML/We
 Use Webstudio actions for event/action props. Do not pass JavaScript functions such as `onClick={() => ...}`; the runtime rejects them because functions cannot be persisted as Webstudio project data.
 
 ```tsx
-<ws.element
-  ws:tag="button"
-  onClick={new ActionValue(["event"], expression`console.log(event)`)}
->
+<button onClick={new ActionValue(["event"], expression`console.log(event)`)}>
   Open
-</ws.element>
+</button>
 ```
 
 Plain JSX prop values must be JSON-compatible: `null`, strings, booleans, finite numbers, arrays, and plain objects. Do not pass `undefined`, `Symbol`, `BigInt`, `NaN`, `Infinity`, `Date`, `Map`, `Set`, class instances, or circular objects; omit the prop, use plain data, or use `expression`/`ActionValue` when the value is dynamic.
 
-If a component has a registered template with required parts, JSX must include those parts explicitly under the same parent structure as the template, for example `<radix.Switch><radix.SwitchThumb /></radix.Switch>`. Use `insert-component` when you want Webstudio to apply one component template automatically.
+If a component has a registered template with required parts, JSX must include those parts explicitly under the same parent structure as the template, for example `<Switch><SwitchThumb /></Switch>`. Use `insert-component` when you want Webstudio to apply one component template automatically.
 
 ## Animation Components
 
@@ -133,7 +157,7 @@ Video Animation settings: `timeline` is a boolean. Prefer `insert-component` for
 Use JSX fragments for authored animation structures when you need styled, editable examples. Put the final visual state in `ws:style` and put the starting or ending animated state in the Animation Group `action` keyframes. Include an explicit `offset` on every keyframe: use `offset: 0` for starting-state keyframes with `fill:"backwards"` and `offset: 1` for ending-state keyframes with `fill:"forwards"`.
 
 ```tsx
-<animation.AnimateChildren
+<AnimateChildren
   action={{
     type: "view",
     axis: "block",
@@ -164,8 +188,7 @@ Use JSX fragments for authored animation structures when you need styled, editab
     ],
   }}
 >
-  <ws.element
-    ws:tag="section"
+  <section
     ws:style={css`
       display: grid;
       gap: 16px;
@@ -175,18 +198,16 @@ Use JSX fragments for authored animation structures when you need styled, editab
       color: white;
     `}
   >
-    <ws.element ws:tag="h2">Launch metrics</ws.element>
-    <ws.element ws:tag="p">
-      A polished card that fades up as it enters the viewport.
-    </ws.element>
-  </ws.element>
-</animation.AnimateChildren>
+    <h2>Launch metrics</h2>
+    <p>A polished card that fades up as it enters the viewport.</p>
+  </section>
+</AnimateChildren>
 ```
 
-For Text Animation, keep `animation.AnimateText` as the direct child of Animation Group and place the text-containing element inside it:
+For Text Animation, keep `AnimateText` as the direct child of Animation Group and place the text-containing element inside it:
 
 ```tsx
-<animation.AnimateChildren
+<AnimateChildren
   action={{
     type: "view",
     animations: [
@@ -286,20 +307,16 @@ For Text Animation, keep `animation.AnimateText` as the direct child of Animatio
     isPinned: true,
   }}
 >
-  <animation.AnimateText
-    splitBy="space"
-    slidingWindow={5}
-    easing="easeOutQuart"
-  >
-    <ws.element ws:tag="h2">Animate words with controlled rhythm</ws.element>
-  </animation.AnimateText>
-</animation.AnimateChildren>
+  <AnimateText splitBy="space" slidingWindow={5} easing="easeOutQuart">
+    <h2>Animate words with controlled rhythm</h2>
+  </AnimateText>
+</AnimateChildren>
 ```
 
-For Stagger Animation, put the repeated cards or rows directly inside `animation.StaggerAnimation`:
+For Stagger Animation, put the repeated cards or rows directly inside `StaggerAnimation`:
 
 ```tsx
-<animation.AnimateChildren
+<AnimateChildren
   action={{
     type: "view",
     animations: [
@@ -321,9 +338,8 @@ For Stagger Animation, put the repeated cards or rows directly inside `animation
     ],
   }}
 >
-  <animation.StaggerAnimation>
-    <ws.element
-      ws:tag="article"
+  <StaggerAnimation>
+    <article
       ws:style={css`
         padding: 20px;
         border: 1px solid #d1d5db;
@@ -331,9 +347,8 @@ For Stagger Animation, put the repeated cards or rows directly inside `animation
       `}
     >
       Plan
-    </ws.element>
-    <ws.element
-      ws:tag="article"
+    </article>
+    <article
       ws:style={css`
         padding: 20px;
         border: 1px solid #d1d5db;
@@ -341,9 +356,8 @@ For Stagger Animation, put the repeated cards or rows directly inside `animation
       `}
     >
       Build
-    </ws.element>
-    <ws.element
-      ws:tag="article"
+    </article>
+    <article
       ws:style={css`
         padding: 20px;
         border: 1px solid #d1d5db;
@@ -351,15 +365,15 @@ For Stagger Animation, put the repeated cards or rows directly inside `animation
       `}
     >
       Launch
-    </ws.element>
-  </animation.StaggerAnimation>
-</animation.AnimateChildren>
+    </article>
+  </StaggerAnimation>
+</AnimateChildren>
 ```
 
 For Video Animation, use the registered template via `insert-component` when possible. If you author JSX, include the Video child explicitly:
 
 ```tsx
-<animation.AnimateChildren
+<AnimateChildren
   action={{
     type: "view",
     animations: [
@@ -375,16 +389,16 @@ For Video Animation, use the registered template via `insert-component` when pos
     ],
   }}
 >
-  <animation.VideoAnimation timeline={true}>
-    <$.Video
+  <VideoAnimation timeline={true}>
+    <Video
       preload="auto"
       autoPlay={true}
       muted={true}
       playsInline={true}
       crossOrigin="anonymous"
     />
-  </animation.VideoAnimation>
-</animation.AnimateChildren>
+  </VideoAnimation>
+</AnimateChildren>
 ```
 
 ## Command Surface Boundary
@@ -411,10 +425,11 @@ For Video Animation, use the registered template via `insert-component` when pos
 Use this process for user requests that change Webstudio content, layout, styles, assets, pages, redirects, resources, or publishing state:
 
 1. Discover capabilities with `webstudio man --json`, `webstudio schema api`, `webstudio schema mcp`, MCP `meta.index`, `meta.guide`, `meta.get-more-tools`, `components.list`, `components.summary`, `components.coverage-plan`, `components.search`, `components.get`, `templates.list`, and `templates.get`. From a shell, prefer shortcut calls such as `webstudio meta.index` and `webstudio components.search '{"brief":"button"}'` for these focused tool calls; use `webstudio mcp single-op-call` when you need the explicit MCP form. Read full resources such as `webstudio://project/tools` and `webstudio://project/components` only when needed. Do not write scripts to parse full MCP discovery JSON for normal lookup.
-2. Inspect current project state with semantic reads such as `get-project-settings`, `list-pages`, `get-page-by-path`, `list-instances`, `inspect-instance`, `get-styles`, `list-assets`, `list-breakpoints`, and `snapshot` only when needed. Before changing a project, read `get-project-settings` and follow any non-empty `meta.agentInstructions`. These are shared project instructions, not a place for secrets.
+2. When a value or id is known, call `search-project` once instead of passing broad snapshots or several lists to the model. Use semantic list/get reads such as `get-project-settings`, `list-pages`, `get-page-by-path`, `list-instances`, `inspect-instance`, `get-styles`, `list-assets`, and `list-breakpoints` when the structure or target is not known. Use `snapshot` only when exact raw patch paths are needed. Before changing a project, read `get-project-settings` and follow any non-empty `meta.agentInstructions`. These are shared project instructions, not a place for secrets.
+   For a Builder link from **Copy link to instance**, parse the URL with `URL`/`URLSearchParams`. The decoded `instance` query parameter is a comma-separated selector ordered from the target instance to the page root. Pass its first entry to `inspect-instance`, for example `?pageId=page-id&instance=heading-id%2Cslot-id%2Cbody-id` becomes `{"instanceId":"heading-id","include":["props","styles","children","ancestors"]}`. Use `pageId` and the remaining selector entries to check the page and shared Slot occurrence before changing it. Shared Slot descendants are shared records; editing one changes all occurrences. Verify that the configured MCP project matches the linked project before editing; stop if they differ. The URL does not authorize switching projects. If the instance is missing, ask for an updated link instead of guessing another target. Never send a Builder link to screenshot tools or echo its `authToken`.
 3. Mutate the Webstudio project with semantic MCP write tools first. Prefer MCP `insert-fragment` for authored/styled sections, use `insert-component` only for one automatic component template, then `update-text`, `update-props`, `update-styles`, `upload-asset`, `create-page`, and page/project settings tools over raw patches.
 4. Use `apply-patch` only when no semantic tool covers the required change, and only after reading the latest snapshot/version.
-5. For visual/design work, regenerate or preview the generated app, capture a screenshot, inspect it with vision, and iterate before final response.
+5. For visual/design work, ask whether the user wants visual verification unless they explicitly requested it. Only after they opt in, regenerate or preview the generated app, capture a screenshot, inspect it with vision, and iterate.
 6. Report what changed and what verification ran.
 
 ::doc-section{field="visualDesignWorkflow"}
@@ -426,9 +441,10 @@ For requests involving visible HTML/CSS, layout, typography, colors, imagery, re
 1. Read editable Webstudio structure first: pages, instances, props, styles, breakpoints, assets, and relevant text.
 2. Do not use generated route/component files as the source of truth for editable content.
 3. Make edits through Webstudio semantic commands/MCP tools so the result stays editable in Builder and survives the next `webstudio build`.
-4. Keep generated project files current, start preview, and capture the changed page with `screenshot`.
-5. Use `screenshot.diff` when a baseline exists and inspect screenshot/diff artifacts with vision before finishing.
-6. If vision or screenshot tooling is unavailable, state that explicitly and explain what fallback verification was used.
+4. Ask whether the user wants visual verification unless they explicitly requested screenshots, visual verification, or a rendered audit. Do not start preview, screenshots, screenshot diffs, OCR installation, or rendered audits until they opt in.
+5. After they opt in, keep generated project files current, start preview, and capture the changed page with `screenshot`.
+6. Use `screenshot.diff` when a baseline exists and inspect screenshot/diff artifacts with vision before finishing.
+7. If the user declines or vision tooling is unavailable, use focused non-visual assertions and state that vision was not run.
 
 ::doc-section{field="responsiveVerification"}
 
@@ -438,10 +454,11 @@ For responsive page work, use Builder breakpoints as the source of truth:
 
 1. Read breakpoints with `list-breakpoints` before deciding responsive behavior.
 2. Apply responsive styles with existing Builder breakpoint ids; do not invent CSS media queries or breakpoint names when Webstudio breakpoint data exists.
-3. Pick screenshot viewport widths from the project breakpoints: include a desktop width, each defined max-width or min-width edge, and a narrow mobile width.
-4. Capture each viewport with `screenshot`, for example `{"path":"/","output":"home-375.png","viewport":{"width":375,"height":812}}` and `{"path":"/","output":"home-1440.png","viewport":{"width":1440,"height":900}}`.
-5. Inspect every viewport screenshot with vision before finishing, checking layout, overflow, hidden content, text wrapping, and breakpoint-specific style changes.
-6. If any viewport fails, update styles through semantic Webstudio tools and repeat screenshots for the affected breakpoints.
+3. Ask whether the user wants visual verification unless they explicitly requested it. Do not capture responsive screenshots until they opt in.
+4. Pick screenshot viewport widths from the project breakpoints: include a desktop width, each defined max-width or min-width edge, and a narrow mobile width.
+5. Capture each viewport with `screenshot`, for example `{"path":"/","output":"home-375.png","viewport":{"width":375,"height":812}}` and `{"path":"/","output":"home-1440.png","viewport":{"width":1440,"height":900}}`.
+6. Inspect every viewport screenshot with vision before finishing, checking layout, overflow, hidden content, text wrapping, and breakpoint-specific style changes.
+7. If any viewport fails, update styles through semantic Webstudio tools and repeat screenshots for the affected breakpoints.
 
 ::doc-section{field="generatedFileGuardrails"}
 
@@ -458,36 +475,45 @@ For responsive page work, use Builder breakpoints as the source of truth:
 
 Before authoring unfamiliar expressions, read `webstudio://project/expressions` with MCP `resources/read` or `webstudio mcp read-resource webstudio://project/expressions`. It documents the supported expression subset, method allowlist, scope, Collection context, and validation limits.
 
+Always write direct property access in authored expressions, such as
+`formData.subject`. Never type optional property access (`?.`) in an authored
+binding. The expression compiler inserts it into generated JavaScript to make
+missing intermediate values safe; that generated syntax is not an authoring
+example and must not be copied into a binding. Use
+`formData.subject ?? "New message"` when a missing value needs a meaningful
+fallback.
+
 - Use direct value tools for fixed content. For one visible text child, use `update-text` with plain `text`. For a bounded multi-instance literal replacement, use `replace-text` with `find`, `replace`, `pagePath` or `pageId`, and `limit`; it does not change expression children. Use `replace-prop-text` for bounded changes inside static string props, optionally limited to prop names or instance ids; it never changes dynamic bindings. For static props such as `aria-label`, `alt`, `id`, `class`, `href`, or button labels stored as props, use `update-props` with the prop's direct type/value.
 - Use `bind-props` only when the prop must stay dynamic: an expression, resource result, action, or existing scoped runtime context such as `system`. Do not use `bind-props` just to set a fixed string.
 - Direct prop string example: `{"updates":[{"instanceId":"button-id","name":"aria-label","type":"string","value":"Open menu"}]}`.
 - Expression binding example: `{"bindings":[{"instanceId":"link-id","name":"href","binding":{"type":"expression","value":"currentPost.url"}}]}`.
-- Page metadata fields such as `title`, `description`, `language`, `redirect`, and custom meta content accept plain fixed text. For computed values, pass JavaScript expression code such as `pageTitle ?? "Pricing | Acme"`.
+- Page metadata fields contain JavaScript expression source. For fixed text, pass a quoted string expression such as `"Pricing | Acme"`; for computed values, pass code such as `pageTitle ?? "Pricing | Acme"`. An unquoted word is a variable reference, not fixed text.
 - Page `status` accepts a fixed HTTP status code as a number from 200 through 599, for example `302`. For a dynamic status, pass JavaScript expression code such as `system.status`.
-- Page metadata update example: use `update-page` with `{"pageId":"page-id","values":{"title":"Pricing | Acme","meta":{"description":"Plans for teams"}}}`.
+- Page metadata update example: use `update-page` with `{"pageId":"page-id","values":{"title":"\"Pricing | Acme\"","meta":{"description":"\"Plans for teams\""}}}`.
 - Draft a page with `update-page` and `{"pageId":"page-id","values":{"isDraft":true}}`. It remains editable and previewable but is omitted from every publish target, including staging, and from sitemap output.
 - Stage a draft page for a future publish with `{"pageId":"page-id","values":{"isDraft":false}}`. This clears draft state but does not deploy the site. The home page and `/*` catch-all page cannot be drafts.
 - Resource `url` accepts plain fixed URLs and paths. For computed URLs, pass JavaScript expression code such as `"https://api.example.com/items?tag=" + filters.tag`. Resource header values, search parameter values, and text bodies accept expressions for dynamic values; for fixed text, use `{ "type": "literal", "value": "application/json" }`.
 - Resource update example: use `update-resource` with `{"resourceId":"resource-id","values":{"url":"https://api.example.com/items"}}`.
 - Assets is one system resource that always executes a structured query. `result:"many"` returns the existing ID-keyed collection shape and is the backward-compatible default. `result:"one"`, `result:"first"`, and `result:"last"` return one direct item or `null`; first and last require explicit sorting. `create-assets-resource` without `query` uses the default URL and optional image-dimensions output.
+- Choose the article format before building a blog. Use `.mdx` with a Content Block for Notion-style visual body editing in Content mode; publishing downloads and compiles each reachable MDX article, which can slow publishing as the blog grows. Use `.md` with Markdown Embed when editors can work in the Markdown file editor in Assets instead; they can edit the source in Content mode but not the body visually on the canvas. `.md` needs no per-article MDX compilation, but the current publish sync still downloads Asset files for both formats, and static generation may read Markdown bodies.
 - For a Markdown-backed blog, create exactly two Builder page definitions: a fixed `/blog` overview and one `/blog/:slug` detail page. Both pages load content through Assets resources. Never create one Builder page per post or duplicate Markdown content into static page structures. Read `get-asset-field-catalog`, validate each structured query with `validate-asset-query`, then call `create-assets-resource` or `update-assets-resource`. Set `values.query:null` to restore the default query.
 - Optimize every explicit Assets query for the deployed content-database size. Use `output.mode:"fields"` and select only fields that are actually rendered or otherwise required by the query. Keep `includeMetadata:false` unless the rendered value needs file metadata; diagnostics are returned separately. Do not use `output.mode:"all"` as a convenience default.
 - Every reachable Assets data source contributes to the shared database. Keep one final resource per rendered query. Update an existing scoped resource instead of creating a placeholder, preview copy, or repair replacement, and remove obsolete duplicate resources and data sources.
 - Make a bounded overview fully static: use literal values for its filters, limit, and offset, add a deterministic ID tie-breaker to its sort, and use `content.mode:"none"`. This lets compilation materialize the small overview result instead of retaining overview-only fields across every candidate article. Reserve runtime expressions for values that are truly dynamic, such as `system.params.slug` on the detail route.
-- Query Markdown files directly and use `content.mode:"markdown-body-ref"` when rendering their bodies. The published database keeps only metadata and document references, filters and paginates first, and fetches the selected Markdown bodies from Asset storage at runtime. Do not create companion JSON descriptors merely to avoid embedding Markdown.
+- Query Markdown or MDX files directly and use `content.mode:"markdown-body-ref"` when rendering their bodies. The published database keeps only metadata and document references, filters and paginates first, and fetches the selected files from Asset storage at runtime. Do not create companion JSON descriptors merely to avoid embedding the document.
 - `full` and bounded `range` request embedded file bytes. Use them only when the caller explicitly requires the complete source or a byte range.
-- Deferred Markdown bodies exclude frontmatter and resolve conventional relative links and images such as `../images/hero.png` to matching Assets. Markdown Embed permits sanitized figures, audio, video, and iframes, but removes scripts, inline event handlers, and unsafe URLs.
+- Deferred Markdown or MDX bodies exclude frontmatter and resolve conventional relative links and images such as `../images/hero.png` to matching Assets. Markdown Embed permits sanitized figures, audio, video, and iframes, but removes scripts, inline event handlers, and unsafe URLs. It does not render Webstudio MDX elements; connect the `.mdx` file to a Content Block for that workflow.
 - For `result:"many"`, Assets expose an ID-keyed map at `<dataSourceName>.data` and `totalCount`/`hasMore` at `<dataSourceName>.meta`; bind a listing Collection to `posts.data`. Single-result modes expose the selected item or `null` directly at `<dataSourceName>.data`, always include its `id`, and expose `totalCount` in meta. Bind detail components and page settings directly from expressions such as `post.data.properties.title`, `post.data.content.text`, and `post.data ? 200 : 404` without a Collection.
 - Use `preview-asset-query` with concrete values before binding expressions in the saved resource. Inspect `__diagnostics__.query` for the temporary query-only footprint and `__diagnostics__.database` for the merged database built from all reachable Assets queries. Only `database.usedBytes` counts toward `database.maxBytes`; query sizes are not separate allowances and must not be summed. Compare `usedBytes`, `unboundedBytes`, and `truncated` within both scopes. A finished Markdown blog must include every source document without truncation, contain no embedded Markdown bodies, and retain only the intended materialized overview query. When merged usage approaches the limit, remove duplicate reachable resources first, then unused output fields, then narrow candidate files. Inspect saved mode and configuration with `list-assets-resources` or `get-assets-resource`; shared index maintenance is automatic.
 - Data variable values support `string`, `number`, `boolean`, and `json`. Use `json` for all arrays, objects, filters, and nested data.
 - Parameters are internal scoped runtime values from pages, collections, or components. They are not a public authoring surface: do not create, update, or delete parameter records. Public tools should preserve existing parameter records and may reference documented context values such as `system` in expressions where they are already in scope.
 - Use scoped resources for read data. A GET resource created with `scopeInstanceId`/`dataSourceName` defaults to `exposeAsDataSource:true`, becomes a scoped resource data variable, is generated into the page resource `data` map, and may be loaded while rendering the page. Read the loaded resource result from its wrapper, usually `.data`.
-- Use prop-bound resources for actions. A resource created without `scopeInstanceId` and bound to a component prop such as Form `action` with `bind-props` and `binding.type: "resource"` becomes an action resource in the page resource `action` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and anything that should run only from an explicit form/action flow.
-- POST, PUT, and DELETE resources default to `exposeAsDataSource:false`, even with a scope. Set `exposeAsDataSource:true` only for an intentional render-time read such as a GraphQL POST query; provide `scopeInstanceId` and inspect the returned warning. Set it to `false` during `update-resource` to detach existing render-time exposure.
+- Native Form (`ResourceForm`) actions use an `action` JSON array of `dataSourceId` entries, not a resource prop. Create the Resource with `scopeInstanceId` on the Form or an ancestor and `exposeAsDataSource:true`, then use the returned `dataSourceId` in `update-props`: `{"updates":[{"instanceId":"form-id","name":"action","type":"json","value":[{"dataSourceId":"resource-data-source-id"}]}]}`. Scope it to the Form when its request needs `formData`. An action-only Resource runs on submission, not page render; avoid separate page bindings to a write Resource. For other components with action-resource props, use `bind-props` with `binding.type:"resource"`.
+- POST, PUT, and DELETE resources default to `exposeAsDataSource:false`, even with a scope. Apart from the native Form action above, set `exposeAsDataSource:true` only for an intentional render-time read such as a GraphQL POST query; provide `scopeInstanceId` and inspect the returned warning. Set it to `false` during `update-resource` to detach existing render-time exposure.
 - For dynamic resource query parameters prefer `searchParams`, for example `{"name":"tag","value":"filters.tag"}`. Use `{"type":"literal","value":"website"}` for fixed request text. Header values can use an expression such as `"Bearer " + auth.token`. Body can be an object expression, including GraphQL payloads such as `{ query: "...", variables: { slug: system.params.slug } }`.
-- Resource methods are `get`, `post`, `put`, and `delete`. Optional resource controls are `graphql` and `system`. Use `control:"graphql"` for GraphQL POST resources with query bodies. Use `control:"system"` for built-in local resource URLs such as `"/$resources/current-date"` and for resources reading the built-in `system` parameter. The built-in system fields are `system.origin`, `system.pathname`, `system.params`, and `system.search`; do not use `system.path`.
+- Resource methods are `get`, `post`, `put`, and `delete`. Optional resource controls are `graphql` and `system`. Use `control:"graphql"` for GraphQL POST resources with query bodies. Use `control:"system"` for built-in local resource URLs such as `"/$resources/current-date"` and for resources reading the built-in `system` parameter. The built-in system fields are `system.origin`, `system.pathname`, `system.params`, and `system.search`; do not use `system.path`. A query key with one value is a string, while repeated values are an ordered array. For `?tag=red&tag=blue`, `system.search.tag` is `["red", "blue"]`.
 - Whenever an array or object from a resource or data variable should render repeated UI, call `insert-collection` with the complete iterable and one repeated-item JSX root. The command creates the Collection, private item parameters, iterable binding, and descendant item bindings atomically. Use `collectionItem` and `collectionItemKey` expressions in the item JSX. Wrap multiple repeated siblings in one Element, and give repeated Radix items stable unique `value` bindings.
-- Expressions are single JavaScript expressions, not statements or functions. Functions, arrow functions, classes, `new`, `this`, `await`, imports, arbitrary calls, increment/decrement, and assignment outside actions are unsupported. Property and index access are made safe automatically, so write direct access without optional chaining. Use nullish coalescing when a fallback is required.
+- Expressions are single JavaScript expressions, not statements or functions. Functions, arrow functions, classes, `new`, `this`, `await`, imports, arbitrary calls, increment/decrement, and assignment outside actions are unsupported. Property and index access are made safe automatically, so write direct access. Use nullish coalescing when a fallback is required.
 
 ## Pick Read Command
 
@@ -519,10 +545,10 @@ MCP tools receive JSON argument objects, not CLI flags. Use these shapes:
 - Pass --json only to commands whose help/schema documents it. Do not add --json to top-level commands such as sync unless supported.
 - On VERSION_CONFLICT, read MCP snapshot again, regenerate the patch, then retry.
 - Treat stdout JSON as the API contract and stderr as diagnostics.
-- For visual/design work, verify the rendered result with vision before finishing.
+- Never run visual verification automatically. Ask first unless the user explicitly requested screenshots, visual verification, or a rendered audit; if they do not opt in, use focused non-visual assertions.
 - Do not edit generated files for normal Webstudio content/design requests.
 - Use direct values for static strings and bindings only for dynamic expressions/resources/actions.
-- Use plain fixed text where documented. Only encode a quoted JavaScript string literal when a field is explicitly documented as an expression-only value.
+- Use expression source for page metadata. Quote fixed text as a JavaScript string literal within the JSON string.
 - Confirm destructive commands with --confirm only when user requested deletion/unpublish/replacement.
 - Use webstudio schema api for machine-readable top-level command metadata and webstudio schema mcp for MCP tool schemas.
 

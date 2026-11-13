@@ -4,6 +4,7 @@ import {
   animationAction,
   encodeDataSourceVariable,
   getStyleDeclKey,
+  tags,
 } from "@webstudio-is/sdk";
 import type {
   Breakpoint,
@@ -19,31 +20,92 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
+import { mapAttributeNames } from "@webstudio-is/content-engine/jsx-attributes";
+import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
 import { parseTemplateCss, type TemplateStyleDecl } from "./css";
 import { camelCaseProperty, parseMediaQuery } from "@webstudio-is/css-data";
 
+export class TemplateValidationError extends Error {}
+
+declare module "react" {
+  interface HTMLAttributes<T> {
+    "ws:id"?: string;
+    "ws:style"?: TemplateStyleDecl[];
+    "ws:tokens"?: Token[];
+    "ws:show"?: boolean | Expression;
+  }
+
+  interface SVGAttributes<T> {
+    "ws:id"?: string;
+    "ws:style"?: TemplateStyleDecl[];
+    "ws:tokens"?: Token[];
+    "ws:show"?: boolean | Expression;
+  }
+}
+
+const instanceMetaByElement = new WeakMap<
+  JSX.Element,
+  Readonly<{ name?: string; label?: string }>
+>();
+const componentIdByMarker = new WeakMap<object, Instance["component"]>();
+const intrinsicTags = new Set(tags);
+
+export type TemplateComponent = Exclude<JSX.Element["type"], string>;
+
+export type RenderTemplateOptions = {
+  allowManualIds?: boolean;
+  componentIds?: ReadonlyMap<TemplateComponent, Instance["component"]>;
+  componentMetas?: ReadonlyMap<Instance["component"], WsComponentMeta>;
+};
+
+/** Associates instance metadata without exposing it as JSX properties. */
+export const setInstanceMeta = (
+  meta: Readonly<{ label?: string }>,
+  element: JSX.Element
+): JSX.Element => {
+  instanceMetaByElement.set(element, meta);
+  return element;
+};
+
+/** Associates structured Content Block template metadata without JSX props. */
+export const setTemplateMeta = (
+  meta: Readonly<{ name: string; label?: string }>,
+  element: JSX.Element
+): JSX.Element => {
+  if (isMdxTemplateComponentName(meta.name) === false) {
+    throw new TemplateValidationError(
+      "Template name must be a PascalCase JavaScript identifier, for example PromotionCard"
+    );
+  }
+  instanceMetaByElement.set(element, meta);
+  return element;
+};
+
 export class Token {
   name: string;
-  styles: TemplateStyleDecl[];
-  constructor(name: string, styles: TemplateStyleDecl[]) {
+  styles?: TemplateStyleDecl[];
+  constructor(name: string, styles?: TemplateStyleDecl[]) {
     this.name = name;
     this.styles = styles;
   }
 }
 
-export const token = (name: string, styles: TemplateStyleDecl[]): Token => {
+export const token = (name: string, styles?: TemplateStyleDecl[]): Token => {
   if (typeof name !== "string" || name.length === 0) {
-    throw new Error(
+    throw new TemplateValidationError(
       'token() requires a non-empty string name, for example token("brand", css`color: red;`).'
     );
   }
+  if (styles === undefined) {
+    return new Token(name);
+  }
   if (Array.isArray(styles) === false) {
-    throw new Error(
+    throw new TemplateValidationError(
       'token() styles must come from css`...`, for example token("brand", css`color: red;`).'
     );
   }
   if (styles.length === 0) {
-    throw new Error(
+    throw new TemplateValidationError(
       'token() styles must include at least one valid CSS declaration from css`...`, for example token("brand", css`color: red;`).'
     );
   }
@@ -68,6 +130,10 @@ export class Parameter {
 
 type ResourceConfig = {
   control?: Resource["control"];
+  email?: Omit<NonNullable<Resource["email"]>, "body" | "subject"> & {
+    body?: string | Expression;
+    subject?: string | Expression;
+  };
   url: Expression;
   method: Resource["method"];
   searchParams?: Array<{ name: string; value: Expression }>;
@@ -80,12 +146,19 @@ export class ResourceValue {
   config: ResourceConfig;
   constructor(name: string, config: ResourceConfig) {
     if (config === undefined) {
-      throw new Error(
+      throw new TemplateValidationError(
         "Invalid JSX prop: ResourceValue requires a resource definition. Existing resource ids are not supported in JSX; insert the component first, then bind its resource prop with update-props."
       );
     }
     this.name = name;
     this.config = config;
+  }
+}
+
+export class FormActionsValue {
+  resources: ResourceValue[];
+  constructor(resources: ResourceValue[]) {
+    this.resources = resources;
   }
 }
 
@@ -151,14 +224,29 @@ const isChildValue = (child: unknown) =>
   child instanceof PlaceholderValue ||
   child instanceof Expression;
 
-const getElementChildren = (element: JSX.Element): JSX.Element[] => {
-  if (Array.isArray(element.props?.children)) {
-    return element.props?.children;
+type ElementChild = JSX.Element | string | PlaceholderValue | Expression;
+
+const appendElementChildren = (children: ElementChild[], child: unknown) => {
+  if (Array.isArray(child)) {
+    for (const item of child) {
+      appendElementChildren(children, item);
+    }
+    return;
   }
-  if (element.props?.children) {
-    return [element.props?.children];
+  if (child === undefined || child === null || typeof child === "boolean") {
+    return;
   }
-  return [];
+  if (typeof child === "number") {
+    children.push(String(child));
+    return;
+  }
+  children.push(child as ElementChild);
+};
+
+const getElementChildren = (element: JSX.Element): ElementChild[] => {
+  const children: ElementChild[] = [];
+  appendElementChildren(children, element.props?.children);
+  return children;
 };
 
 const findUnsupportedSerializableValue = (
@@ -169,11 +257,13 @@ const findUnsupportedSerializableValue = (
   | {
       path: string[];
       message: string;
+      kind?: "function";
     }
   | undefined => {
   if (typeof value === "function") {
     return {
       path,
+      kind: "function",
       message:
         "Do not pass JavaScript functions. Use Webstudio actions instead",
     };
@@ -279,10 +369,11 @@ const validateSerializablePropValue = (name: string, value: unknown) => {
     unsupportedValue.path.length === 0
       ? ""
       : ` at "${unsupportedValue.path.join(".")}"`;
-  const actionHint = unsupportedValue.message.includes("functions")
-    ? ` For actions, use ${name}={new ActionValue(["event"], expression\`console.log(event)\`)}.`
-    : "";
-  throw new Error(
+  const actionHint =
+    unsupportedValue.kind === "function"
+      ? ` For actions, use ${name}={new ActionValue(["event"], expression\`console.log(event)\`)}.`
+      : "";
+  throw new TemplateValidationError(
     `Invalid JSX prop "${name}"${nestedPath}. ${unsupportedValue.message}.${actionHint}`
   );
 };
@@ -304,7 +395,7 @@ const hasInvalidStyleValue = (styles: TemplateStyleDecl[]) =>
 
 const convertReactStyleObject = (value: unknown): TemplateStyleDecl[] => {
   if (isPlainObject(value) === false) {
-    throw new Error(
+    throw new TemplateValidationError(
       "style prop must be a plain object, for example style={{ padding: 24 }}."
     );
   }
@@ -316,7 +407,7 @@ const convertReactStyleObject = (value: unknown): TemplateStyleDecl[] => {
     const property = getReactStyleProperty(name);
     if (typeof styleValue === "number") {
       if (Number.isFinite(styleValue) === false) {
-        throw new Error(
+        throw new TemplateValidationError(
           `Invalid style prop "${name}". Use a finite number or string value.`
         );
       }
@@ -334,7 +425,7 @@ const convertReactStyleObject = (value: unknown): TemplateStyleDecl[] => {
       styles.push(...parseReactStyleDeclaration(property, styleValue));
       continue;
     }
-    throw new Error(
+    throw new TemplateValidationError(
       `Invalid style prop "${name}". Use a string, finite number, null, or undefined value.`
     );
   }
@@ -345,10 +436,7 @@ export const renderTemplate = (
   root: JSX.Element,
   generateId?: () => string,
   initialBreakpoints: Breakpoint[] = [],
-  options: {
-    allowManualIds?: boolean;
-    componentMetas?: Map<Instance["component"], WsComponentMeta>;
-  } = {}
+  options: RenderTemplateOptions = {}
 ): WebstudioFragment => {
   const instances: Instance[] = [];
   const props: Prop[] = [];
@@ -356,7 +444,11 @@ export const renderTemplate = (
   const styleSources: StyleSource[] = [];
   const styleSourceSelections: StyleSourceSelection[] = [];
   const styles: StyleDecl[] = [];
-  const dataSources = new Map<Variable | Parameter, DataSource>();
+  const referenceTokenIds: string[] = [];
+  const dataSources = new Map<
+    Variable | Parameter | ResourceValue,
+    DataSource
+  >();
   const resources = new Map<ResourceValue, Resource>();
   const idsByKey = new Map<unknown, string>();
   const lastIdsByList = new Map<unknown, number>();
@@ -380,7 +472,7 @@ export const renderTemplate = (
   };
   const getVariableId = (
     instanceId: string,
-    variable: Variable | Parameter
+    variable: Variable | Parameter | ResourceValue
   ) => {
     const id = getIdByKey(variable);
     if (dataSources.has(variable)) {
@@ -438,10 +530,38 @@ export const renderTemplate = (
     if (resources.has(resourceValue)) {
       return id;
     }
+    const email = resourceValue.config.email;
+    const {
+      body: emailBody,
+      subject: emailSubject,
+      ...emailSettings
+    } = email ?? {};
     resources.set(resourceValue, {
       id,
       name: resourceValue.name,
       control: resourceValue.config.control,
+      email:
+        email === undefined
+          ? undefined
+          : {
+              ...emailSettings,
+              ...(emailSubject === undefined
+                ? {}
+                : {
+                    subject:
+                      emailSubject instanceof Expression
+                        ? compileExpression(instanceId, emailSubject)
+                        : emailSubject,
+                  }),
+              ...(emailBody === undefined
+                ? {}
+                : {
+                    body:
+                      emailBody instanceof Expression
+                        ? compileExpression(instanceId, emailBody)
+                        : emailBody,
+                  }),
+            },
       url: compileExpression(instanceId, resourceValue.config.url),
       method: resourceValue.config.method,
       searchParams: resourceValue.config.searchParams?.map(
@@ -520,56 +640,85 @@ export const renderTemplate = (
     element: JSX.Element
   ): Instance["children"][number] => {
     if (element.type === Fragment) {
-      throw new Error(
-        "Do not use React fragment shorthand <>...</> inside Webstudio JSX. Pass sibling Webstudio components directly at the top level, or wrap text in a component such as <$.Box><$.Paragraph>Text</$.Paragraph></$.Box>."
+      throw new TemplateValidationError(
+        "Do not use React fragment shorthand <>...</> inside Webstudio JSX. Pass sibling Webstudio components directly at the top level, or wrap text in an element such as <section><p>Text</p></section>."
       );
     }
-    if (typeof element.type === "string") {
-      throw new Error(
-        `Do not use raw HTML tag <${element.type}> in Webstudio JSX. Use Webstudio components such as <$.Box>...</$.Box>, or use <ws.element ws:tag="${element.type}">...</ws.element> when a specific HTML tag is required.`
+    const intrinsicTag =
+      typeof element.type === "string" ? element.type : undefined;
+    if (
+      intrinsicTag !== undefined &&
+      intrinsicTags.has(intrinsicTag) === false
+    ) {
+      throw new TemplateValidationError(
+        `Invalid intrinsic JSX element "${intrinsicTag}". Use a standard lowercase HTML or SVG tag.`
       );
     }
     if (
       options.allowManualIds === false &&
       element.props?.["ws:id"] !== undefined
     ) {
-      throw new Error(
+      throw new TemplateValidationError(
         "Do not set ws:id in JSX fragments. Webstudio runtime generates system ids automatically."
       );
     }
-    const component = element.type.displayName;
+    const component =
+      intrinsicTag === undefined
+        ? (options.componentIds?.get(element.type) ??
+          componentIdByMarker.get(element.type))
+        : "ws:element";
     if (typeof component !== "string") {
-      throw new Error(
-        "Invalid JSX component in Webstudio JSX. Use Webstudio component helpers such as <$.Box>...</$.Box>."
+      const componentName =
+        typeof element.type === "function"
+          ? (element.type.displayName ?? element.type.name)
+          : typeof element.type === "object" && element.type !== null
+            ? element.type.displayName
+            : undefined;
+      throw new TemplateValidationError(
+        `Invalid JSX component${componentName ? ` "${componentName}"` : ""} in Webstudio JSX. Use a lowercase HTML element or an available PascalCase component identifier.`
       );
     }
     const instanceId = element.props?.["ws:id"] ?? getIdByKey(element);
-    let tag: string | undefined;
-    for (const entry of Object.entries({ ...element.props })) {
-      const [_name, value] = entry;
-      let [name] = entry;
-      if (name === "ws:id" || name === "ws:label" || name === "children") {
-        continue;
-      }
-      if (name === "className") {
-        name = "class";
-      }
-      if (name === "htmlFor") {
-        name = "for";
-      }
+    const componentMeta = options.componentMetas?.get(component);
+    const componentPropNames = new Set(Object.keys(componentMeta?.props ?? {}));
+    const acceptsHtmlAttributes =
+      intrinsicTag !== undefined ||
+      component === "ws:element" ||
+      typeof element.props?.["ws:tag"] === "string" ||
+      Object.keys(componentMeta?.presetStyle ?? {}).length > 0;
+    let tag: string | undefined = intrinsicTag;
+    const mappedProps = mapAttributeNames({
+      attributes: Object.entries({ ...element.props }).flatMap(
+        ([name, value]) =>
+          name === "ws:id" || name === "ws:label" || name === "children"
+            ? []
+            : [{ name, value }]
+      ),
+      direction: "jsx-to-instance",
+      componentPropNames,
+      acceptsHtmlAttributes,
+    });
+    for (const mappedProp of mappedProps) {
+      let { name } = mappedProp;
+      const { value } = mappedProp;
       if (name === "ws:tag") {
+        if (intrinsicTag !== undefined) {
+          throw new TemplateValidationError(
+            `Do not set ws:tag on intrinsic JSX <${intrinsicTag}>. Use the intended HTML tag directly.`
+          );
+        }
         tag = value as string;
         continue;
       }
       if (name === "ws:style") {
         const localStyles = value as TemplateStyleDecl[];
         if (Array.isArray(localStyles) === false) {
-          throw new Error(
+          throw new TemplateValidationError(
             "ws:style must come from css`...`, for example ws:style={css`padding: 24px;`}."
           );
         }
         if (localStyles.length === 0) {
-          throw new Error(
+          throw new TemplateValidationError(
             "ws:style must include at least one valid CSS declaration from css`...`, for example ws:style={css`padding: 24px;`}."
           );
         }
@@ -586,7 +735,7 @@ export const renderTemplate = (
           Array.isArray(value) === false ||
           value.every((token) => token instanceof Token) === false
         ) {
-          throw new Error(
+          throw new TemplateValidationError(
             'ws:tokens must be an array of token(...) values, for example ws:tokens={[token("brand", css`color: red;`)]}.'
           );
         }
@@ -605,6 +754,7 @@ export const renderTemplate = (
           ...base,
           type: "expression",
           value: compileExpression(instanceId, value),
+          mode: "read",
         });
         continue;
       }
@@ -621,6 +771,16 @@ export const renderTemplate = (
         props.push({ ...base, type: "resource", value: resourceId });
         continue;
       }
+      if (value instanceof FormActionsValue) {
+        props.push({
+          ...base,
+          type: "json",
+          value: value.resources.map((resource) => ({
+            dataSourceId: getVariableId(instanceId, resource),
+          })),
+        });
+        continue;
+      }
       if (value instanceof ActionValue) {
         const code = compileExpression(instanceId, value.expression);
         const action = { type: "execute" as const, args: value.args, code };
@@ -635,7 +795,7 @@ export const renderTemplate = (
         props.push({ ...base, type: "page", value: value.value });
         continue;
       }
-      const propMeta = options.componentMetas?.get(component)?.props?.[name];
+      const propMeta = componentMeta?.props?.[name];
       if (propMeta?.type === "animationAction") {
         const result = animationAction.safeParse(value);
         if (result.success === false) {
@@ -646,7 +806,7 @@ export const renderTemplate = (
               return `${issue.message}${path}`;
             })
             .join("; ");
-          throw new Error(
+          throw new TemplateValidationError(
             `Invalid JSX prop "${name}". Expected animationAction for ${component}.${name}. ${details}`
           );
         }
@@ -675,8 +835,16 @@ export const renderTemplate = (
       component,
       children: [],
     };
+    const templateMeta = instanceMetaByElement.get(element);
+    if (templateMeta !== undefined) {
+      instance.name = templateMeta.name;
+      instance.label = templateMeta.label;
+      if (instance.label === undefined) {
+        delete instance.label;
+      }
+    }
     instances.push(instance);
-    if (element.props?.["ws:label"]) {
+    if (element.props?.["ws:label"] && templateMeta === undefined) {
       instance.label = element.props?.["ws:label"];
     }
     if (tag !== undefined) {
@@ -692,7 +860,7 @@ export const renderTemplate = (
         }
         if (child instanceof Expression) {
           const expression = compileExpression(instanceId, child);
-          return { type: "expression", value: expression };
+          return { type: "expression", value: expression, mode: "read" };
         }
         return convertElementToInstance(child);
       }
@@ -714,8 +882,8 @@ export const renderTemplate = (
     options.allowManualIds === false &&
     (children.length === 0 || instances.length === 0)
   ) {
-    throw new Error(
-      "JSX fragment must contain at least one Webstudio component, for example <$.Box><$.Paragraph>Text</$.Paragraph></$.Box>."
+    throw new TemplateValidationError(
+      "JSX fragment must contain at least one element or component, for example <section><p>Text</p></section>."
     );
   }
   for (const [instanceId, localStyles] of localStylesByInstanceId) {
@@ -759,7 +927,10 @@ export const renderTemplate = (
         id: tokenId,
         name: token.name,
       });
-      for (const { breakpoint, state, property, value } of token.styles) {
+      if (token.styles === undefined) {
+        referenceTokenIds.push(tokenId);
+      }
+      for (const { breakpoint, state, property, value } of token.styles ?? []) {
         const breakpointId = getBreakpointId(breakpoint);
         if (breakpointId === undefined) {
           continue;
@@ -778,7 +949,8 @@ export const renderTemplate = (
       (sel) => sel.instanceId === instanceId
     );
     if (existingSelection) {
-      existingSelection.values.push(...tokenIds);
+      // Tokens provide defaults; instance-local styles must win in the cascade.
+      existingSelection.values.unshift(...tokenIds);
     } else {
       styleSourceSelections.push({
         instanceId,
@@ -794,6 +966,7 @@ export const renderTemplate = (
     styleSources,
     styleSourceSelections,
     styles,
+    ...(referenceTokenIds.length === 0 ? {} : { referenceTokenIds }),
     dataSources: Array.from(dataSources.values()),
     resources: Array.from(resources.values()),
     assets: [],
@@ -803,7 +976,8 @@ export const renderTemplate = (
 export const renderData = (
   root: JSX.Element,
   generateId?: () => string,
-  initialBreakpoints: Breakpoint[] = []
+  initialBreakpoints: Breakpoint[] = [],
+  options: RenderTemplateOptions = {}
 ): Omit<WebstudioData, "pages"> => {
   const {
     instances,
@@ -815,7 +989,7 @@ export const renderData = (
     dataSources,
     resources,
     assets,
-  } = renderTemplate(root, generateId, initialBreakpoints);
+  } = renderTemplate(root, generateId, initialBreakpoints, options);
   return {
     instances: new Map(instances.map((item) => [item.id, item])),
     props: new Map(props.map((item) => [item.id, item])),
@@ -846,19 +1020,41 @@ type Component = { displayName: string } & ((
   props: ComponentProps
 ) => ReactNode);
 
-export const createProxy = (prefix: string): Record<string, Component> => {
-  return new Proxy(
-    {},
-    {
-      get(_target, prop) {
-        const component: Component = () => undefined;
-        component.displayName = `${prefix}${prop as string}`;
-        return component;
-      },
-    }
-  );
+const createComponentMarker = (
+  componentId: Instance["component"]
+): Component => {
+  const component: Component = () => undefined;
+  component.displayName = componentId;
+  componentIdByMarker.set(component, componentId);
+  return component;
 };
 
-export const $: Record<string, Component> = createProxy("");
+/** @internal Creates an explicit component marker for test fixtures. */
+export const createTemplateComponentFixture = (
+  componentId: Instance["component"]
+): Component => createComponentMarker(componentId);
 
-export const ws: Record<string, Component> = createProxy("ws:");
+const createCompilerPrimitive = (name: string): Component => {
+  return createComponentMarker(`ws:${name}`);
+};
+
+type CompilerPrimitives = {
+  root: Component;
+  element: Component;
+  collection: Component;
+  descendant: Component;
+  block: Component;
+  contentBlockBody: Component;
+  blockTemplate: Component;
+};
+
+/** Compiler-only primitives that have no React component implementation. */
+export const ws: CompilerPrimitives = {
+  root: createCompilerPrimitive("root"),
+  element: createCompilerPrimitive("element"),
+  collection: createCompilerPrimitive("collection"),
+  descendant: createCompilerPrimitive("descendant"),
+  block: createCompilerPrimitive("block"),
+  contentBlockBody: createCompilerPrimitive("content-block-body"),
+  blockTemplate: createCompilerPrimitive("block-template"),
+};

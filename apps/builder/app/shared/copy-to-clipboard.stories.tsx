@@ -10,14 +10,14 @@ export const CopyToClipboard = () => (
   <StorySection title="Copy To Clipboard">
     <Flex gap="3">
       <CopyToClipboardComponent text="Hello, world!">
-        <Button>Click to copy</Button>
+        <Button color="primary">Click to copy</Button>
       </CopyToClipboardComponent>
       <CopyToClipboardComponent
         text="some-secret-token-123"
         copyText="Copy token"
         copiedText="Token copied!"
       >
-        <Button>Copy token</Button>
+        <Button color="primary">Copy token</Button>
       </CopyToClipboardComponent>
     </Flex>
   </StorySection>

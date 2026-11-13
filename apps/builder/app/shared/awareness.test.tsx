@@ -7,7 +7,16 @@ import { selectInstance, selectInstances } from "./nano-states/instances";
 import { $selectedPageId } from "./nano-states";
 import { $user } from "./nano-states/misc";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Fragment = createTemplateComponentFixture("Fragment");
+const Slot = createTemplateComponentFixture("Slot");
+const Text = createTemplateComponentFixture("Text");
 
 test("find awareness by instance", () => {
   const pages = createDefaultPages({
@@ -15,11 +24,11 @@ test("find awareness by instance", () => {
     rootInstanceId: "bodyId",
   });
   const { instances } = renderData(
-    <$.Body ws:id="bodyId">
-      <$.Box ws:id="boxId">
-        <$.Text ws:id="textId"></$.Text>
-      </$.Box>
-    </$.Body>
+    <Body ws:id="bodyId">
+      <Box ws:id="boxId">
+        <Text ws:id="textId"></Text>
+      </Box>
+    </Body>
   );
   expect(findPageAndSelectorByInstanceId(pages, instances, "textId")).toEqual({
     pageId: "homePageId",
@@ -33,18 +42,18 @@ test("find awareness by instance inside of slot", () => {
     rootInstanceId: "bodyId",
   });
   const { instances } = renderData(
-    <$.Body ws:id="bodyId">
-      <$.Slot ws:id="slotOneId">
-        <$.Fragment ws:id="fragmentId">
-          <$.Box ws:id="boxId"></$.Box>
-        </$.Fragment>
-      </$.Slot>
-      <$.Slot ws:id="slotTwoId">
-        <$.Fragment ws:id="fragmentId">
-          <$.Box ws:id="boxId"></$.Box>
-        </$.Fragment>
-      </$.Slot>
-    </$.Body>
+    <Body ws:id="bodyId">
+      <Slot ws:id="slotOneId">
+        <Fragment ws:id="fragmentId">
+          <Box ws:id="boxId"></Box>
+        </Fragment>
+      </Slot>
+      <Slot ws:id="slotTwoId">
+        <Fragment ws:id="fragmentId">
+          <Box ws:id="boxId"></Box>
+        </Fragment>
+      </Slot>
+    </Body>
   );
   expect(findPageAndSelectorByInstanceId(pages, instances, "boxId")).toEqual({
     pageId: "homePageId",
@@ -179,6 +188,11 @@ test("awareness updates are coalesced into one microtask", async () => {
 test("pointer tracking is throttled to 8fps and keeps latest position", () => {
   vi.useFakeTimers();
   $selectedPageId.set("homePageId");
+  const originalFrameElement = window.frameElement;
+  Object.defineProperty(window, "frameElement", {
+    configurable: true,
+    value: null,
+  });
 
   const stop = startPointerTracking();
 
@@ -199,6 +213,10 @@ test("pointer tracking is throttled to 8fps and keeps latest position", () => {
   expect($pointerPosition.get()).toMatchObject({ x: 12, y: 22 });
 
   stop();
+  Object.defineProperty(window, "frameElement", {
+    configurable: true,
+    value: originalFrameElement,
+  });
 });
 
 test("pointer tracking maps iframe coordinates to parent viewport", () => {

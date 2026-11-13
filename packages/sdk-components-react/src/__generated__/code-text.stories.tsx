@@ -3,12 +3,7 @@ import { Box as Box, CodeText as CodeText } from "../components";
 const Component = () => {
   return (
     <Box className={`w-box`}>
-      <CodeText
-        code={'const status = "ready";'}
-        language={"javascript"}
-        theme={"github-light"}
-        className={`w-code-text`}
-      />
+      <CodeText className={`w-code-text`}>{'const status = "ready";'}</CodeText>
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import { StorySection, Toolbar } from "@webstudio-is/design-system";
+import { Flex, StorySection } from "@webstudio-is/design-system";
 import { BuilderModeDropDown } from "./builder-mode";
 import {
   $builderMode,
@@ -11,8 +11,8 @@ export default {
   title: "Builder mode",
 };
 
-export const BuilderMode = () => {
-  $builderMode.set("design");
+const renderBuilderMode = (mode: "design" | "preview") => {
+  $builderMode.set(mode);
   $authPermit.set("own");
   $authToken.set(undefined);
   $planFeatures.set({
@@ -20,19 +20,17 @@ export const BuilderMode = () => {
     allowContentMode: true,
   });
 
-  return (
-    <>
-      <StorySection title="Design mode">
-        <Toolbar>
-          <BuilderModeDropDown />
-        </Toolbar>
-      </StorySection>
-
-      <StorySection title="Preview mode">
-        <Toolbar>
-          <BuilderModeDropDown />
-        </Toolbar>
-      </StorySection>
-    </>
-  );
+  return <BuilderModeDropDown />;
 };
+
+export const DesignMode = () => (
+  <StorySection title="Design mode">
+    <Flex align="center">{renderBuilderMode("design")}</Flex>
+  </StorySection>
+);
+
+export const PreviewMode = () => (
+  <StorySection title="Preview mode">
+    <Flex align="center">{renderBuilderMode("preview")}</Flex>
+  </StorySection>
+);

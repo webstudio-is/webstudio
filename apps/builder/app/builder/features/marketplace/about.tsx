@@ -2,11 +2,11 @@ import {
   DialogClose,
   Flex,
   Link,
+  LinkButton,
   PanelTitle,
   Separator,
   Text,
   Tooltip,
-  buttonStyle,
   theme,
   truncate,
 } from "@webstudio-is/design-system";
@@ -50,7 +50,7 @@ export const About = ({ item }: { item?: MarketplaceOverviewItem }) => {
           </Flex>
           {item.issues && (
             <Flex gap="1">
-              <Text css={{ flexShrink: 0 }}>Issues Tracker:</Text>
+              <Text css={{ flexShrink: 0 }}>Issues tracker:</Text>
               <Link href={item.issues} target="_blank" css={truncate()}>
                 {item.issues}
               </Link>
@@ -68,14 +68,8 @@ export const About = ({ item }: { item?: MarketplaceOverviewItem }) => {
               : 'The project does not have a shared link with "View" permission.'
           }
         >
-          <Link
-            className={buttonStyle({
-              color: "neutral",
-              css: {
-                gap: theme.spacing[3],
-              },
-            })}
-            underline="none"
+          <LinkButton
+            css={{ gap: theme.spacing[3] }}
             href={
               hasAuthToken
                 ? builderUrl({
@@ -89,9 +83,11 @@ export const About = ({ item }: { item?: MarketplaceOverviewItem }) => {
             aria-disabled={hasAuthToken ? undefined : "true"}
           >
             <ExternalLinkIcon aria-hidden /> Open project
-          </Link>
+          </LinkButton>
         </Tooltip>
       </Flex>
     </>
   );
 };
+
+undefined;

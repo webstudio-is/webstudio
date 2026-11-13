@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { getInputSchemaMetadata } from "@webstudio-is/project-build/contracts";
-import type { InputJsonSchema } from "@webstudio-is/sdk";
+import { assetType, type InputJsonSchema } from "@webstudio-is/sdk";
 import type { PublicApiOperationNamespace } from "./runtime-contracts";
 
 const assetUploadDescriptor = z.object({
   name: z.string(),
-  type: z.enum(["image", "font", "file"]),
+  type: assetType,
   format: z.string().optional(),
   description: z.string().optional(),
   folderId: z.string().min(1).optional(),
@@ -23,12 +23,17 @@ const localUploadAssetsInput = z.object({
   assetsDir: z.string().optional(),
 });
 
-const localUpdateAssetContentInput = z.object({
-  assetId: z.string().min(1),
-  expectedName: z.string().min(1),
-  path: z.string().min(1).optional(),
-  content: z.string().optional(),
-});
+const localUpdateAssetContentInput = z
+  .object({
+    assetId: z.string().min(1),
+    expectedName: z.string().min(1),
+    extension: z.string().min(1).optional(),
+    path: z.string().min(1).optional(),
+    content: z.string().optional(),
+  })
+  .describe(
+    "Update a text asset from exactly one source: a local file path or inline content."
+  );
 
 const localOperation = <
   const Operation extends {
@@ -40,10 +45,18 @@ const localOperation = <
   },
 >(
   operation: Operation,
-  inputSchema: z.ZodTypeAny
+  inputSchema: z.ZodTypeAny,
+  exactlyOneOf?: readonly string[]
 ): Operation & { inputSchema: InputJsonSchema } => ({
   ...operation,
-  inputSchema: getInputSchemaMetadata(inputSchema).inputJsonSchema,
+  inputSchema: {
+    ...getInputSchemaMetadata(inputSchema).inputJsonSchema,
+    ...(exactlyOneOf === undefined
+      ? {}
+      : {
+          oneOf: exactlyOneOf.map((field) => ({ required: [field] })),
+        }),
+  },
 });
 
 export const localOnlyOperationInputs = [
@@ -53,6 +66,7 @@ export const localOnlyOperationInputs = [
       id: "assets.upload",
       method: "mutation",
       client: "uploadProjectAsset",
+      permit: "edit" as const,
       invalidatesNamespaces: ["assets"] as const,
     },
     localUploadAssetInput
@@ -63,6 +77,7 @@ export const localOnlyOperationInputs = [
       id: "assets.uploadMany",
       method: "mutation",
       client: "uploadProjectAssets",
+      permit: "edit" as const,
       invalidatesNamespaces: ["assets"] as const,
     },
     localUploadAssetsInput
@@ -76,6 +91,7 @@ export const localOnlyOperationInputs = [
       permit: "edit" as const,
       invalidatesNamespaces: ["assets"] as const,
     },
-    localUpdateAssetContentInput
+    localUpdateAssetContentInput,
+    ["path", "content"]
   ),
 ] as const;

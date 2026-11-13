@@ -1,10 +1,73 @@
 import { expect, test, describe } from "vitest";
+import type { Asset } from "@webstudio-is/sdk";
 import {
   getImageNameAndType,
+  getFileName,
+  getMimeType,
   getSha256Hash,
   getFileUploadFingerprint,
+  isAssetFilenameUsed,
   uploadingFileDataToAsset,
 } from "./asset-utils";
+
+test("matches full asset filenames only in the requested folder", () => {
+  const asset: Asset = {
+    id: "guide",
+    projectId: "project",
+    name: "uploaded_hash.md",
+    filename: "guide",
+    folderId: "other",
+    type: "file",
+    format: "md",
+    size: 1,
+    createdAt: "2026-09-03T00:00:00.000Z",
+    meta: {},
+  };
+
+  expect(
+    isAssetFilenameUsed({
+      assets: [asset],
+      filename: "guide.md",
+      folderId: "other",
+    })
+  ).toBe(true);
+  expect(
+    isAssetFilenameUsed({
+      assets: [asset],
+      filename: "guide.md",
+      folderId: "docs",
+    })
+  ).toBe(false);
+  expect(
+    isAssetFilenameUsed({
+      assets: [asset],
+      filename: "guide.json",
+      folderId: "other",
+    })
+  ).toBe(false);
+  expect(
+    isAssetFilenameUsed({
+      assets: [asset],
+      filename: "guide.md",
+      folderId: "other",
+      excludeAssetId: asset.id,
+    })
+  ).toBe(false);
+});
+
+test("keeps the filename and MIME type of a font asset URL", () => {
+  const url = new URL(
+    "https://source.example.com/cgi/asset/brand.woff2?format=raw"
+  );
+  expect(getFileName(url)).toBe("brand.woff2");
+  expect(getMimeType(url)).toBe("font/woff2");
+});
+
+test("keeps a font filename from any supported URL path", () => {
+  const url = new URL("https://source.example.com/fonts/brand.woff2");
+  expect(getFileName(url)).toBe("brand.woff2");
+  expect(getMimeType(url)).toBe("font/woff2");
+});
 
 test("distinguishes upload fingerprints by filename and content", async () => {
   const first = new File([""], "first.md");
@@ -195,7 +258,11 @@ describe("uploadingFileDataToAsset", () => {
       id: "test-id",
       name: "video.mp4",
       format: "mp4",
-      type: "file",
+      type: "video",
+      meta: {
+        width: Number.NaN,
+        height: Number.NaN,
+      },
     });
   });
 

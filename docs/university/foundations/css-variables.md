@@ -22,18 +22,21 @@ Why Use CSS variables?
 
 The concept of “reusability” is present in both CSS variables and [Tokens](design-tokens.md), but they are different and complement each other exceptionally well.
 
-
 Let’s think of these two concepts as layers or building blocks.
 
 ### Layer 1: CSS variables
 
-**CSS variables are the bottom layer. They comprise individual variable names and values** often used for sizes, colors, and other styles with many input options.
+**CSS variables are the bottom layer. They comprise individual variable names and values** often used for sizes, colors, and other styles with many input options. Craft distinguishes theme variables, which contain theme-specific inputs, from semantic variables, which describe how a value is used.
 
-For example, you can create one variable per color in your design system. Those colors are going to be used throughout your site and in Tokens.
+For colors, define a small set of theme variables and derive semantic variables
+from them. For example, `--theme-accent` can control
+`--background-accent`, `--border-focus`, and their interaction states. Tokens
+consume the semantic variables, so changing a theme input updates the complete
+system without editing each color independently.
 
 ### Layer 2: Tokens
 
-[**Tokens**](design-tokens.md) **are the next layer. They package up&#x20;**_**multiple**_**&#x20;styles.** A `Card` Token may include padding, color, and gap styles, for example.
+[**Tokens**](design-tokens.md) **are the next layer. They package up&#x20;**_**multiple**_**&#x20;styles.** Craft calls these composite Tokens. A `Card` Token may include padding, color, and gap styles, for example.
 
 The values you enter for each style should be defined as variables. This approach ensures consistent designs and allows you to update a value in one place, with the change automatically reflected wherever the variable is used.
 
@@ -46,7 +49,9 @@ With CSS variables, Tokens now often take a more semantic approach, such as call
 ## Creating variables
 
 {% hint style="warning" %}
-Before you create custom variables, be sure to check out [Craft](../craft.md) — the standard guideline for building with Webstudio. It contains a library of expertly crafted CSS variables.
+Before you create custom variables, review [Craft](../craft.md), Webstudio's
+public specification for theme variables, semantic variables, composite
+Tokens, and reusable project architecture.
 {% endhint %}
 
 A CSS variable is defined in the Advanced section by using two dashes followed by the variable name, like this:
@@ -61,7 +66,7 @@ This syntax is not unique to Webstudio. It’s the official [CSS variable](https
 
 Then, the variable's value can be anything such as a color, gradient, duration, size, or number.
 
-<figure><img src="../../.gitbook/assets/css-var-example.png" alt="CSS variable" width="319"><figcaption><p>Creating a variable and assigning a value</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/css-var-example-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/css-var-example-light.png" alt="--gray-5 CSS variable defined in Advanced with a color value" width="240"></picture><figcaption><p>Creating a variable and assigning a value</p></figcaption></figure>
 
 ## Using variables
 
@@ -69,7 +74,7 @@ Once the variable is defined, you can use it on the instance it was defined on a
 
 The variables are available in the autocomplete, so you can access variables by typing them in.
 
-<figure><img src="../../.gitbook/assets/css-var-usage.png" alt="Using a CSS variable" width="318"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/css-var-usage-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/css-var-usage-light.png" alt="Color input autocomplete suggesting CSS variables including --gray-5" width="240"></picture><figcaption></figcaption></figure>
 
 The autocomplete search algorithm is very flexible, letting you search by any of the following:
 
@@ -128,7 +133,7 @@ The general pattern looks like this:
 
 4. In Advanced section or any style inputs, refer to the variables with `var(--brand-color)`.
 
-   <figure><img src="../../.gitbook/assets/use-variable.png" alt="Use CSS variable in style input" width="400"><figcaption>Step 5: reference the variable in any style value input.</figcaption></figure>
+   <figure><picture><source srcset="../../.gitbook/assets/use-variable-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/use-variable-light.png" alt="Size Width field containing var(--test)" width="240"></picture><figcaption>Step 5: reference the variable in any style value input.</figcaption></figure>
 
 This technique is powerful for theming, A/B testing, or applying dynamic values such as colors or dimensions fetched from an API and managed by an external CMS.
 
@@ -138,7 +143,10 @@ CSS variables, by nature, are available in the current instance and any of the c
 
 #### Global Variables
 
-<figure><img src="../../.gitbook/assets/global-root.png" alt="Global Root in Webstudio" width="375"><figcaption><p>Global Root</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/navigator-panel-dark.png">
+  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator panel with Global root, Body, and expanded Form (Beta) showing Form content, Success message, and Error message" width="241">
+</picture>
 
 Most variables should be defined on the Global Root, which is the highest level of the page and the same for every page. That way, you can define `--my-color`, and it's available on every instance on every page.
 
@@ -156,7 +164,9 @@ Here are some use cases for local variables:
 
 With CSS variables, you can interact with the parent and modify the styles of any of the children.
 
-<figure><img src="../../.gitbook/assets/parent-child-demo.gif" alt=""><figcaption><p>Hovering the link and the children change (icon color, icon bg, and arrow appears)</p></figcaption></figure>
+Prefer CSS variables over a [descendant custom state](states-and-selectors.md#custom-states) such as `:hover .button` for parent-child interactions. They keep each property on the child that uses it and are especially useful when one parent state coordinates several properties or children. Define a variable on the parent, use it for the relevant property on each child, and change the variable's value in the parent's `:hover` state.
+
+<figure><img src="../../.gitbook/assets/parent-child-demo.gif" alt="Hovering a link changes its child icon color, background, and arrow visibility"><figcaption><p>Hovering the link and the children change (icon color, icon bg, and arrow appears)</p></figcaption></figure>
 
 {% embed url="https://youtu.be/rg49mmDvdlE" %}
 Video tutorial

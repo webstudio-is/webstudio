@@ -5,11 +5,13 @@ import {
   $selectedInstanceOutlines,
   $selectedInstanceSelector,
   $selectedPageId,
+  $temporaryTagStyleId,
   selectInstance,
   selectInstances,
 } from "../nano-states";
 import { __testing__, createObjectPool } from "./sync-stores";
 import { $instances } from "./data-stores";
+import { $resourcesState } from "../resources";
 
 const { SelectedPageAndInstanceSyncObject } = __testing__;
 const subscriptionControllers: AbortController[] = [];
@@ -62,6 +64,7 @@ afterEach(() => {
   $allSelectedInstanceSelectors.set([]);
   $selectedInstanceOutlines.set([]);
   $instances.set(new Map());
+  $resourcesState.set("pending");
 });
 
 describe("SelectedPageAndInstanceSyncObject", () => {
@@ -358,6 +361,30 @@ describe("SelectedPageAndInstanceSyncObject", () => {
 });
 
 describe("createObjectPool", () => {
+  test("syncs resource readiness to the canvas", () => {
+    const objectPool = createObjectPool();
+
+    objectPool.applyTransaction({
+      id: "resources-loaded",
+      object: "resourcesState",
+      payload: "settled",
+    });
+
+    expect($resourcesState.get()).toBe("settled");
+  });
+
+  test("syncs temporary Tag style selection to the canvas", () => {
+    const objectPool = createObjectPool();
+
+    objectPool.applyTransaction({
+      id: "select-tag-style",
+      object: "temporaryTagStyleId",
+      payload: "tag-style:button",
+    });
+
+    expect($temporaryTagStyleId.get()).toBe("tag-style:button");
+  });
+
   test("syncs selected instance outlines for builder canvas overlay", () => {
     const objectPool = createObjectPool();
 

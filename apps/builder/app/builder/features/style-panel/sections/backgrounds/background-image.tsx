@@ -1,5 +1,5 @@
 import type { StyleValue } from "@webstudio-is/css-engine";
-import { Flex, theme, Grid, Box } from "@webstudio-is/design-system";
+import { PanelContent, Flex, Grid, Box } from "@webstudio-is/design-system";
 import { useRef, useCallback } from "react";
 import { ImageControl } from "../../controls";
 import { PropertyInlineLabel } from "../../property-label";
@@ -54,12 +54,7 @@ export const BackgroundImage = ({
   );
 
   return (
-    <Flex
-      direction="column"
-      gap={1}
-      css={{ padding: theme.panel.padding }}
-      ref={elementRef}
-    >
+    <PanelContent as={Flex} direction="column" gap={1} ref={elementRef}>
       <Grid gap="2" columns="3" align="start">
         <PropertyInlineLabel
           label="Image"
@@ -78,6 +73,6 @@ export const BackgroundImage = ({
         </Box>
       </Grid>
       <BackgroundCodeEditor index={index} onValidate={handleValidate} />
-    </Flex>
+    </PanelContent>
   );
 };

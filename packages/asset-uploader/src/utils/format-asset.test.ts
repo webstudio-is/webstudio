@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+import { asset } from "@webstudio-is/sdk";
 import { formatAsset } from "./format-asset";
 
 describe("formatAsset", () => {
@@ -44,6 +45,28 @@ describe("formatAsset", () => {
     });
   });
 
+  test("keeps assets with invalid JSON metadata from breaking project loads", () => {
+    const result = formatAsset({
+      ...baseParams,
+      file: {
+        name: "Inter-Regular.woff2",
+        format: "woff2",
+        description: null,
+        size: 50000,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-02T00:00:00Z",
+        meta: "{invalid json",
+      },
+    });
+
+    expect(result).toMatchObject({
+      type: "file",
+      format: "unknown",
+      meta: {},
+    });
+    expect(asset.safeParse(result).success).toBe(true);
+  });
+
   test("formats image asset with width and height correctly", () => {
     const result = formatAsset({
       ...baseParams,
@@ -75,7 +98,7 @@ describe("formatAsset", () => {
     });
   });
 
-  test("formats video asset with width and height as file type", () => {
+  test("formats video asset with width and height", () => {
     const result = formatAsset({
       ...baseParams,
       file: {
@@ -96,14 +119,14 @@ describe("formatAsset", () => {
       id: "test-asset-id",
       name: "video.mp4",
       projectId: "test-project-id",
-      type: "file",
+      type: "video",
       format: "mp4",
       size: 5000000,
-      meta: {},
+      meta: { width: 1920, height: 1080 },
     });
   });
 
-  test("formats webm video with width and height as file type", () => {
+  test("formats webm video with width and height", () => {
     const result = formatAsset({
       ...baseParams,
       file: {
@@ -124,10 +147,10 @@ describe("formatAsset", () => {
       id: "test-asset-id",
       name: "video.webm",
       projectId: "test-project-id",
-      type: "file",
+      type: "video",
       format: "webm",
       size: 3000000,
-      meta: {},
+      meta: { width: 1280, height: 720 },
     });
   });
 
@@ -219,6 +242,27 @@ describe("formatAsset", () => {
     expect(result).toMatchObject({
       type: "file",
       format: "png",
+      meta: {},
+    });
+  });
+
+  test("keeps legacy video without dimensions as file type", () => {
+    const result = formatAsset({
+      ...baseParams,
+      file: {
+        name: "video.mp4",
+        format: "mp4",
+        description: null,
+        size: 50000,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-02T00:00:00Z",
+        meta: JSON.stringify({}),
+      },
+    });
+
+    expect(result).toMatchObject({
+      type: "file",
+      format: "mp4",
       meta: {},
     });
   });

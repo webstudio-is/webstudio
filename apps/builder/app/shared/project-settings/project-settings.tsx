@@ -12,6 +12,9 @@ import {
   ListItem,
   Text,
   rawTheme,
+  cssVar,
+  InsetList,
+  InsetListItem,
 } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
 import {
@@ -21,8 +24,10 @@ import {
 import { $isDesignMode } from "~/shared/nano-states";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
 import { SectionGeneral } from "./section-general";
+import { SectionEmails } from "./section-emails";
 import { SectionAgents } from "./section-agents";
 import { SectionAuth } from "./section-auth";
+import { SectionHeaders } from "./section-headers";
 import { SectionRedirects } from "./section-redirects";
 import { SectionPublish } from "./section-publish";
 import { SectionMarketplace } from "./section-marketplace";
@@ -34,12 +39,14 @@ const sections = new Map<
   FunctionComponent<{ projectId?: string }>
 >([
   ["general", SectionGeneral],
+  ["emails", SectionEmails],
   ["agents", SectionAgents],
   ["redirects", SectionRedirects],
   ["publish", SectionPublish],
   ["marketplace", SectionMarketplace],
   ["backups", SectionBackups],
   ["auth", SectionAuth],
+  ["headers", SectionHeaders],
 ] as const);
 
 const sectionLabels = new Map<SectionName, string>([
@@ -81,12 +88,10 @@ export const ProjectSettingsDialog = ({
         <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
           <Flex grow>
             <List asChild>
-              <Flex
-                direction="column"
-                shrink={false}
+              <InsetList
                 css={{
                   width: leftPanelWidth,
-                  borderRight: `1px solid  ${theme.colors.borderMain}`,
+                  borderRight: `1px solid  ${cssVar("--border-default")}`,
                 }}
               >
                 {Array.from(sections.keys()).map((name, index) => {
@@ -100,30 +105,15 @@ export const ProjectSettingsDialog = ({
                         onSectionChange?.(name);
                       }}
                     >
-                      <Flex
-                        css={{
-                          position: "relative",
-                          height: theme.spacing[13],
-                          paddingInline: theme.panel.paddingInline,
-                          outline: "none",
-                          "&:focus-visible, &:hover": {
-                            background: theme.colors.backgroundHover,
-                          },
-                          "&[aria-current=true]": {
-                            background: theme.colors.backgroundItemCurrent,
-                            color: theme.colors.foregroundMain,
-                          },
-                        }}
-                        align="center"
-                      >
+                      <InsetListItem>
                         <Text variant="labels" truncate>
                           {sectionLabels.get(name) ?? titleCase(name)}
                         </Text>
-                      </Flex>
+                      </InsetListItem>
                     </ListItem>
                   );
                 })}
-              </Flex>
+              </InsetList>
             </List>
             <ScrollAreaNative css={{ width: "100%" }}>
               {status === "loading" ? (

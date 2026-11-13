@@ -174,41 +174,24 @@ describe("parsePlansEnv", () => {
     ).toBeUndefined();
   });
 
-  test("rejects unsupported publish report retention values", () => {
+  test("inherits advanced publish diagnostics without retention settings", () => {
     const result = parsePlansEnv(
       JSON.stringify([
-        { name: "Invalid", features: { publishLogRetentionDays: 7 } },
-        { name: "Pro", features: { publishLogRetentionDays: 1 } },
-        { name: "Team", features: { publishLogRetentionDays: 30 } },
+        { name: "Pro", features: { allowAdvancedPublishDiagnostics: true } },
+        { name: "Team", extends: "Pro", features: {} },
       ])
     );
-
-    expect(result.has("Invalid")).toBe(false);
-    expect(result.get("Pro")?.features.publishLogRetentionDays).toBe(1);
-    expect(result.get("Team")?.features.publishLogRetentionDays).toBe(30);
-  });
-
-  test("keeps compact activity for 30 days independently of detailed logs", () => {
-    const result = parsePlansEnv(
-      JSON.stringify([
-        {
-          name: "Invalid",
-          features: { publishActivityRetentionDays: 1 },
-        },
-        {
-          name: "Pro",
-          features: {
-            publishLogRetentionDays: 1,
-            publishActivityRetentionDays: 30,
-          },
-        },
-      ])
+    expect(result.get("Pro")?.features.allowAdvancedPublishDiagnostics).toBe(
+      true
     );
-
-    expect(result.has("Invalid")).toBe(false);
-    expect(result.get("Pro")?.features).toMatchObject({
-      publishLogRetentionDays: 1,
-      publishActivityRetentionDays: 30,
-    });
+    expect(result.get("Team")?.features.allowAdvancedPublishDiagnostics).toBe(
+      true
+    );
+    expect(result.get("Team")?.features).not.toHaveProperty(
+      "publishLogRetentionDays"
+    );
+    expect(result.get("Team")?.features).not.toHaveProperty(
+      "publishActivityRetentionDays"
+    );
   });
 });

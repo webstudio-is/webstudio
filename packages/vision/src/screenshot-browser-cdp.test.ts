@@ -6,8 +6,25 @@ import {
   type BrowserScreenshotDependencies,
 } from "./browser";
 
+class FakeBrowserStderr {
+  readonly listeners: Array<(chunk: unknown) => void> = [];
+  on = (_event: string, listener: (chunk: unknown) => void) => {
+    this.listeners.push(listener);
+    return this;
+  };
+  emit = (chunk: unknown) => {
+    for (const listener of this.listeners) {
+      listener(chunk);
+    }
+  };
+}
+
 class FakeBrowserProcess {
-  readonly listeners = new Map<string, Array<(value?: unknown) => void>>();
+  readonly listeners = new Map<
+    string,
+    Array<(value?: unknown, signal?: unknown) => void>
+  >();
+  readonly stderr = new FakeBrowserStderr();
   kill = vi.fn((_signal?: NodeJS.Signals | number) => {
     this.emit("exit", 0);
     return true;
@@ -18,11 +35,11 @@ class FakeBrowserProcess {
     this.listeners.set(event, listeners);
     return this;
   });
-  emit = (event: string, value?: unknown) => {
+  emit = (event: string, value?: unknown, signal?: unknown) => {
     const listeners = this.listeners.get(event) ?? [];
     this.listeners.delete(event);
     for (const listener of listeners) {
-      listener(value);
+      listener(value, signal);
     }
   };
 }
@@ -43,6 +60,13 @@ class FakeWebSocket {
   readonly subframeStatus?: number;
   readonly readinessWidths?: number[];
   readonly lifecycleFrames: string[];
+  readonly pendingFonts: boolean;
+  readonly runtimeErrorScenario?:
+    | "console-error"
+    | "exception-error"
+    | "stale-outgoing-error"
+    | "hash-navigation-error";
+  private navigationCount = 0;
   imageInspectionFinished = false;
   screenshotStartedBeforeImageInspectionFinished = false;
   private currentUrl = "about:blank";
@@ -52,13 +76,17 @@ class FakeWebSocket {
     finalUrl?: string,
     subframeStatus?: number,
     readinessWidths?: number[],
-    lifecycleFrames = ["main"]
+    lifecycleFrames = ["main"],
+    pendingFonts = false,
+    runtimeErrorScenario?: FakeWebSocket["runtimeErrorScenario"]
   ) {
     this.status = status;
     this.finalUrl = finalUrl;
     this.subframeStatus = subframeStatus;
     this.readinessWidths = readinessWidths;
     this.lifecycleFrames = lifecycleFrames;
+    this.pendingFonts = pendingFonts;
+    this.runtimeErrorScenario = runtimeErrorScenario;
     setTimeout(() => this.emit("open"), 0);
   }
 
@@ -91,6 +119,12 @@ class FakeWebSocket {
       typeof message.params?.expression === "string" &&
       message.params.expression.includes("rootMarkerPresent")
     ) {
+      if (
+        this.pendingFonts &&
+        message.params.expression.includes("document.fonts?.ready")
+      ) {
+        return;
+      }
       const hasPageMetadata = message.params.expression.includes(
         '"rootMarkerAttribute":"data-site"'
       );
@@ -116,6 +150,14 @@ class FakeWebSocket {
           }),
         0
       );
+      return;
+    }
+    if (
+      message.method === "Runtime.evaluate" &&
+      typeof message.params?.expression === "string" &&
+      message.params.expression.includes("Array.from(document.fonts)")
+    ) {
+      setTimeout(() => respond({ result: { value: ["Test Font"] } }), 0);
       return;
     }
     if (
@@ -325,12 +367,34 @@ class FakeWebSocket {
       return;
     }
     setTimeout(() => {
+      const navigationNumber = this.navigationCount + 1;
+      const sameDocumentNavigation =
+        message.method === "Page.navigate" &&
+        this.runtimeErrorScenario === "hash-navigation-error" &&
+        navigationNumber === 2;
       respond(
         message.method === "Page.navigate"
-          ? { frameId: "main", loaderId: "main-loader" }
+          ? sameDocumentNavigation
+            ? { frameId: "main" }
+            : { frameId: "main", loaderId: "main-loader" }
           : {}
       );
       if (message.method === "Page.navigate") {
+        this.navigationCount = navigationNumber;
+        const executionContextId = navigationNumber;
+        if (!sameDocumentNavigation) {
+          this.emit("message", {
+            data: JSON.stringify({
+              method: "Runtime.executionContextCreated",
+              params: {
+                context: {
+                  id: executionContextId,
+                  auxData: { frameId: "main", isDefault: true },
+                },
+              },
+            }),
+          });
+        }
         const requestedUrl = String(message.params?.url);
         this.currentUrl = this.finalUrl ?? requestedUrl;
         if (this.currentUrl !== requestedUrl) {
@@ -377,7 +441,49 @@ class FakeWebSocket {
             }),
           });
         }
-        for (const frameId of this.lifecycleFrames) {
+        const shouldLogError =
+          this.runtimeErrorScenario === "console-error" ||
+          this.runtimeErrorScenario === "exception-error" ||
+          ((this.runtimeErrorScenario === "stale-outgoing-error" ||
+            sameDocumentNavigation) &&
+            navigationNumber === 2);
+        if (shouldLogError) {
+          this.emit("message", {
+            data: JSON.stringify({
+              method:
+                this.runtimeErrorScenario === "exception-error"
+                  ? "Runtime.exceptionThrown"
+                  : "Runtime.consoleAPICalled",
+              params:
+                this.runtimeErrorScenario === "exception-error"
+                  ? {
+                      exceptionDetails: {
+                        executionContextId,
+                        url: "https://example.com/assets/exception.js?token=private",
+                        lineNumber: 6,
+                      },
+                    }
+                  : {
+                      type: "error",
+                      executionContextId:
+                        this.runtimeErrorScenario === "console-error"
+                          ? executionContextId
+                          : 1,
+                      stackTrace: {
+                        callFrames: [
+                          {
+                            url: "https://example.com/assets/app.js?token=private",
+                            lineNumber: 41,
+                          },
+                        ],
+                      },
+                    },
+            }),
+          });
+        }
+        for (const frameId of sameDocumentNavigation
+          ? []
+          : this.lifecycleFrames) {
           this.emit("message", {
             data: JSON.stringify({
               method: "Page.lifecycleEvent",
@@ -498,6 +604,7 @@ const createDependencies = ({
         : {},
   })) as unknown as typeof globalThis.fetch;
   return {
+    platform: process.platform,
     spawnBrowser: vi.fn(
       () => browserProcess
     ) as unknown as BrowserScreenshotDependencies["spawnBrowser"],
@@ -595,6 +702,40 @@ test("captures through DevTools with lifecycle and selector waits", async () => 
   });
 });
 
+test("preserves a successful capture when Windows profile cleanup stays busy", async () => {
+  const browserProcess = new FakeBrowserProcess();
+  const socket = new FakeWebSocket();
+  const cleanupError = Object.assign(new Error("profile journal is busy"), {
+    code: "EBUSY",
+  });
+  const dependencies = createDependencies({ browserProcess, socket });
+  vi.mocked(dependencies.rm).mockRejectedValue(cleanupError);
+
+  await expect(
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "networkidle",
+        waitForTimeout: 0,
+        timeout: 1000,
+      },
+      dependencies
+    )
+  ).resolves.toMatchObject({
+    viewportWidth: 800,
+    viewportHeight: 600,
+  });
+  expect(dependencies.rm).toHaveBeenCalledWith(
+    expect.any(String),
+    expect.objectContaining({ maxRetries: 3, retryDelay: 50 })
+  );
+  expect(browserProcess.kill).toHaveBeenCalledOnce();
+});
+
 test("ignores lifecycle readiness from child frames", async () => {
   const socket = new FakeWebSocket(200, undefined, undefined, undefined, [
     "child",
@@ -618,6 +759,771 @@ test("ignores lifecycle readiness from child frames", async () => {
     code: "SCREENSHOT_TIMEOUT",
     message: expect.stringContaining("Page did not reach networkidle"),
   });
+});
+
+test("does not replay a form after an ambiguous browser failure", async () => {
+  const socket = new FakeWebSocket();
+  const send = socket.send;
+  let submitCalls = 0;
+  socket.send = (data: string) => {
+    const message = JSON.parse(data) as {
+      id: number;
+      method: string;
+      params?: { expression?: string };
+    };
+    if (
+      message.method === "Runtime.evaluate" &&
+      message.params?.expression?.includes(":scope > fieldset[disabled]")
+    ) {
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              result: {
+                result: {
+                  value: {
+                    ready: true,
+                    pageUrl: "http://127.0.0.1:5173/contact",
+                  },
+                },
+              },
+            }),
+          }),
+        0
+      );
+      return;
+    }
+    if (
+      message.method === "Runtime.evaluate" &&
+      message.params?.expression?.includes("requestSubmit")
+    ) {
+      submitCalls += 1;
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              error: { message: "Browser connection lost" },
+            }),
+          }),
+        0
+      );
+      return;
+    }
+    send(data);
+    if (message.method === "Page.navigate") {
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              method: "Page.lifecycleEvent",
+              params: {
+                name: "load",
+                frameId: "main",
+                loaderId: "main-loader",
+              },
+            }),
+          }),
+        1
+      );
+    }
+  };
+  const session = await createBrowserScreenshotSession(
+    {
+      url: "http://127.0.0.1:5173/contact",
+      output: "/tmp/form.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "load",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({ socket })
+  );
+
+  const result = await session.submitForm!({
+    url: "http://127.0.0.1:5173/contact",
+    selector: "form",
+    values: [{ name: "email", value: "me@example.com" }],
+    timeout: 1000,
+  });
+  expect(result).toMatchObject({
+    status: "unknown",
+    correlationId: expect.any(String),
+  });
+  expect(submitCalls).toBe(1);
+  await session.close();
+});
+
+const createFormSubmissionSocket = (
+  initialUrl: string,
+  observe: () => { pageUrl: string; formState: string; busy?: boolean },
+  preSubmitFormState: string | null = "initial",
+  navigationOnSubmit: "main" | "child" | false = false
+) => {
+  const socket = new FakeWebSocket(200, initialUrl);
+  const send = socket.send;
+  socket.send = (data: string) => {
+    const message = JSON.parse(data) as {
+      id: number;
+      method: string;
+      params?: { expression?: string };
+    };
+    const respond = (value: unknown) =>
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              result: { result: { value } },
+            }),
+          }),
+        0
+      );
+    if (message.method === "Runtime.evaluate") {
+      const expression = message.params?.expression ?? "";
+      if (expression.includes(":scope > fieldset[disabled]")) {
+        respond({ ready: true, pageUrl: initialUrl });
+        return;
+      }
+      if (expression.includes("requestSubmit")) {
+        respond({ status: "dispatched", errors: [], preSubmitFormState });
+        if (navigationOnSubmit) {
+          setTimeout(
+            () =>
+              socket.emit("message", {
+                data: JSON.stringify({
+                  method: "Page.navigatedWithinDocument",
+                  params: {
+                    url: initialUrl,
+                    frameId: navigationOnSubmit === "main" ? "main" : "child",
+                  },
+                }),
+              }),
+            1
+          );
+        }
+        return;
+      }
+      if (expression.includes("aria-busy")) {
+        respond(observe());
+        return;
+      }
+    }
+    send(data);
+    if (message.method === "Page.navigate") {
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              method: "Page.lifecycleEvent",
+              params: {
+                name: "load",
+                frameId: "main",
+                loaderId: "main-loader",
+              },
+            }),
+          }),
+        1
+      );
+    }
+  };
+  return socket;
+};
+
+const createFormBrowserSession = (socket: FakeWebSocket) =>
+  createBrowserScreenshotSession(
+    {
+      url: "http://127.0.0.1:5173/contact",
+      output: "/tmp/form.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "load",
+      waitForTimeout: 0,
+      timeout: 30_000,
+    },
+    createDependencies({ socket })
+  );
+
+const createManagedFormSocket = ({
+  body = JSON.stringify({ results: [{ status: 201, resourceId: "action" }] }),
+  base64Encoded = false,
+  bodyDelay = 0,
+  unreadable = false,
+  navigationGap = false,
+  unrelated,
+}: {
+  body?: string;
+  base64Encoded?: boolean;
+  bodyDelay?: number;
+  unreadable?: boolean;
+  navigationGap?: boolean | "stalled";
+  unrelated?: { method: string; url: string; frameId: string };
+} = {}) => {
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(url, () => ({
+    pageUrl: "http://127.0.0.1:5173/thanks?token=private-query#private-hash",
+    formState: "initial",
+    busy: false,
+  }));
+  const counters = {
+    submissions: 0,
+    reads: [] as string[],
+    lateReads: 0,
+    gaps: 0,
+  };
+  const emit = (method: string, params: unknown) =>
+    socket.emit("message", { data: JSON.stringify({ method, params }) });
+  const send = socket.send;
+  let navigated = false;
+  socket.send = (data) => {
+    const message = JSON.parse(data) as {
+      id: number;
+      method: string;
+      params?: { expression?: string; requestId?: string };
+    };
+    if (message.method === "Network.getResponseBody") {
+      counters.reads.push(message.params!.requestId!);
+      const tooLate = navigated;
+      counters.lateReads += Number(tooLate);
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              ...(tooLate || unreadable
+                ? { error: { code: -32000, message: "Body unavailable" } }
+                : { result: { body, base64Encoded } }),
+            }),
+          }),
+        bodyDelay
+      );
+      return;
+    }
+    if (
+      navigationGap &&
+      message.method === "Runtime.evaluate" &&
+      message.params?.expression?.includes("aria-busy") &&
+      (counters.gaps++ === 0 || navigationGap === "stalled")
+    ) {
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              error: {
+                code: -32000,
+                message: "Execution context was destroyed",
+              },
+            }),
+          }),
+        0
+      );
+      return;
+    }
+    send(data);
+    if (
+      message.method === "Runtime.evaluate" &&
+      message.params?.expression?.includes("form.requestSubmit(")
+    ) {
+      counters.submissions += 1;
+      setTimeout(() => {
+        if (unrelated) {
+          emit("Network.requestWillBeSent", {
+            requestId: "unrelated",
+            frameId: unrelated.frameId,
+            request: unrelated,
+          });
+          emit("Network.responseReceived", {
+            requestId: "unrelated",
+            frameId: unrelated.frameId,
+            type: "Fetch",
+            response: { status: 200, url: unrelated.url },
+          });
+          emit("Network.loadingFinished", { requestId: "unrelated" });
+        }
+        emit("Network.requestWillBeSent", {
+          requestId: "managed",
+          frameId: "main",
+          request: {
+            method: "POST",
+            url: "http://127.0.0.1:5173/__ws-form/contact",
+          },
+        });
+        emit("Network.responseReceived", {
+          requestId: "managed",
+          frameId: "main",
+          type: "XHR",
+          response: {
+            status: 200,
+            url: "http://127.0.0.1:5173/__ws-form/contact?token=private-query",
+          },
+        });
+        if (unrelated) {
+          emit("Network.requestWillBeSent", {
+            requestId: "unrelated",
+            frameId: unrelated.frameId,
+            request: unrelated,
+          });
+          emit("Network.responseReceived", {
+            requestId: "unrelated",
+            frameId: unrelated.frameId,
+            type: "Fetch",
+            response: { status: 200, url: unrelated.url },
+          });
+          emit("Network.loadingFinished", { requestId: "unrelated" });
+        }
+        emit("Network.loadingFinished", { requestId: "managed" });
+        navigated = true;
+        emit("Page.frameNavigated", {
+          frame: { id: "main", url: "http://127.0.0.1:5173/thanks" },
+        });
+      }, 5);
+    }
+  };
+  return { socket, counters };
+};
+
+test.each([false, true])(
+  "captures a completed managed response before navigation (base64: %s)",
+  async (base64Encoded) => {
+    const summary = {
+      results: [
+        {
+          status: 201,
+          resourceId: "action",
+          resourceName: "Receiver",
+          body: "private-body",
+          headers: { authorization: "private-header" },
+        },
+      ],
+      errors: [
+        {
+          status: 503,
+          resourceName: "Receipt",
+          message: "private-error",
+          body: "private-error-body",
+        },
+      ],
+    };
+    const json = JSON.stringify(summary);
+    const { socket, counters } = createManagedFormSocket({
+      body: base64Encoded ? Buffer.from(json).toString("base64") : json,
+      base64Encoded,
+      bodyDelay: 200,
+    });
+    const session = await createFormBrowserSession(socket);
+    try {
+      const result = await session.submitForm!({
+        url: "http://127.0.0.1:5173/contact",
+        selector: "form",
+        values: [{ name: "email", value: "private-value" }],
+        timeout: 1000,
+      });
+      expect(counters).toMatchObject({
+        submissions: 1,
+        reads: ["managed"],
+        lateReads: 0,
+      });
+      expect(result).toMatchObject({
+        status: "submitted",
+        results: [
+          { status: 201, resourceId: "action", resourceName: "Receiver" },
+        ],
+        errors: [{ status: 503, name: "Receipt" }],
+      });
+      expect(JSON.stringify(result)).not.toContain("private-");
+    } finally {
+      await session.close();
+    }
+  }
+);
+
+test("continues observing across a navigation execution-context gap without replaying the Form", async () => {
+  const { socket, counters } = createManagedFormSocket({ navigationGap: true });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result).toMatchObject({
+      status: "submitted",
+      pageUrl: "http://127.0.0.1:5173/thanks",
+      results: [{ status: 201, resourceId: "action" }],
+    });
+    expect(counters.submissions).toBe(1);
+    expect(counters.gaps).toBe(2);
+  } finally {
+    await session.close();
+  }
+});
+
+test("keeps an unobservable navigation outcome unknown without replaying the Form", async () => {
+  const { socket, counters } = createManagedFormSocket({
+    navigationGap: "stalled",
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 280,
+    });
+    expect(result.status).toBe("unknown");
+    expect(counters.submissions).toBe(1);
+  } finally {
+    await session.close();
+  }
+});
+
+test.each([
+  {
+    method: "GET",
+    url: "http://127.0.0.1:5173/__ws-form/contact",
+    frameId: "main",
+  },
+  {
+    method: "POST",
+    url: "https://other.example/__ws-form/contact",
+    frameId: "main",
+  },
+  {
+    method: "POST",
+    url: "http://127.0.0.1:5173/__ws-form-other",
+    frameId: "main",
+  },
+  {
+    method: "POST",
+    url: "http://127.0.0.1:5173/__ws-form/other",
+    frameId: "main",
+  },
+  {
+    method: "POST",
+    url: "http://127.0.0.1:5173/__ws-form/contact",
+    frameId: "child",
+  },
+])(
+  "ignores unrelated managed-looking responses: $method $url $frameId",
+  async (unrelated) => {
+    const { socket, counters } = createManagedFormSocket({ unrelated });
+    const session = await createFormBrowserSession(socket);
+    try {
+      const result = await session.submitForm!({
+        url: "http://127.0.0.1:5173/contact",
+        selector: "form",
+        values: [],
+        timeout: 1000,
+      });
+      expect(result.results).toEqual([{ status: 201, resourceId: "action" }]);
+      expect(counters.reads).toEqual(["managed"]);
+      expect(counters.submissions).toBe(1);
+    } finally {
+      await session.close();
+    }
+  }
+);
+
+test.each([999_999, 1_000_000])(
+  "keeps the managed response body limit at %i characters",
+  async (length) => {
+    const body = JSON.stringify({ results: [{ status: 201 }] }).padEnd(
+      length,
+      " "
+    );
+    const { socket, counters } = createManagedFormSocket({ body });
+    const session = await createFormBrowserSession(socket);
+    try {
+      const result = await session.submitForm!({
+        url: "http://127.0.0.1:5173/contact",
+        selector: "form",
+        values: [],
+        timeout: 1000,
+      });
+      expect(result.status).toBe("submitted");
+      expect(result.results).toEqual(
+        length < 1_000_000 ? [{ status: 201 }] : []
+      );
+      expect(counters).toMatchObject({
+        submissions: 1,
+        reads: ["managed"],
+        lateReads: 0,
+      });
+    } finally {
+      await session.close();
+    }
+  }
+);
+
+test("bounds result and error lists and drops invalid entries and sensitive response fields", async () => {
+  const entries = Array.from({ length: 101 }, (_, index) => ({
+    status: index,
+    resourceId: "action",
+    resourceName: "Receiver",
+    body: "private-body",
+    message: "private-message",
+  }));
+  const { socket, counters } = createManagedFormSocket({
+    body: JSON.stringify({
+      results: [null, {}, ...entries],
+      errors: [null, ...entries],
+    }),
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result.results).toHaveLength(98);
+    expect(result.results.at(-1)?.status).toBe(97);
+    expect(result.errors).toHaveLength(99);
+    expect(result.errors.at(-1)?.status).toBe(98);
+    expect(JSON.stringify(result)).not.toContain("private-");
+    expect(counters).toMatchObject({
+      submissions: 1,
+      reads: ["managed"],
+      lateReads: 0,
+    });
+  } finally {
+    await session.close();
+  }
+});
+
+test.each([{ body: "not JSON" }, { unreadable: true }, { bodyDelay: 2000 }])(
+  "preserves the observed outcome when response capture fails: %j",
+  async (options) => {
+    const { socket, counters } = createManagedFormSocket(options);
+    const session = await createFormBrowserSession(socket);
+    try {
+      const result = await session.submitForm!({
+        url: "http://127.0.0.1:5173/contact",
+        selector: "form",
+        values: [],
+        timeout: 300,
+      });
+      expect(result).toMatchObject({
+        status: "submitted",
+        results: [],
+        errors: [],
+        pageUrl: "http://127.0.0.1:5173/thanks",
+      });
+      expect(counters).toMatchObject({
+        submissions: 1,
+        reads: ["managed"],
+        lateReads: 0,
+      });
+      expect(socket.close).toHaveBeenCalledOnce();
+    } finally {
+      await session.close();
+    }
+  }
+);
+
+test("initial route canonicalization is not reported as a form redirect", async () => {
+  const canonicalUrl = "http://127.0.0.1:5173/contact/";
+  let observations = 0;
+  const socket = createFormSubmissionSocket(canonicalUrl, () => ({
+    pageUrl: canonicalUrl,
+    formState: "success",
+    busy: ++observations < 3,
+  }));
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({
+      status: "submitted",
+      formState: "success",
+      pageUrl: canonicalUrl,
+    });
+    expect(result.redirect).toBeUndefined();
+    expect(observations).toBe(3);
+  } finally {
+    await session.close();
+  }
+});
+
+test("reports query-only navigation without exposing query values", async () => {
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(url, () => ({
+    pageUrl: `${url}?tag=one&tag=two&token=secret`,
+    formState: "initial",
+    busy: false,
+  }));
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({
+      status: "submitted",
+      pageUrl: url,
+      redirect: url,
+    });
+    expect(JSON.stringify(result)).not.toContain("secret");
+  } finally {
+    await session.close();
+  }
+});
+
+test("recognizes submission navigation even when URL stays the same", async () => {
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(
+    url,
+    () => ({ pageUrl: url, formState: "initial", busy: false }),
+    "initial",
+    "main"
+  );
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result).toMatchObject({ status: "submitted", formState: "initial" });
+    expect(result.redirect).toBeUndefined();
+  } finally {
+    await session.close();
+  }
+});
+
+test("ignores child-frame navigation when the Form stays idle", async () => {
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(
+    url,
+    () => ({ pageUrl: url, formState: "initial", busy: false }),
+    "initial",
+    "child"
+  );
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 300,
+    });
+    expect(result.status).toBe("unknown");
+  } finally {
+    await session.close();
+  }
+});
+
+test("recognizes a synchronous terminal error caused by submission", async () => {
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(url, () => ({
+    pageUrl: url,
+    formState: "error",
+    busy: false,
+  }));
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({ status: "submitted", formState: "error" });
+  } finally {
+    await session.close();
+  }
+});
+
+test("does not accept an authored terminal state present before submission", async () => {
+  const url = "http://127.0.0.1:5173/contact";
+  let clock: ReturnType<typeof vi.spyOn> | undefined;
+  const socket = createFormSubmissionSocket(
+    url,
+    () => {
+      clock = vi.spyOn(Date, "now").mockReturnValue(Date.now() + 31_000);
+      return { pageUrl: url, formState: "error", busy: false };
+    },
+    "error"
+  );
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({ status: "unknown", formState: "error" });
+  } finally {
+    clock?.mockRestore();
+    await session.close();
+  }
+});
+
+test("keeps observing beyond ten seconds when the caller timeout allows it", async () => {
+  let observations = 0;
+  let clock: ReturnType<typeof vi.spyOn> | undefined;
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(url, () => {
+    observations += 1;
+    if (observations === 1) {
+      const later = Date.now() + 11_000;
+      clock = vi.spyOn(Date, "now").mockReturnValue(later);
+      return { pageUrl: url, formState: "initial", busy: true };
+    }
+    return { pageUrl: url, formState: "success", busy: false };
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({ status: "submitted", formState: "success" });
+    expect(observations).toBe(2);
+  } finally {
+    clock?.mockRestore();
+    await session.close();
+  }
+});
+
+test("returns unknown when the caller observation deadline expires", async () => {
+  let clock: ReturnType<typeof vi.spyOn> | undefined;
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(url, () => {
+    const later = Date.now() + 31_000;
+    clock = vi.spyOn(Date, "now").mockReturnValue(later);
+    return { pageUrl: url, formState: "initial" };
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({ status: "unknown", formState: "initial" });
+  } finally {
+    clock?.mockRestore();
+    await session.close();
+  }
 });
 
 test("reuses one browser process across screenshot captures", async () => {
@@ -919,6 +1825,57 @@ test("restarts the shared browser once after an unexpected exit", async () => {
   expect(dependencies.rm).toHaveBeenCalledTimes(2);
 });
 
+test("restarts a responsive capture when the DevTools connection closes", async () => {
+  const firstProcess = new FakeBrowserProcess();
+  const secondProcess = new FakeBrowserProcess();
+  let recoveredSocket: FakeWebSocket | undefined;
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.spawnBrowser)
+    .mockReturnValueOnce(firstProcess as never)
+    .mockReturnValueOnce(secondProcess as never);
+  vi.mocked(dependencies.createWebSocket)
+    .mockImplementationOnce(
+      () => new ClosingWebSocket() as unknown as WebSocket
+    )
+    .mockImplementationOnce(() => {
+      recoveredSocket = new FakeWebSocket();
+      return recoveredSocket as unknown as WebSocket;
+    });
+  const options = {
+    url: "https://example.com/responsive",
+    output: "/tmp/mobile.png",
+    width: 375,
+    height: 812,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(options, dependencies);
+
+  await expect(
+    session.capturePage([
+      options,
+      { ...options, output: "/tmp/desktop.png", width: 1440, height: 900 },
+    ])
+  ).resolves.toHaveLength(2);
+
+  expect(dependencies.spawnBrowser).toHaveBeenCalledTimes(2);
+  expect(firstProcess.kill).toHaveBeenCalledOnce();
+  expect(dependencies.writeFile).toHaveBeenCalledTimes(2);
+  expect(
+    recoveredSocket?.sentMessages
+      .filter(
+        (message) => message.method === "Emulation.setDeviceMetricsOverride"
+      )
+      .map((message) => message.params?.width)
+  ).toEqual([375, 1440]);
+
+  await session.close();
+
+  expect(secondProcess.kill).toHaveBeenCalledOnce();
+});
+
 test("retries a browser restart after a transient startup failure", async () => {
   const firstProcess = new FakeBrowserProcess();
   const secondProcess = new FakeBrowserProcess();
@@ -1027,7 +1984,10 @@ test("removes the browser profile when spawning throws", async () => {
       },
       dependencies
     )
-  ).rejects.toThrow("Browser spawn failed");
+  ).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    message: "Browser spawn failed",
+  });
   expect(dependencies.rm).toHaveBeenCalledWith("/tmp/vision-browser-test", {
     recursive: true,
     force: true,
@@ -1101,7 +2061,60 @@ test("reports browser startup exit diagnostics without local paths", async () =>
   const dependencies = createDependencies();
   vi.mocked(dependencies.spawnBrowser).mockImplementation(() => {
     const browserProcess = new FakeBrowserProcess();
-    setTimeout(() => browserProcess.emit("exit", 21), 0);
+    setTimeout(() => {
+      browserProcess.stderr.emit(
+        "socket() failed: Operation not permitted at /Users/example/private?authToken=secret"
+      );
+      browserProcess.emit("exit", 21);
+    }, 0);
+    return browserProcess as never;
+  });
+  vi.mocked(dependencies.readFile).mockImplementation(
+    async () => await new Promise(() => undefined)
+  );
+  const options = {
+    url: "https://example.com",
+    output: "/tmp/current.png",
+    width: 800,
+    height: 600,
+    browserPath: "/Users/example/Applications/Chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  let startupError: unknown;
+  try {
+    await createBrowserScreenshotSession(options, dependencies);
+  } catch (error) {
+    startupError = error;
+  }
+
+  expect(startupError).toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    processExit: { code: 21 },
+    message:
+      "Browser exited before its DevTools endpoint became ready (exit code 21). The operating system denied browser IPC or socket access. Check the browser installation or provide a supported Chromium executable.",
+    diagnostic: {
+      stage: "browser-startup",
+      reason: "browser_ipc_permission_denied",
+    },
+    issues: [
+      {
+        code: "browser_ipc_permission_denied",
+        path: [],
+        constraint: "stage:browser-startup",
+      },
+    ],
+  });
+  expect(JSON.stringify(startupError)).not.toContain("/Users/example/private");
+  expect(JSON.stringify(startupError)).not.toContain("secret");
+});
+
+test("keeps a browser startup signal as structured diagnostics", async () => {
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.spawnBrowser).mockImplementation(() => {
+    const browserProcess = new FakeBrowserProcess();
+    setTimeout(() => browserProcess.emit("exit", undefined, "SIGABRT"), 0);
     return browserProcess as never;
   });
   vi.mocked(dependencies.readFile).mockImplementation(
@@ -1115,17 +2128,56 @@ test("reports browser startup exit diagnostics without local paths", async () =>
         output: "/tmp/current.png",
         width: 800,
         height: 600,
-        browserPath: "/Users/example/Applications/Chromium",
+        browserPath: "/usr/bin/chromium",
         waitUntil: "networkidle",
         waitForTimeout: 0,
-        timeout: 1000,
+        timeout: 100,
       },
       dependencies
     )
   ).rejects.toMatchObject({
-    message:
-      "Browser exited before its DevTools endpoint became ready (exit code 21). Check the browser installation or provide a supported Chromium executable.",
+    code: "BROWSER_STARTUP_FAILED",
+    processExit: { signal: "SIGABRT" },
   });
+});
+
+test("retries Linux browser startup without /dev/shm after an abort", async () => {
+  const dependencies = Object.assign(createDependencies(), {
+    platform: "linux" as const,
+  });
+  vi.mocked(dependencies.spawnBrowser)
+    .mockImplementationOnce(() => {
+      const browserProcess = new FakeBrowserProcess();
+      setTimeout(() => browserProcess.emit("exit", undefined, "SIGABRT"), 0);
+      return browserProcess as never;
+    })
+    .mockImplementationOnce(() => new FakeBrowserProcess() as never);
+  vi.mocked(dependencies.readFile)
+    .mockImplementationOnce(async () => await new Promise(() => undefined))
+    .mockResolvedValue("9222\n/devtools/browser/1\n");
+
+  const session = await createBrowserScreenshotSession(
+    {
+      url: "https://example.com",
+      output: "/tmp/current.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "load",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    dependencies
+  );
+
+  expect(dependencies.spawnBrowser).toHaveBeenCalledTimes(2);
+  expect(vi.mocked(dependencies.spawnBrowser).mock.calls[0]?.[1]).not.toContain(
+    "--disable-dev-shm-usage"
+  );
+  expect(vi.mocked(dependencies.spawnBrowser).mock.calls[1]?.[1]).toContain(
+    "--disable-dev-shm-usage"
+  );
+  await session.close();
 });
 
 test("does not restart a browser session after cleanup", async () => {
@@ -1360,6 +2412,146 @@ test("returns final URL, redirects, and HTTP error status", async () => {
   });
 });
 
+test("reports React error boundary errors logged by the page", async () => {
+  const layout = await captureBrowserScreenshot(
+    {
+      url: "https://example.com",
+      output: "/tmp/react-error.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "networkidle",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        "console-error"
+      ),
+    })
+  );
+
+  expect(layout.navigation?.javascriptErrorPresent).toBe(true);
+  expect(layout.navigation).not.toHaveProperty("javascriptErrorLocation");
+});
+
+test("does not expose a page exception URL", async () => {
+  const layout = await captureBrowserScreenshot(
+    {
+      url: "https://example.com",
+      output: "/tmp/page-exception.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "networkidle",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        "exception-error"
+      ),
+    })
+  );
+
+  expect(layout.navigation?.javascriptErrorPresent).toBe(true);
+  expect(layout.navigation).not.toHaveProperty("javascriptErrorLocation");
+});
+
+test("does not attribute an outgoing page error to the next route", async () => {
+  const options = {
+    url: "https://example.com/one",
+    output: "/tmp/one.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(
+    options,
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        "stale-outgoing-error"
+      ),
+    })
+  );
+
+  const layouts = await session.capturePage([
+    options,
+    {
+      ...options,
+      url: "https://example.com/two",
+      output: "/tmp/two.png",
+    },
+  ]);
+
+  expect(
+    layouts.map(({ navigation }) => navigation?.javascriptErrorPresent)
+  ).toEqual([undefined, undefined]);
+  await session.close();
+});
+
+test("keeps tracking the document context across hash navigations", async () => {
+  const options = {
+    url: "https://example.com/one",
+    output: "/tmp/one.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(
+    options,
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        "hash-navigation-error"
+      ),
+    })
+  );
+
+  const layouts = await session.capturePage([
+    options,
+    {
+      ...options,
+      url: "https://example.com/one#section",
+      output: "/tmp/one-hash.png",
+    },
+  ]);
+
+  expect(
+    layouts.map(({ navigation }) => navigation?.javascriptErrorPresent)
+  ).toEqual([undefined, true]);
+  await session.close();
+});
+
 test("ignores child-frame document responses when reporting navigation", async () => {
   const layout = await captureBrowserScreenshot(
     {
@@ -1406,6 +2598,60 @@ test("waits for two stable layout samples after a late shift", async () => {
   expect(layout.navigation?.layoutStable).toBe(true);
 });
 
+test("can capture stable layout without waiting for pending fonts", async () => {
+  const socket = new FakeWebSocket(
+    200,
+    undefined,
+    undefined,
+    undefined,
+    ["main"],
+    true
+  );
+  const layout = await captureBrowserScreenshot(
+    {
+      url: "https://example.com/page",
+      output: "/tmp/page-with-pending-font.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "networkidle",
+      waitForFonts: false,
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({ socket })
+  );
+
+  expect(layout.navigation?.layoutStable).toBe(true);
+  expect(socket.sentMethods).toContain("Page.captureScreenshot");
+});
+
+test("reports a font that blocks screenshot readiness", async () => {
+  const socket = new FakeWebSocket(
+    200,
+    undefined,
+    undefined,
+    undefined,
+    ["main"],
+    true
+  );
+  await expect(
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com/page",
+        output: "/tmp/page-with-pending-font.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "networkidle",
+        waitForTimeout: 0,
+        timeout: 100,
+      },
+      createDependencies({ socket })
+    )
+  ).rejects.toThrow("loading fonts: Test Font");
+});
+
 test("times out when browser DevTools commands stop responding", async () => {
   const browserProcess = new FakeBrowserProcess();
   const socket = new HangingWebSocket();
@@ -1434,12 +2680,20 @@ test("times out when browser DevTools commands stop responding", async () => {
   });
 });
 
-test("rejects pending commands when the DevTools socket closes", async () => {
-  const browserProcess = new FakeBrowserProcess();
-  const dependencies = createDependencies({
-    browserProcess,
-    socket: new ClosingWebSocket(),
-  });
+test("rejects after the DevTools socket closes twice", async () => {
+  const firstProcess = new FakeBrowserProcess();
+  const secondProcess = new FakeBrowserProcess();
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.spawnBrowser)
+    .mockReturnValueOnce(firstProcess as never)
+    .mockReturnValueOnce(secondProcess as never);
+  vi.mocked(dependencies.createWebSocket)
+    .mockImplementationOnce(
+      () => new ClosingWebSocket() as unknown as WebSocket
+    )
+    .mockImplementationOnce(
+      () => new ClosingWebSocket() as unknown as WebSocket
+    );
 
   await expect(
     captureBrowserScreenshot(
@@ -1455,9 +2709,19 @@ test("rejects pending commands when the DevTools socket closes", async () => {
       },
       dependencies
     )
-  ).rejects.toThrow("Browser DevTools connection closed.");
+  ).rejects.toMatchObject({
+    code: "BROWSER_SESSION_CLOSED",
+    issues: [
+      {
+        code: "browser_devtools_connection_closed",
+        constraint: "devtools_connection_available",
+      },
+    ],
+  });
 
-  expect(browserProcess.kill).toHaveBeenCalled();
+  expect(dependencies.spawnBrowser).toHaveBeenCalledTimes(2);
+  expect(firstProcess.kill).toHaveBeenCalledOnce();
+  expect(secondProcess.kill).toHaveBeenCalledOnce();
 });
 
 test("times out when browser page target creation does not respond", async () => {
@@ -1513,12 +2777,43 @@ test("stops polling when the browser DevTools port is not created", async () => 
       },
       dependencies
     )
-  ).rejects.toThrow("Browser DevTools endpoint was not created within 10ms.");
+  ).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    message: "Browser DevTools endpoint was not created within 10ms.",
+  });
 
   const callsAfterTimeout = vi.mocked(dependencies.readFile).mock.calls.length;
   await new Promise((resolve) => setTimeout(resolve, 75));
   expect(dependencies.readFile).toHaveBeenCalledTimes(callsAfterTimeout);
   expect(browserProcess.kill).toHaveBeenCalled();
+});
+
+test("uses a separate browser startup timeout", async () => {
+  const browserProcess = new FakeBrowserProcess();
+  const dependencies = createDependencies({ browserProcess });
+  vi.mocked(dependencies.readFile).mockRejectedValue(
+    Object.assign(new Error("not ready"), { code: "ENOENT" })
+  );
+
+  await expect(
+    createBrowserScreenshotSession(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "load",
+        waitForTimeout: 0,
+        timeout: 100,
+        startupTimeout: 5,
+      },
+      dependencies
+    )
+  ).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    message: "Browser DevTools endpoint was not created within 5ms.",
+  });
 });
 
 test("does not wait indefinitely for a failed browser startup to exit", async () => {

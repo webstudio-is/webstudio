@@ -1,12 +1,13 @@
 import {
   Box,
+  IconButton,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
   Tooltip,
   css,
-  focusRingStyle,
+  cssVar,
   styled,
   theme,
   useResize,
@@ -29,50 +30,21 @@ export const SidebarTabs = styled(Tabs, {
   flexGrow: 1,
 });
 
-const triggerFocusRing = focusRingStyle();
-
-const buttonStyle = css({
-  position: "relative",
-  boxSizing: "border-box",
-  flexShrink: 0,
-  display: "flex",
-  size: theme.spacing[15],
-  m: 0,
-  userSelect: "none",
-  outline: "none",
-  alignItems: "center",
-  justifyContent: "center",
-  color: theme.colors.foregroundIconMain,
-  backgroundColor: theme.colors.backgroundPanel,
-  border: "none",
-  "&:disabled": {
-    opacity: 0.4,
-    cursor: "not-allowed",
-  },
-  "&:focus-visible": triggerFocusRing,
-  "@hover": {
-    "&:hover": {
-      backgroundColor: theme.colors.backgroundHover,
-    },
-  },
-
-  '&[data-state="active"]': {
-    backgroundColor: theme.colors.backgroundHover,
-  },
-});
-
 export const SidebarButton = forwardRef<
   HTMLButtonElement,
-  ComponentProps<"button"> & { label: string }
+  ComponentProps<typeof IconButton> & { label: string }
 >(({ label, ...props }, ref) => {
   return (
     <Tooltip side="right" content={label}>
-      <button
-        {...props}
-        ref={ref}
-        aria-label={label}
-        className={buttonStyle()}
-      ></button>
+      <Box>
+        <IconButton
+          {...props}
+          ref={ref}
+          aria-label={label}
+          size="large"
+          css={{ m: theme.spacing[3] }}
+        />
+      </Box>
     </Tooltip>
   );
 });
@@ -87,13 +59,10 @@ export const SidebarTabsTrigger = forwardRef<
   return (
     <Tooltip side="right" content={label}>
       <Box>
-        <TabsTrigger
-          {...props}
-          ref={ref}
-          aria-label={ariaLabel}
-          className={buttonStyle()}
-        >
-          {children}
+        <TabsTrigger {...props} ref={ref} aria-label={ariaLabel} asChild>
+          <IconButton size="large" css={{ m: theme.spacing[3] }}>
+            {children}
+          </IconButton>
         </TabsTrigger>
       </Box>
     </Tooltip>
@@ -108,7 +77,7 @@ export const SidebarTabsList = styled(TabsList, {
   alignItems: "center",
   outline: "none",
   flexGrow: 1,
-  backgroundColor: theme.colors.backgroundPanel,
+  backgroundColor: cssVar("--background-primary"),
 });
 
 const sidebarTabsContentStyle = css({
@@ -117,7 +86,7 @@ const sidebarTabsContentStyle = css({
   top: 0,
   left: "100%",
   height: "100%",
-  backgroundColor: theme.colors.backgroundPanel,
+  backgroundColor: cssVar("--background-primary"),
   outline: "none",
   // Drawing border this way to ensure content still has full width, avoid subpixels and give layout round numbers
   "&::after": {
@@ -127,7 +96,7 @@ const sidebarTabsContentStyle = css({
     right: 0,
     bottom: 0,
     width: 1,
-    background: theme.colors.borderMain,
+    background: cssVar("--border-default"),
   },
   variants: {
     resizable: {

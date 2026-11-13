@@ -69,7 +69,7 @@ Copy the curl command as shown in the image, then paste it into the URL field in
 
 Now, you need to add several customizations to it.
 
-First, replace `YOUR_SECRET_API_TOKEN` with your API token. Refer to [Airtable's documentation](https://support.airtable.com/docs/creating-personal-access-tokens) for generating a token. Make sure you keep `Bearer` in front of the token.
+First, replace `YOUR_SECRET_API_TOKEN` with a narrowly scoped personal access token. Refer to Airtable's [personal access token guide](https://airtable.com/developers/web/guides/personal-access-tokens) and grant only the records and bases this Resource needs. Keep `Bearer` in front of the token.
 
 <figure><img src="https://images.surferseo.art/84dc1cba-c30f-4e13-9184-6ccd618b66bc.png" alt="Airtable authorization Bearer" width="375"><figcaption></figcaption></figure>
 
@@ -217,7 +217,7 @@ The flexibility of Resources enables you to fetch exactly what you need from one
 
 - [Using filters to dynamically display Airtable content](../how-tos/using-filters-to-dynamically-display-content.md)
 - [Building dynamic pages for Airtable data](https://youtu.be/3mW7cPDXIxY)
-- [Using Webstudio Webhook form to send data to an Airtable automation (doc)](airtable-form-webhook.md)
+- [Using the deprecated Webhook Form to send data to an Airtable automation (doc)](airtable-form-webhook.md)
 - [Airtable filters API (doc)](https://support.airtable.com/docs/airtable-web-api-using-filterbyformula-or-sort-parameters)
 
 ## Related

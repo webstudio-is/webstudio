@@ -11,8 +11,9 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { isLiteralExpression } from "@webstudio-is/expression";
-import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
+import { useAsyncValue } from "~/shared/use-async-value";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import type {
   PageSettingsErrors,
   PageSettingsValues,
@@ -21,7 +22,11 @@ import { useStore } from "@nanostores/react";
 import { $assets, $projectSettings } from "~/shared/sync/data-stores";
 import { $pageRootScope } from "../page-utils";
 import { SearchPreview } from "../search-preview";
-import { computePageSettingsText, usePageUrl, type OnChange } from "./shared";
+import { usePageSettingsText, usePageUrl, type OnChange } from "./shared";
+
+// Search-engine previews represent an external light surface, not Builder UI.
+const searchPreviewBackground = "#ffffff";
+const searchPreviewBorder = "#e6e6e6";
 
 const LanguageField = ({
   errors,
@@ -43,7 +48,7 @@ const LanguageField = ({
       <Label htmlFor={id}>Language</Label>
       <BindableExpressionControl
         expression={value}
-        value={computePageSettingsText(value, variableValues)}
+        value={usePageSettingsText(value, variableValues)}
         bound={isLiteralExpression(value) === false}
         showBinding={showBindingControls}
         scope={scope}
@@ -96,13 +101,14 @@ export const SearchSection = ({
   const pageUrl = usePageUrl(values);
   const faviconAsset = assets.get(projectSettings?.meta.faviconAssetId ?? "");
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
-  const title = computePageSettingsText(values.title, variableValues);
-  const description = computePageSettingsText(
-    values.description,
-    variableValues
-  );
+  const title = usePageSettingsText(values.title, variableValues);
+  const description = usePageSettingsText(values.description, variableValues);
   const excludePageFromSearch = Boolean(
-    computeExpression(values.excludePageFromSearch, variableValues)
+    useAsyncValue(
+      () => computeExpression(values.excludePageFromSearch, variableValues),
+      [values.excludePageFromSearch, variableValues],
+      undefined
+    )
   );
   return (
     <Grid gap={2}>
@@ -115,9 +121,9 @@ export const SearchSection = ({
           <Box
             css={{
               padding: theme.spacing[5],
-              background: theme.colors.white,
+              background: searchPreviewBackground,
               borderRadius: theme.borderRadius[4],
-              border: `1px solid ${theme.colors.borderMain}`,
+              border: `1px solid ${searchPreviewBorder}`,
             }}
           >
             <Box

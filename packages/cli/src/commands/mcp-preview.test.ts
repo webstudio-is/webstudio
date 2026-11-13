@@ -1,5 +1,14 @@
 import { expect, test, vi } from "vitest";
 import {
+  BrowserSessionClosedError,
+  BrowserStartupError,
+} from "@webstudio-is/vision/browser";
+import {
+  createScreenshotCaptureSession,
+  defaultScreenshotDependencies,
+  type ScreenshotDependencies,
+} from "../screenshot";
+import {
   createMcpPreviewHandlers,
   createPreviewFreshness,
   resolveMcpPreviewInput,
@@ -7,21 +16,127 @@ import {
   startMcpPreview,
 } from "./mcp-preview";
 
-test("allocates an available port only when MCP preview omits one", async () => {
+test("browser failure before Form dispatch is reported instead of an unknown submission", async () => {
+  const submitForm = vi.fn(async () => {
+    throw new BrowserStartupError("Browser could not start.");
+  });
+  const close = vi.fn(async () => undefined);
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: () => ({
+        running: true,
+        url: "http://127.0.0.1:53124/",
+        mode: "iterative",
+      }),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(),
+    } as never,
+    isStale: () => false,
+    createCaptureSession: () =>
+      ({
+        submitForm,
+        close,
+        capture: vi.fn(),
+        capturePage: vi.fn(),
+      }) as never,
+  });
+
+  await expect(
+    handlers.submitForm({
+      path: "/contact",
+      selector: "form",
+      values: [{ name: "email", value: "me@example.com" }],
+    })
+  ).rejects.toMatchObject({ code: "BROWSER_STARTUP_FAILED" });
+  expect(submitForm).toHaveBeenCalledOnce();
+  expect(close).toHaveBeenCalledOnce();
+});
+
+test("form submission rejects nonlocal Preview targets before opening a browser", async () => {
+  const createCaptureSession = vi.fn();
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: () => ({
+        running: true,
+        url: "https://example.com/",
+        mode: "iterative",
+      }),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(),
+    } as never,
+    isStale: () => false,
+    createCaptureSession,
+  });
+  await expect(
+    handlers.submitForm({
+      path: "/contact",
+      selector: "form",
+      values: [],
+    })
+  ).rejects.toThrow("session-owned local Preview");
+  expect(createCaptureSession).not.toHaveBeenCalled();
+});
+
+test("form submission accepts same-origin query and hash paths", async () => {
+  const submitForm = vi.fn(async () => ({
+    status: "submitted" as const,
+    formState: "success",
+    results: [],
+    errors: [],
+    exchanges: [],
+    pageUrl: "http://127.0.0.1:53124/contact",
+    correlationId: "test",
+  }));
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: () => ({
+        running: true,
+        url: "http://127.0.0.1:53124/",
+        mode: "iterative",
+      }),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(),
+    } as never,
+    isStale: () => false,
+    createCaptureSession: () =>
+      ({
+        submitForm,
+        close: vi.fn(),
+        capture: vi.fn(),
+        capturePage: vi.fn(),
+      }) as never,
+  });
+  await handlers.submitForm({
+    path: "/contact?tag=one&tag=two#done",
+    selector: "form",
+    values: [],
+  });
+  expect(submitForm).toHaveBeenCalledWith(
+    expect.objectContaining({
+      url: "http://127.0.0.1:53124/contact?tag=one&tag=two#done",
+    })
+  );
+  await expect(
+    handlers.submitForm({
+      path: "/../admin?tag=one",
+      selector: "form",
+      values: [],
+    })
+  ).rejects.toThrow("session-owned local Preview");
+});
+
+test("always allocates the MCP preview host and port", async () => {
   const getAvailablePort = vi.fn(async () => 53124);
 
   await expect(
     resolveMcpPreviewInput({ source: "session" }, getAvailablePort)
-  ).resolves.toEqual({ source: "session", port: 53124 });
-  await expect(
-    resolveMcpPreviewInput({ source: "session", port: 0 }, getAvailablePort)
-  ).resolves.toEqual({ source: "session", port: 53124 });
-  await expect(
-    resolveMcpPreviewInput({ source: "session", port: 4173 }, getAvailablePort)
-  ).resolves.toEqual({ source: "session", port: 4173 });
-  expect(getAvailablePort).toHaveBeenCalledTimes(2);
-  expect(getAvailablePort).toHaveBeenNthCalledWith(1, "127.0.0.1");
-  expect(getAvailablePort).toHaveBeenNthCalledWith(2, "127.0.0.1");
+  ).resolves.toEqual({
+    source: "session",
+    host: "127.0.0.1",
+    port: 53124,
+  });
+  expect(getAvailablePort).toHaveBeenCalledOnce();
+  expect(getAvailablePort).toHaveBeenCalledWith("127.0.0.1");
 });
 
 test("allocates and reuses a collision-free port for automatic screenshots", async () => {
@@ -49,84 +164,24 @@ test("allocates and reuses a collision-free port for automatic screenshots", asy
       { getAvailablePort }
     )
   ).resolves.toMatchObject({ port: 53125 });
-  await expect(
-    resolveMcpScreenshotInput(
-      {
-        path: "/account",
-        browser: "auto",
-        port: 4173,
-        viewport: { width: 1440, height: 900 },
-      },
-      { running: false, url: "http://127.0.0.1:5173/" },
-      { getAvailablePort }
-    )
-  ).resolves.toMatchObject({ port: 4173 });
   expect(getAvailablePort).toHaveBeenCalledOnce();
 });
 
-test("rejects an occupied explicit screenshot port before preview preparation", async () => {
-  const isPortAvailable = vi.fn(async () => false);
+test("allocates an available port for a local-source screenshot", async () => {
+  const getAvailablePort = vi.fn(async () => 53124);
 
   await expect(
     resolveMcpScreenshotInput(
       {
         path: "/account",
-        port: 5199,
+        source: "local",
         viewport: { width: 1440, height: 900 },
       },
       { running: false },
-      {
-        getAvailablePort: vi.fn(async () => 53124),
-        isPortAvailable,
-      }
+      { getAvailablePort }
     )
-  ).rejects.toMatchObject({
-    code: "PREVIEW_PORT_IN_USE",
-    message: expect.stringContaining(
-      "Pass baseUrl with path to capture that existing site"
-    ),
-  });
-  expect(isPortAvailable).toHaveBeenCalledWith("127.0.0.1", 5199);
-});
-
-test("reuses an owned explicit screenshot port when host is omitted", async () => {
-  const isPortAvailable = vi.fn(async () => false);
-
-  await expect(
-    resolveMcpScreenshotInput(
-      {
-        path: "/account",
-        port: 5199,
-        viewport: { width: 1440, height: 900 },
-      },
-      { running: true, url: "http://localhost:5199/" },
-      {
-        getAvailablePort: vi.fn(async () => 53124),
-        isPortAvailable,
-      }
-    )
-  ).resolves.toMatchObject({ port: 5199 });
-  expect(isPortAvailable).not.toHaveBeenCalled();
-});
-
-test("reuses an owned preview on the default HTTP port", async () => {
-  const isPortAvailable = vi.fn(async () => false);
-
-  await expect(
-    resolveMcpScreenshotInput(
-      {
-        path: "/account",
-        port: 80,
-        viewport: { width: 1440, height: 900 },
-      },
-      { running: true, url: "http://localhost/" },
-      {
-        getAvailablePort: vi.fn(async () => 53124),
-        isPortAvailable,
-      }
-    )
-  ).resolves.toMatchObject({ port: 80 });
-  expect(isPortAvailable).not.toHaveBeenCalled();
+  ).resolves.toMatchObject({ source: "local", port: 53124 });
+  expect(getAvailablePort).toHaveBeenCalledWith("127.0.0.1");
 });
 
 test("retries automatic MCP preview ports after a startup race", async () => {
@@ -136,7 +191,11 @@ test("retries automatic MCP preview ports after a startup race", async () => {
     .mockResolvedValueOnce(53125);
   const startPreview = vi
     .fn()
-    .mockRejectedValueOnce(new Error("Preview server exited before ready"))
+    .mockRejectedValueOnce(
+      Object.assign(new Error("Preview port became occupied"), {
+        code: "PREVIEW_PORT_IN_USE",
+      })
+    )
     .mockResolvedValueOnce({ url: "http://127.0.0.1:53125/" });
   const sleep = vi.fn(async () => undefined);
 
@@ -150,13 +209,38 @@ test("retries automatic MCP preview ports after a startup race", async () => {
   ).resolves.toEqual({ url: "http://127.0.0.1:53125/" });
   expect(startPreview).toHaveBeenNthCalledWith(1, {
     source: "session",
+    host: "127.0.0.1",
     port: 53124,
   });
   expect(startPreview).toHaveBeenNthCalledWith(2, {
     source: "session",
+    host: "127.0.0.1",
     port: 53125,
   });
   expect(sleep).toHaveBeenCalledWith(500);
+});
+
+test("does not retry automatic ports after a non-port preview failure", async () => {
+  const getAvailablePort = vi.fn(async () => 53124);
+  const error = Object.assign(new Error("Preview returned HTTP 500"), {
+    code: "PREVIEW_HTTP_ERROR",
+  });
+  const startPreview = vi.fn(async () => {
+    throw error;
+  });
+  const sleep = vi.fn(async () => undefined);
+
+  await expect(
+    startMcpPreview({
+      input: { source: "session" },
+      getAvailablePort,
+      startPreview,
+      sleep,
+    })
+  ).rejects.toBe(error);
+  expect(startPreview).toHaveBeenCalledOnce();
+  expect(getAvailablePort).toHaveBeenCalledOnce();
+  expect(sleep).not.toHaveBeenCalled();
 });
 
 test("does not mark a preview fresh after a newer mutation", () => {
@@ -630,6 +714,93 @@ test("reuses and closes one browser capture session for session screenshots", as
   expect(preview.stop).toHaveBeenCalledOnce();
 });
 
+test("reconnects a screenshot session after preview restart", async () => {
+  let running = false;
+  const preview = {
+    status: vi.fn(() =>
+      running
+        ? {
+            url: "http://127.0.0.1:3000/",
+            running: true as const,
+            mode: "iterative" as const,
+          }
+        : { running: false as const }
+    ),
+    startAndWait: vi.fn(async () => {
+      running = true;
+      return {
+        url: "http://127.0.0.1:3000/",
+        running: true as const,
+        mode: "iterative" as const,
+      };
+    }),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+  };
+  const connectionClosed = new BrowserSessionClosedError(
+    "Browser DevTools connection closed."
+  );
+  const firstClose = vi.fn(async () => undefined);
+  const firstCapturePage = vi.fn(async () => {
+    throw connectionClosed;
+  });
+  const captureScreenshot = createCaptureScreenshotMock([]);
+  const secondCapturePage = vi.fn(
+    async (optionsList) => await Promise.all(optionsList.map(captureScreenshot))
+  );
+  const createCaptureSession = vi
+    .fn()
+    .mockReturnValueOnce({
+      capture: vi.fn(),
+      capturePage: firstCapturePage,
+      close: firstClose,
+    })
+    .mockReturnValueOnce({
+      capture: vi.fn(),
+      capturePage: secondCapturePage,
+      close: vi.fn(async () => undefined),
+    });
+  const progress: string[] = [];
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    preparePreview: vi.fn(async () => ({ cwd: "/tmp/preview" })),
+    createCaptureSession,
+  });
+
+  await handlers.startPreview({ source: "session", mode: "iterative" });
+  await expect(
+    handlers.capturePageScreenshots(
+      [
+        {
+          path: "/",
+          source: "session",
+          viewport: { width: 1440, height: 900 },
+          fullPage: true,
+        },
+      ],
+      { report: (message) => progress.push(message) }
+    )
+  ).resolves.toEqual([
+    expect.objectContaining({
+      viewport: { width: 1440, height: 900 },
+    }),
+  ]);
+
+  expect(preview.startAndWait).toHaveBeenCalledOnce();
+  expect(createCaptureSession).toHaveBeenCalledTimes(2);
+  expect(firstCapturePage).toHaveBeenCalledOnce();
+  expect(firstClose).toHaveBeenCalledOnce();
+  expect(secondCapturePage).toHaveBeenCalledWith([
+    expect.objectContaining({
+      url: "http://127.0.0.1:3000/",
+      width: 1440,
+      height: 900,
+      fullPage: true,
+    }),
+  ]);
+  expect(progress).toContain("tool screenshot reconnecting browser session");
+});
+
 test("times out a stalled screenshot after preview start and releases its session", async () => {
   let running = false;
   const stop = vi.fn(async () => {
@@ -682,6 +853,113 @@ test("times out a stalled screenshot after preview start and releases its sessio
 
   await expect(handlers.stopPreview()).resolves.toEqual({ running: false });
   expect(stop).toHaveBeenCalledOnce();
+});
+
+test("preserves browser phase timeout details instead of the outer watchdog", async () => {
+  const phaseError = Object.assign(
+    new Error("Page did not reach load within 5ms."),
+    { code: "SCREENSHOT_TIMEOUT" }
+  );
+  const captureScreenshot = vi.fn(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    throw phaseError;
+  });
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: vi.fn(() => ({ running: false as const })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(),
+    },
+    captureScreenshot,
+  });
+
+  await expect(
+    handlers.captureScreenshot({
+      url: "https://example.com",
+      viewport: { width: 1280, height: 720 },
+      timeout: 5,
+    })
+  ).rejects.toBe(phaseError);
+});
+
+test("leaves time to start a fallback browser within the MCP timeout", async () => {
+  const createBrowserScreenshotSession = vi.fn(async (options) => {
+    if (options.browserPath === "/usr/bin/chromium") {
+      await new Promise((resolve) =>
+        setTimeout(resolve, options.startupTimeout ?? options.timeout)
+      );
+      throw new BrowserStartupError("Chromium startup timed out.");
+    }
+    return {
+      capture: vi.fn(async () => ({
+        navigation: {
+          requestedUrl: options.url,
+          finalUrl: options.url,
+          redirects: [],
+          documentReadyState: "complete" as const,
+          pageMetadata: { rootMarkerPresent: true },
+          layoutStable: true,
+        },
+        viewportWidth: options.width,
+        viewportHeight: options.height,
+        contentWidth: options.width,
+        contentHeight: options.height,
+        horizontalOverflow: false,
+      })),
+      capturePage: vi.fn(async () => []),
+      close: vi.fn(async () => undefined),
+    };
+  });
+  const dependencies: ScreenshotDependencies = {
+    ...defaultScreenshotDependencies,
+    env: {},
+    platform: "linux",
+    access: vi.fn(async (path) => {
+      if (path === "/usr/bin/chromium" || path === "/usr/bin/google-chrome") {
+        return;
+      }
+      throw new Error("missing");
+    }),
+    which: vi.fn(async (command) => {
+      if (command === "chromium") {
+        return "/usr/bin/chromium";
+      }
+      if (command === "google-chrome") {
+        return "/usr/bin/google-chrome";
+      }
+    }),
+    getChromeLauncherInstallations: vi.fn(() => []),
+    getPlaywrightInstallations: vi.fn(async () => []),
+    mkdir: vi.fn(async () => undefined),
+    createBrowserScreenshotSession,
+    readArtifactByte: vi.fn(async () => 1),
+  };
+  const preview = {
+    status: vi.fn(() => ({
+      url: "http://127.0.0.1:3000/",
+      running: true,
+      mode: "iterative" as const,
+    })),
+    startAndWait: vi.fn(),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+  };
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    createCaptureSession: () => createScreenshotCaptureSession(dependencies),
+  });
+
+  await expect(
+    handlers.captureScreenshot({
+      path: "/",
+      source: "session",
+      viewport: { width: 800, height: 600 },
+      timeout: 200,
+    })
+  ).resolves.toMatchObject({
+    browser: { path: "/usr/bin/google-chrome" },
+  });
+  expect(createBrowserScreenshotSession).toHaveBeenCalledTimes(2);
 });
 
 test("applies internal page credentials only to owned preview captures", async () => {
@@ -898,11 +1176,13 @@ test("captures one session page across multiple viewports through resize", async
       source: "session",
       viewport: { width: 375, height: 812 },
       waitForTimeout: 0,
+      waitForFonts: false,
     },
     {
       path: "/responsive",
       viewport: { width: 1440, height: 900 },
       waitForTimeout: 0,
+      waitForFonts: false,
     },
   ]);
 
@@ -913,14 +1193,119 @@ test("captures one session page across multiple viewports through resize", async
       url: "http://127.0.0.1:3000/responsive",
       width: 375,
       waitForTimeout: 0,
+      waitForFonts: false,
     }),
     expect.objectContaining({
       url: "http://127.0.0.1:3000/responsive",
       width: 1440,
       waitForTimeout: 0,
+      waitForFonts: false,
     }),
   ]);
   expect(preview.startAndWait).not.toHaveBeenCalled();
+});
+
+test("allows each resized capture its configured timeout", async () => {
+  vi.useFakeTimers();
+  try {
+    const preview = {
+      status: vi.fn(() => ({
+        url: "http://127.0.0.1:3000/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+    };
+    const capture = createCaptureScreenshotMock([]);
+    const capturePage = vi.fn(
+      async (optionsList: Array<Parameters<typeof capture>[0]>) => {
+        await new Promise<void>((resolve) => setTimeout(resolve, 6));
+        return await Promise.all(optionsList.map(capture));
+      }
+    );
+    const handlers = createMcpPreviewHandlers({
+      preview,
+      isStale: () => false,
+      createCaptureSession: () => ({
+        capture,
+        capturePage,
+        close: vi.fn(async () => undefined),
+      }),
+    });
+
+    const captures = handlers.capturePageScreenshots(
+      [375, 1440].map((width) => ({
+        path: "/responsive",
+        source: "session" as const,
+        viewport: { width, height: 900 },
+        timeout: 5,
+      }))
+    );
+    await vi.advanceTimersByTimeAsync(6);
+
+    await expect(captures).resolves.toHaveLength(2);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("prepares one local page for multiple viewport captures", async () => {
+  let running = false;
+  const preview = {
+    status: vi.fn(() => ({
+      url: "http://127.0.0.1:5173/",
+      running,
+      mode: "production" as const,
+    })),
+    startAndWait: vi.fn(async () => {
+      running = true;
+      return {
+        url: "http://127.0.0.1:5173/",
+        running: true,
+        mode: "production" as const,
+      };
+    }),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:5173${path}`),
+  };
+  const capture = createCaptureScreenshotMock([]);
+  const capturePage = vi.fn(
+    async (optionsList) => await Promise.all(optionsList.map(capture))
+  );
+  const createCaptureSession = vi.fn(() => ({
+    capture,
+    capturePage,
+    close: vi.fn(async () => undefined),
+  }));
+  const preparePreview = vi.fn(async () => ({ cwd: "/tmp/local-preview" }));
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    preparePreview,
+    createCaptureSession,
+    isStale: () => false,
+  });
+
+  const results = await handlers.capturePageScreenshots(
+    [1440, 768, 390].map((width) => ({
+      path: "/responsive",
+      source: "local" as const,
+      mode: "production" as const,
+      browserPath: "/browser",
+      viewport: { width, height: 900 },
+    }))
+  );
+
+  expect(results.map((result) => result.viewport.width)).toEqual([
+    1440, 768, 390,
+  ]);
+  expect(preparePreview).toHaveBeenCalledOnce();
+  expect(preview.startAndWait).toHaveBeenCalledOnce();
+  expect(createCaptureSession).toHaveBeenCalledOnce();
+  expect(capturePage).toHaveBeenCalledWith([
+    expect.objectContaining({ width: 1440, browserPath: "/browser" }),
+    expect.objectContaining({ width: 768, browserPath: "/browser" }),
+    expect.objectContaining({ width: 390, browserPath: "/browser" }),
+  ]);
 });
 
 test("times out a stalled responsive capture and releases its session", async () => {
@@ -1000,7 +1385,7 @@ test.each([
           viewport: { width: 1440, height: 900 },
         },
       ])
-    ).rejects.toThrow("one session preview target and browser configuration");
+    ).rejects.toThrow("one generated preview target and browser configuration");
     expect(createCaptureSession).not.toHaveBeenCalled();
   }
 );
@@ -1458,4 +1843,149 @@ test("rejects resized generated routes that rendered Builder chrome", async () =
       },
     ])
   ).rejects.toMatchObject({ code: "SCREENSHOT_NOT_GENERATED_SITE" });
+});
+
+test("retries a resized generated route while the refreshed preview settles", async () => {
+  const capturePage = vi
+    .fn()
+    .mockResolvedValueOnce([
+      {
+        navigation: { generatedSiteRootPresent: false },
+      },
+    ])
+    .mockResolvedValueOnce([
+      {
+        navigation: { generatedSiteRootPresent: true },
+      },
+    ]);
+  const sleep = vi.fn(async () => undefined);
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: vi.fn(() => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(() => "http://127.0.0.1:5173/account"),
+    },
+    isStale: () => false,
+    createCaptureSession: vi.fn(() => ({
+      capture: vi.fn(),
+      capturePage,
+      close: vi.fn(),
+    })) as never,
+    sleep,
+  });
+
+  await expect(
+    handlers.capturePageScreenshots([
+      {
+        path: "/account",
+        source: "session",
+        viewport: { width: 1280, height: 720 },
+      },
+    ])
+  ).resolves.toMatchObject([
+    { navigation: { generatedSiteRootPresent: true } },
+  ]);
+  expect(capturePage).toHaveBeenCalledTimes(2);
+  expect(sleep).toHaveBeenCalledWith(1000);
+});
+
+test("reports an interior route HTTP failure instead of a wrong-site error", async () => {
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: vi.fn(() => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(() => "http://127.0.0.1:5173/account"),
+    },
+    isStale: () => false,
+    createCaptureSession: vi.fn(() => ({
+      capture: vi.fn(),
+      capturePage: vi.fn(async () => [
+        {
+          navigation: {
+            generatedSiteRootPresent: false,
+            javascriptErrorPresent: true,
+            status: 503,
+            documentReadyState: "complete",
+            redirects: [],
+          },
+        },
+      ]),
+      close: vi.fn(),
+    })) as never,
+    sleep: vi.fn(async () => undefined),
+  });
+
+  await expect(
+    handlers.capturePageScreenshots([
+      {
+        path: "/account",
+        source: "session",
+        viewport: { width: 1280, height: 720 },
+      },
+    ])
+  ).rejects.toMatchObject({
+    code: "SCREENSHOT_ROUTE_HTTP_ERROR",
+    issues: [
+      { code: "screenshot_route_http_error", constraint: "http_status:503" },
+    ],
+  });
+});
+
+test("does not expose a page script URL in responsive capture errors", async () => {
+  const capturePage = vi.fn().mockResolvedValueOnce([
+    {
+      output: "builder.png",
+      navigation: {
+        generatedSiteRootPresent: true,
+        javascriptErrorPresent: true,
+        javascriptErrorLocation: {
+          pathname: "/private/customer-123.js",
+          line: 42,
+        },
+      },
+    },
+  ]);
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: vi.fn(() => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(() => "http://127.0.0.1:5173/"),
+    },
+    isStale: () => false,
+    createCaptureSession: vi.fn(() => ({
+      capture: vi.fn(),
+      capturePage,
+      close: vi.fn(),
+    })) as never,
+  });
+
+  const input = [
+    {
+      path: "/",
+      source: "session" as const,
+      viewport: { width: 1280, height: 720 },
+    },
+  ];
+  await expect(handlers.capturePageScreenshots(input)).rejects.toMatchObject({
+    code: "SCREENSHOT_JAVASCRIPT_ERROR",
+    message: "The page reported a JavaScript error during screenshot capture.",
+    issues: [
+      {
+        code: "screenshot_javascript_error",
+        constraint: "javascript_runtime_error",
+      },
+    ],
+  });
 });

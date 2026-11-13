@@ -6,7 +6,10 @@ description: Set project-wide configuration, including redirects, authentication
 
 Project settings are located in the top left by clicking the Webstudio logo > Project settings.
 
-<figure><img src="../../.gitbook/assets/project-settings.png" alt="Project settings located in top left" width="261"><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/project-settings-menu-dark.png">
+  <img src="../../.gitbook/assets/project-settings-menu-light.png" alt="Builder menu with Project settings near the top" width="177">
+</picture>
 
 ## General
 
@@ -15,11 +18,28 @@ Project settings are located in the top left by clicking the Webstudio logo > Pr
 * **Custom Code** – Global field to output scripts in the head. Custom Code is often used to add analytics scripts such as Google Analytics, PostHog, Plausible, and any other scripts/code you want to output on every page. Please note that this code does _not_ output in the Builder, so your scripts aren't tracking Builder page views. For outputting a script in the body on every page, use a [Slot](../core-components/slot.md). For example, add [HTML Embed(s)](../core-components/html-embed.md) to your Footer Slot so that it outputs on every page.
 * **Compiler** – Atomic CSS reduces the CSS file size by \~70% in many cases. See more below.
 
+## Emails
+
+Configure recipients and Reply to here. Recipients are comma-separated mailboxes such as `team@example.com` or `Name <address@example.com>`; quote a display name that contains a comma. When the list is empty, new email resources fall back to the project owner's address. An email resource can inherit these recipients or use its own fixed recipient list; submitted Form values cannot choose team recipients. Set the subject and body on each email resource.
+
+To send visitor email, create an email resource, select **Visitor** as its recipient, choose a named email input on the Form, and add the resource to the Form's Action. Its body starts empty. Webstudio always prepends a fixed confirmation sentence with the site's URL, followed by any body configured in the resource. The body can use normal resource bindings. When a Form includes file inputs, submitted files are attached to the outgoing email resource message by default. Turn off ‘Attach submitted files’ to omit them. This action runs alongside other actions, and its failure is reported without reversing an otherwise successful Form submission.
+
+Reply to accepts one mailbox, with or without a display name: `Acme Support <support@example.com>` or `support@example.com`. Its address is for replies, and its optional name is the display name. Webstudio's authenticated From address stays fixed. Each email resource inherits this setting unless it has its own Reply to override. The resource override is empty by default.
+
+Each email from a Form submission includes an `X-Message-ID` header. Email actions from the same submission share the header value, and a retry keeps it. Email subjects stay as configured.
+
+An email resource without a custom body includes submitted Form fields and browser information by default when used on a Form. The automatic text includes submitted hidden fields, but excludes password inputs and Webstudio's internal bot fields. Set the resource body to customize the message, including an explicitly empty body. To use `formData` or `browserInfo` in a resource expression, define the resource on the Form; resources on an ancestor or global root cannot bind that Form's data.
+
+Email resources inherit project recipients and Reply to unless overridden. Republish to update the settings included in a published site. On Webstudio Cloud, published email resources use the private Cloudflare email service when the `EMAIL_SERVICE` binding is configured. Saving settings or publishing does not itself send email; a visitor must submit the Form. Delivery fails explicitly if the service is unavailable. Self-hosted sites need a custom server-side email integration. The existing Contact email recipient setting continues to serve deprecated Webhook Forms.
+
 ## Publishing
 
 ### Atomic CSS
 
-<figure><img src="../../.gitbook/assets/atomic-css-setting.png" alt="Atomic css setting"><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/atomic-css-setting-dark.png">
+  <img src="../../.gitbook/assets/atomic-css-setting-light.png" alt="Project settings Publishing section with Generate atomic CSS when publishing enabled" width="438">
+</picture>
 
 When enabled, the class and CSS structure under the hood contains one style per class. This algorithm allows classes to be reused, significantly reducing the amount of CSS, ultimately leading to a faster-loading website.
 
@@ -111,9 +131,12 @@ To add a protected route:
 4. Click **Add**
 5. Publish the site
 
-Routes use the same syntax as page paths. See [Path syntax](page-settings.md#path-syntax) for supported static routes, dynamic segments, optional segments, and wildcards.
+Routes use the shared [path pattern syntax](path-patterns.md). The guide explains how static paths, parameters, and wildcards match URLs.
 
-<figure><img src="../../.gitbook/assets/project-settings-authentication.png" alt="Project Settings Authentication section with route, login, password fields, and protected route list"><figcaption><p>Project route authentication</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/project-settings-authentication-dark.png">
+  <img src="../../.gitbook/assets/project-settings-authentication-light.png" alt="Project settings Authentication section with route, login, password, and Add controls" width="624">
+</picture>
 
 Login and password rules:
 
@@ -126,7 +149,7 @@ Login and password rules:
 If a page has authentication in Page Settings and the same route is also protected in Project Settings, the page setting takes priority for that route.
 
 {% hint style="info" %}
-Authentication applies to protected routes on custom domains. Staging domains have their own built-in password protection, described in [Publishing & custom domains](publishing-and-custom-domains.md#staging-domain-password-protection).
+Authentication applies to protected routes on custom domains. Staging domains have their own built-in password protection, described in [Publishing & custom domains](publishing-and-custom-domains.md#staging-password-protection).
 {% endhint %}
 
 {% hint style="warning" %}
@@ -134,6 +157,10 @@ Authentication is a Pro feature for custom domains. You can publish to staging f
 {% endhint %}
 
 For a single page, you can also configure authentication directly in [Page settings](page-settings.md#authentication).
+
+## Headers
+
+Configure [HTTP response headers](response-headers.md) to set browser and CDN behavior for your published site. You can apply a header to every route or only to matching paths. Webstudio Cloud supplies framing and referrer defaults when you have not set your own values; platform-managed headers cannot be changed here.
 
 ## Marketplace
 

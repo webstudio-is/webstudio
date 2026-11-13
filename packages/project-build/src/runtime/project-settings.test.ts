@@ -15,15 +15,18 @@ import {
   createRedirect,
   deleteBreakpoint,
   deleteRedirect,
+  deleteResponseHeader,
   getMarketplaceProduct,
   getProjectSettings,
   listBreakpoints,
   listRedirects,
+  listResponseHeaders,
   marketplaceProductUpdateInput,
   projectSettingsUpdateInput,
   redirectFieldsInput,
   redirectUpdateFieldsInput,
   setRedirects,
+  setResponseHeader,
   updateBreakpoint,
   updateMarketplaceProduct,
   updateProjectSettings,
@@ -82,6 +85,82 @@ const context = {
 };
 
 describe("project settings runtime", () => {
+  test("MCP response-header operations use the same validation and route-specific edits", () => {
+    const state = createState();
+    const allPaths = { name: "Cache-Control", value: "public" };
+    expect(setResponseHeader(state, allPaths).payload[0]?.patches).toEqual([
+      { op: "add", path: ["meta", "customHeaders"], value: [allPaths] },
+    ]);
+    state.projectSettings!.meta.customHeaders = [allPaths];
+    expect(
+      setResponseHeader(state, {
+        route: "/",
+        name: "Cache-Control",
+        value: "private",
+      }).payload[0]?.patches
+    ).toEqual([
+      {
+        op: "replace",
+        path: ["meta", "customHeaders"],
+        value: [
+          allPaths,
+          { route: "/", name: "Cache-Control", value: "private" },
+        ],
+      },
+    ]);
+    state.projectSettings!.meta.customHeaders = [
+      allPaths,
+      { route: "/", name: "Cache-Control", value: "private" },
+    ];
+    expect(listResponseHeaders(state).headers).toEqual(
+      state.projectSettings!.meta.customHeaders
+    );
+    expect(
+      deleteResponseHeader(state, { name: "cache-control" }).payload[0]?.patches
+    ).toEqual([
+      {
+        op: "replace",
+        path: ["meta", "customHeaders"],
+        value: [{ route: "/", name: "Cache-Control", value: "private" }],
+      },
+    ]);
+    expect(() => deleteResponseHeader(state, { name: "Missing" })).toThrow();
+  });
+  test("saves custom headers and removes the configuration to restore defaults", () => {
+    const customHeaders = [
+      { name: "X-Frame-Options", value: "DENY" },
+      {
+        name: "Content-Security-Policy",
+        value: "frame-ancestors https://example.com",
+      },
+    ];
+    const input = projectSettingsUpdateInput.parse({ meta: { customHeaders } });
+    const state = createState();
+    expect(updateProjectSettings(state, input).payload[0]?.patches).toEqual([
+      { op: "add", path: ["meta", "customHeaders"], value: customHeaders },
+    ]);
+    state.projectSettings!.meta.customHeaders = customHeaders;
+    expect(
+      updateProjectSettings(state, { meta: { customHeaders: null } }).payload[0]
+        ?.patches
+    ).toEqual([{ op: "remove", path: ["meta", "customHeaders"] }]);
+  });
+
+  test("rejects malformed custom headers at the API boundary", () => {
+    expect(
+      projectSettingsUpdateInput.safeParse({
+        meta: {
+          customHeaders: [
+            {
+              name: "Content-Security-Policy",
+              value: "safe\r\nX-Injected: true",
+            },
+          ],
+        },
+      }).success
+    ).toBe(false);
+  });
+
   test("exports reusable input contracts for router adapters", () => {
     expect(
       projectSettingsUpdateInput.parse({
@@ -198,6 +277,56 @@ describe("project settings runtime", () => {
     expect(
       validateContactEmail("hello@webstudio.is, support@webstudio.is", 1)
     ).toBe("Only 1 emails are allowed.");
+    expect(
+      validateContactEmail(
+        '"Example, Alex" <acme@example.com>, team@example.com',
+        2
+      )
+    ).toBeUndefined();
+    expect(
+      validateContactEmail(
+        '"Example, Alex" <acme@example.com>, team@example.com, team@example.com',
+        2
+      )
+    ).toBe("Only 2 emails are allowed.");
+    expect(validateContactEmail("a@example.com\r\nBcc: b@example.com")).toBe(
+      "Contact email is invalid."
+    );
+  });
+
+  test("validates Reply to", () => {
+    expect(() =>
+      updateProjectSettings(createState(), {
+        meta: { emailSender: "Acme <acme@example.com>" },
+      })
+    ).not.toThrow();
+    expect(() =>
+      updateProjectSettings(createState(), {
+        meta: { emailSender: "a@example.com, b@example.com" },
+      })
+    ).toThrow();
+  });
+
+  test("saves Reply to beside the unchanged legacy Contact list", () => {
+    const state = createState();
+    state.projectSettings!.meta.contactEmail = "legacy@example.com";
+    const input = projectSettingsUpdateInput.parse({
+      meta: {
+        emailSender: "Owner <owner@example.com>",
+      },
+    });
+    const patches = updateProjectSettings(state, input).payload[0]?.patches;
+    expect(patches).toContainEqual({
+      op: "add",
+      path: ["meta", "emailSender"],
+      value: "Owner <owner@example.com>",
+    });
+    expect(patches).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ["meta", "contactEmail"] }),
+      ])
+    );
+    expect(state.projectSettings!.meta.contactEmail).toBe("legacy@example.com");
   });
 
   test("rejects invalid project contact email updates", () => {
@@ -206,6 +335,14 @@ describe("project settings runtime", () => {
         meta: { contactEmail: "not-an-email" },
       })
     ).toThrow("Contact email is invalid.");
+  });
+
+  test("rejects an unsupported project confirmation body setting", () => {
+    expect(
+      projectSettingsUpdateInput.safeParse({
+        meta: { emailConfirmationBody: "We received it." },
+      }).success
+    ).toBe(false);
   });
 
   test("validates serialized project auth config", () => {

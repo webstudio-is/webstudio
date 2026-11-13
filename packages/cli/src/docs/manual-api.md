@@ -31,6 +31,32 @@ The API commands operate on the single project configured by:
 - Use --refresh on local-capable commands to refresh required namespaces before running.
 - Successful JSON responses include compact meta.session with operationId, buildId, version, source, committed, namespaceCounts, diagnosticCount, non-empty diagnostic summaries, and optional compatibilityVersion.
 
+## Publish and wait
+
+Use `webstudio publish deploy --target production --json --wait` to wait for
+this publish and read its available diagnostics before the CLI exits. Without
+`--wait`, publish returns as soon as the job is accepted. Waiting stops after
+360 checks at five-second intervals, plus the time spent on API requests. It
+does not stop the remote publish or save its logs. A successful publish still
+succeeds if its logs are unavailable.
+
+## Search project data
+
+Run `webstudio search-project '{"query":"known value"}'` to search all Builder
+namespaces in the local project session. Narrow it with
+`{"query":"Brand","namespaces":["styleSources","styles"]}` when only specific
+namespaces are relevant. Results contain the current value, stable match id,
+namespace path, owning entity, resolved references, and affected pages.
+
+Values in recognized credential fields are excluded and reported in
+`excludedSensitiveValueCount`.
+
+The command synchronizes its required Builder namespaces, then searches locally
+and returns only matches. Namespace filters limit values matched; related
+namespaces may still supply route and reference context, and synchronization is
+unchanged. This reduces data sent to the model, not project synchronization. It
+searches asset metadata, not asset binaries or document contents.
+
 ## CLI Capability Inventory
 
 For a short end-consumer summary of what MCP can do, see
@@ -71,6 +97,9 @@ These are MCP tools. From a shell, call them with the shortcut form `webstudio <
 ## Raw Patch Fallback
 
 apply-patch accepts either BuildPatchTransaction[] or { "transactions": BuildPatchTransaction[] }.
+An Editor link with API access can patch text and editable props inside a
+Content Block. The server checks the complete batch before saving it. Pages,
+assets, component structure, and design changes still require Builder access.
 
 Each transaction has:
 
@@ -173,8 +202,20 @@ GraphQL-style resource, usually POST with a query body; `system` marks a
 resource intended to use the built-in `system` parameter or one of the built-in
 local resource URLs: `"/$resources/sitemap.xml"`,
 `"/$resources/current-date"`, and `"/$resources/assets"`. The system parameter
-fields are `system.origin`, `system.pathname`, `system.params`, and
-`system.search`.
+fields are `system.origin`, `system.pathname`, `system.params`,
+`system.search`. A query key with one value is a string; a repeated key is an
+array of values in their original order. For `?tag=red&tag=blue`,
+`system.search.tag` is `["red", "blue"]`; missing keys are absent.
+
+For a saved Webhook Form on `/products/:slug`, a Resource URL can use
+`"https://api.example.com/products/" + system.params.slug + "/comments"`.
+On `/products/chair?source=newsletter&tag=red&tag=blue`, use
+`system.search.source` for `"newsletter"` and `system.search.tag` for
+`["red", "blue"]` in a header or object body expression. A missing key stays
+absent; use `system.search.source ?? "direct"` when a fallback is needed.
+These values come from the page being submitted, including after navigation.
+For a saved Webhook Form action, object body bindings are combined with the
+submitted fields; a submitted field wins when both use the same key.
 
 Use prop bindings for dynamic values that read variables or resources; use
 direct props for static values.
@@ -226,7 +267,7 @@ Update a text child on an element:
 {
 "namespace": "instances",
 "patches": [
-{ "op": "replace", "path": ["instance-id", "children", 0, "value"], "value": "Launch faster" }
+{ "op": "replace", "path": ["instance-id", "children", 0], "value": { "type": "text", "value": "Launch faster" } }
 ]
 }
 ]

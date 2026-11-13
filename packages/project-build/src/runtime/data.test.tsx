@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import {
-  $,
+  createTemplateComponentFixture,
   ActionValue,
   expression,
   Parameter,
@@ -11,6 +11,8 @@ import {
 } from "@webstudio-is/template";
 import {
   encodeDataVariableId,
+  encodeDataSourceVariable,
+  createFormEmailDataProxy,
   getAllPages,
   getHomePage,
   ROOT_INSTANCE_ID,
@@ -21,9 +23,13 @@ import {
   type Resource,
 } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { applyBuilderPatchPayloadMutable } from "../state/patch";
 import {
   computeExpression,
+  evaluateExpressionSync,
   computeExpressionWithinScope,
+  computeStringExpression,
+  bindExpressionToInstanceScope,
   createDataVariable,
   dataVariableCreateInput,
   createDataVariableCreatePayload,
@@ -42,12 +48,15 @@ import {
   createResourceValueFromFormData,
   decodeDataVariableName,
   deleteResource,
+  deleteDataVariable,
   deleteVariableMutable,
   deleteUnusedDataVariables,
   encodeDataVariableName,
   findAvailableVariables,
   findResource,
   findUnusedDataVariableIds,
+  isManagedFormParameter,
+  isRequiredManagedFormVariable,
   findUnsetVariableNames,
   findVariableUsagesByInstance,
   getDataVariableJsonExpressionErrors,
@@ -74,6 +83,252 @@ import {
   validateResourceBodyExpression,
   validateResourceUrlExpression,
 } from "./data";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Fragment = createTemplateComponentFixture("Fragment");
+const Slot = createTemplateComponentFixture("Slot");
+const Text = createTemplateComponentFixture("Text");
+const ResourceForm = createTemplateComponentFixture("ResourceForm");
+
+test("deleting a Resource removes it from a new Form's destinations", () => {
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <ResourceForm ws:id="formId" />
+    </Body>
+  );
+  data.dataSources.set("resourceVariable", {
+    type: "resource",
+    id: "resourceVariable",
+    name: "Submission",
+    scopeInstanceId: "formId",
+    resourceId: "resource",
+  });
+  data.resources.set("resource", {
+    id: "resource",
+    name: "Submission",
+    method: "post",
+    url: '"https://example.com"',
+    headers: [],
+  });
+  data.props.set("action", {
+    id: "action",
+    instanceId: "formId",
+    name: "action",
+    type: "json",
+    value: [
+      { dataSourceId: "resourceVariable" },
+      { dataSourceId: "otherResourceVariable" },
+    ],
+  });
+
+  deleteVariableMutable(data, "resourceVariable");
+
+  expect(data.props.get("action")).toMatchObject({
+    value: [{ dataSourceId: "otherResourceVariable" }],
+  });
+});
+
+test("a Form can select ancestor and local Resources, while Form data stays local", () => {
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <ResourceForm ws:id="formId" />
+      <Box ws:id="siblingId" />
+    </Body>
+  );
+  for (const [id, scopeInstanceId] of [
+    ["globalResource", "bodyId"],
+    ["localResource", "formId"],
+    ["siblingResource", "siblingId"],
+  ]) {
+    data.dataSources.set(id, {
+      type: "resource",
+      id,
+      name: id,
+      scopeInstanceId,
+      resourceId: id,
+    });
+  }
+  data.dataSources.set("formData", {
+    type: "parameter",
+    id: "formData",
+    name: "formData",
+    scopeInstanceId: "formId",
+  });
+
+  const availableToForm = findAvailableVariables({
+    startingInstanceId: "formId",
+    instances: data.instances,
+    dataSources: data.dataSources,
+  });
+  expect(availableToForm.map(({ id }) => id)).toContain("globalResource");
+  expect(availableToForm.map(({ id }) => id)).toContain("localResource");
+  expect(availableToForm.map(({ id }) => id)).not.toContain("siblingResource");
+  const availableToOutside = findAvailableVariables({
+    startingInstanceId: "siblingId",
+    instances: data.instances,
+    dataSources: data.dataSources,
+  });
+  expect(availableToOutside.map(({ id }) => id)).not.toContain("formData");
+});
+
+test("Form-scoped Resource bindings and destination survive edit, save, and reload", () => {
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <ResourceForm ws:id="formId" />
+    </Body>
+  );
+  data.dataSources.set("formData", {
+    type: "parameter",
+    id: "formData",
+    name: "formData",
+    scopeInstanceId: "formId",
+  });
+  data.dataSources.set("browserInfo", {
+    type: "parameter",
+    id: "browserInfo",
+    name: "browserInfo",
+    scopeInstanceId: "formId",
+  });
+  data.dataSources.set("destination", {
+    type: "resource",
+    id: "destination",
+    name: "Submission",
+    resourceId: "resource",
+    scopeInstanceId: "formId",
+  });
+  data.resources.set("resource", {
+    id: "resource",
+    name: "Submission",
+    method: "post",
+    url: '"https://example.com/submit"',
+    headers: [],
+  });
+  data.props.set("action", {
+    id: "action",
+    instanceId: "formId",
+    name: "action",
+    type: "json",
+    value: [{ dataSourceId: "destination" }],
+  });
+
+  const bodyExpression = `({ email: ${encodeDataVariableId("formData")}.email })`;
+  const headerExpression = `${encodeDataVariableId("browserInfo")}.language`;
+  const editorData = new FormData();
+  editorData.set("name", "Submission");
+  editorData.set("method", "post");
+  editorData.set("url", '"https://example.com/submit"');
+  editorData.set("header-name", "X-Language");
+  editorData.set("header-value", headerExpression);
+  editorData.set("body", bodyExpression);
+  const mutation = upsertResource(
+    {
+      ...data,
+      pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    },
+    {
+      resourceId: "resource",
+      dataSourceId: "destination",
+      scopeInstanceId: "formId",
+      resource: createResourceFieldsFromFormData({ formData: editorData }),
+    },
+    { createId: () => "unused" }
+  );
+  applyBuilderPatchPayloadMutable(
+    (namespace) => data[namespace as keyof typeof data],
+    mutation.payload
+  );
+
+  const saved = JSON.parse(
+    JSON.stringify({
+      dataSources: [...data.dataSources],
+      resources: [...data.resources],
+      props: [...data.props],
+    })
+  );
+  const reloadedResources = new Map<string, Resource>(saved.resources);
+  const reloadedDataSources = new Map<string, DataSource>(saved.dataSources);
+  const reloadedProps = new Map<string, Prop>(saved.props);
+  expect(reloadedResources.get("resource")).toMatchObject({
+    body: bodyExpression,
+    headers: [{ name: "X-Language", value: headerExpression }],
+  });
+  expect(reloadedDataSources.get("destination")).toMatchObject({
+    resourceId: "resource",
+    scopeInstanceId: "formId",
+  });
+  expect(reloadedProps.get("action")).toMatchObject({
+    value: [{ dataSourceId: "destination" }],
+  });
+});
+
+test.each(["formData", "browserInfo"])(
+  "Form submission parameter %s cannot be renamed or deleted",
+  (name) => {
+    const data = renderData(
+      <Body ws:id="bodyId">
+        <ResourceForm ws:id="formId" />
+      </Body>
+    );
+    data.dataSources.set(name, {
+      type: "parameter",
+      id: name,
+      name,
+      scopeInstanceId: "formId",
+    });
+    const state = {
+      ...data,
+      pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    };
+    expect(
+      isManagedFormParameter(data.dataSources.get(name), data.instances)
+    ).toBe(true);
+    expect(() =>
+      updateDataVariable(state, {
+        dataSourceId: name,
+        values: { name: "renamed" },
+      })
+    ).toThrow("Form submission variables cannot be edited");
+    expect(() => deleteDataVariable(state, { dataSourceId: name })).toThrow(
+      "Form submission variables cannot be deleted"
+    );
+  }
+);
+
+test.each(["state", "onStateChange", "onProgressChange", "onResultChange"])(
+  "required Form variables bound to %s cannot be deleted by a mutation",
+  (propName) => {
+    const data = renderData(
+      <Body ws:id="bodyId">
+        <ResourceForm ws:id="formId" />
+      </Body>
+    );
+    const variable: DataSource = {
+      type: "variable",
+      id: "required",
+      name: "renamed form variable",
+      scopeInstanceId: "formId",
+      value: { type: "string", value: "" },
+    };
+    data.dataSources.set(variable.id, variable);
+    data.props.set("required-binding", {
+      id: "required-binding",
+      instanceId: "formId",
+      name: propName,
+      type: "expression",
+      value: encodeDataSourceVariable(variable.id),
+    });
+    const state = {
+      ...data,
+      pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    };
+    expect(isRequiredManagedFormVariable(variable, state)).toBe(true);
+    expect(() =>
+      deleteDataVariable(state, { dataSourceId: variable.id })
+    ).toThrow("Form submission variables cannot be deleted");
+    expect(state.dataSources.has(variable.id)).toBe(true);
+  }
+);
 
 test("creates Map-backed patches without mutating caller-owned data", () => {
   const before = {
@@ -229,7 +484,10 @@ test("validate data variable name", () => {
       name: "existingResource",
       scopeInstanceId: "instance-1",
     })
-  ).toBeUndefined();
+  ).toEqual({
+    type: "duplicate",
+    message: "Name is already used by another variable on this instance",
+  });
   expect(
     validateDataVariableNameWithSources({
       dataSources: [
@@ -839,9 +1097,9 @@ test("find available variables", () => {
   const bodyVariable = new Variable("bodyVariable", "");
   const boxVariable = new Variable("boxVariable", "");
   const data = renderData(
-    <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-    </$.Body>
+    <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+    </Body>
   );
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
@@ -856,9 +1114,9 @@ test("find masked variables", () => {
   const bodyVariable = new Variable("myVariable", "");
   const boxVariable = new Variable("myVariable", "");
   const data = renderData(
-    <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-    </$.Body>
+    <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+    </Body>
   );
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
@@ -873,9 +1131,9 @@ test("find global variables", () => {
   const boxVariable = new Variable("boxVariable", "");
   const data = renderData(
     <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+      </Body>
     </ws.root>
   );
   data.instances.delete(ROOT_INSTANCE_ID);
@@ -894,13 +1152,13 @@ test("find global variables in slots", () => {
   const boxVariable = new Variable("boxVariable", "");
   const data = renderData(
     <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-        <$.Slot ws:id="slotId">
-          <$.Fragment ws:id="fragmentId">
-            <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+        <Slot ws:id="slotId">
+          <Fragment ws:id="fragmentId">
+            <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+          </Fragment>
+        </Slot>
+      </Body>
     </ws.root>
   );
   data.instances.delete(ROOT_INSTANCE_ID);
@@ -915,9 +1173,9 @@ test("find global variables in slots", () => {
 
 test("find legacy global variables with missing scope", () => {
   const data = renderData(
-    <$.Body ws:id="bodyId">
-      <$.Box ws:id="boxId"></$.Box>
-    </$.Body>
+    <Body ws:id="bodyId">
+      <Box ws:id="boxId"></Box>
+    </Body>
   );
   data.dataSources.set("legacyGlobalVariableId", {
     id: "legacyGlobalVariableId",
@@ -982,6 +1240,12 @@ test("roundtrip system variable in assignment expression", () => {
 test("replace data source ids in expression", () => {
   expect(
     replaceDataSourcesInExpression(
+      `$ws$dataSource$oldId.subject ?? "New message"`,
+      new Map([["oldId", "newId"]])
+    )
+  ).toEqual(`$ws$dataSource$newId.subject ?? "New message"`);
+  expect(
+    replaceDataSourcesInExpression(
       `$ws$dataSource$oldId + missingVariable`,
       new Map([["oldId", "newId"]])
     )
@@ -1000,75 +1264,215 @@ test("replace data source ids in expression", () => {
   ).toEqual("https://example.com/cards.json");
 });
 
-test("compute expression with decoded ids", () => {
-  expect(
+test("compute expression with decoded ids", async () => {
+  await expect(
     computeExpression("$ws$dataSource$myId", new Map([["myId", "value"]]))
-  ).toEqual("value");
+  ).resolves.toEqual("value");
 });
 
-test("compute expression with decoded names", () => {
+test("the synchronous Form evaluator shares Builder binding semantics", async () => {
+  const values = new Map<string, unknown>([
+    ["formData", { email: "ada@example.com", tags: ["a", "b"] }],
+  ]);
+  const expressions = [
+    `${encodeDataVariableId("formData")}.email.toUpperCase()`,
+    `\`Email: \${${encodeDataVariableId("formData")}.email}\``,
+    `${encodeDataVariableId("formData")}.tags.join(",")`,
+    `${encodeDataVariableId("formData")}.missing.deep ?? "fallback"`,
+  ];
+  for (const expression of expressions) {
+    expect(evaluateExpressionSync(expression, values)).toEqual(
+      await computeExpression(expression, values)
+    );
+  }
+});
+
+test("the expression evaluator preserves an existing stringify proxy", async () => {
+  const value = createFormEmailDataProxy(
+    { subject: "Question", name: "Ada" },
+    { space: 2 }
+  );
+  const identifier = encodeDataVariableId("formData");
   expect(
-    computeExpression("My$32$Name", new Map([["My Name", "value"]]))
-  ).toEqual("value");
+    await computeExpression(
+      `${identifier} + ""`,
+      new Map([["formData", value]])
+    )
+  ).toBe("Subject: Question\nName: Ada");
+  expect(
+    await computeExpression(
+      `${identifier}.subject`,
+      new Map([["formData", value]])
+    )
+  ).toBe("Question");
 });
 
-test("compute expression when invalid syntax", () => {
+test("the synchronous Form evaluator can surface the same errors Builder bindings suppress", async () => {
+  const expression = "missingFunction()";
+  expect(await computeExpression(expression, new Map())).toBeUndefined();
+  expect(evaluateExpressionSync(expression, new Map())).toBeUndefined();
+  expect(() =>
+    evaluateExpressionSync(expression, new Map(), { throwOnError: true })
+  ).toThrow();
+});
+
+test("compute expression asynchronously resolves only referenced data sources", async () => {
+  const resolveDataSource = vi.fn(async (id: string, value: unknown) => {
+    if (id === "remoteId") {
+      return { data: { title: "Remote title" } };
+    }
+    return value;
+  });
+
+  await expect(
+    computeExpression(
+      `${encodeDataVariableId("remoteId")}.data.title`,
+      new Map([
+        ["remoteId", undefined],
+        ["unusedId", undefined],
+      ]),
+      resolveDataSource
+    )
+  ).resolves.toBe("Remote title");
+  expect(resolveDataSource).toHaveBeenCalledOnce();
+  expect(resolveDataSource).toHaveBeenCalledWith("remoteId", undefined);
+});
+
+test("compute expression asynchronously resolves independent data sources in parallel", async () => {
+  let finishFirst: (value: number) => void = () => {};
+  let finishSecond: (value: number) => void = () => {};
+  let active = 0;
+  let maximumActive = 0;
+  const resolveDataSource = vi.fn((id: string) => {
+    active += 1;
+    maximumActive = Math.max(maximumActive, active);
+    return new Promise<number>((resolve) => {
+      const finish = (value: number) => {
+        active -= 1;
+        resolve(value);
+      };
+      if (id === "firstId") {
+        finishFirst = finish;
+      } else {
+        finishSecond = finish;
+      }
+    });
+  });
+
+  const result = computeExpression(
+    `${encodeDataVariableId("firstId")} + ${encodeDataVariableId("secondId")}`,
+    new Map(),
+    resolveDataSource
+  );
+  expect(resolveDataSource).toHaveBeenCalledTimes(2);
+  expect(maximumActive).toBe(2);
+  finishFirst(1);
+  finishSecond(2);
+
+  await expect(result).resolves.toBe(3);
+});
+
+test("compute expression asynchronously propagates resolver failures", async () => {
+  const failure = new Error("offline");
+
+  await expect(
+    computeExpression(encodeDataVariableId("remoteId"), new Map(), async () => {
+      throw failure;
+    })
+  ).rejects.toBe(failure);
+});
+
+test("compute string and scoped expressions asynchronously", async () => {
+  const resolveDataSource = async (id: string) =>
+    id === "remoteId" ? "Remote title" : undefined;
+
+  await expect(
+    computeStringExpression(
+      encodeDataVariableId("remoteId"),
+      new Map(),
+      resolveDataSource
+    )
+  ).resolves.toBe("Remote title");
+  await expect(
+    computeExpressionWithinScope(
+      encodeDataVariableId("remoteId"),
+      { [encodeDataVariableId("remoteId")]: undefined },
+      resolveDataSource
+    )
+  ).resolves.toBe("Remote title");
+});
+
+test("compute expression with decoded names", async () => {
+  await expect(
+    computeExpression("My$32$Name", new Map([["My Name", "value"]]))
+  ).resolves.toEqual("value");
+});
+
+test("compute expression when invalid syntax", async () => {
   const spy = vi.spyOn(console, "error");
-  expect(computeExpression("https://github.com", new Map())).toEqual(undefined);
+  await expect(
+    computeExpression("https://github.com", new Map())
+  ).resolves.toEqual(undefined);
   expect(spy).not.toHaveBeenCalled();
   spy.mockRestore();
 });
 
-test("compute expression with nested field of undefined without error", () => {
+test("compute expression with nested field of undefined without error", async () => {
   const spy = vi.spyOn(console, "error");
   const variables = new Map([["myVariable", undefined]]);
-  expect(computeExpression("myVariable.field", variables)).toEqual(undefined);
+  await expect(
+    computeExpression("myVariable.field", variables)
+  ).resolves.toEqual(undefined);
   expect(spy).not.toHaveBeenCalled();
   spy.mockRestore();
 });
 
-test("compute literal expression when variable is json object", () => {
+test("compute literal expression when variable is json object", async () => {
   const jsonObject = { hello: "world", subObject: { world: "hello" } };
   const variables = new Map([["jsonVariable", jsonObject]]);
-  expect(computeExpression("`${jsonVariable}`", variables)).toEqual(
-    `{"hello":"world","subObject":{"world":"hello"}}`
-  );
-  expect(computeExpression("`${jsonVariable.subObject}`", variables)).toEqual(
-    `{"world":"hello"}`
-  );
+  await expect(
+    computeExpression("`${jsonVariable}`", variables)
+  ).resolves.toEqual(`{"hello":"world","subObject":{"world":"hello"}}`);
+  await expect(
+    computeExpression("`${jsonVariable.subObject}`", variables)
+  ).resolves.toEqual(`{"world":"hello"}`);
 });
 
-test("compute literal expression when object is frozen", () => {
+test("compute literal expression when object is frozen", async () => {
   const jsonObject = Object.freeze({
     hello: "world",
     subObject: { world: "hello" },
   });
   const variables = new Map([["jsonVariable", jsonObject]]);
-  expect(computeExpression("`${jsonVariable.subObject}`", variables)).toEqual(
-    `{"world":"hello"}`
-  );
+  await expect(
+    computeExpression("`${jsonVariable.subObject}`", variables)
+  ).resolves.toEqual(`{"world":"hello"}`);
 });
 
-test("compute expression does not clone unused variables", () => {
+test("compute expression does not clone unused variables", async () => {
   const variables = new Map<string, unknown>([
     ["usedVariable", 1],
     ["unusedVariable", Object.freeze({ callback: () => undefined })],
   ]);
-  expect(computeExpression("usedVariable + 1", variables)).toEqual(2);
+  await expect(
+    computeExpression("usedVariable + 1", variables)
+  ).resolves.toEqual(2);
 });
 
-test("compute expression cache reads current variables", () => {
-  expect(
+test("compute expression cache reads current variables", async () => {
+  await expect(
     computeExpression("cachedVariable", new Map([["cachedVariable", "first"]]))
-  ).toEqual("first");
-  expect(
+  ).resolves.toEqual("first");
+  await expect(
     computeExpression("cachedVariable", new Map([["cachedVariable", "second"]]))
-  ).toEqual("second");
+  ).resolves.toEqual("second");
 });
 
-test("compute unset variables as undefined", () => {
-  expect(computeExpression(`a`, new Map())).toEqual(undefined);
-  expect(computeExpression("`${a}`", new Map())).toEqual("undefined");
+test("compute unset variables as undefined", async () => {
+  await expect(computeExpression(`a`, new Map())).resolves.toEqual(undefined);
+  await expect(computeExpression("`${a}`", new Map())).resolves.toEqual(
+    "undefined"
+  );
 });
 
 test("find unset variable names", () => {
@@ -1078,6 +1482,7 @@ test("find unset variable names", () => {
     searchParams: [{ name: "filter", value: expression`seven` }],
     headers: [{ name: "auth", value: expression`eight` }],
     body: expression`nine`,
+    control: "email",
   });
   const resourceProp = new ResourceValue("resourceProp", {
     url: expression`ten`,
@@ -1087,17 +1492,23 @@ test("find unset variable names", () => {
     body: expression`thirteen`,
   });
   const data = renderData(
-    <$.Body ws:id="body" data-prop={expression`two`}>
-      <$.Box ws:id="box" data-prop={expression`three`}>
-        <$.Text
+    <Body ws:id="body" data-prop={expression`two`}>
+      <Box ws:id="box" data-prop={expression`three`}>
+        <Text
           ws:id="text"
           data-variables={expression`${resourceVariable}`}
           data-resource={resourceProp}
           data-action={new ActionValue(["five"], expression`four + five`)}
-        >{expression`one`}</$.Text>
-      </$.Box>
-    </$.Body>
+        >{expression`one`}</Text>
+      </Box>
+    </Body>
   );
+  const emailResource = Array.from(data.resources.values()).find(
+    (resource) => resource.name === "resourceVariable"
+  )!;
+  emailResource.email = { subject: "fourteen", body: "fifteen" };
+  Object.freeze(emailResource.email);
+  Object.freeze(emailResource);
   expect(
     findUnsetVariableNames({ startingInstanceId: "body", ...data })
   ).toEqual([
@@ -1109,6 +1520,8 @@ test("find unset variable names", () => {
     "eight",
     "seven",
     "nine",
+    "fourteen",
+    "fifteen",
     "ten",
     "twelve",
     "eleven",
@@ -1120,11 +1533,11 @@ test("restore tree variables in children", () => {
   const bodyVariable = new Variable("one", "one value of body");
   const boxVariable = new Variable("one", "one value of box");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-vars={expression`${boxVariable}`}>
-        <$.Text ws:id="textId">{expression`one`}</$.Text>
-      </$.Box>
-    </$.Body>
+    <Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-vars={expression`${boxVariable}`}>
+        <Text ws:id="textId">{expression`one`}</Text>
+      </Box>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1138,7 +1551,7 @@ test("restore tree variables in children", () => {
   const [_bodyVariableId, boxVariableId] = data.dataSources.keys();
   const boxIdentifier = encodeDataVariableId(boxVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: boxIdentifier },
+    { type: "expression", value: boxIdentifier, mode: "read" },
   ]);
 });
 
@@ -1147,16 +1560,16 @@ test("restore tree variables in props", () => {
   const oneBox = new Variable("one", "one value of box");
   const twoBox = new Variable("two", "two value of box");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${oneBody}`}>
-      <$.Box
+    <Body ws:id="bodyId" data-body-vars={expression`${oneBody}`}>
+      <Box
         ws:id="boxId"
         data-box-vars={expression`${oneBox} ${twoBox}`}
         data-one={expression`one`}
         data-action={new ActionValue(["one"], expression`one + two + three`)}
       >
-        <$.Text ws:id="text" data-two={expression`one + two + three`}></$.Text>
-      </$.Box>
-    </$.Body>
+        <Text ws:id="text" data-two={expression`one + two + three`}></Text>
+      </Box>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1197,17 +1610,17 @@ test("rebind tree variables in props and children", () => {
   const bodyVariable = new Variable("one", "one value of body");
   const boxVariable = new Variable("one", "one value of box");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
-        <$.Text
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
+        <Text
           ws:id="textId"
           data-text-vars={expression`${bodyVariable}`}
           data-action={new ActionValue([], expression`${bodyVariable}`)}
         >
           {expression`${bodyVariable}`}
-        </$.Text>
-      </$.Box>
-    </$.Body>
+        </Text>
+      </Box>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1230,7 +1643,7 @@ test("rebind tree variables in props and children", () => {
     }),
   ]);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: boxIdentifier },
+    { type: "expression", value: boxIdentifier, mode: "read" },
   ]);
 });
 
@@ -1238,11 +1651,11 @@ test("preserve nested variables with the same name when rebind", () => {
   const bodyVariable = new Variable("one", "one value of body");
   const textVariable = new Variable("one", "one value of box");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Text ws:id="textId" data-text-vars={expression`${textVariable}`}>
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Text ws:id="textId" data-text-vars={expression`${textVariable}`}>
         {expression`${textVariable}`}
-      </$.Text>
-    </$.Body>
+      </Text>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "bodyId",
@@ -1256,7 +1669,7 @@ test("preserve nested variables with the same name when rebind", () => {
   const [_bodyVariableId, textVariableId] = data.dataSources.keys();
   const textIdentifier = encodeDataVariableId(textVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: textIdentifier },
+    { type: "expression", value: textIdentifier, mode: "read" },
   ]);
 });
 
@@ -1278,15 +1691,15 @@ test("restore tree variables in resources", () => {
     body: expression`one + 2`,
   });
   const data = renderData(
-    <$.Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-vars={expression`${boxVariable}`}>
-        <$.Text
+    <Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-vars={expression`${boxVariable}`}>
+        <Text
           ws:id="text"
           data-vars={expression`${resourceVariable}`}
           data-resource={resourceProp}
-        ></$.Text>
-      </$.Box>
-    </$.Body>
+        ></Text>
+      </Box>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1336,15 +1749,15 @@ test("rebind tree variables in resources", () => {
     body: expression`${bodyVariable}`,
   });
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
-        <$.Text
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
+        <Text
           ws:id="textId"
           data-text-vars={expression`${resourceVariable}`}
           data-action={resourceProp}
-        ></$.Text>
-      </$.Box>
-    </$.Body>
+        ></Text>
+      </Box>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1380,9 +1793,9 @@ test("rebind global variables in resources", () => {
   const globalVariable = new Variable("globalVariable", "");
   const data = renderData(
     <ws.root ws:id={ROOT_INSTANCE_ID} data-vars={expression`${globalVariable}`}>
-      <$.Body ws:id="bodyId">
-        <$.Text ws:id="textId">{expression`globalVariable`}</$.Text>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Text ws:id="textId">{expression`globalVariable`}</Text>
+      </Body>
     </ws.root>
   );
   data.instances.delete(ROOT_INSTANCE_ID);
@@ -1397,7 +1810,7 @@ test("rebind global variables in resources", () => {
   const [globalVariableId] = data.dataSources.keys();
   const globalIdentifier = encodeDataVariableId(globalVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: globalIdentifier },
+    { type: "expression", value: globalIdentifier, mode: "read" },
   ]);
 });
 
@@ -1405,9 +1818,9 @@ test("preserve other variables when rebind", () => {
   const bodyVariable = new Variable("globalVariable", "");
   const textVariable = new Variable("textVariable", "");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
-      <$.Text ws:id="textId">{expression`${textVariable}`}</$.Text>
-    </$.Body>
+    <Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
+      <Text ws:id="textId">{expression`${textVariable}`}</Text>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "bodyId",
@@ -1421,20 +1834,20 @@ test("preserve other variables when rebind", () => {
   const [_globalVariableId, textVariableId] = data.dataSources.keys();
   const textIdentifier = encodeDataVariableId(textVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: textIdentifier },
+    { type: "expression", value: textIdentifier, mode: "read" },
   ]);
 });
 
 test("prevent rebinding tree variables from slots", () => {
   const bodyVariable = new Variable("myVariable", "one value of body");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Slot ws:id="slotId">
-        <$.Fragment ws:id="fragmentId">
-          <$.Box ws:id="boxId">{expression`myVariable`}</$.Box>
-        </$.Fragment>
-      </$.Slot>
-    </$.Body>
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Slot ws:id="slotId">
+        <Fragment ws:id="fragmentId">
+          <Box ws:id="boxId">{expression`myVariable`}</Box>
+        </Fragment>
+      </Slot>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1442,7 +1855,7 @@ test("prevent rebinding tree variables from slots", () => {
     ...data,
   });
   expect(data.instances.get("boxId")?.children).toEqual([
-    { type: "expression", value: "myVariable" },
+    { type: "expression", value: "myVariable", mode: "read" },
   ]);
 });
 
@@ -1450,7 +1863,7 @@ test("prevent rebinding with nested collection item", () => {
   const collectionItem = new Parameter("collectionITem");
   const nestedCollectionItem = new Parameter("collectionITem");
   const data = renderData(
-    <$.Body ws:id="bodyId">
+    <Body ws:id="bodyId">
       <ws.collection ws:id="collectionId" data={[]} item={collectionItem}>
         <ws.collection
           ws:id="nestedCollectionId"
@@ -1462,7 +1875,7 @@ test("prevent rebinding with nested collection item", () => {
           </ws.element>
         </ws.collection>
       </ws.collection>
-    </$.Body>
+    </Body>
   );
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "collectionId" }),
@@ -1496,21 +1909,50 @@ test("prevent rebinding with nested collection item", () => {
     }),
   ]);
   expect(data.instances.get("divId")?.children).toEqual([
-    { type: "expression", value: encodeDataVariableId(nestedCollectionItemId) },
+    {
+      type: "expression",
+      value: encodeDataVariableId(nestedCollectionItemId),
+      mode: "read",
+    },
   ]);
+});
+
+test("binds an explicitly referenced shadowed collection item", () => {
+  const outerItem = new Parameter("item");
+  const innerItem = new Parameter("item");
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <ws.collection ws:id="outerId" data={[]} item={outerItem}>
+        <ws.collection ws:id="innerId" data={[]} item={innerItem}>
+          <Box ws:id="boxId" />
+        </ws.collection>
+      </ws.collection>
+    </Body>
+  );
+  const [outerItemId] = data.dataSources.keys();
+  const expression = encodeDataVariableId(outerItemId);
+
+  expect(
+    bindExpressionToInstanceScope({
+      expression,
+      instanceId: "boxId",
+      instances: data.instances,
+      dataSources: data.dataSources,
+    })
+  ).toBe(expression);
 });
 
 test("delete variable and unset it in expressions", () => {
   const bodyVariable = new Variable("bodyVariable", "one value of body");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box
         ws:id="boxId"
         data-action={new ActionValue([], expression`${bodyVariable}`)}
       >
         {expression`${bodyVariable}`}
-      </$.Box>
-    </$.Body>
+      </Box>
+    </Body>
   );
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
@@ -1525,7 +1967,7 @@ test("delete variable and unset it in expressions", () => {
     }),
   ]);
   expect(data.instances.get("boxId")?.children).toEqual([
-    { type: "expression", value: "bodyVariable" },
+    { type: "expression", value: "bodyVariable", mode: "read" },
   ]);
 });
 
@@ -1538,11 +1980,11 @@ test("delete data variable payload reuses mutable cleanup semantics", () => {
     headers: [{ name: "auth", value: expression`${bodyVariable}` }],
   });
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-box-vars={expression`${resourceVariable}`}>
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-box-vars={expression`${resourceVariable}`}>
         {expression`${bodyVariable}`}
-      </$.Box>
-    </$.Body>
+      </Box>
+    </Body>
   );
   const [bodyVariableId] = data.dataSources.keys();
   const pages = createDefaultPages({ rootInstanceId: "bodyId" });
@@ -1627,7 +2069,11 @@ test("delete data variable payload reuses mutable cleanup semantics", () => {
     },
   ]);
   expect(data.instances.get("boxId")?.children).toEqual([
-    { type: "expression", value: encodeDataVariableId(bodyVariableId) },
+    {
+      type: "expression",
+      value: encodeDataVariableId(bodyVariableId),
+      mode: "read",
+    },
   ]);
 });
 
@@ -1648,13 +2094,13 @@ test("delete variable and unset it in resources", () => {
     body: expression`${bodyVariable}`,
   });
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box
         ws:id="boxId"
         data-box-vars={expression`${resourceVariable}`}
         data-resource={resourceProp}
-      ></$.Box>
-    </$.Body>
+      ></Box>
+    </Body>
   );
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
@@ -1684,11 +2130,11 @@ test("rebind expressions with parent variable when delete variable on child", ()
   const bodyVariable = new Variable("myVariable", "one value of body");
   const boxVariable = new Variable("myVariable", "one value of body");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
-        <$.Text ws:id="textId">{expression`${boxVariable}`}</$.Text>
-      </$.Box>
-    </$.Body>
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
+        <Text ws:id="textId">{expression`${boxVariable}`}</Text>
+      </Box>
+    </Body>
   );
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
@@ -1698,7 +2144,7 @@ test("rebind expressions with parent variable when delete variable on child", ()
   deleteVariableMutable(data, boxVariableId);
   const bodyIdentifier = encodeDataVariableId(bodyVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: bodyIdentifier },
+    { type: "expression", value: bodyIdentifier, mode: "read" },
   ]);
 });
 
@@ -1706,15 +2152,15 @@ test("prevent rebinding with variables outside of slot content scope", () => {
   const bodyVariable = new Variable("myVariable", "one value of body");
   const boxVariable = new Variable("myVariable", "one value of body");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Slot>
-        <$.Fragment>
-          <$.Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
-            <$.Text ws:id="textId">{expression`${boxVariable}`}</$.Text>
-          </$.Box>
-        </$.Fragment>
-      </$.Slot>
-    </$.Body>
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Slot>
+        <Fragment>
+          <Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
+            <Text ws:id="textId">{expression`${boxVariable}`}</Text>
+          </Box>
+        </Fragment>
+      </Slot>
+    </Body>
   );
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
@@ -1723,7 +2169,7 @@ test("prevent rebinding with variables outside of slot content scope", () => {
   const [_bodyVariableId, boxVariableId] = data.dataSources.keys();
   deleteVariableMutable(data, boxVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: "myVariable" },
+    { type: "expression", value: "myVariable", mode: "read" },
   ]);
 });
 
@@ -1742,12 +2188,12 @@ test("unset global variables on all pages when delete", () => {
     pages,
     ...renderData(
       <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-        <$.Body ws:id="homeBodyId">
-          <$.Text ws:id="homeTextId">{expression`${globalVariable}`}</$.Text>
-        </$.Body>
-        <$.Body ws:id="aboutBodyId">
-          <$.Text ws:id="aboutTextId">{expression`${globalVariable}`}</$.Text>
-        </$.Body>
+        <Body ws:id="homeBodyId">
+          <Text ws:id="homeTextId">{expression`${globalVariable}`}</Text>
+        </Body>
+        <Body ws:id="aboutBodyId">
+          <Text ws:id="aboutTextId">{expression`${globalVariable}`}</Text>
+        </Body>
       </ws.root>
     ),
   };
@@ -1756,10 +2202,10 @@ test("unset global variables on all pages when delete", () => {
   const [globalVariableId] = data.dataSources.keys();
   deleteVariableMutable(data, globalVariableId);
   expect(data.instances.get("homeTextId")?.children).toEqual([
-    { type: "expression", value: "globalVariable" },
+    { type: "expression", value: "globalVariable", mode: "read" },
   ]);
   expect(data.instances.get("aboutTextId")?.children).toEqual([
-    { type: "expression", value: "globalVariable" },
+    { type: "expression", value: "globalVariable", mode: "read" },
   ]);
 });
 
@@ -1767,9 +2213,9 @@ test("unset legacy global variables with missing scope when delete", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "homeBodyId" }),
     ...renderData(
-      <$.Body ws:id="homeBodyId">
-        <$.Text ws:id="homeTextId"></$.Text>
-      </$.Body>
+      <Body ws:id="homeBodyId">
+        <Text ws:id="homeTextId"></Text>
+      </Body>
     ),
   };
   data.pages.pages.set("aboutPage", {
@@ -1822,13 +2268,13 @@ test("unset global variables in slots when delete", () => {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
       <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slotId">
-            <$.Fragment ws:id="fragmentId">
-              <$.Text ws:id="textId">{expression`${globalVariable}`}</$.Text>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+        <Body ws:id="bodyId">
+          <Slot ws:id="slotId">
+            <Fragment ws:id="fragmentId">
+              <Text ws:id="textId">{expression`${globalVariable}`}</Text>
+            </Fragment>
+          </Slot>
+        </Body>
       </ws.root>
     ),
   };
@@ -1837,7 +2283,7 @@ test("unset global variables in slots when delete", () => {
   const [globalVariableId] = data.dataSources.keys();
   deleteVariableMutable(data, globalVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: "globalVariable" },
+    { type: "expression", value: "globalVariable", mode: "read" },
   ]);
 });
 
@@ -1846,7 +2292,7 @@ test("unset body variables in page meta when delete", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}></$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}></Body>
     ),
   };
   expect(data.dataSources.size).toEqual(1);
@@ -1880,8 +2326,8 @@ test("unset global variables in all pages meta when delete", () => {
     pages: createDefaultPages({ rootInstanceId: "homeBodyId" }),
     ...renderData(
       <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-        <$.Body ws:id="homeBodyId"></$.Body>
-        <$.Body ws:id="aboutBodyId"></$.Body>
+        <Body ws:id="homeBodyId"></Body>
+        <Body ws:id="aboutBodyId"></Body>
       </ws.root>
     ),
   };
@@ -1928,19 +2374,19 @@ test("find variable usages by instance", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body
+      <Body
         ws:id="bodyId"
         vars={expression`${bodyVariable}`}
         data-prop={expression`${bodyVariable} + "test"`}
       >
-        <$.Box
+        <Box
           ws:id="boxId"
           vars={expression`${boxVariable}`}
           data-prop={expression`${boxVariable} + ${bodyVariable}`}
         >
-          <$.Text ws:id="textId">{expression`${bodyVariable}`}</$.Text>
-        </$.Box>
-      </$.Body>
+          <Text ws:id="textId">{expression`${bodyVariable}`}</Text>
+        </Box>
+      </Body>
     ),
   };
   const bodyVariableId = [...data.dataSources.values()].find(
@@ -1967,12 +2413,12 @@ test("find variable usages from root includes all pages", () => {
     pages: createDefaultPages({ rootInstanceId: "homeBodyId" }),
     ...renderData(
       <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-        <$.Body ws:id="homeBodyId">
-          <$.Box ws:id="homeBoxId" data-prop={expression`${globalVariable}`} />
-        </$.Body>
-        <$.Body ws:id="aboutBodyId">
-          <$.Box ws:id="aboutBoxId" data-prop={expression`${globalVariable}`} />
-        </$.Body>
+        <Body ws:id="homeBodyId">
+          <Box ws:id="homeBoxId" data-prop={expression`${globalVariable}`} />
+        </Body>
+        <Body ws:id="aboutBodyId">
+          <Box ws:id="aboutBoxId" data-prop={expression`${globalVariable}`} />
+        </Body>
       </ws.root>
     ),
   };
@@ -2004,7 +2450,7 @@ test("find variable usages in page meta", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}></$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}></Body>
     ),
   };
   const [bodyVariableId] = data.dataSources.keys();
@@ -2032,13 +2478,13 @@ test("find variable usages counts unique instances not expressions", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body
+      <Body
         ws:id="bodyId"
         vars={expression`${bodyVariable}`}
         data-prop1={expression`${bodyVariable}`}
         data-prop2={expression`${bodyVariable}`}
         data-prop3={expression`${bodyVariable}`}
-      ></$.Body>
+      ></Body>
     ),
   };
   const [bodyVariableId] = data.dataSources.keys();
@@ -2060,11 +2506,11 @@ test("finds and deletes unused data variables in one runtime mutation", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body
+      <Body
         ws:id="bodyId"
         vars={expression`${usedVariable};${unusedVariable}`}
         data-prop={expression`${usedVariable}`}
-      ></$.Body>
+      ></Body>
     ),
   };
   const usedVariableId = [...data.dataSources.values()].find(
@@ -2103,11 +2549,11 @@ test("delete unused data variables is a noop when all variables are used", () =>
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body
+      <Body
         ws:id="bodyId"
         vars={expression`${usedVariable}`}
         data-prop={expression`${usedVariable}`}
-      ></$.Body>
+      ></Body>
     ),
   };
 
@@ -2119,6 +2565,34 @@ test("delete unused data variables is a noop when all variables are used", () =>
 });
 
 describe("createResourceValue", () => {
+  test("rejects unsupported resource fields instead of silently discarding updates", () => {
+    const unsupported = {
+      unsupportedField: "value",
+    };
+    const update = resourceFieldsUpdateInput.safeParse({
+      name: "Updated",
+      ...unsupported,
+    });
+    expect(update.success).toBe(false);
+    if (update.success === false) {
+      expect(update.error.issues).toContainEqual(
+        expect.objectContaining({
+          code: "unrecognized_keys",
+          keys: ["unsupportedField"],
+        })
+      );
+    }
+    expect(
+      resourceFieldsInput.safeParse({
+        name: "Users",
+        method: "get",
+        url: '"https://example.com/users"',
+        headers: [],
+        ...unsupported,
+      }).success
+    ).toBe(false);
+  });
+
   test("parse resource create and update inputs used by the API", () => {
     expect(
       resourceFieldsInput.parse({
@@ -2361,6 +2835,61 @@ describe("createResourceValue", () => {
       })
     ).toHaveProperty("body", undefined);
   });
+
+  test("persists the selected HTTP body format", () => {
+    const formData = new FormData();
+    formData.set("name", "Upload");
+    formData.set("method", "post");
+    formData.set("url", '"https://example.com/upload"');
+    formData.set("body-format", "multipart");
+    const fields = createResourceFieldsFromFormData({ formData });
+    expect(fields.bodyFormat).toBe("multipart");
+    const value = createResourceValueFromFormData({
+      id: "upload",
+      formData,
+    });
+    expect(value.bodyFormat).toBe("multipart");
+    expect(createResourceFieldsFromResource(value).bodyFormat).toBe(
+      "multipart"
+    );
+  });
+
+  test("persists Email Resource overrides through form data and resource value", () => {
+    const formData = new FormData();
+    formData.set("name", "Notify team");
+    formData.set("method", "post");
+    formData.set("url", '""');
+    formData.set(
+      "email-settings",
+      JSON.stringify({
+        recipientMode: "custom",
+        recipients: '"Team, West" <team@example.com>',
+        sender: "Owner <owner@example.com>",
+        subject: '"New submission"',
+        body: "`Submission: ${formData.name}`",
+        includeAttachments: false,
+      })
+    );
+    const fields = createResourceFieldsFromFormData({
+      control: "email",
+      formData,
+    });
+    expect(fields.email).toMatchObject({
+      recipients: '"Team, West" <team@example.com>',
+      includeAttachments: false,
+    });
+    const value = createResourceValue({ id: "email-id", ...fields });
+    expect(createResourceFieldsFromResource(value).email).toEqual(fields.email);
+    expect(
+      resourceFieldsInput.safeParse({ ...fields, control: undefined }).success
+    ).toBe(false);
+    expect(
+      resourceFieldsInput.safeParse({
+        ...fields,
+        email: { ...fields.email, sender: "a@example.com, b@example.com" },
+      }).success
+    ).toBe(false);
+  });
 });
 
 describe("findResource", () => {
@@ -2501,6 +3030,7 @@ describe("resource patch helpers", () => {
             },
           ],
           body: { type: "literal", value: "request body" },
+          bodyFormat: "json",
         }),
       },
       { createId: () => "resource-id" }
@@ -2521,6 +3051,7 @@ describe("resource patch helpers", () => {
             searchParams: [{ name: "status", value: '"active"' }],
             headers: [{ name: "Content-Type", value: '"application/json"' }],
             body: '"request body"',
+            bodyFormat: "json",
           },
         },
       ],
@@ -2658,6 +3189,69 @@ describe("resource patch helpers", () => {
         { createId: () => "resource-id" }
       )
     ).toThrow("Scope instance not found");
+  });
+
+  test("creates and updates render data scoped to Global Root", () => {
+    const state = createResourceState();
+    const ids = ["resource-id", "data-source-id"];
+    const created = createResource(
+      state,
+      {
+        resource: resourceFieldsInput.parse({
+          name: "Navigation",
+          method: "get",
+          url: "https://example.com/navigation",
+          headers: [],
+        }),
+        scopeInstanceId: ROOT_INSTANCE_ID,
+      },
+      { createId: () => ids.shift() ?? "unexpected-id" }
+    );
+
+    expect(created.result).toMatchObject({
+      resourceId: "resource-id",
+      dataSourceId: "data-source-id",
+    });
+    expect(created.payload).toContainEqual({
+      namespace: "dataSources",
+      patches: [
+        expect.objectContaining({
+          value: expect.objectContaining({
+            scopeInstanceId: ROOT_INSTANCE_ID,
+            resourceId: "resource-id",
+          }),
+        }),
+      ],
+    });
+
+    state.resources.set("resource-id", {
+      ...resource,
+      id: "resource-id",
+      name: "Navigation",
+    });
+    state.dataSources.set("data-source-id", {
+      id: "data-source-id",
+      scopeInstanceId: ROOT_INSTANCE_ID,
+      name: "navigation",
+      type: "resource",
+      resourceId: "resource-id",
+    });
+    const updated = updateResource(
+      state,
+      {
+        resourceId: "resource-id",
+        values: { name: "Main navigation" },
+      },
+      { createId: () => "unexpected-id" }
+    );
+
+    expect(updated.result).toMatchObject({
+      resourceId: "resource-id",
+      dataSourceId: "data-source-id",
+    });
+    expect(updated.payload).toContainEqual(
+      expect.objectContaining({ namespace: "resources" })
+    );
   });
 
   test("does not invalidate resources when text replacement finds no matches", () => {
@@ -2932,6 +3526,716 @@ describe("resource patch helpers", () => {
     });
   });
 
+  test("preserves body format in a resource create payload", () => {
+    const result = createResourceCreatePayload({
+      resourceId: "resource",
+      resource: { ...resource, bodyFormat: "multipart" },
+      resources: [],
+      dataSources: [],
+    });
+    expect(result.payload).toContainEqual({
+      namespace: "resources",
+      patches: [
+        {
+          op: "add",
+          path: ["resource"],
+          value: expect.objectContaining({ bodyFormat: "multipart" }),
+        },
+      ],
+    });
+  });
+
+  test("persists body format selected in the Resource editor through upsert", () => {
+    const formData = new FormData();
+    formData.set("name", "Upload");
+    formData.set("method", "post");
+    formData.set("url", '"https://example.com/upload"');
+    formData.set("body-format", "multipart");
+    const body: Instance = {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    };
+
+    const result = upsertResource(
+      {
+        pages: createDefaultPages({ rootInstanceId: body.id }),
+        instances: new Map([[body.id, body]]),
+        props: new Map(),
+        dataSources: new Map(),
+        resources: new Map(),
+        breakpoints: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+        styles: new Map(),
+      },
+      {
+        scopeInstanceId: body.id,
+        resource: createResourceFieldsFromFormData({ formData }),
+      },
+      { createId: () => "resource-id" }
+    );
+
+    expect(result.payload).toContainEqual({
+      namespace: "resources",
+      patches: [
+        {
+          op: "add",
+          path: ["resource-id"],
+          value: expect.objectContaining({ bodyFormat: "multipart" }),
+        },
+      ],
+    });
+  });
+
+  test("persists bound Email Sender and custom recipient expressions through upsert", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.dataSources.set("sender-source", {
+      id: "sender-source",
+      name: "sender",
+      scopeInstanceId: "body",
+      type: "variable",
+      value: { type: "string", value: "sender@example.com" },
+    });
+    state.dataSources.set("recipients-source", {
+      id: "recipients-source",
+      name: "recipients",
+      scopeInstanceId: "body",
+      type: "variable",
+      value: { type: "string", value: "team@example.com" },
+    });
+    const senderExpression = encodeDataVariableId("sender-source");
+    const recipientsExpression = encodeDataVariableId("recipients-source");
+
+    const result = upsertResource(
+      state,
+      {
+        scopeInstanceId: "body",
+        resource: resourceFieldsInput.parse({
+          name: "Email",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: {
+            recipientMode: "custom",
+            senderExpression,
+            recipientsExpression,
+          },
+        }),
+      },
+      {
+        createId: (() => {
+          let id = 0;
+          return () => `email-${++id}`;
+        })(),
+      }
+    );
+
+    expect(result.payload).toContainEqual({
+      namespace: "resources",
+      patches: [
+        {
+          op: "add",
+          path: ["email-1"],
+          value: expect.objectContaining({
+            control: "email",
+            email: {
+              recipientMode: "custom",
+              senderExpression,
+              recipientsExpression,
+            },
+          }),
+        },
+      ],
+    });
+  });
+
+  test.each(["senderExpression", "recipientsExpression"] as const)(
+    "rejects invalid Email %s expressions through upsert validation",
+    (field) => {
+      const state = createResourceState();
+      state.instances.set("body", {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [],
+      });
+      const email =
+        field === "senderExpression"
+          ? {
+              recipientMode: "custom",
+              recipients: "team@example.com",
+              senderExpression: "sender +",
+            }
+          : {
+              recipientMode: "custom",
+              sender: "sender@example.com",
+              recipientsExpression: "recipients +",
+            };
+
+      const resource = {
+        name: "Email",
+        control: "email" as const,
+        method: "post" as const,
+        url: '""',
+        headers: [],
+        email,
+      } as Parameters<typeof upsertResource>[1]["resource"];
+
+      expect(() =>
+        upsertResource(
+          state,
+          { scopeInstanceId: "body", resource },
+          { createId: () => "email-id" }
+        )
+      ).toThrow(`email.${field}`);
+    }
+  );
+
+  test.each(["senderExpression", "recipientsExpression"] as const)(
+    "rejects unavailable Email %s bindings through upsert",
+    (field) => {
+      const state = createResourceState();
+      state.instances.set("body", {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [],
+      });
+      const email =
+        field === "senderExpression"
+          ? {
+              recipientMode: "custom",
+              recipients: "team@example.com",
+              senderExpression: encodeDataVariableId("missing-sender"),
+            }
+          : {
+              recipientMode: "custom",
+              sender: "sender@example.com",
+              recipientsExpression: encodeDataVariableId("missing-recipients"),
+            };
+
+      expect(() =>
+        upsertResource(
+          state,
+          {
+            scopeInstanceId: "body",
+            resource: resourceFieldsInput.parse({
+              name: "Email",
+              control: "email",
+              method: "post",
+              url: '""',
+              headers: [],
+              email,
+            }),
+          },
+          { createId: () => "email-id" }
+        )
+      ).toThrow(`resource.email.${field}`);
+    }
+  );
+
+  test.each([
+    "senderExpression",
+    "recipientsExpression",
+    "subject",
+    "body",
+  ] as const)(
+    "rejects Email %s bindings to Resource output before saving",
+    (field) => {
+      const state = createResourceState();
+      state.instances.set("body", {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [],
+      });
+      state.dataSources.set("lookup-source", {
+        id: "lookup-source",
+        name: "lookup",
+        scopeInstanceId: "body",
+        type: "resource",
+        resourceId: resource.id,
+      });
+      expect(() =>
+        upsertResource(
+          state,
+          {
+            scopeInstanceId: "body",
+            resource: resourceFieldsInput.parse({
+              name: "Email",
+              control: "email",
+              method: "post",
+              url: '""',
+              headers: [],
+              email: {
+                recipientMode: "custom",
+                recipients: "team@example.com",
+                [field]: encodeDataVariableId("lookup-source"),
+              },
+            }),
+          },
+          { createId: () => "email-id" }
+        )
+      ).toThrow(`resource.email.${field}`);
+    }
+  );
+
+  test("rejects an Email Resource output binding through createResource", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.dataSources.set("lookup-source", {
+      id: "lookup-source",
+      name: "lookup",
+      scopeInstanceId: "body",
+      type: "resource",
+      resourceId: resource.id,
+    });
+    expect(() =>
+      createResource(
+        state,
+        {
+          scopeInstanceId: "body",
+          resource: resourceFieldsInput.parse({
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "custom",
+              recipients: "team@example.com",
+              subject: encodeDataVariableId("lookup-source"),
+            },
+          }),
+        },
+        { createId: () => "email-id" }
+      )
+    ).toThrow("resource.email.subject");
+  });
+
+  test("rejects a partial Email update against the merged resource and new scope", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Email",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: {
+        recipientMode: "custom",
+        recipients: "team@example.com",
+        subject: encodeDataVariableId("sender-source"),
+      },
+    });
+    state.dataSources.set("sender-source", {
+      id: "sender-source",
+      name: "sender",
+      scopeInstanceId: "body",
+      type: "variable",
+      value: { type: "string", value: "Subject" },
+    });
+    expect(() =>
+      updateResource(
+        state,
+        {
+          resourceId: "email-id",
+          values: { name: "Renamed" },
+          scopeInstanceId: ROOT_INSTANCE_ID,
+        },
+        { createId: () => "unused" }
+      )
+    ).toThrow("resource.email.subject");
+  });
+
+  test("rejects an Email Resource output binding through updateResource", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Email",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: { recipientMode: "custom", recipients: "team@example.com" },
+    });
+    state.dataSources.set("lookup-source", {
+      id: "lookup-source",
+      name: "lookup",
+      scopeInstanceId: "body",
+      type: "resource",
+      resourceId: resource.id,
+    });
+    expect(() =>
+      updateResource(
+        state,
+        {
+          resourceId: "email-id",
+          scopeInstanceId: "body",
+          values: {
+            email: {
+              recipientMode: "custom",
+              recipients: "team@example.com",
+              senderExpression: encodeDataVariableId("lookup-source"),
+            },
+          },
+        },
+        { createId: () => "unused" }
+      )
+    ).toThrow("resource.email.senderExpression");
+  });
+
+  test("rejects an Email Resource output binding through upsertResourceProp", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.dataSources.set("lookup-source", {
+      id: "lookup-source",
+      name: "lookup",
+      scopeInstanceId: "body",
+      type: "resource",
+      resourceId: resource.id,
+    });
+    expect(() =>
+      upsertResourceProp(
+        state,
+        {
+          instanceId: "body",
+          propName: "action",
+          resource: resourceFieldsInput.parse({
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "custom",
+              recipients: "team@example.com",
+              body: encodeDataVariableId("lookup-source"),
+            },
+          }),
+        },
+        { createId: () => "email-id" }
+      )
+    ).toThrow("resource.email.body");
+  });
+
+  test("accepts an ancestor Email binding by ID when a Form variable shadows its name", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "form" }],
+    });
+    state.instances.set("form", {
+      type: "instance",
+      id: "form",
+      component: "ResourceForm",
+      children: [],
+    });
+    for (const [id, scopeInstanceId] of [
+      ["body-subject", "body"],
+      ["form-subject", "form"],
+    ] as const) {
+      state.dataSources.set(id, {
+        id,
+        name: "subject",
+        scopeInstanceId,
+        type: "variable",
+        value: { type: "string", value: "Hello" },
+      });
+    }
+
+    expect(() =>
+      upsertResourceProp(
+        state,
+        {
+          instanceId: "form",
+          propName: "action",
+          resource: resourceFieldsInput.parse({
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: { subject: encodeDataVariableId("body-subject") },
+          }),
+        },
+        { createId: () => "email-id" }
+      )
+    ).not.toThrow();
+  });
+
+  test("rejects Form-only Email bindings when updating a Resource shared with body", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "form" }],
+    });
+    state.instances.set("form", {
+      type: "instance",
+      id: "form",
+      component: "ResourceForm",
+      children: [],
+    });
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Email",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+    });
+    for (const [id, instanceId] of [
+      ["body-action", "body"],
+      ["form-action", "form"],
+    ] as const) {
+      state.props.set(id, {
+        id,
+        instanceId,
+        name: "action",
+        type: "resource",
+        value: "email-id",
+      });
+    }
+    for (const [id, scopeInstanceId] of [
+      ["body-subject", "body"],
+      ["form-subject", "form"],
+    ] as const) {
+      state.dataSources.set(id, {
+        id,
+        name: "subject",
+        scopeInstanceId,
+        type: "variable",
+        value: { type: "string", value: "Hello" },
+      });
+    }
+    const edit = (subject: string) =>
+      upsertResourceProp(
+        state,
+        {
+          resourceId: "email-id",
+          instanceId: "form",
+          propName: "action",
+          resource: resourceFieldsInput.parse({
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: { subject },
+          }),
+        },
+        { createId: () => "unused" }
+      );
+
+    expect(() => edit(encodeDataVariableId("form-subject"))).toThrow(
+      "resource.email.subject"
+    );
+    expect(() => edit(encodeDataVariableId("body-subject"))).not.toThrow();
+  });
+
+  test("validates a retained Resource alias when editing Email from a Form", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "form" }],
+    });
+    state.instances.set("form", {
+      type: "instance",
+      id: "form",
+      component: "ResourceForm",
+      children: [],
+    });
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Email",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+    });
+    state.dataSources.set("form-alias", {
+      id: "form-alias",
+      name: "formAlias",
+      scopeInstanceId: "form",
+      type: "resource",
+      resourceId: "email-id",
+    });
+    state.dataSources.set("body-alias", {
+      id: "body-alias",
+      name: "bodyAlias",
+      scopeInstanceId: "body",
+      type: "resource",
+      resourceId: "email-id",
+    });
+    state.dataSources.set("form-subject", {
+      id: "form-subject",
+      name: "subject",
+      scopeInstanceId: "form",
+      type: "variable",
+      value: { type: "string", value: "Hello" },
+    });
+
+    expect(() =>
+      upsertResourceProp(
+        state,
+        {
+          resourceId: "email-id",
+          instanceId: "form",
+          propName: "action",
+          resource: resourceFieldsInput.parse({
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: { subject: encodeDataVariableId("form-subject") },
+          }),
+        },
+        { createId: () => "new-prop" }
+      )
+    ).toThrow("resource.email.subject");
+  });
+
+  test.each([
+    ["updateResource", "prop"],
+    ["updateResource", "alias"],
+    ["upsertResource", "prop"],
+    ["upsertResource", "alias"],
+  ] as const)(
+    "%s validates a shared Email Resource's retained body %s scope",
+    (mutation, consumer) => {
+      const state = createResourceState();
+      state.instances.set("body", {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [{ type: "id", value: "form" }],
+      });
+      state.instances.set("form", {
+        type: "instance",
+        id: "form",
+        component: "ResourceForm",
+        children: [],
+      });
+      state.resources.set("email-id", {
+        id: "email-id",
+        name: "Email",
+        control: "email",
+        method: "post",
+        url: '""',
+        headers: [],
+      });
+      state.dataSources.set("form-alias", {
+        id: "form-alias",
+        name: "formAlias",
+        scopeInstanceId: "form",
+        type: "resource",
+        resourceId: "email-id",
+      });
+      if (consumer === "prop") {
+        state.props.set("body-action", {
+          id: "body-action",
+          instanceId: "body",
+          name: "action",
+          type: "resource",
+          value: "email-id",
+        });
+      } else {
+        state.dataSources.set("body-alias", {
+          id: "body-alias",
+          name: "bodyAlias",
+          scopeInstanceId: "body",
+          type: "resource",
+          resourceId: "email-id",
+        });
+      }
+      for (const [id, scopeInstanceId] of [
+        ["body-subject", "body"],
+        ["form-subject", "form"],
+      ] as const) {
+        state.dataSources.set(id, {
+          id,
+          name: "subject",
+          scopeInstanceId,
+          type: "variable",
+          value: { type: "string", value: "Hello" },
+        });
+      }
+      const edit = (subject: string) => {
+        if (mutation === "updateResource") {
+          return updateResource(
+            state,
+            {
+              resourceId: "email-id",
+              scopeInstanceId: "form",
+              values: { email: { subject } },
+            },
+            { createId: () => "unused" }
+          );
+        }
+        return upsertResource(
+          state,
+          {
+            resourceId: "email-id",
+            dataSourceId: "form-alias",
+            scopeInstanceId: "form",
+            resource: resourceFieldsInput.parse({
+              name: "Email",
+              control: "email",
+              method: "post",
+              url: '""',
+              headers: [],
+              email: { subject },
+            }),
+          },
+          { createId: () => "unused" }
+        );
+      };
+
+      expect(() => edit(encodeDataVariableId("form-subject"))).toThrow(
+        "resource.email.subject"
+      );
+      expect(() => edit(encodeDataVariableId("body-subject"))).not.toThrow();
+    }
+  );
+
   test("upserts resource and preserves existing data source id", () => {
     const body: Instance = {
       type: "instance",
@@ -3140,7 +4444,7 @@ describe("resource patch helpers", () => {
     const form: Instance = {
       type: "instance",
       id: "form",
-      component: "Form",
+      component: "ResourceForm",
       children: [],
     };
     const ids = ["resource-id", "prop-id"];
@@ -3167,6 +4471,7 @@ describe("resource patch helpers", () => {
           method: "post",
           url: "https://example.com/submit",
           headers: [],
+          bodyFormat: "multipart",
         }),
       },
       { createId: () => ids.shift() ?? "extra-id" }
@@ -3212,6 +4517,7 @@ describe("resource patch helpers", () => {
             searchParams: undefined,
             headers: [],
             body: undefined,
+            bodyFormat: "multipart",
           },
         },
       ],
@@ -3307,6 +4613,113 @@ describe("resource patch helpers", () => {
     });
   });
 
+  test("preserves omitted Email settings during a partial update", () => {
+    const state = createResourceState();
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Visitor confirmation",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: {
+        recipientMode: "visitor",
+        visitorEmailField: "email",
+        sender: "John <john@example.com>",
+        includeAttachments: false,
+        subject: '"Original"',
+      },
+    });
+
+    const result = updateResource(
+      state,
+      {
+        resourceId: "email-id",
+        values: { email: { subject: '"Updated"' } },
+      },
+      { createId: () => "unused-id" }
+    );
+    const resourcePatch = result.payload
+      .find(({ namespace }) => namespace === "resources")
+      ?.patches.find(({ path }) => path[0] === "email-id");
+
+    expect(resourcePatch).toMatchObject({
+      value: {
+        email: {
+          recipientMode: "visitor",
+          visitorEmailField: "email",
+          sender: "John <john@example.com>",
+          includeAttachments: false,
+          subject: '"Updated"',
+        },
+      },
+    });
+  });
+
+  test("validates the effective Email settings after a partial update", () => {
+    const state = createResourceState();
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Owner notification",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: { recipientMode: "project" },
+    });
+
+    expect(() =>
+      updateResource(
+        state,
+        {
+          resourceId: "email-id",
+          values: { email: { recipientMode: "custom" } },
+        },
+        { createId: () => "unused-id" }
+      )
+    ).toThrow("Enter a valid recipient list");
+  });
+
+  test("accepts a partial Email update using existing custom recipients", () => {
+    const state = createResourceState();
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Owner notification",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: {
+        recipientMode: "custom",
+        recipients: "team@example.com",
+      },
+    });
+
+    const result = updateResource(
+      state,
+      {
+        resourceId: "email-id",
+        values: resourceFieldsUpdateInput.parse({
+          email: { recipientMode: "custom", subject: '"New message"' },
+        }),
+      },
+      { createId: () => "unused-id" }
+    );
+    const resourcePatch = result.payload
+      .find(({ namespace }) => namespace === "resources")
+      ?.patches.find(({ path }) => path[0] === "email-id");
+
+    expect(resourcePatch).toMatchObject({
+      value: {
+        email: {
+          recipientMode: "custom",
+          recipients: "team@example.com",
+          subject: '"New message"',
+        },
+      },
+    });
+  });
+
   test("keeps an empty resource update as a no-op", () => {
     const state = createResourceState();
     state.resources.set("resource", resource);
@@ -3362,7 +4775,7 @@ describe("resource patch helpers", () => {
     });
   });
 
-  test("preserves explicit write-resource exposure during unrelated updates", () => {
+  test("preserves explicit write-resource exposure during a full update", () => {
     const state = createResourceState();
     state.instances.set("body", {
       type: "instance",
@@ -3383,7 +4796,15 @@ describe("resource patch helpers", () => {
       state,
       {
         resourceId: "resource",
-        values: { name: "Renamed" },
+        values: {
+          name: resource.name,
+          control: resource.control,
+          method: "post",
+          url: resource.url,
+          searchParams: resource.searchParams,
+          headers: resource.headers,
+          body: resource.body,
+        },
       },
       { createId: () => "unused-id" }
     );
@@ -3576,6 +4997,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
+        instances: new Map(),
         props: [prop],
         dataSources: [dataSource],
       })
@@ -3584,6 +5006,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
+        instances: new Map(),
         props: [prop],
         dataSources: [dataSource],
         force: true,
@@ -3607,6 +5030,77 @@ describe("resource patch helpers", () => {
       propIds: ["prop"],
       isUsed: false,
     });
+  });
+
+  test("guards a Form destination and removes its selection on forced deletion", () => {
+    const submission: Prop = {
+      id: "action",
+      instanceId: "form",
+      name: "action",
+      type: "json",
+      value: [{ dataSourceId: "data-source" }],
+    };
+    const dataSource: DataSource = {
+      id: "data-source",
+      scopeInstanceId: "form",
+      name: "Submission",
+      type: "resource",
+      resourceId: resource.id,
+    };
+    expect(
+      createResourceDeletePayload({
+        resource,
+        instances: new Map([["form", { component: "ResourceForm" }]]),
+        props: [submission],
+        dataSources: [dataSource],
+      }).isUsed
+    ).toBe(true);
+    expect(
+      createResourceDeletePayload({
+        resource,
+        instances: new Map([["form", { component: "ResourceForm" }]]),
+        props: [submission],
+        dataSources: [dataSource],
+        force: true,
+      }).payload
+    ).toContainEqual({
+      namespace: "props",
+      patches: [
+        {
+          op: "replace",
+          path: ["action", "value"],
+          value: [],
+        },
+      ],
+    });
+  });
+
+  test("resource deletion leaves a non-Form JSON action prop unchanged", () => {
+    const action: Prop = {
+      id: "button-action",
+      instanceId: "button",
+      name: "action",
+      type: "json",
+      value: [{ dataSourceId: "data-source" }],
+    };
+    const dataSource: DataSource = {
+      id: "data-source",
+      scopeInstanceId: "button",
+      name: "Request",
+      type: "resource",
+      resourceId: resource.id,
+    };
+    const result = createResourceDeletePayload({
+      resource,
+      instances: new Map([["button", { component: "Button" }]]),
+      props: [action],
+      dataSources: [dataSource],
+      force: true,
+    });
+    expect(result.payload.flatMap(({ patches }) => patches)).not.toContainEqual(
+      expect.objectContaining({ path: ["button-action", "value"] })
+    );
+    expect(action.value).toEqual([{ dataSourceId: "data-source" }]);
   });
 
   test("rejects deleting resources whose data source is referenced by expressions", () => {
@@ -3647,36 +5141,46 @@ describe("resource expression form validation", () => {
     [encodeDataVariableId("bodyJson")]: { ok: true },
   };
 
-  test("computes expressions against encoded variable scope names", () => {
-    expect(computeExpressionWithinScope("apiUrl", scope)).toBe(
+  test("computes expressions against encoded variable scope names", async () => {
+    await expect(computeExpressionWithinScope("apiUrl", scope)).resolves.toBe(
       "https://example.com/users"
     );
-    expect(computeExpressionWithinScope("   ", scope)).toBeUndefined();
+    await expect(
+      computeExpressionWithinScope("   ", scope)
+    ).resolves.toBeUndefined();
   });
 
-  test("validates evaluated resource urls", () => {
-    expect(validateResourceUrlExpression("apiUrl", scope)).toBe("");
-    expect(validateResourceUrlExpression("bodyJson", scope)).toBe(
-      "URL expects a string"
+  test("validates evaluated resource urls", async () => {
+    await expect(validateResourceUrlExpression("apiUrl", scope)).resolves.toBe(
+      ""
     );
-    expect(validateResourceUrlExpression("emptyUrl", scope)).toBe(
-      "URL is required"
-    );
-    expect(validateResourceUrlExpression('"not a url"', scope)).toBe(
-      "URL is invalid"
-    );
+    await expect(
+      validateResourceUrlExpression("bodyJson", scope)
+    ).resolves.toBe("URL expects a string");
+    await expect(
+      validateResourceUrlExpression("emptyUrl", scope)
+    ).resolves.toBe("URL is required");
+    await expect(
+      validateResourceUrlExpression('"not a url"', scope)
+    ).resolves.toBe("URL is invalid");
   });
 
-  test("validates evaluated resource body by body type", () => {
-    expect(validateResourceBodyExpression("", "json", scope)).toBe("");
-    expect(validateResourceBodyExpression("bodyJson", "json", scope)).toBe("");
-    expect(validateResourceBodyExpression("bodyText", "json", scope)).toBe(
-      "Expected valid JSON object in body"
-    );
-    expect(validateResourceBodyExpression("bodyText", "text", scope)).toBe("");
-    expect(validateResourceBodyExpression("bodyJson", "text", scope)).toBe(
-      "Expected string in body"
-    );
+  test("validates evaluated resource body by body type", async () => {
+    await expect(
+      validateResourceBodyExpression("", "json", scope)
+    ).resolves.toBe("");
+    await expect(
+      validateResourceBodyExpression("bodyJson", "json", scope)
+    ).resolves.toBe("");
+    await expect(
+      validateResourceBodyExpression("bodyText", "json", scope)
+    ).resolves.toBe("Expected valid JSON object in body");
+    await expect(
+      validateResourceBodyExpression("bodyText", "text", scope)
+    ).resolves.toBe("");
+    await expect(
+      validateResourceBodyExpression("bodyJson", "text", scope)
+    ).resolves.toBe("Expected string in body");
   });
 });
 

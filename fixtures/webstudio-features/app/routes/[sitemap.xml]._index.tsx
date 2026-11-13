@@ -1,7 +1,12 @@
+import { isProtectedResourceReentry } from "@webstudio-is/sdk/protected-resource-fetch";
 import { renderToString } from "react-dom/server";
 import { type LoaderFunctionArgs, redirect } from "react-router";
-import { isLocalResource, loadResources } from "@webstudio-is/sdk/runtime";
-import { authenticateRequest } from "@webstudio-is/wsauth";
+import {
+  isLocalResource,
+  loadResources,
+  getSystemSearch,
+} from "@webstudio-is/sdk/runtime";
+import { authenticateProjectRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,
   xmlNodeTagSuffix,
@@ -9,6 +14,7 @@ import {
 import {
   Page,
   breakpoints,
+  projectId,
   projectDomain,
 } from "../__generated__/[sitemap.xml]._index";
 import {
@@ -20,24 +26,6 @@ import { assetBaseUrl, imageLoader } from "../constants.mjs";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
 import { authRoutes } from "../__generated__/$resources.wsauth.server";
 import { createGeneratedAssetResourceFetch } from "../__generated__/$resources.asset-query-runtime";
-
-const authenticateProductionRequest = (request: Request) => {
-  const host =
-    request.headers.get("x-forwarded-host") ||
-    request.headers.get("host") ||
-    "";
-
-  const requestHost = host.split(":")[0];
-  if (
-    projectDomain !== undefined &&
-    (requestHost === projectDomain ||
-      requestHost.startsWith(`${projectDomain}.`))
-  ) {
-    return;
-  }
-
-  return authenticateRequest(request, authRoutes);
-};
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
@@ -73,7 +61,15 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
-  const authRoute = authenticateProductionRequest(arg.request);
+  if (isProtectedResourceReentry(arg.request, projectId)) {
+    throw new Response(null, { status: 508 });
+  }
+
+  const authRoute = authenticateProjectRequest(
+    arg.request,
+    authRoutes,
+    projectDomain
+  );
 
   const url = new URL(arg.request.url);
   const host =
@@ -87,7 +83,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
 
   const system = {
     params,
-    search: Object.fromEntries(url.searchParams),
+    ...getSystemSearch(url.searchParams),
     origin: url.origin,
     pathname: url.pathname,
   };
@@ -102,6 +98,15 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     getResources({ system }).data,
     url,
     { signal: arg.request.signal }
+  );
+  Object.assign(
+    resources,
+    await loadResources(
+      generatedFetch,
+      getResources({ system, resources }).contentData ?? new Map(),
+      url,
+      { signal: arg.request.signal }
+    )
   );
   const pageMeta = getPageMeta({ system, resources });
 

@@ -1,4 +1,4 @@
-import { matchPathnamePattern } from "./url-pattern";
+import { matchPathnamePattern } from "@webstudio-is/wsauth";
 
 const isOptionalSegmentMarker = (source: string, index: number) => {
   const nextChar = source[index + 1];
@@ -203,18 +203,7 @@ export const doesRedirectSourceMatchLocalUrl = (
   }
 
   const normalizedUrlPathname = getRedirectSourcePathname(normalizedUrl);
-  for (const sourceVariant of getOptionalStaticSegmentVariants(
-    normalizedSource
-  )) {
-    for (const urlVariant of getOptionalStaticSegmentVariants(
-      normalizedUrlPathname
-    )) {
-      if (matchPathnamePattern(sourceVariant, urlVariant) !== undefined) {
-        return true;
-      }
-    }
-  }
-  return false;
+  return doesPathnamePatternOverlap(normalizedSource, normalizedUrlPathname);
 };
 
 export const doesRedirectSourceOverridePagePath = (

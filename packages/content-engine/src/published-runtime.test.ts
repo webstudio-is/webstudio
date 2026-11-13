@@ -13,6 +13,7 @@ import {
   createPublishedAssetResourceFetch as createPublishedRuntime,
 } from "./published-runtime";
 import { createDocumentGraph } from "./document-graph";
+import { createCanonicalAssetPath } from "./asset-path";
 
 const revision = `sha256:${"a".repeat(64)}`;
 const document: AssetFileDocument = {
@@ -29,6 +30,9 @@ const document: AssetFileDocument = {
   properties: { slug: "post", title: "Post" },
 };
 const runtimeAssets = { "post-1": { url: "/assets/post.md" } };
+
+const getRequestUrl = (input: RequestInfo | URL) =>
+  input instanceof Request ? input.url : String(input);
 
 const createPublishedAssetResourceFetch = (
   options: Omit<Parameters<typeof createPublishedRuntime>[0], "artifact"> & {
@@ -99,6 +103,163 @@ const queryRequest = (content = false) =>
 describe("published asset resource runtime", () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  describe.each([false, true])(
+    "Basic auth forwarding (graph: %s)",
+    (withGraph) => {
+      test.each([
+        {
+          url: "/assets/post.md",
+          authorization: "Basic dXNlcjpwYXNz",
+          expected: "Basic dXNlcjpwYXNz",
+        },
+        {
+          url: "https://site.example/assets/post.md",
+          authorization: "Basic dXNlcjpwYXNz",
+          expected: "Basic dXNlcjpwYXNz",
+        },
+        {
+          url: "https://cdn.example/post.md",
+          authorization: "Basic dXNlcjpwYXNz",
+          expected: null,
+        },
+        {
+          url: "http://site.example/assets/post.md",
+          authorization: "Basic dXNlcjpwYXNz",
+          expected: null,
+        },
+        {
+          url: "https://site.example:8443/assets/post.md",
+          authorization: "Basic dXNlcjpwYXNz",
+          expected: null,
+        },
+        {
+          url: "/assets/post.md",
+          authorization: "Bearer private-token",
+          expected: null,
+        },
+        { url: "/assets/post.md", authorization: undefined, expected: null },
+      ])(
+        "restricts credentials for $url ($authorization)",
+        async ({ url, authorization, expected }) => {
+          const { index } = await createRuntime();
+          const artifact = createContentRuntimeArtifact(index, {
+            includeContents: false,
+          });
+          const fallback = vi.fn<typeof fetch>(
+            async () => new Response("Post")
+          );
+          const createFetch = createGeneratedRuntime({
+            deploymentId: "basic-auth-test",
+            artifact: {
+              ...artifact,
+              ...(withGraph
+                ? {
+                    documentGraph: {
+                      nodes: [
+                        {
+                          id: document._id,
+                          revision,
+                          contentRef: document.contentRef,
+                          format: "markdown" as const,
+                        },
+                      ],
+                      edges: [],
+                    },
+                  }
+                : {}),
+            },
+            runtimeAssets: {
+              "post-1": { url, contentRef: document.contentRef },
+            },
+          });
+          const headers = new Headers({ cookie: "private=value" });
+          if (authorization !== undefined) {
+            headers.set("authorization", authorization);
+          }
+          const generatedFetch = await createFetch({
+            request: new Request("https://site.example/blog/post", { headers }),
+            fallback,
+          });
+          const response = await generatedFetch(queryRequest(true));
+          expect(response.status).toBe(200);
+          expect(await response.json()).toMatchObject({
+            items: [{ content: { text: "Post" } }],
+          });
+          expect(fallback).toHaveBeenCalledOnce();
+          const request = fallback.mock.calls[0][0] as Request;
+          expect(request.headers.get("authorization")).toBe(expected);
+          expect(request.headers.has("cookie")).toBe(false);
+          if (expected !== null) {
+            expect(request.redirect).toBe("manual");
+          }
+        }
+      );
+    }
+  );
+
+  test.each([
+    { content: { mode: "full" }, text: "Post" },
+    { content: { mode: "range", offset: 1, length: 2 }, text: "os" },
+  ])(
+    "fetches unembedded files without graph nodes: $content.mode",
+    async ({ content, text }) => {
+      const { index } = await createRuntime();
+      const fetchDocument = vi.fn<typeof fetch>(
+        async () => new Response("Post")
+      );
+      const runtimeFetch = createPublishedRuntime({
+        baseUrl: "https://site.example/blog/post",
+        deploymentId: "build-http",
+        artifact: createContentRuntimeArtifact(index, {
+          includeContents: false,
+        }),
+        runtimeAssets,
+        automationToken: "test-automation-token",
+        fetchDocument,
+      });
+      const controller = new AbortController();
+      const request = new Request(queryRequest(), {
+        signal: controller.signal,
+        body: JSON.stringify({
+          query: { content, output: { mode: "all", includeMetadata: true } },
+        }),
+      });
+      const response = await runtimeFetch(request);
+      expect(response?.status).toBe(200);
+      expect(await response?.json()).toMatchObject({
+        items: [{ id: "post-1", content: { text } }],
+      });
+      expect(fetchDocument).toHaveBeenCalledOnce();
+      const [assetRequest, init] = fetchDocument.mock.calls[0];
+      expect(assetRequest).toBeInstanceOf(Request);
+      expect(getRequestUrl(assetRequest)).toBe(
+        "https://site.example/assets/post.md"
+      );
+      expect(
+        (assetRequest as Request).headers.get("x-webstudio-automation")
+      ).toBe("test-automation-token");
+      expect(init?.signal?.aborted).toBe(false);
+      controller.abort();
+      expect(init?.signal?.aborted).toBe(true);
+    }
+  );
+
+  test("does not return an HTTP error body as file content", async () => {
+    const { index } = await createRuntime();
+    const runtimeFetch = createPublishedRuntime({
+      baseUrl: "https://site.example",
+      deploymentId: "build-http-error",
+      artifact: createContentRuntimeArtifact(index, { includeContents: false }),
+      runtimeAssets,
+      fetchDocument: async () => new Response("Unauthorized", { status: 401 }),
+    });
+    const response = await runtimeFetch(queryRequest(true));
+    expect(response?.status).toBe(400);
+    expect(await response?.json()).toMatchObject({
+      error: { code: "INVALID_REQUEST" },
+    });
+  });
+
   test("does not open the query-result cache for ordinary generated fetches", async () => {
     const { index } = await createRuntime();
     const open = vi.fn();
@@ -163,6 +324,69 @@ describe("published asset resource runtime", () => {
     expect(networkFetch).not.toHaveBeenCalled();
     expect(fallback).not.toHaveBeenCalled();
     expect(onDocumentGraphEvent).not.toHaveBeenCalled();
+  });
+
+  test("matches visible asset paths in local and published runtimes", async () => {
+    const canonicalDocument = {
+      ...document,
+      path: createCanonicalAssetPath({
+        folderNames: ["Tutorial posts"],
+        name: "post.md",
+      }),
+    };
+    const index = await createAssetIndex({
+      projectId: "project-1",
+      entries: [
+        createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document: canonicalDocument,
+        }),
+      ],
+    });
+    const query = assetQuery.parse({
+      where: {
+        field: ["path"],
+        operator: "startsWith",
+        value: "Tutorial posts/",
+      },
+      output: {
+        mode: "fields",
+        includeMetadata: false,
+        fields: [["id"], ["path"]],
+      },
+      content: { mode: "none" },
+    });
+    const localResult = await createContentDatabase({ artifact: index }).query({
+      query,
+    });
+    const runtimeFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "build-path-filter",
+      artifact: index,
+      runtimeAssets,
+    });
+    const publishedResponse = await runtimeFetch(
+      new Request("https://site.example/$resources/assets", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ query }),
+      })
+    );
+
+    if (publishedResponse === undefined) {
+      throw new Error("Published Assets runtime did not handle the request");
+    }
+    expect(publishedResponse.status).toBe(200);
+    await expect(publishedResponse.json()).resolves.toEqual(localResult);
+    expect(localResult).toMatchObject({
+      items: [
+        {
+          id: "post-1",
+          path: "Tutorial%20posts/post.md",
+        },
+      ],
+      totalCount: 1,
+    });
   });
 
   test("assembles equivalent graph results in local, SSG, SSR, and published runtimes", async () => {
@@ -308,10 +532,12 @@ describe("published asset resource runtime", () => {
       items: [{ id: "post" }],
     });
     expect(fetchDocument).toHaveBeenCalledTimes(1);
-    expect(fetchDocument).toHaveBeenCalledWith(
-      new URL("https://site.example/assets/author.md"),
-      expect.anything()
+    const [documentRequest] = fetchDocument.mock.calls[0] ?? [];
+    expect(documentRequest).toBeInstanceOf(Request);
+    expect(getRequestUrl(documentRequest as Request)).toBe(
+      "https://site.example/assets/author.md"
     );
+    expect((documentRequest as Request).headers.get("referer")).toBeNull();
     expect(events).toEqual(
       expect.arrayContaining([
         { type: "roots-selected", rootCount: 1 },
@@ -339,6 +565,31 @@ describe("published asset resource runtime", () => {
     await expect(ssgResponse?.json()).resolves.toMatchObject(localResult);
     expect(fetchDocument).toHaveBeenCalledTimes(2);
 
+    const embeddedDocumentFetch = vi.fn(async () => {
+      throw new Error("embedded documents must not be fetched");
+    });
+    const embeddedFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "graph-embedded-build",
+      artifact: {
+        ...artifact,
+        contents: {
+          "storage:author": "---\nname: Ada\nrole: Writer\n---\nBio\n",
+        },
+      },
+      runtimeAssets: {
+        post: { url: "/assets/post.json", contentRef: "storage:post" },
+        author: { url: "/assets/author.md", contentRef: "storage:author" },
+      },
+      fetchDocument: embeddedDocumentFetch,
+    });
+    const embeddedResponse = await embeddedFetch(
+      "/$resources/assets",
+      requestInit()
+    );
+    await expect(embeddedResponse?.json()).resolves.toMatchObject(localResult);
+    expect(embeddedDocumentFetch).not.toHaveBeenCalled();
+
     const createGeneratedFetch = createGeneratedAssetResourceRuntime({
       deploymentId: "graph-build",
       artifact,
@@ -350,6 +601,11 @@ describe("published asset resource runtime", () => {
     });
     const generatedFetch = await createGeneratedFetch({
       request: new Request("https://site.example/blog/post"),
+      context: {
+        cloudflare: {
+          env: { WEBSTUDIO_AUTOMATION_TOKEN: "test-automation-token" },
+        },
+      },
       fallback: fetchDocument,
     });
     const generatedResponse = await generatedFetch(
@@ -364,6 +620,13 @@ describe("published asset resource runtime", () => {
       ],
     });
     expect(fetchDocument).toHaveBeenCalledTimes(3);
+    const [generatedDocumentRequest] = fetchDocument.mock.calls[2] ?? [];
+    expect(generatedDocumentRequest).toBeInstanceOf(Request);
+    expect(
+      (generatedDocumentRequest as Request).headers.get(
+        "x-webstudio-automation"
+      )
+    ).toBe("test-automation-token");
     expect(() =>
       createPublishedAssetResourceFetch({
         baseUrl: "https://site.example",
@@ -458,7 +721,9 @@ describe("published asset resource runtime", () => {
     });
     const runtimeArtifact = createContentRuntimeArtifact(artifact);
     const fetchDocument = vi.fn(async (input: RequestInfo | URL) => {
-      const id = String(input).includes("second.md") ? "second" : "first";
+      const id = getRequestUrl(input).includes("second.md")
+        ? "second"
+        : "first";
       return new Response(sources[id]);
     });
     const runtimeFetch = createPublishedRuntime({
@@ -467,7 +732,10 @@ describe("published asset resource runtime", () => {
       artifact: runtimeArtifact,
       runtimeAssets: {
         first: { url: "/assets/first.md", contentRef: "storage:first" },
-        second: { url: "/assets/second.md", contentRef: "storage:second" },
+        second: {
+          url: "/cgi/asset/second.md?format=raw",
+          contentRef: "storage:second",
+        },
       },
       fetchDocument,
     });
@@ -507,7 +775,12 @@ describe("published asset resource runtime", () => {
       totalCount: 1,
     });
     expect(fetchDocument).toHaveBeenCalledOnce();
-    expect(String(fetchDocument.mock.calls[0][0])).toContain("second.md");
+    const [documentRequest] = fetchDocument.mock.calls[0] ?? [];
+    expect(documentRequest).toBeInstanceOf(Request);
+    expect(getRequestUrl(documentRequest as Request)).toContain(
+      "/cgi/asset/second.md"
+    );
+    expect((documentRequest as Request).headers.get("referer")).toBeNull();
   });
 
   test("hydrates parallel CDN roots with one cached shared dependency", async () => {
@@ -563,7 +836,7 @@ describe("published asset resource runtime", () => {
     const fetchDocument = vi.fn(
       (input: RequestInfo | URL) =>
         new Promise<Response>((resolve) => {
-          pending.set(new URL(String(input)).pathname, resolve);
+          pending.set(new URL(getRequestUrl(input)).pathname, resolve);
         })
     );
     const runtimeFetch = createPublishedAssetResourceFetch({
@@ -626,7 +899,7 @@ describe("published asset resource runtime", () => {
     expect(fetchDocument).toHaveBeenCalledTimes(1);
     expect(
       fetchDocument.mock.calls.filter(([input]) =>
-        String(input).includes("/assets/author.json")
+        getRequestUrl(input).includes("/assets/author.json")
       )
     ).toHaveLength(1);
   });
@@ -715,7 +988,7 @@ describe("published asset resource runtime", () => {
       runtimeAssets,
       fetchDocument: async (input) =>
         new Response(
-          String(input).endsWith("graph-post.json")
+          getRequestUrl(input).endsWith("graph-post.json")
             ? '{"author":{"$ref":"./author.json"}}'
             : `{"value":"${"a".repeat(1024 * 1024)}"}`
         ),
@@ -820,7 +1093,7 @@ describe("published asset resource runtime", () => {
     });
   });
 
-  test("resolves structured Asset values from materialized query rows", async () => {
+  test("resolves structured Asset metadata in the published runtime", async () => {
     const query = assetQuery.parse({
       where: {
         all: [
@@ -837,7 +1110,12 @@ describe("published asset resource runtime", () => {
       output: {
         mode: "fields",
         includeMetadata: false,
-        fields: [["properties", "featureImage"]],
+        fields: [
+          ["properties", "featureImage", "src"],
+          ["properties", "featureImage", "description"],
+          ["properties", "featureImage", "width"],
+          ["properties", "featureImage", "height"],
+        ],
       },
       content: { mode: "none" },
     });
@@ -850,7 +1128,9 @@ describe("published asset resource runtime", () => {
             ...document,
             properties: {
               ...document.properties,
-              featureImage: "./assets/hero.png?width=1200#cover",
+              featureImage: {
+                $ref: "./assets/hero.png?width=1200#cover",
+              },
             },
           },
         }),
@@ -861,6 +1141,7 @@ describe("published asset resource runtime", () => {
             path: ["properties", "featureImage"],
             assetId: "hero",
             suffix: "?width=1200#cover",
+            structured: true,
           },
         ],
       },
@@ -869,7 +1150,7 @@ describe("published asset resource runtime", () => {
       ]),
     });
 
-    expect(index.documents).toEqual([]);
+    expect(index.documents).toHaveLength(1);
     expect(() =>
       createPublishedAssetResourceFetch({
         baseUrl: "https://site.example",
@@ -883,7 +1164,12 @@ describe("published asset resource runtime", () => {
       deploymentId: "materialized-structured-asset",
       artifact: index,
       runtimeAssets: {
-        hero: { url: "/cgi/image/hero.png?format=raw" },
+        hero: {
+          url: "/cgi/image/hero.png?format=raw",
+          description: "Published hero",
+          width: 1200,
+          height: 800,
+        },
       },
     });
     const response = await runtimeFetch("/$resources/assets", {
@@ -896,7 +1182,12 @@ describe("published asset resource runtime", () => {
         {
           id: "post-1",
           properties: {
-            featureImage: "/cgi/image/hero.png?format=raw&width=1200#cover",
+            featureImage: {
+              src: "/cgi/image/hero.png?format=raw&width=1200#cover",
+              description: "Published hero",
+              width: 1200,
+              height: 800,
+            },
           },
         },
       ],
@@ -1033,6 +1324,31 @@ describe("published asset resource runtime", () => {
       body: "not json",
     });
     expect(malformed?.status).toBe(400);
+
+    const structurallyInvalid = await runtimeFetch("/$resources/assets", {
+      method: "POST",
+      body: JSON.stringify({
+        query: {
+          result: "first",
+          limit: -1,
+          output: { mode: "fields", includeMetadata: false, fields: [] },
+          content: { mode: "none" },
+        },
+      }),
+    });
+    expect(structurallyInvalid?.status).toBe(400);
+    await expect(structurallyInvalid?.json()).resolves.toMatchObject({
+      error: {
+        code: "INVALID_REQUEST",
+        details: {
+          issues: [
+            { path: ["query", "limit"] },
+            { path: ["query"] },
+            { path: ["query", "sort"] },
+          ],
+        },
+      },
+    });
 
     const stale = await runtimeFetch("/$resources/assets", {
       method: "POST",

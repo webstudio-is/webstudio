@@ -66,13 +66,13 @@ It's unclear why each item is correct or incorrect by just looking at the image,
 
 **You'll know when you get to the array when the next items in the autocomplete are numbers.** The numbers represent each item in the list. Once you see the numbers, backspace, as you don't want to select one item; you want the list.
 
-<figure><img src="../../.gitbook/assets/component-array.png" alt="Autocomplete showing array items in Binding"><figcaption><p>The numbers indicate each item in the list/array</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/component-array-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/component-array-light.png" alt="Binding autocomplete showing array indexes 0, 1, and 2 beside the demoPosts array preview" width="480"></picture><figcaption><p>The numbers indicate each item in the list/array</p></figcaption></figure>
 
 ## How to use Collection
 
 Add the Collection component to the canvas and either manually enter data (less common) or [bind data](../foundations/expression-editor.md#binding) to it (more common).
 
-**The Collection iterates over the array, so you must bind just the array portion of your variable to it. See** [**What's an Array**](collection.md#whats-an-array) **for more info.**
+**The Collection iterates over the array, so you must bind just the array portion of your variable to it. See** [**What's an array or object?**](collection.md#whats-an-array-or-object) **for more info.**
 
 Optionally, rename the default Collection Item variable to something more semantic. If you are iterating over blog posts, name it "Blog Post."
 
@@ -88,7 +88,7 @@ When working with [Radix Components](../radix/), you might want to dynamically g
 
 ### Accordions
 
-<figure><img src="../../.gitbook/assets/accordion-collection.png" alt=""><figcaption><p>The Item has a unique value from the dynamic data bound to the Value field</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/accordion-collection.png" alt="Accordion Item settings with a unique collection value bound to the Value property"><figcaption><p>The Item has a unique value from the dynamic data bound to the Value field</p></figcaption></figure>
 
 ### Tabs
 
@@ -98,9 +98,9 @@ Tab Triggers and Tab Contents maintain their relationship by having the same val
 
 <div>
 
-<figure><img src="../../.gitbook/assets/tab-trigger.png" alt=""><figcaption><p>Tab Trigger with custom value</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/tab-trigger-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/tab-trigger-light.png" alt="Tab Trigger settings with custom Value account" width="240"></picture><figcaption><p>Tab Trigger with custom value</p></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/tab-content.png" alt=""><figcaption><p>Tab Content with custom value</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/tab-content-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/tab-content-light.png" alt="Tab Content settings with matching custom Value account" width="240"></picture><figcaption><p>Tab Content with custom value</p></figcaption></figure>
 
 </div>
 

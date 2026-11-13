@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { release } from "node:os";
 import { join } from "node:path";
@@ -5,17 +6,31 @@ import { cwd } from "node:process";
 import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
 import { compileContentSource } from "@webstudio-is/content-engine/compiler";
 import {
+  hasHistoricalFormComponentIdentityVersion,
   migratePages,
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
 import * as httpClient from "@webstudio-is/http-client";
+import { createHttpAssetContentRepository } from "@webstudio-is/content-engine/asset-content-repository";
+import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
   bundleVersion,
+  issueReportBrowserAttempt,
+  issueReportBrowserSignal,
+  issueReportEntityId,
+  issueReportErrorType,
+  issueReportRequestId,
+  issueReportRecentTargetSchema,
   getPublicBuildIncludes,
+  publicApiEntityIdFields,
   publicApiContractVersion,
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
   type IssueReportRuntime,
+  type IssueReportRecentFailure,
+  type IssueReportRecentTarget,
   type PublicApiCommand,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
@@ -25,6 +40,7 @@ import {
   getHomePage,
 } from "@webstudio-is/sdk";
 import {
+  ProjectSessionBusyError,
   createProjectSession,
   createDefaultProjectSessionCompatibility,
   serializeRestorePointTransaction,
@@ -52,6 +68,10 @@ import {
   type SerializedBuilderStateSnapshot,
 } from "@webstudio-is/project-build/state";
 import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build";
+import {
+  createContentBlockApplication,
+  getValidationIssues,
+} from "@webstudio-is/project-build/runtime";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
@@ -133,6 +153,35 @@ export const assertCliServerOperationSupported = (
   );
 };
 
+export const requiresCliEditingContract = (
+  operation: Pick<
+    (typeof publicApiOperations)[number],
+    "method" | "writeNamespaces"
+  >,
+  dryRun = false
+) =>
+  dryRun === false &&
+  operation.method === "mutation" &&
+  operation.writeNamespaces.length > 0;
+
+export const assertCliEditingContractVersion = (
+  contract: CliServerApiContract
+) => {
+  if (
+    contract.negotiated === false ||
+    contract.serverVersion === contract.clientVersion
+  ) {
+    return;
+  }
+
+  throw Object.assign(
+    new Error(
+      `The Webstudio CLI and API use different editing contracts. Expected ${contract.serverVersion}, received ${contract.clientVersion}. Restart the MCP server with the latest CLI; if it is already current, retry after the Webstudio API deployment is updated.`
+    ),
+    { code: "API_CONTRACT_MISMATCH" }
+  );
+};
+
 type PublicBuildSnapshot = Omit<
   BuilderBuildDataSnapshot,
   "dataSources" | "pages"
@@ -142,6 +191,8 @@ type PublicBuildSnapshot = Omit<
   version: number;
   homePageId?: string;
   rootFolderId?: string;
+  /** Keep while unversioned saved projects are supported; tracks the Form identity migration. */
+  formComponentIdentityVersion?: number;
   pages?: unknown;
   pageTemplates?: unknown;
   folders?: unknown;
@@ -178,6 +229,11 @@ export const getCliProjectRestorePointsFile = (
     "restore-points.json"
   );
 const compatibilityVersion = "cli-project-session-v1";
+const issueReportPathRoots = new Set([
+  ...builderNamespaces,
+  ...publicApiOperations.flatMap((operation) => operation.inputFields),
+  "input",
+]);
 
 const createCliProjectSessionCompatibility = (
   connection: ApiConnection
@@ -186,12 +242,34 @@ const createCliProjectSessionCompatibility = (
   apiCompatibilityVersion: connection.headers?.["x-webstudio-client-version"],
 });
 
-const isUnsupportedProjectSettingsIncludeError = (error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  return (
-    message.includes("invalid_enum_value") &&
-    message.includes('received "projectSettings"')
-  );
+const isUnsupportedProjectSettingsIncludeError = (
+  error: unknown,
+  includes: readonly string[]
+) => {
+  return getIssueReportErrorRecords(error).some((record) => {
+    const data = isPlainRecord(record.data) ? record.data : record;
+    return (
+      Array.isArray(data.issues) &&
+      data.issues.some((issue) => {
+        if (
+          !isPlainRecord(issue) ||
+          (issue.code !== "invalid_enum_value" &&
+            issue.code !== "invalid_value") ||
+          !Array.isArray(issue.path) ||
+          issue.path.length !== 2 ||
+          issue.path[0] !== "include"
+        ) {
+          return false;
+        }
+        const index = issue.path[1];
+        return (
+          (typeof index === "number" || typeof index === "string") &&
+          Number.isInteger(Number(index)) &&
+          includes[Number(index)] === "projectSettings"
+        );
+      })
+    );
+  });
 };
 
 const getLegacyPublicApiInclude = (namespaces: readonly BuilderNamespace[]) =>
@@ -218,22 +296,44 @@ const toPages = (snapshot: PublicBuildSnapshot) => {
 
 const toRemoteSnapshot = (
   snapshot: PublicBuildSnapshot
-): ProjectSessionRemoteSnapshot => ({
-  projectId: snapshot.projectId,
-  buildId: snapshot.buildId,
-  version: snapshot.version,
-  state: createBuilderStateFromBuildData({
-    ...snapshot,
-    pages: toPages(snapshot),
-    dataSources: snapshot.dataSources ?? snapshot.variables ?? [],
-  }),
-});
+): ProjectSessionRemoteSnapshot => {
+  if (
+    snapshot.pages === undefined &&
+    snapshot.instances?.some((instance) => instance.component === "Form")
+  ) {
+    throw new Error("A snapshot with instances must include pages.");
+  }
+  const instances = snapshot.instances?.map((instance) => ({ ...instance }));
+  if (instances !== undefined) {
+    migrateResourceFormInstancesMutable(
+      instances,
+      hasHistoricalFormComponentIdentityVersion(snapshot)
+    );
+  }
+  return {
+    projectId: snapshot.projectId,
+    buildId: snapshot.buildId,
+    version: snapshot.version,
+    state: createBuilderStateFromBuildData({
+      ...snapshot,
+      instances,
+      pages: toPages(snapshot),
+      dataSources: snapshot.dataSources ?? snapshot.variables ?? [],
+    }),
+  };
+};
 
 const publicOperationById = new Map(
   publicApiOperations.map((operation) => [operation.id, operation])
 );
 
-const getIssueReportRuntime = (): IssueReportRuntime => ({
+export const createIssueReportRuntime = (
+  recentFailure?: IssueReportRecentFailure,
+  diagnostics?: Pick<
+    IssueReportRuntime,
+    "projectId" | "recentTargets" | "session" | "preview"
+  >
+): IssueReportRuntime => ({
   cliVersion: packageJson.version,
   nodeVersion: process.versions.node,
   os: process.platform,
@@ -241,27 +341,374 @@ const getIssueReportRuntime = (): IssueReportRuntime => ({
   architecture: process.arch,
   executionMode: "mcp",
   apiContractVersion: publicApiContractVersion,
+  bundleVersion,
+  recentFailure,
+  ...diagnostics,
 });
+
+const getIssueReportErrorRecords = (error: unknown) => {
+  const records: Record<string, unknown>[] = [];
+  const seen = new Set<unknown>();
+  let current = error;
+  while (isPlainRecord(current) && !seen.has(current) && records.length < 10) {
+    records.push(current);
+    seen.add(current);
+    const data = isPlainRecord(current.data) ? current.data : undefined;
+    current = current.cause ?? data?.cause;
+  }
+  return records;
+};
+
+const getIssueReportEntityIds = (input: unknown) => {
+  const ids: NonNullable<IssueReportRecentFailure["entityIds"]> = [];
+  const seen = new Set<string>();
+  if (!isPlainRecord(input)) {
+    return ids;
+  }
+  // Only inspect operation fields, never arbitrary authored values or content.
+  const updates = Array.isArray(input.updates)
+    ? input.updates.slice(0, 100)
+    : [];
+  for (const entry of [input, ...updates]) {
+    if (!isPlainRecord(entry)) {
+      continue;
+    }
+    for (const [field, candidate] of Object.entries(entry).slice(0, 100)) {
+      if (publicApiEntityIdFields.has(field) === false) {
+        continue;
+      }
+      const parsed = issueReportEntityId.safeParse({ field, id: candidate });
+      if (parsed.success) {
+        const { id } = parsed.data;
+        const key = `${field}:${id}`;
+        if (!seen.has(key)) {
+          ids.push(parsed.data);
+          seen.add(key);
+        }
+      }
+      if (ids.length === 20) {
+        return ids;
+      }
+    }
+  }
+  return ids;
+};
+
+export const createIssueReportTarget = (
+  tool: string,
+  input: unknown,
+  pageId?: string
+): IssueReportRecentTarget | undefined => {
+  const entityIds = getIssueReportEntityIds(input);
+  if (
+    pageId !== undefined &&
+    !entityIds.some(({ field }) => field === "pageId")
+  ) {
+    const parsed = issueReportEntityId.safeParse({
+      field: "pageId",
+      id: pageId,
+    });
+    if (parsed.success) {
+      entityIds.unshift(parsed.data);
+    }
+  }
+  const target = issueReportRecentTargetSchema.safeParse({
+    tool,
+    entityIds: entityIds.slice(0, 20),
+  });
+  return target.success ? target.data : undefined;
+};
+
+export const createIssueReportTargetTracker = (now = Date.now) => {
+  let recent: { target: IssueReportRecentTarget; at: number }[] = [];
+  const snapshot = () => {
+    const valid = recent.filter(({ at }) => {
+      const age = now() - at;
+      return age >= 0 && age <= 10 * 60_000;
+    });
+    return valid.length === 0 ? undefined : valid;
+  };
+  return {
+    record(tool: string, input: unknown, pageId?: string) {
+      const target = createIssueReportTarget(tool, input, pageId);
+      if (target === undefined) {
+        return false;
+      }
+      recent = [
+        { target, at: now() },
+        ...(snapshot() ?? []).filter(({ target: old }) => old.tool !== tool),
+      ].slice(0, 3);
+      return true;
+    },
+    getAll: () => snapshot()?.map(({ target }) => target),
+    restore(target: IssueReportRecentTarget, at: number) {
+      const age = now() - at;
+      if (age >= 0 && age <= 10 * 60_000) {
+        recent.push({ target, at });
+        recent.sort((left, right) => right.at - left.at);
+        recent = recent.slice(0, 3);
+      }
+    },
+    snapshot,
+    clear() {
+      recent = [];
+    },
+  };
+};
+
+export const createIssueReportFailure = (
+  canonicalTool: string,
+  error: unknown,
+  elapsedMs?: number,
+  input?: unknown
+): IssueReportRecentFailure => {
+  const errorCode = getStableErrorCode(error);
+  const records = getIssueReportErrorRecords(error);
+  const errorType = records
+    .map((record) =>
+      issueReportErrorType.safeParse(
+        record instanceof Error ? record.constructor.name : undefined
+      )
+    )
+    .find((result) => result.success && result.data !== "TRPCClientError");
+  const record = records.find(
+    (candidate) =>
+      candidate.attempts !== undefined || candidate.processExit !== undefined
+  );
+  const responseRecord = records.find(
+    (candidate) =>
+      isPlainRecord(candidate.meta) &&
+      (candidate.meta.response !== undefined ||
+        candidate.meta.responseJSON !== undefined)
+  );
+  const meta = isPlainRecord(responseRecord?.meta)
+    ? responseRecord.meta
+    : undefined;
+  const response = isPlainRecord(meta?.response) ? meta.response : undefined;
+  const contentType =
+    response?.headers instanceof Headers
+      ? response.headers.get("content-type")
+      : undefined;
+  const responseJson = meta?.responseJSON;
+  const envelope = Array.isArray(responseJson) ? responseJson[0] : responseJson;
+  const responseFormat =
+    typeof contentType === "string" && contentType.includes("json")
+      ? "json"
+      : typeof contentType === "string" && contentType.includes("html")
+        ? "html"
+        : "other";
+  const responseEnvelope =
+    responseJson === undefined
+      ? "missing"
+      : isPlainRecord(envelope) && "result" in envelope
+        ? "result"
+        : isPlainRecord(envelope) && "error" in envelope
+          ? "error"
+          : "other";
+  const httpStatus = httpClient.getErrorStatus(error) ?? response?.status;
+  const requestId = issueReportRequestId.safeParse(
+    records.find((record) => record.requestId !== undefined)?.requestId ??
+      (response?.headers instanceof Headers
+        ? (response.headers.get("x-request-id") ??
+          response.headers.get("cf-ray"))
+        : undefined)
+  );
+  const isResponseTransformFailure = records.some((candidate) => {
+    if (
+      candidate.name !== "TRPCClientError" ||
+      !isPlainRecord(candidate.meta)
+    ) {
+      return false;
+    }
+    const json = candidate.meta.responseJSON;
+    const envelopes = Array.isArray(json) ? json : [json];
+    return (
+      json !== undefined &&
+      envelopes.some(
+        (envelope) =>
+          !isPlainRecord(envelope) ||
+          ("error" in envelope
+            ? !isPlainRecord(envelope.error) ||
+              typeof envelope.error.code !== "number"
+            : !isPlainRecord(envelope.result))
+      )
+    );
+  });
+  const processExit = isPlainRecord(record?.processExit)
+    ? record.processExit
+    : undefined;
+  const exitSignal = issueReportBrowserSignal.safeParse(processExit?.signal);
+  const exitCode =
+    typeof processExit?.code === "number" &&
+    Number.isInteger(processExit.code) &&
+    processExit.code >= 0 &&
+    processExit.code <= 255
+      ? processExit.code
+      : undefined;
+  const browserAttempts = Array.isArray(record?.attempts)
+    ? record.attempts
+        .flatMap((attempt) => {
+          if (!isPlainRecord(attempt)) {
+            return [];
+          }
+          const parsed = issueReportBrowserAttempt.safeParse({
+            browser: attempt.browser,
+            source: attempt.source,
+          });
+          return parsed.success ? [parsed.data] : [];
+        })
+        .slice(0, 10)
+    : [];
+  const issues =
+    errorCode === undefined
+      ? undefined
+      : getValidationIssues(error)
+          ?.slice(0, 30)
+          .map((issue) => ({
+            // Keep only a known namespace/input field and array index. Leaf
+            // keys may contain project data, while this prefix is enough to
+            // locate the failing input shape (for example `updates[0]`).
+            path: issueReportPathRoots.has(issue.path[0] ?? "")
+              ? [
+                  issue.path[0],
+                  ...(/^\d+$/.test(issue.path[1] ?? "") ? [issue.path[1]] : []),
+                ]
+              : [],
+            code: issue.code,
+            constraint: issue.constraint,
+          }));
+  const entityIds = getIssueReportEntityIds(input);
+  const previewProcess =
+    errorCode === "PREVIEW_DEPENDENCY_INSTALL_FAILED"
+      ? records
+          .slice(1)
+          .find(
+            (candidate) =>
+              candidate.code !== undefined || candidate.killed === true
+          )
+      : undefined;
+  const processErrorCode = getStableErrorCode(previewProcess);
+  const previewExitCode =
+    typeof previewProcess?.code === "number" &&
+    Number.isInteger(previewProcess.code) &&
+    previewProcess.code >= 0 &&
+    previewProcess.code <= 255
+      ? previewProcess.code
+      : undefined;
+  const previewTerminated = previewProcess?.killed === true;
+  return {
+    tool: canonicalTool,
+    code: isResponseTransformFailure
+      ? "API_RESPONSE_TRANSFORM_FAILED"
+      : (errorCode ?? "MCP_TOOL_FAILED"),
+    ...(errorType?.success ? { errorType: errorType.data } : {}),
+    ...(requestId.success ? { requestId: requestId.data } : {}),
+    ...(typeof httpStatus === "number" &&
+    Number.isInteger(httpStatus) &&
+    httpStatus >= 100 &&
+    httpStatus <= 599
+      ? { httpStatus }
+      : {}),
+    ...(elapsedMs === undefined ? {} : { elapsedMs }),
+    ...(entityIds.length === 0 ? {} : { entityIds }),
+    ...(issues === undefined || issues.length === 0 ? {} : { issues }),
+    ...(processErrorCode === undefined &&
+    previewExitCode === undefined &&
+    previewTerminated === false
+      ? {}
+      : {
+          previewInstall: {
+            ...(processErrorCode === undefined ? {} : { processErrorCode }),
+            ...(previewExitCode === undefined
+              ? {}
+              : { exitCode: previewExitCode }),
+            ...(previewTerminated ? { terminated: true } : {}),
+          },
+        }),
+    ...(response === undefined
+      ? {}
+      : {
+          response: {
+            format: responseFormat,
+            envelope: responseEnvelope,
+            ...(Array.isArray(responseJson)
+              ? { batchSize: Math.min(responseJson.length, 1_000) }
+              : {}),
+          },
+        }),
+    ...(browserAttempts.length === 0 &&
+    !exitSignal.success &&
+    exitCode === undefined
+      ? {}
+      : {
+          browser: {
+            ...(exitSignal.success ? { exitSignal: exitSignal.data } : {}),
+            ...(exitCode === undefined ? {} : { exitCode }),
+            ...(browserAttempts.length === 0
+              ? {}
+              : { attempts: browserAttempts }),
+          },
+        }),
+  };
+};
+
+export const createIssueReportFailureTracker = (now = Date.now) => {
+  let recent: { failure: IssueReportRecentFailure; at: number } | undefined;
+  const getRecent = () => {
+    if (recent === undefined) {
+      return;
+    }
+    const age = now() - recent.at;
+    return age >= 0 && age <= 10 * 60_000 ? recent : undefined;
+  };
+  return {
+    record(tool: string, error: unknown, elapsedMs?: number, input?: unknown) {
+      recent = {
+        failure: createIssueReportFailure(tool, error, elapsedMs, input),
+        at: now(),
+      };
+    },
+    get() {
+      return getRecent()?.failure;
+    },
+    restore(failure: IssueReportRecentFailure, at: number) {
+      const age = now() - at;
+      if (age >= 0 && age <= 10 * 60_000) {
+        recent = { failure, at };
+      }
+    },
+    snapshot() {
+      return getRecent();
+    },
+    succeed(tool: string) {
+      if (tool === "report-issue") {
+        recent = undefined;
+      }
+    },
+  };
+};
 
 export const addIssueReportRuntime = (
   command: PublicApiCommand,
   input: unknown,
-  runtime: IssueReportRuntime = getIssueReportRuntime()
+  getRuntime: () => IssueReportRuntime = createIssueReportRuntime
 ) => {
   if (command !== "report-issue" || isPlainRecord(input) === false) {
     return input;
   }
-  return { ...input, runtime };
+  return { ...input, runtime: getRuntime() };
 };
 
 const executePublicServerOperation = async ({
   connection,
   operationId,
   input,
+  issueReportRuntime,
 }: {
   connection: ApiConnection;
   operationId: string;
   input: unknown;
+  issueReportRuntime?: () => IssueReportRuntime;
 }) => {
   const operation = publicOperationById.get(operationId);
   if (operation === undefined) {
@@ -277,10 +724,15 @@ const executePublicServerOperation = async ({
   }
   return await client({
     ...connection,
-    ...(addIssueReportRuntime(operation.command, input) as Record<
-      string,
-      unknown
-    >),
+    ...(addIssueReportRuntime(
+      operation.command,
+      input,
+      issueReportRuntime ??
+        (() =>
+          createIssueReportRuntime(undefined, {
+            projectId: connection.projectId,
+          }))
+    ) as Record<string, unknown>),
     projectId: connection.projectId,
   });
 };
@@ -294,7 +746,8 @@ const withMappedRemoteError = async <Result>(task: () => Promise<Result>) => {
       throw error;
     }
     const mapped = new Error(
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
+      { cause: error }
     ) as Error & { code: string };
     mapped.name = code;
     mapped.code = code;
@@ -304,10 +757,32 @@ const withMappedRemoteError = async <Result>(task: () => Promise<Result>) => {
 
 const parsePersistedSnapshot = (
   value: PersistedCliProjectSessionSnapshot
-): ProjectSessionPersistedSnapshot => ({
-  ...value,
-  state: createBuilderStateFromSerializedSnapshot(value.state),
-});
+): ProjectSessionPersistedSnapshot => {
+  const instances = value.state.instances?.map(
+    ([id, instance]) => [id, { ...instance }] as const
+  );
+  if (
+    value.state.pages === undefined &&
+    instances?.some(([, instance]) => instance.component === "Form")
+  ) {
+    throw new Error(
+      "A persisted snapshot with Form instances must include pages."
+    );
+  }
+  if (instances !== undefined) {
+    migrateResourceFormInstancesMutable(
+      instances.map(([, instance]) => instance),
+      hasHistoricalFormComponentIdentityVersion(value.state.pages)
+    );
+  }
+  return {
+    ...value,
+    state: createBuilderStateFromSerializedSnapshot({
+      ...value.state,
+      instances,
+    }),
+  };
+};
 
 const serializePersistedSnapshot = (
   snapshot: ProjectSessionPersistedSnapshot
@@ -329,9 +804,9 @@ export const createCliProjectSessionStorage = (
       options.expectedRevision !== undefined &&
       current?.revision !== options.expectedRevision
     ) {
-      throw new Error("Project session snapshot changed on disk.");
+      throw new ProjectSessionBusyError();
     }
-    const revision = crypto.randomUUID();
+    const revision = randomUUID();
     await writeFileAtomic(
       path,
       `${JSON.stringify(
@@ -397,7 +872,7 @@ export const createCliProjectRestorePointStorage = (
       return await withFileLock(path, async () => {
         const persisted = await load();
         const point: PersistedCliProjectRestorePoint = {
-          id: crypto.randomUUID(),
+          id: randomUUID(),
           name,
           createdAt: new Date().toISOString(),
           snapshot: serializePersistedSnapshot(snapshot),
@@ -437,11 +912,13 @@ export const createCliProjectSessionTransport = ({
   executeServerOperation,
   getBuildSnapshot = httpClient.getBuildSnapshot,
   getPermissions,
+  issueReportRuntime,
 }: {
   connection: ApiConnection;
   executeServerOperation?: ProjectSessionTransport["executeServerOperation"];
   getBuildSnapshot?: typeof httpClient.getBuildSnapshot;
   getPermissions?: ProjectSessionTransport["getPermissions"];
+  issueReportRuntime?: () => IssueReportRuntime;
 }): ProjectSessionTransport => ({
   async getCompatibility() {
     return createCliProjectSessionCompatibility(connection);
@@ -454,17 +931,22 @@ export const createCliProjectSessionTransport = ({
           include,
         })
       ) as Promise<PublicBuildSnapshot>;
+    // Older servers need pages to disambiguate historical Form instances.
+    const readNamespaces = namespaces.includes("instances")
+      ? [...namespaces, "pages" as const]
+      : namespaces;
+    const includes = getPublicBuildIncludes(readNamespaces);
     let snapshot: PublicBuildSnapshot;
     try {
-      snapshot = await fetchSnapshot(getPublicBuildIncludes(namespaces));
+      snapshot = await fetchSnapshot(includes);
     } catch (error) {
       if (
         namespaces.includes("projectSettings") === false ||
-        isUnsupportedProjectSettingsIncludeError(error) === false
+        isUnsupportedProjectSettingsIncludeError(error, includes) === false
       ) {
         throw error;
       }
-      snapshot = await fetchSnapshot(getLegacyPublicApiInclude(namespaces));
+      snapshot = await fetchSnapshot(getLegacyPublicApiInclude(readNamespaces));
     }
     return toRemoteSnapshot(snapshot);
   },
@@ -514,9 +996,27 @@ export const createCliProjectSessionTransport = ({
       input: unknown;
     }) =>
       (await withMappedRemoteError(() =>
-        executePublicServerOperation({ connection, operationId, input })
+        executePublicServerOperation({
+          connection,
+          operationId,
+          input,
+          issueReportRuntime,
+        })
       )) as Result),
 });
+
+export const createCliAssetContentRepository = ({
+  connection,
+}: {
+  connection: ApiConnection;
+}) =>
+  createHttpAssetContentRepository({
+    projectId: connection.projectId,
+    ...httpClient.createProjectAssetContentTransport({
+      ...connection,
+      authToken: () => connection.authToken,
+    }),
+  });
 
 export const createCliProjectSession = ({
   connection,
@@ -525,6 +1025,8 @@ export const createCliProjectSession = ({
   sessionProjectId,
   executeServerOperation,
   getPermissions,
+  issueReportRuntime,
+  assetContentRepository = createCliAssetContentRepository({ connection }),
 }: {
   connection: ApiConnection;
   storage?: ProjectSessionStorage;
@@ -532,13 +1034,28 @@ export const createCliProjectSession = ({
   sessionProjectId?: string;
   executeServerOperation?: ProjectSessionTransport["executeServerOperation"];
   getPermissions?: ProjectSessionTransport["getPermissions"];
-}) =>
-  createProjectSession({
+  issueReportRuntime?: () => IssueReportRuntime;
+  assetContentRepository?: ReturnType<typeof createCliAssetContentRepository>;
+}) => {
+  let projectSession: ReturnType<typeof createProjectSession>;
+  const contentSession = createAssetContentSession({
+    repository: assetContentRepository,
+    authorize: async ({ operation }) => {
+      const permissions = await projectSession.getPermissions();
+      return (
+        permissions.canUseApi &&
+        permissions.canView &&
+        (operation === "read" || permissions.canEdit)
+      );
+    },
+  });
+  projectSession = createProjectSession({
     projectId: connection.projectId,
     transport: createCliProjectSessionTransport({
       connection,
       executeServerOperation,
       getPermissions,
+      issueReportRuntime,
     }),
     storage:
       storage ??
@@ -546,7 +1063,18 @@ export const createCliProjectSession = ({
         getCliProjectSessionFile(projectRoot, sessionProjectId)
       ),
     compatibilityVersion,
+    runtimeContext: {
+      createId: randomUUID,
+      projectId: connection.projectId,
+      contentBlockApplication: createContentBlockApplication({
+        projectId: connection.projectId,
+        session: contentSession,
+        metas: componentMetas,
+      }),
+    },
   });
+  return projectSession;
+};
 
 export type CliProjectSession = ReturnType<typeof createCliProjectSession>;
 

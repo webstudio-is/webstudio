@@ -9,12 +9,14 @@ import {
   Flex,
   Grid,
   rawTheme,
+  cssVar,
 } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { Role } from "@webstudio-is/project";
 import { initializeClientSync, getSyncClient } from "~/shared/sync/sync-client";
 import { usePreventUnload } from "~/shared/sync/project-queue";
 import { usePublish, $publisher } from "~/shared/pubsub";
+import { subscribePreviewFormRequests } from "~/shared/preview-form-parent";
 import { Inspector } from "./inspector";
 import { Topbar } from "./shared/topbar";
 import { Footer } from "./features/footer";
@@ -42,6 +44,7 @@ import { $settings, type Settings } from "./shared/client-settings";
 import { builderUrl, getCanvasUrl } from "~/shared/router-utils";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
+import { PreviewNavigationObserver } from "~/shared/pages/use-switch-page";
 import { useMount, useUnmount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
 import { ProjectSettings } from "~/shared/project-settings";
@@ -70,6 +73,7 @@ import { KeyboardShortcutsDialog } from "./features/keyboard-shortcuts-dialog";
 import { TokenConflictDialog } from "~/shared/token-conflict-dialog";
 import { RootStyleConflictDialog } from "~/shared/root-style-conflict-dialog";
 import { DesignTokenImportDialog } from "~/shared/design-token-import-dialog";
+import { TemplateNameConfirmationDialog } from "./features/template-name-confirmation-dialog";
 import type { User } from "~/shared/db/user.server";
 
 import {
@@ -120,7 +124,7 @@ const SidePanel = ({
         fg: 0,
         // Left sidebar tabs won't be able to pop out to the right if we set overflowX to auto.
         //overflowY: "auto",
-        backgroundColor: theme.colors.backgroundPanel,
+        backgroundColor: cssVar("--background-primary"),
         height: "100%",
         ...css,
       }}
@@ -333,6 +337,7 @@ export const Builder = (props: BuilderProps) => {
   useEffect(() => {
     $publisher.set({ publish });
   }, [publish]);
+  useEffect(() => subscribePreviewFormRequests(publish), [publish]);
 
   const project = useStore($project);
 
@@ -413,6 +418,7 @@ export const Builder = (props: BuilderProps) => {
 
   return (
     <TooltipProvider>
+      {isPreviewMode && <PreviewNavigationObserver />}
       <div
         style={{ display: "contents" }}
         onPointerDown={inertHandlers.onPointerDown}
@@ -474,15 +480,13 @@ export const Builder = (props: BuilderProps) => {
                 left: 0,
                 bottom: 0,
                 width: 1,
-                background: theme.colors.borderMain,
+                background: cssVar("--border-default"),
+                zIndex: 1,
               },
             }}
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>
-          <Main css={{ pointerEvents: "none" }}>
-            <CanvasToolsContainer />
-          </Main>
           {project ? (
             <Topbar
               project={project}
@@ -529,6 +533,7 @@ export const Builder = (props: BuilderProps) => {
         <DesignTokenImportDialog />
         <TokenConflictDialog />
         <RootStyleConflictDialog />
+        <TemplateNameConfirmationDialog />
         <RemoteDialog />
         <Toaster />
       </div>

@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { beforeEach, describe, test, expect, vi } from "vitest";
 import {
   createTestServer,
   db,
@@ -8,6 +8,13 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  encodeDataSourceVariable,
+  type Instance,
+  type Prop,
+} from "@webstudio-is/sdk";
 import {
   loadRawBuildById,
   loadBuildById,
@@ -108,12 +115,236 @@ describe("loadRawBuildById (msw)", () => {
 // ---------------------------------------------------------------------------
 
 describe("loadBuildById (msw)", () => {
+  test.each(["string", "expression"] as const)(
+    "loads legacy CodeText %s content canonically without writing or removing defaults",
+    async (type) => {
+      const code: Prop = {
+        id: "legacy-code",
+        instanceId: "code",
+        name: "code",
+        type,
+        value: type === "string" ? "const old = 1;" : '"protected"',
+        ...(type === "expression" ? { mode: "read" as const } : {}),
+      };
+      const theme: Prop = {
+        id: "theme",
+        instanceId: "code",
+        name: "theme",
+        type: "string",
+        value: "github-light",
+      };
+      const row = {
+        ...buildRow,
+        instances: JSON.stringify([
+          { id: "code", type: "instance", component: "CodeText", children: [] },
+        ]),
+        props: JSON.stringify([code, theme]),
+      };
+      const before = structuredClone(row);
+      const writes: unknown[] = [];
+      server.use(
+        db.get("Build", () => json([row])),
+        db.patch("Build", async ({ request }) => {
+          writes.push(await request.json());
+          return json([row]);
+        })
+      );
+
+      const result = await loadBuildById(createContext(), row.id);
+      expect(result.instances[0].children).toEqual([
+        type === "string"
+          ? { type: "text", value: code.value }
+          : { type: "expression", value: code.value, mode: "read" },
+      ]);
+      expect(result.props).toEqual([theme]);
+      expect(await loadBuildById(createContext(), row.id)).toEqual(result);
+      expect(row).toEqual(before);
+      expect(writes).toEqual([]);
+    }
+  );
+
+  test("normalizes only legacy document bindings on reads without saving them", async () => {
+    const expression = `${encodeDataSourceVariable("document")}.frontmatter.title`;
+    const bindings = [
+      { id: "legacy", value: expression },
+      { id: "read", value: expression, mode: "read" as const },
+      { id: "readwrite", value: expression, mode: "readwrite" as const },
+      { id: "computed", value: `${expression} + "!"` },
+      {
+        id: "other-document",
+        value: `${encodeDataSourceVariable("other")}.frontmatter.title`,
+      },
+      {
+        id: "unsafe",
+        value: `${encodeDataSourceVariable("document")}.frontmatter.__proto__.title`,
+      },
+    ];
+    const instances: Instance[] = [
+      {
+        id: "block",
+        type: "instance",
+        component: blockComponent,
+        children: [
+          ...bindings.map(({ id }) => ({ type: "id" as const, value: id })),
+          { type: "id", value: "templates" },
+        ],
+      },
+      ...bindings.map(
+        ({ id, ...binding }): Instance => ({
+          id,
+          type: "instance",
+          component: "Heading",
+          children: [{ type: "expression", ...binding }],
+        })
+      ),
+      {
+        id: "templates",
+        type: "instance",
+        component: blockTemplateComponent,
+        children: [{ type: "id", value: "template-title" }],
+      },
+      {
+        id: "template-title",
+        type: "instance",
+        component: "Heading",
+        children: [{ type: "expression", value: expression }],
+      },
+    ];
+    const props: Prop[] = [
+      {
+        id: "source",
+        instanceId: "block",
+        name: "src",
+        type: "asset",
+        value: "article",
+      },
+      {
+        id: "document-prop",
+        instanceId: "block",
+        name: "document",
+        type: "parameter",
+        value: "document",
+      },
+      ...bindings.map(
+        ({ id, ...binding }): Prop => ({
+          id: `${id}-prop`,
+          instanceId: id,
+          name: "aria-label",
+          type: "expression",
+          ...binding,
+        })
+      ),
+    ];
+    const row = {
+      ...buildRow,
+      instances: JSON.stringify(instances),
+      props: JSON.stringify(props),
+    };
+    const before = structuredClone(row);
+    const writes: unknown[] = [];
+    server.use(
+      db.get("Build", () => json([row])),
+      db.patch("Build", async ({ request }) => {
+        writes.push(await request.json());
+        return json([row]);
+      })
+    );
+    const result = await loadBuildById(createContext(), "build-1");
+    for (const binding of bindings) {
+      const expectedMode = binding.id === "legacy" ? "readwrite" : binding.mode;
+      expect(
+        result.instances.find(({ id }) => id === binding.id)?.children
+      ).toEqual([
+        {
+          type: "expression",
+          value: binding.value,
+          ...(expectedMode === undefined ? {} : { mode: expectedMode }),
+        },
+      ]);
+      expect(
+        result.props.find(({ id }) => id === `${binding.id}-prop`)
+      ).toEqual({
+        id: `${binding.id}-prop`,
+        instanceId: binding.id,
+        name: "aria-label",
+        type: "expression",
+        value: binding.value,
+        ...(expectedMode === undefined ? {} : { mode: expectedMode }),
+      });
+    }
+    expect(
+      result.instances.find(({ id }) => id === "template-title")?.children
+    ).toEqual(instances.at(-1)?.children);
+    expect(await loadBuildById(createContext(), "build-1")).toEqual(result);
+    expect(row).toEqual(before);
+    expect(writes).toEqual([]);
+  });
+
+  test.each([
+    { marker: 1, expected: "ResourceForm" },
+    { marker: undefined, expected: "WebhookForm" },
+  ])(
+    "normalizes stored Form as $expected before exposing pages",
+    async ({ marker, expected }) => {
+      server.use(
+        db.get("Build", () =>
+          json([
+            {
+              ...buildRow,
+              pages: JSON.stringify({
+                ...JSON.parse(buildRow.pages),
+                formComponentIdentityVersion: marker,
+              }),
+              instances: JSON.stringify([
+                {
+                  id: "form",
+                  type: "instance",
+                  component: "Form",
+                  children: [],
+                },
+              ]),
+            },
+          ])
+        )
+      );
+      const result = await loadBuildById(createContext(), "build-1");
+      expect(result.instances[0]?.component).toBe(expected);
+      expect(result.pages).not.toHaveProperty("formComponentIdentityVersion");
+    }
+  );
+
   test("returns parsed build with id and projectId", async () => {
     server.use(db.get("Build", () => json([buildRow])));
     const result = await loadBuildById(createContext(), "build-1");
     expect(result.id).toBe("build-1");
     expect(result.projectId).toBe("proj-1");
     expect(result.marketplaceProduct).toBeUndefined();
+  });
+
+  test("drops persisted response-header rules with a null value", async () => {
+    server.use(
+      db.get("Build", () =>
+        json([
+          {
+            ...buildRow,
+            projectSettings: JSON.stringify({
+              meta: {
+                customHeaders: [
+                  { name: "X-Frame-Options", value: null },
+                  { name: "Referrer-Policy", value: "no-referrer" },
+                ],
+              },
+              compiler: {},
+            }),
+          },
+        ])
+      )
+    );
+
+    const result = await loadBuildById(createContext(), "build-1");
+    expect(result.projectSettings.meta.customHeaders).toEqual([
+      { name: "Referrer-Policy", value: "no-referrer" },
+    ]);
   });
 
   test("rejects invalid persisted data sources", async () => {
@@ -375,6 +606,315 @@ describe("createBuild (msw)", () => {
 // ---------------------------------------------------------------------------
 
 describe("createProductionBuild (msw)", () => {
+  beforeEach(() => server.use(db.get("Asset", () => json([]))));
+  test.each([
+    { label: "without custom headers", headers: [], denied: false },
+    {
+      label: "with custom headers on a Free plan",
+      headers: [{ name: "X-Frame-Options", value: "DENY" }],
+      denied: true,
+    },
+  ])(
+    "reads legacy settings from the saved snapshot $label",
+    async ({ headers, denied }) => {
+      const removeBuild = vi.fn(() => empty({ status: 204 }));
+      server.use(
+        db.get("Project", () =>
+          json({
+            id: "proj-1",
+            userId: "project-owner",
+            domain: "project-domain",
+          })
+        ),
+        db.get("Build", ({ request }) => {
+          // Use the saved snapshot's legacy settings, even when the development
+          // build read before snapshot creation had different settings.
+          if (new URL(request.url).searchParams.get("id") === "eq.build-prod") {
+            return json([
+              {
+                projectSettings: null,
+                pages: JSON.stringify({
+                  ...JSON.parse(buildRow.pages),
+                  meta: { siteName: "Legacy site", customHeaders: headers },
+                }),
+              },
+            ]);
+          }
+          return json([buildRow]);
+        }),
+        db.post("rpc/create_production_build_expected", () =>
+          json("build-prod")
+        ),
+        db.delete("Build", removeBuild)
+      );
+      const result = createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: { destination: "saas", domains: ["example.com"] },
+        },
+        createContext()
+      );
+      if (denied) {
+        await expect(result).rejects.toThrow(
+          "Custom headers are a Pro feature"
+        );
+        expect(removeBuild).toHaveBeenCalledOnce();
+      } else {
+        await expect(result).resolves.toMatchObject({ id: "build-prod" });
+        expect(removeBuild).not.toHaveBeenCalled();
+      }
+    }
+  );
+
+  test.each([
+    {
+      label: "Free owner, custom domain",
+      allowed: false,
+      domains: ["example.com"],
+      headers: [{ name: "X-Frame-Options", value: "DENY" }],
+      denied: true,
+      checkPlan: true,
+    },
+    {
+      label: "Free owner, route rule",
+      allowed: false,
+      domains: ["example.com"],
+      headers: [
+        {
+          route: "/private/*",
+          name: "Referrer-Policy",
+          value: "no-referrer",
+        },
+      ],
+      denied: true,
+      checkPlan: true,
+    },
+    {
+      label: "Free owner, mixed domains",
+      allowed: false,
+      domains: ["project-domain", "example.com"],
+      headers: [{ name: "X-Frame-Options", value: "DENY" }],
+      denied: true,
+      checkPlan: true,
+    },
+    {
+      label: "Free owner, staging",
+      allowed: false,
+      domains: ["project-domain"],
+      headers: [{ name: "X-Frame-Options", value: "DENY" }],
+      denied: false,
+      checkPlan: false,
+    },
+    {
+      label: "Pro owner, custom domain",
+      allowed: true,
+      domains: ["example.com"],
+      headers: [{ name: "X-Frame-Options", value: "DENY" }],
+      denied: false,
+      checkPlan: true,
+    },
+    {
+      label: "Free owner, deleted headers",
+      allowed: false,
+      domains: ["example.com"],
+      headers: [],
+      denied: false,
+      checkPlan: false,
+    },
+    {
+      label: "Free owner, legacy null header value",
+      allowed: false,
+      domains: ["example.com"],
+      headers: [{ name: "X-Frame-Options", value: null }],
+      denied: false,
+      checkPlan: false,
+    },
+    {
+      label: "Free owner, explicit defaults",
+      allowed: false,
+      domains: ["example.com"],
+      headers: [
+        { name: "content-security-policy", value: "frame-ancestors 'self'" },
+        { name: "X-Frame-Options", value: "SAMEORIGIN" },
+      ],
+      denied: false,
+      checkPlan: false,
+    },
+  ])(
+    "enforces custom header publishing for $label",
+    async ({ allowed, domains, headers, denied, checkPlan }) => {
+      const context = createContext();
+      // A collaborator's own plan must not determine the project's entitlement.
+      context.planFeatures = {
+        ...context.planFeatures,
+        allowDynamicData: !allowed,
+      };
+      const getOwnerPlanFeatures = vi.fn(async () => ({
+        ...context.planFeatures,
+        allowDynamicData: allowed,
+      }));
+      context.getOwnerPlanFeatures = getOwnerPlanFeatures;
+      const createBuild = vi.fn(() => json("build-prod"));
+      const removeBuild = vi.fn(() => empty({ status: 204 }));
+      server.use(
+        db.get("Project", () =>
+          json({
+            id: "proj-1",
+            userId: "project-owner",
+            domain: "project-domain",
+          })
+        ),
+        db.get("Build", () =>
+          json([
+            {
+              ...buildRow,
+              projectSettings: JSON.stringify({
+                meta: { customHeaders: headers },
+                compiler: {},
+              }),
+            },
+          ])
+        ),
+        db.post("rpc/create_production_build_expected", createBuild),
+        db.delete("Build", removeBuild)
+      );
+      const result = createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: {
+            destination: "saas",
+            domains,
+            // Deliberately misleading caller-supplied metadata must not bypass the gate.
+            target: "staging",
+            assetsDomain: domains[0],
+          },
+        },
+        context
+      );
+      if (denied) {
+        await expect(result).rejects.toThrow(
+          "Custom headers are a Pro feature"
+        );
+        expect(removeBuild).toHaveBeenCalledOnce();
+      } else {
+        await expect(result).resolves.toMatchObject({ id: "build-prod" });
+        expect(removeBuild).not.toHaveBeenCalled();
+      }
+      expect(createBuild).toHaveBeenCalledOnce();
+      if (checkPlan) {
+        expect(getOwnerPlanFeatures).toHaveBeenCalledExactlyOnceWith(
+          "project-owner"
+        );
+      } else {
+        expect(getOwnerPlanFeatures).not.toHaveBeenCalled();
+      }
+    }
+  );
+
+  test.each([
+    { label: "custom value", value: "DENY", allowed: false, staging: false },
+    { label: "Pro owner", value: "DENY", allowed: true, staging: false },
+    { label: "staging", value: "DENY", allowed: false, staging: true },
+    {
+      label: "default value",
+      value: "SAMEORIGIN",
+      allowed: false,
+      staging: false,
+    },
+  ])(
+    "checks the published snapshot after a concurrent edit: $label",
+    async ({ value, allowed, staging }) => {
+      const context = createContext();
+      context.getOwnerPlanFeatures = vi.fn(async () => ({
+        ...context.planFeatures,
+        allowDynamicData: allowed,
+      }));
+      const removeBuild = vi.fn(({ request }: { request: Request }) => {
+        expect(new URL(request.url).searchParams.get("id")).toBe(
+          "eq.build-prod"
+        );
+        return empty({ status: 204 });
+      });
+      const readSnapshot = vi.fn();
+      server.use(
+        db.get("Project", () =>
+          json({
+            id: "proj-1",
+            userId: "project-owner",
+            domain: "project-domain",
+          })
+        ),
+        db.get("Build", ({ request }) => {
+          const url = new URL(request.url);
+          if (url.searchParams.get("id") === "eq.build-prod") {
+            readSnapshot();
+            expect(url.searchParams.get("select")).toBe(
+              "projectSettings,pages"
+            );
+            return json([
+              {
+                projectSettings: JSON.stringify({
+                  meta: { customHeaders: [{ name: "X-Frame-Options", value }] },
+                  compiler: {},
+                }),
+              },
+            ]);
+          }
+          // Development settings change before the RPC snapshots them.
+          return json([buildRow]);
+        }),
+        db.post("rpc/create_production_build_expected", () =>
+          json("build-prod")
+        ),
+        db.delete("Build", removeBuild)
+      );
+      const result = createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: {
+            destination: "saas",
+            domains: [staging ? "project-domain" : "example.com"],
+          },
+        },
+        context
+      );
+      if (!allowed && !staging && value !== "SAMEORIGIN" && value !== null) {
+        await expect(result).rejects.toThrow(
+          "Custom headers are a Pro feature"
+        );
+        expect(removeBuild).toHaveBeenCalledOnce();
+      } else {
+        await expect(result).resolves.toMatchObject({ id: "build-prod" });
+        expect(removeBuild).not.toHaveBeenCalled();
+      }
+      expect(readSnapshot).toHaveBeenCalledOnce();
+    }
+  );
+
+  test("fails closed and removes the unpublished build when its settings cannot be verified", async () => {
+    const removeBuild = vi.fn(() => empty({ status: 204 }));
+    server.use(
+      ownershipHandler,
+      db.get("Build", ({ request }) =>
+        new URL(request.url).searchParams.has("id")
+          ? json([])
+          : json([buildRow])
+      ),
+      db.post("rpc/create_production_build_expected", () => json("build-prod")),
+      db.delete("Build", removeBuild)
+    );
+    await expect(
+      createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: { destination: "saas", domains: ["example.com"] },
+        },
+        createContext()
+      )
+    ).rejects.toThrow("Cannot verify published response headers");
+    expect(removeBuild).toHaveBeenCalledOnce();
+  });
+
   test("throws when dev build has orphan resource references", async () => {
     let didCreateProductionBuild = false;
     server.use(
@@ -511,7 +1051,7 @@ describe("unpublishBuild (msw)", () => {
     ).rejects.toThrow(AuthorizationError);
   });
 
-  test("throws when domain is not published", async () => {
+  test("succeeds when the domain is already unpublished", async () => {
     const projectId = uid();
     server.use(
       ownershipHandler,
@@ -521,7 +1061,7 @@ describe("unpublishBuild (msw)", () => {
 
     await expect(
       unpublishBuild({ projectId, domain: "example.com" }, createContext())
-    ).rejects.toThrow("is not published");
+    ).resolves.toBeUndefined();
   });
 
   test("deletes build when it has only the one domain", async () => {

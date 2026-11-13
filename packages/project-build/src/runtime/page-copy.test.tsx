@@ -1,10 +1,12 @@
 import { describe, expect, test } from "vitest";
 import {
+  createId,
   ROOT_FOLDER_ID,
   ROOT_INSTANCE_ID,
   encodeDataVariableId,
   elementComponent,
   getHomePage,
+  pageTemplate,
   type Asset,
   type DataSource,
   type Instance,
@@ -32,14 +34,16 @@ import {
   duplicatePageTemplate,
   insertPageCopyMutable,
   insertPageTransferItem,
+  insertFolderCopyFromDataMutable,
   insertPageFromTemplateMutable,
   insertTemplateCopyFromFragmentsMutable,
   listPageTemplates,
   reorderPageTemplates,
   updatePageTemplate,
 } from "./page-copy";
+import type { FolderCopyData } from "./data-formats/page-transfer";
 import {
-  $,
+  createTemplateComponentFixture,
   css,
   expression,
   Parameter,
@@ -47,8 +51,14 @@ import {
   Variable,
   ws,
 } from "@webstudio-is/template";
-import { nanoid } from "nanoid";
 import { applyBuilderPatchTransactions } from "../state/patch";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Fragment = createTemplateComponentFixture("Fragment");
+const Slot = createTemplateComponentFixture("Slot");
+
+const createNanoId = () => createId("nano");
 
 const { deduplicateName, deduplicatePath, joinPath } = pageCopyTesting;
 
@@ -77,9 +87,37 @@ test("requires an explicit resolution for conflicting transferred root styles", 
           }),
         },
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     )
   ).toThrow(/root style conflicts require an explicit/i);
+});
+
+test("rejects a nested historical Form before creating any folder or page", () => {
+  const { sourcePages, source, target } = createConflictingRootStyleProjects();
+  const page = createPageCopyData({
+    data: source,
+    page: getHomePage(sourcePages),
+  });
+  page.bodyFragment.instances[0].component = "Form";
+  const folder: FolderCopyData = {
+    folder: { id: "outer", name: "Outer", slug: "outer", children: [] },
+    children: [
+      {
+        folder: { id: "inner", name: "Inner", slug: "inner", children: [] },
+        children: [page],
+      },
+    ],
+  };
+  const before = structuredClone(target);
+
+  expect(() =>
+    insertFolderCopyFromDataMutable({
+      source: folder,
+      target: { data: target, parentFolderId: ROOT_FOLDER_ID },
+      projectId: "target-project",
+    })
+  ).toThrow(/Copy it again/);
+  expect(target).toEqual(before);
 });
 
 test("requires an explicit resolution for conflicting copied root styles", () => {
@@ -93,7 +131,7 @@ test("requires an explicit resolution for conflicting copied root styles", () =>
         sourceData: source,
         pageId: "source-page",
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     )
   ).toThrow(/root style conflicts require an explicit/i);
 });
@@ -113,7 +151,7 @@ test.each([
         pageId: "source-page",
         rootStyleConflictResolution,
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     );
     const updated = applyBuilderPatchTransactions(target, [
       { id: "copy-page", payload: mutation.payload },
@@ -174,7 +212,7 @@ const createConflictingRootStyleProjects = () => {
           color: red;
         `}
       >
-        <$.Body ws:id="source-body"></$.Body>
+        <Body ws:id="source-body"></Body>
       </ws.root>
     ),
     pages: sourcePages,
@@ -187,7 +225,7 @@ const createConflictingRootStyleProjects = () => {
           color: blue;
         `}
       >
-        <$.Body ws:id="target-body"></$.Body>
+        <Body ws:id="target-body"></Body>
       </ws.root>
     ),
     pages: createDefaultPages({
@@ -497,7 +535,7 @@ describe("insert page copy", () => {
         name: "Copy",
         path: "/copy",
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     );
 
     expect(result.result.pageId).toEqual(expect.any(String));
@@ -571,7 +609,7 @@ describe("insert page copy", () => {
         name: "Copy",
         path: "/copy",
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     );
 
     expect(mutation.payload).toContainEqual({
@@ -727,7 +765,7 @@ describe("insert page copy", () => {
             },
           },
         },
-        { createId: nanoid }
+        { createId: createNanoId }
       )
     ).toThrow('Copied variable "missing" was not found');
     expect(data.pages.pages.size).toBe(2);
@@ -778,7 +816,7 @@ describe("insert page copy", () => {
           pageId: "pageId",
           path: "/copy",
         },
-        { createId: nanoid }
+        { createId: createNanoId }
       )
     ).toThrow('Page path "/copy" is already in use');
   });
@@ -826,7 +864,7 @@ describe("insert page copy", () => {
         projectId: "projectId",
         folderId: "folderId",
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     );
 
     expect(result.result.folderId).toEqual(expect.any(String));
@@ -861,20 +899,20 @@ describe("insert page copy", () => {
           projectId: "projectId",
           folderId: "missing",
         },
-        { createId: nanoid }
+        { createId: createNanoId }
       )
     ).toThrow("Folder parent folder was not found");
   });
 
   test("preserves slot content ids when duplicating page", () => {
     const dataWithoutPages = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Slot ws:id="slotId">
-          <$.Fragment ws:id="fragmentId">
-            <$.Box ws:id="boxId"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Slot ws:id="slotId">
+          <Fragment ws:id="fragmentId">
+            <Box ws:id="boxId"></Box>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     const data = getWebstudioDataStub({
       ...dataWithoutPages,
@@ -1120,7 +1158,7 @@ describe("insert page copy", () => {
   test("replace variables in page copy meta", () => {
     const bodyVariable = new Variable("bodyVariable", "");
     const dataWithoutPage = renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}></$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}></Body>
     );
     const [variableId] = dataWithoutPage.dataSources.keys();
     const variableIdentifier = encodeDataVariableId(variableId);
@@ -1253,9 +1291,9 @@ describe("insert page copy", () => {
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">{expression`${globalVariable}`}</$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">{expression`${globalVariable}`}</Box>
+          </Body>
         </ws.root>
       ),
     };
@@ -1275,7 +1313,11 @@ describe("insert page copy", () => {
     ]);
     const newBox = Array.from(data.instances.values()).at(-1);
     expect(newBox?.children).toEqual([
-      { type: "expression", value: encodeDataVariableId(globalVariableId) },
+      {
+        type: "expression",
+        value: encodeDataVariableId(globalVariableId),
+        mode: "read",
+      },
     ]);
   });
 
@@ -1287,12 +1329,12 @@ describe("insert page copy", () => {
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">{expression`${globalVariable}`}</$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">{expression`${globalVariable}`}</Box>
+          </Body>
         </ws.root>,
         // generate different ids in source and data projects
-        nanoid
+        createNanoId
       ),
     };
     sourceData.instances.delete(ROOT_INSTANCE_ID);
@@ -1302,10 +1344,10 @@ describe("insert page copy", () => {
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-          <$.Body ws:id="anotherBodyId"></$.Body>
+          <Body ws:id="anotherBodyId"></Body>
         </ws.root>,
         // generate different ids in source and data projects
-        nanoid
+        createNanoId
       ),
     };
     targetData.instances.delete(ROOT_INSTANCE_ID);
@@ -1323,7 +1365,11 @@ describe("insert page copy", () => {
     ]);
     const newBox = Array.from(targetData.instances.values()).at(-1);
     expect(newBox?.children).toEqual([
-      { type: "expression", value: encodeDataVariableId(globalVariableId) },
+      {
+        type: "expression",
+        value: encodeDataVariableId(globalVariableId),
+        mode: "read",
+      },
     ]);
   });
 
@@ -1335,12 +1381,12 @@ describe("insert page copy", () => {
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">{expression`${globalVariable}`}</$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">{expression`${globalVariable}`}</Box>
+          </Body>
         </ws.root>,
         // generate different ids in source and data projects
-        nanoid
+        createNanoId
       ),
     };
     sourceData.instances.delete(ROOT_INSTANCE_ID);
@@ -1349,7 +1395,7 @@ describe("insert page copy", () => {
         rootInstanceId: "anotherBodyId",
       }),
       // generate different ids in source and data projects
-      ...renderData(<$.Body ws:id="anotherBodyId"></$.Body>, nanoid),
+      ...renderData(<Body ws:id="anotherBodyId"></Body>, createNanoId),
     };
     insertPageCopyMutable({
       source: { data: sourceData, pageId: sourceData.pages.homePageId },
@@ -1365,16 +1411,20 @@ describe("insert page copy", () => {
     ]);
     const newBox = Array.from(targetData.instances.values()).at(-1);
     expect(newBox?.children).toEqual([
-      { type: "expression", value: encodeDataVariableId(globalVariableId) },
+      {
+        type: "expression",
+        value: encodeDataVariableId(globalVariableId),
+        mode: "read",
+      },
     ]);
   });
 
   test("delete page system in favor of global one", () => {
     const pageSystemVariable = new Parameter("system");
     const dataWithoutPages = renderData(
-      <$.Body ws:id="bodyId" vars={expression`${pageSystemVariable}`}>
-        <$.Box ws:id="boxId">{expression`${pageSystemVariable}`}</$.Box>
-      </$.Body>
+      <Body ws:id="bodyId" vars={expression`${pageSystemVariable}`}>
+        <Box ws:id="boxId">{expression`${pageSystemVariable}`}</Box>
+      </Body>
     );
     const [pageSystemVariableId] = dataWithoutPages.dataSources.keys();
     const data = {
@@ -1401,7 +1451,7 @@ describe("insert page copy", () => {
     ]);
     const newBox = Array.from(data.instances.values()).at(-1);
     expect(newBox?.children).toEqual([
-      { type: "expression", value: "$ws$system" },
+      { type: "expression", value: "$ws$system", mode: "read" },
     ]);
     const copiedPage = getCopiedPages(data)[0];
     expect(copiedPage.title).toEqual(`$ws$system`);
@@ -1411,9 +1461,9 @@ describe("insert page copy", () => {
   test("insert page from template with transformed metadata", () => {
     const templateVariable = new Variable("templateVariable", "");
     const dataWithoutPages = renderData(
-      <$.Body ws:id="templateBodyId" vars={expression`${templateVariable}`}>
-        <$.Box ws:id="boxId">{expression`${templateVariable}`}</$.Box>
-      </$.Body>
+      <Body ws:id="templateBodyId" vars={expression`${templateVariable}`}>
+        <Box ws:id="boxId">{expression`${templateVariable}`}</Box>
+      </Body>
     );
     const [templateVariableId] = dataWithoutPages.dataSources.keys();
     const templateVariableIdentifier = encodeDataVariableId(templateVariableId);
@@ -1587,6 +1637,29 @@ describe("insert page copy", () => {
     });
   });
 
+  test("creates a valid page template when title is omitted", () => {
+    const data = getWebstudioDataStub();
+    const ids = ["templateId", "templateBodyId"];
+
+    const result = createPageTemplate(
+      data,
+      { name: "Landing Template" },
+      { createId: () => ids.shift() ?? "extraId" }
+    );
+    const updated = applyBuilderPatchTransactions(data, [
+      { id: "create-page-template", payload: result.payload },
+    ]).state as WebstudioData;
+
+    expect(
+      pageTemplate.parse(updated.pages.pageTemplates?.get("templateId"))
+    ).toEqual(
+      expect.objectContaining({
+        name: "Landing Template",
+        title: '"Landing Template"',
+      })
+    );
+  });
+
   test("updates page templates through page field validation semantics", () => {
     const pages = createDefaultPages({ rootInstanceId: "homeBodyId" });
     pages.pageTemplates = new Map([
@@ -1702,7 +1775,7 @@ describe("insert page copy", () => {
     const result = duplicatePageTemplate(
       data,
       { projectId: "projectId", templateId: "templateId" },
-      { createId: nanoid }
+      { createId: createNanoId }
     );
 
     expect(result.result.templateId).toEqual(expect.any(String));
@@ -1906,7 +1979,7 @@ describe("insert page copy", () => {
           name: "Landing",
           path: "/landing",
         },
-        { createId: nanoid }
+        { createId: createNanoId }
       )
     ).toThrow('Page path "/landing" is already in use');
   });

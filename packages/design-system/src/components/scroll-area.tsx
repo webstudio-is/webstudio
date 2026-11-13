@@ -1,6 +1,13 @@
 import { forwardRef, type ComponentProps, type Ref } from "react";
 import { styled, theme, css, type CSS } from "../stitches.config";
 import { Root, Viewport, Scrollbar, Thumb } from "@radix-ui/react-scroll-area";
+import { cssVar, declareCssVar } from "../css-var";
+
+const scrollAreaThumbHeight = declareCssVar("--radix-scroll-area-thumb-height");
+
+const scrollbarColor = `oklch(from ${cssVar(
+  "--foreground-secondary"
+)} l c h / 27%)`;
 
 const ScrollAreaRoot = styled(Root, {
   boxSizing: "border-box",
@@ -13,7 +20,7 @@ const ScrollAreaRoot = styled(Root, {
 const ScrollAreaThumb = styled(Thumb, {
   position: "relative",
   boxSizing: "border-box",
-  background: theme.colors.foregroundScrollBar,
+  background: scrollbarColor,
   borderRadius: theme.spacing[4],
 });
 
@@ -30,7 +37,7 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   '&[data-orientation="horizontal"]': {
     flexDirection: "column",
     height: theme.spacing[6],
-    "--radix-scroll-area-thumb-height": theme.spacing[4],
+    [scrollAreaThumbHeight]: theme.spacing[4],
   },
 
   variants: {
@@ -114,5 +121,5 @@ ScrollArea.displayName = "ScrollArea";
 export const ScrollAreaNative = styled("div", {
   overflow: "auto",
   scrollbarWidth: "thin",
-  scrollbarColor: `${theme.colors.foregroundScrollBar} transparent`,
+  scrollbarColor: `${scrollbarColor} transparent`,
 });

@@ -12,14 +12,23 @@ See [export types](./#export-types) for more information about JavaScript applic
 
 ## Downloading your project
 
-1. Click “Publish”
-2.  Click “Export”
+1. Select **Publish** in the top bar.
+2. Select **Export**.
 
-    ![](../../.gitbook/assets/export.png)
-3.  Click “Build and download static site”
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/export-dark.png">
+  <img src="../../.gitbook/assets/export-light.png" alt="Export dialog with Docker selected and CLI setup and deployment commands">
+</picture>
 
-    ![](../../.gitbook/assets/build-and-download-static-site.png)
-4. Wait up to a minute while the project is built then downloaded
+3. Set **Destination** to **Static**.
+4. Select **Build and download static site**.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/build-and-download-static-site-dark.png">
+  <img src="../../.gitbook/assets/build-and-download-static-site-light.png" alt="Export dialog with Static selected and the Build and download static site action">
+</picture>
+
+5. Wait while Webstudio builds and downloads the project.
 
 The export contains a static site consisting of HTML, CSS, JS, and images ready to be uploaded to another platform.
 

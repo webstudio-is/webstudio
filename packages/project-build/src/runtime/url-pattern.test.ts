@@ -1,23 +1,30 @@
+import { matchPathnamePattern as matchRouterPattern } from "@webstudio-is/wsauth";
+import { toWebstudioParams } from "@webstudio-is/react-sdk";
 import { expect, test, describe } from "vitest";
 import {
   compilePathnamePattern,
   isPathnamePattern,
-  matchPathnamePattern,
   tokenizePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
 import { VALID_URLPATTERN_PATHS } from "@webstudio-is/sdk/router-path-test-data";
 
+// Published pages adapt Remix's "*" parameter to Webstudio's page path names.
+const matchPathnamePattern = (pattern: string, pathname: string) => {
+  const params = matchRouterPattern(pattern, pathname);
+  return params === undefined ? undefined : toWebstudioParams(pattern, params);
+};
+
 /**
  * These tests use the shared test data from @webstudio-is/sdk to ensure
- * URLPattern matching is consistent with schema validation.
+ * route matching is consistent with schema validation.
  */
-describe("Shared router path tests - URLPattern matching", () => {
-  describe("all valid paths can be used as URLPattern patterns", () => {
+describe("Shared router path tests - published route matching", () => {
+  describe("all valid paths can be used as route patterns", () => {
     test.each(VALID_URLPATTERN_PATHS)("accepts pattern: %s", (pattern) => {
-      // Pattern should be valid for URLPattern
+      // Pattern should be valid for the published router
       // Some patterns may have validation errors due to our custom rules
-      // but they should still work with URLPattern itself
+      // but the matcher must handle them safely
       expect(() => matchPathnamePattern(pattern, pattern)).not.toThrow();
     });
   });
@@ -49,8 +56,13 @@ test("decode matched params", () => {
   });
 });
 
-describe("URLPattern Unicode/non-Latin character support", () => {
-  // These tests verify that the URLPattern-based router properly handles
+test("published splat matches its base path", () => {
+  expect(matchPathnamePattern("/docs/*", "/docs")).toEqual({ 0: "" });
+  expect(matchPathnamePattern("/docs/*", "/docs/")).toEqual({ 0: "" });
+});
+
+describe("Published router Unicode/non-Latin character support", () => {
+  // These tests verify that the published router matcher properly handles
   // non-Latin characters in redirect paths, which is important for
   // international websites (Chinese, Japanese, Korean, etc.)
 

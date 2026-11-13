@@ -1,5 +1,5 @@
-import { nanoid } from "nanoid";
 import { createNanoEvents } from "nanoevents";
+import { createId } from "@webstudio-is/sdk";
 import type { Change, Store } from "immerhin";
 import type { WritableAtom } from "nanostores";
 import type {
@@ -51,18 +51,21 @@ export class ImmerhinSyncObject implements SyncObject {
   store: Store;
   transformOnSend?: (changes: Change[]) => Change[];
   transformOnReceive?: (changes: Change[]) => Change[];
+  onRevert?: (changes: Change[]) => void;
   constructor(
     name: string,
     store: Store,
     transform?: {
       onSend?: (changes: Change[]) => Change[];
       onReceive?: (changes: Change[]) => Change[];
+      onRevert?: (changes: Change[]) => void;
     }
   ) {
     this.name = name;
     this.store = store;
     this.transformOnSend = transform?.onSend;
     this.transformOnReceive = transform?.onReceive;
+    this.onRevert = transform?.onRevert;
   }
   getState() {
     const state = new Map<string, unknown>();
@@ -94,7 +97,13 @@ export class ImmerhinSyncObject implements SyncObject {
     this.store.addTransaction(transaction.id, payload, "remote");
   }
   revertTransaction(transaction: RevertedTransaction) {
+    const revertedChanges = this.store.transactionManager.currentStack
+      .find(({ id }) => id === transaction.id)
+      ?.getChanges();
     this.store.revertTransaction(transaction.id);
+    if (revertedChanges !== undefined) {
+      this.onRevert?.(revertedChanges);
+    }
   }
   subscribe(
     sendTransaction: (transaction: Transaction<Change[]>) => void,
@@ -154,7 +163,11 @@ export class NanostoresSyncObject implements SyncObject {
       if (this.operation !== "local") {
         return;
       }
-      const transaction = { id: nanoid(), object: this.name, payload };
+      const transaction = {
+        id: createId("nano"),
+        object: this.name,
+        payload,
+      };
       sendTransaction(transaction);
     });
     signal.addEventListener("abort", unsubscribe);
@@ -218,7 +231,7 @@ type SyncClientOptions = {
 };
 
 export class SyncClient {
-  clientId = nanoid();
+  clientId = createId("nano");
   role: SyncClientOptions["role"];
   object: SyncObject;
   storages: SyncStorage[];

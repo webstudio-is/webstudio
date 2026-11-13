@@ -91,9 +91,37 @@ type FontDataStatic = {
 type FontDataVariable = {
   format: FontFormat;
   family: string;
+  style: FontStyle;
   variationAxes: VariationAxes;
 };
 type FontData = FontDataStatic | FontDataVariable;
+
+type FontStyleSource = {
+  "OS/2"?: {
+    fsSelection?: {
+      italic?: boolean;
+      oblique?: boolean;
+    };
+  };
+  italicAngle?: number;
+};
+
+const detectFontStyle = (
+  font: FontStyleSource,
+  fallback: FontStyle
+): FontStyle => {
+  const selection = font["OS/2"]?.fsSelection;
+  if (selection?.italic === true) {
+    return "italic";
+  }
+  if (selection?.oblique === true) {
+    return "oblique";
+  }
+  if (font.italicAngle !== undefined && font.italicAngle !== 0) {
+    return "italic";
+  }
+  return fallback;
+};
 
 export const getFontData = (data: Uint8Array, fileName: string): FontData => {
   const font = createFontKit(data as Buffer);
@@ -107,12 +135,18 @@ export const getFontData = (data: Uint8Array, fileName: string): FontData => {
     font.getName("fontSubfamily", defaultLanguage) ??
     "";
   const family = normalizeFamily(originalFamily, subfamily, fileName);
+  const parsedSubfamily = parseSubfamily(
+    subfamily,
+    font["OS/2"]?.usWeightClass
+  );
+  const style = detectFontStyle(font, parsedSubfamily.style);
   const isVariable = Object.keys(font.variationAxes).length !== 0;
 
   if (isVariable) {
     return {
       format,
       family,
+      style,
       variationAxes: font.variationAxes,
     };
   }
@@ -120,7 +154,8 @@ export const getFontData = (data: Uint8Array, fileName: string): FontData => {
   return {
     format,
     family,
-    ...parseSubfamily(subfamily, font["OS/2"]?.usWeightClass),
+    style,
+    weight: parsedSubfamily.weight,
   };
 };
 
@@ -131,4 +166,5 @@ export const __testing__: {
     fileName: string
   ) => string;
   getFontFamily: typeof getFontFamily;
-} = { normalizeFamily, getFontFamily };
+  detectFontStyle: typeof detectFontStyle;
+} = { normalizeFamily, getFontFamily, detectFontStyle };

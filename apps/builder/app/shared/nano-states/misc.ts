@@ -4,7 +4,6 @@ import {
   $workspaceRole,
   $workspaces,
 } from "~/dashboard/workspace/workspace-stores";
-import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import {
   defaultPlanFeatures,
@@ -14,16 +13,19 @@ import {
 import type { Role } from "@webstudio-is/project";
 import type { User } from "~/shared/db/user.server";
 import { toast, type Placement } from "@webstudio-is/design-system";
-import type {
-  Instance,
-  Prop,
-  Props,
-  StyleDecl,
-  StyleSource,
+import {
+  createId,
+  getHtmlTagsFromProps,
+  getTagFromStyleId,
+  type AssetType,
+  type Instance,
+  type Prop,
+  type Props,
+  type StyleDecl,
+  type StyleSource,
 } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
-import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "@webstudio-is/project-build/runtime";
 import type { ChildrenOrientation } from "@webstudio-is/design-system";
@@ -47,7 +49,6 @@ export const $memoryProps = atom<Map<string, Props>>(new Map());
 
 export const $propsIndex = computed($props, (props) => {
   const propsByInstanceId = new Map<Instance["id"], Prop[]>();
-  const htmlTagsByInstanceId = new Map<Instance["id"], string>();
   for (const prop of props.values()) {
     const { instanceId } = prop;
     let instanceProps = propsByInstanceId.get(instanceId);
@@ -56,13 +57,10 @@ export const $propsIndex = computed($props, (props) => {
       propsByInstanceId.set(instanceId, instanceProps);
     }
     instanceProps.push(prop);
-    if (prop.type === "string" && prop.name === "tag") {
-      htmlTagsByInstanceId.set(instanceId, prop.value);
-    }
   }
   return {
     propsByInstanceId,
-    htmlTagsByInstanceId,
+    htmlTagsByInstanceId: getHtmlTagsFromProps(props),
   };
 });
 
@@ -75,9 +73,11 @@ export const $selectedStyleSources = atom(
   new Map<Instance["id"], StyleSource["id"]>()
 );
 export const $selectedStyleState = atom<StyleDecl["state"]>();
+export const $temporaryTagStyleId = atom<string | undefined>(undefined);
 // reset style state whenever selected instance change
 onSet($selectedInstanceSelector, () => {
   $selectedStyleState.set(undefined);
+  $temporaryTagStyleId.set(undefined);
 });
 
 /**
@@ -158,6 +158,7 @@ export type PropertySizes = Partial<Record<CssProperty, UnitValue>>;
 export const $selectedInstanceSizes = atom<{
   unitSizes: UnitSizes;
   propertySizes: PropertySizes;
+  computedValues: Partial<Record<CssProperty, string>>;
 }>({
   unitSizes: {
     ch: 8,
@@ -168,6 +169,7 @@ export const $selectedInstanceSizes = atom<{
     px: 1,
   },
   propertySizes: {},
+  computedValues: {},
 });
 
 /**
@@ -179,8 +181,18 @@ export const $selectedInstanceRenderState = atom<
 >("notMounted");
 
 export const $selectedInstanceStatesByStyleSourceId = computed(
-  [$styles, $styleSourceSelections, $selectedInstance],
-  (styles, styleSourceSelections, selectedInstance) => {
+  [
+    $stylesIndex,
+    $styleSourceSelections,
+    $selectedInstance,
+    $temporaryTagStyleId,
+  ],
+  (
+    { stylesByStyleSourceId },
+    styleSourceSelections,
+    selectedInstance,
+    temporaryTagStyleId
+  ) => {
     const statesByStyleSourceId = new Map<StyleSource["id"], string[]>();
     if (selectedInstance === undefined) {
       return statesByStyleSourceId;
@@ -188,20 +200,22 @@ export const $selectedInstanceStatesByStyleSourceId = computed(
     const styleSourceIds = new Set(
       styleSourceSelections.get(selectedInstance.id)?.values
     );
-    for (const styleDecl of styles.values()) {
-      if (
-        styleDecl.state === undefined ||
-        styleSourceIds.has(styleDecl.styleSourceId) === false
-      ) {
-        continue;
-      }
-      let states = statesByStyleSourceId.get(styleDecl.styleSourceId);
-      if (states === undefined) {
-        states = [];
-        statesByStyleSourceId.set(styleDecl.styleSourceId, states);
-      }
-      if (states.includes(styleDecl.state) === false) {
-        states.push(styleDecl.state);
+    if (temporaryTagStyleId) {
+      styleSourceIds.add(temporaryTagStyleId);
+    }
+    for (const sourceId of styleSourceIds) {
+      for (const styleDecl of stylesByStyleSourceId.get(sourceId) ?? []) {
+        if (styleDecl.state === undefined) {
+          continue;
+        }
+        let states = statesByStyleSourceId.get(sourceId);
+        if (states === undefined) {
+          states = [];
+          statesByStyleSourceId.set(sourceId, states);
+        }
+        if (states.includes(styleDecl.state) === false) {
+          states.push(styleDecl.state);
+        }
       }
     }
     return statesByStyleSourceId;
@@ -209,11 +223,33 @@ export const $selectedInstanceStatesByStyleSourceId = computed(
 );
 
 export const $selectedInstanceStyleSources = computed(
-  [$styleSourceSelections, $styleSources, $selectedInstance],
-  (styleSourceSelections, styleSources, selectedInstance) => {
+  [
+    $styleSourceSelections,
+    $styleSources,
+    $selectedInstance,
+    $temporaryTagStyleId,
+  ],
+  (
+    styleSourceSelections,
+    styleSources,
+    selectedInstance,
+    temporaryTagStyleId
+  ) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
     if (selectedInstance === undefined) {
       return selectedInstanceStyleSources;
+    }
+    const tag = temporaryTagStyleId
+      ? getTagFromStyleId(temporaryTagStyleId)
+      : undefined;
+    if (tag && temporaryTagStyleId) {
+      selectedInstanceStyleSources.push(
+        styleSources.get(temporaryTagStyleId) ?? {
+          type: "tag",
+          id: temporaryTagStyleId,
+          tag,
+        }
+      );
     }
     const styleSourceIds =
       styleSourceSelections.get(selectedInstance.id)?.values ?? [];
@@ -233,7 +269,7 @@ export const $selectedInstanceStyleSources = computed(
       // always put local style source last
       selectedInstanceStyleSources.push({
         type: "local",
-        id: nanoid(),
+        id: createId("nano"),
       });
     }
     return selectedInstanceStyleSources;
@@ -292,6 +328,9 @@ export const $selectedStyleSource = computed(
  * to display style values as remote
  */
 export const $selectedInstanceStates = atom(new Set<string>());
+export const $selectedInstanceStatesByInstanceId = atom(
+  new Map<string, Set<string>>()
+);
 
 export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
   undefined
@@ -439,8 +478,12 @@ export const setBuilderMode = (mode: BuilderMode | null) => {
   if (mode === "design" && !$isDesignModeAllowed.get()) {
     toast.info("Design mode is not available for content edit links.");
 
-    $builderMode.set("content");
-    lastEditableBuilderMode = "content";
+    if ($isContentModeAllowed.get()) {
+      $builderMode.set("content");
+      lastEditableBuilderMode = "content";
+    } else {
+      $builderMode.set("preview");
+    }
     return;
   }
 

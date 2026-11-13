@@ -36,6 +36,30 @@ const asset = (id: string, folderId?: string): Asset => ({
   meta: {},
 });
 
+const collectionAsset = ({
+  id,
+  name,
+  filename,
+  format,
+}: {
+  id: string;
+  name: string;
+  filename: string;
+  format: "json" | "mdx";
+}): Asset => ({
+  id,
+  projectId: "project",
+  name,
+  filename,
+  folderId: "posts",
+  type: "file",
+  size: 1,
+  format,
+  createdAt: "2026-01-01T00:00:00.000Z",
+  description: null,
+  meta: {},
+});
+
 describe("asset folders", () => {
   test("creates a nested folder with a trimmed name", () => {
     const result = createAssetFolder(
@@ -127,14 +151,20 @@ describe("asset folders", () => {
 
   test("duplicates a folder subtree and its assets", () => {
     const ids = ["copy", "child-copy", "asset-copy"];
+    const unrelatedCopy = asset("unrelated", "other");
+    unrelatedCopy.filename = "asset copy";
     const result = duplicateAssetFolder(
       {
         assetFolders: folders(
           folder("source", undefined, "Media"),
           folder("existing-copy", undefined, "Media copy"),
-          folder("child", "source", "Photos")
+          folder("child", "source", "Photos"),
+          folder("other")
         ),
-        assets: new Map([["asset", asset("asset", "child")]]),
+        assets: new Map([
+          ["asset", asset("asset", "child")],
+          [unrelatedCopy.id, unrelatedCopy],
+        ]),
       },
       { folderId: "source", parentId: null },
       { projectId: "project", createId: () => ids.shift()! }
@@ -179,6 +209,64 @@ describe("asset folders", () => {
           },
         ],
       },
+    ]);
+  });
+
+  test("preserves logical filenames when duplicating a collection folder", () => {
+    const config = collectionAsset({
+      id: "config",
+      name: "config-storage.json",
+      filename: "collection",
+      format: "json",
+    });
+    const template = collectionAsset({
+      id: "template",
+      name: "template-storage.mdx",
+      filename: "template",
+      format: "mdx",
+    });
+    const entry = collectionAsset({
+      id: "entry",
+      name: "entry-storage.mdx",
+      filename: "hello-world",
+      format: "mdx",
+    });
+    const ids = ["posts-copy", "config-copy", "template-copy", "entry-copy"];
+
+    const result = duplicateAssetFolder(
+      {
+        assetFolders: folders(folder("posts", undefined, "Posts")),
+        assets: new Map(
+          [config, template, entry].map((value) => [value.id, value])
+        ),
+      },
+      { folderId: "posts" },
+      { projectId: "project", createId: () => ids.shift()! }
+    );
+
+    const assetPatches = result.payload.find(
+      ({ namespace }) => namespace === "assets"
+    )?.patches;
+    expect(
+      assetPatches?.map((patch) =>
+        patch.op === "add" || patch.op === "replace" ? patch.value : undefined
+      )
+    ).toEqual([
+      expect.objectContaining({
+        id: "config-copy",
+        filename: "collection",
+        folderId: "posts-copy",
+      }),
+      expect.objectContaining({
+        id: "template-copy",
+        filename: "template",
+        folderId: "posts-copy",
+      }),
+      expect.objectContaining({
+        id: "entry-copy",
+        filename: "hello-world",
+        folderId: "posts-copy",
+      }),
     ]);
   });
 

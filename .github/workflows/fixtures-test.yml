@@ -38,6 +38,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.action == 'labeled' && github.event.label.name == 'safe-to-deploy' }}
       # Test that everything is working with submodules
       - uses: ./.github/actions/submodules-checkout
         with:
@@ -57,7 +58,8 @@ jobs:
         shell: bash
         run: |
           set +e
-          pnpm --filter='./fixtures/*' --sequential run fixtures:sync 2>&1 | tee fixtures-sync.log
+          # Build webstudio-features from its checked-in snapshot; its remote data is mutable.
+          pnpm --filter='./fixtures/*' --filter='!./fixtures/webstudio-features' --sequential run fixtures:sync 2>&1 | tee fixtures-sync.log
           sync_status=${PIPESTATUS[0]}
           if [ "$sync_status" -ne 0 ]; then
             message=$(tail -n 40 fixtures-sync.log | sed -e 's/%/%25/g' -e 's/\r/%0D/g' -e 's/$/%0A/' | tr -d '\n')
@@ -74,12 +76,16 @@ jobs:
           find . -type f -path "./fixtures/*/.webstudio/data.json" -exec sed -i 's|"origin": ".*"|"origin": "https://main.development.webstudio.is"|g' {} +
 
       - name: Test git diff
-        # This command will fail if there are uncommitted changes, i.e something has broken
-        run: git diff --name-only HEAD --exit-code
+        # Submodule checkout can move the pinned commit to its current branch.
+        run: |
+          git diff --name-only HEAD --exit-code -- . ':(exclude)packages/sdk-components-animation/private-src'
+          git -C packages/sdk-components-animation/private-src diff --name-only HEAD --exit-code
 
       - name: Show changed files and diff
         if: ${{ failure() }}
         run: |
           echo "Changed files are:"
-          git diff --name-only HEAD
-          git diff HEAD | head -n 1000
+          git diff --name-only HEAD -- . ':(exclude)packages/sdk-components-animation/private-src'
+          git -C packages/sdk-components-animation/private-src diff --name-only HEAD
+          git diff HEAD -- . ':(exclude)packages/sdk-components-animation/private-src' | head -n 1000
+          git -C packages/sdk-components-animation/private-src diff HEAD | head -n 1000

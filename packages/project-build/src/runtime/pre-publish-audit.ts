@@ -1,19 +1,14 @@
 import {
-  generateCss,
   getPagePath,
   getPublishablePages,
   type Assets,
-  type Breakpoints,
   type DataSources,
   type Instances,
   type Pages,
   type Props,
   type Resources,
-  type StyleSourceSelections,
-  type Styles,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { parse as parseCss } from "css-tree";
 import {
   formatBuildIntegrityIssue,
   getBuildIntegrityIssues,
@@ -29,15 +24,16 @@ export type PrePublishAuditFinding = {
     pageName?: string;
     pagePath?: string;
     instanceId?: string;
+    instanceSelector?: string[];
     dataSourceId?: string;
     propId?: string;
     resourceId?: string;
+    assetId?: string;
   };
 };
 
 export class PrePublishAuditError extends Error {
   findings: PrePublishAuditFinding[];
-  attemptId?: string;
 
   constructor(findings: PrePublishAuditFinding[]) {
     const firstError = findings.find(({ severity }) => severity === "error");
@@ -57,11 +53,8 @@ type PrePublishAuditContext = {
   props: Props;
   dataSources: DataSources;
   resources: Resources;
+  assets: Assets;
   metas: Map<string, WsComponentMeta>;
-  assets?: Assets;
-  breakpoints?: Breakpoints;
-  styles?: Styles;
-  styleSourceSelections?: StyleSourceSelections;
 };
 
 type PrePublishAuditCheck = (
@@ -75,13 +68,24 @@ const checkHtmlContentModel: PrePublishAuditCheck = ({
   metas,
 }) => {
   const findings: PrePublishAuditFinding[] = [];
+  const codeTextMeta = metas.get("CodeText");
+  const auditMetas = new Map(metas);
+  if (codeTextMeta !== undefined) {
+    // Older Code Text instances could contain component children. Keep those
+    // projects publishable while insertion and editing use the current
+    // plain-text-only content model.
+    auditMetas.set("CodeText", {
+      ...codeTextMeta,
+      contentModel: { category: "instance", children: ["text", "instance"] },
+    });
+  }
 
   for (const page of getPublishablePages(pages)) {
     const pageFindings: PrePublishAuditFinding[] = [];
     const isValid = isTreeSatisfyingContentModel({
       instances,
       props,
-      metas,
+      metas: auditMetas,
       instanceSelector: [page.rootInstanceId],
       onError: (error, instanceSelector) => {
         pageFindings.push({
@@ -121,108 +125,113 @@ const checkHtmlContentModel: PrePublishAuditCheck = ({
   return findings;
 };
 
-const checkResourceIntegrity: PrePublishAuditCheck = ({
+const checkBuildIntegrity: PrePublishAuditCheck = ({
   dataSources,
   props,
   resources,
+  instances,
+  assets,
 }) =>
   getBuildIntegrityIssues({
     dataSources: dataSources.values(),
     props: props.values(),
     resources: resources.values(),
+    instances: instances.values(),
+    assets: assets.values(),
   }).map((issue) => ({
-    ruleId: "resource-integrity",
+    ruleId:
+      issue.type === "missingResource"
+        ? "resource-integrity"
+        : issue.type === "slotInContentBlockTemplates"
+          ? "content-block-template-integrity"
+          : "content-block-source-integrity",
     severity: "error",
     message: formatBuildIntegrityIssue(issue),
     location: {
-      ...(issue.source === "dataSource"
-        ? { dataSourceId: issue.dataSourceId }
-        : { propId: issue.propId }),
-      resourceId: issue.resourceId,
+      ...(issue.type === "missingResource"
+        ? {
+            ...(issue.source === "dataSource"
+              ? { dataSourceId: issue.dataSourceId }
+              : { propId: issue.propId }),
+            resourceId: issue.resourceId,
+          }
+        : issue.type === "slotInContentBlockTemplates"
+          ? { instanceId: issue.instanceId }
+          : {
+              instanceId: issue.blockInstanceId,
+              ...(issue.type === "duplicateContentBlockSource"
+                ? { propId: issue.propIds[0] }
+                : { propId: issue.propId }),
+              ...(issue.type === "missingContentBlockSourceAsset" ||
+              issue.type === "incompatibleContentBlockSourceAsset"
+                ? { assetId: issue.assetId }
+                : {}),
+            }),
     },
   }));
 
-const checkGeneratedStylesheet: PrePublishAuditCheck = ({
-  assets,
-  breakpoints,
-  instances,
-  props,
-  styles,
-  styleSourceSelections,
-  metas,
-}) => {
-  if (
-    assets === undefined ||
-    breakpoints === undefined ||
-    styles === undefined ||
-    styleSourceSelections === undefined
-  ) {
-    return [];
-  }
-
-  try {
-    const { cssText } = generateCss({
-      assets,
-      breakpoints,
-      instances,
-      props,
-      styles,
-      styleSourceSelections,
-      componentMetas: metas,
-      assetBaseUrl: "/cgi/asset/",
-      atomic: false,
-    });
-    return getGeneratedStylesheetFindings(cssText);
-  } catch (error) {
-    const details =
-      error instanceof Error && error.message.trim().length > 0
-        ? ` ${error.message}`
-        : "";
-    return [
-      {
-        ruleId: "generated-stylesheet",
-        severity: "error",
-        message: `The generated stylesheet contains invalid CSS.${details}`,
-        location: {},
-      },
-    ];
-  }
-};
-
-export const getGeneratedStylesheetFindings = (
-  cssText: string
-): PrePublishAuditFinding[] => {
-  const errors: string[] = [];
-  try {
-    parseCss(cssText, {
-      positions: true,
-      onParseError: (error) => {
-        errors.push(error.message);
-      },
-    });
-  } catch (error) {
-    errors.push(error instanceof Error ? error.message : "");
-  }
-  return Array.from(new Set(errors))
-    .slice(0, 500)
-    .map((error) => {
-      const details = error.trim().length > 0 ? ` ${error}` : "";
+const checkJsonPropValues: PrePublishAuditCheck = ({ props, instances }) =>
+  [...props.values()]
+    .filter((prop) => prop.type === "json" && prop.value === undefined)
+    .map((prop) => {
+      const instance = instances.get(prop.instanceId);
+      const owner = instance?.label ?? instance?.component ?? prop.instanceId;
       return {
-        ruleId: "generated-stylesheet",
-        severity: "error" as const,
-        message: `The generated stylesheet contains invalid CSS.${details}`,
-        location: {},
+        ruleId: "json-prop-value",
+        severity: "error",
+        message: `JSON prop “${prop.name}” on “${owner}” has no value. Set or reset it before publishing.`,
+        location: { instanceId: prop.instanceId, propId: prop.id },
       };
     });
-};
 
-export const getGeneratedStylesheetFinding = (cssText: string) =>
-  getGeneratedStylesheetFindings(cssText)[0];
+const checkDeprecatedWebhookForms: PrePublishAuditCheck = ({
+  pages,
+  instances,
+}) => {
+  const findings: PrePublishAuditFinding[] = [];
+  for (const page of getPublishablePages(pages)) {
+    const visited = new Set<string>();
+    const visit = (instanceId: string, parentSelector: string[]) => {
+      if (visited.has(instanceId)) {
+        return;
+      }
+      visited.add(instanceId);
+      const instance = instances.get(instanceId);
+      if (instance === undefined) {
+        return;
+      }
+      const instanceSelector = [instanceId, ...parentSelector];
+      if (instance.component === "WebhookForm") {
+        findings.push({
+          ruleId: "deprecated-webhook-form",
+          severity: "warning",
+          message:
+            "Webhook Form is deprecated. Replace it with the Form component.",
+          location: {
+            pageId: page.id,
+            pageName: page.name,
+            pagePath: getPagePath(page.id, pages) || "/",
+            instanceId,
+            instanceSelector,
+          },
+        });
+      }
+      for (const child of instance.children ?? []) {
+        if (child.type === "id") {
+          visit(child.value, instanceSelector);
+        }
+      }
+    };
+    visit(page.rootInstanceId, []);
+  }
+  return findings;
+};
 
 const prePublishAuditChecks: PrePublishAuditCheck[] = [
   checkHtmlContentModel,
-  checkResourceIntegrity,
-  checkGeneratedStylesheet,
+  checkDeprecatedWebhookForms,
+  checkJsonPropValues,
+  checkBuildIntegrity,
 ];
 
 const maxAuditFindings = 500;

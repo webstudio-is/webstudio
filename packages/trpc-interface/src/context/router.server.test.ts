@@ -111,3 +111,32 @@ test("does not classify a domain not-found error as API incompatibility", async 
   });
   expect(JSON.stringify(body)).not.toContain("apiCompatibility");
 });
+
+test("preserves missing import filenames independently of error wording", async () => {
+  const appRouter = router({
+    fail: procedure.mutation(() => {
+      throw Object.assign(new Error("Import files are unavailable"), {
+        webstudioCode: "MISSING_IMPORTED_ASSET_FILES",
+        missingAssetNames: ["font,latin.woff2"],
+      });
+    }),
+  });
+  const response = await fetchRequestHandler({
+    endpoint: "/trpc",
+    req: new Request("http://localhost/trpc/fail", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "null",
+    }),
+    router: appRouter,
+    createContext,
+  });
+  await expect(response.json()).resolves.toMatchObject({
+    error: {
+      data: {
+        webstudioCode: "MISSING_IMPORTED_ASSET_FILES",
+        missingAssetNames: ["font,latin.woff2"],
+      },
+    },
+  });
+});

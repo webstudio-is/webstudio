@@ -2,22 +2,15 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import {
   Button,
   Flex,
-  globalCss,
-  rawTheme,
   Text,
   theme,
+  cssVar,
+  webstudioBrand,
 } from "@webstudio-is/design-system";
 import { GithubIcon, GoogleIcon, WebstudioIcon } from "@webstudio-is/icons";
 import { Form } from "@remix-run/react";
 import { authPath } from "~/shared/router-utils";
 import { SecretLogin } from "./secret-login";
-
-const globalStyles = globalCss({
-  body: {
-    margin: 0,
-    overflow: "hidden",
-  },
-});
 
 export type LoginProps = {
   errorMessage?: string;
@@ -34,14 +27,14 @@ export const Login = ({
   isSecretLoginEnabled,
   devPlanNames,
 }: LoginProps) => {
-  globalStyles();
   return (
     <Flex
       align="center"
       justify="center"
       css={{
         height: "100vh",
-        background: theme.colors.brandBackgroundDashboard,
+        color: cssVar("--foreground-primary"),
+        background: webstudioBrand.backgroundGradient,
       }}
     >
       <Flex
@@ -53,9 +46,7 @@ export const Login = ({
           minWidth: theme.spacing[20],
           padding: theme.spacing[17],
           borderRadius: theme.spacing[5],
-          [`@media (min-width: ${rawTheme.spacing[35]})`]: {
-            backgroundColor: `rgba(255, 255, 255, 0.5)`,
-          },
+          backgroundColor: `oklch(from ${cssVar("--background-primary")} l c h / 50%)`,
         }}
       >
         <WebstudioIcon size={48} />
@@ -80,7 +71,7 @@ export const Login = ({
                 prefix={<GithubIcon size={22} fill="currentColor" />}
                 color="ghost"
                 css={{
-                  border: `1px solid ${theme.colors.borderDark}`,
+                  border: `1px solid ${cssVar("--border-default")}`,
                   height: theme.spacing[15],
                 }}
                 formAction={authPath({ provider: "github" })}

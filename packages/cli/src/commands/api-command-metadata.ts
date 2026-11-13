@@ -147,6 +147,9 @@ const apiCommandOptionsByCommand: Partial<
   "submit-marketplace-product":
     apiCommand.submitMarketplaceProductCommandOptions,
   "list-redirects": apiCommand.paginatedListCommandOptions,
+  "list-response-headers": apiCommand.paginatedListCommandOptions,
+  "set-response-header": apiCommand.setResponseHeaderCommandOptions,
+  "delete-response-header": apiCommand.deleteResponseHeaderCommandOptions,
   "create-redirect": apiCommand.createRedirectCommandOptions,
   "update-redirect": apiCommand.updateRedirectCommandOptions,
   "delete-redirect": apiCommand.deleteRedirectCommandOptions,
@@ -205,12 +208,14 @@ const apiCommandOptionsByCommand: Partial<
   "get-assets-resource": apiCommand.assetResourceCommandOptions,
   "create-assets-resource": apiCommand.inputCommandOptions,
   "update-assets-resource": apiCommand.inputCommandOptions,
+  "simulate-form-submission": apiCommand.inputCommandOptions,
   "list-publishes": apiCommand.paginatedListCommandOptions,
   "create-resource": apiCommand.createResourceCommandOptions,
   "update-resource": apiCommand.updateResourceCommandOptions,
   "delete-resource": apiCommand.deleteResourceCommandOptions,
   "list-domains": apiCommand.paginatedListCommandOptions,
   publish: apiCommand.publishCommandOptions,
+  "validate-publish": apiCommand.validatePublishCommandOptions,
   "get-publish-job": apiCommand.publishJobCommandOptions,
   "get-publish-report": apiCommand.publishReportCommandOptions,
   unpublish: apiCommand.unpublishCommandOptions,
@@ -247,10 +252,18 @@ export const apiCommandMetadata = publicApiOperations.map((operation) => ({
 
 export const highLevelCliCommands = [
   { command: "audit", operation: "audit" },
+  {
+    command: "validate-publish",
+    operation: "validate-publish",
+  },
   { command: "permissions", operation: "permissions" },
   { command: "get-assets-resource", operation: "get-assets-resource" },
   { command: "create-assets-resource", operation: "create-assets-resource" },
   { command: "update-assets-resource", operation: "update-assets-resource" },
+  {
+    command: "simulate-form-submission",
+    operation: "simulate-form-submission",
+  },
   {
     command: "get-marketplace-product",
     operation: "get-marketplace-product",

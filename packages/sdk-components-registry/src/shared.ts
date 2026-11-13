@@ -34,7 +34,7 @@ export const componentMetaLibraries: readonly ComponentMetaLibrary[] = [
 ];
 
 export const getComponentName = (
-  library: ComponentMetaLibrary,
+  library: Pick<ComponentMetaLibrary, "namespace">,
   exportName: string
 ) =>
   library.namespace === undefined

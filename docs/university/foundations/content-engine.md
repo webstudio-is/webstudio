@@ -1,14 +1,29 @@
 ---
-description: Create a file-based blog with Markdown, Assets queries, and dynamic pages.
+description: Create a file-based blog with Markdown or MDX, Assets queries, and dynamic pages.
 ---
 
 # 📚 Content Engine
 
-Webstudio's Content Engine turns Markdown and JSON files in Assets into content
+Webstudio's Content Engine turns Markdown, MDX, and JSON files in Assets into content
 you can query and bind in the visual editor. The files remain the source of
 truth, including their filenames, folders, metadata, and relative links. You
 can move the same files between projects or use them outside Webstudio without
 exporting them from a database first.
+
+MDX is a widely used file format that combines Markdown with JSX. In Webstudio,
+it lets designers pre-style every article element while editors write directly
+on the canvas with a Notion-style interface. Editors can also work in the MDX
+source, and AI agents can work through Webstudio MCP.
+
+It brings Content mode to file-based sites without requiring an external CMS
+or a runtime content database on the published site. Use it to:
+
+- Query file fields and render hundreds of pages from one visual design.
+- Edit complete MDX articles on the canvas with changes saved back to the file.
+- Give editors pre-styled Markdown elements and custom interactive components.
+- Create and edit structured entries through forms generated from a collection schema.
+- Build or change the same setup with Webstudio MCP while keeping every setting
+  available in the visual interface.
 
 This guide creates a blog overview at `/blog` and one dynamic article page at
 `/blog/:slug`.
@@ -16,25 +31,81 @@ This guide creates a blog overview at `/blog` and one dynamic article page at
 To see the finished setup first, start with the
 [Markdown Blog marketplace template](https://webstudio.is/marketplace/templates/markdown-blog).
 
-The screenshots use the Webstudio Updates project as a working example. Its
-filenames, fields, and category filter differ from the tutorial values below.
+Watch the complete workflow, from the first MDX file to visual editing and
+structured collection entries:
 
-<figure><img src="../../.gitbook/assets/content-engine-assets-structure.png" alt="Assets panel showing Markdown articles and their assets folder"><figcaption><p>Markdown articles stored alongside their assets</p></figcaption></figure>
+{% embed url="https://youtu.be/Sn-fhVajpgU" %}
+
+<figure><picture><source srcset="../../.gitbook/assets/content-engine-assets-structure-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/content-engine-assets-structure-light.png" alt="Assets panel showing two MDX articles and their assets folder" width="280"></picture><figcaption><p>Markdown articles stored alongside their assets</p></figcaption></figure>
+
+## Choose Markdown or MDX
+
+Choose the file format based on how editors will work with the article body:
+
+| Format | Publishing | Editing in Content mode |
+| --- | --- | --- |
+| `.mdx` with a Content Block | Publishing downloads the article files and compiles the MDX for every article the page can render. More articles can make publishing slower. | Editors can change the article visually on the canvas with a Notion-style experience, or edit the MDX source file. |
+| `.md` with Markdown Embed | No per-article MDX compilation is needed. A hosted page reads the selected Markdown body when it is requested. | Editors can edit the `.md` file in the Markdown source editor in Assets, but cannot edit its body visually on the canvas. |
+
+Hosted builds receive a content database for their Assets queries. Markdown
+body-reference queries use stored frontmatter for that database and fetch the
+selected body when a visitor opens the page. Static exports download article
+sources and build the database in the publish runner; this transfer and any
+MDX compilation still take time. Hosted pages using MDX Content Blocks also
+download article sources and compile the required MDX in the publish runner.
+If required MDX content is unavailable or compilation reports an error, the
+build fails instead of publishing an incomplete page.
+Use [Content Block](../core-components/content-block.md) when visual
+article editing matters, or [Markdown Embed](../core-components/markdown-embed.md)
+when source editing is enough.
+
+## Decide if the Content Engine fits
+
+Use the Content Engine for bounded, file-based content that should live with
+the site and remain portable as Markdown, MDX, or JSON.
+
+Good fits include:
+
+- Blogs with hundreds of text-and-image articles, within the limits below.
+- Portfolios, team directories, resource libraries, and case studies.
+- Small product catalogues with infrequently changed display data. Keep orders,
+  inventory, and payments in an ecommerce system.
+
+Use an external CMS, commerce backend, or media service when you need:
+
+- Several thousand entries or complex search and filtering.
+- Large image or video galleries, media processing, or streaming.
+- Live inventory, customer-specific prices, editorial workflows, scheduled
+  publishing, or content shared across many applications.
+
+### Limits that affect this choice
+
+Queries can consider and return at most 1,000 candidate documents. When a query
+uses document `$ref` values, resolving those references can load up to 2,000
+documents across the candidate documents and their dependencies. All reachable
+Assets resources share a 500 KiB published content database. **Markdown body
+reference** keeps article bodies out of the database.
+
+Images and videos remain separate Assets, but the Content Engine does not
+provide media processing or streaming. Review the complete
+[query and content limits](content-engine-reference.md#query-limits) before
+using it for a content-heavy project.
 
 ## Build it with MCP
 
 An AI agent can complete this entire workflow through
-[Webstudio MCP](../mcp.md). It can create the folders and Markdown files, upload
-images, build both pages, configure the Assets resources, add the Collection,
-bind the article directly, set the page metadata, and check the rendered result
-with vision. Everything remains editable in the visual editor.
+[Webstudio MCP](../mcp.md). It can create the folders and MDX files, upload
+images, build both pages, configure the Assets resources, connect a Content
+Block, add the content collection, set the page metadata, and check the rendered
+result with vision. Everything remains editable in the visual editor.
 
 Give the agent an editable project share link when it asks for one, then make a
 request such as:
 
-> Use Webstudio CLI to build a blog with the Content Engine. Store the articles
-> as Markdown files, create `/blog` and `/blog/:slug`, exclude drafts, and check
-> both pages on desktop and mobile.
+> Install Webstudio CLI and use MCP to build a blog with the Content Engine.
+> Store complete articles in MDX files, create `/blog` and `/blog/:slug`, make
+> every article field editable in Content mode, let editors create entries with
+> a collection form, exclude drafts, and check both pages on desktop and mobile.
 
 The remaining steps explain the same workflow when you want to build or inspect
 it manually.
@@ -50,17 +121,203 @@ blog/
     assets/
 ```
 
-Keeping all articles in one folder makes them easy to query. Images can live
-next to the articles or in a nested folder.
+Keeping all articles in one folder makes them easy to query. Put images and
+other supporting files in a nested folder.
 
 Open the settings for the `posts` folder and copy its ID. Both Assets resources
 in this guide use that ID to query only files in this folder.
 
+### Make the folder a content collection
+
+This step is optional. The Assets queries and dynamic page work without a
+collection. Add one when editors should create and update entries through forms
+instead of editing MDX frontmatter by hand.
+
+Turn on **Use as content collection** when you create the `posts` folder if
+editors should be able to add articles without writing MDX frontmatter. For an
+existing folder, choose **Use as content collection** from its context menu,
+actions menu, or **Folder settings**, then confirm setup. This creates two files
+in the same folder without changing its ID or existing content:
+
+- `collection.json` defines the entry fields and their rules with JSON Schema.
+- `template.mdx` supplies the starting frontmatter and body for each entry.
+
+Existing selected entries must be MDX files. Setup leaves their content unchanged,
+even when fields are missing or not yet configured. The collection shows field
+errors for repair after setup. Other files stay visible and are ignored by
+collection validation. Setup stops if a selected file has an incompatible type
+or conflicts with the generated configuration or template. Choose **Configure
+collection** after setup to define the fields used by your existing entries.
+
+### Select collection entries
+
+The generated `collection.json` includes filename patterns in `x-webstudio.entries`:
+
+```json
+{
+  "x-webstudio": {
+    "template": "template.mdx",
+    "entries": ["*.mdx"]
+  }
+}
+```
+
+These use [URLPattern syntax](https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API),
+not filesystem globs. Patterns match direct filenames in the current folder,
+case-insensitively; subfolders are independent. For example, use
+`["post-*.mdx", "!post-private-*.mdx"]` to select public post files. A leading
+`!` excludes a pattern; exclusions take priority over inclusions. At least one
+inclusion is required. Slashes are not allowed. The configuration and configured
+template are always excluded from entries, regardless of patterns.
+
+Omitting `entries` preserves the default `["*.mdx"]`. The setting accepts up to
+64 patterns of 256 characters each. New entry filenames must match the patterns.
+Only MDX entries are currently supported; a pattern selecting another format
+reports an error rather than treating that file as editable MDX. Files not
+selected remain visible and can still appear in ordinary Assets query results.
+
+### Configure fields and the template
+
+The folder remains a normal Assets folder. The direct `collection.json` file is
+what makes Webstudio treat it as a collection and show the collection badge.
+The configuration and referenced template files also show this badge. You can
+open them or download them when permitted, but cannot cut, copy, duplicate,
+move, or delete them individually. Manage them through **Collection settings**.
+Their asset **Settings** remain available to collection designers: Name is
+read-only and Folder is disabled, while Description remains editable.
+
+Open **Collection settings → Fields** and select a field from the list.
+Edit **Label** and **Field key** together, add a **Description** that tells
+editors what to enter, then choose the field's **Type**. The description appears
+as help in entry forms without repeating the field label.
+Set required fields and length or number limits under **Validation**.
+Choose **Add field** to add another entry field. The configurator writes the
+schema; designers do not need to edit JSON.
+
+Use the **Entry template** tab to rename the entry template and edit its default
+frontmatter and starter content with the built-in Markdown editor. Creating
+an entry keeps you on the current page.
+
+Use the **Entry page** tab to choose the dynamic page that displays collection
+entries. The page must have one URL parameter, such as `/blog/:slug`.
+Webstudio fills the page parameter with the entry filename when you choose
+**Open on canvas** from an entry's menu or **Entry settings**. The action stays
+visible but disabled until the collection has a compatible entry page; its help
+points back to this setting. If the page does not exist yet, finish step 5 and
+then return to this setting. Creating an entry does not navigate automatically.
+
+The collection format uses a supported subset of JSON Schema draft 2020-12.
+The configurator exposes string, number, integer, boolean, and slug fields,
+along with required fields and length or value limits. Set starting values in
+the entry template frontmatter. Collection fields are flat; arrays and nested
+objects are not supported. Slug fields reference Webstudio's bundled schema:
+
+```json
+{
+  "$ref": "https://webstudio.is/schemas/slug",
+  "title": "URL slug",
+  "description": "The URL-safe name used in this entry's web address.",
+  "maxLength": 120,
+  "x-webstudio": { "control": "slug" }
+}
+```
+
+Webstudio resolves this reference from its bundled rules, without a network
+request. Length limits alongside the reference still apply. The configurator
+writes the reference automatically; designers do not need to write a regex.
+Other references, composition keywords, enums, formats, and custom
+regular-expression patterns are not supported. Webstudio
+reports unsupported rules with their location instead of silently ignoring
+them.
+
+Editors choose **New entry**, complete the generated form, and select **Create
+entry**. Webstudio creates a lowercase, dash-separated slug from the configured
+source field, which is **Title** by default.
+Slugs preserve letters and numbers from any language, including accents:
+`Привет мир` becomes `привет-мир`, and `你好世界` stays `你好世界`.
+Spaces and punctuation become separators. If the title contains only emoji or
+symbols, enter a slug manually. Existing filenames are never renamed.
+
+Webstudio recognizes its previously generated slug patterns and uses the bundled
+Unicode rule for those collections too. Saving collection settings replaces the
+old pattern with the reference. Existing entry content and filenames remain
+unchanged. Future rule updates do not require editing each collection's regex.
+
+Editors can change the slug before creating the entry. New entries must satisfy
+the schema. Existing entries report field errors without blocking incremental
+edits or publication. The slug becomes
+the MDX filename and cannot be changed after creation.
+
+Slug fields are optional. Change the Slug field to another type
+if the collection does not need one. New entries then receive unique generated
+MDX filenames, without adding a filename field to their frontmatter. Existing
+filenames stay unchanged. For a manual slug, set **Generate from** to
+**None (manual entry)**.
+
+For optional fields, click the field label and choose **Reset value**, or
+Alt-click the label, to omit the value, including a value supplied by the
+template. An empty text
+value is different from an omitted value. Optional boolean fields offer
+**Yes**, **No**, and **Not set**. Validation errors appear beside their fields.
+
+Collection settings save automatically when valid. Webstudio checks the entry
+template against the new rules. Existing entries remain editable if a rule changes.
+The open collection folder checks entry frontmatter in the background and shows
+a warning when an entry needs attention. Choose **Review first entry**, select
+an entry's error indicator, or choose **Entry settings** from its menu to edit
+its fields using the same controls as **New entry**. Edits save automatically,
+including partial repairs. Unknown frontmatter properties and the MDX body are
+preserved. Slugs remain fixed to the filename; an existing mismatch has a repair
+action.
+
+Use **Edit file** to edit the body or inspect unconfigured fields. Use **Open on
+canvas** to edit the configured entry page visually. Invalid field values are
+underlined in the source editor; hover them for details. Content-mode text and
+number controls bound to these fields also show their collection errors. Fixing
+the values clears the errors. A field error does not hide the entry, stop the
+collection rendering, or block publication of unrelated changes.
+
+A failed read is reported separately from field errors and can be retried with
+**Check again**.
+
+The configurator rejects Integer limits that leave no possible whole number.
+Slug limits must allow at least one character, even when minimum length is unset.
+Without a Slug field, use a single `*.mdx` or `entry-*.mdx` entry pattern when
+saving collection settings. These match automatically generated filenames.
+Custom filename patterns require a Slug field. Existing configurations remain
+readable so their content can still be repaired and published.
+
+A collection folder accepts entries, supporting assets, and subfolders. Use
+**New entry** for filenames selected by the entry patterns. Files excluded by
+the patterns behave like ordinary assets: upload, create, paste, move, rename,
+and duplicate them normally. The collection configuration and template remain
+protected and do not appear in Content
+Engine query results. Keep `collection.json` valid and its referenced template
+available. Broken collection configuration can still block collection queries
+and publishing when Webstudio cannot safely identify the reserved files.
+An invalid template still blocks entry creation and publication. Malformed YAML
+and unreadable files are not ordinary field-validation errors; those existing
+parsing and access checks still apply.
+
+**Delete unused assets** does not list the files directly inside a collection
+folder. Collection entries are loaded dynamically and may not have a direct
+page or component reference.
+
+Choose **Convert to regular folder** in **Collection settings**, the folder's
+context or actions menu, or the empty-space context menu inside the folder.
+Confirm the conversion. This deletes only
+`collection.json`. The folder becomes a normal folder again, while its entries
+and template remain. The former template is then a regular MDX file and can
+appear in Assets query results.
+
 ## 2. Create an article
+
+If `posts` is a content collection, choose **New entry** and fill in its form.
+Otherwise, create the MDX file and frontmatter manually:
 
 1. Open `blog/posts` in the Assets panel.
 2. Open the add menu and choose **Create text file**.
-3. Name the file `hello-world.md`.
+3. Name the file `hello-world.mdx`.
 4. Add the article metadata between the two `---` lines, followed by the
    article body:
 
@@ -71,7 +328,8 @@ slug: hello-world
 publishedAt: 2026-08-10
 excerpt: A short introduction to the article.
 draft: false
-featureImage: ./assets/hello-world.png
+featureImage:
+  $ref: ./assets/hello-world.png
 author: Ada Lovelace
 ---
 
@@ -80,7 +338,13 @@ author: Ada Lovelace
 Write the article here.
 ```
 
-<figure><img src="../../.gitbook/assets/content-engine-markdown-editor.png" alt="Markdown editor showing article frontmatter and body"><figcaption><p>An article's metadata and body in the Markdown editor</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/content-engine-markdown-editor-dark.png">
+    <img src="../../.gitbook/assets/content-engine-markdown-editor-light.png" alt="MDX editor showing title and description frontmatter above a Product update article" width="640">
+  </picture>
+  <figcaption><p>An article's metadata and body in the Markdown editor</p></figcaption>
+</figure>
 
 ### Frontmatter
 
@@ -105,15 +369,29 @@ at `content.text` when the Assets resource uses **Markdown body reference**.
 
 ### Relative asset paths
 
-Upload `hello-world.png` to `blog/posts/assets`. The article refers to it with
-`./assets/hello-world.png`, relative to the Markdown file. When an Assets
-resource returns `properties.featureImage`, Webstudio turns that path into the
-published image URL. Bind the returned value directly to an image, background
-image, social image, download link, or another URL property.
+Upload `hello-world.png` to `blog/posts/assets`. The article's `$ref` resolves
+relative to the Markdown file. It declares that `featureImage` is structured
+asset data without deciding which metadata a query must return.
 
 Relative paths also work in nested objects, arrays, and JSON files. Query
 strings and fragments are preserved, so a value such as
 `./assets/hello-world.png?width=1200#cover` remains usable.
+
+Select only the referenced fields the page uses, such as
+`properties.featureImage.src` and `properties.featureImage.description`. The
+value becomes structured data:
+
+```js
+post.properties.featureImage.src;
+post.properties.featureImage.description;
+```
+
+Bind the Image source to `post.properties.featureImage.src`. Bind its
+alternative text to
+`post.properties.featureImage.description ?? post.properties.title`. This
+uses the Asset Manager description when present and falls back to the article
+title. Existing content that stores the asset path as a plain string continues
+returning a URL string.
 
 Imported content can also use published asset paths such as
 `./assets/hero.png` or `/assets/hero.png`. Webstudio matches the final filename
@@ -128,8 +406,9 @@ asset ID or generated filename. This is what makes the content portable.
 
 ### JSON files
 
-The Content Engine can query JSON files as well as Markdown. A JSON file must
-contain an object at its root:
+The Content Engine can query JSON files as well as Markdown and MDX. JSON files can
+contain objects, arrays, or scalar values. A root object exposes its fields for
+structured queries:
 
 ```json
 {
@@ -139,26 +418,34 @@ contain an object at its root:
 }
 ```
 
-Its fields are also exposed under `properties`, such as `properties.name` and
-`properties.avatar`. Use JSON when the file contains structured data without a
-Markdown body.
+The object's fields are exposed under `properties`, such as `properties.name`
+and `properties.avatar`. Root arrays and scalars remain valid JSON content but
+do not expose top-level `properties` fields. Use JSON when the file contains
+structured data without a Markdown body. Name the file with a `.json` extension
+in the **Create text file** dialog. A new file starts with an empty object, which
+you can replace with any JSON value. The editor accepts JSON-compatible syntax
+and formats it as strict JSON when saving. Unsupported or incomplete syntax is
+reported without saving the file. You can also change an existing text file's
+extension to `.json` by editing its complete filename in Asset settings;
+Webstudio validates and formats the current content before converting it.
 
 ## 3. Query the articles for the overview
 
-Create a static page with the path `/blog`, then add an Assets resource to its
-page-level **Dynamic data**:
+Create a static page with the path `/blog`, then select its Body and add an
+Assets resource in **Settings > Variables**:
 
-1. Create a **System Resource** and choose **Assets**.
+1. In the **New variable** dialog, choose **Assets resource**.
 2. Name it `posts`.
 3. Under **Output**, choose **Selected fields**, turn off **File metadata**, and
    include only the fields the overview renders, such as `properties.title`,
    `properties.slug`, `properties.publishedAt`, `properties.excerpt`, and
-   `properties.featureImage`.
+   `properties.featureImage.src` and
+   `properties.featureImage.description`.
 4. Under **Result**, choose **Many**.
 5. Under **Content**, choose **Metadata only**. The overview does not render
    complete article bodies.
 6. Add these filters:
-   - `extension` **equals** `"md"`
+   - `extension` **equals** `"mdx"`
    - `folder id` **equals** the quoted `posts` folder ID
    - `properties.draft` **does not equal** `true`
 7. Sort `properties.publishedAt` in descending order. Add `id` in ascending
@@ -179,8 +466,10 @@ article just to display a list.
 4. Design one article card inside the Collection.
 5. Bind the card's text and image to fields on `Post.value`, such as
    `Post.value.properties.title` and
-   `Post.value.properties.featureImage`.
-6. Bind the card link to `"/blog/" + Post.value.properties.slug`.
+   `Post.value.properties.featureImage.src`.
+6. Bind the image alternative text to
+   `Post.value.properties.featureImage.description ?? Post.value.properties.title`.
+7. Bind the card link to `"/blog/" + Post.value.properties.slug`.
 
 The Assets resource returns many results as an object keyed by asset ID. The
 current article inside the Collection is available through the Collection
@@ -192,53 +481,87 @@ Create one page with the path `/blog/:slug`. This page is the template for all
 articles. In the visual editor's address bar, enter `hello-world` as the
 preview value for `:slug`.
 
-Add another Assets resource to the page-level **Dynamic data**:
+On the article page, select Body and add another Assets resource in
+**Settings > Variables**:
 
-1. Create a **System Resource** and choose **Assets**.
+1. In the **New variable** dialog, choose **Assets resource**.
 2. Name it `post`.
 3. Under **Output**, choose **Selected fields**, turn off **File metadata**, and
    include the fields this page renders, such as `properties.title`,
-   `properties.publishedAt`, `properties.excerpt`, `properties.featureImage`,
-   and `properties.author`.
+   `properties.publishedAt`, `properties.excerpt`,
+   `properties.featureImage.src`, `properties.featureImage.description`, and
+   `properties.author`.
 4. Under **Result**, choose **Exactly one**.
-5. Under **Content**, choose **Markdown body reference**.
+5. Under **Content**, choose **Metadata only**. The Content Block loads the
+   matching MDX file directly.
 6. Add these filters:
-   - `extension` **equals** `"md"`
+   - `extension` **equals** `"mdx"`
    - `folder id` **equals** the quoted `posts` folder ID
    - `properties.slug` **equals** `system.params.slug`
    - `properties.draft` **does not equal** `true`
 
-<figure><img src="../../.gitbook/assets/content-engine-article-query.png" alt="Assets resource filtering one Markdown article by folder and the dynamic page slug"><figcaption><p>The article resource uses the dynamic slug from the page URL</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/content-engine-article-query.png" alt="Assets resource filtering one Markdown article by folder and the dynamic page slug"><figcaption><p>The article Resource uses the dynamic slug from the page URL</p></figcaption></figure>
 
 **Exactly one** returns the matching article directly at `post.data`. It also
 reports an error if two articles use the same slug. You do not need a
 Collection on the article page.
 
-**Markdown body reference** keeps article bodies out of the published content
-database. Webstudio first finds the matching article, then loads only that
-Markdown body from Assets.
+**Metadata only** keeps article bodies out of the published content database.
+The resource finds the matching article and returns its Asset ID. The Content
+Block then loads that MDX file directly.
+
+If `posts` is a content collection, return to **Collection settings → Entry
+page** and select this dynamic page. This enables **Open on canvas** for its
+entries.
 
 ## 6. Bind the article
 
-Bind the article components directly to `post.data`:
+Add a [Content Block](../core-components/content-block.md#store-content-in-an-mdx-file)
+and bind its **Source** to `post.data.id`. Every Assets query result includes its
+Asset ID, even when file metadata is disabled. The Content Block loads the
+matching article and adds an **MDX content** region for its body.
 
-- Heading: `post.data.properties.title`
-- Author: `post.data.properties.author`
-- Image source: `post.data.properties.featureImage`
-- Markdown Embed code: `post.data.content.text`
+Build the complete article inside the Content Block:
 
-Add a [Markdown Embed](../core-components/markdown-embed.md) for the body. Style
-its nested headings, paragraphs, links, lists, and images once; the styles apply
-to every article.
+- Bind the heading directly to `document.frontmatter.title`.
+- Bind the author directly to `document.frontmatter.author`.
+- Bind the Image source directly to
+  `document.frontmatter.featureImage.src` and make the binding writable.
+- Bind the Image alternative text to
+  `document.frontmatter.featureImage.description`.
+- Place the **MDX content** region where the article body should render.
+- Style the standard Markdown elements in **Templates**, then add any custom
+  interactive elements editors should be able to insert.
+
+Keep each editable value directly bound to one frontmatter field. Computed
+expressions remain read-only. Put fixed wording in separate text elements and
+use a Date Time component for dates so Content mode shows the appropriate
+controls.
+
+Editors can now change the title, author, images, dates, body, links, and custom
+interactive elements directly on the canvas. These changes save back to the MDX
+file. Verify every article-owned value in Content mode before handing the site
+to an editor.
 
 In Page Settings, bind the fields needed for search and sharing:
 
 - **Title**: `post.data.properties.title`
 - **Description**: `post.data.properties.excerpt`
-- **Social image**: `post.data.properties.featureImage`
+- **Social image**: `post.data.properties.featureImage.src`
 - **Status code**: `post.data ? 200 : 404`
 
 The status expression returns a real 404 when no article matches the URL.
+
+### Render a Markdown body without visual editing
+
+Use a `.md` file and [Markdown Embed](../core-components/markdown-embed.md) when
+editors can work in the Markdown source editor instead of editing the body on
+the canvas. Content mode editors can still open and edit the `.md` file in
+Assets. Set the article resource's
+`extension` filter to `md` and **Content** to **Markdown body reference**, then
+bind the Markdown Embed code to `post.data.content.text`. Style its nested
+document elements once for every article. See [Choose Markdown or MDX](#choose-markdown-or-mdx)
+for the publishing tradeoff.
 
 ## 7. Publish the article
 
@@ -255,27 +578,29 @@ give its Assets resource the same `properties.draft does not equal true`
 filter. The metadata field does not automatically remove an article from a
 custom sitemap.
 
-To publish another article, duplicate the Markdown file and change its title,
-slug, publication date, image, and body. The existing overview and dynamic page
-will render it without another page design.
+To publish another collection article, choose **New entry**. For the manual
+workflow, duplicate the MDX file and change its title, slug, publication
+date, image, and body. The existing overview and dynamic page will render it
+without another page design.
 
 ## Connect content with document references
 
-The Content Engine calls links between Markdown and JSON files **document
+The Content Engine calls links between Markdown, MDX, and JSON files **document
 references**. A document reference replaces an exact `$ref` object with data
 from another content file. This is Webstudio's syntax. It uses URI references
 for file paths and [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901)
 for values inside JSON files, but it does not implement JSON Schema resolution.
 
-Both supported source formats can reference either target format:
+All supported source formats can reference the other content formats:
 
-| Source | Where references can appear | JSON target | Markdown target |
-| --- | --- | --- | --- |
-| Markdown | YAML frontmatter | Yes | Yes |
-| JSON | Anywhere in the document | Yes | Yes |
+| Source          | Where references can appear | JSON target | Markdown or MDX target |
+| --------------- | --------------------------- | ----------- | ---------------------- |
+| Markdown or MDX | YAML frontmatter            | Yes         | Yes                    |
+| JSON            | Anywhere in the document    | Yes         | Yes                    |
 
-References do not work inside a Markdown body. A `$ref` object can be nested in
-an object or array, including inside a file reached through another reference.
+References do not work inside a Markdown or MDX body. A `$ref` object can be
+nested in an object or array, including inside a file reached through another
+reference.
 
 ### Reference syntax
 
@@ -291,13 +616,13 @@ relative to the file containing the reference, not the project root.
 
 The optional fragment selects which value to insert:
 
-| Reference | Value inserted at `$ref` |
-| --- | --- |
-| `../authors/ada.json` | The complete JSON value |
-| `../authors/ada.json#/profile/name` | The value at JSON Pointer `/profile/name` |
-| `../authors/ada.md` | The complete Markdown source, including frontmatter |
-| `../authors/ada.md#frontmatter` | The Markdown frontmatter as an object |
-| `../authors/ada.md#body` | The Markdown body without frontmatter |
+| Reference                           | Value inserted at `$ref`                            |
+| ----------------------------------- | --------------------------------------------------- |
+| `../authors/ada.json`               | The complete JSON value                             |
+| `../authors/ada.json#/profile/name` | The value at JSON Pointer `/profile/name`           |
+| `../authors/ada.md`                 | The complete Markdown source, including frontmatter |
+| `../authors/ada.md#frontmatter`     | The Markdown frontmatter as an object               |
+| `../authors/ada.md#body`            | The Markdown body without frontmatter               |
 
 JSON Pointer fragments apply only to JSON files. Use `~1` for `/` and `~0` for
 `~` inside a property name. For example, `#/social~1links/0` selects the first
@@ -350,12 +675,12 @@ the resolved `properties.author` value is:
 }
 ```
 
-The same rules cover JSON to Markdown and Markdown frontmatter to JSON. A
-referenced file can contain its own references, so shared records can be
-composed across several files.
+The same rules cover JSON to Markdown or MDX and Markdown or MDX frontmatter to
+JSON. A referenced file can contain its own references, so shared records can
+be composed across several files.
 
 The Content Engine loads referenced data when a query filters, sorts, or
-returns a field that depends on it. The target must be another Markdown or JSON
+returns a field that depends on it. The target must be another Markdown, MDX, or JSON
 file in the project's compiled Assets. Missing files, invalid fragments, and
 reference cycles fail instead of returning partial data.
 
@@ -363,6 +688,7 @@ reference cycles fail instead of returning partial data.
 
 - [Content Engine reference](content-engine-reference.md) – Check query fields, modes, diagnostics, references, and limits
 - [Assets](assets.md) – Create, edit, organize, and reference project files
-- [Data variables](variables.md) – Define resources and understand their scope
+- [Content Block](../core-components/content-block.md) – Design and visually edit MDX articles
+- [Variables](variables.md) – Define resources and understand their scope
 - [Collection](../core-components/collection.md) – Render article lists
 - [Markdown Embed](../core-components/markdown-embed.md) – Render and style an article body

@@ -13,7 +13,7 @@ For general Tailwind HTML, use the **Paste HTML with Tailwind classes** command:
 3. Search for **Paste HTML with Tailwind classes**
 4. Run the command
 
-<figure><img src="../../../.gitbook/assets/paste-html-tailwind-command.png" alt="Commands and search showing the Paste HTML with Tailwind classes command"><figcaption><p>Paste HTML with Tailwind classes command</p></figcaption></figure>
+<figure><picture><source srcset="../../../.gitbook/assets/paste-html-tailwind-command-dark.png" media="(prefers-color-scheme: dark)"><img src="../../../.gitbook/assets/paste-html-tailwind-command-light.png" alt="Commands search showing Paste HTML with Tailwind classes" width="500"></picture><figcaption><p>Paste HTML with Tailwind classes command</p></figcaption></figure>
 
 HTML/Tailwind output copied from [Inception](../../inception.md#copy-htmltailwind) can also be pasted directly into the Builder.
 

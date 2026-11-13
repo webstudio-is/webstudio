@@ -1,7 +1,7 @@
 import { ItemIcon, RadioGroupIcon, TriggerIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
-import { radix } from "./shared/meta";
+import { getRadixComponentId } from "./shared/component-id";
 import { buttonReset } from "./shared/preset-styles";
 import {
   propsRadioGroup,
@@ -14,7 +14,7 @@ export const metaRadioGroup: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: ["instance"],
-    descendants: [radix.RadioGroupItem],
+    descendants: [getRadixComponentId("RadioGroupItem")],
   },
   presetStyle: {
     div,
@@ -28,7 +28,7 @@ export const metaRadioGroupItem: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.RadioGroupIndicator],
+    descendants: [getRadixComponentId("RadioGroupIndicator")],
   },
   states: [
     { label: "Checked", selector: '[data-state="checked"]' },

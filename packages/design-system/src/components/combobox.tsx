@@ -41,6 +41,9 @@ import { Flex } from "./flex";
 import { NestedInputButton } from "./nested-input-button";
 import { InputField } from "./input-field";
 import { Grid } from "./grid";
+import { cssVar, declareCssVar } from "../css-var";
+
+const popperAnchorWidth = declareCssVar("--radix-popper-anchor-width");
 
 export const ComboboxListbox = styled(
   "ul",
@@ -128,19 +131,15 @@ export const ComboboxItemDescription = ({
   return (
     <>
       <ComboboxSeparator
-        style={{
-          display: `var(--ws-combobox-description-display-bottom, none)`,
-          order: "var(--ws-combobox-description-order)",
-        }}
+        data-combobox-description="bottom-separator"
+        css={{ order: 2 }}
       />
       <ListboxItem
+        data-combobox-description="content"
         css={{
           display: "grid",
         }}
         hint
-        style={{
-          order: "var(--ws-combobox-description-order)",
-        }}
       >
         {descriptions.map((description, index) => (
           <Box
@@ -164,28 +163,37 @@ export const ComboboxItemDescription = ({
         </Box>
       </ListboxItem>
       <ComboboxSeparator
-        style={{
-          display: `var(--ws-combobox-description-display-top, none)`,
-          order: "var(--ws-combobox-description-order)",
-        }}
+        data-combobox-description="top-separator"
+        css={{ order: 0 }}
       />
     </>
   );
 };
 
 export const ComboboxRoot = (props: ComponentProps<typeof Popover>) => {
-  return <Popover {...props} modal />;
+  return <Popover modal {...props} />;
 };
 
 const StyledPopoverContent = styled(PopoverContent, {
-  minWidth: "var(--radix-popper-anchor-width)",
+  minWidth: cssVar(popperAnchorWidth),
+  '& [data-combobox-description$="separator"]': {
+    display: "none",
+  },
   "&[data-side=top]": {
-    "--ws-combobox-description-display-top": "block",
-    "--ws-combobox-description-order": 0,
+    '& [data-combobox-description="top-separator"]': {
+      display: "block",
+    },
+    '& [data-combobox-description="content"]': {
+      order: 0,
+    },
   },
   "&[data-side=bottom]": {
-    "--ws-combobox-description-display-bottom": "block",
-    "--ws-combobox-description-order": 2,
+    '& [data-combobox-description="bottom-separator"]': {
+      display: "block",
+    },
+    '& [data-combobox-description="content"]': {
+      order: 2,
+    },
   },
 });
 
@@ -465,7 +473,7 @@ type ComboboxProps<Item> = UseComboboxProps<Item> &
     | "onBlur"
     | "onInvalid"
     | "disabled"
-  >;
+  > & { modal?: boolean };
 
 export const Combobox = <Item,>({
   getDescription,
@@ -479,6 +487,7 @@ export const Combobox = <Item,>({
   onBlur,
   onInvalid,
   disabled,
+  modal,
   ...props
 }: ComboboxProps<Item>) => {
   const combobox = useCombobox<Item>(props);
@@ -492,7 +501,7 @@ export const Combobox = <Item,>({
   const descriptions = combobox.items.map((item) => getDescription?.(item));
 
   return (
-    <ComboboxRoot open={combobox.isOpen}>
+    <ComboboxRoot open={combobox.isOpen} modal={modal ?? true}>
       <Box {...combobox.getComboboxProps()}>
         <ComboboxAnchor>
           <InputField

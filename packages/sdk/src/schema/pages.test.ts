@@ -154,6 +154,40 @@ test("validates non-home page path is not empty", () => {
   ]);
 });
 
+test("allows an empty local path for a folder index page", () => {
+  expect(
+    pages.safeParse({
+      ...validPages,
+      pages: new Map(validPages.pages).set("folder-index", {
+        id: "folder-index",
+        name: "Folder index",
+        path: "",
+        title: `"Folder index"`,
+        meta: {},
+        rootInstanceId: "folderIndexRoot",
+      }),
+      folders: new Map([
+        [
+          "root",
+          {
+            ...validPages.folders.get("root")!,
+            children: ["home", "folder"],
+          },
+        ],
+        [
+          "folder",
+          {
+            id: "folder",
+            name: "Folder",
+            slug: "folder",
+            children: ["folder-index"],
+          },
+        ],
+      ]),
+    }).success
+  ).toBe(true);
+});
+
 test("supports text document type", () => {
   expect(documentTypes).toContain("text");
   expect(

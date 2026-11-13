@@ -1,15 +1,15 @@
-import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState, type ReactNode } from "react";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
 import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { propertiesData } from "@webstudio-is/css-data";
 import {
   Button,
+  cssVar,
   Flex,
   Kbd,
-  Label,
-  rawTheme,
+  ResettableLabel,
   SectionTitleLabel,
   Text,
   theme,
@@ -17,52 +17,63 @@ import {
   IconLink,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-import { $registeredComponentMetas } from "~/shared/nano-states";
+import {
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedInstancePathWithRoot,
+  $selectedBreakpointId,
+  $selectedStyleState,
+  $temporaryTagStyleId,
+  selectInstance,
+  $virtualInstances,
+} from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $instances, $styleSources } from "~/shared/sync/data-stores";
 import type {
   ComputedStyleDecl,
+  StyleValueSource,
   StyleValueSourceColor,
 } from "~/shared/style-object-model";
 import { useComputedStyles } from "./shared/model";
 import { useReadonly } from "./shared/readonly";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
-import { $virtualInstances } from "~/shared/nano-states";
+import { selectStyleSource } from "~/builder/shared/style-source-actions";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
+import { $isAltPressed } from "./shared/modifier-keys";
 
-const $isAltPressed = atom(false);
-if (typeof window !== "undefined") {
-  addEventListener("keydown", (event) => {
-    if (event.key === "Alt") {
-      $isAltPressed.set(true);
-    }
-  });
-  addEventListener("keyup", (event) => {
-    if (event.key === "Alt") {
-      $isAltPressed.set(false);
-    }
-  });
-}
+const sourceHints: Record<StyleValueSourceColor, string> = {
+  local: "Defined in the selected style source.",
+  overwritten: "Defined here, but a later declaration takes precedence.",
+  remote:
+    "Comes from another style source, breakpoint, state, or parent element.",
+  preset: "Comes from Webstudio component defaults.",
+  default: "Comes from a browser default or CSS initial value.",
+};
 
 const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
   let css = "";
   for (const styleDecl of styles) {
-    let value;
-    if (isComputed) {
-      value = toValue(styleDecl.usedValue);
-    } else {
-      value = toValue(styleDecl.cascadedValue);
-    }
+    const value = toValue(
+      isComputed ? styleDecl.usedValue : styleDecl.cascadedValue
+    );
     css += `${styleDecl.property}: ${value};\n`;
   }
   return css;
 };
 
+const deleteProperties = (properties: CssProperty[]) => {
+  const batch = createBatchUpdate();
+  for (const property of properties) {
+    batch.deleteProperty(property);
+  }
+  batch.publish();
+};
+
 export const PropertyInfo = ({
   title,
   code,
-  link,
+  property,
   description,
   styles,
   onReset,
@@ -70,10 +81,10 @@ export const PropertyInfo = ({
 }: {
   title: string;
   code?: string;
-  link?: string;
+  property: CssProperty;
   description: ReactNode;
   styles: ComputedStyleDecl[];
-  onReset: () => void;
+  onReset?: () => void;
   resetType?: "reset" | "delete";
 }) => {
   const readonly = useReadonly();
@@ -83,11 +94,16 @@ export const PropertyInfo = ({
   const styleSources = useStore($styleSources);
   const metas = useStore($registeredComponentMetas);
   const isAltPressed = useStore($isAltPressed);
+  const selectedInstanceId = useStore($selectedInstanceSelector)?.[0];
+  const instancePath = useStore($selectedInstancePathWithRoot);
 
   let resettable = false;
-  const breakpointSet = new Set<string>();
-  const styleSourceNameSet = new Set<string>();
-  const instanceSet = new Set<string>();
+  const breakpointSources = new Map<
+    string,
+    { label: string; source: StyleValueSource }
+  >();
+  const styleSourceNames = new Map<string, StyleValueSource>();
+  const instanceSources = new Map<string, StyleValueSource>();
 
   for (const { source } of styles) {
     if (source.name === "local" || source.name === "overwritten") {
@@ -109,37 +125,133 @@ export const PropertyInfo = ({
       : undefined;
     if (styleSource) {
       const styleSourceName =
-        styleSource.type === "token" ? styleSource.name : "Local";
+        styleSource.type === "token"
+          ? styleSource.name
+          : styleSource.type === "tag"
+            ? styleSource.tag
+            : "Local";
       if (source.state) {
         const stateLabel =
           meta?.states?.find((item) => item.selector === source.state)?.label ??
           humanizeString(source.state);
-        styleSourceNameSet.add(`${styleSourceName} (${stateLabel})`);
+        styleSourceNames.set(`${styleSourceName} (${stateLabel})`, source);
       } else {
-        styleSourceNameSet.add(styleSourceName);
+        styleSourceNames.set(styleSourceName, source);
       }
     }
     if (breakpoint) {
-      breakpointSet.add(
-        breakpoint?.minWidth?.toString() ??
-          breakpoint?.maxWidth?.toString() ??
-          "Base"
-      );
+      breakpointSources.set(breakpoint.id, {
+        label:
+          breakpoint.minWidth?.toString() ??
+          breakpoint.maxWidth?.toString() ??
+          "Base",
+        source,
+      });
     }
     if (instance && meta) {
-      instanceSet.add(getInstanceLabel(instance));
+      instanceSources.set(getInstanceLabel(instance), source);
     }
   }
 
+  const jumpToSource = (source: StyleValueSource) => {
+    const target = instancePath?.find(
+      ({ instance }) => instance.id === source.instanceId
+    );
+    if (target === undefined) {
+      return;
+    }
+    const targetSelector = target.instanceSelector;
+    selectInstance(
+      targetSelector.length > 1 && targetSelector.at(-1) === ROOT_INSTANCE_ID
+        ? targetSelector.slice(0, -1)
+        : targetSelector
+    );
+    if (source.styleSourceId) {
+      if (styleSources.get(source.styleSourceId)?.type === "tag") {
+        $temporaryTagStyleId.set(source.styleSourceId);
+      }
+      selectStyleSource(source.styleSourceId, source.state);
+    } else {
+      $selectedStyleState.set(source.state);
+    }
+    if (source.breakpointId) {
+      $selectedBreakpointId.set(source.breakpointId);
+    }
+  };
+  const canJumpToSource = (source: StyleValueSource) =>
+    instancePath?.some(({ instance }) => instance.id === source.instanceId) ??
+    false;
+  const sourceBadges = [
+    ...Array.from(breakpointSources, ([id, { label, source }]) => ({
+      key: `breakpoint:${id}`,
+      label,
+      source,
+      color: "breakpoint" as const,
+    })),
+    ...Array.from(styleSourceNames, ([label, source]) => ({
+      key: `style:${label}`,
+      label,
+      source,
+      color:
+        source.styleSourceId &&
+        styleSources.get(source.styleSourceId)?.type === "tag"
+          ? ("tag" as const)
+          : label === "Local"
+            ? ("local" as const)
+            : ("token" as const),
+    })),
+    ...Array.from(instanceSources, ([label, source]) => ({
+      key: `instance:${label}`,
+      label,
+      source,
+      color: "instance" as const,
+    })),
+  ];
+
+  const mdnUrl = propertiesData[property]?.mdnUrl;
+  const sourceColor =
+    styles.length > 0 ? getPriorityStyleValueSource(styles) : undefined;
+  let sourceLabel = sourceColor === "remote" ? "Cascaded" : sourceColor;
+  let sourceDescription = sourceColor && sourceHints[sourceColor];
+  if (
+    selectedInstanceId !== undefined &&
+    (sourceColor === "remote" || sourceColor === "preset")
+  ) {
+    const matchingStyles = styles.filter(
+      (style) => style.source.name === sourceColor
+    );
+    if (
+      matchingStyles.every(
+        ({ source }) =>
+          source.instanceId !== undefined &&
+          source.instanceId !== selectedInstanceId &&
+          source.state?.startsWith(" ") !== true
+      )
+    ) {
+      sourceLabel = sourceColor === "remote" ? "Inherited" : "Preset";
+      sourceDescription =
+        sourceColor === "remote"
+          ? "Comes from a style on an ancestor element."
+          : "Comes from a Webstudio component default on an ancestor element.";
+    } else if (
+      sourceColor === "remote" &&
+      matchingStyles.every(
+        ({ source }) => source.instanceId === selectedInstanceId
+      )
+    ) {
+      sourceDescription =
+        "Comes from another style source, breakpoint, or state on this element.";
+    }
+  }
   return (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
       <Flex justify="between">
         <Text variant="titles" truncate>
           {title}
         </Text>
-        {link && (
+        {mdnUrl && (
           <IconLink
-            href={link}
+            href={mdnUrl}
             target="_blank"
             rel="noreferrer"
             color="inherit"
@@ -157,7 +269,13 @@ export const PropertyInfo = ({
         {code ?? renderCss(styles, isAltPressed)}
       </Text>
       <Text>{description}</Text>
-      {(styleSourceNameSet.size > 0 || instanceSet.size > 0) && (
+      {sourceColor && (
+        <Text>
+          <strong>{humanizeString(sourceLabel ?? sourceColor)}: </strong>
+          {sourceDescription}
+        </Text>
+      )}
+      {(styleSourceNames.size > 0 || instanceSources.size > 0) && (
         <Flex
           direction="column"
           gap="1"
@@ -165,31 +283,26 @@ export const PropertyInfo = ({
         >
           <Text color="moreSubtle">Value comes from</Text>
           <Flex gap="1" wrap="wrap">
-            {Array.from(breakpointSet).map((label) => (
-              <StyleSourceBadge key={label} source="breakpoint" variant="small">
-                {label}
-              </StyleSourceBadge>
-            ))}
-            {Array.from(styleSourceNameSet).map((label) => (
+            {sourceBadges.map(({ key, label, source, color }) => (
               <StyleSourceBadge
-                key={label}
-                source={label === "Local" ? "local" : "token"}
+                as="button"
+                type="button"
+                key={key}
+                source={color}
                 variant="small"
+                clickable
+                disabled={!canJumpToSource(source)}
+                onClick={() => jumpToSource(source)}
               >
-                {label}
-              </StyleSourceBadge>
-            ))}
-            {Array.from(instanceSet).map((label) => (
-              <StyleSourceBadge key={label} source="instance" variant="small">
                 {label}
               </StyleSourceBadge>
             ))}
           </Flex>
         </Flex>
       )}
-      {resettable && readonly === false && (
+      {resettable && readonly === false && onReset && (
         <Button
-          color="dark"
+          color="neutral-destructive"
           prefix={
             <Flex justify="end">
               <ResetIcon />
@@ -225,6 +338,60 @@ export const getPriorityStyleValueSource = (
   return "default";
 };
 
+const ResettablePropertyLabel = ({
+  label,
+  description,
+  properties,
+  disabled,
+  asChild,
+  children,
+}: {
+  label: string;
+  description?: string;
+  properties: [CssProperty, ...CssProperty[]];
+  disabled?: boolean;
+  asChild?: boolean;
+  children: ReactNode;
+}) => {
+  const styles = useComputedStyles(properties);
+  const readonly = useReadonly();
+  const styleValueSourceColor = getPriorityStyleValueSource(styles);
+
+  const resetProperty = () => {
+    if (readonly) {
+      return;
+    }
+    deleteProperties(properties);
+  };
+
+  return (
+    <ResettableLabel
+      asChild={asChild}
+      disabled={disabled}
+      color={styleValueSourceColor}
+      onReset={
+        styles.some(
+          ({ source }) =>
+            source.name === "local" || source.name === "overwritten"
+        )
+          ? resetProperty
+          : undefined
+      }
+      resetDisabled={readonly}
+      content={
+        <PropertyInfo
+          title={label}
+          property={properties[0]}
+          description={description}
+          styles={styles}
+        />
+      }
+    >
+      {children}
+    </ResettableLabel>
+  );
+};
+
 export const PropertyLabel = ({
   label,
   description,
@@ -236,63 +403,15 @@ export const PropertyLabel = ({
   properties: [CssProperty, ...CssProperty[]];
   disabled?: boolean;
 }) => {
-  const styles = useComputedStyles(properties);
-  const readonly = useReadonly();
-  const styleValueSourceColor = getPriorityStyleValueSource(styles);
-  const [isOpen, setIsOpen] = useState(false);
-  const resetProperty = () => {
-    if (readonly) {
-      return;
-    }
-    const batch = createBatchUpdate();
-    for (const property of properties) {
-      batch.deleteProperty(property);
-    }
-    batch.publish();
-  };
-
   return (
-    <Flex align="center">
-      <Tooltip
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        triggerProps={{
-          onClick: (event) => {
-            if (readonly) {
-              return;
-            }
-            if (event.altKey) {
-              event.preventDefault();
-              // If not, when mixed with ToogleGroupControl.
-              // The will trigger the reset of the toggle group.
-              // And resets all of the properties in the toggle group.
-              event.stopPropagation();
-              resetProperty();
-              return;
-            }
-            setIsOpen(true);
-          },
-        }}
-        content={
-          <PropertyInfo
-            title={label}
-            description={description}
-            styles={styles}
-            onReset={() => {
-              resetProperty();
-              setIsOpen(false);
-            }}
-            link={propertiesData[properties[0]]?.mdnUrl}
-          />
-        }
-      >
-        <Flex shrink gap={1} align="center">
-          <Label color={styleValueSourceColor} truncate disabled={disabled}>
-            {label}
-          </Label>
-        </Flex>
-      </Tooltip>
-    </Flex>
+    <ResettablePropertyLabel
+      label={label}
+      description={description}
+      properties={properties}
+      disabled={disabled}
+    >
+      {label}
+    </ResettablePropertyLabel>
   );
 };
 
@@ -304,64 +423,16 @@ export const PropertySectionLabel = ({
   label: string;
   description: string | undefined;
   properties: [CssProperty, ...CssProperty[]];
-}) => {
-  const styles = useComputedStyles(properties);
-  const readonly = useReadonly();
-  const styleValueSourceColor = getPriorityStyleValueSource(styles);
-  const [isOpen, setIsOpen] = useState(false);
-  const resetProperty = () => {
-    if (readonly) {
-      return;
-    }
-    const batch = createBatchUpdate();
-    for (const property of properties) {
-      batch.deleteProperty(property);
-    }
-    batch.publish();
-  };
-
-  return (
-    <Flex align="center">
-      <Tooltip
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        // prevent closing tooltip on content click
-        onPointerDown={(event) => event.preventDefault()}
-        triggerProps={{
-          onClick: (event) => {
-            if (readonly) {
-              return;
-            }
-            if (event.altKey) {
-              event.preventDefault();
-              resetProperty();
-              return;
-            }
-            setIsOpen(true);
-          },
-        }}
-        content={
-          <PropertyInfo
-            title={label}
-            description={description}
-            styles={styles}
-            onReset={() => {
-              resetProperty();
-              setIsOpen(false);
-            }}
-            link={propertiesData[properties[0]]?.mdnUrl}
-          />
-        }
-      >
-        <Flex shrink gap={1} align="center">
-          <SectionTitleLabel color={styleValueSourceColor}>
-            {label}
-          </SectionTitleLabel>
-        </Flex>
-      </Tooltip>
-    </Flex>
-  );
-};
+}) => (
+  <ResettablePropertyLabel
+    label={label}
+    description={description}
+    properties={properties}
+    asChild
+  >
+    <SectionTitleLabel>{label}</SectionTitleLabel>
+  </ResettablePropertyLabel>
+);
 
 /**
  * Some properties like layered background-image, background-size are non resetable.
@@ -382,47 +453,28 @@ export const PropertyInlineLabel = ({
   properties?: [CssProperty, ...CssProperty[]];
   disabled?: boolean;
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   return (
-    <Flex align="center">
-      <Tooltip
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        // prevent closing tooltip on content click
-        onPointerDown={(event) => event.preventDefault()}
-        triggerProps={{
-          onClick: () => setIsOpen(true),
-        }}
-        content={
-          <>
-            <Flex
-              direction="column"
-              gap="2"
-              css={{ maxWidth: theme.spacing[28] }}
+    <ResettableLabel
+      disabled={disabled}
+      content={
+        <>
+          <Text variant="titles">{title ?? label}</Text>
+          {properties && (
+            <Text
+              variant="monoBold"
+              color="moreSubtle"
+              userSelect="text"
+              css={{ whiteSpace: "break-spaces", cursor: "text" }}
             >
-              <Text variant="titles">{title ?? label}</Text>
-              {properties && (
-                <Text
-                  variant="monoBold"
-                  color="moreSubtle"
-                  userSelect="text"
-                  css={{ whiteSpace: "break-spaces", cursor: "text" }}
-                >
-                  {properties.join("\n")}
-                </Text>
-              )}
-              <Text>{description}</Text>
-            </Flex>
-          </>
-        }
-      >
-        <Flex shrink gap={1} align="center">
-          <Label color="default" disabled={disabled} truncate>
-            {label}
-          </Label>
-        </Flex>
-      </Tooltip>
-    </Flex>
+              {properties.join("\n")}
+            </Text>
+          )}
+          <Text>{description}</Text>
+        </>
+      }
+    >
+      {label}
+    </ResettableLabel>
   );
 };
 
@@ -446,11 +498,7 @@ export const PropertyValueTooltip = ({
     if (readonly) {
       return;
     }
-    const batch = createBatchUpdate();
-    for (const property of properties) {
-      batch.deleteProperty(property);
-    }
-    batch.publish();
+    deleteProperties(properties);
   };
 
   return (
@@ -474,12 +522,13 @@ export const PropertyValueTooltip = ({
       content={
         <PropertyInfo
           title={label}
+          property={properties[0]}
           description={
             <Flex gap="2" direction="column">
               {description}
               {isAdvanced && (
                 <Flex gap="1">
-                  <AlertIcon color={rawTheme.colors.backgroundAlertMain} /> This
+                  <AlertIcon color={cssVar("--foreground-warning")} /> This
                   value was defined in the Advanced section.
                 </Flex>
               )}
@@ -490,7 +539,6 @@ export const PropertyValueTooltip = ({
             resetProperty();
             setIsOpen(false);
           }}
-          link={propertiesData[properties[0]]?.mdnUrl}
         />
       }
     >

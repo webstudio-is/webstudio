@@ -6,13 +6,28 @@ type ListProps = SlotProps & {
   asChild?: boolean;
 };
 
-export const List = ({ asChild, ...props }: ListProps) => {
+export const List = ({ asChild, onKeyDown, ...props }: ListProps) => {
   const Component = asChild ? Slot : "ul";
   return (
     <ArrowFocus
       render={({ handleKeyDown }) => {
         return (
-          <Component role="listbox" onKeyDown={handleKeyDown} {...props} />
+          <Component
+            role="listbox"
+            {...props}
+            data-keyboard-list
+            onKeyDown={(event) => {
+              onKeyDown?.(event);
+              if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+                handleKeyDown(event, {
+                  accept: (element) =>
+                    element.hasAttribute("data-keyboard-list-item") &&
+                    element.closest("[data-keyboard-list]") ===
+                      event.currentTarget,
+                });
+              }
+            }}
+          />
         );
       }}
     />
@@ -34,6 +49,7 @@ export const ListItem = ({
   index,
   onSelect,
   asChild,
+  onKeyDown,
   ...props
 }: ListItemProps) => {
   const stateProp =
@@ -49,15 +65,30 @@ export const ListItem = ({
   });
   const Component = asChild ? Slot : "li";
   return (
-    <Component
-      tabIndex={index === 0 ? 0 : -1}
-      role="option"
-      key={index}
-      {...(state === "selected" ? { "aria-selected": true } : undefined)}
-      {...(current ? { "aria-current": true } : undefined)}
-      {...props}
-      {...stateProp}
-      {...pressProps}
+    <ArrowFocus
+      render={({ handleKeyDown }) => (
+        <Component
+          tabIndex={index === 0 ? 0 : -1}
+          role="option"
+          key={index}
+          {...(state === "selected" ? { "aria-selected": true } : undefined)}
+          {...(current ? { "aria-current": true } : undefined)}
+          {...props}
+          {...stateProp}
+          {...pressProps}
+          data-keyboard-list-item
+          onKeyDown={(event) => {
+            onKeyDown?.(event);
+            if (event.defaultPrevented) {
+              return;
+            }
+            pressProps.onKeyDown?.(event);
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              handleKeyDown(event);
+            }
+          }}
+        />
+      )}
     />
   );
 };

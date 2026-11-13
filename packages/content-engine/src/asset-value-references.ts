@@ -1,12 +1,24 @@
-import { createAssetIdResolver } from "./asset-path-resolution";
+import { getJsonReferenceMarkerValue } from "./document-graph/document-utils";
+import type { JsonValue } from "./canonical-json";
+import {
+  createAssetReferenceResolver,
+  type ResolvedAssetReference,
+} from "./asset-reference-utils";
 
-export type AssetValueReference = {
+export type AssetValueReference = ResolvedAssetReference & {
   path: Array<string | number>;
-  assetId: string;
-  suffix?: string;
+  structured?: true;
 };
 
 export type AssetValueReferences = Record<string, AssetValueReference[]>;
+
+export type AssetRuntimeData = Readonly<Record<string, unknown>> & {
+  url: string;
+  /** Immutable storage identity for graph-backed document URLs. */
+  contentRef?: string;
+  width?: number;
+  height?: number;
+};
 
 export const getRuntimeAssetUrls = (
   runtimeAssets?: Readonly<Record<string, { url: string }>>
@@ -15,37 +27,43 @@ export const getRuntimeAssetUrls = (
     Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [id, asset.url])
   );
 
-const getUrlSuffix = (value: string) => {
-  let parsed: URL;
-  try {
-    parsed = new URL(value, "https://content.webstudio.invalid/");
-  } catch {
-    return;
-  }
-  const suffix = `${parsed.search}${parsed.hash}`;
-  return suffix === "" ? undefined : suffix;
-};
-
 export const discoverAssetValueReferences = ({
   properties,
   sourcePath,
   assetIdsByPath,
+  structuredAssetIds,
+  rootPath = ["properties"],
 }: {
-  properties: Readonly<Record<string, unknown>>;
+  properties: unknown;
   sourcePath: string;
   assetIdsByPath: ReadonlyMap<string, string>;
+  structuredAssetIds?: ReadonlySet<string>;
+  rootPath?: Array<string | number>;
 }): AssetValueReference[] => {
-  const resolveAssetId = createAssetIdResolver(assetIdsByPath, sourcePath);
+  const resolveAssetReference = createAssetReferenceResolver({
+    sourcePath,
+    assetIdsByPath,
+  });
   const references: AssetValueReference[] = [];
   const visit = (value: unknown, path: Array<string | number>) => {
     if (typeof value === "string") {
-      const assetId = resolveAssetId(value);
-      if (assetId !== undefined) {
-        const suffix = getUrlSuffix(value);
+      const reference = resolveAssetReference(value);
+      if (reference !== undefined) {
+        references.push({ path, ...reference });
+      }
+      return;
+    }
+    const marker = getJsonReferenceMarkerValue(value as JsonValue);
+    if (typeof marker === "string") {
+      const reference = resolveAssetReference(marker);
+      if (
+        reference !== undefined &&
+        structuredAssetIds?.has(reference.assetId)
+      ) {
         references.push({
           path,
-          assetId,
-          ...(suffix === undefined ? {} : { suffix }),
+          ...reference,
+          structured: true,
         });
       }
       return;
@@ -63,17 +81,17 @@ export const discoverAssetValueReferences = ({
       visit(item, [...path, key]);
     }
   };
-  visit(properties, ["properties"]);
+  visit(properties, rootPath);
   return references;
 };
 
 export const mergeAssetUrlSuffix = (url: string, suffix?: string) => {
-  if (suffix === undefined) {
+  if (suffix === undefined || suffix.length === 0) {
     return url;
   }
-  const base = "https://content.webstudio.invalid";
-  const canonical = new URL(url, `${base}/`);
-  const authored = new URL(suffix, `${base}/`);
+  const base = new URL("https://content.webstudio.invalid/__assets__/");
+  const canonical = new URL(url, base);
+  const authored = new URL(suffix, base);
   for (const [key, value] of authored.searchParams) {
     canonical.searchParams.append(key, value);
   }
@@ -86,7 +104,20 @@ export const mergeAssetUrlSuffix = (url: string, suffix?: string) => {
   if (url.startsWith("/")) {
     return `${canonical.pathname}${canonical.search}${canonical.hash}`;
   }
-  return canonical.href;
+  let isAbsoluteUrl = false;
+  try {
+    new URL(url);
+    isAbsoluteUrl = true;
+  } catch {
+    // Relative Asset paths are handled below.
+  }
+  if (isAbsoluteUrl) {
+    return canonical.href;
+  }
+  const pathname = canonical.pathname.startsWith(base.pathname)
+    ? canonical.pathname.slice(base.pathname.length)
+    : canonical.pathname;
+  return `${pathname}${canonical.search}${canonical.hash}`;
 };
 
 const replaceValueAtPath = ({
@@ -96,7 +127,7 @@ const replaceValueAtPath = ({
 }: {
   value: unknown;
   path: readonly (string | number)[];
-  replacement: string;
+  replacement: unknown;
 }): unknown => {
   const [segment, ...rest] = path;
   if (segment === undefined) {
@@ -134,7 +165,56 @@ const replaceValueAtPath = ({
   };
 };
 
+const toStructuredAssetValue = ({
+  reference,
+  runtimeAsset,
+}: {
+  reference: AssetValueReference;
+  runtimeAsset: AssetRuntimeData;
+}) => {
+  const { url, contentRef: _contentRef, ...asset } = runtimeAsset;
+  return {
+    ...asset,
+    id: reference.assetId,
+    src: mergeAssetUrlSuffix(url, reference.suffix),
+  };
+};
+
 export const resolveAssetValueReferences = <Value>({
+  value,
+  references,
+  runtimeAssets = {},
+  assetUrls,
+}: {
+  value: Value;
+  references: readonly AssetValueReference[] | undefined;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+  /** @deprecated Pass runtimeAssets so structured references can include metadata. */
+  assetUrls?: Readonly<Record<string, string>>;
+}): Value => {
+  let resolved: unknown = value;
+  for (const reference of references ?? []) {
+    const assetUrl = assetUrls?.[reference.assetId];
+    const runtimeAsset =
+      runtimeAssets[reference.assetId] ??
+      (assetUrl === undefined ? undefined : { url: assetUrl });
+    if (runtimeAsset === undefined) {
+      continue;
+    }
+    resolved = replaceValueAtPath({
+      value: resolved,
+      path: reference.path,
+      replacement:
+        reference.structured === true
+          ? toStructuredAssetValue({ reference, runtimeAsset })
+          : mergeAssetUrlSuffix(runtimeAsset.url, reference.suffix),
+    });
+  }
+  return resolved as Value;
+};
+
+/** Rewrites authored Asset paths while preserving structured `$ref` markers. */
+export const rewriteAssetValueReferences = <Value>({
   value,
   references,
   assetUrls,
@@ -143,17 +223,18 @@ export const resolveAssetValueReferences = <Value>({
   references: readonly AssetValueReference[] | undefined;
   assetUrls: Readonly<Record<string, string>>;
 }): Value => {
-  let resolved: unknown = value;
+  let rewritten: unknown = value;
   for (const reference of references ?? []) {
     const assetUrl = assetUrls[reference.assetId];
     if (assetUrl === undefined) {
       continue;
     }
-    resolved = replaceValueAtPath({
-      value: resolved,
+    const url = mergeAssetUrlSuffix(assetUrl, reference.suffix);
+    rewritten = replaceValueAtPath({
+      value: rewritten,
       path: reference.path,
-      replacement: mergeAssetUrlSuffix(assetUrl, reference.suffix),
+      replacement: reference.structured === true ? { $ref: url } : url,
     });
   }
-  return resolved as Value;
+  return rewritten as Value;
 };

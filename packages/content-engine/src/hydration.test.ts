@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import type { AssetFileDocument } from "./schema";
 import { contentEngineLimits } from "./limits";
+import { discoverMarkdownAssetReferenceRanges } from "./markdown-assets";
 import {
   hydrateAssetResourceResult,
   type AssetResourceContentReader,
@@ -142,6 +143,44 @@ describe("selected asset content hydration", () => {
     expect(result.content[document._id]?.text).toBe("# Body\n");
   });
 
+  test("resolves relative images per article path when articles share stored bytes", async () => {
+    const body = "![Cover](./cover.svg)\n";
+    const documents = ["first", "second"].map((id) =>
+      createDocument(id, body, {
+        path: `${id}/post.md`,
+        contentRef: "shared-content",
+      })
+    );
+    const assetPaths = {
+      "first-cover": "first/cover.svg",
+      "second-cover": "second/cover.svg",
+    };
+    const assetUrls = {
+      "first-cover": "/assets/first.svg",
+      "second-cover": "/assets/second.svg",
+    };
+    // A mixed full/body query can include a reference map keyed by shared bytes.
+    const references = discoverMarkdownAssetReferenceRanges({
+      markdown: body,
+      sourcePath: documents[0].path,
+      assetIdsByPath: new Map(
+        Object.entries(assetPaths).map(([id, path]) => [path, id])
+      ),
+    });
+    const result = await hydrateAssetResourceResult({
+      result: documents.map(identity),
+      documents,
+      options: { mode: "markdown-body-ref" },
+      read: createReader({ "shared-content": body }),
+      assetReferences: { "shared-content": references },
+      assetPaths,
+      assetUrls,
+    });
+
+    expect(result.content.first.text).toBe("![Cover](/assets/first.svg)\n");
+    expect(result.content.second.text).toBe("![Cover](/assets/second.svg)\n");
+  });
+
   test("requires selected projections to retain stable content identity", async () => {
     const document = createDocument("post", "Post");
     const read = createReader({ [document.contentRef]: "Post" });
@@ -250,6 +289,41 @@ describe("selected asset content hydration", () => {
     });
   });
 
+  test("reports every selected file hydration failure", async () => {
+    const first = createDocument("first-invalid", "xx", { size: 2 });
+    const second = createDocument("second-invalid", "xx", { size: 2 });
+    const read = createReader({
+      [first.contentRef]: new Uint8Array([0xc3, 0x28]),
+      [second.contentRef]: new Uint8Array([0xc3, 0x28]),
+    });
+
+    await expect(
+      hydrateAssetResourceResult({
+        result: [identity(first), identity(second)],
+        documents: [first, second],
+        options: { mode: "full" },
+        read,
+      })
+    ).rejects.toMatchObject({
+      code: "CONTENT_DECODING_FAILED",
+      details: {
+        diagnostics: [
+          {
+            code: "CONTENT_DECODING_FAILED",
+            assetId: "first-invalid",
+            path: "blog/first-invalid.md",
+          },
+          {
+            code: "CONTENT_DECODING_FAILED",
+            assetId: "second-invalid",
+            path: "blog/second-invalid.md",
+          },
+        ],
+      },
+    });
+    expect(read).toHaveBeenCalledTimes(2);
+  });
+
   test("hydrates SVG assets as supported UTF-8 text", async () => {
     const source = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
     const document = createDocument("vector", source, {
@@ -302,7 +376,19 @@ describe("selected asset content hydration", () => {
     await expect.poll(() => release).toBeTypeOf("function");
     release?.();
 
-    await expect(pending).rejects.toThrow("read failed");
+    await expect(pending).rejects.toMatchObject({
+      code: "INVALID_REQUEST",
+      message: "read failed",
+      details: {
+        diagnostics: [
+          {
+            code: "CONTENT_READ_FAILED",
+            assetId: "failed",
+            path: "blog/failed.md",
+          },
+        ],
+      },
+    });
     expect(slowReadCompleted).toBe(true);
   });
 });

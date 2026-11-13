@@ -1,7 +1,16 @@
 import { expect, test, describe } from "vitest";
-import { $, css, renderTemplate, token, ws } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  css,
+  renderTemplate,
+  token,
+  ws,
+} from "@webstudio-is/template";
 import type { WebstudioFragment } from "@webstudio-is/sdk";
 import { generateFragmentFromHtml as _generateFragmentFromHtml } from "./html";
+
+const HtmlEmbed = createTemplateComponentFixture("HtmlEmbed");
+const Image = createTemplateComponentFixture("Image");
 
 // Wrapper that strips skippedSelectors for tests that only compare fragment shape
 const generateFragmentFromHtml = (html: string) => {
@@ -304,7 +313,7 @@ test("generate nested css math functions as unparsed local styles", () => {
 test("script as html embed", () => {
   expect(generateFragmentFromHtml(`<script>a;</script>`)).toEqual(
     renderTemplate(
-      <$.HtmlEmbed
+      <HtmlEmbed
         ws:label="Script"
         clientOnly={true}
         code={`<script>a;</script>`}
@@ -315,7 +324,7 @@ test("script as html embed", () => {
 
 test("style as html embed", () => {
   expect(generateFragmentFromHtml(`<style>a;</style>`)).toEqual(
-    renderTemplate(<$.HtmlEmbed code={`<style>a;</style>`} ws:label="Style" />)
+    renderTemplate(<HtmlEmbed code={`<style>a;</style>`} ws:label="Style" />)
   );
 });
 
@@ -381,7 +390,7 @@ test("generate Image component instead of img element", () => {
   ).toEqual(
     renderTemplate(
       <ws.element ws:tag="div">
-        <$.Image src="./my-url" />
+        <Image src="./my-url" />
       </ws.element>
     )
   );
@@ -583,7 +592,7 @@ describe("style tag to tokens", () => {
     ).toEqual(
       renderTemplate(
         <>
-          <$.HtmlEmbed
+          <HtmlEmbed
             ws:label="Style"
             code={`<style>#hero { color: red; }</style>`}
           />
@@ -710,7 +719,7 @@ describe("style tag to tokens", () => {
     ).toEqual(
       renderTemplate(
         <>
-          <$.HtmlEmbed
+          <HtmlEmbed
             ws:label="Style"
             code={`<style>div { color: red; }</style>`}
           />
@@ -1005,7 +1014,7 @@ describe("style tag to tokens", () => {
     ).toEqual(
       renderTemplate(
         <>
-          <$.HtmlEmbed
+          <HtmlEmbed
             ws:label="Script"
             clientOnly={true}
             code={`<script>console.log("hi");</script>`}

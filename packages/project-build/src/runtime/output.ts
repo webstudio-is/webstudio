@@ -37,6 +37,8 @@ export const projectOutput = <Compact extends object, Expanded extends object>({
 }): Compact | (Compact & Expanded) =>
   input.verbose === true ? { ...compact, ...expanded() } : compact;
 
+export class InvalidCursorError extends Error {}
+
 const parseCursor = (
   cursor: string | undefined,
   invalidCursorMessage: string
@@ -46,7 +48,7 @@ const parseCursor = (
   }
   const offset = Number(cursor);
   if (Number.isInteger(offset) === false || offset < 0) {
-    throw new Error(invalidCursorMessage);
+    throw new InvalidCursorError(invalidCursorMessage);
   }
   return offset;
 };

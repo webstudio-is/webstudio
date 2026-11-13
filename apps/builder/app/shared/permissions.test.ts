@@ -255,57 +255,57 @@ describe("getPermissions", () => {
   });
 
   describe("allowContentMode with authPermit", () => {
-    test("content mode allowed for shared project (view permit)", () => {
+    test("content mode denied for free shared project (view permit)", () => {
       const result = getPermissions({
         role: "own",
         authPermit: "view",
         planFeatures: freePlan,
         workspaces: [],
       });
-      expect(result.allowContentMode).toBe(true);
+      expect(result.allowContentMode).toBe(false);
     });
 
-    test("content mode allowed for shared project (edit permit)", () => {
+    test("content mode denied for free shared project (edit permit)", () => {
       const result = getPermissions({
         role: "own",
         authPermit: "edit",
         planFeatures: freePlan,
         workspaces: [],
       });
-      expect(result.allowContentMode).toBe(true);
+      expect(result.allowContentMode).toBe(false);
     });
 
-    test("content mode allowed for shared project (build permit)", () => {
+    test("content mode denied for free shared project (build permit)", () => {
       const result = getPermissions({
         role: "own",
         authPermit: "build",
         planFeatures: freePlan,
         workspaces: [],
       });
-      expect(result.allowContentMode).toBe(true);
+      expect(result.allowContentMode).toBe(false);
     });
 
-    test("content mode allowed for shared project (admin permit)", () => {
+    test("content mode denied for free shared project (admin permit)", () => {
       const result = getPermissions({
         role: "own",
         authPermit: "admin",
         planFeatures: freePlan,
         workspaces: [],
       });
-      expect(result.allowContentMode).toBe(true);
+      expect(result.allowContentMode).toBe(false);
     });
 
-    test("content mode allowed for shared project with free plan", () => {
+    test("content mode allowed for shared project with Pro plan", () => {
       const result = getPermissions({
         role: "own",
         authPermit: "edit",
-        planFeatures: freePlan,
+        planFeatures: proPlan,
         workspaces: [],
       });
       expect(result.allowContentMode).toBe(true);
     });
 
-    test("content mode depends on plan for own project", () => {
+    test("content mode is allowed for own project on any plan", () => {
       expect(
         getPermissions({
           role: "own",
@@ -313,7 +313,7 @@ describe("getPermissions", () => {
           planFeatures: freePlan,
           workspaces: [],
         }).allowContentMode
-      ).toBe(false);
+      ).toBe(true);
       expect(
         getPermissions({
           role: "own",
@@ -512,7 +512,7 @@ describe("getPermissions", () => {
   });
 
   describe("all three parameters combined", () => {
-    test("viewer + free plan + shared project enables only content mode", () => {
+    test("viewer + free plan + shared project does not enable content mode", () => {
       const result = getPermissions({
         role: "viewers",
         planFeatures: freePlan,
@@ -527,9 +527,9 @@ describe("getPermissions", () => {
       expect(result.canDelete).toBe(false);
       expect(result.canEditTags).toBe(false);
       expect(result.canOpenSettings).toBe(false);
-      // plan: all false except content mode overridden by shared project access
+      // plan: all false
       expect(result.allowDynamicData).toBe(false);
-      expect(result.allowContentMode).toBe(true);
+      expect(result.allowContentMode).toBe(false);
       expect(result.allowStagingPublish).toBe(false);
       expect(result.allowAdditionalPermissions).toBe(false);
     });

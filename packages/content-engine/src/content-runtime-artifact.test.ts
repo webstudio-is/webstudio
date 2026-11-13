@@ -77,6 +77,9 @@ test("projects build metadata and inline JSON graph sources out of the runtime a
   });
 
   const runtime = createContentRuntimeArtifact(artifact);
+  const runtimeWithoutContents = createContentRuntimeArtifact(artifact, {
+    includeContents: false,
+  });
   const serialized = serializeContentRuntimeArtifact(runtime);
   const parsed = JSON.parse(serialized);
 
@@ -86,6 +89,7 @@ test("projects build metadata and inline JSON graph sources out of the runtime a
   expect(parsed).not.toHaveProperty("fieldCatalog");
   expect(parsed).not.toHaveProperty("database");
   expect(parsed).not.toHaveProperty("integrity");
+  expect(runtimeWithoutContents).not.toHaveProperty("contents");
   expect(runtime.documentGraph?.nodes.map(({ id }) => id)).toEqual([
     "markdown",
   ]);

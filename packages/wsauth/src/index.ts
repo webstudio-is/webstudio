@@ -1,4 +1,5 @@
 import type { BasicAuthInput, WsAuthConfig } from "./schema";
+import { matchRoutes } from "@remix-run/router";
 export type { BasicAuthInput, WsAuthConfig } from "./schema";
 
 export type BasicAuthRule = {
@@ -154,7 +155,7 @@ export const createBasicAuthRoute = ({
   login: string;
   password: string;
 }): WsAuthRoute => {
-  const routeError = validateWsAuthRoute(route);
+  const routeError = validatePathnamePattern(route);
   if (routeError) {
     throw new Error(routeError);
   }
@@ -197,14 +198,32 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 
 const parameterSegment = /^:\w+[?*]?$/;
 
-export const validateWsAuthRoute = (route: string) => {
+const decodeStaticSegment = (segment: string) => {
+  if (segment.includes("%") === false) {
+    return { path: segment };
+  }
+  try {
+    const decoded = decodeURIComponent(segment);
+    return {
+      // Remix decodes request paths; keep encoded slashes within one segment.
+      path: decoded.replaceAll("/", "%2F"),
+      // These were valid literal segments before route matching used Remix.
+      literal: decoded.startsWith(":") || /[?*%]/.test(decoded),
+    };
+  } catch {
+    return { path: segment, literal: true };
+  }
+};
+
+/** Validate the route-rule syntax shared by authentication and response headers. */
+export const validatePathnamePattern = (route: string) => {
   if (route.startsWith("/") === false) {
     return 'Route must start with "/"';
   }
   if (route === "/") {
     return;
   }
-  if (route !== "/" && route.endsWith("/")) {
+  if (route.endsWith("/")) {
     return 'Route must not end with "/"';
   }
   if (route.includes("//")) {
@@ -224,6 +243,9 @@ export const validateWsAuthRoute = (route: string) => {
     }
     if (segment.startsWith(":") && parameterSegment.test(segment) === false) {
       return `Invalid route parameter "${segment}"`;
+    }
+    if (segment.includes("?") && parameterSegment.test(segment) === false) {
+      return 'Optional marker "?" is only allowed on a named parameter';
     }
     if (segment.includes("*")) {
       return "Wildcard can only be used as * or :name*";
@@ -265,7 +287,7 @@ export const parseWsAuth = (content: string): WsAuthParseResult => {
   }
 
   for (const [route, authInput] of Object.entries(json.routes)) {
-    const routeError = validateWsAuthRoute(route);
+    const routeError = validatePathnamePattern(route);
     if (routeError) {
       errors.push({
         path: `routes.${JSON.stringify(route)}`,
@@ -427,51 +449,102 @@ export const getBasicAuthCredentials = (authorization: string | null) => {
   return auth?.credentials;
 };
 
-const normalizePathname = (pathname: string) => {
-  if (pathname === "" || pathname === "/") {
-    return "/";
+// Remix performs route matching; literal encoded segments need placeholders so
+// saved rules such as /%2A cannot turn into router syntax.
+const toRouterPattern = (
+  pattern: string,
+  literals: Map<string, string>,
+  decodedPathname: string
+) => {
+  const segments: string[] = [];
+  for (const segment of (pattern || "/").replace(/:\w+\*$/, "*").split("/")) {
+    if (segment === "*" || segment.startsWith(":")) {
+      segments.push(segment);
+      continue;
+    }
+    const decoded = decodeStaticSegment(segment);
+    if (decoded.literal) {
+      let marker = literals.get(segment);
+      if (marker === undefined) {
+        let index = literals.size;
+        marker = `\0${index}\0`;
+        while (
+          decodedPathname.includes(marker) ||
+          Array.from(literals.values()).includes(marker)
+        ) {
+          index += 1;
+          marker = `\0${index}\0`;
+        }
+        literals.set(segment, marker);
+      }
+      segments.push(marker);
+      continue;
+    }
+    segments.push(decoded.path);
   }
-  return pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  return segments.join("/");
 };
 
-export const matchWsAuthRoute = (route: string, pathname: string) => {
-  const routeSegments = normalizePathname(route).slice(1).split("/");
-  const pathnameSegments = normalizePathname(pathname).slice(1).split("/");
-  const matchSegments = (
-    routeIndex: number,
-    pathnameIndex: number
-  ): boolean => {
-    const routeSegment = routeSegments[routeIndex];
-    const pathnameSegment = pathnameSegments[pathnameIndex];
-    if (routeSegment === undefined) {
-      return pathnameSegment === undefined;
+/** Match a set of page paths with the same route ranking as the published app. */
+export const matchPathnameRoutes = <Value>(
+  routes: ReadonlyArray<{ pattern: string; value: Value }>,
+  pathname: string
+): { value: Value; params: Record<string, string | undefined> } | undefined => {
+  const literals = new Map<string, string>();
+  const decodedPathname = pathname
+    .split("/")
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    })
+    .join("/");
+  const routerRoutes = routes.map((route) => ({
+    path: toRouterPattern(route.pattern, literals, decodedPathname),
+    caseSensitive: false,
+    source: route,
+  }));
+  const decodedLiterals = Array.from(literals, ([literal, marker]) => {
+    try {
+      return [marker, decodeURIComponent(literal)] as const;
+    } catch {
+      return [marker, literal] as const;
     }
-    if (routeSegment === "*" || /^:\w+\*$/.test(routeSegment)) {
-      return routeIndex === routeSegments.length - 1;
-    }
-    if (/^:\w+\?$/.test(routeSegment)) {
-      return (
-        matchSegments(routeIndex + 1, pathnameIndex) ||
-        (pathnameSegment !== undefined &&
-          matchSegments(routeIndex + 1, pathnameIndex + 1))
-      );
-    }
-    if (pathnameSegment === undefined) {
-      return false;
-    }
-    if (/^:\w+$/.test(routeSegment)) {
-      return matchSegments(routeIndex + 1, pathnameIndex + 1);
-    }
-    return (
-      routeSegment === pathnameSegment &&
-      matchSegments(routeIndex + 1, pathnameIndex + 1)
-    );
+  });
+  const routerPathname = pathname
+    .split("/")
+    .map((segment) => literals.get(segment) ?? segment)
+    .join("/");
+  const match = matchRoutes(routerRoutes, routerPathname)?.at(-1);
+  if (match === undefined) {
+    return;
+  }
+  return {
+    value: match.route.source.value,
+    params: Object.fromEntries(
+      Object.entries(match.params).map(([name, value]) => [
+        name,
+        value === undefined
+          ? value
+          : decodedLiterals.reduce(
+              (result, [marker, literal]) => result.replaceAll(marker, literal),
+              value
+            ),
+      ])
+    ),
   };
-  return matchSegments(0, 0);
 };
+
+/** Match one project rule or page path using the published app's route semantics. */
+export const matchPathnamePattern = (pattern: string, pathname: string) =>
+  matchPathnameRoutes([{ pattern, value: true }], pathname)?.params;
 
 export const findWsAuthRoute = (authRoutes: WsAuthRoute[], pathname: string) =>
-  authRoutes.find(({ route }) => matchWsAuthRoute(route, pathname));
+  authRoutes.find(
+    ({ route }) => matchPathnamePattern(route, pathname) !== undefined
+  );
 
 export const authenticateRequest = (
   request: Request,
@@ -496,4 +569,20 @@ export const authenticateRequest = (
       },
     });
   }
+};
+
+/** Skip project authentication only on the actual project hostname. */
+export const authenticateProjectRequest = (
+  request: Request,
+  authRoutes: WsAuthRoute[],
+  projectDomain?: string
+) => {
+  const hostname = new URL(request.url).hostname;
+  if (
+    projectDomain !== undefined &&
+    (hostname === projectDomain || hostname.startsWith(`${projectDomain}.`))
+  ) {
+    return;
+  }
+  return authenticateRequest(request, authRoutes);
 };

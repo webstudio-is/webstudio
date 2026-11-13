@@ -41,6 +41,7 @@ export const assertApiTokenPermit = async (ctx: AppContext) => {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Authorization token cannot use Builder API",
+      cause: { webstudioCode: "API_ACCESS_DISABLED" },
     });
   }
   return { token, permits };

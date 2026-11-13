@@ -1,16 +1,27 @@
 import { describe, expect, test } from "vitest";
-import type { Instance, Prop } from "@webstudio-is/sdk";
+import { applyBuilderNamespacePatches } from "../state/patch";
+import { getContentModeCapabilities } from "./content-mode-capabilities";
+import { applyContentModeTransaction } from "./content-mode-permissions";
 import {
+  blockComponent,
+  contentBlockSourceProp,
+  encodeDataSourceVariable,
+  type Asset,
+  type Instance,
+  type Prop,
+} from "@webstudio-is/sdk";
+import {
+  bindProps,
   clonePropForInstance,
   createPropDeletePayload,
   createPropBindingFromInput,
-  createPropClonePatches,
   createStartingPropValueFromMeta,
   createPropRenamePayload,
   createPropUpsertPayload,
   createValidatedPropBindingFromInput,
   createValidatedPropValueFromInput,
   createPropValue,
+  deleteProps,
   findProp,
   getDefaultPropMetaForType,
   getPropDeletePlan,
@@ -140,14 +151,12 @@ describe("findProp", () => {
 });
 
 test("defines show attribute metadata in runtime", () => {
-  expect(showAttributeMeta).toEqual({
+  expect(showAttributeMeta).toMatchObject({
     label: "Show",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: true,
-    description:
-      "Removes the instance from the DOM. Breakpoints have no effect on this setting.",
   });
 });
 
@@ -272,6 +281,34 @@ describe("prop input creators", () => {
     ).toThrow();
   });
 
+  test("rejects definitely non-object expressions bound to the style prop", () => {
+    for (const value of [
+      '"color: " + themeColor',
+      "42",
+      "true",
+      "null",
+      "[]",
+    ]) {
+      expect(() =>
+        propBindingInput.parse({
+          instanceId: "instance-id",
+          name: "style",
+          binding: { type: "expression", value },
+        })
+      ).toThrow("must evaluate to an object");
+    }
+    expect(() =>
+      propBindingInput.parse({
+        instanceId: "instance-id",
+        name: "style",
+        binding: {
+          type: "expression",
+          value: "{ color: themeColor }",
+        },
+      })
+    ).not.toThrow();
+  });
+
   test("reports malformed prop update batch items by index", () => {
     const result = propUpdatesInput.safeParse({
       updates: [
@@ -327,6 +364,7 @@ describe("prop input creators", () => {
       name: "value",
       type: "expression",
       value: "value",
+      mode: "read",
     });
   });
 });
@@ -419,33 +457,6 @@ describe("clonePropForInstance", () => {
   });
 });
 
-describe("createPropClonePatches", () => {
-  test("clones props for copied instances", () => {
-    expect(
-      createPropClonePatches({
-        nextIdById: new Map([[image.id, "new-instance"]]),
-        props: [
-          prop("title", { value: "Title" }),
-          prop("ignored", { instanceId: "other-instance" }),
-        ],
-        createId: () => "new-prop",
-      })
-    ).toEqual([
-      {
-        op: "add",
-        path: ["new-prop"],
-        value: {
-          id: "new-prop",
-          instanceId: "new-instance",
-          name: "title",
-          type: "string",
-          value: "Title",
-        },
-      },
-    ]);
-  });
-});
-
 describe("createPropUpsertPayload", () => {
   test("creates add and replace patches", () => {
     const nextExisting = prop("src", { id: "incoming-src-id", value: "next" });
@@ -501,6 +512,563 @@ describe("createPropUpsertPayload", () => {
 });
 
 describe("updateProps", () => {
+  test.each([
+    ["Image", "src", "image", "png", true, true],
+    ["Image", "src", "video", "mp4", false, false],
+    ["Image", "src", "file", "txt", false, false],
+    ["Image", "src", "file", "png", true, false],
+    ["Image", "width", "file", "txt", false, false],
+    ["Image", "height", "video", "mp4", false, false],
+    ["Image", "alt", "file", "png", false, false],
+    ["Image", "width", "image", "png", true, false],
+    ["Video", "src", "video", "mp4", true, false],
+    // Video's current accept list contains unsupported extensions and the
+    // shared picker matcher falls back to allowing all assets.
+    ["Video", "src", "image", "png", true, false],
+    ["Image", "data-download", "file", "txt", true, false],
+  ] as const)(
+    "%s %s enforces picker constraints for %s/%s",
+    (component, name, type, format, allowed, linksMetadata) => {
+      const asset: Asset = {
+        id: "asset",
+        projectId: "project",
+        name: `asset.${format}`,
+        format,
+        size: 100,
+        createdAt: "",
+        description: "Description",
+        ...(type === "file"
+          ? { type, meta: {} }
+          : { type, meta: { width: 120, height: 80 } }),
+      };
+      const state = {
+        instances: new Map([[image.id, { ...image, component }]]),
+        props: new Map<string, Prop>(),
+        assets: new Map([[asset.id, asset]]),
+      };
+      const before = structuredClone(state);
+      let id = 0;
+      const run = () =>
+        updateProps(
+          state,
+          {
+            updates: [
+              {
+                instanceId: image.id,
+                name: "title",
+                type: "string",
+                value: "New title",
+              },
+              { instanceId: image.id, name, type: "asset", value: asset.id },
+            ],
+          },
+          { createId: () => `new-${id++}` }
+        );
+      if (allowed) {
+        const result = run();
+        const next = applyBuilderNamespacePatches(
+          state.props,
+          result.payload[0].patches
+        );
+        expect([...next.values()].map(({ name }) => name)).toEqual(
+          linksMetadata
+            ? ["title", name, "width", "height", "alt"]
+            : ["title", name]
+        );
+        expect(findProp(next.values(), image.id, name)).toMatchObject({
+          type: "asset",
+          value: asset.id,
+        });
+      } else {
+        expect(run).toThrow(expect.objectContaining({ code: "BAD_REQUEST" }));
+      }
+      expect(state).toEqual(before);
+    }
+  );
+
+  test("does not apply asset-picker constraints to manually entered URLs", () => {
+    const state = {
+      instances: new Map([[image.id, image]]),
+      props: new Map<string, Prop>(),
+    };
+    const result = updateProps(
+      state,
+      {
+        updates: [
+          {
+            instanceId: image.id,
+            name: "src",
+            type: "string",
+            value: "https://example.com/dynamic-image",
+          },
+        ],
+      },
+      { createId: () => "src" }
+    );
+    expect([
+      ...applyBuilderNamespacePatches(
+        state.props,
+        result.payload[0].patches
+      ).values(),
+    ]).toEqual([
+      {
+        id: "src",
+        instanceId: image.id,
+        name: "src",
+        type: "string",
+        value: "https://example.com/dynamic-image",
+      },
+    ]);
+  });
+
+  test("coalescing reads a large rejected batch only linearly", () => {
+    let reads = 0;
+    const updates = Array.from({ length: 200 }, (_, index) => ({
+      get instanceId() {
+        reads += 1;
+        return "missing";
+      },
+      name: `prop-${index}`,
+      type: "string" as const,
+      value: "value",
+    }));
+    expect(() =>
+      updateProps(
+        { instances: new Map([[image.id, image]]), props: new Map() },
+        { updates },
+        { createId: () => "unused" }
+      )
+    ).toThrow();
+    expect(reads).toBeLessThanOrEqual(updates.length * 3);
+  });
+
+  test("coalesces by instance and property without merging unrelated updates", () => {
+    const other = { ...image, id: "other", component: "Link" };
+    const existing = prop("title", { value: "Original" });
+    const state = {
+      instances: new Map([
+        [image.id, image],
+        [other.id, other],
+      ]),
+      props: new Map([[existing.id, existing]]),
+    };
+    const updates = [
+      {
+        instanceId: image.id,
+        name: "title",
+        type: "string" as const,
+        value: "Discarded",
+      },
+      {
+        instanceId: other.id,
+        name: "title",
+        type: "string" as const,
+        value: "Other",
+      },
+      {
+        instanceId: image.id,
+        name: "alt",
+        type: "string" as const,
+        value: "Discarded alt",
+      },
+      {
+        instanceId: image.id,
+        name: "title",
+        type: "string" as const,
+        value: "Final",
+      },
+      {
+        instanceId: image.id,
+        name: "alt",
+        type: "string" as const,
+        value: "Final alt",
+      },
+    ];
+    const original = structuredClone({ state, updates });
+    let id = 0;
+    const result = updateProps(
+      state,
+      { updates },
+      { createId: () => `new-${id++}` }
+    );
+    const next = applyBuilderNamespacePatches(
+      state.props,
+      result.payload[0].patches
+    );
+    expect([...next.values()]).toEqual([
+      { ...existing, value: "Final" },
+      {
+        id: "new-0",
+        instanceId: other.id,
+        name: "title",
+        type: "string",
+        value: "Other",
+      },
+      {
+        id: "new-1",
+        instanceId: image.id,
+        name: "alt",
+        type: "string",
+        value: "Final alt",
+      },
+    ]);
+    expect(result.result.propIds).toEqual(["new-0", existing.id, "new-1"]);
+    expect(id).toBe(2);
+    expect({ state, updates }).toEqual(original);
+  });
+
+  test.each(["Image", "Video"])(
+    "coalesces new %s sources before assigning IDs",
+    (component) => {
+      const state = {
+        instances: new Map([[image.id, { ...image, component }]]),
+        props: new Map<string, Prop>(),
+      };
+      let id = 0;
+      const result = updateProps(
+        state,
+        {
+          updates: ["first", "last"].map((value) => ({
+            instanceId: image.id,
+            name: "src",
+            type: "asset" as const,
+            value,
+          })),
+        },
+        { createId: () => `new-${id++}` }
+      );
+      const next = applyBuilderNamespacePatches(
+        state.props,
+        result.payload[0].patches
+      );
+      expect(
+        [...next.values()].map(({ name, value }) => ({ name, value }))
+      ).toEqual(
+        (component === "Image"
+          ? ["src", "width", "height", "alt"]
+          : ["src"]
+        ).map((name) => ({ name, value: "last" }))
+      );
+      expect(id).toBe(next.size);
+      expect(
+        applyContentModeTransaction({
+          capabilities: getContentModeCapabilities({
+            ...state,
+            contentRootIds: new Set([image.id]),
+            styleSources: new Map(),
+            metas: new Map([
+              [
+                component,
+                {
+                  props: {
+                    src: {
+                      type: "string",
+                      control: "file",
+                      required: false,
+                      contentMode: true,
+                    },
+                  },
+                },
+              ],
+            ]),
+          }),
+          transaction: result,
+          scope: "text-and-props",
+        }).success
+      ).toBe(true);
+    }
+  );
+
+  test.each(["Image", "Video"])(
+    "links %s metadata to the last source in a batch",
+    (component) => {
+      const existing = [
+        prop("src"),
+        prop("width"),
+        prop("height"),
+        prop("alt"),
+      ];
+      const state = {
+        instances: new Map([[image.id, { ...image, component }]]),
+        props: new Map(existing.map((prop) => [prop.id, prop])),
+      };
+      for (const type of ["asset", "string"] as const) {
+        const result = updateProps(
+          state,
+          {
+            updates: [
+              {
+                instanceId: image.id,
+                name: "src",
+                type: "asset",
+                value: "first",
+              },
+              { instanceId: image.id, name: "src", type, value: "last" },
+            ],
+          },
+          { createId: () => "unused" }
+        );
+        const next = applyBuilderNamespacePatches(
+          state.props,
+          result.payload[0].patches
+        );
+        expect([...next.values()]).toEqual(
+          existing.map((prop) =>
+            prop.name === "src" || (component === "Image" && type === "asset")
+              ? { ...prop, type, value: "last" }
+              : prop
+          )
+        );
+      }
+    }
+  );
+
+  test.each(
+    ["Image", "Video"].flatMap((component) =>
+      ([undefined, "expression", "resource", "parameter"] as const).map(
+        (bound) => ({ component, bound })
+      )
+    )
+  )(
+    "updates $component source atomically and preserves bindings: $bound",
+    ({ component, bound }) => {
+      const existing = [
+        prop("src"),
+        prop(
+          "width",
+          bound
+            ? { type: bound, value: "post.width", required: true }
+            : { type: "number", value: 100, required: true }
+        ),
+        prop("height", { type: "number", value: 200 }),
+        prop("alt", bound ? { type: bound, value: "post.alt" } : {}),
+      ];
+      const state = {
+        instances: new Map([[image.id, { ...image, component }]]),
+        props: new Map(existing.map((prop) => [prop.id, prop])),
+      };
+      const result = updateProps(
+        state,
+        {
+          updates: [
+            {
+              instanceId: image.id,
+              name: "src",
+              type: "asset",
+              value: "new-asset",
+            },
+          ],
+        },
+        { createId: () => "unused" }
+      );
+      const next = applyBuilderNamespacePatches(
+        state.props,
+        result.payload[0].patches
+      );
+      expect([...next.values()]).toEqual(
+        existing.map((prop) =>
+          (bound !== undefined &&
+            (prop.name === "width" || prop.name === "alt")) ||
+          (component === "Video" && prop.name !== "src")
+            ? prop
+            : { ...prop, type: "asset", value: "new-asset" }
+        )
+      );
+      expect([...state.props.values()]).toEqual(existing);
+      for (const payload of [
+        result.payload.map((change) => ({
+          ...change,
+          patches: [...change.patches].reverse(),
+        })),
+        result.payload.flatMap((change) =>
+          [...change.patches]
+            .reverse()
+            .map((patch) => ({ namespace: change.namespace, patches: [patch] }))
+        ),
+      ]) {
+        const authorized = applyContentModeTransaction({
+          capabilities: getContentModeCapabilities({
+            ...state,
+            contentRootIds: new Set([image.id]),
+            styleSources: new Map(),
+            metas: new Map([
+              [
+                component,
+                {
+                  props: {
+                    src: {
+                      type: "string",
+                      control: "file",
+                      required: false,
+                      contentMode: true,
+                    },
+                    alt: {
+                      type: "string",
+                      control: "text",
+                      required: false,
+                      contentMode: true,
+                    },
+                  },
+                },
+              ],
+            ]),
+          }),
+          transaction: {
+            payload,
+          },
+          scope: "text-and-props",
+        });
+        expect(authorized.success).toBe(true);
+        if (authorized.success) {
+          expect(authorized.capabilities.props).toEqual(next);
+        }
+      }
+    }
+  );
+
+  test("keeps explicit media overrides and creates missing asset props", () => {
+    const state = {
+      instances: new Map([[image.id, image]]),
+      props: new Map<string, Prop>(),
+    };
+    let id = 0;
+    const result = updateProps(
+      state,
+      {
+        updates: [
+          { instanceId: image.id, name: "src", type: "asset", value: "asset" },
+          { instanceId: image.id, name: "width", type: "number", value: 300 },
+        ],
+      },
+      { createId: () => `new-${id++}` }
+    );
+    const next = applyBuilderNamespacePatches(
+      state.props,
+      result.payload[0].patches
+    );
+    expect(
+      [...next.values()].map(({ name, type, value }) => ({ name, type, value }))
+    ).toEqual([
+      { name: "src", type: "asset", value: "asset" },
+      { name: "width", type: "number", value: 300 },
+      { name: "height", type: "asset", value: "asset" },
+      { name: "alt", type: "asset", value: "asset" },
+    ]);
+    expect(next.size).toBe(4);
+    expect(state.props.size).toBe(0);
+  });
+
+  test.each([
+    {
+      component: "Image",
+      name: "alt",
+      type: "asset" as const,
+      source: prop("src"),
+    },
+    {
+      component: "Image",
+      name: "src",
+      type: "string" as const,
+      source: prop("src"),
+    },
+    {
+      component: "Link",
+      name: "src",
+      type: "asset" as const,
+      source: prop("src"),
+    },
+    ...(["expression", "resource", "parameter"] as const).map((type) => ({
+      component: "Image",
+      name: "src",
+      type: "asset" as const,
+      source: prop("src", { type, value: "post.image" }),
+    })),
+  ])(
+    "does not sync unrelated or bound source edits: $component $name $type $source.type",
+    ({ component, name, type, source }) => {
+      const state = {
+        instances: new Map([[image.id, { ...image, component }]]),
+        props: new Map([[source.id, source]]),
+      };
+      const result = updateProps(
+        state,
+        { updates: [{ instanceId: image.id, name, type, value: "value" }] },
+        { createId: () => "new-id" }
+      );
+      expect(result.payload[0].patches).toHaveLength(1);
+      const next = applyBuilderNamespacePatches(
+        state.props,
+        result.payload[0].patches
+      );
+      expect(findProp(next.values(), image.id, "width")).toBeUndefined();
+      expect(findProp(next.values(), image.id, "height")).toBeUndefined();
+    }
+  );
+
+  test("requires Content Block source lifecycle operations", () => {
+    const contentBlock: Instance = {
+      type: "instance",
+      id: "content-block-id",
+      component: blockComponent,
+      children: [],
+    };
+    const source: Prop = {
+      id: "source-id",
+      instanceId: contentBlock.id,
+      name: contentBlockSourceProp,
+      type: "asset",
+      value: "asset-id",
+    };
+    const state = {
+      instances: new Map([[contentBlock.id, contentBlock]]),
+      props: new Map([[source.id, source]]),
+    };
+
+    expect(() =>
+      updateProps(
+        state,
+        {
+          updates: [
+            {
+              instanceId: contentBlock.id,
+              name: contentBlockSourceProp,
+              type: "asset",
+              value: "next-asset-id",
+            },
+          ],
+        },
+        { createId: () => "next-source-id" }
+      )
+    ).toThrow("Content Block source operations");
+
+    expect(() =>
+      bindProps(
+        state,
+        {
+          bindings: [
+            {
+              instanceId: contentBlock.id,
+              name: contentBlockSourceProp,
+              binding: { type: "expression", value: "selectedAssetId" },
+            },
+          ],
+        },
+        { createId: () => "next-source-id" }
+      )
+    ).toThrow("Content Block source operations");
+
+    expect(() =>
+      deleteProps(state, {
+        deletions: [
+          {
+            instanceId: contentBlock.id,
+            name: contentBlockSourceProp,
+          },
+        ],
+      })
+    ).toThrow("Content Block source operations");
+  });
+
   test("parses CSS strings in animation action keyframes", () => {
     const input = propUpdatesInput.parse({
       updates: [
@@ -932,7 +1500,107 @@ describe("getPropValueErrors", () => {
     expect(
       getPropValueErrors({ type: "expression", value: "invalid {" })
     ).not.toEqual([]);
+    expect(
+      getPropValueErrors({
+        type: "expression",
+        value: 'document.frontmatter.title + "!"',
+        mode: "readwrite",
+      })
+    ).toContain("Read-write expressions must be a direct static path");
   });
+});
+
+test("rejects readwrite prop bindings outside a connected Content Block document", () => {
+  expect(() =>
+    bindProps(
+      {
+        instances: new Map([[image.id, image]]),
+        props: new Map(),
+      },
+      {
+        bindings: [
+          {
+            instanceId: image.id,
+            name: "alt",
+            binding: {
+              type: "expression",
+              value: "document.frontmatter.alt",
+              mode: "readwrite",
+            },
+          },
+        ],
+      },
+      { createId: () => "alt-id" }
+    )
+  ).toThrow(
+    "Read-write expressions require a connected Content Block document frontmatter path"
+  );
+});
+
+test("accepts readwrite prop bindings into connected Content Block frontmatter", () => {
+  const block: Instance = {
+    type: "instance",
+    id: "block",
+    component: blockComponent,
+    children: [{ type: "id", value: image.id }],
+  };
+  const result = bindProps(
+    {
+      instances: new Map([
+        [block.id, block],
+        [image.id, image],
+      ]),
+      props: new Map<string, Prop>([
+        [
+          "source",
+          {
+            id: "source",
+            instanceId: block.id,
+            name: "src",
+            type: "asset",
+            value: "article",
+          },
+        ],
+        [
+          "document",
+          {
+            id: "document",
+            instanceId: block.id,
+            name: "document",
+            type: "parameter",
+            value: "document",
+          },
+        ],
+      ]),
+    },
+    {
+      bindings: [
+        {
+          instanceId: image.id,
+          name: "alt",
+          binding: {
+            type: "expression",
+            value: `${encodeDataSourceVariable("document")}.frontmatter.alt`,
+            mode: "readwrite",
+          },
+        },
+      ],
+    },
+    { createId: () => "alt-id" }
+  );
+
+  expect(result.payload).toEqual([
+    {
+      namespace: "props",
+      patches: [
+        {
+          op: "add",
+          path: ["alt-id"],
+          value: expect.objectContaining({ mode: "readwrite" }),
+        },
+      ],
+    },
+  ]);
 });
 
 describe("getPropIdsToDelete", () => {

@@ -96,7 +96,7 @@ Or link a Project non-interactively:
 npx webstudio link --link "<share-link-with-build-access>"
 ```
 
-Publish the Project in Webstudio Cloud before syncing when you need recent Builder changes in the local export.
+Sync exports the current saved Builder project and its asset files. Publishing is not required.
 
 ## Install Node.js only when needed
 
@@ -166,11 +166,21 @@ The share link should include Build access when you need to sync, build, import,
 
 ## Export and build a Project
 
-After linking, publish the Project in Webstudio Cloud, then sync it locally:
+After linking, sync the current saved Project locally:
 
 ```bash
 npx webstudio sync
 ```
+
+Sync refreshes the project from the server, downloads its asset files, and prepares the local content index. It does not combine an older published build with current assets.
+
+To replace another Project with the synced Project:
+
+```bash
+npx webstudio import --to "<target-share-link-with-build-access>"
+```
+
+Import replaces the target's pages, assets, and asset folders. It preserves file formats and folder assignments; it does not convert Markdown files to MDX.
 
 Build a dynamic app with a deployment template:
 
@@ -192,7 +202,7 @@ Build a static site with:
 npx webstudio build --template ssg
 ```
 
-Please review [the limitations](self-hosting/#ssg-limitations) of using the static site export instead of dynamic templates.
+Please review [the limitations](self-hosting/#static-site-limitations) of using the static site export instead of dynamic templates.
 
 ## Other workflows
 
@@ -221,7 +231,7 @@ restarting an MCP client:
 
 ```bash
 npx webstudio meta.index
-npx webstudio insert-fragment '{"parentInstanceId":"<parent-id>","fragment":"<ws.element ws:tag=\"section\" />"}' --dry-run
+npx webstudio insert-fragment '{"parentInstanceId":"<parent-id>","fragment":"<section />"}' --dry-run
 ```
 
 The explicit equivalent is

@@ -3,9 +3,11 @@ import { type ElementRef, type ComponentProps, forwardRef } from "react";
 export const defaultTag = "code";
 
 type CodeTextProps = ComponentProps<typeof defaultTag> & {
+  /** @deprecated Use children (Text Content) instead. */
   code?: string;
   language?: string;
   theme?: string;
+  "data-ws-text-editing"?: string;
 };
 
 export const CodeText = forwardRef<
@@ -14,7 +16,7 @@ export const CodeText = forwardRef<
 >(
   (
     {
-      code,
+      code: legacyCode,
       children,
       language: _language,
       theme: _theme,
@@ -22,21 +24,9 @@ export const CodeText = forwardRef<
     }: CodeTextProps,
     ref
   ) => {
-    // Children are supported for Code Text instances created before the
-    // editable code property was introduced.
-    if (
-      (children === undefined && code === undefined) ||
-      String(code).trim().length === 0
-    ) {
-      return (
-        <code {...props} style={{ padding: 20 }} ref={ref}>
-          {`Open the "Settings" panel to edit the code.`}
-        </code>
-      );
-    }
     return (
       <code {...props} ref={ref}>
-        {code ?? children}
+        {children ?? legacyCode}
       </code>
     );
   }

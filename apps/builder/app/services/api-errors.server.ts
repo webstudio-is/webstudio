@@ -10,9 +10,14 @@ export const throwApiError = (
   message: string,
   options: ApiErrorOptions = {}
 ): never => {
+  const errorOptions =
+    code === "NOT_FOUND" && options.webstudioCode === undefined
+      ? { ...options, webstudioCode: code }
+      : options;
   const cause =
-    options.webstudioCode === undefined && options.issues === undefined
+    errorOptions.webstudioCode === undefined &&
+    errorOptions.issues === undefined
       ? undefined
-      : Object.assign(new Error(message), options);
+      : Object.assign(new Error(message), errorOptions);
   throw new TRPCError({ code, message, cause });
 };

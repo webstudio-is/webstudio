@@ -42,6 +42,66 @@ export const toByteChunks = (source: ByteSource): AsyncIterable<Uint8Array> => {
   return source;
 };
 
+export const selectByteRange = (
+  source: ByteSource,
+  range?: { offset: number; length: number }
+): AsyncIterable<Uint8Array> => {
+  if (range === undefined) {
+    return toByteChunks(source);
+  }
+  return {
+    async *[Symbol.asyncIterator]() {
+      let skipped = 0;
+      let emitted = 0;
+      for await (const chunk of toByteChunks(source)) {
+        if (emitted === range.length) {
+          return;
+        }
+        if (skipped + chunk.byteLength <= range.offset) {
+          skipped += chunk.byteLength;
+          continue;
+        }
+        const start = Math.max(0, range.offset - skipped);
+        const length = Math.min(
+          chunk.byteLength - start,
+          range.length - emitted
+        );
+        if (length > 0) {
+          yield chunk.subarray(start, start + length);
+          emitted += length;
+        }
+        skipped += chunk.byteLength;
+      }
+    },
+  };
+};
+
+export const readableStreamToAsyncIterable = (
+  stream: ReadableStream<Uint8Array>
+): AsyncIterable<Uint8Array> => ({
+  async *[Symbol.asyncIterator]() {
+    const reader = stream.getReader();
+    let completed = false;
+    try {
+      for (;;) {
+        const result = await reader.read();
+        if (result.done) {
+          completed = true;
+          return;
+        }
+        yield result.value;
+      }
+    } finally {
+      if (completed === false) {
+        // Cancelling a tee waits for its other branch. Start cleanup without
+        // delaying the consumer or replacing its error if cancellation fails.
+        reader.cancel().catch(() => {});
+      }
+      reader.releaseLock();
+    }
+  },
+});
+
 export const readBytePrefix = async (
   source: ByteSource,
   maximumBytes: number
@@ -65,11 +125,12 @@ export const readBytePrefix = async (
 
 export const readBoundedBytes = async (
   source: ByteSource,
-  maximumBytes: number
+  maximumBytes: number,
+  limitError = new ByteLimitExceededError()
 ) => {
   const bytes = await readBytePrefix(source, maximumBytes + 1);
   if (bytes.byteLength > maximumBytes) {
-    throw new ByteLimitExceededError();
+    throw limitError;
   }
   return bytes;
 };

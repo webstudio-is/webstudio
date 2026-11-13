@@ -16,11 +16,11 @@ permissions:
   packages: write
   deployments: write
 
+env:
+  COMPATIBILITY_DATE: "2024-04-10"
+
 jobs:
   build:
-    env:
-      COMPATIBILITY_DATE: 2024-04-10
-
     environment:
       name: "staging"
 
@@ -124,7 +124,7 @@ jobs:
         run: |
           NODE_ENV=production pnpm wrangler deploy \
           --name build \
-          --compatibility-date '${COMPATIBILITY_DATE}' \
+          --compatibility-date "${COMPATIBILITY_DATE}" \
           --minify true \
           --logpush true \
           --dry-run \

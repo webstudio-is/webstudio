@@ -66,7 +66,7 @@ export const SmallIconButton = () => (
 export default {
   title: "Small Icon Button",
   parameters: {
-    // to make the variant=contrast visible
-    backgrounds: { default: "Maintenance Medium" },
+    // Make the contrast variant visible.
+    backgrounds: { default: "Inverse" },
   },
 };

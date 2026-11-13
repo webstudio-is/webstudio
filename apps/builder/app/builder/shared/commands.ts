@@ -3,7 +3,11 @@ import {
   deleteSelectedInstance,
   reparentInstance,
 } from "~/shared/instance-utils/mutation";
-import { sortInstancePathsForChildMutation } from "@webstudio-is/project-build/runtime";
+import {
+  canMoveInstanceInContentMode,
+  isStyleSourceLocked,
+  sortInstancePathsForChildMutation,
+} from "@webstudio-is/project-build/runtime";
 import { toggleInstanceShow } from "~/shared/instance-utils/mutation";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { toast } from "@webstudio-is/design-system";
@@ -26,10 +30,18 @@ import {
   $isDesignMode,
   $isPreviewMode,
   $pageIdToDelete,
+  $selectedStyleSource,
   $templateIdToDelete,
   toggleBuilderMode,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
+import {
+  externalContentInstanceNameMessage,
+  getExternalContentRoots,
+  findExternalContentRootEntryBySelector,
+  isExternalContentInstance,
+} from "~/shared/external-content-mutations";
+import { traverseExternalContentHistory } from "~/shared/external-content-roots";
 
 // Declare command for type safety
 declare module "~/shared/pubsub" {
@@ -81,6 +93,10 @@ import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-varia
 import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";
 import { openDeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
 import { openKeyboardShortcutsDialog } from "~/builder/features/keyboard-shortcuts-dialog";
+import {
+  getStyleBlockSelectionKey,
+  openStyleBlockEditor,
+} from "~/builder/features/style-panel/sections/advanced/style-block-editor-state";
 import {
   copyFolder,
   copyInstance,
@@ -167,6 +183,35 @@ const guardDesignOrContentModeCommand = ({
 
 const hasMultiInstanceSelection = () =>
   $allSelectedInstanceSelectors.get().length > 1;
+
+const traverseSelectedContentHistory = (direction: "undo" | "redo") => {
+  const selector = $selectedInstancePath.get()?.[0]?.instanceSelector;
+  if (selector === undefined) {
+    return false;
+  }
+  const roots = getExternalContentRoots();
+  const root = findExternalContentRootEntryBySelector(roots, selector)?.[1];
+  if (
+    root?.projectId === undefined ||
+    root.assetId === undefined ||
+    ($isContentMode.get() === false &&
+      isExternalContentInstance(roots, selector[0]) === false &&
+      root.contentInstanceId !== selector[0])
+  ) {
+    return false;
+  }
+  void traverseExternalContentHistory({
+    projectId: root.projectId,
+    direction,
+  }).catch((error) => {
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Unable to restore the article edit."
+    );
+  });
+  return true;
+};
 
 const copyPageActionTarget = () => {
   if ($isDesignMode.get() === false) {
@@ -596,10 +641,12 @@ const getInstanceMoveTarget = (direction: InstanceMoveDirection) => {
 };
 
 const moveSelectedInstance = (direction: InstanceMoveDirection) => {
+  const isContentMode = $isContentMode.get();
   if (
-    guardDesignModeCommand({
+    guardDesignOrContentModeCommand({
+      isContentMode,
       isDesignMode: $isDesignMode.get(),
-      message: "Moving is only allowed in design mode.",
+      message: "Moving is only allowed in design or content mode.",
     }) === false
   ) {
     return;
@@ -612,6 +659,17 @@ const moveSelectedInstance = (direction: InstanceMoveDirection) => {
   const target = getInstanceMoveTarget(direction);
   if (target === undefined) {
     return;
+  }
+  if (isContentMode) {
+    if (
+      canMoveInstanceInContentMode({
+        instanceSelector: selectedItem.instanceSelector,
+        parentSelector: target.parentSelector,
+        instances: $instances.get(),
+      }) === false
+    ) {
+      return;
+    }
   }
   reparentInstance(selectedItem.instanceSelector, target);
 };
@@ -828,6 +886,23 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       disableOnInputLikeControls: true,
     },
     {
+      name: "openStyleBlockEditor",
+      description: "Open code editor",
+      category: "Style panel",
+      defaultHotkeys: ["alt+shift+x"],
+      handler: () => {
+        if (
+          $isDesignMode.get() === false ||
+          isStyleSourceLocked($selectedStyleSource.get()) ||
+          getStyleBlockSelectionKey() === undefined
+        ) {
+          return;
+        }
+        $activeInspectorPanel.set("style");
+        openStyleBlockEditor();
+      },
+    },
+    {
       name: "openSettingsPanel",
       description: "Open settings panel",
       category: "Panels",
@@ -1019,6 +1094,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
         const [selectedItem] = instancePath;
+        if (
+          isExternalContentInstance(
+            getExternalContentRoots(),
+            selectedItem.instance.id
+          )
+        ) {
+          toast.info(externalContentInstanceNameMessage);
+          return;
+        }
         $editingItemSelector.set(selectedItem.instanceSelector);
       },
     },
@@ -1127,7 +1211,9 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       defaultHotkeys: ["meta+z", "ctrl+z"],
       disableOnInputLikeControls: true,
       handler: () => {
-        serverSyncStore.undo();
+        if (traverseSelectedContentHistory("undo") === false) {
+          serverSyncStore.undo();
+        }
       },
     },
     {
@@ -1138,7 +1224,9 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       defaultHotkeys: ["meta+shift+z", "ctrl+shift+z"],
       disableOnInputLikeControls: true,
       handler: () => {
-        serverSyncStore.redo();
+        if (traverseSelectedContentHistory("redo") === false) {
+          serverSyncStore.redo();
+        }
       },
     },
 

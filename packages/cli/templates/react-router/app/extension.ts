@@ -1,13 +1,9 @@
-import type { ResourceRequest } from "@webstudio-is/sdk";
+import "react-router";
+
 
 declare module "react-router" {
   interface AppLoadContext {
     EXCLUDE_FROM_SEARCH: boolean;
-    getDefaultActionResource?: (options: {
-      url: URL;
-      projectId: string;
-      contactEmail: string;
-      formData: FormData;
-    }) => ResourceRequest;
+    WEBSTUDIO_AUTOMATION_TOKEN?: string;
   }
 }

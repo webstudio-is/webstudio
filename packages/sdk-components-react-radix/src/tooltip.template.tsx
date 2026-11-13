@@ -1,10 +1,11 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
-  $,
   css,
   PlaceholderValue,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import { Button, Text } from "@webstudio-is/sdk-components-react/components";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./components";
 import { getButtonStyle } from "./shared/styles";
 import {
   borderRadius,
@@ -30,13 +31,13 @@ export const meta: TemplateMeta = {
     "Displays content that is related to the trigger, when the trigger is hovered with the mouse or focused with the keyboard. You are reading an example of a tooltip right now.",
   order: 7,
   template: (
-    <radix.Tooltip>
-      <radix.TooltipTrigger>
-        <$.Button ws:style={getButtonStyle("outline")}>
+    <Tooltip>
+      <TooltipTrigger>
+        <Button ws:style={getButtonStyle("outline")}>
           {new PlaceholderValue("Button")}
-        </$.Button>
-      </radix.TooltipTrigger>
-      <radix.TooltipContent
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent
         /**
          *  z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md
          **/
@@ -52,8 +53,8 @@ export const meta: TemplateMeta = {
           box-shadow: ${boxShadow.md};
         `}
       >
-        <$.Text>{new PlaceholderValue("The text you can edit")}</$.Text>
-      </radix.TooltipContent>
-    </radix.Tooltip>
+        <Text>{new PlaceholderValue("The text you can edit")}</Text>
+      </TooltipContent>
+    </Tooltip>
   ),
 };

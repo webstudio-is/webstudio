@@ -4,6 +4,9 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { patchLoadedBuild } from "@webstudio-is/project/index.server";
 import type { Database } from "@webstudio-is/postgrest/index.server";
+import type { AssetObjectReader } from "@webstudio-is/asset-uploader/server";
+import { loadAssetFoldersByProject } from "@webstudio-is/asset-uploader/server";
+import { createAssetClient } from "~/shared/asset-client";
 import {
   assertProjectPermit,
   authorizePatchEntries,
@@ -26,6 +29,7 @@ const baseBuildPatchColumns = [
 ] as const satisfies BuildColumn[];
 
 const contentModeBuildColumns = [
+  "pages",
   "instances",
   "props",
   "styleSources",
@@ -35,11 +39,12 @@ const contentModeBuildColumns = [
 ] as const satisfies BuildColumn[];
 
 const namespaceBuildColumns = {
-  pages: ["pages"],
+  pages: ["pages", "instances", "props"],
   projectSettings: ["projectSettings"],
   breakpoints: ["breakpoints"],
-  instances: ["instances"],
-  props: ["props"],
+  instances: ["pages", "instances", "props"],
+  props: ["props", "instances"],
+  assets: ["props", "instances"],
   styleSourceSelections: ["styleSourceSelections"],
   styleSources: ["styleSources"],
   styles: ["styles"],
@@ -232,11 +237,13 @@ const applyAuthorizedEntries = async ({
   build,
   patch,
   version,
+  assetStore,
 }: {
   authorized: AuthorizedPatchEntry[];
   build?: BuildRow;
   patch: NormalizedPatchRequest;
   version: number;
+  assetStore: AssetObjectReader;
 }) => {
   if (authorized.length === 0) {
     return {
@@ -263,6 +270,7 @@ const applyAuthorizedEntries = async ({
         projectId: patch.projectId,
         clientVersion: version,
         transactions: authorized.map(({ entry }) => entry.transaction),
+        assetStore,
       },
       applyContext
     );
@@ -282,8 +290,13 @@ const applyAuthorizedEntries = async ({
 
   const entries: PatchEntryResult[] = [];
   let currentVersion = version;
+  let previousError: string | undefined;
 
   for (const { entry, context: entryContext } of authorized) {
+    if (previousError !== undefined) {
+      entries.push(failedResult(entry, previousError));
+      continue;
+    }
     const entryResult = await patchLoadedBuild(
       {
         build: currentBuild,
@@ -291,6 +304,7 @@ const applyAuthorizedEntries = async ({
         projectId: patch.projectId,
         clientVersion: currentVersion,
         transactions: [entry.transaction],
+        assetStore,
       },
       entryContext
     );
@@ -304,6 +318,7 @@ const applyAuthorizedEntries = async ({
     if (entryResult.status === "version_mismatched") {
       return entryResult;
     }
+    previousError = entryResult.errors;
     entries.push(failedResult(entry, entryResult.errors));
   }
 
@@ -325,7 +340,8 @@ export const applyPatchRequest = async (
     patch,
     async () => {
       const build = await loadBuildForContentMode(context, patch.buildId);
-      return createContentModeCapabilities({
+      const capabilities = createContentModeCapabilities({
+        pages: build.pages,
         instances: build.instances,
         props: build.props,
         styleSources: build.styleSources,
@@ -333,6 +349,25 @@ export const applyPatchRequest = async (
         styles: build.styles,
         breakpoints: build.breakpoints,
       });
+      if (
+        patch.entries.some(({ transaction }) =>
+          transaction.payload.some(
+            ({ namespace }) => namespace === "assetFolders"
+          )
+        )
+      ) {
+        const folders = await loadAssetFoldersByProject(
+          patch.projectId,
+          context,
+          {
+            skipPermissionsCheck: true,
+          }
+        );
+        capabilities.assetFolders = new Map(
+          folders.map((folder) => [folder.id, folder])
+        );
+      }
+      return capabilities;
     }
   );
   const build =
@@ -349,6 +384,7 @@ export const applyPatchRequest = async (
     build,
     patch,
     version: authorized.length === 0 ? state.version : patch.clientVersion,
+    assetStore: createAssetClient(),
   });
 
   if (applied.status === "version_mismatched") {

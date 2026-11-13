@@ -6,6 +6,7 @@ import {
 import { languages } from "@codemirror/language-data";
 import {
   Button,
+  cssVar,
   DialogClose,
   DialogMaximize,
   DialogTitle,
@@ -14,10 +15,10 @@ import {
   SmallIconButton,
   Text,
   Tooltip,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
+import { codeTextDefaultLanguage } from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import {
@@ -63,7 +64,7 @@ export const matchCodeTextEditorLanguage = (selectedLanguage: unknown) => {
   );
 };
 
-const useCodeTextLanguageSupport = (selectedLanguage: unknown) => {
+export const useCodeTextLanguageSupport = (selectedLanguage: unknown) => {
   const [languageSupport, setLanguageSupport] = useState<LanguageSupport>();
 
   useEffect(() => {
@@ -129,8 +130,8 @@ const ErrorInfo = ({
           <InfoCircleIcon
             color={
               error.severity === "warning"
-                ? rawTheme.colors.foregroundSubtle
-                : rawTheme.colors.foregroundDestructive
+                ? cssVar("--foreground-warning")
+                : cssVar("--foreground-negative")
             }
           />
         }
@@ -157,16 +158,22 @@ export const CodeControl = ({
   };
   const lang = meta.control === "code" ? meta.language : undefined;
   const codeTextLanguageSupport = useCodeTextLanguageSupport(
-    meta.control === "codetext" ? computedProps?.get("language") : undefined
+    meta.control === "codetext"
+      ? (computedProps?.get("language") ?? codeTextDefaultLanguage)
+      : undefined
   );
   const label = humanizeAttribute(metaOverride.label || propName);
   const editorValue = behavior
     ? behavior.formatValue(computedValue)
     : String(computedValue ?? "");
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
   const localValue = useDraftValue(
     editorValue,
     (value) => {
-      if (prop?.type === "expression") {
+      if (binding.bindingState.overwritable === false) {
         return;
       }
       let storedValue = value;
@@ -197,11 +204,6 @@ export const CodeControl = ({
     },
     { autoSave: behavior?.autoSave ?? true }
   );
-
-  const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
-    fallbackExpression: JSON.stringify(computedValue),
-  });
 
   const errorInfo = (
     <ErrorInfo

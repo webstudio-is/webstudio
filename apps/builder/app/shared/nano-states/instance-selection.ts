@@ -9,6 +9,10 @@ import {
   normalizeInstanceSelectors,
 } from "../instance-utils/selection";
 import { $instances } from "../sync/data-stores";
+import {
+  getExternalContentRoots,
+  getExternalContentSourceSelector,
+} from "../external-content-mutations";
 
 export const $allSelectedInstanceSelectors = atom<InstanceSelector[]>([]);
 // Instance pruning is derived from tree updates and must not be synchronized
@@ -81,9 +85,25 @@ $instances.listen((instances) => {
     return;
   }
   setSelectedInstances(
-    selectedSelectors.filter((instanceSelector) =>
-      canResolveInstanceSelector(instanceSelector, instances)
-    ),
+    selectedSelectors.filter((instanceSelector) => {
+      const externalSelectors = getExternalContentSourceSelector({
+        selector: instanceSelector,
+        roots: getExternalContentRoots(),
+      });
+      if (externalSelectors !== undefined) {
+        return (
+          canResolveInstanceSelector(
+            externalSelectors.contentSelector,
+            instances
+          ) &&
+          canResolveInstanceSelector(
+            externalSelectors.sourceSelector,
+            instances
+          )
+        );
+      }
+      return canResolveInstanceSelector(instanceSelector, instances);
+    }),
     "instance-pruning"
   );
 });

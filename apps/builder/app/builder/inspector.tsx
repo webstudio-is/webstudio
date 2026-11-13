@@ -1,7 +1,11 @@
 import { useRef } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Instance } from "@webstudio-is/sdk";
+import {
+  elementComponent,
+  getComponentJsxName,
+  type Instance,
+} from "@webstudio-is/sdk";
 import {
   theme,
   PanelTabs,
@@ -33,16 +37,38 @@ import {
   $selectedInstanceKey,
   $selectedPage,
 } from "~/shared/nano-states";
-import { InstanceIcon, getInstanceLabel } from "./shared/instance-label";
+import { getInstanceLabel } from "./shared/instance-label";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
+  const metas = useStore($registeredComponentMetas);
+  const label = getInstanceLabel(instance);
+  const componentName =
+    instance.name ??
+    (instance.component === elementComponent
+      ? (instance.tag ?? "div")
+      : getComponentJsxName({
+          component: instance.component,
+          components: new Set([...metas.keys(), instance.component]),
+        }));
+  const componentTag = `<${componentName}>`;
   return (
-    <Flex gap="1" align="center">
-      <Flex shrink={false}>
-        <InstanceIcon instance={instance} />
-      </Flex>
-      <Text truncate variant="labels">
-        {getInstanceLabel(instance)}
+    <Flex gap="1" align="center" grow css={{ minWidth: 0, overflow: "hidden" }}>
+      <Text
+        truncate
+        variant="labels"
+        title={label}
+        css={{ minWidth: 0, maxWidth: "50%", flexShrink: 0 }}
+      >
+        {label}
+      </Text>
+      <Text
+        truncate
+        variant="labels"
+        color="subtle"
+        title={componentTag}
+        css={{ minWidth: 0, flexShrink: 1 }}
+      >
+        {componentTag}
       </Text>
     </Flex>
   );
@@ -208,4 +234,5 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
 
 export const __testing__ = {
   getInspectorEmptyStateMessage,
+  InstanceInfo,
 };

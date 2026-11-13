@@ -16,8 +16,22 @@ import { jsx } from "./plugin-jsx";
 import { markdown } from "./plugin-markdown";
 import { webflow } from "./plugin-webflow/plugin-webflow";
 import { designTokens } from "./plugin-design-tokens";
+import {
+  styleSource,
+  copyTokenData,
+  copyReusableStyleSourceData,
+} from "./plugin-style-source";
 import { builderApi } from "../builder-api";
 import { readClipboardText } from "../clipboard";
+import { $selectedInstance } from "../nano-states";
+import { $dataSources, $instances, $resources } from "../sync/data-stores";
+import { serverSyncStore } from "../sync/sync-stores";
+import { findAvailableVariables } from "@webstudio-is/project-build/runtime";
+import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
+import {
+  deserializeVariable,
+  isVariableClipboardData,
+} from "./variable-clipboard";
 
 const isTextEditing = (event: ClipboardEvent) => {
   // Text is edited on the Canvas using the default Canvas text editor settings.
@@ -45,7 +59,7 @@ const isTextEditing = (event: ClipboardEvent) => {
  * # How to test:
  * 1. Focus on an input in the style panel (width, style source) or name input in settings. Select the text, then copy and paste any instance in the Navigator tree or on the Canvas.
  * 2. Edit text in a paragraph on the Canvas. Select text (single or multiple lines), then press Cmd+X. The paragraph should not be deleted.
- * 3. Select CSS preview text, then select an instance in the Navigator. Press Cmd+C, then Cmd+V.
+ * 3. Select text in a Builder panel, then select an instance in the Navigator. Press Cmd+C, then Cmd+V.
  **/
 const validateClipboardEvent = (event: ClipboardEvent) => {
   if (event.clipboardData === null) {
@@ -56,7 +70,7 @@ const validateClipboardEvent = (event: ClipboardEvent) => {
     return false;
   }
 
-  // Allows native selection of text in the Builder panels, such as CSS preview.
+  // Allows native selection of text in the Builder panels.
   if (event.type === "copy") {
     const isInBuilderContext = window.self === window.top;
     const selection = window.getSelection();
@@ -80,8 +94,11 @@ const validateCopyPermission = () => {
 export type Plugin = {
   name: string;
   mimeType: string;
-  onCopy?: () => undefined | string;
-  onCut?: () => undefined | string;
+  onCopy?: () => undefined | string | Promise<undefined | string>;
+  // Delete the source only after writeClipboard confirms the data was saved.
+  onCut?: (
+    writeClipboard: (data: string) => Promise<boolean>
+  ) => undefined | Promise<undefined | string>;
   onPaste?: (data: string) => PasteResult | Promise<PasteResult>;
 };
 
@@ -109,6 +126,109 @@ const reportPasteResult = (result: PasteResult) => {
   }
 };
 
+const textMimeType = "text/plain";
+
+const variableClipboard: Plugin = {
+  name: "variable",
+  mimeType: textMimeType,
+  onPaste: (text) => {
+    if (isVariableClipboardData(text) === false) {
+      return pasteIgnored;
+    }
+    const instance = $selectedInstance.get();
+    if (!instance) {
+      return pasteHandled;
+    }
+    try {
+      const copied = deserializeVariable(
+        text,
+        instance.id,
+        new Map(
+          findAvailableVariables({
+            startingInstanceId: instance.id,
+            instances: $instances.get(),
+            dataSources: $dataSources.get(),
+          }).map((variable) => [variable.id, variable])
+        )
+      );
+      const originalName = copied.variable.name;
+      let suffix = 2;
+      let error = validateDataVariableName(
+        copied.variable.name,
+        undefined,
+        instance.id
+      );
+      while (error?.type === "duplicate") {
+        copied.variable.name = `${originalName} ${suffix++}`;
+        error = validateDataVariableName(
+          copied.variable.name,
+          undefined,
+          instance.id
+        );
+      }
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      if (copied.resource) {
+        copied.resource.name = copied.variable.name;
+      }
+      serverSyncStore.createTransaction(
+        [$dataSources, $resources],
+        (dataSources, resources) => {
+          dataSources.set(copied.variable.id, copied.variable);
+          if (copied.resource) {
+            resources.set(copied.resource.id, copied.resource);
+          }
+        }
+      );
+      return pasteHandled;
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Unable to paste variable",
+      };
+    }
+  },
+};
+
+const readClipboardData = (
+  mimeTypes: Array<string>,
+  clipboardData: null | DataTransfer
+) => {
+  const dataByMimeType = new Map<string, string>();
+  for (const mimeType of mimeTypes) {
+    if (dataByMimeType.has(mimeType) === false) {
+      dataByMimeType.set(
+        mimeType,
+        clipboardData?.getData(mimeType).trim() ?? ""
+      );
+    }
+  }
+  return dataByMimeType;
+};
+
+let pasteClipboardText: undefined | ((text: string) => Promise<void>);
+
+const registerPasteClipboardText = (
+  handler: (text: string) => Promise<void>,
+  signal: AbortSignal
+) => {
+  pasteClipboardText = handler;
+  signal.addEventListener("abort", () => {
+    if (pasteClipboardText === handler) {
+      pasteClipboardText = undefined;
+    }
+  });
+};
+
+const validatePasteCommand = () => {
+  if ($textEditingInstanceSelector.get() != null) {
+    return false;
+  }
+  return validateCopyPermission();
+};
+
 const initPlugins = ({
   plugins,
   signal,
@@ -124,6 +244,22 @@ const initPlugins = ({
     for (const { mimeType, onCopy } of plugins) {
       const data = onCopy?.();
 
+      if (data instanceof Promise) {
+        event.preventDefault();
+        void data
+          .then((value) => {
+            if (value !== undefined) {
+              event.clipboardData?.setData(mimeType, value);
+            }
+            return writeClipboardText(value);
+          })
+          .catch(() =>
+            builderApi.toast.error(
+              "Could not prepare the selected content for copying."
+            )
+          );
+        break;
+      }
       if (data) {
         // must prevent default, otherwise setData() will not work
         event.preventDefault();
@@ -137,28 +273,24 @@ const initPlugins = ({
     if (validateClipboardEvent(event) === false) {
       return;
     }
-    for (const { mimeType, onCut } of plugins) {
-      const data = onCut?.();
-      if (data) {
-        // must prevent default, otherwise setData() will not work
+    for (const { onCut } of plugins) {
+      const operation = onCut?.(writeClipboardText);
+      if (operation !== undefined) {
         event.preventDefault();
-        event.clipboardData?.setData(mimeType, data);
+        operation.catch(() => {
+          builderApi.toast.error("Could not cut the selected content.");
+        });
         break;
       }
     }
   };
 
-  const handlePaste = async (event: ClipboardEvent) => {
-    if (validateClipboardEvent(event) === false) {
-      return;
-    }
-    event.preventDefault();
-
+  const pasteData = async (dataByMimeType: Map<string, string>) => {
     for (const { mimeType, onPaste } of plugins) {
       if (onPaste === undefined) {
         continue;
       }
-      const data = event.clipboardData?.getData(mimeType).trim();
+      const data = dataByMimeType.get(mimeType);
       if (data === undefined || data === "") {
         continue;
       }
@@ -170,16 +302,39 @@ const initPlugins = ({
     }
   };
 
+  const handlePaste = async (event: ClipboardEvent) => {
+    if (validateClipboardEvent(event) === false) {
+      return;
+    }
+    event.preventDefault();
+    await pasteData(
+      readClipboardData(
+        plugins.map((plugin) => plugin.mimeType),
+        event.clipboardData
+      )
+    );
+  };
+
+  const handlePasteText = async (text: string) => {
+    if (validatePasteCommand() === false) {
+      return;
+    }
+    await pasteData(new Map([[textMimeType, text.trim()]]));
+  };
+
   document.addEventListener("copy", handleCopy, { signal });
   document.addEventListener("cut", handleCut, { signal });
   // Capture is required so we get the element before content-editable removes it
   // This way we can detect when we are inside content-editable and ignore the event
   document.addEventListener("paste", handlePaste, { capture: true, signal });
+  registerPasteClipboardText(handlePasteText, signal);
 };
 
 export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
     plugins: [
+      variableClipboard,
+      styleSource,
       pageText,
       instanceJson,
       instanceText,
@@ -215,6 +370,18 @@ export const initCopyPasteForContentEditMode = ({
       return;
     }
     const data = instanceText.onCopy?.();
+    if (data instanceof Promise) {
+      event.preventDefault();
+      void data
+        .then((value) => {
+          if (value !== undefined) {
+            event.clipboardData?.setData(instanceText.mimeType, value);
+          }
+          return writeClipboardText(value);
+        })
+        .catch(() => undefined);
+      return;
+    }
     if (data) {
       event.preventDefault();
       event.clipboardData?.setData(instanceText.mimeType, data);
@@ -227,7 +394,11 @@ export const initCopyPasteForContentEditMode = ({
     if (validateClipboardEvent(event) === false) {
       return;
     }
-    const jsonData = event.clipboardData?.getData(instanceJson.mimeType).trim();
+    const dataByMimeType = readClipboardData(
+      [instanceJson.mimeType, instanceText.mimeType],
+      event.clipboardData
+    );
+    const jsonData = dataByMimeType.get(instanceJson.mimeType);
     if (jsonData) {
       event.preventDefault();
       const result = await instanceJson.onPaste(jsonData);
@@ -238,7 +409,7 @@ export const initCopyPasteForContentEditMode = ({
       showUnsupportedPasteMessage();
       return;
     }
-    const textData = event.clipboardData?.getData(instanceText.mimeType).trim();
+    const textData = dataByMimeType.get(instanceText.mimeType);
     if (textData) {
       event.preventDefault();
       const result = await instanceText.onPaste(textData);
@@ -247,6 +418,23 @@ export const initCopyPasteForContentEditMode = ({
         return;
       }
       showUnsupportedPasteMessage();
+      return;
+    }
+    showUnsupportedPasteMessage();
+  };
+
+  const handlePasteText = async (text: string) => {
+    if (validatePasteCommand() === false) {
+      return;
+    }
+    const textData = text.trim();
+    if (textData === "") {
+      showUnsupportedPasteMessage();
+      return;
+    }
+    const result = await instanceText.onPaste(textData);
+    if (isPasteHandled(result)) {
+      reportPasteResult(result);
       return;
     }
     showUnsupportedPasteMessage();
@@ -267,18 +455,38 @@ export const initCopyPasteForContentEditMode = ({
     capture: true,
     signal,
   });
+  registerPasteClipboardText(handlePasteText, signal);
 };
 
-const writeClipboardText = (data: string | undefined) => {
+const writeClipboardText = async (
+  data: string | undefined | Promise<string | undefined>
+) => {
+  data = await data;
   if (data && validateCopyPermission()) {
-    return navigator.clipboard.writeText(data);
+    await navigator.clipboard.writeText(data);
+    return true;
   }
-  return Promise.resolve();
+  return false;
 };
 
 // Public API for programmatic copy/paste/cut operations
 export const copyInstance = () => {
   return writeClipboardText(instanceText.onCopy?.());
+};
+
+export const copyToken = async (tokenId: string) =>
+  writeClipboardText(copyTokenData(tokenId));
+
+export const copyReusableStyleSource = async (
+  styleSourceId: string,
+  sourceType: "tag" | "local"
+) => writeClipboardText(copyReusableStyleSourceData(styleSourceId, sourceType));
+
+export const pasteStyleSource = async (data: string) => {
+  const result = await styleSource.onPaste?.(data);
+  if (result !== undefined) {
+    reportPasteResult(result);
+  }
 };
 
 export const copyPage = (pageId: string) => {
@@ -308,20 +516,9 @@ export const emitPaste = async () => {
   if (text === undefined) {
     return;
   }
-
-  // Create and dispatch a paste event to go through the normal handlePaste flow
-  const dataTransfer = new DataTransfer();
-  dataTransfer.setData("text/plain", text);
-
-  const pasteEvent = new ClipboardEvent("paste", {
-    clipboardData: dataTransfer,
-    bubbles: true,
-    cancelable: true,
-  });
-
-  document.dispatchEvent(pasteEvent);
+  await pasteClipboardText?.(text);
 };
 
-export const cutInstance = () => {
-  return writeClipboardText(instanceText.onCut?.());
+export const cutInstance = async () => {
+  await instanceText.onCut?.(writeClipboardText);
 };

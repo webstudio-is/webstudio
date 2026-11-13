@@ -7,11 +7,12 @@
 >
   <path
     d="M13.4444 1H2.55556C1.69645 1 1 1.69645 1 2.55556V13.4444C1 14.3036 1.69645 15 2.55556 15H13.4444C14.3036 15 15 14.3036 15 13.4444V2.55556C15 1.69645 14.3036 1 13.4444 1Z"
-    fill="#D2D2D2"
+    fill="currentColor"
+    fill-opacity="0.18"
   />
   <path
     d="M11.3335 5.66667H4.66675L4.66679 10.3333H11.3335V5.66667Z"
-    fill="white"
+    fill="currentColor"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"

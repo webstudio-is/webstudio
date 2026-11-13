@@ -17,6 +17,8 @@ import {
 } from "@webstudio-is/icons";
 import { type StyleValue, toValue } from "@webstudio-is/css-engine";
 import {
+  PanelContent,
+  cssVar,
   theme,
   Flex,
   Grid,
@@ -58,8 +60,8 @@ const ColorSwatchIcon = styled("div", {
   width: theme.spacing[7],
   height: theme.spacing[7],
   borderRadius: theme.borderRadius[3],
-  backgroundColor: theme.colors.foregroundMain,
-  boxShadow: `inset 0 0 0 1px ${theme.colors.borderMain}`,
+  backgroundColor: cssVar("--foreground-primary"),
+  boxShadow: `inset 0 0 0 1px ${cssVar("--border-default")}`,
 });
 
 type BackgroundTypeOption = {
@@ -272,7 +274,7 @@ const BackgroundRepeat = ({
               setActiveTooltip(isOpen ? item.value : undefined)
             }
             isSelected={false}
-            label="Background Repeat"
+            label="Background repeat"
             code={`background-repeat: ${item.value};`}
             description={item.description}
             properties={["background-repeat"]}
@@ -421,11 +423,11 @@ export const BackgroundContent = ({ index }: { index: number }) => {
 
   return (
     <>
-      <Flex
+      <PanelContent
+        as={Flex}
         align="center"
         gap="2"
         justify="between"
-        css={{ padding: theme.panel.padding }}
         shrink={false}
       >
         <PropertyInlineLabel
@@ -441,7 +443,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           index={index}
           cachedValues={cachedValuesRef}
         />
-      </Flex>
+      </PanelContent>
 
       <Separator />
 

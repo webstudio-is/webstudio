@@ -38,9 +38,7 @@ export const ConfirmationDialog = ({
           <Button autoFocus onClick={onConfirm} color="destructive">
             Delete
           </Button>
-          <Button color="neutral" onClick={onAbort}>
-            Cancel
-          </Button>
+          <Button onClick={onAbort}>Cancel</Button>
         </DialogActions>
       </DialogContent>
     </Dialog>

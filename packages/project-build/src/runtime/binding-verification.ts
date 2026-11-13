@@ -314,17 +314,17 @@ export const verifyBindings = (
       allowAssignment,
     });
     for (const diagnostic of diagnostics) {
-      const unknownMatch = diagnostic.message.match(
-        /^"(.+)" is not defined in the scope$/
-      );
-      const code = unknownMatch ? "unknown-identifier" : "invalid-expression";
+      const isUnknownIdentifier = diagnostic.code === "unknown-identifier";
+      const code = isUnknownIdentifier
+        ? "unknown-identifier"
+        : "invalid-expression";
       findings.push(
         createFinding(code, bindingKind, location, {
-          category: unknownMatch ? "scope" : "validity",
+          category: isUnknownIdentifier ? "scope" : "validity",
           severity: diagnostic.severity === "error" ? "error" : "warning",
           message: diagnostic.message,
-          remediation: unknownMatch
-            ? `Define ${JSON.stringify(unknownMatch[1])} in this instance scope or use an available variable, then rerun verify-bindings.`
+          remediation: isUnknownIdentifier
+            ? `Define ${JSON.stringify(diagnostic.identifier)} in this instance scope or use an available variable, then rerun verify-bindings.`
             : "Correct the persisted expression using supported Webstudio expression syntax, then rerun verify-bindings.",
           range: { from: diagnostic.from, to: diagnostic.to },
         })

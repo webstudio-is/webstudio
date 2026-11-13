@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage } from "node:http";
 import { afterEach, expect, test, vi } from "vitest";
 import {
   bundleVersion,
+  maxProjectBundleSize,
   publicApiOperations,
   stagedUploadPath,
 } from "@webstudio-is/protocol";
@@ -16,6 +17,7 @@ import {
   attachDesignToken,
   bindProps,
   cloneInstance,
+  copyDesignToken,
   createAssetFolder,
   createProjectAssetFolder,
   createBreakpoint,
@@ -44,6 +46,7 @@ import {
   deleteProps,
   deleteResource,
   deleteRedirect,
+  deleteResponseHeader,
   deleteVariable,
   duplicatePage,
   duplicateAsset,
@@ -54,12 +57,14 @@ import {
   getPublishReport,
   getApiCompatibilityMessage,
   getApiErrorCode,
+  getErrorStatus,
   getBuildSnapshot,
   getPage,
   getPageByPath,
   getBuildPatchSummary,
   getMarketplaceProduct,
   getProjectPermissions,
+  simulateFormSubmission,
   getProjectAsset,
   getProjectAssetFolder,
   getProjectSettings,
@@ -84,6 +89,7 @@ import {
   listPageTemplates,
   listPublishes,
   listRedirects,
+  listResponseHeaders,
   listResources,
   listTexts,
   listVariables,
@@ -91,9 +97,12 @@ import {
   loadProjectBundleByProjectId,
   moveInstance,
   publish,
+  validatePublish,
   readProjectAssetContent,
   parseBuildPatchTransactions,
   parseBuilderUrl,
+  pasteDesignToken,
+  pasteStyleSource,
   toLocalProjectBundle,
   uploadAsset,
   uploadAssets,
@@ -114,6 +123,7 @@ import {
   updateFolder,
   updateProps,
   updateProjectSettings,
+  setResponseHeader,
   updateRedirect,
   updateResource,
   updateStyleDeclarations,
@@ -142,6 +152,7 @@ const createFragmentPayload = (): FragmentPayload => ({
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 const expectRequest = (
@@ -162,6 +173,46 @@ const apiParams = {
   origin: "https://apps.webstudio.is",
   projectId: "project-id",
 };
+
+test("normalizes Token and Tag paste results in pasteStyleSource", async () => {
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify([{ result: { data: { tokenId: "token" } } }]),
+        {
+          headers: { "content-type": "application/json" },
+        }
+      )
+    )
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify([
+          { result: { data: { styleSourceId: "tag-style:p" } } },
+        ]),
+        { headers: { "content-type": "application/json" } }
+      )
+    )
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify([{ result: { data: { tokenId: "legacy" } } }]),
+        {
+          headers: { "content-type": "application/json" },
+        }
+      )
+    );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    pasteStyleSource({ ...apiParams, data: "token-data" })
+  ).resolves.toEqual({ styleSourceId: "token" });
+  await expect(
+    pasteStyleSource({ ...apiParams, data: "tag-data" })
+  ).resolves.toEqual({ styleSourceId: "tag-style:p" });
+  await expect(
+    pasteDesignToken({ ...apiParams, data: "token-data" })
+  ).resolves.toEqual({ tokenId: "legacy" });
+});
 
 test("re-exports builder URL parsing from protocol", () => {
   expect(
@@ -189,6 +240,7 @@ test("reports non-json api responses", async () => {
   );
 
   let message;
+  let status;
   try {
     await loadProjectBundleByProjectId({
       authToken: "token",
@@ -198,8 +250,10 @@ test("reports non-json api responses", async () => {
     });
   } catch (error) {
     message = error instanceof Error ? error.message : String(error);
+    status = getErrorStatus(error);
   }
 
+  expect(status).toBe(413);
   expect(message).toContain(
     "API returned text/html instead of JSON from https://apps.webstudio.is/trpc"
   );
@@ -225,12 +279,24 @@ test("sends the bundle contract when loading by project id", async () => {
   expect(decodeURIComponent(String(url))).toContain(
     `"bundleVersion":"${bundleVersion}"`
   );
+  expect(decodeURIComponent(String(url))).not.toContain("contentIndex");
 });
 
 test("creates api client compatibility headers", () => {
   expect(createApiClientHeaders({ name: "cli", version: "1.2.3" })).toEqual({
     "x-webstudio-client": "cli",
     "x-webstudio-client-version": "1.2.3",
+  });
+  expect(
+    createApiClientHeaders({
+      name: "cli",
+      version: "1.2.3",
+      contractVersion: "public-api:current",
+    })
+  ).toEqual({
+    "x-webstudio-client": "cli",
+    "x-webstudio-client-version": "1.2.3",
+    "x-webstudio-api-contract-version": "public-api:current",
   });
 });
 
@@ -491,6 +557,18 @@ test("wraps project api trpc calls in named functions", async () => {
       compiler: { atomicStyles: true },
     });
     await listRedirects(params);
+    await listResponseHeaders(params);
+    await setResponseHeader({
+      ...params,
+      route: "/docs/*",
+      name: "Cache-Control",
+      value: "public",
+    });
+    await deleteResponseHeader({
+      ...params,
+      route: "/docs/*",
+      name: "Cache-Control",
+    });
     await createRedirect({
       ...params,
       old: "/old",
@@ -703,6 +781,12 @@ test("wraps project api trpc calls in named functions", async () => {
       withUsage: true,
       sort: "usage",
     });
+    await copyDesignToken({ ...params, tokenId: "token-id" });
+    await pasteDesignToken({
+      ...params,
+      data: "token-data",
+      instanceId: "instance-id",
+    });
     await createDesignTokens({
       ...params,
       tokens: [
@@ -769,6 +853,11 @@ test("wraps project api trpc calls in named functions", async () => {
       scopeInstanceId: "body-id",
     });
     await listPublishes(params);
+    await validatePublish({
+      ...params,
+      target: "production",
+      domains: ["example.com"],
+    });
     await publish({
       ...params,
       target: "production",
@@ -782,7 +871,10 @@ test("wraps project api trpc calls in named functions", async () => {
     });
     await getPublishReport({
       ...params,
+      buildId: "build-id",
       attemptId: "attempt-id",
+      executionHandle: "signed-handle",
+      cursor: 256,
     });
     await unpublish({
       ...params,
@@ -853,6 +945,12 @@ test("wraps project api trpc calls in named functions", async () => {
       folderId: null,
     });
     await getProjectPermissions(params);
+    await simulateFormSubmission({
+      ...params,
+      formId: "form-1",
+      path: "/contact",
+      values: [{ name: "email", value: "test@example.com" }],
+    });
     await listFolders({
       ...params,
       cursor: "20",
@@ -915,6 +1013,15 @@ test("wraps project api trpc calls in named functions", async () => {
     expectRequest("/trpc/api.projectSettings.getMarketplaceProduct"),
     expectBodyRequest("/trpc/api.projectSettings.update", '"siteName":"Acme"'),
     expectRequest("/trpc/api.redirects.list"),
+    expectRequest("/trpc/api.responseHeaders.list"),
+    expectBodyRequest(
+      "/trpc/api.responseHeaders.set",
+      '"name":"Cache-Control"'
+    ),
+    expectBodyRequest(
+      "/trpc/api.responseHeaders.delete",
+      '"name":"Cache-Control"'
+    ),
     expectBodyRequest("/trpc/api.redirects.create", '"old":"/old"'),
     expectBodyRequest("/trpc/api.redirects.update", '"old":"/older"'),
     expectBodyRequest("/trpc/api.redirects.delete", '"old":"/older"'),
@@ -983,6 +1090,11 @@ test("wraps project api trpc calls in named functions", async () => {
     expectBodyRequest("/trpc/api.styles.deleteDeclarations", '"deletions"'),
     expectBodyRequest("/trpc/api.styles.replaceValues", '"fromValue"'),
     expectRequest("/trpc/api.designTokens.list"),
+    expectRequest("/trpc/api.designTokens.copy"),
+    expectBodyRequest(
+      "/trpc/api.designTokens.paste",
+      '"instanceId":"instance-id"'
+    ),
     expectBodyRequest("/trpc/api.designTokens.create", '"name":"Primary"'),
     expectBodyRequest(
       "/trpc/api.designTokens.updateStyles",
@@ -1008,6 +1120,7 @@ test("wraps project api trpc calls in named functions", async () => {
     expectRequest("/trpc/api.variables.list"),
     expectRequest("/trpc/api.resources.list"),
     expectRequest("/trpc/api.publish.list"),
+    expectRequest("/trpc/api.publish.validate"),
     expectBodyRequest(
       "/trpc/api.publish.create",
       '"idempotencyKey":"publish-key"'
@@ -1037,6 +1150,10 @@ test("wraps project api trpc calls in named functions", async () => {
     ),
     expectBodyRequest("/trpc/api.assets.duplicate", '"folderId":null'),
     expectRequest("/trpc/api.projects.permissions"),
+    expectBodyRequest(
+      "/trpc/api.forms.simulateSubmission",
+      '"formId":"form-1"'
+    ),
     expectRequest("/trpc/api.folders.list"),
     expectBodyRequest("/trpc/api.build.patch", '"baseVersion":2'),
     expectBodyRequest("/trpc/build.restorePoint", '"baseVersion":3'),
@@ -1046,6 +1163,12 @@ test("wraps project api trpc calls in named functions", async () => {
   );
   expect(decodeURIComponent(requests[0]?.search ?? "")).toContain(
     '"version":2'
+  );
+  const copyRequest = requests.find(
+    (request) => request.path === "/trpc/api.designTokens.copy"
+  );
+  expect(decodeURIComponent(copyRequest?.search ?? "")).toContain(
+    '"sourceOrigin":"http://127.0.0.1:'
   );
 });
 
@@ -1057,6 +1180,48 @@ test("reports invalid build patch transactions", async () => {
       transactions: [{ id: "tx-1" }],
     })
   ).rejects.toThrow("Invalid patch JSON:");
+});
+
+test("bounds build patch commits with an abort signal", async () => {
+  const controller = new AbortController();
+  const timeout = vi
+    .spyOn(AbortSignal, "timeout")
+    .mockReturnValue(controller.signal);
+  const fetch = vi.fn(
+    async (_request: RequestInfo | URL, init?: RequestInit) =>
+      await new Promise<Response>((_resolve, reject) => {
+        expect(init?.signal).toBeInstanceOf(AbortSignal);
+        init?.signal?.addEventListener("abort", () =>
+          reject(init.signal?.reason)
+        );
+        queueMicrotask(() =>
+          controller.abort(new DOMException("deadline", "TimeoutError"))
+        );
+      })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    applyBuildPatch({
+      ...apiParams,
+      baseVersion: 2,
+      transactions: [
+        {
+          id: "tx-1",
+          payload: [
+            {
+              namespace: "pages",
+              patches: [
+                { op: "replace", path: ["meta", "siteName"], value: "Site" },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  ).rejects.toThrow("aborted");
+  expect(fetch).toHaveBeenCalledOnce();
+  expect(timeout).toHaveBeenCalledWith(120_000);
 });
 
 test("parses build patch transaction input", () => {
@@ -1142,7 +1307,7 @@ test("uploads assets as binary requests", async () => {
         type: "image",
         name: "image.png",
         filename: "image.png",
-        description: "Campaign photo",
+        description: "Balkon mit roten Wänden",
         folderId: "campaign",
         format: "png",
         size: 3,
@@ -1163,11 +1328,36 @@ test("uploads assets as binary requests", async () => {
   expect(init.headers).toBeInstanceOf(Headers);
   expect((init.headers as Headers).get("x-auth-token")).toBe("token");
   expect((init.headers as Headers).get("x-webstudio-asset-description")).toBe(
-    "Campaign photo"
+    "QmFsa29uIG1pdCByb3RlbiBXw6RuZGVu"
   );
+  expect(
+    (init.headers as Headers).get("x-webstudio-asset-description-encoding")
+  ).toBe("base64url");
   expect((init.headers as Headers).get("content-type")).toBe(
     "application/octet-stream"
   );
+});
+
+test("lets the server detect metadata for assets described only by token CSS", async () => {
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify({ uploadedAssets: [], deduplicated: false }), {
+      headers: { "content-type": "application/json" },
+    })
+  );
+  vi.stubGlobal("fetch", fetch);
+  await uploadAsset({
+    ...apiParams,
+    upload: {
+      asset: createImageAssetFixture(),
+      data: new Uint8Array([1, 2, 3]),
+      detectMetadata: true,
+    },
+  });
+  const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
+  expect(url.searchParams.has("width")).toBe(false);
+  expect(url.searchParams.has("height")).toBe(false);
+  expect(url.searchParams.has("format")).toBe(false);
+  expect((init.headers as Headers).has("x-webstudio-asset-meta")).toBe(false);
 });
 
 test("rejects malformed successful asset upload responses", async () => {
@@ -1255,6 +1445,74 @@ test("loads project bundle by build id without auth headers", async () => {
   );
   expect((init.headers as Record<string, string>).authorization).toBe(
     undefined
+  );
+});
+
+test("reports json props without a value when loading a published bundle", async () => {
+  const project = JSON.parse(
+    JSON.stringify(createPublishedProjectBundleFixture())
+  );
+  project.build.instances = [
+    [
+      "instance-id",
+      {
+        id: "instance-id",
+        type: "instance",
+        component: "ws:collection",
+        label: "Projects",
+      },
+    ],
+  ];
+  project.build.props = [
+    [
+      "json-prop-id",
+      {
+        id: "json-prop-id",
+        instanceId: "instance-id",
+        name: "data",
+        type: "json",
+      },
+    ],
+  ];
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify([{ result: { data: project } }]), {
+      headers: { "content-type": "application/json" },
+    })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    loadProjectBundleByBuildId({
+      buildId: project.build.id,
+      origin: "https://example.com",
+    })
+  ).rejects.toMatchObject({
+    name: "MissingJsonPropValueError",
+    message: [
+      "This build cannot be published because it contains JSON props with no value:",
+      "- “Projects” (ws:collection): JSON prop “data” has no value",
+      "Open the project in Webstudio, set or reset the affected prop, then publish again.",
+    ].join("\n"),
+  });
+});
+
+test("requests local content preparation for the publish runner", async () => {
+  const project = createPublishedProjectBundleFixture();
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify([{ result: { data: project } }]), {
+      headers: { "content-type": "application/json" },
+    })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await loadProjectBundleByBuildId({
+    buildId: project.build.id,
+    origin: "https://example.com",
+    contentIndex: "client",
+  });
+
+  expect(decodeURIComponent(String(fetch.mock.calls[0]?.[0]))).toContain(
+    '"contentIndex":"client"'
   );
 });
 
@@ -1355,6 +1613,7 @@ test("uploads assets with one retry and aggregated failures", async () => {
           assetName === "image.png" ? "Temporary failure" : "Upload failed",
       }),
       {
+        status: 500,
         headers: { "content-type": "application/json" },
       }
     );
@@ -1367,9 +1626,57 @@ test("uploads assets with one retry and aggregated failures", async () => {
       ...apiParams,
       readAssetData: async (asset) => new Blob([asset.name]),
     })
-  ).rejects.toThrow("Failed to upload assets: other.png: Upload failed");
+  ).rejects.toMatchObject({
+    message: expect.stringContaining(
+      'Asset "other.png" failed after 2 attempts'
+    ),
+    webstudioCode: "ASSET_UPLOAD_RETRY_EXHAUSTED",
+    retryable: true,
+    status: 500,
+  });
 
   expect(fetch).toHaveBeenCalledTimes(4);
+});
+
+test("preserves a single asset upload permission error", async () => {
+  const asset = createImageAssetFixture({ name: "image.png" });
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      Response.json(
+        { errors: "Authorization token does not have edit permission" },
+        { status: 403 }
+      )
+    )
+  );
+
+  await expect(
+    uploadAssets({
+      assets: [asset],
+      ...apiParams,
+      readAssetData: async () => new Blob(["image"]),
+    })
+  ).rejects.toMatchObject({
+    message: expect.stringContaining("Failed to upload assets: image.png"),
+    cause: expect.objectContaining({ code: "FORBIDDEN", status: 403 }),
+  });
+});
+
+test("does not retry an unsupported asset upload", async () => {
+  const fetch = vi.fn(async () =>
+    Response.json({ errors: "Unsupported file type" }, { status: 400 })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    uploadProjectAsset({
+      ...apiParams,
+      asset: { name: "library.exe", type: "file", format: "exe", meta: {} },
+      readAssetData: async () => new Blob(["content"]),
+    })
+  ).rejects.toMatchObject({ cause: expect.objectContaining({ status: 400 }) });
+
+  expect(fetch).toHaveBeenCalledOnce();
 });
 
 test("keeps uploaded assets in input order", async () => {
@@ -1497,6 +1804,19 @@ test("uploads project asset descriptors with local data readers", async () => {
   ).resolves.toEqual({ uploaded: [uploadedAsset] });
 
   await expect(
+    uploadProjectAsset({
+      ...apiParams,
+      asset: {
+        name: "video.mp4",
+        type: "video",
+        format: "mp4",
+        meta: { width: 1920, height: 1080 },
+      },
+      readAssetData: async () => new Uint8Array([1, 2, 3]),
+    })
+  ).resolves.toEqual({ uploaded: [uploadedAsset] });
+
+  await expect(
     uploadProjectAssets({
       ...apiParams,
       assets: [
@@ -1509,7 +1829,11 @@ test("uploads project asset descriptors with local data readers", async () => {
       ],
       readAssetData: async () => new Uint8Array([1, 2, 3]),
     })
-  ).resolves.toEqual({ uploaded: [uploadedAsset] });
+  ).resolves.toEqual({
+    uploaded: [uploadedAsset],
+    failed: [],
+    ambiguous: [],
+  });
 
   const calls = fetch.mock.calls as unknown as Array<[URL, RequestInit]>;
   expect(new URL(calls[0][0].toString()).searchParams.get("folderId")).toBe(
@@ -1522,6 +1846,170 @@ test("uploads project asset descriptors with local data readers", async () => {
   expect(new Headers(calls[0][1].headers).get("x-webstudio-asset-meta")).toBe(
     JSON.stringify({ width: 10, height: 20 })
   );
+  const videoUrl = new URL(calls[1][0].toString());
+  expect(videoUrl.searchParams.get("type")).toBe("video");
+  expect(videoUrl.searchParams.get("width")).toBe("1920");
+  expect(videoUrl.searchParams.get("height")).toBe("1080");
+});
+
+test("reports retry diagnostics and permits an isolated retry after a partial batch failure", async () => {
+  const uploadedAsset = createImageAssetFixture({ name: "uploaded.jpg" });
+  const retriedAsset = createImageAssetFixture({ name: "retried.jpg" });
+  let retriedAssetAttempts = 0;
+  const response = (asset?: typeof uploadedAsset) =>
+    new Response(
+      JSON.stringify(
+        asset === undefined
+          ? { errors: "Internal Assets API error" }
+          : { uploadedAssets: [asset], deduplicated: false }
+      ),
+      {
+        status: asset === undefined ? 500 : 200,
+        headers: { "content-type": "application/json" },
+      }
+    );
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (request: URL | RequestInfo) => {
+      const name = decodeURIComponent(
+        new URL(request.toString()).pathname.split("/").at(-1) ?? ""
+      );
+      if (name === "uploaded.jpg") {
+        return response(uploadedAsset);
+      }
+      retriedAssetAttempts += 1;
+      return response(retriedAssetAttempts <= 2 ? undefined : retriedAsset);
+    })
+  );
+  const descriptor = {
+    name: "retried.jpg",
+    type: "image" as const,
+    format: "jpg",
+    meta: { width: 10, height: 20 },
+  };
+
+  await expect(
+    uploadProjectAssets({
+      ...apiParams,
+      assets: [{ ...descriptor, name: "uploaded.jpg" }, descriptor],
+      readAssetData: async (asset) => new Blob([asset.name]),
+    })
+  ).resolves.toEqual({
+    uploaded: [uploadedAsset],
+    failed: [
+      {
+        index: 1,
+        name: "retried.jpg",
+        error: expect.stringContaining("failed after 2 attempts (HTTP 500)"),
+        code: "ASSET_UPLOAD_RETRY_EXHAUSTED",
+        retryable: true,
+        status: 500,
+      },
+    ],
+    ambiguous: [],
+  });
+
+  await expect(
+    uploadProjectAsset({
+      ...apiParams,
+      asset: descriptor,
+      readAssetData: async () => new Blob([descriptor.name]),
+    })
+  ).resolves.toEqual({ uploaded: [retriedAsset] });
+  expect(retriedAssetAttempts).toBe(3);
+});
+
+test("does not retry a forced upload after an ambiguous server failure", async () => {
+  const fetch = vi.fn(
+    async () => new Response("response failed after commit", { status: 504 })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    uploadProjectAssets({
+      ...apiParams,
+      assets: [
+        {
+          name: "hero.png",
+          type: "image",
+          format: "png",
+          meta: { width: 10, height: 20 },
+          force: true,
+        },
+      ],
+      readAssetData: async () => new Uint8Array([1, 2, 3]),
+    })
+  ).resolves.toEqual({
+    uploaded: [],
+    failed: [],
+    ambiguous: [
+      {
+        index: 0,
+        name: "hero.png",
+        error: expect.stringContaining("HTTP status: 504"),
+      },
+    ],
+  });
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("warns before retrying one ambiguous forced upload", async () => {
+  const fetch = vi.fn(
+    async () => new Response("response failed after commit", { status: 504 })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    uploadProjectAsset({
+      ...apiParams,
+      asset: {
+        name: "hero.png",
+        type: "image",
+        format: "png",
+        meta: { width: 10, height: 20 },
+        force: true,
+      },
+      readAssetData: async () => new Uint8Array([1, 2, 3]),
+    })
+  ).rejects.toThrow("Forced asset upload may already be committed: hero.png:");
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("identifies failed duplicate asset names by input index", async () => {
+  const uploadedAsset = createImageAssetFixture({ name: "duplicate.png" });
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (request: URL | RequestInfo) => {
+      if (new URL(request.toString()).searchParams.get("force") !== "true") {
+        return new Response(
+          JSON.stringify({
+            uploadedAssets: [uploadedAsset],
+            deduplicated: false,
+          }),
+          { headers: { "content-type": "application/json" } }
+        );
+      }
+      return new Response(JSON.stringify({ errors: "Upload failed" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    })
+  );
+
+  await expect(
+    uploadProjectAssets({
+      ...apiParams,
+      assets: [
+        { name: "duplicate.png", type: "file", format: "txt" },
+        { name: "duplicate.png", type: "file", format: "txt", force: true },
+      ],
+      readAssetData: async (asset) => new Blob([asset.description ?? ""]),
+    })
+  ).resolves.toEqual({
+    uploaded: [uploadedAsset],
+    failed: [{ index: 1, name: "duplicate.png", error: "Upload failed" }],
+    ambiguous: [],
+  });
 });
 
 test("updates asset content through the stable asset revision endpoint", async () => {
@@ -1544,6 +2032,7 @@ test("updates asset content through the stable asset revision endpoint", async (
       ...apiParams,
       assetId: "asset/id",
       expectedName: "old_hash.json",
+      extension: "json",
       readAssetData: async () => '{"theme":"dark"}',
       request,
     })
@@ -1553,6 +2042,7 @@ test("updates asset content through the stable asset revision endpoint", async (
   expect(url.pathname).toBe("/rest/assets/asset%2Fid/content");
   expect(url.searchParams.get("projectId")).toBe(apiParams.projectId);
   expect(url.searchParams.get("expectedName")).toBe("old_hash.json");
+  expect(url.searchParams.get("extension")).toBe("json");
   expect(init).toMatchObject({ method: "PUT", body: '{"theme":"dark"}' });
   expect(new Headers(init.headers).get("x-auth-token")).toBe(
     apiParams.authToken
@@ -1577,6 +2067,119 @@ test("surfaces asset content revision conflicts", async () => {
       request,
     })
   ).rejects.toMatchObject({ message: "File changed", status: 409 });
+});
+
+test("reports an asset update as successful when the committed content can be confirmed", async () => {
+  const revision = {
+    ...createImageAssetFixture({ id: "asset-id", name: "new_hash.json" }),
+    type: "file" as const,
+    format: "json",
+    meta: {},
+  };
+  const request = vi.fn(
+    async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = new URL(input.toString());
+      if (init?.method === "PUT") {
+        return new Response("response failed after commit", { status: 500 });
+      }
+      if (url.pathname.endsWith("/content")) {
+        return new Response('{"theme":"dark"}');
+      }
+      return new Response(JSON.stringify({ asset: revision }), {
+        headers: { "content-type": "application/json" },
+      });
+    }
+  );
+
+  await expect(
+    updateProjectAssetContent({
+      ...apiParams,
+      assetId: "asset-id",
+      expectedName: "old_hash.json",
+      readAssetData: async () => '{"theme":"dark"}',
+      request,
+    })
+  ).resolves.toEqual({ asset: revision });
+  expect(request).toHaveBeenCalledTimes(4);
+});
+
+test("does not confirm an asset update while its revision is changing", async () => {
+  const revisions = ["first_hash.json", "second_hash.json"];
+  const request = vi.fn(
+    async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = new URL(input.toString());
+      if (init?.method === "PUT") {
+        return new Response("response failed after commit", { status: 500 });
+      }
+      if (url.pathname.endsWith("/content")) {
+        return new Response('{"theme":"dark"}');
+      }
+      const name = revisions.shift() ?? "second_hash.json";
+      return new Response(
+        JSON.stringify({
+          asset: {
+            ...createImageAssetFixture({ id: "asset-id", name }),
+            type: "file",
+            format: "json",
+            meta: {},
+          },
+        }),
+        { headers: { "content-type": "application/json" } }
+      );
+    }
+  );
+
+  await expect(
+    updateProjectAssetContent({
+      ...apiParams,
+      assetId: "asset-id",
+      expectedName: "old_hash.json",
+      readAssetData: async () => '{"theme":"dark"}',
+      request,
+    })
+  ).rejects.toMatchObject({ code: "ASSET_UPDATE_COMMIT_UNCERTAIN" });
+});
+
+test("reports recovery guidance when an asset update commit cannot be confirmed", async () => {
+  const current = {
+    ...createImageAssetFixture({ id: "asset-id", name: "old_hash.json" }),
+    type: "file" as const,
+    format: "json",
+    meta: {},
+  };
+  const request = vi.fn(
+    async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = new URL(input.toString());
+      if (init?.method === "PUT") {
+        return new Response("response failed", {
+          status: 500,
+          headers: { "cf-ray": "abc123-LIS" },
+        });
+      }
+      if (url.pathname.endsWith("/content")) {
+        return new Response('{"theme":"light"}');
+      }
+      return new Response(JSON.stringify({ asset: current }), {
+        headers: { "content-type": "application/json" },
+      });
+    }
+  );
+
+  await expect(
+    updateProjectAssetContent({
+      ...apiParams,
+      assetId: "asset-id",
+      expectedName: "old_hash.json",
+      readAssetData: async () => '{"theme":"dark"}',
+      request,
+    })
+  ).rejects.toMatchObject({
+    code: "ASSET_UPDATE_COMMIT_UNCERTAIN",
+    cause: expect.objectContaining({ requestId: "abc123-LIS" }),
+    message: expect.stringContaining(
+      "Read the current asset and download its content"
+    ),
+  });
 });
 
 test("updates asset metadata through the unified Assets endpoint", async () => {
@@ -1883,7 +2486,8 @@ test("imports project bundle through staged upload", async () => {
         origin: `http://127.0.0.1:${address.port}`,
         projectId: "project-id",
         data: {
-          largeContent: "x".repeat(3 * 1024 * 1024 + 1),
+          // Real customer builds can exceed the old 20 MiB import limit.
+          largeContent: "x".repeat(28 * 1024 * 1024),
           assetIndex: { marker: "derived-index-marker" },
         } as unknown as PublishedProjectBundle,
       })
@@ -1894,156 +2498,229 @@ test("imports project bundle through staged upload", async () => {
     });
   }
 
-  expect(uploadChunks).toHaveLength(2);
-  expect(Buffer.concat(uploadChunks).toString("utf8")).not.toContain(
-    "derived-index-marker"
-  );
+  const importedData = Buffer.concat(uploadChunks);
+  expect(importedData.byteLength).toBeGreaterThan(20 * 1024 * 1024);
+  expect(importedData.byteLength).toBeLessThan(maxProjectBundleSize);
+  expect(importedData.toString("utf8")).not.toContain("derived-index-marker");
   expect(JSON.stringify(trpcBody)).toContain('"uploadId":"upload-id"');
   expect(JSON.stringify(trpcBody)).not.toContain("largeContent");
 });
 
-test("imports project bundle with assets and retries missing asset uploads", async () => {
-  const asset = createImageAssetFixture({ name: "image.png" });
-  const bundle = createPublishedProjectBundleFixture({ assets: [asset] });
-  const calls: string[] = [];
-  const uploadUrls: string[] = [];
-  const uploadOffsets = new Map<string, number>();
-  let importAttempts = 0;
-  let uploadAttempts = 0;
-
-  const server = createServer(async (request, response) => {
-    const url = new URL(request.url ?? "/", "http://localhost");
-    calls.push(`${request.method} ${url.pathname}`);
-
-    if (
-      request.method === "GET" &&
-      url.pathname === "/trpc/build.checkProjectBuildPermission"
-    ) {
-      response.writeHead(200, { "content-type": "application/json" });
-      response.end(JSON.stringify([{ result: { data: undefined } }]));
-      return;
-    }
-
-    if (
-      request.method === "POST" &&
-      url.pathname === "/rest/assets/uploads/image.png"
-    ) {
-      uploadAttempts += 1;
-      uploadUrls.push(url.href);
-      await readRequestBody(request);
-      response.writeHead(200, { "content-type": "application/json" });
-      response.end(
-        JSON.stringify({
-          uploadedAssets: [
-            createImageAssetFixture({
-              id: `server-generated-asset-${uploadAttempts}`,
-              name: "image_destination.png",
-            }),
-          ],
-          deduplicated: false,
-        })
-      );
-      return;
-    }
-
-    if (request.method === "POST" && url.pathname === stagedUploadPath) {
-      response.writeHead(201, {
-        Location: `http://${request.headers.host}${stagedUploadPath}/upload-id-${importAttempts}`,
-        "Tus-Resumable": "1.0.0",
-      });
-      response.end();
-      return;
-    }
-
-    if (
-      request.method === "PATCH" &&
-      url.pathname.startsWith(`${stagedUploadPath}/upload-id-`)
-    ) {
-      const chunk = await readRequestBody(request);
-      const offset = (uploadOffsets.get(url.pathname) ?? 0) + chunk.byteLength;
-      uploadOffsets.set(url.pathname, offset);
-      response.writeHead(204, {
-        "Tus-Resumable": "1.0.0",
-        "Upload-Offset": String(offset),
-      });
-      response.end();
-      return;
-    }
-
-    if (
-      request.method === "POST" &&
-      url.pathname === "/trpc/build.importProjectBundle"
-    ) {
-      importAttempts += 1;
-      await readRequestBody(request);
-      response.writeHead(200, { "content-type": "application/json" });
-      response.end(
-        JSON.stringify([
-          importAttempts === 1
-            ? {
-                error: {
-                  message: "Imported asset files are missing: image.png",
-                  code: -32603,
-                  data: { code: "INTERNAL_SERVER_ERROR" },
-                },
-              }
-            : { result: { data: { version: 2 } } },
-        ])
-      );
-      return;
-    }
-
-    response.writeHead(404);
-    response.end();
-  });
-
-  await new Promise<void>((resolve) => {
-    server.listen(0, "127.0.0.1", resolve);
-  });
-
-  const importAttemptMessages: string[] = [];
-  const missingAssetMessages: string[] = [];
-  const uploadAssetMessages: string[] = [];
-
-  try {
-    const address = server.address();
-    if (address === null || typeof address === "string") {
-      throw new Error("Server address is unavailable");
-    }
-
-    await expect(
-      importProjectBundleWithAssets({
-        authToken: "token",
-        origin: `http://127.0.0.1:${address.port}`,
-        projectId: "project-id",
-        data: bundle,
-        readAssetData: async () => new Blob(["asset"]),
-        onImportAttempt: () => importAttemptMessages.push("attempt"),
-        onMissingAssets: (assets) =>
-          missingAssetMessages.push(
-            assets.map((asset) => asset.name).join(",")
-          ),
-        onUploadAssets: (assets) =>
-          uploadAssetMessages.push(assets.map((asset) => asset.name).join(",")),
-      })
-    ).resolves.toEqual({ version: 2 });
-  } finally {
-    await new Promise<void>((resolve, reject) => {
-      server.close((error) => (error ? reject(error) : resolve()));
+test.each(
+  [true, false].flatMap((supportsStructuredImportErrors) =>
+    [undefined, "source-folder"].map((folderId) => ({
+      folderId,
+      supportsStructuredImportErrors,
+    }))
+  )
+)(
+  "imports assets from folder $folderId (structured errors: $supportsStructuredImportErrors)",
+  async ({ folderId, supportsStructuredImportErrors }) => {
+    const asset = createImageAssetFixture({ name: "image.png", folderId });
+    const assetFolders =
+      folderId === undefined
+        ? []
+        : [
+            {
+              id: folderId,
+              name: "Images",
+              projectId: "source-project",
+              createdAt: "2026-09-09T00:00:00.000Z",
+            },
+          ];
+    const bundle = createPublishedProjectBundleFixture({
+      assets: [asset],
+      assetFolders,
     });
-  }
+    const uploadChunks = new Map<string, Buffer[]>();
+    const readAssets: unknown[] = [];
+    const calls: string[] = [];
+    const uploadUrls: string[] = [];
+    const uploadOffsets = new Map<string, number>();
+    let importAttempts = 0;
+    let uploadAttempts = 0;
 
-  expect(calls).toContain("GET /trpc/build.checkProjectBuildPermission");
-  expect(importAttempts).toBe(2);
-  expect(uploadAttempts).toBe(1);
-  expect(uploadUrls.every((url) => url.includes("assetId=") === false)).toBe(
-    true
-  );
-  expect(uploadOffsets.size).toBe(2);
-  expect(importAttemptMessages).toEqual(["attempt", "attempt"]);
-  expect(missingAssetMessages).toEqual([]);
-  expect(uploadAssetMessages).toEqual(["image.png"]);
-});
+    const server = createServer(async (request, response) => {
+      const url = new URL(request.url ?? "/", "http://localhost");
+      calls.push(`${request.method} ${url.pathname}`);
+
+      if (
+        request.method === "GET" &&
+        url.pathname === "/trpc/build.checkProjectBuildPermission"
+      ) {
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(
+          JSON.stringify([
+            {
+              result: {
+                data: supportsStructuredImportErrors
+                  ? { supportsStructuredImportErrors: true }
+                  : undefined,
+              },
+            },
+          ])
+        );
+        return;
+      }
+
+      if (
+        request.method === "POST" &&
+        url.pathname === "/rest/assets/uploads/image.png"
+      ) {
+        uploadAttempts += 1;
+        uploadUrls.push(url.href);
+        await readRequestBody(request);
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(
+          JSON.stringify({
+            uploadedAssets: [
+              createImageAssetFixture({
+                id: `server-generated-asset-${uploadAttempts}`,
+                name: "image_destination.png",
+              }),
+            ],
+            deduplicated: false,
+          })
+        );
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === stagedUploadPath) {
+        response.writeHead(201, {
+          Location: `http://${request.headers.host}${stagedUploadPath}/upload-id-${importAttempts}`,
+          "Tus-Resumable": "1.0.0",
+        });
+        response.end();
+        return;
+      }
+
+      if (
+        request.method === "PATCH" &&
+        url.pathname.startsWith(`${stagedUploadPath}/upload-id-`)
+      ) {
+        const chunk = await readRequestBody(request);
+        const chunks = uploadChunks.get(url.pathname) ?? [];
+        chunks.push(chunk);
+        uploadChunks.set(url.pathname, chunks);
+        const offset =
+          (uploadOffsets.get(url.pathname) ?? 0) + chunk.byteLength;
+        uploadOffsets.set(url.pathname, offset);
+        response.writeHead(204, {
+          "Tus-Resumable": "1.0.0",
+          "Upload-Offset": String(offset),
+        });
+        response.end();
+        return;
+      }
+
+      if (
+        request.method === "POST" &&
+        url.pathname === "/trpc/build.importProjectBundle"
+      ) {
+        importAttempts += 1;
+        await readRequestBody(request);
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(
+          JSON.stringify([
+            supportsStructuredImportErrors && importAttempts === 1
+              ? {
+                  error: {
+                    message: "Import requires uploaded files",
+                    code: -32603,
+                    data: {
+                      code: "INTERNAL_SERVER_ERROR",
+                      webstudioCode: "MISSING_IMPORTED_ASSET_FILES",
+                      missingAssetNames: ["image.png"],
+                    },
+                  },
+                }
+              : { result: { data: { version: 2 } } },
+          ])
+        );
+        return;
+      }
+
+      response.writeHead(404);
+      response.end();
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+
+    const importAttemptMessages: string[] = [];
+    const missingAssetMessages: string[] = [];
+    const uploadAssetMessages: string[] = [];
+
+    try {
+      const address = server.address();
+      if (address === null || typeof address === "string") {
+        throw new Error("Server address is unavailable");
+      }
+
+      await expect(
+        importProjectBundleWithAssets({
+          authToken: "token",
+          origin: `http://127.0.0.1:${address.port}`,
+          projectId: "project-id",
+          data: bundle,
+          readAssetData: async (asset) => {
+            readAssets.push(asset);
+            return new Blob(["asset"]);
+          },
+          onImportAttempt: () => importAttemptMessages.push("attempt"),
+          onMissingAssets: (assets) =>
+            missingAssetMessages.push(
+              assets.map((asset) => asset.name).join(",")
+            ),
+          onUploadAssets: (assets) =>
+            uploadAssetMessages.push(
+              assets.map((asset) => asset.name).join(",")
+            ),
+        })
+      ).resolves.toEqual({ version: 2 });
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()));
+      });
+    }
+
+    expect(calls).toContain("GET /trpc/build.checkProjectBuildPermission");
+    if (!supportsStructuredImportErrors) {
+      expect(calls.indexOf("POST /rest/assets/uploads/image.png")).toBeLessThan(
+        calls.indexOf("POST /trpc/build.importProjectBundle")
+      );
+    }
+    const expectedImportAttempts = supportsStructuredImportErrors ? 2 : 1;
+    expect(importAttempts).toBe(expectedImportAttempts);
+    expect(uploadAttempts).toBe(1);
+    expect(
+      uploadUrls.map((url) => new URL(url).searchParams.get("folderId"))
+    ).toEqual([null]);
+    expect(readAssets).toHaveLength(1);
+    expect(readAssets[0]).toBe(asset);
+    expect(bundle.assets[0]).toEqual(asset);
+    const importedBundles = Array.from(uploadChunks.values(), (chunks) =>
+      JSON.parse(Buffer.concat(chunks).toString("utf8"))
+    );
+    expect(importedBundles.map((bundle) => bundle.assetFolders)).toEqual(
+      Array.from({ length: expectedImportAttempts }, () => assetFolders)
+    );
+    expect(importedBundles.map((bundle) => bundle.assets)).toEqual([
+      ...(supportsStructuredImportErrors ? [[asset]] : []),
+      [{ ...asset, name: "image_destination.png" }],
+    ]);
+    expect(uploadUrls.every((url) => url.includes("assetId=") === false)).toBe(
+      true
+    );
+    expect(uploadOffsets.size).toBe(expectedImportAttempts);
+    expect(importAttemptMessages).toEqual(
+      Array.from({ length: expectedImportAttempts }, () => "attempt")
+    );
+    expect(missingAssetMessages).toEqual([]);
+    expect(uploadAssetMessages).toEqual(["image.png"]);
+  }
+);
 
 test("rejects project bundles over the import size limit", async () => {
   let requestCount = 0;
@@ -2069,11 +2746,11 @@ test("rejects project bundles over the import size limit", async () => {
         origin: `http://127.0.0.1:${address.port}`,
         projectId: "project-id",
         data: {
-          largeContent: "x".repeat(20 * 1024 * 1024),
+          largeContent: "x".repeat(maxProjectBundleSize),
         } as unknown as PublishedProjectBundle,
       })
     ).rejects.toThrow(
-      "Project bundle is too large to import. Maximum size is 20 MiB."
+      "Project bundle is too large to import. Maximum size is 32 MiB."
     );
   } finally {
     await new Promise<void>((resolve, reject) => {

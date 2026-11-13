@@ -29,6 +29,7 @@ export const webstudioFragment = z.object({
   styleSourceSelections: z.array(styleSourceSelection),
   styleSources: z.array(styleSource),
   styles: z.array(styleDecl),
+  referenceTokenIds: z.array(z.string()).optional(),
 });
 
 export type WebstudioFragment = z.infer<typeof webstudioFragment>;

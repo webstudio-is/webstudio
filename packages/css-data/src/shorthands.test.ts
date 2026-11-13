@@ -116,6 +116,42 @@ test("expand border edges", () => {
   ]);
 });
 
+test("expand border with color-mix containing a variable", () => {
+  expect(
+    expandShorthands([
+      [
+        "border-top",
+        "1px solid color-mix(in srgb, var(--accent) 50%, transparent)",
+      ],
+    ])
+  ).toEqual([
+    ["border-top-width", "1px"],
+    ["border-top-style", "solid"],
+    ["border-top-color", "color-mix(in srgb,var(--accent) 50%,transparent)"],
+  ]);
+  expect(
+    expandShorthands([
+      [
+        "border-top",
+        "solid color-mix(in srgb, var(--accent) 50%, transparent)",
+      ],
+    ])
+  ).toEqual([
+    ["border-top-width", "medium"],
+    ["border-top-style", "solid"],
+    ["border-top-color", "color-mix(in srgb,var(--accent) 50%,transparent)"],
+  ]);
+  expect(
+    expandShorthands([
+      ["border-top", "color-mix(in srgb, var(--accent) 50%, transparent)"],
+    ])
+  ).toEqual([
+    ["border-top-width", "medium"],
+    ["border-top-style", "none"],
+    ["border-top-color", "color-mix(in srgb,var(--accent) 50%,transparent)"],
+  ]);
+});
+
 test("expand border types", () => {
   expect(expandShorthands([["border-width", "1px"]])).toEqual([
     ["border-top-width", "1px"],
@@ -524,6 +560,20 @@ test("expand font with css-wide keywords", () => {
   ]);
 });
 
+test("expand font with variable family and fallback", () => {
+  expect(
+    expandShorthands([["font", "600 16px/1.5 var(--font-body, sans-serif)"]])
+  ).toEqual([
+    ["font-style", "initial"],
+    ["font-variant-caps", "initial"],
+    ["font-weight", "600"],
+    ["font-stretch", "initial"],
+    ["font-size", "16px"],
+    ["line-height", "1.5"],
+    ["font-family", "var(--font-body, sans-serif)"],
+  ]);
+});
+
 test("expand font-synthesis", () => {
   expect(expandShorthands([["font-synthesis", `none`]])).toEqual([
     ["font-synthesis-weight", "none"],
@@ -661,6 +711,39 @@ test("expand flex", () => {
   ]);
 });
 
+test.each([
+  ["calc((100% - var(--space-lg)) / 2)", "calc((100% - var(--space-lg))/2)"],
+  ["min(50%, var(--wide))", "min(50%,var(--wide))"],
+  ["max(20rem, var(--wide))", "max(20rem,var(--wide))"],
+  ["clamp(20rem, var(--basis), 50%)", "clamp(20rem,var(--basis),50%)"],
+  ["round(var(--basis), 1px)", "round(var(--basis),1px)"],
+  ["calc-size(auto, size + 2rem)", "calc-size(auto,size + 2rem)"],
+  ["var(--basis)", "var(--basis)"],
+])("expand flex with %s as its basis", (basis, expected) => {
+  expect(expandShorthands([["flex", `0 1 ${basis}`]])).toEqual([
+    ["flex-grow", "0"],
+    ["flex-shrink", "1"],
+    ["flex-basis", expected],
+  ]);
+});
+
+test.each([
+  ["", "", "1", "1"],
+  ["2 ", "", "2", "1"],
+  ["", " 2", "2", "1"],
+  ["", " 2 3", "2", "3"],
+])(
+  "expand flex function basis between %s and %s",
+  (before, after, grow, shrink) => {
+    const basis = "calc((100% - var(--gap)) / 2)";
+    expect(expandShorthands([["flex", `${before}${basis}${after}`]])).toEqual([
+      ["flex-grow", grow],
+      ["flex-shrink", shrink],
+      ["flex-basis", "calc((100% - var(--gap))/2)"],
+    ]);
+  }
+);
+
 test("expand flex with css-wide keywords", () => {
   expect(expandShorthands([["flex", "inherit"]])).toEqual([
     ["flex-grow", "inherit"],
@@ -704,6 +787,21 @@ test("expand column-rule", () => {
     ["column-rule-width", "thick"],
     ["column-rule-style", "inset"],
     ["column-rule-color", "blue"],
+  ]);
+  expect(expandShorthands([["column-rule", "blue dashed"]])).toEqual([
+    ["column-rule-width", "medium"],
+    ["column-rule-style", "dashed"],
+    ["column-rule-color", "blue"],
+  ]);
+  expect(expandShorthands([["column-rule", "inherit"]])).toEqual([
+    ["column-rule-width", "inherit"],
+    ["column-rule-style", "inherit"],
+    ["column-rule-color", "inherit"],
+  ]);
+  expect(expandShorthands([["column-rule", "var(--rule)"]])).toEqual([
+    ["column-rule-width", "var(--rule)"],
+    ["column-rule-style", "var(--rule)"],
+    ["column-rule-color", "var(--rule)"],
   ]);
 });
 
@@ -951,16 +1049,28 @@ test("expand grid-area", () => {
     ["grid-row-start", "a"],
     ["grid-column-start", "b"],
     ["grid-row-end", "c"],
-    ["grid-column-end", "auto"],
+    ["grid-column-end", "b"],
   ]);
   expect(expandShorthands([["grid-area", "a / b"]])).toEqual([
     ["grid-row-start", "a"],
     ["grid-column-start", "b"],
-    ["grid-row-end", "auto"],
-    ["grid-column-end", "auto"],
+    ["grid-row-end", "a"],
+    ["grid-column-end", "b"],
   ]);
   expect(expandShorthands([["grid-area", "a"]])).toEqual([
     ["grid-row-start", "a"],
+    ["grid-column-start", "a"],
+    ["grid-row-end", "a"],
+    ["grid-column-end", "a"],
+  ]);
+  expect(expandShorthands([["grid-area", "1 / area"]])).toEqual([
+    ["grid-row-start", "1"],
+    ["grid-column-start", "area"],
+    ["grid-row-end", "auto"],
+    ["grid-column-end", "area"],
+  ]);
+  expect(expandShorthands([["grid-area", "1"]])).toEqual([
+    ["grid-row-start", "1"],
     ["grid-column-start", "auto"],
     ["grid-row-end", "auto"],
     ["grid-column-end", "auto"],
@@ -1162,6 +1272,14 @@ test("expand container", () => {
   expect(expandShorthands([["container", "my-layout / size"]])).toEqual([
     ["container-name", "my-layout"],
     ["container-type", "size"],
+  ]);
+  expect(expandShorthands([["container", "unset"]])).toEqual([
+    ["container-name", "unset"],
+    ["container-type", "unset"],
+  ]);
+  expect(expandShorthands([["container", "var(--container)"]])).toEqual([
+    ["container-name", "var(--container)"],
+    ["container-type", "var(--container)"],
   ]);
 });
 
@@ -1446,16 +1564,63 @@ test("expand overscroll-behavior", () => {
 
 test("expand position-try", () => {
   expect(expandShorthands([["position-try", "none"]])).toEqual([
+    ["position-try-fallbacks", "none"],
     ["position-try-order", "normal"],
-    ["position-try-options", "none"],
   ]);
   expect(expandShorthands([["position-try", "most-width none"]])).toEqual([
+    ["position-try-fallbacks", "none"],
     ["position-try-order", "most-width"],
-    ["position-try-options", "none"],
   ]);
-  expect(expandShorthands([["position-try", "--dashed-ident"]])).toEqual([
+  expect(expandShorthands([["position-try", "--fallback flip-block"]])).toEqual(
+    [
+      ["position-try-fallbacks", "--fallback flip-block"],
+      ["position-try-order", "normal"],
+    ]
+  );
+  expect(expandShorthands([["position-try", "top span-right"]])).toEqual([
+    ["position-try-fallbacks", "top span-right"],
     ["position-try-order", "normal"],
-    ["position-try-options", "--dashed-ident"],
+  ]);
+  expect(expandShorthands([["position-try", "var(--try)"]])).toEqual([
+    ["position-try-fallbacks", "var(--try)"],
+    ["position-try-order", "var(--try)"],
+  ]);
+  expect(expandShorthands([["position-try", "most-width"]])).toEqual([
+    ["position-try-fallbacks", "most-width"],
+    ["position-try-order", "most-width"],
+  ]);
+  expect(expandShorthands([["position-try", "--fallback most-width"]])).toEqual(
+    [
+      ["position-try-fallbacks", "--fallback most-width"],
+      ["position-try-order", "--fallback most-width"],
+    ]
+  );
+  expect(expandShorthands([["position-try", "revert-layer"]])).toEqual([
+    ["position-try-fallbacks", "revert-layer"],
+    ["position-try-order", "revert-layer"],
+  ]);
+});
+
+test("preserve shorthands with incompatible MDN and CSS-tree data", () => {
+  expect(expandShorthands([["interest-delay", "1s 2s"]])).toEqual([
+    ["interest-delay", "1s 2s"],
+  ]);
+});
+
+test.each([
+  [
+    "-ms-content-zoom-snap",
+    "-ms-content-zoom-snap-type",
+    "-ms-content-zoom-snap-points",
+  ],
+  ["-ms-scroll-snap-x", "-ms-scroll-snap-type", "-ms-scroll-snap-points-x"],
+  ["-ms-scroll-snap-y", "-ms-scroll-snap-type", "-ms-scroll-snap-points-y"],
+])("expand syntax-defined function shorthand %s", (shorthand, type, points) => {
+  expect(
+    expandShorthands([[shorthand, "mandatory snapInterval(10%, 20%)"]])
+  ).toEqual([
+    [type, "mandatory"],
+    [points, "snapInterval(10%,20%)"],
   ]);
 });
 

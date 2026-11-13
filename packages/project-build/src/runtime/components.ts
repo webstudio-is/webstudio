@@ -1,5 +1,11 @@
 import equal from "fast-deep-equal";
 import {
+  blockTemplateComponent,
+  blockBodyComponent,
+  blockComponent,
+  getContentBlockSource,
+  findContentBlockBodyContainers,
+  assignUniqueBlockTemplateNamesMutable,
   elementComponent,
   instanceComponent,
   ROOT_INSTANCE_ID,
@@ -38,23 +44,28 @@ import type {
 } from "./component-insert-contract";
 import {
   createCollectionFragment,
+  conflictResolutionInput,
   insertCollectionInput,
   type InsertCollectionResult,
 } from "./collection";
 import type { BuilderRuntimeContext } from "./context";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
+import { isContentModeTemplateDefaultPropType } from "./content-mode-permissions";
 import { findAvailableVariables } from "./data";
 import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import {
   detectFragmentTokenConflicts,
+  extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   webstudioFragmentMutationInput,
 } from "./fragment";
 import {
+  blockTemplateNameConfirmationInput,
   createInstanceAppendPayload,
   createInstanceChild,
   insertIndexInput,
   instanceInsertModeInput,
+  requireBlockTemplateNameConfirmation,
 } from "./instances";
 import { createRuntimeMutation, type BuilderRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
@@ -66,8 +77,9 @@ import {
   getNewFragmentContentModelWarnings,
 } from "./matcher";
 import { z } from "zod";
-
-const conflictResolutionInput = z.enum(["ours", "theirs", "merge"]);
+import { getBlockTemplateNameConfirmation } from "./block";
+import { hasMdxComponentAdapter } from "./mdx-component-adapters";
+import { wrapEditableChildrenAroundInsertIndexMutable } from "./tree";
 
 export const insertComponentInput = z.object({
   parentInstanceId: z.string(),
@@ -81,6 +93,7 @@ export const insertComponentInput = z.object({
     .describe('Required when component is "ws:element"; omit otherwise.'),
   mode: instanceInsertModeInput.optional(),
   insertIndex: insertIndexInput.optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const insertFragmentInput = z
@@ -90,9 +103,15 @@ export const insertFragmentInput = z
       "Structured Webstudio fragment produced by Webstudio JSX/template helpers. Runtime remaps fragment ids to generated project ids."
     ),
     conflictResolution: conflictResolutionInput.optional(),
-    contentMode: z.boolean().optional(),
+    contentMode: z
+      .boolean()
+      .optional()
+      .describe(
+        "Apply content-mode copy restrictions to props and styles while reusing existing tokens and breakpoints."
+      ),
     mode: instanceInsertModeInput.optional(),
     insertIndex: insertIndexInput.optional(),
+    templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
   })
   .superRefine((input, context) => {
     if (
@@ -204,7 +223,7 @@ const getUnknownCoreComponentError = ({
     componentMetas.has(component) === false &&
     templates.has(component) === false
   ) {
-    return `Component "${component}" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands. To create a native HTML element, use component "ws:element" with its "tag" property, for example <ws.element ws:tag="div">...</ws.element>.`;
+    return `Component "${component}" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands. In structured instance data, create a native HTML element with component "ws:element" and its "tag" property.`;
   }
 };
 
@@ -236,19 +255,56 @@ const getRequiredComponentInsertState = (state: ComponentInsertState) => {
   };
 };
 
+export const getRequiredComponentInsertData = (
+  state: ComponentInsertState
+): Omit<WebstudioData, "pages"> => {
+  const required = getRequiredComponentInsertState(state);
+  return {
+    instances: required.instances,
+    props: required.props,
+    dataSources: required.dataSources,
+    resources: required.resources,
+    styleSources: required.styleSources,
+    styleSourceSelections: required.styleSourceSelections,
+    styles: required.styles,
+    breakpoints: required.breakpoints,
+    assets: required.assets,
+  };
+};
+
+const isBlockTemplateFragment = ({
+  data,
+  fragment,
+}: {
+  data: Omit<WebstudioData, "pages">;
+  fragment: WebstudioFragment;
+}) =>
+  Array.from(data.instances.values()).some(
+    (instance) =>
+      instance.component === blockTemplateComponent &&
+      instance.children.some(
+        (child) =>
+          child.type === "id" &&
+          equal(extractWebstudioFragment(data, child.value), fragment)
+      )
+  );
+
 const cloneFragmentData = (
   state: ReturnType<typeof getRequiredComponentInsertState>
-): Omit<WebstudioData, "pages"> => ({
-  instances: cloneMap(state.instances),
-  props: cloneMap(state.props),
-  dataSources: cloneMap(state.dataSources),
-  resources: cloneMap(state.resources),
-  styleSources: cloneMap(state.styleSources),
-  styleSourceSelections: cloneMap(state.styleSourceSelections),
-  styles: cloneMap(state.styles),
-  breakpoints: cloneMap(state.breakpoints),
-  assets: cloneMap(state.assets),
-});
+): Omit<WebstudioData, "pages"> => {
+  const data = getRequiredComponentInsertData(state);
+  return {
+    instances: cloneMap(data.instances),
+    props: cloneMap(data.props),
+    dataSources: cloneMap(data.dataSources),
+    resources: cloneMap(data.resources),
+    styleSources: cloneMap(data.styleSources),
+    styleSourceSelections: cloneMap(data.styleSourceSelections),
+    styles: cloneMap(data.styles),
+    breakpoints: cloneMap(data.breakpoints),
+    assets: cloneMap(data.assets),
+  };
+};
 
 const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
   new Map(
@@ -306,10 +362,12 @@ const getInsertionPage = (
 };
 
 const createRecordAddPatches = <Value>({
+  namespace,
   before,
   after,
   skip = new Set(),
 }: {
+  namespace: (typeof componentInsertNamespaces)[number];
   before: Map<string, Value>;
   after: Map<string, Value>;
   skip?: Set<string>;
@@ -324,7 +382,18 @@ const createRecordAddPatches = <Value>({
       if (equal(previous, value) === false) {
         return throwBuilderRuntimeError(
           "CONFLICT",
-          `Generated record id "${id}" already exists`
+          `Generated record ID already exists in ${namespace}.`,
+          {
+            issues: [
+              {
+                code: "generated_id_conflict",
+                path: [],
+                message: `Generated record ID conflicts with an existing ${namespace} record.`,
+                constraint: `unique_generated_id:${namespace}`,
+                detail: "stage:fragment-record-insertion",
+              },
+            ],
+          }
         );
       }
       continue;
@@ -368,6 +437,7 @@ const createFragmentPayload = ({
     {
       namespace: "assets",
       patches: createRecordAddPatches({
+        namespace: "assets",
         before: before.assets,
         after: after.assets,
       }),
@@ -375,6 +445,7 @@ const createFragmentPayload = ({
     {
       namespace: "breakpoints",
       patches: createRecordAddPatches({
+        namespace: "breakpoints",
         before: before.breakpoints,
         after: after.breakpoints,
       }),
@@ -382,6 +453,7 @@ const createFragmentPayload = ({
     {
       namespace: "dataSources",
       patches: createRecordAddPatches({
+        namespace: "dataSources",
         before: before.dataSources,
         after: after.dataSources,
       }),
@@ -389,6 +461,7 @@ const createFragmentPayload = ({
     {
       namespace: "resources",
       patches: createRecordAddPatches({
+        namespace: "resources",
         before: before.resources,
         after: after.resources,
       }),
@@ -396,6 +469,7 @@ const createFragmentPayload = ({
     {
       namespace: "styleSources",
       patches: createRecordAddPatches({
+        namespace: "styleSources",
         before: before.styleSources,
         after: after.styleSources,
       }),
@@ -403,6 +477,7 @@ const createFragmentPayload = ({
     {
       namespace: "styleSourceSelections",
       patches: createRecordAddPatches({
+        namespace: "styleSourceSelections",
         before: before.styleSourceSelections,
         after: after.styleSourceSelections,
       }),
@@ -421,6 +496,7 @@ const createFragmentPayload = ({
     {
       namespace: "props",
       patches: createRecordAddPatches({
+        namespace: "props",
         before: before.props,
         after: after.props,
       }),
@@ -447,10 +523,20 @@ const createFragmentInsertPayload = ({
     after,
     instancePatches: [
       ...createRecordAddPatches({
+        namespace: "instances",
         before: before.instances,
         after: after.instances,
         skip: new Set([parent.id]),
       }),
+      ...(equal(after.instances.get(parent.id)?.children, parent.children)
+        ? []
+        : [
+            {
+              op: "replace" as const,
+              path: [parent.id, "children"],
+              value: after.instances.get(parent.id)?.children,
+            },
+          ]),
       ...(shouldSetChildrenArray
         ? [
             {
@@ -479,6 +565,7 @@ const createTokenFragmentInsertPayload = ({
     {
       namespace: "assets",
       patches: createRecordAddPatches({
+        namespace: "assets",
         before: before.assets,
         after: after.assets,
       }),
@@ -486,6 +573,7 @@ const createTokenFragmentInsertPayload = ({
     {
       namespace: "breakpoints",
       patches: createRecordAddPatches({
+        namespace: "breakpoints",
         before: before.breakpoints,
         after: after.breakpoints,
       }),
@@ -493,6 +581,7 @@ const createTokenFragmentInsertPayload = ({
     {
       namespace: "styleSources",
       patches: createRecordAddPatches({
+        namespace: "styleSources",
         before: before.styleSources,
         after: after.styleSources,
       }),
@@ -530,7 +619,7 @@ const validateFragmentComponent = ({
   ) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
-      'Component "ws:element" requires a non-empty tag, for example <ws.element ws:tag="section">...</ws.element>. Use a Webstudio component such as <$.Box>...</$.Box> when you do not need a specific HTML tag.'
+      'Component "ws:element" requires a non-empty tag. In JSX, use a lowercase HTML element such as <section>...</section>; in structured instance data, set component "ws:element" and tag "section".'
     );
   }
   const insertCategory = templates.get(component)?.category ?? meta?.category;
@@ -678,6 +767,7 @@ const createInsertFragmentMutation = <
   additionalAvailableVariables = [],
   getResultDetails,
   validateContentModel = true,
+  confirm,
   context,
 }: {
   state: ComponentInsertState;
@@ -694,6 +784,7 @@ const createInsertFragmentMutation = <
     newDataSourceIds: Map<string, string>;
   }) => Details;
   validateContentModel?: boolean;
+  confirm?: z.infer<typeof blockTemplateNameConfirmationInput>;
   context: BuilderRuntimeContext;
 }) => {
   const mutationState = getRequiredComponentInsertState(state);
@@ -712,6 +803,12 @@ const createInsertFragmentMutation = <
   }
 
   const nextData = cloneFragmentData(mutationState);
+  const copiesContentBlockTemplate =
+    contentMode &&
+    isBlockTemplateFragment({
+      data: mutationState,
+      fragment,
+    });
   const normalizedSlotDropTarget = getSlotFragmentDropTargetMutable(
     nextData.instances,
     { parentSelector: [originalParent.id], position: "end" },
@@ -727,7 +824,7 @@ const createInsertFragmentMutation = <
   const parentChildren = parent.children ?? [];
   const insertIndex =
     mode === "replace"
-      ? 0
+      ? (explicitInsertIndex ?? 0)
       : mode === "prepend"
         ? 0
         : (explicitInsertIndex ?? parentChildren.length);
@@ -737,6 +834,20 @@ const createInsertFragmentMutation = <
       "Insert index is outside parent children"
     );
   }
+  if (
+    mode === "replace" &&
+    explicitInsertIndex !== undefined &&
+    insertIndex === parentChildren.length
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Replace index is outside parent children"
+    );
+  }
+  const replacedChildren =
+    mode === "replace" && explicitInsertIndex !== undefined
+      ? parentChildren.slice(insertIndex, insertIndex + 1)
+      : parentChildren;
 
   const { newInstanceIds, newDataSourceIds, didMergeBreakpointsDueToLimit } =
     insertWebstudioFragmentCopy({
@@ -754,7 +865,10 @@ const createInsertFragmentMutation = <
       conflictResolution,
       createId: context.createId,
       metas: componentMetas,
-      contentModeCopyableProp: isFragmentContentModeCopyableProp,
+      contentModeCopyableProp: (input) =>
+        isFragmentContentModeCopyableProp(input) ||
+        (copiesContentBlockTemplate &&
+          isContentModeTemplateDefaultPropType(input.prop.type)),
       contentMode,
     });
   for (const instanceId of newInstanceIds.values()) {
@@ -764,7 +878,19 @@ const createInsertFragmentMutation = <
     ) {
       return throwBuilderRuntimeError(
         "CONFLICT",
-        `Generated instance id "${instanceId}" already exists`
+        "Generated record ID already exists in instances.",
+        {
+          issues: [
+            {
+              code: "generated_id_conflict",
+              path: [],
+              message:
+                "Generated record ID conflicts with an existing instances record.",
+              constraint: "unique_generated_id:instances",
+              detail: "stage:fragment-instance-insertion",
+            },
+          ],
+        }
       );
     }
   }
@@ -778,19 +904,97 @@ const createInsertFragmentMutation = <
       return child;
     }
   );
+  const insertionParent = nextData.instances.get(parent.id);
+  if (insertionParent === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const originalChildren = insertionParent.children;
+  if (mode === "replace" && explicitInsertIndex !== undefined) {
+    insertionParent.children = [
+      ...originalChildren.slice(0, insertIndex),
+      ...originalChildren.slice(insertIndex + 1),
+    ];
+  }
+  const wrapped =
+    insertedChildren.some((child) => child.type === "id") &&
+    !(mode === "replace" && explicitInsertIndex === undefined)
+      ? wrapEditableChildrenAroundInsertIndexMutable({
+          instances: nextData.instances,
+          props: nextData.props,
+          metas: componentMetas,
+          parentId: parent.id,
+          position: insertIndex,
+          createId: context.createId,
+        })
+      : undefined;
+  if (wrapped === undefined) {
+    insertionParent.children = originalChildren;
+  }
+  const effectiveInsertIndex = wrapped ?? insertIndex;
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: insertedChildren.flatMap((child) =>
+      child.type === "id" ? [child.value] : []
+    ),
+    parent,
+    replacedInstanceIds:
+      mode === "replace"
+        ? replacedChildren.flatMap((child) =>
+            child.type === "id" ? [child.value] : []
+          )
+        : [],
+    instances: nextData.instances,
+    components: componentMetas.keys(),
+  });
+  const requiredTemplateNameConfirmation =
+    mode === "replace" && parent.component === blockTemplateComponent
+      ? getBlockTemplateNameConfirmation({
+          changes: replacedChildren.flatMap((child, index) => {
+            if (child.type !== "id") {
+              return [];
+            }
+            const instance = mutationState.instances.get(child.value);
+            const inserted = insertedChildren[index];
+            return instance === undefined
+              ? []
+              : [
+                  {
+                    instance,
+                    nextInstance:
+                      inserted?.type === "id"
+                        ? nextData.instances.get(inserted.value)
+                        : undefined,
+                  },
+                ];
+          }),
+          instances: mutationState.instances,
+          props: mutationState.props.values(),
+        })
+      : undefined;
 
   if (validateContentModel) {
     const validationInstances = new Map(nextData.instances);
     const validationParent: Instance = {
       ...parent,
       children:
-        mode === "replace"
-          ? insertedChildren
-          : [
-              ...parentChildren.slice(0, insertIndex),
+        wrapped !== undefined
+          ? [
+              ...insertionParent.children.slice(0, effectiveInsertIndex),
               ...insertedChildren,
-              ...parentChildren.slice(insertIndex),
-            ],
+              ...insertionParent.children.slice(effectiveInsertIndex),
+            ]
+          : mode === "replace"
+            ? explicitInsertIndex === undefined
+              ? insertedChildren
+              : [
+                  ...parentChildren.slice(0, insertIndex),
+                  ...insertedChildren,
+                  ...parentChildren.slice(insertIndex + 1),
+                ]
+            : [
+                ...parentChildren.slice(0, insertIndex),
+                ...insertedChildren,
+                ...parentChildren.slice(insertIndex),
+              ],
     };
     validationInstances.set(parent.id, validationParent);
     const { instanceSelector: parentSelector } =
@@ -822,15 +1026,21 @@ const createInsertFragmentMutation = <
       return throwBuilderRuntimeError("BAD_REQUEST", contentModelError.message);
     }
   }
+  requireBlockTemplateNameConfirmation({
+    required: requiredTemplateNameConfirmation,
+    confirm,
+    path: "mode",
+  });
 
   const createResult = (
     parentInstanceId: string,
     removedInstanceIds: string[]
   ): ComponentInsertResult & Details =>
     ({
-      instanceIds: Array.from(newInstanceIds.values()).filter(
+      instanceIds: Array.from(nextData.instances.keys()).filter(
         (instanceId) =>
           instanceId !== ROOT_INSTANCE_ID &&
+          instanceId !== normalizedSlotDropTarget?.parentSelector[0] &&
           mutationState.instances.has(instanceId) === false
       ),
       rootInstanceIds: insertedChildren.flatMap((child) =>
@@ -855,7 +1065,7 @@ const createInsertFragmentMutation = <
     if (mode === "prepend") {
       parent.children.splice(0, 0, ...insertedChildren);
     } else {
-      parent.children.splice(insertIndex, 0, ...insertedChildren);
+      parent.children.splice(effectiveInsertIndex, 0, ...insertedChildren);
     }
     const insertPayload = createFragmentPayload({
       before: mutationState,
@@ -884,12 +1094,16 @@ const createInsertFragmentMutation = <
       styleSources: mutationState.styleSources.values(),
       styleSourceSelections: mutationState.styleSourceSelections.values(),
       styles: mutationState.styles.values(),
+      replaceIndex:
+        mode === "replace" && explicitInsertIndex !== undefined
+          ? insertIndex
+          : undefined,
     });
   const insertPayload = createFragmentInsertPayload({
     before: mutationState,
     after: nextData,
     parent,
-    insertIndex,
+    insertIndex: effectiveInsertIndex,
     insertedChildren,
   });
   return createRuntimeMutation({
@@ -902,6 +1116,29 @@ const createInsertFragmentMutation = <
   });
 };
 
+const requireFragmentTokenConflictResolution = ({
+  fragment,
+  targetData,
+  conflictResolution,
+}: {
+  fragment: WebstudioFragment;
+  targetData: ReturnType<typeof getRequiredComponentInsertState>;
+  conflictResolution?: ConflictResolution;
+}) => {
+  if (conflictResolution !== undefined) {
+    return;
+  }
+  const conflicts = detectFragmentTokenConflicts({ fragment, targetData });
+  if (conflicts.length > 0) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      `Design token conflicts require an explicit conflictResolution (ours, theirs, or merge): ${conflicts
+        .map(({ tokenName }) => tokenName)
+        .join(", ")}`
+    );
+  }
+};
+
 export const insertComponent = (
   state: ComponentInsertState,
   input: z.infer<typeof insertComponentInput>,
@@ -911,6 +1148,48 @@ export const insertComponent = (
   const parent = mutationState.instances.get(input.parentInstanceId);
   if (parent === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+
+  if (
+    input.component !== elementComponent &&
+    !hasMdxComponentAdapter(input.component)
+  ) {
+    const { instanceSelector } = findPageAndSelectorByInstanceId(
+      mutationState.pages,
+      mutationState.instances,
+      parent.id
+    );
+    let insideBody = false;
+    for (const id of instanceSelector) {
+      const ancestor = mutationState.instances.get(id);
+      if (ancestor?.component === blockTemplateComponent) {
+        break;
+      }
+      if (ancestor?.component === blockBodyComponent) {
+        insideBody = true;
+      }
+      if (ancestor?.component !== blockComponent) {
+        continue;
+      }
+      const source = getContentBlockSource({
+        blockInstanceId: id,
+        props: mutationState.props.values(),
+      });
+      if (
+        source !== undefined &&
+        (insideBody ||
+          findContentBlockBodyContainers({
+            blockInstance: ancestor,
+            instances: mutationState.instances,
+          }).length === 0)
+      ) {
+        return throwBuilderRuntimeError(
+          "BAD_REQUEST",
+          "To add this component to MDX content, add it to this Content Block’s Templates and insert it from the template picker. You can add a one-off instance outside MDX content."
+        );
+      }
+      break;
+    }
   }
 
   const templates = getComponentTemplates();
@@ -991,6 +1270,7 @@ export const insertComponent = (
     mode: input.mode,
     insertIndex: input.insertIndex,
     validateContentModel: false,
+    confirm: input.templateNameConfirmation,
     context,
   });
 };
@@ -1009,6 +1289,11 @@ export const insertCollection = (
     state: mutationState,
     input,
     templates,
+  });
+  requireFragmentTokenConflictResolution({
+    fragment: collection.fragment,
+    targetData: mutationState,
+    conflictResolution: input.conflictResolution,
   });
   const getMappedId = (ids: Map<string, string>, sourceId: string) => {
     const id = ids.get(sourceId);
@@ -1029,6 +1314,7 @@ export const insertCollection = (
     templates,
     mode: input.mode,
     insertIndex: input.insertIndex,
+    conflictResolution: input.conflictResolution,
     additionalAvailableVariables: collection.parameterDataSources,
     getResultDetails: ({ newInstanceIds, newDataSourceIds }) => ({
       collectionInstanceId: getMappedId(
@@ -1099,20 +1385,11 @@ export const insertFragment = (
   if (htmlEmbedError !== undefined) {
     return throwBuilderRuntimeError("BAD_REQUEST", htmlEmbedError.message);
   }
-  if (input.conflictResolution === undefined) {
-    const conflicts = detectFragmentTokenConflicts({
-      fragment: input.fragment,
-      targetData: getRequiredComponentInsertState(state),
-    });
-    if (conflicts.length > 0) {
-      return throwBuilderRuntimeError(
-        "CONFLICT",
-        `Design token conflicts require an explicit conflictResolution (ours, theirs, or merge): ${conflicts
-          .map(({ tokenName }) => tokenName)
-          .join(", ")}`
-      );
-    }
-  }
+  requireFragmentTokenConflictResolution({
+    fragment: input.fragment,
+    targetData: getRequiredComponentInsertState(state),
+    conflictResolution: input.conflictResolution,
+  });
   if (input.fragment.children.length === 0) {
     return createInsertTokenFragmentMutation({
       state,
@@ -1137,6 +1414,7 @@ export const insertFragment = (
     insertIndex: input.insertIndex,
     conflictResolution: input.conflictResolution,
     contentMode: input.contentMode,
+    confirm: input.templateNameConfirmation,
     context,
   });
 };

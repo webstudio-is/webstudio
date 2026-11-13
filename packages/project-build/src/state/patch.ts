@@ -1,4 +1,4 @@
-import { applyPatches, type Patch } from "immer";
+import { applyPatches, produce, type Patch } from "immer";
 import { enableImmerPatchPlugins } from "./immer";
 import type {
   BuilderPatch,
@@ -149,7 +149,7 @@ const replaceTargetMutable = (target: unknown, value: unknown) => {
 
 const getPatchParent = (
   namespaceData: unknown,
-  patch: BuilderPatch
+  patch: Pick<Patch, "path">
 ): { parent: unknown; key: string | number } => {
   const key = patch.path.at(-1);
   if (key === undefined) {
@@ -167,7 +167,7 @@ const getPatchParent = (
 
 const assertReplacePatchTargetsExistingPath = (
   namespaceData: unknown,
-  patch: BuilderPatch
+  patch: Patch
 ) => {
   if (patch.op !== "replace") {
     return;
@@ -183,12 +183,14 @@ const assertReplacePatchTargetsExistingPath = (
 
 export const applyBuilderNamespacePatches = <State>(
   state: State,
-  patches: readonly BuilderPatch[]
+  patches: readonly Patch[]
 ): State => {
-  for (const patch of patches) {
-    assertReplacePatchTargetsExistingPath(state, patch);
-  }
-  return applyPatches(state as never, patches as Patch[]) as State;
+  return produce({ state }, (draft) => {
+    for (const patch of patches) {
+      assertReplacePatchTargetsExistingPath(draft.state, patch);
+      draft.state = applyPatches(draft.state as never, [patch]);
+    }
+  }).state;
 };
 
 export const applyBuilderPatchPayloadMutable = (

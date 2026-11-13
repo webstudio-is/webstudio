@@ -9,7 +9,9 @@ description: This page highlights where to get support for all Webstudio custome
 If you're looking to upgrade your account and wish to receive a credit for any previous purchase, follow the below steps:&#x20;
 
 - Visit [https://webstudio.is/pricing](https://webstudio.is/pricing)
-- Select the "Existing Lifetime Customer, Click here" text as illustrated below. ![](../.gitbook/assets/upgrade-account-pricing.png)
+- Select **Existing Lifetime Customer, Click here**.
+
+  ![Pricing page with the Existing Lifetime Customer link](../.gitbook/assets/upgrade-account-pricing.png)
 - Fill out the upgrade request form.&#x20;
 
 ## RocketHub account issues
@@ -18,7 +20,7 @@ If you're having trouble with an activation through a RocketHub purchase, please
 
 ## AppSumo account issues
 
-If you're having trouble activating your AppSumo license please read [this article](../errors/appsumo-redemption-failed.md).&#x20;
+If you're having trouble activating an AppSumo license, ask for help in the [Webstudio community](https://wstd.us/community). Do not post license codes, authentication links, or other private account information.
 
 ## Any other type of support
 
@@ -27,6 +29,5 @@ All other support is run directly via our community. We have a thriving communit
 ## Related
 
 - [Account Limits](account-limits.md) – View domain and pageview limits for different plans
-- [AppSumo Redemption Failed](../errors/appsumo-redemption-failed.md) – Troubleshoot AppSumo activation issues
 - [FAQs](../basics/FAQ.md) – Common questions and answers about Webstudio
 - [Roadmap & Links](../basics/roadmap-and-links.md) – Official links and community resources&#x20;

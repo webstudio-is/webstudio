@@ -4,8 +4,16 @@ import {
   getAssetContentHash,
   type AssetQueryResourceConfigurationInput,
   type AssetFolder,
+  type CustomResponseHeader,
+  type ExpressionBindingMode,
 } from "@webstudio-is/sdk";
 import {
+  assetContentDescriptor,
+  assetContentDescriptorHeader,
+  assetDescriptionEncoding,
+  assetDescriptionEncodingHeader,
+  assetDescriptionHeader,
+  parseAssetContentDescriptor,
   type AssetFolderUpdateRequest,
   type AssetMetadataUpdate,
   type AssetQueryRequestInput,
@@ -21,6 +29,7 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   apiClientHeader,
+  apiClientContractVersionHeader,
   apiClientVersionHeader,
   getApiCompatibilityPayload,
 } from "@webstudio-is/trpc-interface/api-compatibility";
@@ -30,7 +39,8 @@ import {
   buildPatchNamespaces,
   bundleVersion as currentBundleVersion,
   importProjectBundleResult,
-  parseMissingImportedAssetFilesMessage,
+  getMissingImportedAssetFiles,
+  historicalPublishedProjectBundle,
   publishedProjectBundle,
   maxProjectBundleSize,
   stagedUploadPath,
@@ -106,12 +116,51 @@ const createApiResponseErrorMessage = async (
     .join("\n");
 };
 
+export class MissingJsonPropValueError extends Error {
+  constructor(diagnostics: string[]) {
+    super(
+      [
+        "This build cannot be published because it contains JSON props with no value:",
+        ...diagnostics.map((diagnostic) => `- ${diagnostic}`),
+        "Open the project in Webstudio, set or reset the affected prop, then publish again.",
+      ].join("\n")
+    );
+    this.name = "MissingJsonPropValueError";
+  }
+}
+
+const getMissingJsonPropValueDiagnostics = (data: unknown) => {
+  const build = (data as { build?: PublishedProjectBundle["build"] } | null)
+    ?.build;
+  if (!Array.isArray(build?.props)) {
+    return;
+  }
+
+  const instances = new Map(
+    Array.isArray(build.instances) ? build.instances : []
+  );
+  const diagnostics = build.props.flatMap((entry) => {
+    const prop = Array.isArray(entry) ? entry[1] : undefined;
+    if (!prop || prop.type !== "json" || prop.value !== undefined) {
+      return [];
+    }
+    const instance = instances.get(prop.instanceId);
+    const target = instance?.label ?? `instance ${prop.instanceId}`;
+    const component = instance?.component ? ` (${instance.component})` : "";
+    return [`“${target}”${component}: JSON prop “${prop.name}” has no value`];
+  });
+  return diagnostics.length > 0 ? diagnostics : undefined;
+};
+
 const fetchJsonResponse: typeof fetch = async (request, init) => {
   const response = await fetch(request, init);
   const contentType = response.headers.get("content-type");
 
   if (contentType?.includes("json") !== true) {
-    throw new Error(await createApiResponseErrorMessage(request, response));
+    throw Object.assign(
+      new Error(await createApiResponseErrorMessage(request, response)),
+      { status: response.status }
+    );
   }
 
   return response;
@@ -137,12 +186,17 @@ type ApiClientName = "browser" | "cli" | "service";
 export const createApiClientHeaders = ({
   name,
   version,
+  contractVersion,
 }: {
   name: ApiClientName;
   version: string;
+  contractVersion?: string;
 }): RequestHeaders => ({
   [apiClientHeader]: name,
   [apiClientVersionHeader]: version,
+  ...(contractVersion === undefined
+    ? {}
+    : { [apiClientContractVersionHeader]: contractVersion }),
 });
 
 export const getApiCompatibilityMessage = (
@@ -212,8 +266,11 @@ const createAuthTrpcClient = (params: {
   return {
     query: <Result = unknown>(path: string, input?: unknown) =>
       client.query(path, input) as Promise<Result>,
-    mutation: <Result = unknown>(path: string, input?: unknown) =>
-      client.mutation(path, input) as Promise<Result>,
+    mutation: <Result = unknown>(
+      path: string,
+      input?: unknown,
+      options?: { signal?: AbortSignal }
+    ) => client.mutation(path, input, options) as Promise<Result>,
   };
 };
 
@@ -250,12 +307,14 @@ const queryProjectApi = async <Result = unknown>(
 const mutateProjectApi = async <Result = unknown>(
   params: AuthProjectParams,
   path: string,
-  input: Record<string, unknown> = {}
+  input: Record<string, unknown> = {},
+  options?: { signal?: AbortSignal }
 ) => {
-  return await createAuthTrpcClient(params).mutation<Result>(path, {
-    projectId: params.projectId,
-    ...input,
-  });
+  return await createAuthTrpcClient(params).mutation<Result>(
+    path,
+    { projectId: params.projectId, ...input },
+    options
+  );
 };
 
 const pickInput = <Params extends object, Key extends keyof Params>(
@@ -349,6 +408,7 @@ type AssetUpload = {
   asset: Asset;
   data: BinaryAssetData;
   force?: boolean;
+  detectMetadata?: boolean;
 };
 
 type AssetUploadDescriptor = {
@@ -364,18 +424,83 @@ type AssetUploadDescriptor = {
 type UploadedAsset = Asset & { deduplicated?: boolean };
 type AssetUploadBatchResult =
   | { status: "fulfilled"; uploadedAssets: UploadedAsset[] }
-  | { status: "rejected"; asset: Asset; error: unknown };
+  | { status: "rejected"; asset: Asset; index: number; error: unknown }
+  | { status: "ambiguous"; asset: Asset; index: number; error: unknown };
+
+const encodeAssetDescriptionHeader = (value: string) =>
+  btoa(String.fromCharCode(...new TextEncoder().encode(value)))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
 
 const formatError = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
-const retryOnce = async <Result>(task: () => Promise<Result>) => {
+export const getErrorStatus = (error: unknown) => {
+  const visited = new Set<unknown>();
+  let current = error;
+  while (
+    typeof current === "object" &&
+    current !== null &&
+    visited.has(current) === false
+  ) {
+    visited.add(current);
+    const record = current as Record<string, unknown>;
+    const data =
+      typeof record.data === "object" && record.data !== null
+        ? (record.data as Record<string, unknown>)
+        : undefined;
+    const status = record.status ?? data?.status;
+    if (typeof status === "number") {
+      return status;
+    }
+    current = record.cause ?? data?.cause;
+  }
+};
+
+const retryOnce = async <Result>(
+  task: () => Promise<Result>,
+  delayMs = 0,
+  shouldRetry?: (error: unknown) => boolean
+) => {
   try {
     return await task();
-  } catch {
+  } catch (error) {
+    if (shouldRetry?.(error) === false) {
+      throw error;
+    }
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
     return await task();
   }
 };
+
+const isRetryableAssetUploadError = (error: unknown) => {
+  const status = getErrorStatus(error);
+  return (
+    status === undefined || status === 408 || status === 429 || status >= 500
+  );
+};
+
+const assetUploadRetryExhaustedCode = "ASSET_UPLOAD_RETRY_EXHAUSTED";
+
+class AssetUploadRetryError extends Error {
+  readonly webstudioCode = assetUploadRetryExhaustedCode;
+  readonly retryable = true;
+  readonly status: number | undefined;
+
+  constructor(assetName: string, cause: unknown) {
+    const status = getErrorStatus(cause);
+    super(
+      `Asset "${assetName}" failed after 2 attempts${
+        status === undefined ? "" : ` (HTTP ${status})`
+      }. Retry this file by itself. If it still fails, verify that it opens and matches its declared format, then report ${assetUploadRetryExhaustedCode} and the HTTP status.`,
+      { cause }
+    );
+    this.status = status;
+  }
+}
 
 const getBinaryAssetDataHash = async (data: BinaryAssetData) => {
   return getAssetContentHash(
@@ -386,11 +511,13 @@ const getBinaryAssetDataHash = async (data: BinaryAssetData) => {
 const getAssetUploadUrl = ({
   asset,
   force,
+  detectMetadata,
   origin,
   projectId,
 }: {
   asset: Asset;
   force?: boolean;
+  detectMetadata?: boolean;
   origin: string;
   projectId: string;
 }) => {
@@ -401,11 +528,14 @@ const getAssetUploadUrl = ({
   if (asset.folderId !== undefined) {
     url.searchParams.set("folderId", asset.folderId);
   }
-  if (asset.type === "image") {
+  if (
+    detectMetadata !== true &&
+    (asset.type === "image" || asset.type === "video")
+  ) {
     url.searchParams.set("width", String(asset.meta.width));
     url.searchParams.set("height", String(asset.meta.height));
   }
-  if (asset.format !== undefined) {
+  if (detectMetadata !== true && asset.format !== undefined) {
     url.searchParams.set("format", asset.format);
   }
   if (force === true) {
@@ -420,11 +550,13 @@ export const uploadAsset = async (
   }
 ): Promise<Asset[]> => {
   const { authToken, headers, origin, projectId, upload } = params;
+  const description = upload.asset.description ?? undefined;
   const result = await requestAssetRestJson<AssetUploadResult>(
     fetchJsonResponse,
     getAssetUploadUrl({
       asset: upload.asset,
       force: upload.force,
+      detectMetadata: upload.detectMetadata,
       origin,
       projectId,
     }),
@@ -434,8 +566,15 @@ export const uploadAsset = async (
       headers: createHeaders({
         ...headers,
         "x-auth-token": authToken,
-        "x-webstudio-asset-description": upload.asset.description ?? undefined,
-        "x-webstudio-asset-meta": JSON.stringify(upload.asset.meta),
+        [assetDescriptionHeader]:
+          description === undefined
+            ? undefined
+            : encodeAssetDescriptionHeader(description),
+        [assetDescriptionEncodingHeader]:
+          description === undefined ? undefined : assetDescriptionEncoding,
+        "x-webstudio-asset-meta": upload.detectMetadata
+          ? undefined
+          : JSON.stringify(upload.asset.meta),
         "content-type": "application/octet-stream",
       }),
     }
@@ -454,13 +593,13 @@ export const uploadAsset = async (
     : result.uploadedAssets;
 };
 
-export const uploadAssets = async (
+const uploadAssetsSettled = async (
   params: AuthProjectParams & {
     assets: Asset[];
     readAssetData: (asset: Asset) => Promise<BinaryAssetData>;
     force?: (asset: Asset) => boolean;
   }
-): Promise<UploadedAsset[]> => {
+): Promise<AssetUploadBatchResult[]> => {
   const results: AssetUploadBatchResult[] = Array(params.assets.length);
   const prepared = await Promise.all(
     params.assets.map(async (asset, index) => {
@@ -478,7 +617,7 @@ export const uploadAssets = async (
               : await getBinaryAssetDataHash(data),
         };
       } catch (error) {
-        results[index] = { status: "rejected", asset, error };
+        results[index] = { status: "rejected", asset, index, error };
       }
     })
   );
@@ -495,7 +634,7 @@ export const uploadAssets = async (
     Array.from(groups.values(), async (uploads) => {
       for (const { asset, data, force, index } of uploads) {
         try {
-          const uploadedAssets = await retryOnce(async () => {
+          const upload = async () => {
             return await uploadAsset({
               authToken: params.authToken,
               headers: params.headers,
@@ -507,25 +646,70 @@ export const uploadAssets = async (
                 force,
               },
             });
-          });
+          };
+          const uploadedAssets =
+            force === true
+              ? await upload()
+              : await retryOnce(upload, 100, isRetryableAssetUploadError);
           results[index] = { status: "fulfilled", uploadedAssets };
-        } catch (error) {
-          results[index] = { status: "rejected", asset, error };
+        } catch (cause) {
+          const error =
+            force !== true && isRetryableAssetUploadError(cause)
+              ? new AssetUploadRetryError(asset.name, cause)
+              : cause;
+          const status = getErrorStatus(error);
+          results[index] = {
+            status:
+              force === true && (status === undefined || status >= 500)
+                ? "ambiguous"
+                : "rejected",
+            asset,
+            index,
+            error,
+          };
         }
       }
     })
   );
 
-  const failedUploads = results.flatMap((result) =>
+  return results;
+};
+
+export const uploadAssets = async (
+  params: AuthProjectParams & {
+    assets: Asset[];
+    readAssetData: (asset: Asset) => Promise<BinaryAssetData>;
+    force?: (asset: Asset) => boolean;
+  }
+): Promise<UploadedAsset[]> => {
+  const results = await uploadAssetsSettled(params);
+  const ambiguous = results.flatMap((result) =>
+    result.status === "ambiguous" ? [result] : []
+  );
+  if (ambiguous.length > 0) {
+    throw new Error(
+      `Forced asset upload may already be committed: ${ambiguous
+        .map(({ asset, error }) => `${asset.name}: ${formatError(error)}`)
+        .join("; ")}. Inspect the Assets list before retrying.`
+    );
+  }
+  const failed = results.flatMap((result) =>
     result.status === "rejected"
       ? [{ asset: result.asset, error: result.error }]
       : []
   );
-  if (failedUploads.length > 0) {
+  if (failed.length > 0) {
+    if (
+      failed.length === 1 &&
+      failed[0]?.error instanceof AssetUploadRetryError
+    ) {
+      throw failed[0].error;
+    }
     throw new Error(
-      `Failed to upload assets: ${failedUploads
+      `Failed to upload assets: ${failed
         .map(({ asset, error }) => `${asset.name}: ${formatError(error)}`)
-        .join("; ")}`
+        .join("; ")}`,
+      { cause: failed.length === 1 ? failed[0]?.error : undefined }
     );
   }
   return results.flatMap((result) =>
@@ -550,7 +734,7 @@ const toUploadAsset = ({
     size: 0,
     createdAt: new Date().toISOString(),
   };
-  if (descriptor.type === "image") {
+  if (descriptor.type === "image" || descriptor.type === "video") {
     const width = descriptor.meta?.width;
     const height = descriptor.meta?.height;
     if (
@@ -559,12 +743,14 @@ const toUploadAsset = ({
       descriptor.format === undefined
     ) {
       throw new Error(
-        `Image asset "${descriptor.name}" requires format, meta.width, and meta.height.`
+        `${descriptor.type === "image" ? "Image" : "Video"} asset "${
+          descriptor.name
+        }" requires format, meta.width, and meta.height.`
       );
     }
     return {
       ...base,
-      type: "image",
+      type: descriptor.type,
       format: descriptor.format,
       meta: { width, height },
     };
@@ -613,27 +799,63 @@ export const uploadProjectAssets = async (
     readAssetData: (asset: AssetUploadDescriptor) => Promise<BinaryAssetData>;
   }
 ) => {
-  const descriptorByName = new Map(
-    params.assets.map((descriptor) => [descriptor.name, descriptor])
+  const assets = params.assets.map((descriptor) =>
+    toUploadAsset({ descriptor, projectId: params.projectId })
   );
-  const uploaded = await uploadAssets({
+  const descriptorByAsset = new Map(
+    assets.map((asset, index) => [asset, params.assets[index]!])
+  );
+  const results = await uploadAssetsSettled({
     authToken: params.authToken,
     headers: params.headers,
     origin: params.origin,
     projectId: params.projectId,
-    assets: params.assets.map((descriptor) =>
-      toUploadAsset({ descriptor, projectId: params.projectId })
-    ),
+    assets,
     readAssetData: (asset) => {
-      const descriptor = descriptorByName.get(asset.name);
+      const descriptor = descriptorByAsset.get(asset);
       if (descriptor === undefined) {
         throw new Error(`Asset descriptor not found for ${asset.name}.`);
       }
       return params.readAssetData(descriptor);
     },
-    force: (asset) => descriptorByName.get(asset.name)?.force === true,
+    force: (asset) => descriptorByAsset.get(asset)?.force === true,
   });
-  return { uploaded };
+  return {
+    uploaded: results.flatMap((result) =>
+      result.status === "fulfilled" ? result.uploadedAssets : []
+    ),
+    failed: results.flatMap((result) =>
+      result.status === "rejected"
+        ? [
+            {
+              index: result.index,
+              name: result.asset.name,
+              error: formatError(result.error),
+              ...(result.error instanceof AssetUploadRetryError
+                ? {
+                    code: result.error.webstudioCode,
+                    retryable: result.error.retryable,
+                    ...(result.error.status === undefined
+                      ? {}
+                      : { status: result.error.status }),
+                  }
+                : {}),
+            },
+          ]
+        : []
+    ),
+    ambiguous: results.flatMap((result) =>
+      result.status === "ambiguous"
+        ? [
+            {
+              index: result.index,
+              name: result.asset.name,
+              error: formatError(result.error),
+            },
+          ]
+        : []
+    ),
+  };
 };
 
 const createAssetRestUrl = ({
@@ -682,7 +904,12 @@ const getAssetRestFailure = async (
   } catch {
     // Preserve the HTTP status when the server cannot return a JSON error.
   }
-  return Object.assign(new Error(message), { status: response.status });
+  return Object.assign(new Error(message), {
+    status: response.status,
+    ...(response.status === 403 ? { code: "FORBIDDEN" } : {}),
+    requestId:
+      response.headers.get("x-request-id") ?? response.headers.get("cf-ray"),
+  });
 };
 
 const requestAssetRestJson = async <Result>(
@@ -721,27 +948,87 @@ const requestAssetRest = async (
   return response;
 };
 
+const toAssetContentBytes = async (data: AssetContentData) =>
+  new Uint8Array(await new Response(data).arrayBuffer());
+
+const hasEqualAssetContent = async (
+  response: Response,
+  expected: AssetContentData
+) => {
+  const [actualBytes, expectedBytes] = await Promise.all([
+    response.arrayBuffer().then((buffer) => new Uint8Array(buffer)),
+    toAssetContentBytes(expected),
+  ]);
+  return (
+    actualBytes.byteLength === expectedBytes.byteLength &&
+    actualBytes.every((byte, index) => byte === expectedBytes[index])
+  );
+};
+
+const createUncertainAssetUpdateError = (cause: unknown) =>
+  Object.assign(
+    new Error(
+      "ASSET_UPDATE_COMMIT_UNCERTAIN: The asset update response failed and the saved content could not be confirmed. Do not retry with the previous expectedName. Read the current asset and download its content before deciding whether another update is needed.",
+      { cause }
+    ),
+    { code: "ASSET_UPDATE_COMMIT_UNCERTAIN" }
+  );
+
 export const updateProjectAssetContent = async (
   params: Omit<AuthProjectParams, "authToken"> & {
     authToken?: string;
     assetId: string;
     expectedName: string;
+    extension?: string;
     readAssetData: () => Promise<AssetContentData>;
     request?: typeof fetch;
     requestOrigin?: string;
   }
 ): Promise<{ asset: Asset }> => {
   const request = params.request ?? fetch;
+  const data = await params.readAssetData();
   const url = createAssetRestUrl({
     ...params,
     path: getAssetContentApiUrl(params.assetId),
   });
   url.searchParams.set("expectedName", params.expectedName);
-  return await requestAssetRestJson(request, url, {
-    method: "PUT",
-    body: await params.readAssetData(),
-    headers: createAssetRestHeaders(params, "application/octet-stream"),
-  });
+  if (params.extension !== undefined) {
+    url.searchParams.set("extension", params.extension);
+  }
+  try {
+    return await requestAssetRestJson(request, url, {
+      method: "PUT",
+      body: data,
+      headers: createAssetRestHeaders(params, "application/octet-stream"),
+    });
+  } catch (error) {
+    const status =
+      typeof error === "object" && error !== null && "status" in error
+        ? error.status
+        : undefined;
+    if (typeof status === "number" && status < 500) {
+      throw error;
+    }
+    try {
+      const { asset: before } = await getProjectAsset({ ...params, request });
+      const content = await readProjectAssetContent({
+        ...params,
+        request,
+        assetId: params.assetId,
+      });
+      const { asset } = await getProjectAsset({ ...params, request });
+      if (
+        asset.name === before.name &&
+        asset.name !== params.expectedName &&
+        (await hasEqualAssetContent(content, data))
+      ) {
+        return { asset };
+      }
+    } catch {
+      // Fall through to an explicit ambiguous-result error.
+    }
+    throw createUncertainAssetUpdateError(error);
+  }
 };
 
 export const updateProjectAsset = async (
@@ -797,7 +1084,8 @@ export const listProjectAssets = async (
   );
 
 export const getProjectAsset = async (
-  params: AuthProjectParams & {
+  params: Omit<AuthProjectParams, "authToken"> & {
+    authToken?: string;
     assetId: string;
     request?: typeof fetch;
     requestOrigin?: string;
@@ -810,7 +1098,8 @@ export const getProjectAsset = async (
   );
 
 export const readProjectAssetContent = async (
-  params: AuthProjectParams & {
+  params: Omit<AuthProjectParams, "authToken"> & {
+    authToken?: string;
     assetId: string;
     range?: { offset: number; length: number };
     request?: typeof fetch;
@@ -840,6 +1129,66 @@ export const readProjectAssetContent = async (
   }
   return response;
 };
+
+export const createProjectAssetContentTransport = ({
+  projectId,
+  origin,
+  requestOrigin = origin,
+  authToken = () => undefined,
+  headers,
+  request = fetch,
+}: {
+  projectId: string;
+  origin: string;
+  requestOrigin?: string;
+  authToken?: () => string | undefined;
+  headers?: RequestHeaders;
+  request?: typeof fetch;
+}) => ({
+  read: ({
+    assetId,
+    range,
+  }: {
+    assetId: string;
+    range?: { offset: number; length: number };
+  }) =>
+    readProjectAssetContent({
+      projectId,
+      origin,
+      requestOrigin,
+      authToken: authToken(),
+      headers,
+      request,
+      assetId,
+      range,
+    }),
+  update: async ({
+    assetId,
+    expectedName,
+    data,
+  }: {
+    assetId: string;
+    expectedName: string;
+    data: Uint8Array;
+  }) => {
+    const { asset } = await updateProjectAssetContent({
+      projectId,
+      origin,
+      requestOrigin,
+      authToken: authToken(),
+      headers,
+      request,
+      assetId,
+      expectedName,
+      readAssetData: async () => Uint8Array.from(data),
+    });
+    return assetContentDescriptor.parse(asset);
+  },
+  parseAsset: (response: Response) =>
+    parseAssetContentDescriptor(
+      response.headers.get(assetContentDescriptorHeader)
+    ),
+});
 
 export const listProjectAssetFolders = async (
   params: AuthProjectParams & {
@@ -934,6 +1283,7 @@ export const loadProjectBundleByBuildId = async (
     buildId: string;
     origin: string;
     headers?: RequestHeaders;
+    contentIndex?: "client";
   } & (
     | {
         serviceToken: string;
@@ -956,8 +1306,13 @@ export const loadProjectBundleByBuildId = async (
   const data = await client.query("build.loadProjectBundleByBuildId", {
     buildId: params.buildId,
     bundleVersion: currentBundleVersion,
+    contentIndex: params.contentIndex,
   });
-  return publishedProjectBundle.parse(data);
+  const missingJsonPropValues = getMissingJsonPropValueDiagnostics(data);
+  if (missingJsonPropValues !== undefined) {
+    throw new MissingJsonPropValueError(missingJsonPropValues);
+  }
+  return historicalPublishedProjectBundle.parse(data);
 };
 
 export const loadProjectBundleByProjectId = async (
@@ -968,10 +1323,21 @@ export const loadProjectBundleByProjectId = async (
     projectId: params.projectId,
     bundleVersion: currentBundleVersion,
   });
-  return publishedProjectBundle.parse(data);
+  return historicalPublishedProjectBundle.parse(data);
 };
 
 export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
+  if (
+    "formComponentIdentityVersion" in project.build.pages ||
+    project.build.instances.some(
+      ([, instance]) =>
+        instance.component === "Form" || instance.component === "NativeForm"
+    )
+  ) {
+    throw new Error(
+      "Historical form identities must be normalized before export."
+    );
+  }
   const normalizedProject = publishedProjectBundle.parse(project);
   const {
     assets,
@@ -1002,13 +1368,20 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
 
 export const checkProjectBuildPermission = async (
   params: AuthProjectParams
-): Promise<void> => {
-  await createAuthTrpcClient(params).query(
+): Promise<{ supportsStructuredImportErrors: boolean }> => {
+  const result = await createAuthTrpcClient(params).query(
     "build.checkProjectBuildPermission",
     {
       projectId: params.projectId,
     }
   );
+  return {
+    supportsStructuredImportErrors:
+      typeof result === "object" &&
+      result !== null &&
+      "supportsStructuredImportErrors" in result &&
+      result.supportsStructuredImportErrors === true,
+  };
 };
 
 const formatSchemaIssues = (
@@ -1031,8 +1404,11 @@ export const parseBuildPatchTransactions = (transactions: unknown) => {
 
   const result = buildPatchTransaction.array().safeParse(input);
   if (result.success === false) {
-    throw new Error(
-      `Invalid patch JSON: ${formatSchemaIssues(result.error.issues)}`
+    throw Object.assign(
+      new Error(
+        `Invalid patch JSON: ${formatSchemaIssues(result.error.issues)}`
+      ),
+      { code: "INVALID_PATCH", issues: result.error.issues }
     );
   }
   return result.data;
@@ -1042,7 +1418,9 @@ const parseRestorePointPatchTransactions = (transactions: unknown) => {
   const result = restorePointPatchTransaction.array().safeParse(transactions);
   if (result.success === false) {
     throw new Error(
-      `Invalid restore point transaction: ${formatSchemaIssues(result.error.issues)}`
+      `Invalid restore point transaction: ${formatSchemaIssues(
+        result.error.issues
+      )}`
     );
   }
   return result.data;
@@ -1074,9 +1452,36 @@ export const getProjectInfo = projectQuery(
   getPublicApiOperationPath("inspect")
 );
 
+export const loadBuilderDataByProjectId = (params: AuthProjectParams) =>
+  createAuthTrpcClient(params).query("build.loadData", {
+    projectId: params.projectId,
+  });
+
 export const getProjectPermissions = projectQuery(
   getPublicApiOperationPath("permissions")
 );
+
+export const simulateFormSubmission = async (
+  params: AuthProjectParams & {
+    formId: string;
+    path: string;
+    siteOrigin?: string;
+    values: readonly { name: string; value: string }[];
+    arrayNames?: readonly string[];
+  }
+) =>
+  await mutateProjectApi<{
+    success: boolean;
+    status: number;
+    results: { status: number; resourceId?: string }[];
+    errors: { status?: number; message: string }[];
+  }>(params, getPublicApiOperationPath("simulate-form-submission"), {
+    formId: params.formId,
+    path: params.path,
+    siteOrigin: params.siteOrigin,
+    values: params.values,
+    arrayNames: params.arrayNames,
+  });
 
 export const getBuildSnapshot = projectQueryInput<
   AuthProjectParams & {
@@ -1087,6 +1492,8 @@ export const getBuildSnapshot = projectQueryInput<
     limit?: number;
   }
 >("snapshot");
+
+const buildPatchRequestTimeoutMs = 120_000;
 
 export const applyBuildPatch = async (
   params: AuthProjectParams & {
@@ -1100,7 +1507,8 @@ export const applyBuildPatch = async (
     {
       baseVersion: params.baseVersion,
       transactions: parseBuildPatchTransactions(params.transactions),
-    }
+    },
+    { signal: AbortSignal.timeout(buildPatchRequestTimeoutMs) }
   );
 };
 
@@ -1110,10 +1518,15 @@ export const applyRestorePointPatch = async (
     transactions: unknown;
   }
 ) =>
-  await mutateProjectApi(params, projectSessionRestorePointPath, {
-    baseVersion: params.baseVersion,
-    transactions: parseRestorePointPatchTransactions(params.transactions),
-  });
+  await mutateProjectApi(
+    params,
+    projectSessionRestorePointPath,
+    {
+      baseVersion: params.baseVersion,
+      transactions: parseRestorePointPatchTransactions(params.transactions),
+    },
+    { signal: AbortSignal.timeout(buildPatchRequestTimeoutMs) }
+  );
 
 type PageMetaInput = {
   description?: string;
@@ -1258,6 +1671,8 @@ export const setInstanceTag = runtimeProjectMutation("set-instance-tag");
 
 export const setInstanceLabel = runtimeProjectMutation("set-instance-label");
 
+export const setInstanceName = runtimeProjectMutation("set-instance-name");
+
 export const updateSelectedStyleDeclarations = runtimeProjectMutation(
   "update-selected-styles"
 );
@@ -1314,6 +1729,38 @@ export const updateAsset = runtimeProjectMutation("update-asset");
 
 export const addAsset = runtimeProjectMutation("add-asset");
 
+export const inspectContentBlockSource =
+  projectQueryInput<RuntimeOperationParams>("inspect-content-block-source");
+
+export const connectContentBlockSource = runtimeProjectMutation(
+  "connect-content-block-source"
+);
+
+export const switchContentBlockSource = runtimeProjectMutation(
+  "switch-content-block-source"
+);
+
+export const disconnectContentBlockSource = runtimeProjectMutation(
+  "disconnect-content-block-source"
+);
+
+export const editContentBlockSource = runtimeProjectMutation(
+  "edit-content-block-source"
+);
+
+export const updateContentBlockFrontmatter = runtimeProjectMutation(
+  "update-content-block-frontmatter"
+);
+
+export const reloadContentBlockSource =
+  projectQueryInput<RuntimeOperationParams>("reload-content-block-source");
+
+export const migrateContentBlockTemplateReferences = runtimeProjectMutation(
+  "migrate-content-block-template-references"
+);
+
+export const insertMdxText = runtimeProjectMutation("insert-mdx-text");
+
 type ProjectSettingsInput = {
   meta?: {
     siteName?: string | null;
@@ -1321,6 +1768,7 @@ type ProjectSettingsInput = {
     faviconAssetId?: string | null;
     code?: string | null;
     auth?: string | null;
+    customHeaders?: CustomResponseHeader[] | null;
   };
   compiler?: {
     atomicStyles?: boolean | null;
@@ -1338,6 +1786,18 @@ export const updateProjectSettings = projectMutationInput<
 export const listRedirects = projectQueryInput<
   AuthProjectParams & PaginatedQueryInput
 >("list-redirects");
+
+export const listResponseHeaders = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput
+>("list-response-headers");
+
+export const setResponseHeader = projectMutationInput<
+  AuthProjectParams & CustomResponseHeader
+>("set-response-header");
+
+export const deleteResponseHeader = projectMutationInput<
+  AuthProjectParams & Pick<CustomResponseHeader, "route" | "name">
+>("delete-response-header");
 
 export const createRedirect = projectMutationInput<
   AuthProjectParams & {
@@ -1566,28 +2026,39 @@ export const deleteInstance = projectMutationInput<
 type PropValueInput = {
   instanceId: string;
   name: string;
-  type:
-    | "number"
-    | "string"
-    | "boolean"
-    | "json"
-    | "asset"
-    | "page"
-    | "string[]"
-    | "parameter"
-    | "resource"
-    | "expression"
-    | "action"
-    | "animationAction";
-  value: unknown;
   required?: boolean;
-};
+} & (
+  | {
+      type: "expression";
+      value: string;
+      mode?: ExpressionBindingMode;
+    }
+  | {
+      type:
+        | "number"
+        | "string"
+        | "boolean"
+        | "json"
+        | "asset"
+        | "page"
+        | "string[]"
+        | "parameter"
+        | "resource"
+        | "action"
+        | "animationAction";
+      value: unknown;
+    }
+);
 
 type PropBindingInput = {
   instanceId: string;
   name: string;
   binding:
-    | { type: "expression"; value: string }
+    | {
+        type: "expression";
+        value: string;
+        mode?: ExpressionBindingMode;
+      }
     | { type: "parameter"; value: string }
     | { type: "resource"; value: string }
     | {
@@ -1629,8 +2100,13 @@ export const updateText = projectMutationInput<
     instanceId: string;
     childIndex: number;
     text: string;
-    mode?: "text" | "expression";
-  }
+  } & (
+      | {
+          mode: "expression";
+          expressionBindingMode?: ExpressionBindingMode;
+        }
+      | { mode?: "text"; expressionBindingMode?: never }
+    )
 >("update-text");
 
 export const getStyleDeclarations = projectQueryInput<
@@ -1692,6 +2168,66 @@ export const listDesignTokens = projectQueryInput<
       sort?: "name" | "usage";
     }
 >("list-design-tokens");
+
+export const listTagStyles = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput & { tag?: string }
+>("list-tag-styles");
+
+const queryCopyDesignToken = projectQueryInput<
+  AuthProjectParams & { tokenId: string; sourceOrigin?: string },
+  { data: string }
+>("copy-design-token");
+
+export const copyDesignToken = (
+  params: AuthProjectParams & { tokenId: string; sourceOrigin?: string }
+) =>
+  queryCopyDesignToken({
+    ...params,
+    sourceOrigin:
+      params.sourceOrigin ?? parseBuilderUrl(params.origin).sourceOrigin,
+  });
+
+const queryCopyStyleSource = projectQueryInput<
+  AuthProjectParams & {
+    styleSourceId: string;
+    sourceType: "token" | "tag" | "local";
+    sourceOrigin?: string;
+  },
+  { data: string }
+>("copy-design-token");
+
+export const copyStyleSource = (
+  params: AuthProjectParams & {
+    styleSourceId: string;
+    sourceType: "token" | "tag" | "local";
+    sourceOrigin?: string;
+  }
+) =>
+  queryCopyStyleSource({
+    ...params,
+    sourceOrigin:
+      params.sourceOrigin ?? parseBuilderUrl(params.origin).sourceOrigin,
+  });
+
+export const pasteDesignToken = projectMutationInput<
+  AuthProjectParams & { data: string; instanceId?: string },
+  { tokenId: string }
+>("paste-design-token");
+
+const queryPasteStyleSource = projectMutationInput<
+  AuthProjectParams & { data: string; instanceId?: string },
+  { styleSourceId: string } | { tokenId: string }
+>("paste-design-token");
+
+export const pasteStyleSource = async (
+  params: AuthProjectParams & { data: string; instanceId?: string }
+) => {
+  const result = await queryPasteStyleSource(params);
+  return {
+    styleSourceId:
+      "styleSourceId" in result ? result.styleSourceId : result.tokenId,
+  };
+};
 
 type DesignTokenStyleInput = {
   property: string;
@@ -1907,6 +2443,13 @@ export const listPublishes = projectQueryInput<
   AuthProjectParams & PaginatedQueryInput
 >("list-publishes");
 
+export const validatePublish = projectQueryInput<
+  AuthProjectParams & {
+    target: "staging" | "production";
+    domains?: string[];
+  }
+>("validate-publish");
+
 export const publish = projectMutationInput<
   AuthProjectParams & {
     target: "staging" | "production";
@@ -1921,7 +2464,12 @@ export const getPublishJob = projectQueryInput<
 >("get-publish-job");
 
 export const getPublishReport = projectQueryInput<
-  AuthProjectParams & { attemptId: string }
+  AuthProjectParams & {
+    buildId: string;
+    attemptId: string;
+    executionHandle: string;
+    cursor?: number;
+  }
 >("get-publish-report");
 
 export const unpublish = projectConfirmedMutationInput<
@@ -2055,7 +2603,9 @@ const uploadProjectBundleData = async (
   const data = JSON.stringify(portableData);
   if (new TextEncoder().encode(data).byteLength > maxProjectBundleSize) {
     throw new Error(
-      `Project bundle is too large to import. Maximum size is ${formatMebibytes(maxProjectBundleSize)}.`
+      `Project bundle is too large to import. Maximum size is ${formatMebibytes(
+        maxProjectBundleSize
+      )}.`
     );
   }
   const file =
@@ -2122,13 +2672,67 @@ export const importProjectBundleWithAssets = async (
         }
     )
 ): Promise<ImportProjectBundleResult> => {
-  await checkProjectBuildPermission(params);
+  const capabilities = await checkProjectBuildPermission(params);
 
   let dataToImport =
     params.skipAssets === true ? { ...params.data, assets: [] } : params.data;
 
   const maxRetries = params.maxMissingAssetImportRetries ?? 5;
   let uploadAttempts = 0;
+  const uploadImportAssets = async (
+    assetsToUpload: Asset[],
+    readAssetData: (asset: Asset) => Promise<BinaryAssetData>
+  ) => {
+    if (uploadAttempts === 0) {
+      params.onUploadAssets?.(assetsToUpload);
+    } else {
+      params.onMissingAssets?.(assetsToUpload);
+    }
+    const originalAssetsById = new Map(
+      assetsToUpload.map((asset) => [asset.id, asset])
+    );
+    const uploadedAssets = await uploadAssets({
+      ...params,
+      // Source folders do not exist in the destination yet. The final
+      // bundle import creates them and restores the original assignments.
+      assets: assetsToUpload.map((asset) => ({
+        ...asset,
+        folderId: undefined,
+      })),
+      readAssetData: (asset) =>
+        readAssetData(originalAssetsById.get(asset.id)!),
+    });
+    if (uploadedAssets.length !== assetsToUpload.length) {
+      throw new Error(
+        `Expected ${assetsToUpload.length} uploaded assets, received ${uploadedAssets.length}.`
+      );
+    }
+    const uploadedNamesById = new Map(
+      assetsToUpload.map((asset, index) => [
+        asset.id,
+        uploadedAssets[index].name,
+      ])
+    );
+    dataToImport = {
+      ...dataToImport,
+      assets: dataToImport.assets.map((asset) => {
+        const name = uploadedNamesById.get(asset.id);
+        return name === undefined ? asset : { ...asset, name };
+      }),
+    };
+    uploadAttempts += 1;
+  };
+
+  // Older servers return no capabilities. Upload first rather than inferring
+  // missing files from their unstructured import error messages.
+  if (
+    capabilities.supportsStructuredImportErrors === false &&
+    params.skipAssets !== true &&
+    dataToImport.assets.length > 0
+  ) {
+    await uploadImportAssets(params.data.assets, params.readAssetData);
+  }
+
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     params.onImportAttempt?.();
     try {
@@ -2141,7 +2745,7 @@ export const importProjectBundleWithAssets = async (
       const missingAssetNames =
         params.skipAssets === true
           ? undefined
-          : parseMissingImportedAssetFilesMessage(error);
+          : getMissingImportedAssetFiles(error);
       const assetNames = missingAssetNames ?? [];
       if (assetNames.length === 0 || attempt === maxRetries) {
         throw error;
@@ -2170,35 +2774,7 @@ export const importProjectBundleWithAssets = async (
         throw error;
       }
 
-      if (uploadAttempts === 0) {
-        params.onUploadAssets?.(missingAssets);
-      } else {
-        params.onMissingAssets?.(missingAssets);
-      }
-      const uploadedAssets = await uploadAssets({
-        ...params,
-        assets: missingAssets,
-        readAssetData,
-      });
-      if (uploadedAssets.length !== missingAssets.length) {
-        throw new Error(
-          `Expected ${missingAssets.length} uploaded assets, received ${uploadedAssets.length}.`
-        );
-      }
-      const uploadedNamesById = new Map(
-        missingAssets.map((asset, index) => [
-          asset.id,
-          uploadedAssets[index].name,
-        ])
-      );
-      dataToImport = {
-        ...dataToImport,
-        assets: dataToImport.assets.map((asset) => {
-          const name = uploadedNamesById.get(asset.id);
-          return name === undefined ? asset : { ...asset, name };
-        }),
-      };
-      uploadAttempts += 1;
+      await uploadImportAssets(missingAssets, readAssetData);
     }
   }
 

@@ -84,6 +84,7 @@ export const CreateWorkspaceDialog = ({
           </Flex>
           <DialogActions>
             <Button
+              color="primary"
               type="submit"
               state={state === "idle" ? undefined : "pending"}
             >

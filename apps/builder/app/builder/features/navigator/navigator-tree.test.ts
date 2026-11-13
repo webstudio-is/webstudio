@@ -1,13 +1,22 @@
-import { beforeEach, describe, expect, test } from "vitest";
-import { blockComponent } from "@webstudio-is/sdk";
-import { __testing__ } from "./navigator-tree";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import {
+  blockBodyComponent,
+  blockComponent,
+  elementComponent,
+  contentBlockSourceProp,
+} from "@webstudio-is/sdk";
+import { $flatTree, __testing__ } from "./navigator-tree";
 import {
   $allSelectedInstanceSelectors,
+  $builderMode,
+  $selectedPageId,
   selectInstances,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $instances, $pages, $props } from "~/shared/sync/data-stores";
+import { $externalContentRoots } from "~/shared/external-content-mutations";
 
 const {
+  getMdxContentSource,
   commitNavigatorDrop,
   getFocusSelectionSkipCountAfterPointerDown,
   getBuilderDropTarget,
@@ -18,6 +27,102 @@ const {
   shouldClearNavigatorMultiSelectionOnEscape,
   shouldSelectOnPointerDown,
 } = __testing__;
+
+test("identifies only the connected MDX Body, including an empty Body", () => {
+  const previousRoots = $externalContentRoots.get();
+  $instances.set(
+    new Map([
+      [
+        "block",
+        {
+          id: "block",
+          type: "instance",
+          component: blockComponent,
+          children: [
+            { type: "id", value: "body" },
+            { type: "id", value: "shell" },
+          ],
+        },
+      ],
+      [
+        "body",
+        {
+          id: "body",
+          type: "instance",
+          component: blockBodyComponent,
+          children: [],
+        },
+      ],
+      [
+        "shell",
+        {
+          id: "shell",
+          type: "instance",
+          component: elementComponent,
+          tag: "div",
+          children: [],
+        },
+      ],
+    ])
+  );
+  $props.set(new Map());
+  expect(getMdxContentSource(["body", "block"])).toBeUndefined();
+  $props.set(
+    new Map([
+      [
+        "source",
+        {
+          id: "source",
+          instanceId: "block",
+          name: contentBlockSourceProp,
+          type: "asset",
+          value: "article",
+        },
+      ],
+    ])
+  );
+  try {
+    expect(getMdxContentSource(["body", "block"])).toEqual({
+      assetId: "article",
+    });
+    expect(getMdxContentSource(["shell", "block"])).toBeUndefined();
+    expect(getMdxContentSource(["block"])).toBeUndefined();
+    $props.set(
+      new Map([
+        [
+          "source",
+          {
+            id: "source",
+            instanceId: "block",
+            name: contentBlockSourceProp,
+            type: "expression",
+            value: "collection.data._id",
+          },
+        ],
+      ])
+    );
+    $externalContentRoots.set(
+      new Map([
+        [
+          "root",
+          {
+            blockInstanceId: "block",
+            contentInstanceId: "body",
+            assetId: "article",
+            instanceIds: new Set(),
+            mutationRevision: 0,
+          },
+        ],
+      ])
+    );
+    expect(getMdxContentSource(["body", "block"])).toEqual({
+      assetId: "article",
+    });
+  } finally {
+    $props.set(new Map());
+    $externalContentRoots.set(previousRoots);
+  }
+});
 
 const createTreeItem = ({
   parentComponent = "Box",
@@ -86,6 +191,181 @@ const createTreeItem = ({
     isReusable: false,
   };
 };
+
+test("shows connected Content Block instances in Content mode", () => {
+  $pages.set({
+    homePageId: "home",
+    rootFolderId: "root",
+    pages: new Map([
+      [
+        "home",
+        {
+          id: "home",
+          name: "Home",
+          path: "",
+          title: "Home",
+          meta: {},
+          rootInstanceId: "body",
+        },
+      ],
+    ]),
+    folders: new Map([
+      ["root", { id: "root", name: "Root", slug: "", children: ["home"] }],
+    ]),
+  });
+  $instances.set(
+    new Map([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [{ type: "id", value: "block" }],
+        },
+      ],
+      [
+        "block",
+        {
+          type: "instance",
+          id: "block",
+          component: blockComponent,
+          children: [{ type: "id", value: "heading" }],
+        },
+      ],
+      [
+        "heading",
+        {
+          type: "instance",
+          id: "heading",
+          component: elementComponent,
+          tag: "h1",
+          children: [{ type: "text", value: "MDX heading" }],
+        },
+      ],
+    ])
+  );
+  $selectedPageId.set("home");
+  $builderMode.set("content");
+  expect($flatTree.get().map(({ instance }) => instance.id)).toEqual([
+    "block",
+    "heading",
+  ]);
+});
+
+test("shows the scoped Content Block occurrence in Content mode", () => {
+  $pages.set({
+    homePageId: "home",
+    rootFolderId: "root",
+    pages: new Map([
+      [
+        "home",
+        {
+          id: "home",
+          name: "Home",
+          path: "",
+          title: "Home",
+          meta: {},
+          rootInstanceId: "body",
+        },
+      ],
+    ]),
+    folders: new Map([
+      ["root", { id: "root", name: "Root", slug: "", children: ["home"] }],
+    ]),
+  });
+  $instances.set(
+    new Map([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [{ type: "id", value: "block" }],
+        },
+      ],
+      [
+        "block",
+        {
+          type: "instance",
+          id: "block",
+          component: blockComponent,
+          children: [{ type: "id", value: "content" }],
+        },
+      ],
+      [
+        "content",
+        {
+          type: "instance",
+          id: "content",
+          component: blockBodyComponent,
+          children: [],
+        },
+      ],
+      [
+        "scoped-block",
+        {
+          type: "instance",
+          id: "scoped-block",
+          component: blockComponent,
+          children: [{ type: "id", value: "content" }],
+        },
+      ],
+      [
+        "scoped-content",
+        {
+          type: "instance",
+          id: "scoped-content",
+          component: blockBodyComponent,
+          children: [{ type: "id", value: "scoped-heading" }],
+        },
+      ],
+      [
+        "scoped-heading",
+        {
+          type: "instance",
+          id: "scoped-heading",
+          component: elementComponent,
+          tag: "h1",
+          children: [{ type: "text", value: "Scoped MDX heading" }],
+        },
+      ],
+    ])
+  );
+  $selectedPageId.set("home");
+  $builderMode.set("content");
+  $externalContentRoots.set(
+    new Map([
+      [
+        "root",
+        {
+          sourceBlockInstanceId: "block",
+          sourceRenderScope: '["block","body"]',
+          blockInstanceId: "scoped-block",
+          sourceContentInstanceId: "content",
+          contentInstanceId: "scoped-content",
+          renderScope: '["scoped-block","body"]',
+          instanceIds: new Set(["scoped-heading"]),
+          mutationRevision: 0,
+        },
+      ],
+    ])
+  );
+
+  expect($flatTree.get().map(({ instance }) => instance.id)).toEqual([
+    "scoped-block",
+    "scoped-content",
+  ]);
+});
+
+afterEach(() => {
+  $builderMode.set("design");
+  $selectedPageId.set(undefined);
+  $pages.set(undefined);
+  $instances.set(new Map());
+  $externalContentRoots.set(new Map());
+});
 
 describe("getNavigatorSelectionUpdate", () => {
   beforeEach(() => {

@@ -1,5 +1,15 @@
 import { cwd, stdin, stdout, stderr } from "node:process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import {
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rename,
+  rm,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import {
   connectProjectSessionMcpServer,
@@ -11,15 +21,48 @@ import {
   getProjectBasicAuthCredentials,
   type BuilderNamespace,
 } from "@webstudio-is/project-build/contracts";
+import {
+  getBuilderStateNamespacesByStatus,
+  type BuilderStateNamespaceStatus,
+} from "@webstudio-is/project-build/state";
 import { diffPngFiles } from "@webstudio-is/vision/diff";
 import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
+  issueReportRecentFailureSchema,
+  issueReportRecentTargetSchema,
+  type IssueReportRecentFailure,
+  type IssueReportRecentTarget,
 } from "@webstudio-is/protocol";
 import * as httpClient from "@webstudio-is/http-client";
 import packageJson from "../../package.json" with { type: "json" };
 import type { ProjectSessionSnapshot } from "@webstudio-is/project-build/project-session";
-import type { SemanticValidationIssue } from "@webstudio-is/project-build/runtime";
+import {
+  formatValidationErrorMessage,
+  getZodValidationIssues,
+  prefixValidationIssuePaths,
+  type SemanticValidationIssue,
+} from "@webstudio-is/project-build/runtime";
+import {
+  inspectMdxAssetSource,
+  mdxAssetInspectionNamespaces,
+} from "@webstudio-is/project-build/runtime";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import {
+  validateTextAssetSourceBytes,
+  type TextAssetSourceDiagnostic,
+} from "@webstudio-is/content-engine/mdx";
+import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
+import { assetQueryRequest } from "@webstudio-is/content-engine";
+import {
+  assetType,
+  getAllPages,
+  getFileExtension,
+  getPagePath,
+} from "@webstudio-is/sdk";
+import { matchPathnameRoutes } from "@webstudio-is/wsauth";
+import { prepareMcpStyleSourcePasteData } from "./mcp-style-source-transfer";
+import { fontMetaUpdate } from "@webstudio-is/fonts";
 import { resolveApiConnection } from "../api-connection";
 import {
   getCliErrorIssues,
@@ -30,14 +73,20 @@ import {
 import { HandledCliError, isHandledCliError } from "../errors";
 import { loadJSONFile } from "../fs-utils";
 import {
+  assertCliEditingContractVersion,
   assertCliServerOperationSupported,
   createCliProjectRestorePointStorage,
   createCliProjectSession,
+  createIssueReportFailureTracker,
+  createIssueReportTargetTracker,
+  createIssueReportRuntime,
   getCliProjectRestorePointsFile,
   getCliServerApiContract,
   getSupportedPublicApiOperations,
+  requiresCliEditingContract,
   type CliServerApiContract,
   writeCliProjectSessionPreviewDataFile,
+  type CliProjectSession,
 } from "../project-session";
 import { executeProjectSessionApiOperation } from "../project-session-api";
 import { createPreviewController } from "../preview-server";
@@ -62,7 +111,8 @@ import { readCliDoc } from "../docs";
 import { printJson } from "../json-output";
 import { isPlainRecord } from "../type-utils";
 import { withTimeout } from "../async-utils";
-import { LOCAL_DATA_FILE } from "../config";
+import { checkForCliUpdate, type CliUpdate } from "../cli-update";
+import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "../config";
 import {
   assertMcpBatchMutationApproved,
   isMcpProjectsManifest,
@@ -112,6 +162,13 @@ export const prepareMcpProjectSession = async (
 
 const mcpStatusPrefix = "[webstudio mcp]";
 const renderedAuditArtifactDirectory = ".webstudio/audits";
+
+const getCliUpdateInstructions = (update: CliUpdate | undefined) => {
+  if (update === undefined) {
+    return;
+  }
+  return `This MCP server runs Webstudio CLI ${update.currentVersion}, but ${update.latestVersion} is available. Tell the user before editing and recommend restarting this MCP server with the latest CLI, for example \`npx -y webstudio@latest mcp\`. Do not try to update or restart the CLI yourself. The existing API compatibility check remains the authority for whether writes are supported.`;
+};
 
 export const formatMcpStatusLine = (message: string) =>
   `${mcpStatusPrefix} ${message}`;
@@ -170,51 +227,862 @@ const createMcpInputError = (message: string, code: string) =>
 const hasAssetName = (value: unknown): value is { name: string } =>
   isPlainRecord(value) && typeof value.name === "string";
 
-const getMcpUploadAssetInput = (input: unknown) => {
-  if (isPlainRecord(input) === false || hasAssetName(input.asset) === false) {
-    throw new Error("upload-asset requires an asset object.");
+const createAssetInputIssue = ({
+  path,
+  message,
+  code,
+}: {
+  path: string[];
+  message: string;
+  code: string;
+}) => ({
+  path,
+  code,
+  message,
+  constraint: code,
+});
+
+const getTextAssetFormat = (value: string): "md" | "mdx" | undefined => {
+  const extension = (getFileExtension(value) ?? value).toLowerCase();
+  return extension === "md" || extension === "mdx" ? extension : undefined;
+};
+
+const getAssetDescriptorIssues = ({
+  assets,
+  pathPrefix,
+}: {
+  assets: unknown[];
+  pathPrefix: string[];
+}) => {
+  const issues: SemanticValidationIssue[] = [];
+  for (const [index, value] of assets.entries()) {
+    const assetPath =
+      pathPrefix[0] === "asset" ? pathPrefix : [...pathPrefix, String(index)];
+    if (isPlainRecord(value) === false) {
+      issues.push(
+        createAssetInputIssue({
+          path: assetPath,
+          code: "invalid_type",
+          message: "Asset descriptor must be an object.",
+        })
+      );
+      continue;
+    }
+    const asset = value;
+    const allowedFields = new Set([
+      "name",
+      "type",
+      "format",
+      "description",
+      "folderId",
+      "force",
+      "meta",
+    ]);
+    for (const field of Object.keys(asset)) {
+      if (allowedFields.has(field) === false) {
+        issues.push(
+          createAssetInputIssue({
+            path: [...assetPath, field],
+            code: "unknown_field",
+            message: `Asset descriptor field ${JSON.stringify(field)} is not supported.`,
+          })
+        );
+      }
+    }
+    if (typeof asset.name !== "string") {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "name"],
+          code: "invalid_type",
+          message: "Asset name must be a string.",
+        })
+      );
+    }
+    if (
+      typeof asset.type !== "string" ||
+      assetType.options.includes(
+        asset.type as (typeof assetType.options)[number]
+      ) === false
+    ) {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "type"],
+          code: "invalid_value",
+          message: `Asset type must be one of ${assetType.options.join(", ")}.`,
+        })
+      );
+    }
+    for (const field of ["format", "description", "folderId"] as const) {
+      if (asset[field] !== undefined && typeof asset[field] !== "string") {
+        issues.push(
+          createAssetInputIssue({
+            path: [...assetPath, field],
+            code: "invalid_type",
+            message: `Asset ${field} must be a string.`,
+          })
+        );
+      }
+    }
+    if (asset.folderId === "") {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "folderId"],
+          code: "too_small",
+          message: "Asset folderId must not be empty.",
+        })
+      );
+    }
+    if (asset.force !== undefined && typeof asset.force !== "boolean") {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "force"],
+          code: "invalid_type",
+          message: "Asset force must be a boolean.",
+        })
+      );
+    }
+    if (asset.meta !== undefined && isPlainRecord(asset.meta) === false) {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "meta"],
+          code: "invalid_type",
+          message: "Asset meta must be an object.",
+        })
+      );
+    }
+    if (asset.type === "font" && isPlainRecord(asset.meta)) {
+      const fontMetaResult = fontMetaUpdate.safeParse(asset.meta);
+      if (fontMetaResult.success === false) {
+        issues.push(
+          ...prefixValidationIssuePaths(
+            getZodValidationIssues(fontMetaResult.error),
+            [...assetPath, "meta"]
+          )
+        );
+      }
+    }
+    const name = typeof asset.name === "string" ? asset.name : "";
+    const filenameFormat = getFileExtension(name)?.toLowerCase();
+    const declaredFormat =
+      typeof asset.format === "string" ? asset.format.toLowerCase() : undefined;
+    const mentionsTextFormat =
+      filenameFormat === "md" ||
+      filenameFormat === "mdx" ||
+      declaredFormat === "md" ||
+      declaredFormat === "mdx";
+    if (
+      mentionsTextFormat &&
+      declaredFormat !== undefined &&
+      declaredFormat !== filenameFormat
+    ) {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "format"],
+          code: "asset_filename_format_mismatch",
+          message: `Asset filename and format must match. ${JSON.stringify(name)} has extension ${JSON.stringify(filenameFormat ?? "(none)")} but format is ${JSON.stringify(declaredFormat ?? "(missing)")}.`,
+        })
+      );
+    }
+    if (
+      mentionsTextFormat &&
+      typeof asset.type === "string" &&
+      asset.type !== "file"
+    ) {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "type"],
+          code: "markdown_asset_type_mismatch",
+          message: `Markdown and MDX Assets must use type "file", not ${JSON.stringify(asset.type)}.`,
+        })
+      );
+    }
   }
-  return createLocalUploadAssetInput({
-    asset: input.asset,
+  return issues;
+};
+
+const assertTextAssetDescriptorFormats = ({
+  assets,
+  pathPrefix,
+}: {
+  assets: unknown[];
+  pathPrefix: string[];
+}) => {
+  const issues = getAssetDescriptorIssues({ assets, pathPrefix });
+  if (issues.length > 0) {
+    throw Object.assign(
+      new Error("Markdown and MDX Asset descriptors are invalid."),
+      { code: "INVALID_INPUT", issues }
+    );
+  }
+};
+
+const throwAssetInputIssues = (issues: readonly SemanticValidationIssue[]) => {
+  if (issues.length > 0) {
+    throw Object.assign(new Error("Asset operation input is invalid."), {
+      code: "INVALID_INPUT",
+      issues,
+    });
+  }
+};
+
+const getRootAssetInputIssues = ({
+  input,
+  allowedFields,
+}: {
+  input: Record<string, unknown>;
+  allowedFields: readonly string[];
+}) =>
+  Object.keys(input).flatMap((field) =>
+    allowedFields.includes(field)
+      ? []
+      : [
+          createAssetInputIssue({
+            path: [field],
+            code: "unknown_field",
+            message: `Asset operation field ${JSON.stringify(field)} is not supported.`,
+          }),
+        ]
+  );
+
+const getMcpUploadAssetInput = (input: unknown) => {
+  if (isPlainRecord(input) === false) {
+    throwAssetInputIssues([
+      createAssetInputIssue({
+        path: [],
+        code: "invalid_type",
+        message: "upload-asset input must be an object.",
+      }),
+    ]);
+    throw new Error("Unreachable invalid upload input");
+  }
+  throwAssetInputIssues([
+    ...getRootAssetInputIssues({
+      input,
+      allowedFields: ["asset", "assetsDir"],
+    }),
+    ...(input.assetsDir === undefined || typeof input.assetsDir === "string"
+      ? []
+      : [
+          createAssetInputIssue({
+            path: ["assetsDir"],
+            code: "invalid_type",
+            message: "assetsDir must be a string.",
+          }),
+        ]),
+    ...getAssetDescriptorIssues({
+      assets: [input.asset],
+      pathPrefix: ["asset"],
+    }),
+  ]);
+  const asset = input.asset;
+  if (hasAssetName(asset) === false) {
+    throw new Error("Unreachable invalid Asset descriptor");
+  }
+  const prepared = createLocalUploadAssetInput({
+    asset,
     assetsDir:
       typeof input.assetsDir === "string" ? input.assetsDir : undefined,
     readFile,
   });
+  let content: Promise<unknown> | undefined;
+  return {
+    ...prepared,
+    readAssetData: () => (content ??= prepared.readAssetData(asset)),
+  };
 };
 
 const getMcpUploadAssetsInput = (input: unknown) => {
-  if (
-    isPlainRecord(input) === false ||
-    Array.isArray(input.assets) === false ||
-    input.assets.every(hasAssetName) === false
-  ) {
-    throw new Error("upload-assets requires an assets array.");
+  if (isPlainRecord(input) === false) {
+    throwAssetInputIssues([
+      createAssetInputIssue({
+        path: [],
+        code: "invalid_type",
+        message: "upload-assets input must be an object.",
+      }),
+    ]);
+    throw new Error("Unreachable invalid upload input");
   }
-  return createLocalUploadAssetsInput({
-    assets: input.assets,
+  const assets = Array.isArray(input.assets) ? input.assets : [];
+  throwAssetInputIssues([
+    ...getRootAssetInputIssues({
+      input,
+      allowedFields: ["assets", "assetsDir"],
+    }),
+    ...(Array.isArray(input.assets)
+      ? []
+      : [
+          createAssetInputIssue({
+            path: ["assets"],
+            code: "invalid_type",
+            message: "upload-assets requires an assets array.",
+          }),
+        ]),
+    ...(input.assetsDir === undefined || typeof input.assetsDir === "string"
+      ? []
+      : [
+          createAssetInputIssue({
+            path: ["assetsDir"],
+            code: "invalid_type",
+            message: "assetsDir must be a string.",
+          }),
+        ]),
+    ...getAssetDescriptorIssues({ assets, pathPrefix: ["assets"] }),
+  ]);
+  if (assets.every(hasAssetName) === false) {
+    throw new Error("Unreachable invalid Asset descriptors");
+  }
+  const prepared = createLocalUploadAssetsInput({
+    assets,
     assetsDir:
       typeof input.assetsDir === "string" ? input.assetsDir : undefined,
     readFile,
   });
+  const contentByAsset = new Map<object, Promise<unknown>>();
+  return {
+    ...prepared,
+    readAssetData: (asset: { name: string }) => {
+      let content = contentByAsset.get(asset);
+      if (content === undefined) {
+        content = prepared.readAssetData(asset);
+        contentByAsset.set(asset, content);
+      }
+      return content;
+    },
+  };
 };
 
 const getMcpUpdateAssetContentInput = (input: unknown) => {
+  if (isPlainRecord(input) === false) {
+    throwAssetInputIssues([
+      createAssetInputIssue({
+        path: [],
+        code: "invalid_type",
+        message: "update-asset-content input must be an object.",
+      }),
+    ]);
+    throw new Error("Unreachable invalid update input");
+  }
+  const issues = getRootAssetInputIssues({
+    input,
+    allowedFields: ["assetId", "expectedName", "extension", "path", "content"],
+  });
+  for (const field of ["assetId", "expectedName"] as const) {
+    if (typeof input[field] !== "string" || input[field].length === 0) {
+      issues.push(
+        createAssetInputIssue({
+          path: [field],
+          code: typeof input[field] === "string" ? "too_small" : "invalid_type",
+          message: `${field} must be a non-empty string.`,
+        })
+      );
+    }
+  }
+  for (const field of ["extension", "path"] as const) {
+    if (
+      input[field] !== undefined &&
+      (typeof input[field] !== "string" || input[field].length === 0)
+    ) {
+      issues.push(
+        createAssetInputIssue({
+          path: [field],
+          code: typeof input[field] === "string" ? "too_small" : "invalid_type",
+          message: `${field} must be a non-empty string.`,
+        })
+      );
+    }
+  }
+  if (input.content !== undefined && typeof input.content !== "string") {
+    issues.push(
+      createAssetInputIssue({
+        path: ["content"],
+        code: "invalid_type",
+        message: "content must be a string.",
+      })
+    );
+  }
+  const hasPath = typeof input.path === "string" && input.path.length > 0;
+  const hasContent = typeof input.content === "string";
+  if (hasPath === hasContent) {
+    issues.push(
+      createAssetInputIssue({
+        path: [],
+        code: "invalid_source_selection",
+        message: "Provide exactly one of path or content.",
+      })
+    );
+  }
+  throwAssetInputIssues(issues);
   if (
-    isPlainRecord(input) === false ||
     typeof input.assetId !== "string" ||
     typeof input.expectedName !== "string"
   ) {
-    throw new Error(
-      "update-asset-content requires assetId and expectedName strings."
-    );
+    throw new Error("Unreachable invalid update input");
   }
-  return createLocalUpdateAssetContentInput({
+  const prepared = createLocalUpdateAssetContentInput({
     assetId: input.assetId,
     expectedName: input.expectedName,
+    extension:
+      typeof input.extension === "string" ? input.extension : undefined,
     path: typeof input.path === "string" ? input.path : undefined,
     content: typeof input.content === "string" ? input.content : undefined,
     readFile,
   });
+  let content: Promise<unknown> | undefined;
+  return {
+    ...prepared,
+    readAssetData: () => (content ??= prepared.readAssetData()),
+  };
+};
+
+type TextAssetDiagnostic =
+  | TextAssetSourceDiagnostic
+  | Awaited<ReturnType<typeof inspectMdxAssetSource>>[number];
+
+type TextAssetWriteFeedback =
+  | Readonly<{
+      type: "uploads";
+      sourceDiagnostics: readonly Readonly<{
+        index: number;
+        name: string;
+        source: string;
+        format: "md" | "mdx";
+        issuePath: string[];
+        diagnostics: readonly TextAssetDiagnostic[];
+      }>[];
+    }>
+  | Readonly<{
+      type: "update";
+      source: string;
+      diagnostics: readonly TextAssetDiagnostic[];
+    }>;
+
+const createTextAssetContentError = ({
+  assetId,
+  name,
+  path: filePath,
+  issuePath,
+  diagnostic,
+  code,
+}: {
+  assetId?: string;
+  name?: string;
+  path?: string;
+  issuePath: string[];
+  diagnostic: TextAssetSourceDiagnostic;
+  code: "CONTENT_DECODING_FAILED" | "CONTENT_LIMIT_EXCEEDED";
+}) => {
+  const location = name ?? filePath ?? assetId ?? "Markdown or MDX Asset";
+  const issue = {
+    ...diagnostic,
+    path: issuePath,
+    constraint: diagnostic.code,
+    ...(assetId === undefined ? {} : { assetId }),
+    ...(name === undefined ? {} : { name }),
+    ...(filePath === undefined ? {} : { file: filePath }),
+  };
+  return Object.assign(new Error(`${location}: ${diagnostic.message}`), {
+    code,
+    issues: [issue],
+    ...(assetId === undefined ? {} : { assetId }),
+    ...(name === undefined ? {} : { name }),
+    ...(filePath === undefined ? {} : { path: filePath }),
+  });
+};
+
+const validateTextAssetContent = async ({
+  content,
+  format,
+  assetId,
+  name,
+  path: filePath,
+  issuePath,
+  session,
+}: {
+  content: unknown;
+  format: "md" | "mdx";
+  assetId?: string;
+  name?: string;
+  path?: string;
+  issuePath: string[];
+  session?: Pick<CliProjectSession, "ensureNamespaces">;
+}): Promise<{
+  source: string;
+  diagnostics: readonly TextAssetDiagnostic[];
+}> => {
+  const bytes =
+    typeof content === "string"
+      ? new TextEncoder().encode(content)
+      : content instanceof Uint8Array
+        ? content
+        : undefined;
+  const validation =
+    bytes === undefined
+      ? undefined
+      : await validateTextAssetSourceBytes({ source: bytes, format });
+  if (bytes === undefined || validation === undefined) {
+    throw createTextAssetContentError({
+      assetId,
+      name,
+      path: filePath,
+      issuePath,
+      code: "CONTENT_DECODING_FAILED",
+      diagnostic: {
+        code: format === "md" ? "MARKDOWN_BODY_DECODING_FAILED" : "invalid-mdx",
+        severity: "error",
+        message: `${format === "md" ? "Markdown" : "MDX"} content must be UTF-8 text`,
+      },
+    });
+  }
+  const source = validation.source;
+  if (source === undefined) {
+    const diagnostic = validation.diagnostics[0];
+    if (diagnostic === undefined) {
+      throw new Error("Text Asset validation did not return decoded source.");
+    }
+    throw createTextAssetContentError({
+      assetId,
+      name,
+      path: filePath,
+      issuePath,
+      diagnostic,
+      code:
+        bytes.byteLength > contentEngineLimits.hydratedFileBytes
+          ? "CONTENT_LIMIT_EXCEEDED"
+          : "CONTENT_DECODING_FAILED",
+    });
+  }
+  if (format !== "mdx" || assetId === undefined || session === undefined) {
+    return { source, diagnostics: validation.diagnostics };
+  }
+  const snapshot = await session.ensureNamespaces(mdxAssetInspectionNamespaces);
+  return {
+    source,
+    diagnostics: await inspectMdxAssetSource({
+      source,
+      assetId,
+      state: snapshot.state,
+      metas: componentMetas,
+      projectId: snapshot.projectId,
+    }),
+  };
+};
+
+const prepareTextAssetWriteFeedback = async ({
+  command,
+  input,
+  operationInput,
+  session,
+}: {
+  command: string;
+  input: unknown;
+  operationInput: unknown;
+  session?: Pick<CliProjectSession, "ensureNamespaces">;
+}): Promise<TextAssetWriteFeedback | undefined> => {
+  if (
+    (command === "upload-asset" || command === "upload-assets") &&
+    isPlainRecord(input) &&
+    isPlainRecord(operationInput) &&
+    typeof operationInput.readAssetData === "function"
+  ) {
+    const assets =
+      command === "upload-asset"
+        ? isPlainRecord(input.asset)
+          ? [input.asset]
+          : []
+        : Array.isArray(input.assets)
+          ? input.assets.filter(isPlainRecord)
+          : [];
+    const sourceDiagnostics = [];
+    const validationIssues: Array<{
+      index: number;
+      issues: NonNullable<ReturnType<typeof getCliErrorIssues>>;
+    }> = [];
+    const fatalErrors: unknown[] = [];
+    for (const [index, asset] of assets.entries()) {
+      if (typeof asset.name !== "string") {
+        continue;
+      }
+      const assetName = asset.name;
+      const format = getTextAssetFormat(
+        typeof asset.format === "string" ? asset.format : assetName
+      );
+      if (format === undefined) {
+        continue;
+      }
+      const issuePath =
+        command === "upload-asset"
+          ? ["asset", "name"]
+          : ["assets", String(index), "name"];
+      try {
+        const { source, diagnostics } = await validateTextAssetContent({
+          content: await operationInput.readAssetData(asset),
+          format,
+          name: assetName,
+          issuePath,
+        });
+        sourceDiagnostics.push({
+          index,
+          name: assetName,
+          source,
+          format,
+          issuePath,
+          diagnostics,
+        });
+        validationIssues.push({
+          index,
+          issues: diagnostics.map((diagnostic) => ({
+            ...diagnostic,
+            path: issuePath,
+            constraint: diagnostic.code,
+            message:
+              "message" in diagnostic && typeof diagnostic.message === "string"
+                ? diagnostic.message
+                : "reason" in diagnostic &&
+                    typeof diagnostic.reason === "string"
+                  ? diagnostic.reason
+                  : diagnostic.code,
+            name: assetName,
+          })),
+        });
+      } catch (error) {
+        const issues = getCliErrorIssues(error);
+        const code = getStableErrorCode(error);
+        if (
+          issues === undefined ||
+          (code !== "CONTENT_DECODING_FAILED" &&
+            code !== "CONTENT_LIMIT_EXCEEDED")
+        ) {
+          throw error;
+        }
+        validationIssues.push({ index, issues });
+        fatalErrors.push(error);
+      }
+    }
+    if (fatalErrors.length > 0) {
+      const code = fatalErrors.some(
+        (error) => getStableErrorCode(error) === "CONTENT_DECODING_FAILED"
+      )
+        ? "CONTENT_DECODING_FAILED"
+        : "CONTENT_LIMIT_EXCEEDED";
+      throw Object.assign(
+        new Error(
+          `${fatalErrors.length} Markdown or MDX Asset${fatalErrors.length === 1 ? "" : "s"} could not be read before upload.`
+        ),
+        {
+          code,
+          issues: validationIssues
+            .sort((left, right) => left.index - right.index)
+            .flatMap(({ issues }) => issues),
+        }
+      );
+    }
+    return sourceDiagnostics.length === 0
+      ? undefined
+      : { type: "uploads", sourceDiagnostics };
+  }
+  if (
+    command !== "update-asset-content" ||
+    isPlainRecord(input) === false ||
+    isPlainRecord(operationInput) === false ||
+    typeof operationInput.readAssetData !== "function"
+  ) {
+    return;
+  }
+  const format = getTextAssetFormat(
+    typeof input.extension === "string"
+      ? input.extension
+      : typeof input.expectedName === "string"
+        ? input.expectedName
+        : ""
+  );
+  if (format === undefined) {
+    return;
+  }
+  const assetId = typeof input.assetId === "string" ? input.assetId : undefined;
+  const { source, diagnostics } = await validateTextAssetContent({
+    content: await operationInput.readAssetData(),
+    format,
+    assetId,
+    name:
+      typeof input.expectedName === "string" ? input.expectedName : undefined,
+    issuePath: ["content"],
+    session,
+  });
+  return { type: "update", source, diagnostics };
+};
+
+const validateDownloadedTextAsset = async ({
+  assetId,
+  path: filePath,
+  format,
+  content,
+  session,
+}: {
+  assetId: string;
+  path: string;
+  format: "md" | "mdx";
+  content: Uint8Array;
+  session?: Pick<CliProjectSession, "ensureNamespaces">;
+}) =>
+  validateTextAssetContent({
+    content,
+    format,
+    assetId,
+    path: filePath,
+    issuePath: [filePath],
+    session,
+  });
+
+const materializeValidatedDownloadedAsset = async ({
+  assetId,
+  remotePath,
+  localPath,
+  diagnostics,
+}: {
+  assetId: string;
+  remotePath: string;
+  localPath: string;
+  diagnostics: readonly TextAssetDiagnostic[];
+}) => {
+  const remote = await readFile(remotePath);
+  let local: Uint8Array | undefined;
+  try {
+    local = await readFile(localPath);
+  } catch (error) {
+    if (
+      typeof error !== "object" ||
+      error === null ||
+      !("code" in error) ||
+      error.code !== "ENOENT"
+    ) {
+      throw error;
+    }
+  }
+  if (local !== undefined && Buffer.from(local).equals(remote) === false) {
+    const issues = [
+      ...diagnostics.map((diagnostic) => ({
+        ...diagnostic,
+        path: [localPath],
+        constraint: diagnostic.code,
+        assetId,
+        file: localPath,
+        message:
+          "message" in diagnostic && typeof diagnostic.message === "string"
+            ? diagnostic.message
+            : "reason" in diagnostic && typeof diagnostic.reason === "string"
+              ? diagnostic.reason
+              : diagnostic.code,
+      })),
+      {
+        code: "local_asset_conflict",
+        severity: "error" as const,
+        path: [localPath],
+        constraint: "remote_content_matches_local_file",
+        assetId,
+        file: localPath,
+        message:
+          "The existing local file differs from the current project Asset. Move or remove it, then download again.",
+      },
+    ];
+    throw Object.assign(
+      new Error(
+        `The existing local file differs from the current project Asset: ${localPath}`
+      ),
+      { code: "CONFLICT", assetId, path: localPath, issues }
+    );
+  }
+  if (local === undefined) {
+    await mkdir(path.dirname(localPath), { recursive: true });
+    await copyFile(remotePath, localPath);
+  }
+  return remote;
+};
+
+const withTextAssetWriteFeedback = async <
+  Envelope extends { result: unknown },
+>({
+  command,
+  input,
+  operationInput,
+  result,
+  session,
+  feedback,
+}: {
+  command: string;
+  input: unknown;
+  operationInput: unknown;
+  result: Envelope;
+  session?: Pick<CliProjectSession, "ensureNamespaces">;
+  feedback?: TextAssetWriteFeedback;
+}): Promise<Envelope> => {
+  const prepared =
+    feedback ??
+    (await prepareTextAssetWriteFeedback({
+      command,
+      input,
+      operationInput,
+      session,
+    }));
+  if (prepared?.type === "uploads") {
+    const uploaded =
+      isPlainRecord(result.result) && Array.isArray(result.result.uploaded)
+        ? result.result.uploaded
+        : [];
+    const uploadedByName = new Map<string, Array<Record<string, unknown>>>();
+    for (const asset of uploaded) {
+      if (isPlainRecord(asset) === false || typeof asset.name !== "string") {
+        continue;
+      }
+      const matches = uploadedByName.get(asset.name) ?? [];
+      matches.push(asset);
+      uploadedByName.set(asset.name, matches);
+    }
+    const sourceDiagnostics = await Promise.all(
+      prepared.sourceDiagnostics.map(async (entry) => {
+        let diagnostics = entry.diagnostics;
+        if (entry.format === "mdx" && session !== undefined) {
+          const uploadedAsset = uploadedByName.get(entry.name)?.shift();
+          if (typeof uploadedAsset?.id === "string") {
+            ({ diagnostics } = await validateTextAssetContent({
+              content: entry.source,
+              format: entry.format,
+              assetId: uploadedAsset.id,
+              name: entry.name,
+              issuePath: entry.issuePath,
+              session,
+            }));
+          }
+        }
+        return {
+          index: entry.index,
+          name: entry.name,
+          diagnostics,
+        };
+      })
+    );
+    return {
+      ...result,
+      result: {
+        ...(isPlainRecord(result.result)
+          ? result.result
+          : { result: result.result }),
+        sourceDiagnostics,
+      },
+    };
+  }
+  if (prepared?.type !== "update") {
+    return result;
+  }
+  return {
+    ...result,
+    result: {
+      ...(isPlainRecord(result.result)
+        ? result.result
+        : { result: result.result }),
+      source: prepared.source,
+      diagnostics: prepared.diagnostics,
+    },
+  };
 };
 
 const getMcpOperationInput = (command: string, input: unknown) => {
@@ -226,6 +1094,12 @@ const getMcpOperationInput = (command: string, input: unknown) => {
   }
   if (command === "update-asset-content") {
     return getMcpUpdateAssetContentInput(input);
+  }
+  if (command === "validate-asset-query") {
+    return assetQueryRequest.pick({ query: true }).parse(input);
+  }
+  if (command === "preview-asset-query") {
+    return assetQueryRequest.parse(input);
   }
   return input;
 };
@@ -598,6 +1472,15 @@ const createMcpRunCheckpointStopPayload = ({
 
 const getMcpRunError = (error: unknown) => {
   const issues = getCliErrorIssues(error);
+  const isValidationError =
+    error instanceof Error && error.name === "ZodError" && issues !== undefined;
+  if (isValidationError) {
+    return {
+      code: "INVALID_INPUT",
+      message: formatValidationErrorMessage("Tool input is invalid.", issues),
+      issues,
+    };
+  }
   if (
     isPlainRecord(error) &&
     typeof error.message === "string" &&
@@ -606,7 +1489,7 @@ const getMcpRunError = (error: unknown) => {
     return {
       code: isMissingApiAccessError(error)
         ? "UNAUTHORIZED"
-        : (error.code ?? "MCP_TOOL_FAILED"),
+        : (getStableErrorCode(error) ?? "MCP_TOOL_FAILED"),
       message: getCliErrorMessage(error),
       ...(issues === undefined ? {} : { issues }),
     };
@@ -698,6 +1581,43 @@ type ActiveMcpRunCall = {
 type McpRunTermination =
   | { type: "beforeExit"; exitCode: number }
   | { type: "signal"; signal: NodeJS.Signals };
+
+const reportMcpSingleOpCallTermination = ({
+  termination,
+  tool,
+  elapsedMs,
+  writeStatus = (message) => stderr.write(`${message}\n`),
+  writeResult = printJson,
+  setExitCode = (code) => {
+    process.exitCode = code;
+  },
+}: {
+  termination: McpRunTermination;
+  tool: string;
+  elapsedMs: number;
+  writeStatus?: (message: string) => void;
+  writeResult?: (result: unknown) => void;
+  setExitCode?: (code: number) => void;
+}) => {
+  const error = {
+    code: "MCP_CALL_TERMINATED",
+    message: `MCP single-op-call ${tool} terminated before returning a result.`,
+  };
+  const payload = createMcpSingleOpCallErrorPayload({ error, elapsedMs });
+  writeStatus(
+    formatMcpStatusLine(`single-op-call ${tool} terminated: ${error.message}`)
+  );
+  writeResult({
+    ...payload,
+    meta: {
+      ...payload.meta,
+      termination,
+    },
+  });
+  if (termination.type === "beforeExit") {
+    setExitCode(1);
+  }
+};
 
 const mcpRunTerminationCleanupTimeout = 5000;
 
@@ -814,12 +1734,14 @@ const installMcpRunTerminationHandlers = ({
   results,
   startedAt,
   disposeHost,
+  reportTermination = reportMcpRunTermination,
 }: {
   getActiveCall: () => ActiveMcpRunCall | undefined;
   totalCalls: number;
   results: unknown[];
   startedAt: number;
   disposeHost: () => Promise<void>;
+  reportTermination?: typeof reportMcpRunTermination;
 }) => {
   const controller = createMcpRunTerminationController({
     getActiveCall,
@@ -827,6 +1749,7 @@ const installMcpRunTerminationHandlers = ({
     results,
     startedAt,
     disposeHost,
+    reportTermination,
   });
   const terminationSignals = ["SIGHUP", "SIGINT", "SIGTERM"] as const;
   const signalHandlers = new Map<NodeJS.Signals, () => void>();
@@ -911,6 +1834,164 @@ const assertSingleOpCallToolSupported = (tool: string) => {
       { code: "BAD_REQUEST" }
     );
   }
+  if (tool === "preview.submit-form") {
+    throw Object.assign(
+      new Error(
+        "preview.submit-form requires a Preview owned by the same long-running MCP session or mcp run process."
+      ),
+      { code: "BAD_REQUEST" }
+    );
+  }
+};
+
+const getMcpDownloadAsset = async (
+  session: Pick<CliProjectSession, "ensureNamespaces">,
+  assetId: string
+) => {
+  const snapshot = await session.ensureNamespaces(["assets"]);
+  const asset = snapshot.state.assets?.get(assetId);
+  if (asset === undefined) {
+    throw new Error(`Asset not found: ${assetId}`);
+  }
+  assertTextAssetDescriptorFormats({
+    assets: [{ name: asset.name, type: asset.type, format: asset.format }],
+    pathPrefix: ["asset"],
+  });
+  return asset;
+};
+
+const getIssueReportFailureFile = (projectRoot: string, projectId?: string) =>
+  path.join(
+    getLocalProjectStateDirectory(projectRoot, projectId),
+    "issue-report-failure.json"
+  );
+
+const persistIssueReportFailure = async (
+  filePath: string,
+  snapshot: { failure: IssueReportRecentFailure; at: number } | undefined,
+  targetSnapshot?: { target: IssueReportRecentTarget; at: number }[]
+) => {
+  if (snapshot === undefined && targetSnapshot === undefined) {
+    await rm(filePath, { force: true }).catch(() => undefined);
+    return;
+  }
+  const temporaryPath = `${filePath}.${randomUUID()}.tmp`;
+  try {
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(
+      temporaryPath,
+      JSON.stringify({
+        ...snapshot,
+        ...(targetSnapshot === undefined ? {} : { targets: targetSnapshot }),
+      }),
+      "utf8"
+    );
+    await rename(temporaryPath, filePath);
+  } catch {
+    await rm(temporaryPath, { force: true }).catch(() => undefined);
+  }
+};
+
+const createIssueReportStateWriter = (
+  filePath: string,
+  write = persistIssueReportFailure
+) => {
+  let pending = Promise.resolve();
+  return (
+    snapshot: { failure: IssueReportRecentFailure; at: number } | undefined,
+    targetSnapshot?: { target: IssueReportRecentTarget; at: number }[]
+  ) => {
+    const persist = () => write(filePath, snapshot, targetSnapshot);
+    pending = pending.then(persist, persist);
+    return pending;
+  };
+};
+
+const restoreIssueReportFailure = async (
+  filePath: string,
+  failureTracker: ReturnType<typeof createIssueReportFailureTracker>,
+  targetTracker?: ReturnType<typeof createIssueReportTargetTracker>
+) => {
+  try {
+    const value: unknown = JSON.parse(await readFile(filePath, "utf8"));
+    if (!isPlainRecord(value)) {
+      await rm(filePath, { force: true }).catch(() => undefined);
+      return;
+    }
+    const failure = issueReportRecentFailureSchema.safeParse(value.failure);
+    if (
+      failure.success &&
+      typeof value.at === "number" &&
+      Number.isSafeInteger(value.at)
+    ) {
+      failureTracker.restore(failure.data, value.at);
+    }
+    if (Array.isArray(value.targets)) {
+      for (const entry of value.targets.slice(0, 3)) {
+        if (!isPlainRecord(entry)) {
+          continue;
+        }
+        const target = issueReportRecentTargetSchema.safeParse(entry.target);
+        if (
+          target.success &&
+          typeof entry.at === "number" &&
+          Number.isSafeInteger(entry.at)
+        ) {
+          targetTracker?.restore(target.data, entry.at);
+        }
+      }
+    }
+    if (
+      failureTracker.snapshot() === undefined &&
+      targetTracker?.snapshot() === undefined
+    ) {
+      await rm(filePath, { force: true }).catch(() => undefined);
+    }
+  } catch {
+    // Issue reporting is best effort; absent or malformed local diagnostics
+    // must not prevent a project session from starting.
+    await rm(filePath, { force: true }).catch(() => undefined);
+  }
+};
+
+const getIssueReportPageId = (
+  tool: string,
+  input: unknown,
+  pages: NonNullable<ProjectSessionSnapshot["state"]["pages"]> | undefined
+) => {
+  if (
+    pages === undefined ||
+    ![
+      "screenshot",
+      "screenshot.responsive",
+      "verify-page-responsive",
+      "get-page-by-path",
+    ].includes(tool) ||
+    !isPlainRecord(input) ||
+    ((tool === "screenshot" || tool === "screenshot.responsive") &&
+      (input.url !== undefined || input.baseUrl !== undefined)) ||
+    typeof input.path !== "string" ||
+    !input.path.startsWith("/") ||
+    input.path.startsWith("//")
+  ) {
+    return;
+  }
+  try {
+    const pathUrl = new URL(input.path, "https://webstudio.invalid");
+    if (pathUrl.origin !== "https://webstudio.invalid") {
+      return;
+    }
+    return matchPathnameRoutes(
+      getAllPages(pages).map((page) => ({
+        pattern: getPagePath(page.id, pages),
+        value: page.id,
+      })),
+      pathUrl.pathname
+    )?.value;
+  } catch {
+    // Report context is best effort and must not turn a tool call into an error.
+    return;
+  }
 };
 
 const createCliMcpHost = async ({
@@ -943,10 +2024,57 @@ const createCliMcpHost = async ({
   };
   const apiContract = await getCliServerApiContract(apiConnection);
   const operations = getSupportedPublicApiOperations(apiContract);
+  const failureTracker = createIssueReportFailureTracker();
+  const targetTracker = createIssueReportTargetTracker();
+  const issueReportFailureFile = getIssueReportFailureFile(
+    projectRoot,
+    connection.projectId
+  );
+  const persistIssueReportState = createIssueReportStateWriter(
+    issueReportFailureFile
+  );
+  await restoreIssueReportFailure(
+    issueReportFailureFile,
+    failureTracker,
+    targetTracker
+  );
   const session = createCliProjectSession({
     connection: apiConnection,
     projectRoot,
     sessionProjectId: projectId,
+    issueReportRuntime: () => {
+      const snapshot = session.snapshot;
+      const previewStatus = previewFreshness.status();
+      const renderedProjectVersion = previewStatus.renderedProjectVersion;
+      const namespacesByStatus =
+        snapshot === undefined
+          ? undefined
+          : (status: BuilderStateNamespaceStatus) =>
+              getBuilderStateNamespacesByStatus(snapshot.freshness, status);
+      return createIssueReportRuntime(failureTracker.get(), {
+        projectId: connection.projectId,
+        recentTargets: targetTracker.getAll(),
+        ...(namespacesByStatus === undefined
+          ? {}
+          : {
+              session: {
+                staleNamespaces: namespacesByStatus("stale"),
+                missingNamespaces: namespacesByStatus("missing"),
+                invalidatedNamespaces: namespacesByStatus("invalidated"),
+              },
+            }),
+        preview: {
+          stale: previewStatus.stale,
+          hasRenderedVersion: renderedProjectVersion !== undefined,
+          ...(renderedProjectVersion === undefined || snapshot === undefined
+            ? {}
+            : {
+                renderedVersionMatchesSession:
+                  renderedProjectVersion === snapshot.version,
+              }),
+        },
+      });
+    },
   });
   const restorePointStorage = createCliProjectRestorePointStorage(
     getCliProjectRestorePointsFile(projectRoot, projectId)
@@ -1014,17 +2142,62 @@ const createCliMcpHost = async ({
     createProjectSession: () => session,
     onProjectSessionChange: previewFreshness.markStale,
     executeOperation: async ({ command, input, dryRun }) => {
+      assertMcpToolServerSupport(command, apiContract, dryRun === true);
+      let operationInput = getMcpOperationInput(command, input);
+      const projectOrigin = new URL(apiConnection.origin).origin;
+      if (command === "copy-design-token" && isPlainRecord(operationInput)) {
+        operationInput = { ...operationInput, sourceOrigin: projectOrigin };
+      }
+      if (
+        command === "paste-design-token" &&
+        isPlainRecord(operationInput) &&
+        typeof operationInput.data === "string"
+      ) {
+        operationInput = {
+          ...operationInput,
+          assetIds: await prepareMcpStyleSourcePasteData({
+            data: operationInput.data,
+            projectOrigin,
+            dryRun: dryRun === true,
+            download: (url) => fetch(url),
+            upload: (asset, data, detectMetadata) =>
+              httpClient.uploadAsset({
+                ...apiConnection,
+                upload: {
+                  asset: { ...asset, folderId: undefined },
+                  data,
+                  detectMetadata,
+                },
+              }),
+            refreshAssets: () => session.refresh(["assets"]),
+          }),
+        };
+      }
+      const textAssetFeedback = await prepareTextAssetWriteFeedback({
+        command,
+        input,
+        operationInput,
+        session,
+      });
       const result = await executeProjectSessionApiOperation({
         command,
-        input: getMcpOperationInput(command, input),
+        input: operationInput,
         connection: apiConnection,
         createProjectSession: () => session,
+        apiContract,
         dryRun,
       });
       if (dryRun !== true && shouldInvalidatePreview(command)) {
         previewFreshness.markStale();
       }
-      return result;
+      return withTextAssetWriteFeedback({
+        command,
+        input,
+        operationInput,
+        result,
+        session,
+        feedback: textAssetFeedback,
+      });
     },
     restorePoints: {
       async create({ name }) {
@@ -1086,10 +2259,42 @@ const createCliMcpHost = async ({
       return { imported: true as const };
     },
     async downloadAsset(input) {
-      const snapshot = getLoadedProjectSessionSnapshot(session);
-      const asset = snapshot.state.assets?.get(input.assetId);
-      if (asset === undefined) {
-        throw new Error(`Asset not found: ${input.assetId}`);
+      const asset = await getMcpDownloadAsset(session, input.assetId);
+      const localPath = getLocalAssetPath(asset.name, input.assetsDir);
+      const format = getTextAssetFormat(asset.format);
+      if (format !== undefined) {
+        const temporaryDirectory = await mkdtemp(
+          path.join(tmpdir(), "webstudio-asset-download-")
+        );
+        try {
+          await downloadAssetFile({
+            asset,
+            assetsDirectory: temporaryDirectory,
+            origin: connection.origin,
+          });
+          const remotePath = getLocalAssetPath(asset.name, temporaryDirectory);
+          const { source, diagnostics } = await validateDownloadedTextAsset({
+            assetId: asset.id,
+            path: localPath,
+            format,
+            content: await readFile(remotePath),
+            session,
+          });
+          await materializeValidatedDownloadedAsset({
+            assetId: asset.id,
+            remotePath,
+            localPath,
+            diagnostics,
+          });
+          return {
+            assetId: asset.id,
+            path: localPath,
+            source,
+            diagnostics,
+          };
+        } finally {
+          await rm(temporaryDirectory, { recursive: true, force: true });
+        }
       }
       await downloadAssetFile({
         asset,
@@ -1098,7 +2303,7 @@ const createCliMcpHost = async ({
       });
       return {
         assetId: asset.id,
-        path: getLocalAssetPath(asset.name, input.assetsDir),
+        path: localPath,
       };
     },
     async startPreview(input, progress) {
@@ -1122,6 +2327,17 @@ const createCliMcpHost = async ({
         running: true,
         mode: result.mode,
       };
+    },
+    async submitPreviewForm(input) {
+      return await previewHandlers.submitForm(input);
+    },
+    async simulateForm(input) {
+      await session.assertPermit("api");
+      await session.assertPermit("build");
+      return await httpClient.simulateFormSubmission({
+        ...apiConnection,
+        ...input,
+      });
     },
     async getPreviewStatus() {
       return { ...preview.status(), ...previewFreshness.status() };
@@ -1187,6 +2403,52 @@ const createCliMcpHost = async ({
     host,
     apiContract,
     toolCount: operations.length,
+    async recordToolFailure(
+      canonicalTool: string,
+      error: unknown,
+      elapsedMs: number,
+      input: unknown
+    ) {
+      if (canonicalTool !== "report-issue") {
+        failureTracker.record(canonicalTool, error, elapsedMs, input);
+        targetTracker.record(
+          canonicalTool,
+          input,
+          getIssueReportPageId(
+            canonicalTool,
+            input,
+            session.snapshot?.state.pages
+          )
+        );
+        await persistIssueReportState(
+          failureTracker.snapshot(),
+          targetTracker.snapshot()
+        );
+      }
+    },
+    async recordToolSuccess(canonicalTool: string, input: unknown) {
+      failureTracker.succeed(canonicalTool);
+      if (canonicalTool === "report-issue") {
+        targetTracker.clear();
+        await persistIssueReportState(undefined);
+      } else {
+        const hasTarget = targetTracker.record(
+          canonicalTool,
+          input,
+          getIssueReportPageId(
+            canonicalTool,
+            input,
+            session.snapshot?.state.pages
+          )
+        );
+        if (hasTarget) {
+          await persistIssueReportState(
+            failureTracker.snapshot(),
+            targetTracker.snapshot()
+          );
+        }
+      }
+    },
     reportLog(message: string) {
       if (message.startsWith("ready with ")) {
         return;
@@ -1228,13 +2490,17 @@ type CliMcpCore = ReturnType<
 
 const assertMcpToolServerSupport = (
   tool: string,
-  contract: CliServerApiContract
+  contract: CliServerApiContract,
+  dryRun = false
 ) => {
   const operation = publicApiOperationByCommand.get(tool as PublicApiCommand);
-  if (
-    operation !== undefined &&
-    publicApiOperationRequiresServerSupport(operation)
-  ) {
+  if (operation === undefined) {
+    return;
+  }
+  if (requiresCliEditingContract(operation, dryRun)) {
+    assertCliEditingContractVersion(contract);
+  }
+  if (publicApiOperationRequiresServerSupport(operation)) {
     assertCliServerOperationSupported(operation.id, contract);
   }
 };
@@ -1282,33 +2548,98 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
       `single-op-call ${tool} started${options.dryRun === true ? " (dry run)" : ""}`
     )}\n`
   );
+  let activeCall: ActiveMcpRunCall | undefined = { number: 1, tool };
+  let didTerminate = false;
+  let disposeHost: () => Promise<void> = async () => undefined;
+  const disposeTerminationHandlers = installMcpRunTerminationHandlers({
+    getActiveCall: () => activeCall,
+    totalCalls: 1,
+    results: [],
+    startedAt,
+    disposeHost: () => disposeHost(),
+    reportTermination: ({ termination, activeCall, elapsedMs }) => {
+      didTerminate = true;
+      reportMcpSingleOpCallTermination({
+        termination,
+        tool: activeCall.tool,
+        elapsedMs,
+      });
+    },
+  });
   try {
     assertSingleOpCallToolSupported(tool);
     const input = await parseMcpSingleOpCallInput(options);
     validateSingleOpCallInput(tool, input);
+    if (didTerminate) {
+      throw new HandledCliError();
+    }
     await withMcpHost(
-      () => createCliMcpHost({ projectId: options.project }),
-      async ({ host, apiContract, scope }) => {
-        assertMcpToolServerSupport(tool, apiContract);
+      async () => {
+        const mcpHost = await createCliMcpHost({ projectId: options.project });
+        disposeHost = mcpHost.dispose;
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
+        return mcpHost;
+      },
+      async ({
+        host,
+        apiContract,
+        scope,
+        recordToolFailure,
+        recordToolSuccess,
+      }) => {
+        assertMcpToolServerSupport(tool, apiContract, options.dryRun === true);
         const core = createCliMcpCore(host);
         const persistedCheckpoint =
           tool === "checkpoint.ack"
             ? await readPersistedMcpCheckpoint(scope)
             : undefined;
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         await assertPersistedMcpCheckpointAcknowledged(
           tool,
           core.listTools(),
           scope
         );
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         if (options.refresh === true && tool !== "refresh") {
           await core.callTool({ name: "refresh" });
+          if (didTerminate) {
+            throw new HandledCliError();
+          }
         }
-        const result = await core.callTool({
-          name: tool,
-          input,
-          dryRun: options.dryRun,
-        });
+        const callStartedAt = Date.now();
+        let result: Awaited<ReturnType<typeof core.callTool>>;
+        try {
+          result = await core.callTool({
+            name: tool,
+            input,
+            dryRun: options.dryRun,
+          });
+        } catch (error) {
+          await recordToolFailure(
+            tool,
+            error,
+            Date.now() - callStartedAt,
+            input
+          );
+          throw error;
+        }
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         if (isMcpToolCallFailure(result)) {
+          await recordToolFailure(
+            tool,
+            getMcpToolCallError(result),
+            Date.now() - callStartedAt,
+            input
+          );
+          activeCall = undefined;
           stderr.write(
             `${formatMcpStatusLine(
               `single-op-call ${tool} failed in ${Date.now() - startedAt}ms`
@@ -1317,6 +2648,7 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
           printJson(result.structuredContent);
           throw new HandledCliError();
         }
+        await recordToolSuccess(tool, input);
         if (
           tool === "checkpoint.ack" &&
           persistedCheckpoint?.nextCommand !== undefined &&
@@ -1330,9 +2662,13 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
           structuredContent: result.structuredContent,
           scope,
         });
+        if (didTerminate) {
+          throw new HandledCliError();
+        }
         const session = result.structuredContent.meta.session;
         const committed =
           session === undefined ? "" : `; committed=${session.committed}`;
+        activeCall = undefined;
         stderr.write(
           `${formatMcpStatusLine(
             `single-op-call ${tool} succeeded in ${Date.now() - startedAt}ms${committed}`
@@ -1346,6 +2682,10 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
       }
     );
   } catch (error) {
+    activeCall = undefined;
+    if (didTerminate) {
+      throw new HandledCliError();
+    }
     if (isHandledCliError(error)) {
       throw error;
     }
@@ -1360,6 +2700,9 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     );
     printJson(payload);
     throw new HandledCliError();
+  } finally {
+    activeCall = undefined;
+    disposeTerminationHandlers();
   }
 };
 
@@ -1397,13 +2740,17 @@ const runMcpProjectsBatch = async ({
       );
       await withMcpHost(
         () => createCliMcpHost({ projectRoot: project.root }),
-        async ({ host, apiContract }) => {
+        async ({ host, apiContract, recordToolFailure, recordToolSuccess }) => {
           const core = createCliMcpCore(host);
           const tools = new Map(
             core.listTools().map((tool) => [tool.name, tool])
           );
           for (const call of project.calls.slice(startCall)) {
-            assertMcpToolServerSupport(call.tool, apiContract);
+            assertMcpToolServerSupport(
+              call.tool,
+              apiContract,
+              call.dryRun === true
+            );
             const tool = tools.get(call.tool);
             assertMcpBatchMutationApproved({
               projectId: project.id,
@@ -1415,16 +2762,29 @@ const runMcpProjectsBatch = async ({
           for (let index = startCall; index < project.calls.length; index++) {
             const call = project.calls[index]!;
             const tool = tools.get(call.tool);
+            const callStartedAt = Date.now();
             await callStarted(
               index,
               call.dryRun || tool?.annotations.method !== "mutation"
             );
-            const { checkpoint } = await executeMcpRunCall({
-              core,
-              call,
-              scope: { projectRoot: project.root },
-            });
+            let checkpoint: PersistedMcpCheckpoint | undefined;
+            try {
+              ({ checkpoint } = await executeMcpRunCall({
+                core,
+                call,
+                scope: { projectRoot: project.root },
+              }));
+            } catch (error) {
+              await recordToolFailure(
+                call.tool,
+                error,
+                Date.now() - callStartedAt,
+                call.input
+              );
+              throw error;
+            }
             await callSucceeded(index + 1);
+            await recordToolSuccess(call.tool, call.input);
             const nextTool = project.calls[index + 1]?.tool;
             if (
               checkpoint !== undefined &&
@@ -1507,6 +2867,17 @@ export const mcpRun = async (options: McpRunOptions) => {
   const results: unknown[] = [];
   let core: ReturnType<typeof createProjectSessionMcpCore<PublicApiCommand>>;
   let scope: McpProjectScope = {};
+  let recordToolFailure:
+    | ((
+        tool: string,
+        error: unknown,
+        elapsedMs: number,
+        input: unknown
+      ) => Promise<void>)
+    | undefined;
+  let recordToolSuccess:
+    | ((tool: string, input: unknown) => Promise<void>)
+    | undefined;
   let disposeHost: () => Promise<void> = async () => undefined;
   try {
     const mcpHost = await createCliMcpHost({
@@ -1514,10 +2885,12 @@ export const mcpRun = async (options: McpRunOptions) => {
       managePreviewProcessSignals: false,
     });
     const { host, apiContract } = mcpHost;
+    recordToolFailure = mcpHost.recordToolFailure;
+    recordToolSuccess = mcpHost.recordToolSuccess;
     disposeHost = mcpHost.dispose;
     scope = mcpHost.scope;
     for (const call of calls) {
-      assertMcpToolServerSupport(call.tool, apiContract);
+      assertMcpToolServerSupport(call.tool, apiContract, call.dryRun === true);
     }
     core = createCliMcpCore(host);
   } catch (error) {
@@ -1540,6 +2913,7 @@ export const mcpRun = async (options: McpRunOptions) => {
   try {
     for (const [index, call] of calls.entries()) {
       const callNumber = index + 1;
+      const callStartedAt = Date.now();
       activeCall = { number: callNumber, tool: call.tool };
       stderr.write(
         `${formatMcpStatusLine(
@@ -1553,6 +2927,7 @@ export const mcpRun = async (options: McpRunOptions) => {
           scope,
         });
         const session = result.structuredContent.meta.session;
+        await recordToolSuccess?.(call.tool, call.input);
         const committed =
           session === undefined ? "" : `; committed=${session.committed}`;
         stderr.write(
@@ -1594,6 +2969,12 @@ export const mcpRun = async (options: McpRunOptions) => {
         if (error instanceof McpRunCheckpointStop) {
           throw new HandledCliError();
         }
+        await recordToolFailure?.(
+          call.tool,
+          error,
+          Date.now() - callStartedAt,
+          call.input
+        );
         const structuredError = getMcpRunError(error);
         results.push({
           tool: call.tool,
@@ -1712,10 +3093,21 @@ export const mcp = async (
   stdin.once("end", reportClose);
   stdin.once("close", reportClose);
   status.starting();
-  const { host, toolCount, reportLog, apiContract, dispose } =
-    await createCliMcpHost({
-      projectId: options.project,
-    });
+  const cliUpdatePromise = checkForCliUpdate({
+    currentVersion: packageJson.version,
+  });
+  const {
+    host,
+    toolCount,
+    reportLog,
+    recordToolFailure,
+    recordToolSuccess,
+    apiContract,
+    dispose,
+  } = await createCliMcpHost({
+    projectId: options.project,
+  });
+  const cliUpdate = await cliUpdatePromise;
   disposeHost = dispose;
   if (didReportClose) {
     await disposeHost().catch(() => undefined);
@@ -1726,8 +3118,11 @@ export const mcp = async (
   status.ready(toolCount);
   const server = await connectProjectSessionMcpServer({
     ...host,
+    additionalInstructions: getCliUpdateInstructions(cliUpdate),
     toolNameFormat: options.toolNameFormat,
     getErrorCode: getStableErrorCode,
+    onToolFailure: recordToolFailure,
+    onToolSuccess: recordToolSuccess,
     reportLog: (_level, message) => {
       reportLog(message);
     },
@@ -1740,8 +3135,16 @@ export const mcp = async (
 };
 
 export const __testing__ = {
+  createIssueReportStateWriter,
+  getIssueReportPageId,
+  getMcpDownloadAsset,
+  getIssueReportFailureFile,
+  persistIssueReportFailure,
+  restoreIssueReportFailure,
+  getCliUpdateInstructions,
   createMcpStatusReporter,
   formatMcpStatusLine,
+  assertMcpToolServerSupport,
   assertSingleOpCallToolSupported,
   createMcpSingleOpCallErrorPayload,
   createMcpResourceErrorPayload: (error: unknown, elapsedMs: number) => ({
@@ -1753,11 +3156,16 @@ export const __testing__ = {
     meta: { elapsedMs },
   }),
   createMcpRunErrorPayload,
+  reportMcpSingleOpCallTermination,
   reportMcpRunTermination,
   createMcpRunTerminationController,
   createMcpRunCheckpointStopPayload,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
+  prepareTextAssetWriteFeedback,
+  withTextAssetWriteFeedback,
+  validateDownloadedTextAsset,
+  materializeValidatedDownloadedAsset,
   parseMcpSingleOpCallInput,
   validateSingleOpCallInput,
   isMcpToolCallFailure,

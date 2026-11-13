@@ -2,17 +2,44 @@ import type {
   Asset,
   FontAsset,
   ImageAsset,
+  VideoAsset,
   AllowedFileExtension,
 } from "@webstudio-is/sdk";
-import { nanoid } from "nanoid";
 import {
+  createId,
+  formatAssetName,
   getMimeTypeByExtension,
   getFileExtension,
   IMAGE_EXTENSIONS,
   detectAssetType,
   getAssetContentHash,
+  decodePathFragment,
+  validateFileName,
 } from "@webstudio-is/sdk";
 import type { UploadingFileData } from "~/shared/nano-states";
+
+export const isAssetFilenameUsed = ({
+  assets,
+  filename,
+  folderId,
+  excludeAssetId,
+}: {
+  assets: Iterable<Asset>;
+  filename: string;
+  folderId?: string;
+  excludeAssetId?: Asset["id"];
+}) => {
+  for (const asset of assets) {
+    if (
+      asset.id !== excludeAssetId &&
+      asset.folderId === folderId &&
+      formatAssetName(asset) === filename
+    ) {
+      return true;
+    }
+  }
+  return false;
+};
 
 export const getImageNameAndType = (fileName: string) => {
   const extractedExt = getFileExtension(fileName)?.toLowerCase();
@@ -29,7 +56,14 @@ export const getImageNameAndType = (fileName: string) => {
   return [getMimeTypeByExtension(extractedExt)!, fileName] as const;
 };
 
-const extractImageNameAndMimeTypeFromUrl = (url: URL) => {
+const extractNameAndMimeTypeFromUrl = (url: URL) => {
+  try {
+    const filename = decodePathFragment(url.pathname.split("/").at(-1) ?? "");
+    const { mimeType } = validateFileName(filename);
+    return [mimeType, filename] as const;
+  } catch {
+    // Try the image name in the rest of the URL.
+  }
   const nameFromPath = url.pathname
     .split("/")
     .map(getImageNameAndType)
@@ -50,7 +84,7 @@ const extractImageNameAndMimeTypeFromUrl = (url: URL) => {
   // Any image format is suitable
   const FALLBACK_URL_TYPE = "image/png";
 
-  return [FALLBACK_URL_TYPE, `${nanoid()}.png`] as const;
+  return [FALLBACK_URL_TYPE, `${createId("nano")}.png`] as const;
 };
 
 export const getSha256Hash = async (data: string) => {
@@ -82,7 +116,7 @@ export const getMimeType = (file: File | URL) => {
     return file.type;
   }
 
-  return extractImageNameAndMimeTypeFromUrl(file)[0];
+  return extractNameAndMimeTypeFromUrl(file)[0];
 };
 
 export const getFileName = (file: File | URL) => {
@@ -90,7 +124,7 @@ export const getFileName = (file: File | URL) => {
     return file.name;
   }
 
-  return extractImageNameAndMimeTypeFromUrl(file)[1];
+  return extractNameAndMimeTypeFromUrl(file)[1];
 };
 
 export const uploadingFileDataToAsset = (
@@ -147,7 +181,20 @@ export const uploadingFileDataToAsset = (
     return asset;
   }
 
-  // Videos and other non-image/font uploads use the generic file type.
+  if (assetType === "video") {
+    const asset: VideoAsset = {
+      ...base,
+      format,
+      type: "video",
+      meta: {
+        width: Number.NaN,
+        height: Number.NaN,
+      },
+    };
+
+    return asset;
+  }
+
   const asset: Asset = {
     ...base,
     format,

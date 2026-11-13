@@ -9,13 +9,22 @@ type SocialPreviewProps = {
   ogDescription: string;
 };
 
+// Social previews represent an external light surface, not Builder UI.
+const socialPreviewColors = {
+  background: "#fff",
+  imagePlaceholder: "#dfe3e6",
+  border: "#e6e6e6",
+  foreground: "#18283e",
+  foregroundSecondary: "#4d5156",
+} as const;
+
 const imgStyle = css({
   borderTopLeftRadius: theme.borderRadius[4],
   borderTopRightRadius: theme.borderRadius[4],
   width: "100%",
   aspectRatio: "1.91",
-  background: "#DFE3E6",
-  borderBottom: `1px solid ${theme.colors.borderMain}`,
+  background: socialPreviewColors.imagePlaceholder,
+  borderBottom: `1px solid ${socialPreviewColors.border}`,
   variants: {
     hasImage: {
       true: {
@@ -39,8 +48,8 @@ export const SocialPreview = ({
         gap={1}
         css={{
           borderRadius: theme.borderRadius[4],
-          border: `1px solid ${theme.colors.borderMain}`,
-          backgroundColor: theme.colors.white,
+          border: `1px solid ${socialPreviewColors.border}`,
+          backgroundColor: socialPreviewColors.background,
         }}
       >
         <img
@@ -63,7 +72,7 @@ export const SocialPreview = ({
         >
           <Box
             css={{
-              color: "#4D5156",
+              color: socialPreviewColors.foregroundSecondary,
               fontFamily: "Arial",
               fontSize: "12px",
               lineHeight: "16px",
@@ -73,7 +82,7 @@ export const SocialPreview = ({
           </Box>
           <Box
             css={{
-              color: "#18283E",
+              color: socialPreviewColors.foreground,
               fontFamily: "Arial",
               fontSize: "14px",
               fontWeight: 700,
@@ -87,7 +96,7 @@ export const SocialPreview = ({
           </Box>
           <Box
             css={{
-              color: "#4D5156",
+              color: socialPreviewColors.foregroundSecondary,
               fontFamily: "Arial",
               fontSize: "12px",
               fontWeight: 400,

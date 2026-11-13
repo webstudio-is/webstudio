@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/index.ts", "src/runtime.ts"],
+  "include": ["src/index.ts", "src/runtime.ts", "src/standard-attributes.ts"],
   "compilerOptions": {
     "declarationDir": "lib/types",
     "rootDir": "./src"

@@ -1,5 +1,5 @@
-import { nanoid } from "nanoid";
 import { z } from "zod";
+import { createId } from "@webstudio-is/sdk";
 import { loadById, patchBuild } from "@webstudio-is/project/index.server";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import {
@@ -14,7 +14,9 @@ import {
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { assertApiProjectPermit } from "./api-permits.server";
+import { assertCliApiContractVersion } from "./api-compatibility.server";
 import { throwApiError } from "./api-errors.server";
+import { createAssetClient } from "~/shared/asset-client";
 
 export const loadBuildByProjectVersion = async (
   ctx: AppContext,
@@ -156,12 +158,14 @@ export const commitBuildTransactions = async ({
   clientVersion: number;
   transactions: z.infer<typeof buildPatchTransaction>[];
 }) => {
+  assertCliApiContractVersion(ctx);
   const result = await patchBuild(
     {
       buildId,
       projectId,
       clientVersion,
       transactions,
+      assetStore: createAssetClient(),
     },
     ctx
   );
@@ -193,6 +197,6 @@ export const commitBuildPatch = async ({
     projectId,
     buildId: build.id,
     clientVersion: build.version,
-    transactions: [{ id: nanoid(), payload }],
+    transactions: [{ id: createId("nano"), payload }],
   });
 };

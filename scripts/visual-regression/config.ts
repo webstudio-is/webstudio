@@ -6,6 +6,7 @@ export const visualRegressionConfig = {
   capture: {
     viewport: { width: 1280, height: 800 },
     timeout: 90_000,
+    settleTime: 250,
     concurrency: { minimum: 5, maximum: 8 },
   },
   comparison: {

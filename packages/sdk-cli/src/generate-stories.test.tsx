@@ -1,0 +1,297 @@
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  rmdir,
+  writeFile,
+} from "node:fs/promises";
+import path from "node:path";
+import { afterEach, describe, expect, test } from "vitest";
+import { build } from "esbuild";
+import type { ReactNode } from "react";
+import {
+  ActionValue,
+  PlaceholderValue,
+  Variable,
+  expression,
+  ws,
+} from "@webstudio-is/template";
+import type { TemplateMeta } from "@webstudio-is/template";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
+import { generateStories } from "./generate-stories";
+
+const originalCwd = process.cwd();
+const tempRoot = path.join(originalCwd, ".temp");
+const tempDirs: string[] = [];
+
+afterEach(async () => {
+  process.chdir(originalCwd);
+  await Promise.all(
+    tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
+  );
+  await rmdir(tempRoot).catch(() => undefined);
+});
+
+const writeFixtureFile = async (
+  root: string,
+  file: string,
+  content: string
+) => {
+  await writeFile(path.join(root, file), content);
+};
+
+const createTempPackage = async ({
+  packageJson,
+}: {
+  packageJson: Record<string, unknown>;
+}) => {
+  await mkdir(tempRoot, { recursive: true });
+  const root = await mkdtemp(path.join(tempRoot, "webstudio-sdk-stories-"));
+  tempDirs.push(root);
+  await mkdir(path.join(root, "src"), { recursive: true });
+  await writeFixtureFile(root, "package.json", JSON.stringify(packageJson));
+  return root;
+};
+
+const boxMeta: WsComponentMeta = {
+  label: "Box",
+  contentModel: {
+    category: "instance",
+    children: ["instance", "text"],
+  },
+  presetStyle: {},
+  props: {},
+};
+
+const labelMeta: WsComponentMeta = {
+  label: "Label",
+  contentModel: {
+    category: "instance",
+    children: ["instance", "text"],
+  },
+  presetStyle: {},
+  props: {},
+};
+
+const Box = (_props: { children?: ReactNode }) => null;
+Box.displayName = "Box";
+const ResourceForm = (_props: {
+  errors?: unknown;
+  onResultChange?: unknown;
+  children?: ReactNode;
+  "ws:show"?: boolean;
+}) => null;
+ResourceForm.displayName = "ResourceForm";
+const BaseLabel = () => null;
+BaseLabel.displayName = "Label";
+const RadixLabel = () => null;
+RadixLabel.displayName = "Label";
+
+describe("generateStories", () => {
+  test("generates stories from explicit package-local templates and metas", async () => {
+    const root = await createTempPackage({
+      packageJson: {
+        name: "@webstudio-is/sdk-components-react",
+        type: "module",
+      },
+    });
+
+    process.chdir(root);
+    await generateStories({
+      packageName: "@webstudio-is/sdk-components-react",
+      components: { Box },
+      templates: [
+        {
+          meta: {
+            category: "general",
+            template: <Box />,
+          } satisfies TemplateMeta,
+        },
+      ],
+      metas: {
+        Box: boxMeta,
+      },
+    });
+
+    await expect(
+      readFile(path.join(root, "src/__generated__/box.stories.tsx"), "utf8")
+    ).resolves.toContain('title: "Components/Box"');
+  });
+
+  test.each([
+    { hasErrors: true, hidden: false },
+    { hasErrors: false, hidden: false },
+    { hasErrors: true, hidden: true },
+  ])(
+    "imports managed Form formatting only when used (errors: $hasErrors, hidden: $hidden)",
+    async ({ hasErrors, hidden }) => {
+      const root = await createTempPackage({
+        packageJson: {
+          name: "@webstudio-is/sdk-components-react",
+          type: "module",
+        },
+      });
+      process.chdir(root);
+      const errorsVariable = new Variable("errors", []);
+      await generateStories({
+        packageName: "@webstudio-is/sdk-components-react",
+        components: { Box, ResourceForm },
+        templates: [
+          {
+            meta: {
+              category: "general",
+              template: hasErrors ? (
+                <ResourceForm
+                  ws:show={!hidden}
+                  errors={expression`${errorsVariable}`}
+                  onResultChange={
+                    new ActionValue(
+                      ["result"],
+                      expression`${errorsVariable} = result.errors`
+                    )
+                  }
+                >
+                  <ws.element ws:label="Error Message">
+                    {new PlaceholderValue("Sorry, something went wrong.")}
+                  </ws.element>
+                </ResourceForm>
+              ) : (
+                <Box />
+              ),
+            },
+          },
+        ],
+        metas: { Box: boxMeta, ResourceForm: boxMeta },
+      });
+      const source = await readFile(
+        path.join(
+          root,
+          `src/__generated__/${hasErrors ? "resource-form" : "box"}.stories.tsx`
+        ),
+        "utf8"
+      );
+      const result = await build({
+        stdin: { contents: source, loader: "tsx" },
+        format: "esm",
+        metafile: true,
+        tsconfigRaw: { compilerOptions: { verbatimModuleSyntax: true } },
+        write: false,
+      });
+      const imports = Object.values(result.metafile!.outputs).flatMap(
+        (output) => output.imports.map(({ path }) => path)
+      );
+      expect(imports.includes("@webstudio-is/sdk")).toBe(hasErrors && !hidden);
+      expect(imports.includes("@webstudio-is/react-sdk/runtime")).toBe(
+        hasErrors
+      );
+    }
+  );
+
+  test("rejects templates that resolve to the same story name", async () => {
+    const root = await createTempPackage({
+      packageJson: {
+        name: "@webstudio-is/sdk-components-react",
+        type: "module",
+      },
+    });
+
+    process.chdir(root);
+    await expect(
+      generateStories({
+        packageName: "@webstudio-is/sdk-components-react",
+        components: { Box },
+        templates: [
+          { meta: { category: "general", template: <Box /> } },
+          { meta: { category: "general", template: <Box /> } },
+        ],
+        metas: { Box: boxMeta },
+      })
+    ).rejects.toThrow('Story name "Box" is generated more than once');
+  });
+
+  test("imports default components from the base package even when local metas share the short name", async () => {
+    const root = await createTempPackage({
+      packageJson: {
+        name: "@webstudio-is/sdk-components-react-radix",
+        type: "module",
+      },
+    });
+
+    process.chdir(root);
+    await generateStories({
+      packageName: "@webstudio-is/sdk-components-react-radix",
+      components: { Label: RadixLabel },
+      templates: [
+        {
+          storyName: "BaseLabel",
+          meta: {
+            category: "general",
+            template: <BaseLabel />,
+          } satisfies TemplateMeta,
+        },
+      ],
+      metas: {
+        Label: {
+          ...labelMeta,
+          label: "Radix Label",
+        },
+      },
+      namespaceComponents: new Map([
+        [
+          "@webstudio-is/sdk-components-react/components",
+          { Box, Label: BaseLabel },
+        ],
+      ]),
+      namespaceMetas: new Map([
+        [
+          "@webstudio-is/sdk-components-react/components",
+          {
+            Box: boxMeta,
+            Label: labelMeta,
+          },
+        ],
+      ]),
+    });
+
+    const story = await readFile(
+      path.join(root, "src/__generated__/base-label.stories.tsx"),
+      "utf8"
+    );
+    expect(story).toContain(
+      'import { Box as Box, Label as Label } from "@webstudio-is/sdk-components-react/components";'
+    );
+    expect(story).not.toContain('from "../components"');
+  });
+
+  test("keeps namespaced component identity in generated stories", async () => {
+    const root = await createTempPackage({
+      packageJson: {
+        name: "@webstudio-is/sdk-components-react-radix",
+        type: "module",
+      },
+    });
+
+    process.chdir(root);
+    await generateStories({
+      packageName: "@webstudio-is/sdk-components-react-radix",
+      components: { Label: RadixLabel },
+      templates: [
+        {
+          meta: {
+            category: "general",
+            template: <RadixLabel />,
+          },
+        },
+      ],
+      metas: { Label: labelMeta },
+      namespaceMetas: new Map([
+        ["@webstudio-is/sdk-components-react/components", { Box: boxMeta }],
+      ]),
+    });
+
+    await expect(
+      readFile(path.join(root, "src/__generated__/label.stories.tsx"), "utf8")
+    ).resolves.toContain('import { Label as Label } from "../components";');
+  });
+});

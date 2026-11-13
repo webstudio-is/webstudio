@@ -23,7 +23,23 @@ export const meta: WsComponentMeta = {
     "type",
     "placeholder",
     "required",
+    "accept",
+    "multiple",
     "autofocus",
   ],
-  props,
+  props: {
+    ...props,
+    placeholder: {
+      type: "string",
+      control: "text",
+      required: false,
+      contentMode: true,
+    },
+    "aria-label": {
+      type: "string",
+      control: "text",
+      required: false,
+      contentMode: true,
+    },
+  },
 };

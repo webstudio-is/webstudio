@@ -6,10 +6,11 @@ import {
   useSearchFieldKeys,
   findNextListItemIndex,
   Tooltip,
+  InfoTooltip,
   Text,
-  rawTheme,
   Link,
   Flex,
+  cssVar,
 } from "@webstudio-is/design-system";
 import {
   AssetsShell,
@@ -139,8 +140,8 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           item.type === "uploaded" ? (
             renderMenu(index)
           ) : itemProps.state === "selected" && item.description ? (
-            <Tooltip
-              variant="wrapped"
+            <InfoTooltip
+              label={`About ${item.label}`}
               content={
                 <Flex
                   direction="column"
@@ -162,12 +163,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                   <Text>{item.description}</Text>
                 </Flex>
               }
-            >
-              <InfoCircleIcon
-                tabIndex={0}
-                color={rawTheme.colors.foregroundSubtle}
-              />
-            </Tooltip>
+            />
           ) : undefined
         }
       >
@@ -221,7 +217,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                 >
                   <InfoCircleIcon
                     tabIndex={0}
-                    color={rawTheme.colors.foregroundSubtle}
+                    color={cssVar("--foreground-secondary")}
                     style={{ pointerEvents: "auto" }}
                   />
                 </Tooltip>

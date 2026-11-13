@@ -1,9 +1,11 @@
-/**
- * @vitest-environment jsdom
- */
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
+import { userEvent } from "@vitest/browser/context";
+import {
+  $commandMetas,
+  createCommandsEmitter,
+} from "~/shared/commands-emitter";
 import type { QueryDefinition } from "@webstudio-is/query-builder";
 import { encodeDataSourceVariable, type DataSource } from "@webstudio-is/sdk";
 import { $dataSources } from "~/shared/sync/data-stores";
@@ -56,60 +58,93 @@ const renderQueryBuilder = <Query extends Record<string, unknown>>({
   return container;
 };
 
-test("shows public variable names without changing the stored expression", () => {
-  const value = {
-    where: {
-      all: [
+test.each(["Backspace", "Delete"])(
+  "protects a bound filter from the %s instance shortcut",
+  async (key) => {
+    const value = {
+      where: {
+        all: [
+          {
+            field: ["path"],
+            operator: "eq",
+            value: "$ws$system.pathname",
+          },
+        ],
+      },
+    };
+    const capabilities = {
+      version: 1,
+      fields: [{ path: ["path"], label: "Path", types: ["string"] }],
+      operators: [
         {
-          field: ["path"],
-          operator: "eq",
-          value: "$ws$system.pathname",
+          value: "eq",
+          label: "Equals",
+          types: ["string"],
+          input: { control: "expression", defaultValue: '""' },
         },
       ],
-    },
-  };
-  const capabilities = {
-    version: 1,
-    fields: [{ path: ["path"], label: "Path", types: ["string"] }],
-    operators: [
-      {
-        value: "eq",
-        label: "Equals",
-        types: ["string"],
-        input: { control: "expression", defaultValue: '""' },
+      source: {
+        fieldPathSchema: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 1,
+        },
+        controls: [
+          {
+            type: "filter",
+            key: "where",
+            label: "Filters",
+            defaultValue: { all: [] },
+            combinators: ["all"],
+            limits: { conditions: 8, depth: 3 },
+            defaultCondition: { field: ["path"], operator: "eq" },
+          },
+        ],
       },
-    ],
-    source: {
-      fieldPathSchema: {
-        type: "array",
-        items: { type: "string" },
-        minItems: 1,
-      },
-      controls: [
+    } as const satisfies QueryDefinition<string, string>;
+
+    const container = renderQueryBuilder({ value, capabilities });
+    await vi.waitFor(() =>
+      expect(container.querySelector(".cm-content")?.textContent).toBe(
+        '"/blog/article"'
+      )
+    );
+    const editor = container.querySelector(".cm-content");
+    const source = Array.from(container.querySelectorAll(".cm-content")).at(-1);
+
+    expect(editor?.textContent).toBe('"/blog/article"');
+    expect(source?.textContent).toContain("system.pathname");
+    expect(source?.textContent).not.toContain("$ws$system.pathname");
+    expect(value.where.all[0].value).toBe("$ws$system.pathname");
+    const handler = vi.fn();
+    const previousCommands = $commandMetas.get();
+    const { subscribeCommands } = createCommandsEmitter({
+      source: "builder",
+      commands: [
         {
-          type: "filter",
-          key: "where",
-          label: "Filters",
-          defaultValue: { all: [] },
-          combinators: ["all"],
-          limits: { conditions: 8, depth: 3 },
-          defaultCondition: { field: ["path"], operator: "eq" },
+          name: "deleteTestInstance",
+          defaultHotkeys: [key],
+          disableOnInputLikeControls: true,
+          handler,
         },
       ],
-    },
-  } as const satisfies QueryDefinition<string, string>;
+    });
+    const unsubscribe = subscribeCommands();
+    try {
+      await userEvent.click(editor as HTMLElement);
+      await userEvent.keyboard(`{${key}}`);
+      expect(handler).not.toHaveBeenCalled();
+      (editor as HTMLElement).blur();
+      await userEvent.keyboard(`{${key}}`);
+      expect(handler).toHaveBeenCalledOnce();
+    } finally {
+      unsubscribe();
+      $commandMetas.set(previousCommands);
+    }
+  }
+);
 
-  const container = renderQueryBuilder({ value, capabilities });
-  const editor = container.querySelector(".cm-content");
-  const source = Array.from(container.querySelectorAll(".cm-content")).at(-1);
-
-  expect(editor?.textContent).toBe('"/blog/article"');
-  expect(source?.textContent).toContain("system.pathname");
-  expect(source?.textContent).not.toContain("$ws$system.pathname");
-  expect(value.where.all[0].value).toBe("$ws$system.pathname");
-});
-
-test("shows an evaluated value for a bound number input", () => {
+test("shows an evaluated value for a bound number input", async () => {
   const capabilities = {
     version: 1,
     fields: [],
@@ -140,6 +175,8 @@ test("shows an evaluated value for a bound number input", () => {
   const input = container.querySelector<HTMLInputElement>(
     'input[aria-label="Limit"]'
   );
+
+  await vi.waitFor(() => expect(input?.value).toBe("20"));
 
   expect(input?.value).toBe("20");
   expect(input?.step).toBe("1");
@@ -258,6 +295,7 @@ test("renders the query source inside a constrained full-size editor", () => {
   const scrollerStyle = getComputedStyle(
     sourceContainer.querySelector(".cm-scroller") as Element
   );
-  expect(scrollerStyle.minHeight).toBe("0");
-  expect(scrollerStyle.overflow).toBe("auto");
+  expect(scrollerStyle.minHeight).toBe("0px");
+  expect(scrollerStyle.overflowX).toBe("hidden");
+  expect(scrollerStyle.overflowY).toBe("auto");
 });

@@ -24,10 +24,10 @@ import {
   isPageDraft,
 } from "@webstudio-is/sdk";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
-import { tokenizer } from "acorn";
 import * as bcp47 from "bcp-47";
 import slugify from "slugify";
 import { z } from "zod";
+import { matchPathnameRoutes } from "@webstudio-is/wsauth";
 import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
@@ -45,6 +45,7 @@ import {
   type SemanticValidationIssue,
 } from "./errors";
 import { getNamedExpressionValidationIssues } from "./expression-validation";
+import { bindExpressionInput } from "./expression-scope";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { paginateOutput, type PaginatedOutputInput } from "./output";
 import {
@@ -151,40 +152,17 @@ export const getSerializedPagePath = (
 export const normalizeSerializedPagePath = (path: string) =>
   path === "/" ? "" : path;
 
-const escapeRegExp = (value: string) =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-const isSerializedPagePathMatch = (pattern: string, path: string) => {
-  if (pattern === path) {
-    return true;
-  }
-  const segments = pattern.split("/");
-  const pathSegments = path.split("/");
-  const regexParts = segments.map((segment, index) => {
-    if (segment === "*") {
-      return index === segments.length - 1 ? ".*" : "[^/]+";
-    }
-    const param = segment.match(/^:(\w+)([?*]?)$/);
-    if (param === null) {
-      return escapeRegExp(segment);
-    }
-    const modifier = param[2];
-    if (modifier === "?") {
-      return "[^/]*";
-    }
-    if (modifier === "*") {
-      return index === segments.length - 1 ? ".*" : "[^/]+";
-    }
-    return "[^/]+";
-  });
-  if (
-    segments.length !== pathSegments.length &&
-    pattern.endsWith("*") === false
-  ) {
-    return false;
-  }
-  return new RegExp(`^${regexParts.join("/")}$`).test(path);
-};
+const findMatchingSerializedPageByPath = (
+  pages: SerializedPages,
+  path: string
+) =>
+  matchPathnameRoutes(
+    pages.pages.map((page) => ({
+      pattern: getSerializedPagePath(pages, page),
+      value: page,
+    })),
+    normalizeSerializedPagePath(path)
+  )?.value;
 
 export const serializePageSummary = (
   pages: SerializedPages,
@@ -236,12 +214,7 @@ export const findSerializedPageByInput = (
     const exactPage = pages.pages.find(
       (page) => getSerializedPagePath(pages, page) === pagePath
     );
-    return (
-      exactPage ??
-      pages.pages.find((page) =>
-        isSerializedPagePathMatch(getSerializedPagePath(pages, page), pagePath)
-      )
-    );
+    return exactPage ?? findMatchingSerializedPageByPath(pages, pagePath);
   }
 };
 
@@ -252,16 +225,6 @@ const findExactSerializedPageByPath = (
   const pagePath = normalizeSerializedPagePath(path);
   return pages.pages.find(
     (page) => getSerializedPagePath(pages, page) === pagePath
-  );
-};
-
-const findMatchingSerializedPageByPath = (
-  pages: SerializedPages,
-  path: string
-) => {
-  const pagePath = normalizeSerializedPagePath(path);
-  return pages.pages.find((page) =>
-    isSerializedPagePathMatch(getSerializedPagePath(pages, page), pagePath)
   );
 };
 
@@ -840,7 +803,7 @@ export const listPageMetadataExpressions = (
 };
 
 export const pageExpressionFieldHint =
-  'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.';
+  'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.';
 
 export const pageStatusFieldHint =
   "Pass a fixed HTTP status code as a number from 200 through 599, for example 302. For a dynamic status, pass one Webstudio JavaScript expression as a string, for example `system.status`.";
@@ -856,99 +819,19 @@ const pageStatusCodeInput = z.number().refine(
   })
 );
 
-const jsExpressionStartPattern =
-  /^\s*(?:["'`[{(]|(?:await|new|typeof|void)\b|(?:undefined|null|true|false)\s*$)/;
-const jsExpressionOperatorPattern =
-  /(?:\?\?|&&|\|\||=>|\?\s*.+\s*:|\.\s*[A-Za-z_$]|\[[^\]]*\]|\s(?:[=!<>]=?|[+\-*/%])\s)/;
-
-const pageTextSentenceSegmenter = new Intl.Segmenter(undefined, {
-  granularity: "sentence",
-});
-
-const hasMultipleSentences = (value: string) => {
-  let count = 0;
-  for (const { segment } of pageTextSentenceSegmenter.segment(value)) {
-    if (segment.trim().length > 0) {
-      count += 1;
-    }
-    if (count > 1) {
-      return true;
-    }
-  }
-  return false;
-};
-
-const hasWhitespaceAfterDot = (value: string) => {
-  try {
-    const tokens = tokenizer(value, { ecmaVersion: "latest" });
-    let token = tokens.getToken();
-    while (token.type.label !== "eof") {
-      const nextToken = tokens.getToken();
-      if (
-        token.type.label === "." &&
-        nextToken.type.label === "name" &&
-        token.end < nextToken.start
-      ) {
-        return true;
-      }
-      token = nextToken;
-    }
-  } catch {
-    return hasMultipleSentences(value);
-  }
-  return false;
-};
-
-const isAbsoluteUrl = (value: string) => {
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const normalizePageExpressionInput = (value: string) => {
-  if (isAbsoluteUrl(value) || hasWhitespaceAfterDot(value)) {
-    return JSON.stringify(value);
-  }
-  if (
-    jsExpressionStartPattern.test(value) ||
-    jsExpressionOperatorPattern.test(value)
-  ) {
-    return value;
-  }
-  return JSON.stringify(value);
-};
-
-const normalizePageStatusInput = (value: string) => {
-  const number = Number(value);
-  if (Number.isNaN(number) === false && String(number) === value) {
-    return value;
-  }
-  return normalizePageExpressionInput(value);
-};
-
 const pageExpressionStringInput = z
-  .preprocess(
-    (value) =>
-      typeof value === "string" ? normalizePageExpressionInput(value) : value,
-    z.string({
-      error: (issue) =>
-        issue.input !== null &&
-        typeof issue.input === "object" &&
-        Array.isArray(issue.input) === false
-          ? `${pageExpressionFieldHint} Pass it as a string, not as a prop value object like {"type":"string","value":"..."}.`
-          : undefined,
-    })
-  )
+  .string({
+    error: (issue) =>
+      issue.input !== null &&
+      typeof issue.input === "object" &&
+      Array.isArray(issue.input) === false
+        ? `${pageExpressionFieldHint} Pass expression source as a string, not as a prop value object like {"type":"string","value":"..."}.`
+        : undefined,
+  })
   .describe(pageExpressionFieldHint);
 
 const pageStatusExpressionInput = z
-  .union([
-    pageStatusCodeInput.transform((value) => String(value)),
-    z.string().transform(normalizePageStatusInput),
-  ])
+  .union([pageStatusCodeInput.transform((value) => String(value)), z.string()])
   .describe(pageStatusFieldHint);
 
 export const pagePathFieldHint =
@@ -996,41 +879,36 @@ type PageFieldsPatchInput = Partial<{
   meta: PageMetaPatchInput;
 }>;
 
-const normalizePageMetaExpressionInputs = (
-  meta: PageMetaPatchInput | undefined
-) => {
-  if (meta === undefined) {
-    return undefined;
+const bindPageFieldsExpressionInputs = <Input extends PageFieldsPatchInput>({
+  state,
+  input,
+  rootInstanceId,
+}: {
+  state: Pick<BuilderState, "instances" | "dataSources">;
+  input: Input;
+  rootInstanceId: string;
+}): Input => {
+  const bound: Input = { ...input };
+  if (typeof input.title === "string") {
+    bound.title = bindExpressionInput(state, rootInstanceId, input.title);
   }
-  const normalized: PageMetaPatchInput = { ...meta };
+  if (input.meta === undefined) {
+    return bound;
+  }
+  const meta: PageMetaPatchInput = { ...input.meta };
   for (const name of pageMetaExpressionFields) {
-    const value = normalized[name];
-    if (typeof value === "string" && value !== "") {
-      normalized[name] =
-        name === "status"
-          ? normalizePageStatusInput(value)
-          : normalizePageExpressionInput(value);
+    const value = meta[name];
+    if (typeof value === "string") {
+      meta[name] = bindExpressionInput(state, rootInstanceId, value);
     }
   }
-  normalized.custom = normalized.custom?.map((customMeta) => ({
+  meta.custom = meta.custom?.map((customMeta) => ({
     ...customMeta,
-    content: normalizePageExpressionInput(customMeta.content),
+    content: bindExpressionInput(state, rootInstanceId, customMeta.content),
   }));
-  return normalized;
+  bound.meta = meta;
+  return bound;
 };
-
-const normalizePageFieldsExpressionInputs = <
-  Input extends PageFieldsPatchInput,
->(
-  input: Input
-): Input => ({
-  ...input,
-  title:
-    typeof input.title === "string"
-      ? normalizePageExpressionInput(input.title)
-      : input.title,
-  meta: normalizePageMetaExpressionInputs(input.meta),
-});
 
 const pageMetaInputBase = z.object({
   description: pageExpressionStringInput.optional(),
@@ -1236,7 +1114,8 @@ export const pageSettingsUpdateInput = z.object({
         thumbnailAssetId: z.string(),
       }),
     })
-    .partial(),
+    .partial()
+    .strict(),
 });
 
 export const pageSavePathInHistoryInput = z.object({
@@ -1466,7 +1345,7 @@ export const computePageSettingsPath = (
     .replace(/\/+/g, "/");
 };
 
-export const validatePageSettingsGeneralSection = ({
+export const validatePageSettingsGeneralSection = async ({
   pages,
   pageId,
   values,
@@ -1476,12 +1355,16 @@ export const validatePageSettingsGeneralSection = ({
   pageId: undefined | Page["id"];
   values: PageSettingsValues;
   variableValues: Map<string, unknown>;
-}): PageSettingsErrors => {
+}): Promise<PageSettingsErrors> => {
+  const [status, redirect] = await Promise.all([
+    computeExpression(values.status ?? `undefined`, variableValues),
+    computeExpression(values.redirect, variableValues),
+  ]);
   const computedValues = {
     name: values.name,
     path: values.path,
-    status: computeExpression(values.status ?? `undefined`, variableValues),
-    redirect: computeExpression(values.redirect, variableValues),
+    status,
+    redirect,
     documentType: values.documentType,
   };
 
@@ -1552,63 +1435,71 @@ export const validatePageSettingsAuthSection = (
   return { auth: authErrors };
 };
 
-export const validatePageSettingsSearchSection = (
+export const validatePageSettingsSearchSection = async (
   values: PageSettingsValues,
   variableValues: Map<string, unknown>
-): PageSettingsErrors => {
+): Promise<PageSettingsErrors> => {
+  const [title, description, excludePageFromSearch, language] =
+    await Promise.all([
+      computeExpression(values.title, variableValues),
+      computeExpression(values.description, variableValues),
+      computeExpression(values.excludePageFromSearch, variableValues),
+      computeExpression(values.language, variableValues),
+    ]);
   const parsedResult = pageSearchSettingsInput.safeParse({
-    title:
-      computeExpression(values.title, variableValues) ??
-      "exclude from validation",
-    description: computeExpression(values.description, variableValues),
-    excludePageFromSearch: computeExpression(
-      values.excludePageFromSearch,
-      variableValues
-    ),
-    language: computeExpression(values.language, variableValues),
+    title: title ?? "exclude from validation",
+    description,
+    excludePageFromSearch,
+    language,
   });
   return parsedResult.success ? {} : parsedResult.error.flatten().fieldErrors;
 };
 
-export const validatePageSettingsSocialImageSection = (
+export const validatePageSettingsSocialImageSection = async (
   values: PageSettingsValues,
   variableValues: Map<string, unknown>
-): PageSettingsErrors => {
+): Promise<PageSettingsErrors> => {
+  const socialImageUrl = await computeExpression(
+    values.socialImageUrl,
+    variableValues
+  );
   const parsedResult = pageSocialImageSettingsInput.safeParse({
-    socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
+    socialImageUrl,
   });
   return parsedResult.success ? {} : parsedResult.error.flatten().fieldErrors;
 };
 
-export const validatePageSettingsCustomMetadataSection = (
+export const validatePageSettingsCustomMetadataSection = async (
   values: PageSettingsValues,
   variableValues: Map<string, unknown>
-): PageSettingsErrors => {
-  const parsedResult = pageCustomMetadataSettingsInput.safeParse({
-    customMetas: values.customMetas.map((item) => ({
+): Promise<PageSettingsErrors> => {
+  const customMetas = await Promise.all(
+    values.customMetas.map(async (item) => ({
       property: item.property,
-      content: computeExpression(item.content, variableValues),
-    })),
+      content: await computeExpression(item.content, variableValues),
+    }))
+  );
+  const parsedResult = pageCustomMetadataSettingsInput.safeParse({
+    customMetas,
   });
   return parsedResult.success ? {} : parsedResult.error.flatten().fieldErrors;
 };
 
-export const validatePageSettingsTextContentSection = (
+export const validatePageSettingsTextContentSection = async (
   values: PageSettingsValues,
   variableValues: Map<string, unknown>
-): PageSettingsErrors => {
+): Promise<PageSettingsErrors> => {
   if (values.documentType !== "text") {
     return {};
   }
 
-  const parsedResult = pageTextContentSettingsInput.safeParse({
-    content: computeExpression(values.content, variableValues),
-  });
+  const content = await computeExpression(values.content, variableValues);
+  const parsedResult = pageTextContentSettingsInput.safeParse({ content });
 
   return parsedResult.success ? {} : parsedResult.error.flatten().fieldErrors;
 };
 
-export const validatePageSettings = ({
+export const validatePageSettings = async ({
   pages,
   pageId,
   values,
@@ -1618,7 +1509,7 @@ export const validatePageSettings = ({
   pageId: undefined | Page["id"];
   values: PageSettingsValues;
   variableValues: Map<string, unknown>;
-}): PageSettingsErrors => {
+}): Promise<PageSettingsErrors> => {
   const errors: PageSettingsErrors = {};
   const sectionErrors = [
     validatePageSettingsGeneralSection({
@@ -1627,7 +1518,7 @@ export const validatePageSettings = ({
       values,
       variableValues,
     }),
-    validatePageSettingsAuthSection(values),
+    Promise.resolve(validatePageSettingsAuthSection(values)),
   ];
   if (values.documentType === "html") {
     sectionErrors.push(
@@ -1641,7 +1532,8 @@ export const validatePageSettings = ({
       validatePageSettingsTextContentSection(values, variableValues)
     );
   }
-  for (const sectionError of sectionErrors) {
+  const resolvedSectionErrors = await Promise.all(sectionErrors);
+  for (const sectionError of resolvedSectionErrors) {
     if (sectionError.auth) {
       errors.auth = { ...errors.auth, ...sectionError.auth };
     }
@@ -1847,16 +1739,14 @@ export const createPageUpdatePayload = (
 };
 
 export const createPage = (
-  state: Pick<BuilderState, "pages">,
+  state: Pick<BuilderState, "pages" | "instances" | "dataSources">,
   input: z.infer<typeof pageCreateInput>,
   context: BuilderRuntimeContext
 ) => {
   const pages = getRequiredPages(state);
-  const normalizedInput = normalizePageFieldsExpressionInputs(input);
   const parentFolderId = input.parentFolderId ?? pages.rootFolderId;
   const parentFolder = getFolderOrThrow(pages, parentFolderId);
-  const expressionIssues =
-    collectPageExpressionValidationIssues(normalizedInput);
+  const expressionIssues = collectPageExpressionValidationIssues(input);
   if (expressionIssues.length > 0) {
     return throwBuilderValidationError(
       formatValidationIssueMessages(expressionIssues),
@@ -1888,16 +1778,21 @@ export const createPage = (
     );
   }
   const rootInstanceId = context.createId();
+  const boundInput = bindPageFieldsExpressionInputs({
+    state,
+    input,
+    rootInstanceId,
+  });
   const page = createPageValue({
     pageId,
-    name: normalizedInput.name ?? input.name,
-    path: normalizedInput.path ?? input.path,
-    title: normalizedInput.title,
+    name: boundInput.name ?? input.name,
+    path: boundInput.path ?? input.path,
+    title: boundInput.title,
     rootInstanceId,
     meta:
-      normalizedInput.meta === undefined
+      boundInput.meta === undefined
         ? {}
-        : (pageMetaToPatchValue(normalizedInput.meta) as Page["meta"]),
+        : (pageMetaToPatchValue(boundInput.meta) as Page["meta"]),
   });
   const rootInstance = createPageRootInstance(rootInstanceId);
   return createRuntimeMutation({
@@ -1913,7 +1808,7 @@ export const createPage = (
 };
 
 export const updatePage = (
-  state: Pick<BuilderState, "pages">,
+  state: Pick<BuilderState, "pages" | "instances" | "dataSources">,
   input: z.infer<typeof pageUpdateInput>
 ) => {
   const pages = getRequiredPages(state);
@@ -1921,9 +1816,8 @@ export const updatePage = (
   if (page === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
   }
-  const normalizedValues = normalizePageFieldsExpressionInputs(input.values);
-  const nextPath = normalizedValues.path ?? page.path;
-  const nextIsDraft = normalizedValues.isDraft ?? isPageDraft(page);
+  const nextPath = input.values.path ?? page.path;
+  const nextIsDraft = input.values.isDraft ?? isPageDraft(page);
   const draftabilityError = getPageDraftabilityError({
     pageId: page.id,
     pagePath: nextPath,
@@ -1932,17 +1826,14 @@ export const updatePage = (
   if (nextIsDraft && draftabilityError !== undefined) {
     return throwBuilderRuntimeError("BAD_REQUEST", draftabilityError);
   }
-  const expressionIssues =
-    collectPageExpressionValidationIssues(normalizedValues);
+  const expressionIssues = collectPageExpressionValidationIssues(input.values);
   if (expressionIssues.length > 0) {
     return throwBuilderValidationError(
       formatValidationIssueMessages(expressionIssues),
       prefixValidationIssuePaths(expressionIssues, ["values"])
     );
   }
-  const pathIssues = getPagePathValidationIssues(normalizedValues.path, [
-    "values",
-  ]);
+  const pathIssues = getPagePathValidationIssues(input.values.path, ["values"]);
   if (pathIssues.length > 0) {
     return throwBuilderValidationError(
       pathIssues.map((issue) => issue.detail).join("\n"),
@@ -1950,29 +1841,33 @@ export const updatePage = (
     );
   }
   if (
-    (normalizedValues.path !== undefined ||
-      normalizedValues.parentFolderId !== undefined) &&
+    (input.values.path !== undefined ||
+      input.values.parentFolderId !== undefined) &&
     isPathAvailable({
       pages,
-      path: normalizedValues.path ?? page.path,
+      path: input.values.path ?? page.path,
       parentFolderId:
-        normalizedValues.parentFolderId ??
-        getParentFolderIdOrThrow(pages, page.id),
+        input.values.parentFolderId ?? getParentFolderIdOrThrow(pages, page.id),
       pageId: page.id,
     }) === false
   ) {
     return throwBuilderRuntimeError(
       "CONFLICT",
-      `Page path "${normalizedValues.path ?? page.path}" is already in use`
+      `Page path "${input.values.path ?? page.path}" is already in use`
     );
   }
-  if (normalizedValues.parentFolderId !== undefined) {
-    getFolderOrThrow(pages, normalizedValues.parentFolderId);
+  if (input.values.parentFolderId !== undefined) {
+    getFolderOrThrow(pages, input.values.parentFolderId);
     getParentFolderIdOrThrow(pages, page.id);
   }
+  const boundValues = bindPageFieldsExpressionInputs({
+    state,
+    input: input.values,
+    rootInstanceId: page.rootInstanceId,
+  });
   return createRuntimeMutation({
     payload: createPageUpdatePayload({
-      input: normalizedValues,
+      input: boundValues,
       page,
       pages,
     }),
@@ -2065,7 +1960,7 @@ export const getPageSettingsUpdateData = ({
 };
 
 export const updatePageSettings = (
-  state: Pick<BuilderState, "pages">,
+  state: Pick<BuilderState, "pages" | "instances" | "dataSources">,
   input: z.infer<typeof pageSettingsUpdateInput>
 ) => {
   const pages = getRequiredPages(state);

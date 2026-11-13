@@ -1,4 +1,12 @@
-import type { WebstudioFragment } from "@webstudio-is/sdk";
+import {
+  getHtmlTagFromInstance,
+  getContentBlockTemplateName,
+  isContentBlockMdxTemplateInsertable,
+  type Instance,
+  type Props,
+  type WebstudioFragment,
+  type WsComponentMeta,
+} from "@webstudio-is/sdk";
 import { findTextEditorTarget } from "@webstudio-is/project-build/runtime";
 import {
   executeRuntimeMutationAsync,
@@ -26,9 +34,10 @@ import type {
   InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import {
-  findBlockSelector,
+  findBlockContentSelector,
   getBlockTemplateInsertionIndex,
 } from "@webstudio-is/project-build/runtime";
+import { recordExternalContentTemplateInsertion } from "~/shared/external-content-mutations";
 
 const getTemplateTokenConflicts = ({
   fragment,
@@ -46,6 +55,22 @@ const getTemplateTokenConflicts = ({
   }
   return detect({ fragment, targetData });
 };
+
+export const filterInsertableContentBlockTemplates = ({
+  templates,
+  props,
+  metas,
+}: {
+  templates: [instance: Instance, selector: InstanceSelector][];
+  props: Props;
+  metas: Map<Instance["component"], WsComponentMeta>;
+}) =>
+  templates.filter(([instance]) =>
+    isContentBlockMdxTemplateInsertable({
+      component: instance.component,
+      tag: getHtmlTagFromInstance({ instance, props, metas }),
+    })
+  );
 
 export const __testing__ = {
   getTemplateTokenConflicts,
@@ -118,22 +143,32 @@ export const insertListItemAt = async (listItemSelector: InstanceSelector) => {
   selectInstance(selectedInstanceSelector);
 };
 
-export const insertTemplateAt = async (
-  templateSelector: InstanceSelector,
-  anchor: InstanceSelector,
-  insertBefore: boolean
-) => {
+export const insertTemplateAt = async ({
+  templateSelector,
+  anchor,
+  insertBefore,
+  replaceAnchor = false,
+}: {
+  templateSelector: InstanceSelector;
+  anchor: InstanceSelector;
+  insertBefore: boolean;
+  replaceAnchor?: boolean;
+}) => {
   const instances = $instances.get();
+  const template = instances.get(templateSelector[0]);
+  if (template === undefined) {
+    return false;
+  }
 
   const fragment = extractWebstudioFragment(
     getWebstudioData(),
     templateSelector[0]
   );
 
-  const parentSelector = findBlockSelector({ anchor, instances });
+  const parentSelector = findBlockContentSelector({ anchor, instances });
 
   if (parentSelector === undefined) {
-    return;
+    return false;
   }
 
   const position = getBlockTemplateInsertionIndex({
@@ -143,7 +178,7 @@ export const insertTemplateAt = async (
   });
 
   if (position === undefined) {
-    return;
+    return false;
   }
 
   const target: DroppableTarget = {
@@ -158,38 +193,67 @@ export const insertTemplateAt = async (
       targetData: getWebstudioData(),
       contentMode,
     });
-    const conflictResolution = await resolveTokenConflicts(conflicts);
+    const conflictResolution =
+      conflicts.length === 0
+        ? "theirs"
+        : await resolveTokenConflicts(conflicts);
     if (conflictResolution === "cancel") {
-      return;
+      return false;
     }
 
-    const didInsert = await insertWebstudioFragmentAt(
+    const didInsert = insertWebstudioFragmentAt(
       fragment,
       target,
       conflictResolution,
-      { contentMode }
+      {
+        contentMode,
+        replaceInstanceSelector: replaceAnchor ? anchor : undefined,
+      }
     );
     if (didInsert === false) {
-      return;
+      return false;
     }
     const selectedInstanceSelector = $selectedInstanceSelector.get();
     if (selectedInstanceSelector === undefined) {
-      return;
+      return false;
     }
     const data = getWebstudioData();
+    const metas = $registeredComponentMetas.get();
+    const pristineFragment = structuredClone(
+      extractWebstudioFragment(data, selectedInstanceSelector[0])
+    );
+    const pristineProps = new Map(
+      pristineFragment.props.map((prop) => [prop.id, prop])
+    );
+    recordExternalContentTemplateInsertion({
+      instanceSelector: selectedInstanceSelector,
+      insertion: {
+        templateName: getContentBlockTemplateName(template),
+        pristineFragment,
+        htmlTags: pristineFragment.instances.flatMap((instance) => {
+          const tag = getHtmlTagFromInstance({
+            instance,
+            metas,
+            props: pristineProps,
+          });
+          return tag === undefined ? [] : [{ instanceId: instance.id, tag }];
+        }),
+      },
+    });
     const editableInstanceSelector = findTextEditorTarget({
       instanceSelector: selectedInstanceSelector,
       instances: data.instances,
       props: data.props,
-      metas: $registeredComponentMetas.get(),
+      metas,
     });
     $textEditingInstanceSelector.set(
       editableInstanceSelector
         ? { selector: editableInstanceSelector, reason: "new" }
         : undefined
     );
+    return true;
   } catch {
     // User cancelled the operation
-    return;
+    return false;
   }
 };

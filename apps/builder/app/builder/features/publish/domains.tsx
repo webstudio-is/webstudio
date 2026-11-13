@@ -1,5 +1,6 @@
 import {
   Button,
+  cssVar,
   theme,
   Text,
   Tooltip,
@@ -15,7 +16,14 @@ import {
   toast,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { CopyIcon, HelpIcon } from "@webstudio-is/icons";
+import {
+  AlertIcon,
+  CheckCircleIcon,
+  CopyIcon,
+  HelpIcon,
+  InfoCircleIcon,
+  SpinnerIcon,
+} from "@webstudio-is/icons";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
   Fragment,
@@ -37,7 +45,7 @@ import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
-import { PublishStatusButton } from "./publish-details-dialog";
+import type { PublishSessionItem } from "./use-publish-session";
 
 export type Domain = Project["domainsVirtual"][number];
 
@@ -86,7 +94,20 @@ export const getPublishStatusAndText = ({
     </>
   );
 
-  return { statusText, status };
+  const color =
+    status === "PUBLISHED"
+      ? cssVar("--foreground-positive")
+      : status === "FAILED"
+        ? cssVar("--foreground-negative")
+        : cssVar("--foreground-warning");
+  const Icon =
+    status === "PUBLISHED"
+      ? CheckCircleIcon
+      : status === "FAILED"
+        ? AlertIcon
+        : SpinnerIcon;
+
+  return { statusText, status, color, Icon };
 };
 
 const getStatusText = (props: {
@@ -95,7 +116,8 @@ const getStatusText = (props: {
 }) => {
   const status = getStatus(props.projectDomain);
 
-  let isVerifiedActive = false;
+  let color = cssVar("--foreground-negative");
+  let Icon = AlertIcon;
   let text: ReactNode = "Something went wrong";
 
   switch (status) {
@@ -110,7 +132,8 @@ const getStatusText = (props: {
       text = "Status: Waiting for CNAME propagation";
       break;
     case "VERIFIED_ACTIVE":
-      isVerifiedActive = true;
+      color = cssVar("--foreground-secondary");
+      Icon = InfoCircleIcon;
       text = "Status: Active, not published";
 
       if (props.projectDomain.latestBuildVirtual !== null) {
@@ -119,7 +142,8 @@ const getStatusText = (props: {
         );
 
         text = publishText.statusText;
-        isVerifiedActive = publishText.status !== "FAILED";
+        color = publishText.color;
+        Icon = publishText.Icon;
       }
       break;
     case "VERIFIED_ERROR":
@@ -134,21 +158,78 @@ const getStatusText = (props: {
   }
 
   return {
-    isVerifiedActive,
+    color: props.isLoading ? cssVar("--foreground-secondary") : color,
+    Icon,
     text: props.isLoading ? "Loading status..." : text,
   };
 };
 
+const StatusIcon = (props: {
+  projectDomain: Domain;
+  isLoading: boolean;
+  latestSession?: PublishSessionItem;
+  onOpenReport?: (domain: string) => void;
+}) => {
+  const fallback = getStatusText(props);
+  const { latestSession } = props;
+  const Icon =
+    latestSession?.availability === "pending"
+      ? SpinnerIcon
+      : latestSession?.outcome === "failed"
+        ? AlertIcon
+        : latestSession?.outcome === "succeeded"
+          ? CheckCircleIcon
+          : fallback.Icon;
+  const color =
+    latestSession?.availability === "pending"
+      ? cssVar("--foreground-warning")
+      : latestSession?.outcome === "failed"
+        ? cssVar("--foreground-negative")
+        : latestSession?.outcome === "succeeded"
+          ? cssVar("--foreground-positive")
+          : fallback.color;
+  const text =
+    latestSession?.availability === "pending"
+      ? "Publishing started"
+      : latestSession?.outcome === "failed"
+        ? "Publish failed"
+        : latestSession?.outcome === "succeeded"
+          ? "Published"
+          : fallback.text;
+
+  return (
+    <Tooltip content={text}>
+      <IconButton
+        type="button"
+        aria-label={`Publish report: ${props.projectDomain.domain}`}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          props.onOpenReport?.(props.projectDomain.domain);
+        }}
+        css={{ color }}
+      >
+        <Icon />
+      </IconButton>
+    </Tooltip>
+  );
+};
 const DomainItem = ({
   initiallyOpen,
   projectDomain,
   project,
   refresh,
+  validatedDomains,
+  onOpenReport,
+  latestSession,
 }: {
   initiallyOpen: boolean;
   projectDomain: Domain;
   project: Project;
   refresh: () => Promise<void>;
+  validatedDomains?: readonly string[];
+  onOpenReport?: (domain: string) => void;
+  latestSession?: PublishSessionItem;
 }) => {
   const timeSinceLastUpdateMs =
     Date.now() - new Date(projectDomain.updatedAt).getTime();
@@ -273,7 +354,7 @@ const DomainItem = ({
 
   const domainStatus = getStatus(projectDomain);
 
-  const { isVerifiedActive, text } = getStatusText({
+  const { color, text } = getStatusText({
     projectDomain,
     isLoading: false,
   });
@@ -310,6 +391,7 @@ const DomainItem = ({
             projectDomain.latestBuildVirtual.buildId ===
               project.latestBuildVirtual?.buildId
           }
+          validatedDomains={validatedDomains}
           domain={projectDomain.domain}
           disabled={domainStatus !== "VERIFIED_ACTIVE"}
           isCustomDomain
@@ -319,22 +401,20 @@ const DomainItem = ({
       title={projectDomain.domain}
       suffix={
         <Grid flow="column">
-          <PublishStatusButton
-            label={projectDomain.domain}
-            activity={text}
-            latestBuildId={projectDomain.latestBuildVirtual?.buildId}
-            status={
-              isStatusLoading
-                ? "pending"
-                : isVerifiedActive
-                  ? "success"
-                  : "error"
-            }
+          <StatusIcon
+            projectDomain={projectDomain}
+            isLoading={isStatusLoading}
+            onOpenReport={onOpenReport}
+            latestSession={latestSession}
           />
 
           <CopyToClipboard
             text={pageUrl.toString()}
-            copyText={`Copy link: ${pageUrl.toString()}`}
+            copyText={
+              <Text css={{ overflowWrap: "anywhere" }}>
+                Copy link: {pageUrl.toString()}
+              </Text>
+            }
           >
             <IconButton type="button" tabIndex={-1}>
               <CopyIcon />
@@ -349,7 +429,6 @@ const DomainItem = ({
             // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
             formAction={handleVerify}
             state={isCheckStateInProgress ? "pending" : undefined}
-            color="neutral"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
           >
             Check status
@@ -366,7 +445,6 @@ const DomainItem = ({
             // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
             formAction={handleUpdateStatus}
             state={isCheckStateInProgress ? "pending" : undefined}
-            color="neutral"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
           >
             Check status
@@ -418,7 +496,9 @@ const DomainItem = ({
 
           {status !== "UNVERIFIED" && (
             <>
-              <Text color={isVerifiedActive ? "success" : "destructive"}>
+              <Text
+                css={{ color, overflowWrap: "anywhere", userSelect: "text" }}
+              >
                 {text}
               </Text>
             </>
@@ -502,7 +582,7 @@ const DomainItem = ({
           }}
         >
           <Separator css={{ alignSelf: "unset" }} />
-          <Text color="main">OR</Text>
+          <Text color="main">or</Text>
           <Separator css={{ alignSelf: "unset" }} />
         </Grid>
 
@@ -537,6 +617,9 @@ type DomainsProps = {
   domains: Domain[];
   refresh: () => Promise<void>;
   project: Project;
+  validatedDomains?: readonly string[];
+  onOpenReport?: (domain: string) => void;
+  sessionItems?: PublishSessionItem[];
 };
 
 export const Domains = ({
@@ -544,6 +627,9 @@ export const Domains = ({
   domains,
   refresh,
   project,
+  validatedDomains,
+  onOpenReport,
+  sessionItems = [],
 }: DomainsProps) => {
   return (
     <>
@@ -554,8 +640,20 @@ export const Domains = ({
           initiallyOpen={newDomains.has(projectDomain.domain)}
           refresh={refresh}
           project={project}
+          validatedDomains={validatedDomains}
+          onOpenReport={onOpenReport}
+          latestSession={sessionItems.find(
+            (item) =>
+              item.target === "site" &&
+              item.domains.includes(projectDomain.domain)
+          )}
         />
       ))}
     </>
   );
 };
+
+undefined;
+undefined;
+
+export const __testing__ = { StatusIcon };

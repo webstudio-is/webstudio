@@ -137,7 +137,7 @@ export const SortSelect = ({ value, onValueChange }: SortSelectProps) => {
           {sortLabel}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" sideOffset={4}>
         <DropdownMenuLabel>Sort</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={sortBy}

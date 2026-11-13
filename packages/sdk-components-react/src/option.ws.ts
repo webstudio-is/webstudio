@@ -18,6 +18,7 @@ const presetStyle = {
 } satisfies PresetStyle<"option">;
 
 export const meta: WsComponentMeta = {
+  selectionReveal: { type: "native-option" },
   category: "hidden",
   contentModel: {
     category: "none",
@@ -36,6 +37,14 @@ export const meta: WsComponentMeta = {
     { selector: ":hover", label: "Hover" },
     { selector: ":disabled", label: "Disabled" },
   ],
-  initialProps: ["label", "value", "label", "disabled"],
-  props,
+  initialProps: ["label", "value", "disabled"],
+  props: {
+    ...props,
+    label: {
+      type: "string",
+      control: "text",
+      required: false,
+      contentMode: true,
+    },
+  },
 };

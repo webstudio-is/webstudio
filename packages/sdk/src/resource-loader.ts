@@ -1,8 +1,44 @@
 import hash from "@emotion/hash";
+import {
+  readResourceResponse,
+  ResourceResponseTooLargeError,
+} from "./resource-response";
+import {
+  awaitWithSignal,
+  resolveResources as resolveResourceGraph,
+  type Resource,
+} from "@webstudio-is/content-engine";
 import type { ResourceRequest } from "./schema/resources";
-import { serializeValue } from "./to-string";
+import { isPlainObject, serializeValue } from "./to-string";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
+const RESOURCE_ERROR_DETAIL_LIMIT = 2000;
+export const resourceLoadConcurrency = 20;
+
+const formatResourceErrorDetail = (data: unknown) => {
+  let detail = "";
+  if (typeof data === "string") {
+    detail = data;
+  } else if (
+    typeof data === "object" &&
+    data !== null &&
+    Array.isArray(data) === false
+  ) {
+    const record = data as Record<string, unknown>;
+    const structuredDetail: Record<string, unknown> = {};
+    for (const key of ["code", "message", "issues"]) {
+      if (record[key] !== undefined) {
+        structuredDetail[key] = record[key];
+      }
+    }
+    if (Object.keys(structuredDetail).length > 0) {
+      detail = JSON.stringify(structuredDetail, undefined, 2);
+    }
+  }
+  return detail.length > RESOURCE_ERROR_DETAIL_LIMIT
+    ? `${detail.slice(0, RESOURCE_ERROR_DETAIL_LIMIT)}\n…truncated`
+    : detail;
+};
 
 /**
  * Prevents fetch cycles by prefixing local resources.
@@ -23,6 +59,82 @@ export const isLocalResource = (pathname: string, resourceName?: string) => {
   }
 
   return segments.join("/") === `${LOCAL_RESOURCE_PREFIX}/${resourceName}`;
+};
+
+const containsFile = (value: unknown): boolean => {
+  if (
+    (typeof File !== "undefined" && value instanceof File) ||
+    (typeof Blob !== "undefined" && value instanceof Blob)
+  ) {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return value.some(containsFile);
+  }
+  if (isPlainObject(value)) {
+    return Object.values(value).some(containsFile);
+  }
+  return false;
+};
+
+const toMultipartFormData = (value: object) => {
+  const formData = new FormData();
+  const append = (name: string, item: unknown) => {
+    if (item === undefined || item === null) {
+      return;
+    }
+    if (typeof File !== "undefined" && item instanceof File) {
+      formData.append(name, item, item.name);
+      return;
+    }
+    if (typeof Blob !== "undefined" && item instanceof Blob) {
+      formData.append(name, item);
+      return;
+    }
+    if (Array.isArray(item)) {
+      for (const value of item) {
+        append(name, value);
+      }
+      return;
+    }
+    if (isPlainObject(item) && containsFile(item)) {
+      for (const [key, value] of Object.entries(item)) {
+        append(`${name}[${key}]`, value);
+      }
+      return;
+    }
+    formData.append(name, serializeValue(item));
+  };
+  for (const [name, fieldValue] of Object.entries(value)) {
+    append(name, fieldValue);
+  }
+  return formData;
+};
+
+export const getResourceBodyFormatError = (request: ResourceRequest) => {
+  if (
+    request.control === "email" ||
+    request.method === "get" ||
+    request.bodyFormat === undefined ||
+    request.bodyFormat === "auto"
+  ) {
+    return;
+  }
+  if (request.body instanceof FormData) {
+    return request.bodyFormat === "json"
+      ? "JSON body cannot include form data"
+      : undefined;
+  }
+  if (request.bodyFormat === "json" && containsFile(request.body)) {
+    return "JSON body cannot include uploaded files";
+  }
+  if (request.bodyFormat === "json") {
+    if (isPlainObject(request.body) === false && !Array.isArray(request.body)) {
+      return "JSON body expects an object or array";
+    }
+  } else if (isPlainObject(request.body) === false) {
+    return "Multipart body expects an object of fields";
+  }
 };
 
 export const sitemapResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;
@@ -49,10 +161,86 @@ export const assetsFieldCatalogApiUrl = `${assetsApiUrl}/field-catalog`;
 export const assetsOpenApiUrl = `${assetsApiUrl}/openapi.json`;
 export const assetsQuerySchemaApiUrl = `${assetsApiUrl}/query-schema.json`;
 
+export type PreparedHttpRequest = {
+  type: "prepared-http";
+  url: string;
+  method: string;
+  headers: Headers;
+  body?: RequestInit["body"];
+};
+
+export type ResourceExchange = {
+  /** The configured Resource type; never infer this from the request URL. */
+  kind?: "http" | "email";
+  request: Request | ResourceRequest | PreparedHttpRequest;
+  response: {
+    status: number;
+    statusText: string;
+    headers: Headers;
+    data: unknown;
+    url?: string;
+  };
+  /** Logical delivery result, which can differ from an Email Service HTTP response. */
+  outcome?: {
+    ok: boolean;
+    status: number;
+    statusText: string;
+    data: unknown;
+  };
+};
+
 export type ResourceLoadOptions = {
+  /** Private, opt-in inspection of the same transport attempt; never replays it. */
+  onExchange?: (exchange: ResourceExchange) => void | Promise<void>;
   signal?: AbortSignal;
   timeoutMs?: number;
 };
+
+export type ResourceLoadResult = {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  data: unknown;
+};
+
+export type ResourceGraphLoadOptions = ResourceLoadOptions & {
+  onResourceExchange?: (
+    resourceId: string,
+    exchange: ResourceExchange
+  ) => void | Promise<void>;
+  /** A caller may retry an independent failed root once. */
+  shouldRetryFailedRoot?: (
+    resourceId: string,
+    request: ResourceRequest,
+    result: ResourceLoadResult
+  ) => boolean;
+  requestOverrides?: ReadonlyMap<
+    string,
+    Partial<ResourceRequest> & { fetch?: typeof fetch }
+  >;
+  /** Select a feature transport while retaining shared graph resolution. */
+  loadRequest?: (
+    customFetch: typeof fetch,
+    request: ResourceRequest,
+    baseUrl?: string | URL,
+    options?: ResourceLoadOptions
+  ) => Promise<ResourceLoadResult>;
+};
+
+export type ResourceRequestResource = Readonly<{
+  id: string;
+  outputName: string;
+  name?: string;
+  dependencies: readonly string[];
+  control?: ResourceRequest["control"];
+  bodyFormat?: ResourceRequest["bodyFormat"];
+  createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
+}>;
+
+export type ResourceRequestGraph = Readonly<{
+  resources: readonly ResourceRequestResource[];
+  rootIds: readonly string[];
+}>;
 
 export const createResourceFetchBatchProvider = ({
   baseUrl,
@@ -210,7 +398,11 @@ const transportFailure = ({
   retryable,
   status,
 }: {
-  code: "REQUEST_CANCELLED" | "REQUEST_TIMEOUT" | "NETWORK_ERROR";
+  code:
+    | "REQUEST_CANCELLED"
+    | "REQUEST_TIMEOUT"
+    | "NETWORK_ERROR"
+    | "RESPONSE_TOO_LARGE";
   message: string;
   retryable: boolean;
   status: number;
@@ -227,6 +419,13 @@ export const loadResource = async (
   baseUrl?: string | URL,
   options: ResourceLoadOptions = {}
 ) => {
+  const observe = async (exchange: ResourceExchange) => {
+    try {
+      await options.onExchange?.(exchange);
+    } catch {
+      /* Inspection must not change delivery outcomes. */
+    }
+  };
   const controller = new AbortController();
   let didTimeout = false;
   const cancel = () => controller.abort(options.signal?.reason);
@@ -239,10 +438,15 @@ export const loadResource = async (
     options.timeoutMs === undefined
       ? undefined
       : setTimeout(() => {
+          if (controller.signal.aborted) {
+            return;
+          }
           didTimeout = true;
           controller.abort();
         }, options.timeoutMs);
 
+  let inspectionRequest: PreparedHttpRequest | undefined;
+  let inspectionResponse: ResourceExchange["response"] | undefined;
   try {
     const { method, searchParams, headers, body } = resourceRequest;
     let href = resourceRequest.url;
@@ -267,24 +471,100 @@ export const loadResource = async (
       // empty block
     }
     const requestHeaders = new Headers(
-      headers.map(({ name, value }): [string, string] => [
-        name,
-        serializeValue(value),
-      ])
+      headers
+        .filter(({ value }) => value !== undefined)
+        .map(({ name, value }): [string, string] => [
+          name,
+          serializeValue(value),
+        ])
     );
+    const bodyFormatError = getResourceBodyFormatError(resourceRequest);
+    if (bodyFormatError !== undefined) {
+      return {
+        ok: false,
+        data: {
+          ok: false,
+          error: {
+            code: "INVALID_BODY_FORMAT",
+            message: bodyFormatError,
+            retryable: false,
+          },
+        },
+        status: 400,
+        statusText: bodyFormatError,
+      };
+    }
     const requestInit: RequestInit = {
       method,
       headers: requestHeaders,
     };
+    let signal: AbortSignal | undefined;
     if (options.signal !== undefined || options.timeoutMs !== undefined) {
-      requestInit.signal = controller.signal;
+      signal = controller.signal;
+      requestInit.signal = signal;
     }
     if (method !== "get" && body !== undefined) {
-      requestInit.body = serializeValue(body);
+      if (body instanceof FormData) {
+        // Fetch must generate the Content-Type boundary for this FormData.
+        requestHeaders.delete("Content-Type");
+        requestInit.body = body;
+      } else if (isPlainObject(body)) {
+        if (resourceRequest.bodyFormat === "multipart" || containsFile(body)) {
+          // Form data is JSON by default; preserve upload bytes and repeated
+          // values as multipart whenever the body contains a file.
+          requestHeaders.delete("Content-Type");
+          requestInit.body = toMultipartFormData(body);
+        } else {
+          if (
+            resourceRequest.bodyFormat === "json" ||
+            requestHeaders.has("Content-Type") === false
+          ) {
+            requestHeaders.set("Content-Type", "application/json");
+          }
+          requestInit.body = serializeValue(body);
+        }
+      } else if (
+        resourceRequest.bodyFormat === "json" ||
+        Array.isArray(body) ||
+        typeof body === "number" ||
+        typeof body === "boolean"
+      ) {
+        if (
+          resourceRequest.bodyFormat === "json" ||
+          requestHeaders.has("Content-Type") === false
+        ) {
+          requestHeaders.set("Content-Type", "application/json");
+        }
+        requestInit.body = serializeValue(body);
+      } else {
+        if (requestHeaders.has("Content-Type") === false) {
+          requestHeaders.set("Content-Type", "text/plain");
+        }
+        requestInit.body = serializeValue(body);
+      }
     }
-    const response = await customFetch(href, requestInit);
+    if (options.onExchange && !isLocalResource(href)) {
+      inspectionRequest = {
+        type: "prepared-http",
+        url: href,
+        method: method.toUpperCase(),
+        headers: new Headers(requestHeaders),
+        body: requestInit.body,
+      };
+    }
+    const response = await awaitWithSignal(
+      customFetch(href, requestInit),
+      signal
+    );
 
-    let data = await response.text();
+    // System Resources have their own limits. HTTP Resources share this limit
+    // across Builder, published sites, Form actions, and cached responses.
+    let data = await awaitWithSignal(
+      isLocalResource(href)
+        ? response.text()
+        : readResourceResponse(response).then((response) => response.text()),
+      signal
+    );
 
     try {
       // If it looks like JSON and quacks like JSON, then it probably is JSON.
@@ -294,9 +574,19 @@ export const loadResource = async (
     }
 
     if (!response.ok) {
-      console.error(`Failed to load resource request: ${response.status}`);
+      const detail = formatResourceErrorDetail(data);
+      console.error(
+        `Failed to load resource request: ${response.status}${detail === "" ? "" : `\n${detail}`}`
+      );
     }
 
+    inspectionResponse = {
+      status: response.status,
+      statusText: response.statusText,
+      headers: new Headers(response.headers),
+      data,
+      url: response.url || undefined,
+    };
     const result = {
       ok: response.ok,
       status: response.status,
@@ -311,30 +601,50 @@ export const loadResource = async (
     }
     return result;
   } catch (error) {
-    if (didTimeout) {
-      return transportFailure({
-        code: "REQUEST_TIMEOUT",
-        message: `Resource request exceeded ${options.timeoutMs}ms`,
-        retryable: true,
-        status: 504,
-      });
+    const failure = didTimeout
+      ? transportFailure({
+          code: "REQUEST_TIMEOUT",
+          message: `Resource request exceeded ${options.timeoutMs}ms`,
+          retryable: true,
+          status: 504,
+        })
+      : options.signal?.aborted
+        ? transportFailure({
+            code: "REQUEST_CANCELLED",
+            message: "Resource request was cancelled",
+            retryable: false,
+            status: 499,
+          })
+        : // SDK entry points are bundled separately, so compare the stable code
+          // rather than relying on class identity across those bundles.
+          error instanceof Error &&
+            "code" in error &&
+            error.code === "RESPONSE_TOO_LARGE"
+          ? transportFailure({
+              code: "RESPONSE_TOO_LARGE",
+              message: new ResourceResponseTooLargeError().message,
+              retryable: false,
+              status: 502,
+            })
+          : transportFailure({
+              code: "NETWORK_ERROR",
+              message: "Resource request failed",
+              retryable: true,
+              status: 502,
+            });
+    if (!didTimeout && !options.signal?.aborted) {
+      console.error("Resource request failed");
     }
-    if (options.signal?.aborted) {
-      return transportFailure({
-        code: "REQUEST_CANCELLED",
-        message: "Resource request was cancelled",
-        retryable: false,
-        status: 499,
-      });
-    }
-    console.error("Resource request failed");
-    return transportFailure({
-      code: "NETWORK_ERROR",
-      message: "Resource request failed",
-      retryable: true,
-      status: 502,
-    });
+    inspectionResponse = { ...failure, headers: new Headers() };
+    return failure;
   } finally {
+    if (inspectionRequest && inspectionResponse) {
+      await observe({
+        kind: "http",
+        request: inspectionRequest,
+        response: inspectionResponse,
+      });
+    }
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId);
     }
@@ -344,22 +654,85 @@ export const loadResource = async (
 
 export const loadResources = async (
   customFetch: typeof fetch,
-  requests: Map<string, ResourceRequest>,
+  requests: Map<string, ResourceRequest> | ResourceRequestGraph,
   baseUrl?: string | URL,
-  options?: ResourceLoadOptions
+  options?: ResourceGraphLoadOptions
 ) => {
-  return Object.fromEntries(
-    await Promise.all(
-      Array.from(
-        requests,
-        async ([name, request]) =>
-          [
-            name,
-            await loadResource(customFetch, request, baseUrl, options),
-          ] as const
-      )
-    )
+  const isLegacyMap = requests instanceof Map;
+  const graph: ResourceRequestGraph = isLegacyMap
+    ? {
+        resources: Array.from(requests, ([name, request]) => ({
+          id: name,
+          outputName: name,
+          dependencies: [],
+          createRequest: () => request,
+        })),
+        rootIds: Array.from(requests.keys()),
+      }
+    : requests;
+  const rootIds = new Set(graph.rootIds);
+  const resources: Resource<unknown>[] = graph.resources.map((resource) => ({
+    id: resource.id,
+    dependencies: resource.dependencies,
+    resolve: ({ documents, signal }) => {
+      const {
+        requestOverrides,
+        shouldRetryFailedRoot,
+        onResourceExchange,
+        loadRequest = loadResource,
+        ...loadOptions
+      } = options ?? {};
+      const { fetch: requestFetch = customFetch, ...overrides } =
+        requestOverrides?.get(resource.id) ?? {};
+      const request = resource.createRequest(documents);
+      const resolvedRequest = {
+        ...request,
+        ...overrides,
+      };
+      const load = () =>
+        loadRequest(requestFetch, resolvedRequest, baseUrl, {
+          ...loadOptions,
+          onExchange: onResourceExchange
+            ? (exchange) => onResourceExchange(resource.id, exchange)
+            : loadOptions.onExchange,
+          signal: signal ?? options?.signal,
+        });
+      return load().then((result) =>
+        rootIds.has(resource.id) &&
+        result.ok === false &&
+        !(
+          isRecord(result.data) &&
+          isRecord(result.data.error) &&
+          result.data.error.retryable === false
+        ) &&
+        shouldRetryFailedRoot?.(resource.id, resolvedRequest, result) ===
+          true &&
+        !signal?.aborted &&
+        !options?.signal?.aborted
+          ? load()
+          : result
+      );
+    },
+  }));
+  const resolved = await resolveResourceGraph({
+    resources,
+    rootIds: graph.rootIds,
+    concurrency: resourceLoadConcurrency,
+    // Legacy maps expose cancellation as a structured transport document.
+    // Graph callers use resolver-level cancellation instead.
+    signal: isLegacyMap ? undefined : options?.signal,
+  });
+  const resourcesById = new Map(
+    graph.resources.map((resource) => [resource.id, resource])
   );
+  const output = new Map<string, unknown>();
+  for (const resourceId of graph.rootIds) {
+    const resource = resourcesById.get(resourceId);
+    if (resource !== undefined && resolved.documents.has(resourceId)) {
+      output.set(resource.outputName, resolved.documents.get(resourceId));
+    }
+  }
+  return Object.fromEntries(output);
 };
 
 /**
@@ -406,7 +779,9 @@ export const cachedFetch = async (
     // put Cache-Control from request into response
     // https://developers.cloudflare.com/workers/reference/how-the-cache-works/#cache-api
     // response.clone() does not remove read-only constraint from headers
-    response = new Response(response.body, response);
+    // Bound the body before cloning: cache.put consumes its branch of the
+    // stream and would otherwise buffer an unlimited response before loading.
+    response = await readResourceResponse(response);
     response.headers.set("Cache-Control", requestCacheControl);
     // avoid mutating cached response
     await cache.put(cacheKey, response.clone());

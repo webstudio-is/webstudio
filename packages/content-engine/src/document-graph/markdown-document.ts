@@ -8,6 +8,7 @@ import {
 } from "../byte-stream";
 import { normalizeJsonValue, type JsonValue } from "../canonical-json";
 import { extractMarkdownFrontmatter } from "../frontmatter";
+import { MarkdownMetadataError } from "../markdown-errors";
 import { contentEngineLimits } from "../limits";
 import { extractMarkdownBody } from "../markdown-body";
 import type { DocumentRepresentation } from "./reference";
@@ -158,12 +159,53 @@ export const parseMarkdownDocumentSource = async ({
   }
   const [body, frontmatter] = await Promise.all([
     extractMarkdownBody(bytes, maximumBytes),
-    extractMarkdownFrontmatter(bytes),
+    extractMarkdownFrontmatter(bytes).catch((error) => {
+      if (error instanceof MarkdownMetadataError) {
+        return { properties: {}, frontmatterBytes: 0, consumedBytes: 0 };
+      }
+      throw error;
+    }),
   ]);
   return normalizeMarkdownDocument({
     source: sourceText,
     body: body.body,
     frontmatter: frontmatter.properties,
+  });
+};
+
+/** Discovers references from complete, revision-matched frontmatter. */
+export const analyzeMarkdownFrontmatter = ({
+  frontmatter,
+  sourceDocumentId,
+  documentUrl,
+}: {
+  frontmatter: Readonly<Record<string, unknown>>;
+  sourceDocumentId: string;
+  documentUrl: string | URL;
+}) => {
+  let analyzedFrontmatter;
+  try {
+    analyzedFrontmatter = analyzeJsonDocument({
+      value: frontmatter,
+      sourceDocumentId,
+      documentUrl,
+    });
+  } catch (cause) {
+    if (cause instanceof JsonDocumentError) {
+      throwMarkdownJsonError(cause);
+    }
+    throw cause;
+  }
+  return Object.freeze({
+    properties: analyzedFrontmatter.document as MarkdownDocument["frontmatter"],
+    references: Object.freeze(
+      analyzedFrontmatter.references.map((occurrence) =>
+        Object.freeze({
+          ...occurrence,
+          referenceId: toMarkdownReferenceId(occurrence.referenceId),
+        })
+      )
+    ),
   });
 };
 
@@ -185,34 +227,14 @@ export const analyzeMarkdownDocument = async ({
   }>
 > => {
   const parsed = await parseMarkdownDocumentSource({ source, maximumBytes });
-  let analyzedFrontmatter;
-  try {
-    analyzedFrontmatter = analyzeJsonDocument({
-      value: parsed.frontmatter,
-      sourceDocumentId,
-      documentUrl,
-    });
-  } catch (cause) {
-    if (cause instanceof JsonDocumentError) {
-      throwMarkdownJsonError(cause);
-    }
-    throw cause;
-  }
-  const document = normalizeMarkdownDocument({
-    source: parsed.source,
-    body: parsed.body,
-    frontmatter: analyzedFrontmatter.document,
+  const { properties, references } = analyzeMarkdownFrontmatter({
+    frontmatter: parsed.frontmatter,
+    sourceDocumentId,
+    documentUrl,
   });
   return Object.freeze({
-    document,
-    references: Object.freeze(
-      analyzedFrontmatter.references.map((occurrence) =>
-        Object.freeze({
-          ...occurrence,
-          referenceId: toMarkdownReferenceId(occurrence.referenceId),
-        })
-      )
-    ),
+    document: normalizeMarkdownDocument({ ...parsed, frontmatter: properties }),
+    references,
   });
 };
 

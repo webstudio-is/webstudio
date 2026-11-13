@@ -1,8 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { encodeDataVariableId } from "@webstudio-is/sdk";
+import { encodeDataVariableId, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
 import {
+  ProjectSessionBusyError,
   createDefaultProjectSessionCompatibility,
   createProjectSession,
   hasProjectSessionPermit,
@@ -27,6 +28,7 @@ import { build } from "./state/fixtures.test-utils";
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import { executeBuilderRuntimeOperation } from "./runtime/registry";
 import type { BuilderRuntimeMutation } from "./runtime/mutation";
+import { createStyleDecl } from "./runtime/styles";
 
 const compatibilityVersion = "test-session";
 const compatibility: ProjectSessionCompatibility = {
@@ -47,6 +49,31 @@ const createSnapshot = (
     state,
     ...overrides,
   };
+};
+
+const createBulkStyleDeletionSnapshot = (version: number) => {
+  const snapshot = createSnapshot({ version });
+  const styleSourceId = "local-style-source";
+  snapshot.state.styleSources?.set(styleSourceId, {
+    id: styleSourceId,
+    type: "local",
+  });
+  snapshot.state.styleSourceSelections?.set("instance-root", {
+    instanceId: "instance-root",
+    values: [styleSourceId],
+  });
+  const deletions = Array.from({ length: 185 }, (_, index) => {
+    const property = `--variable-${index}`;
+    const declaration = createStyleDecl({
+      styleSourceId,
+      breakpointId: "base",
+      property,
+      value: { type: "keyword", value: "red" },
+    });
+    snapshot.state.styles?.set(getStyleDeclKey(declaration), declaration);
+    return { instanceId: "instance-root", property };
+  });
+  return { snapshot, deletions };
 };
 
 const createPersistedSnapshot = (
@@ -110,7 +137,7 @@ const createOneTimeConflictingStorage = (
       if (saveAttempts === 1) {
         revision = "rev-concurrent";
         current = { ...current, revision };
-        throw new Error("Project session snapshot changed on disk.");
+        throw new ProjectSessionBusyError();
       }
       expect(options.expectedRevision).toBe(revision);
       revision = "rev-reconciled";
@@ -301,6 +328,48 @@ describe("project session", () => {
       op: "replace",
       path: [],
       value: undefined,
+    });
+  });
+
+  test("hydrates a canonical instances-only restore without pages", () => {
+    const transaction = {
+      id: "restore",
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: [],
+              value: [
+                [
+                  "form",
+                  {
+                    id: "form",
+                    type: "instance",
+                    component: "ResourceForm",
+                    children: [],
+                  },
+                ],
+              ],
+            },
+          ],
+        },
+      ],
+    } as BuilderPatchTransaction;
+    const hydrated = hydrateRestorePointTransaction(transaction);
+    expect(hydrated.payload[0]?.patches[0]).toMatchObject({
+      value: new Map([
+        [
+          "form",
+          {
+            id: "form",
+            type: "instance",
+            component: "ResourceForm",
+            children: [],
+          },
+        ],
+      ]),
     });
   });
 
@@ -602,7 +671,7 @@ describe("project session", () => {
             revision: "rev-concurrent",
           });
           revision = current.revision;
-          throw new Error("Project session snapshot changed on disk.");
+          throw new ProjectSessionBusyError();
         }
         expect(options.expectedRevision).toBe(revision);
         revision = "rev-retry";
@@ -659,7 +728,7 @@ describe("project session", () => {
         return createPersistedSnapshot({ revision: "rev-concurrent" });
       },
       async save() {
-        throw new Error("Project session snapshot changed on disk.");
+        throw new ProjectSessionBusyError();
       },
       async clear() {},
     };
@@ -992,7 +1061,7 @@ describe("project session", () => {
       },
       async save() {
         saveAttempts += 1;
-        throw new Error("Project session snapshot changed on disk.");
+        throw new ProjectSessionBusyError();
       },
       async clear() {},
     };
@@ -1209,7 +1278,7 @@ describe("project session", () => {
       expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
     ]);
     expect(transport.loadedNamespaces).toEqual([
-      ["instances", "props", "dataSources"],
+      ["instances", "props", "dataSources", "assets"],
     ]);
   });
 
@@ -1220,7 +1289,7 @@ describe("project session", () => {
     transport.commitPatch = async (input) => {
       attempts += 1;
       transport.commits.push([...input.transactions]);
-      if (attempts === 1) {
+      if (attempts <= 2) {
         throw Object.assign(new Error("Build version mismatch"), {
           code: "CONFLICT",
         });
@@ -1237,13 +1306,317 @@ describe("project session", () => {
 
     expect(result.state.committed).toBe(true);
     expect(result.version).toBe(3);
+    expect(serializeProjectSessionMeta(result)).toMatchObject({
+      version: 3,
+      commitStatus: "committed",
+      committed: true,
+      diagnosticCount: 2,
+    });
     expect(result.diagnostics).toEqual([
-      expect.objectContaining({ code: "CONFLICT" }),
-      expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
-      expect.objectContaining({ code: "CONFLICT_RETRY" }),
+      expect.objectContaining({ level: "info", code: "CONFLICT_REFRESHED" }),
+      expect.objectContaining({ level: "info", code: "CONFLICT_RETRY" }),
     ]);
-    expect(transport.loadedNamespaces).toEqual([["pages"]]);
+    expect(transport.loadedNamespaces).toEqual([
+      ["pages", "instances", "dataSources"],
+    ]);
+    expect(transport.commits).toHaveLength(3);
+  });
+
+  test("retries a bulk CSS variable deletion after a conflict", async () => {
+    const local = createBulkStyleDeletionSnapshot(1);
+    const remote = createBulkStyleDeletionSnapshot(2);
+    const storage = createStorage(
+      createPersistedSnapshot({ version: 1, state: local.snapshot.state })
+    );
+    const transport = createMutableTransport(remote.snapshot);
+    const commitPatch = transport.commitPatch;
+    let attempts = 0;
+    transport.commitPatch = async (input) => {
+      attempts += 1;
+      if (attempts <= 2) {
+        throw Object.assign(new Error("Build version mismatch"), {
+          code: "CONFLICT",
+        });
+      }
+      return await commitPatch(input);
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("styles.deleteDeclarations", {
+      deletions: local.deletions,
+    });
+
+    expect(result.state.committed).toBe(true);
+    expect(result.version).toBe(3);
+    expect(result.result.styleKeys).toHaveLength(185);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ level: "info", code: "CONFLICT_REFRESHED" }),
+      expect.objectContaining({ level: "info", code: "CONFLICT_RETRY" }),
+    ]);
+    expect(attempts).toBe(3);
+
+    const styles = await session.read<{ declarations: unknown[] }>(
+      "styles.getDeclarations",
+      { propertyFilter: "--", limit: 200 }
+    );
+    expect(styles.result.declarations).toEqual([]);
+  });
+
+  test("reports a project settings conflict retry as committed", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const remote = createSnapshot({ version: 2 });
+    const transport = createMutableTransport(remote);
+    let attempts = 0;
+    const commitPatch = transport.commitPatch;
+    transport.commitPatch = async (input) => {
+      attempts += 1;
+      if (attempts <= 2) {
+        throw Object.assign(new Error("Build version mismatch"), {
+          code: "CONFLICT",
+        });
+      }
+      return await commitPatch(input);
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("projectSettings.update", {
+      meta: { code: "console.log('committed')" },
+    });
+
+    expect(result.state.committed).toBe(true);
+    expect(result.version).toBe(3);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        level: "info",
+        code: "CONFLICT_REFRESHED",
+      }),
+      expect.objectContaining({ level: "info", code: "CONFLICT_RETRY" }),
+    ]);
+
+    await session.refresh(["projectSettings"]);
+    const settings = await session.read("projectSettings.get", {});
+    expect(settings.result).toMatchObject({
+      meta: { code: "console.log('committed')" },
+    });
+  });
+
+  test("confirms an ambiguous commit with the same transaction", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let committedTransactionId: string | undefined;
+    transport.commitPatch = async (input) => {
+      transport.commits.push([...input.transactions]);
+      const transactionId = input.transactions[0]?.id;
+      if (transactionId === committedTransactionId) {
+        return { version: input.baseVersion + 1 };
+      }
+      committedTransactionId = transactionId;
+      throw Object.assign(new Error("Build version mismatch"), {
+        code: "CONFLICT",
+      });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "Home updated" },
+    });
+
+    expect(result.state.committed).toBe(true);
+    expect(result.version).toBe(2);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: "COMMIT_RETRY_CONFIRMED" }),
+    ]);
+    expect(transport.loadedNamespaces).toEqual([]);
     expect(transport.commits).toHaveLength(2);
+    expect(transport.commits[0]?.[0]?.id).toBe(transport.commits[1]?.[0]?.id);
+  });
+
+  test("does not resend a gateway timeout while the server may still be committing", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let committedTransactionId: string | undefined;
+    transport.commitPatch = async (input) => {
+      transport.commits.push([...input.transactions]);
+      const transactionId = input.transactions[0]?.id;
+      if (transactionId === committedTransactionId) {
+        return { version: input.baseVersion + 1 };
+      }
+      committedTransactionId = transactionId;
+      throw Object.assign(new Error("Gateway Timeout"), { status: 504 });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "Home updated" },
+    });
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: "AMBIGUOUS_COMMIT" }),
+      expect.objectContaining({ code: "COMMIT_STATE_REFRESHED" }),
+    ]);
+    expect(transport.commits).toHaveLength(1);
+  });
+
+  test.each([
+    [
+      "reset connection",
+      new TypeError("fetch failed", {
+        cause: Object.assign(new Error("Connection reset"), {
+          code: "ECONNRESET",
+        }),
+      }),
+    ],
+    [
+      "aborted deadline",
+      new Error("This operation was aborted", {
+        cause: new DOMException("deadline", "AbortError"),
+      }),
+    ],
+  ])(
+    "does not resend a %s while the server may still be committing",
+    async (_name, failure) => {
+      const storage = createStorage(createPersistedSnapshot());
+      const transport = createTransport();
+      let committedTransactionId: string | undefined;
+      transport.commitPatch = async (input) => {
+        transport.commits.push([...input.transactions]);
+        const transactionId = input.transactions[0]?.id;
+        if (transactionId === committedTransactionId) {
+          return { version: input.baseVersion + 1 };
+        }
+        committedTransactionId = transactionId;
+        throw failure;
+      };
+      const session = createSession({ storage, transport });
+
+      await session.initialize();
+      const result = await session.mutate("pages.update", {
+        pageId: "page-home",
+        values: { name: "Home updated" },
+      });
+
+      expect(result.state.committed).toBe(false);
+      expect(result.diagnostics).toEqual([
+        expect.objectContaining({ code: "AMBIGUOUS_COMMIT" }),
+        expect.objectContaining({ code: "COMMIT_STATE_REFRESHED" }),
+      ]);
+      expect(transport.commits).toHaveLength(1);
+    }
+  );
+
+  test("does not resend a JSON API gateway error while the server may still be committing", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let committedTransactionId: string | undefined;
+    transport.commitPatch = async (input) => {
+      transport.commits.push([...input.transactions]);
+      const transactionId = input.transactions[0]?.id;
+      if (transactionId === committedTransactionId) {
+        return { version: input.baseVersion + 1 };
+      }
+      committedTransactionId = transactionId;
+      throw Object.assign(new Error("Gateway Timeout"), {
+        data: { httpStatus: 504 },
+      });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "Home updated" },
+    });
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: "AMBIGUOUS_COMMIT" }),
+      expect.objectContaining({ code: "COMMIT_STATE_REFRESHED" }),
+    ]);
+    expect(transport.commits).toHaveLength(1);
+  });
+
+  test("keeps a conflict confirmation timeout ambiguous", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let attempts = 0;
+    transport.commitPatch = async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        throw Object.assign(new Error("Build version mismatch"), {
+          code: "CONFLICT",
+        });
+      }
+      throw Object.assign(new Error("Connection reset"), {
+        code: "ECONNRESET",
+      });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "Conflict" },
+    });
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "AMBIGUOUS_COMMIT",
+        details: expect.objectContaining({
+          confirmationFailure: {
+            code: "ECONNRESET",
+            message: "Connection reset",
+          },
+        }),
+      }),
+      expect.objectContaining({ code: "COMMIT_STATE_REFRESHED" }),
+    ]);
+    expect(transport.loadedNamespaces).toEqual([
+      ["pages", "instances", "dataSources"],
+    ]);
+    expect(attempts).toBe(2);
+  });
+
+  test("clears cached permissions after authorization confirmation failure", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    let attempts = 0;
+    transport.commitPatch = async (input) => {
+      attempts += 1;
+      if (attempts === 1) {
+        throw Object.assign(new Error("Build version mismatch"), {
+          code: "CONFLICT",
+        });
+      }
+      if (attempts === 2) {
+        throw Object.assign(new Error("Token expired"), {
+          code: "UNAUTHORIZED",
+        });
+      }
+      return { version: input.baseVersion + 1 };
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    await session.mutate(
+      "pages.update",
+      { pageId: "page-home", values: { name: "First" } },
+      { permit: "build" }
+    );
+    await session.mutate(
+      "pages.update",
+      { pageId: "page-home", values: { name: "Second" } },
+      { permit: "build" }
+    );
+
+    expect(transport.permissionReads).toBe(2);
   });
 
   test("checks and caches permissions for local runtime mutations", async () => {
@@ -1310,10 +1683,129 @@ describe("project session", () => {
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
         level: "error",
+        code: "FORBIDDEN",
         message: "Authorization token does not have build permission.",
       }),
     ]);
     expect(transport.commits).toEqual([]);
+  });
+
+  test("routes Editor semantic mutations through the server without raw patch access", async () => {
+    const transport = createTransport();
+    transport.getPermissions = async () => ({
+      canView: true,
+      canEdit: true,
+      canBuild: false,
+      canAdmin: false,
+      canUseApi: true,
+    });
+    const session = createSession({
+      storage: createStorage(createPersistedSnapshot()),
+      transport,
+    });
+
+    await session.initialize();
+    const result = await session.mutate(
+      "pages.updateSettings",
+      { pageId: "page-home", values: { title: '"Edited title"' } },
+      { permit: "edit" }
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.source).toBe("server");
+    expect(result.state.committed).toBe(true);
+    expect(transport.serverOperations).toEqual([
+      {
+        operationId: "pages.updateSettings",
+        input: { pageId: "page-home", values: { title: '"Edited title"' } },
+      },
+    ]);
+    expect(transport.patchCommits).toEqual([]);
+  });
+
+  test("keeps Builder semantic mutations on the local patch path", async () => {
+    const transport = createTransport();
+    const session = createSession({
+      storage: createStorage(createPersistedSnapshot()),
+      transport,
+    });
+
+    await session.initialize();
+    const result = await session.mutate(
+      "pages.updateSettings",
+      { pageId: "page-home", values: { title: '"Builder title"' } },
+      { permit: "edit" }
+    );
+
+    expect(result.source).toBe("local");
+    expect(result.state.committed).toBe(true);
+    expect(transport.patchCommits).toHaveLength(1);
+    expect(transport.serverOperations).toEqual([]);
+  });
+
+  test("does not run Editor semantic mutations without edit permission", async () => {
+    const transport = createTransport();
+    transport.getPermissions = async () => ({
+      canView: true,
+      canEdit: false,
+      canBuild: false,
+      canAdmin: false,
+      canUseApi: true,
+    });
+    const session = createSession({
+      storage: createStorage(createPersistedSnapshot()),
+      transport,
+    });
+
+    await session.initialize();
+    const result = await session.mutate(
+      "pages.updateSettings",
+      { pageId: "page-home", values: { title: '"Viewer title"' } },
+      { permit: "edit" }
+    );
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ level: "error", code: "FORBIDDEN" }),
+    ]);
+    expect(transport.patchCommits).toEqual([]);
+    expect(transport.serverOperations).toEqual([]);
+  });
+
+  test("does not report rejected Editor server mutations as committed", async () => {
+    const transport = createTransport();
+    transport.getPermissions = async () => ({
+      canView: true,
+      canEdit: true,
+      canBuild: false,
+      canAdmin: false,
+      canUseApi: true,
+    });
+    transport.executeServerOperation = async () => {
+      throw Object.assign(
+        new Error("Page patch is not editable in content mode."),
+        {
+          code: "FORBIDDEN",
+        }
+      );
+    };
+    const session = createSession({
+      storage: createStorage(createPersistedSnapshot()),
+      transport,
+    });
+
+    await session.initialize();
+    const result = await session.mutate(
+      "pages.updateSettings",
+      { pageId: "page-home", values: { status: "draft" } },
+      { permit: "edit" }
+    );
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ level: "error", code: "FORBIDDEN" }),
+    ]);
+    expect(transport.patchCommits).toEqual([]);
   });
 
   test("clears cached permissions after plan errors", async () => {
@@ -1442,6 +1934,52 @@ describe("project session", () => {
     expect(transport.commits).toHaveLength(1);
     expect(transport.patchCommits).toHaveLength(0);
     expect(transport.restoreCommits).toHaveLength(1);
+  });
+
+  test("confirms an ambiguous restore with the same transaction", async () => {
+    const target = createPersistedSnapshot();
+    const current = structuredClone(target);
+    current.version = 2;
+    current.revision = "rev-2";
+    const currentHome = current.state.pages?.pages.get("page-home");
+    if (currentHome === undefined) {
+      throw new Error("Home page fixture is missing");
+    }
+    currentHome.name = "Edited after restore point";
+    const storage = createStorage(current);
+    const transport = createTransport({
+      projectId: current.projectId,
+      buildId: current.buildId,
+      version: current.version,
+      state: current.state,
+    });
+    let committedTransactionId: string | undefined;
+    transport.commitRestorePoint = async (input) => {
+      transport.commits.push([...input.transactions]);
+      transport.restoreCommits.push([...input.transactions]);
+      const transactionId = input.transactions[0]?.id;
+      if (transactionId === committedTransactionId) {
+        return { version: input.baseVersion + 1 };
+      }
+      committedTransactionId = transactionId;
+      throw Object.assign(new Error("Build version mismatch"), {
+        code: "CONFLICT",
+      });
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const restored = await session.restoreSnapshot(target);
+
+    expect(restored.state.committed).toBe(true);
+    expect(restored.version).toBe(3);
+    expect(restored.diagnostics).toEqual([
+      expect.objectContaining({ code: "COMMIT_RETRY_CONFIRMED" }),
+    ]);
+    expect(transport.restoreCommits).toHaveLength(2);
+    expect(transport.restoreCommits[0]?.[0]?.id).toBe(
+      transport.restoreCommits[1]?.[0]?.id
+    );
   });
 
   test("keeps separately persisted assets outside restore points", async () => {

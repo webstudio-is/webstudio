@@ -17,6 +17,9 @@ const conditions = hasPrivateFolders
   : ["webstudio"];
 
 export default defineConfig({
+  optimizeDeps: {
+    include: ["react/jsx-dev-runtime"],
+  },
   resolve: {
     conditions,
   },

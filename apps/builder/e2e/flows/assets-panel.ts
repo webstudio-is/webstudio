@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import { waitForChangeToBeSaved } from "./sync-status";
 import { dragPointer } from "./drag";
 
@@ -40,18 +40,29 @@ export const openAssetsPanel = async ({
 export const createAssetFolder = async ({
   page,
   name,
+  useAsContentCollection = false,
 }: {
   page: Page;
   name: string;
+  useAsContentCollection?: boolean;
 }) => {
   await openAddAssetMenu(page);
   await page.getByRole("menuitem", { name: "Create folder" }).click();
   const dialog = page.getByRole("dialog", { name: "New folder" });
   await dialog.getByLabel("Name", { exact: true }).fill(name);
+  if (useAsContentCollection) {
+    await dialog.getByLabel("Use as content collection").check();
+  }
   await Promise.all([
     waitForChangeToBeSaved({ page }),
     dialog.getByRole("button", { name: "Create folder" }).click(),
   ]);
+  if (useAsContentCollection) {
+    const collectionCreatedDialog = page.getByRole("dialog", {
+      name: "Collection created",
+    });
+    await collectionCreatedDialog.getByRole("button", { name: "Done" }).click();
+  }
   return page.getByRole("button", { name: `Folder ${name}`, exact: true });
 };
 
@@ -174,6 +185,24 @@ export const chooseAssetByFilename = async ({
   filename: string;
 }) => {
   const title = await waitForAsset({ page, filename });
-  await page.getByAltText(title, { exact: true }).last().click();
+  await page.getByTitle(title, { exact: true }).last().click();
   return title;
+};
+
+export const getAssetIdByFilename = async ({
+  page,
+  filename,
+}: {
+  page: Page;
+  filename: string;
+}) => {
+  const title = await waitForAsset({ page, filename });
+  const dragKey = await page
+    .getByTitle(title)
+    .locator("xpath=ancestor-or-self::*[@data-asset-manager-drag-key][1]")
+    .getAttribute("data-asset-manager-drag-key");
+  if (dragKey?.startsWith("asset:") !== true) {
+    throw new Error(`Expected uploaded asset ${filename} to expose its id`);
+  }
+  return dragKey.slice("asset:".length);
 };

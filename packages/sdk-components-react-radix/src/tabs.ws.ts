@@ -6,7 +6,7 @@ import {
 } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div } from "@webstudio-is/sdk/normalize.css";
-import { radix } from "./shared/meta";
+import { getRadixComponentId } from "./shared/component-id";
 import { buttonReset } from "./shared/preset-styles";
 import {
   propsTabs,
@@ -20,7 +20,10 @@ export const metaTabs: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: ["instance"],
-    descendants: [radix.TabsList, radix.TabsContent],
+    descendants: [
+      getRadixComponentId("TabsList"),
+      getRadixComponentId("TabsContent"),
+    ],
   },
   presetStyle: { div },
   props: propsTabs,
@@ -31,16 +34,22 @@ export const metaTabsList: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.TabsTrigger],
+    descendants: [getRadixComponentId("TabsTrigger")],
   },
   presetStyle: { div },
   props: propsTabsList,
 };
 
 export const metaTabsTrigger: WsComponentMeta = {
+  selectionReveal: {
+    type: "value",
+    ancestor: getRadixComponentId("Tabs"),
+    prop: "value",
+    source: "self",
+  },
   icon: TriggerIcon,
   label: "Tab Trigger",
-  indexWithinAncestor: radix.Tabs,
+  indexWithinAncestor: getRadixComponentId("Tabs"),
   contentModel: {
     category: "none",
     children: ["instance", "rich-text"],
@@ -56,9 +65,15 @@ export const metaTabsTrigger: WsComponentMeta = {
 };
 
 export const metaTabsContent: WsComponentMeta = {
+  selectionReveal: {
+    type: "value",
+    ancestor: getRadixComponentId("Tabs"),
+    prop: "value",
+    source: "self",
+  },
   label: "Tab Content",
   icon: ContentIcon,
-  indexWithinAncestor: radix.Tabs,
+  indexWithinAncestor: getRadixComponentId("Tabs"),
   contentModel: {
     category: "none",
     children: ["instance", "rich-text"],

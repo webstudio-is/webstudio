@@ -82,12 +82,28 @@ const canPasteToFolder = (
   );
 };
 
-export const canPasteAssetManagerClipboard = (folderId: string | undefined) => {
+type AcceptClipboardItems = (
+  items: readonly AssetManagerSelection[]
+) => boolean;
+
+const acceptAllClipboardItems: AcceptClipboardItems = () => true;
+
+export const canPasteAssetManagerClipboard = (
+  folderId: string | undefined,
+  acceptItems: AcceptClipboardItems = acceptAllClipboardItems
+) => {
   const data = getClipboardItems();
-  return data !== undefined && canPasteToFolder(data, folderId);
+  return (
+    data !== undefined &&
+    acceptItems(data.items) &&
+    canPasteToFolder(data, folderId)
+  );
 };
 
-export const pasteAssetManagerClipboard = (folderId: string | undefined) => {
+export const pasteAssetManagerClipboard = (
+  folderId: string | undefined,
+  acceptItems: AcceptClipboardItems = acceptAllClipboardItems
+) => {
   const data = getClipboardItems();
   if (data === undefined) {
     const clipboard = $assetManagerClipboard.get();
@@ -100,7 +116,10 @@ export const pasteAssetManagerClipboard = (folderId: string | undefined) => {
     $assetManagerClipboard.set(undefined);
     return;
   }
-  if (canPasteToFolder(data, folderId) === false) {
+  if (
+    acceptItems(data.items) === false ||
+    canPasteToFolder(data, folderId) === false
+  ) {
     return;
   }
   const { clipboard, items } = data;

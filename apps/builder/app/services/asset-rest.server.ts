@@ -1,20 +1,27 @@
 import { json } from "@remix-run/server-runtime";
 import {
+  ContentCollectionError,
+  MarkdownMetadataError,
   readBoundedRequestBytes,
   RequestByteLimitError,
 } from "@webstudio-is/content-engine";
-import { decodeUtf8 } from "@webstudio-is/content-engine/compiler";
+import {
+  ByteLimitExceededError,
+  decodeUtf8,
+} from "@webstudio-is/content-engine/compiler";
 import {
   AssetRepositoryConflictError,
   AssetRepositoryNotFoundError,
   AssetRevisionConflictError,
+  AssetUploadCountLimitError,
   AssetUploadSizeLimitError,
   PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/server";
 import type { ProjectPermit } from "@webstudio-is/trpc-interface/index.server";
-import { assetFolderIssue } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
+import { InvalidAssetFileNameError } from "@webstudio-is/sdk";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
+import { assetDescriptionEncoding } from "@webstudio-is/protocol/asset-resource-api";
 import { ZodError } from "zod";
 import { createAssetClient } from "~/shared/asset-client";
 import { parseError } from "~/shared/error/error-parse";
@@ -35,12 +42,12 @@ export const requireAssetRestBody = (request: Request) => {
   return request.body;
 };
 
-const readAssetRestBody = async (request: Request) => {
+const readAssetRestBody = async (
+  request: Request,
+  maximumBytes = assetResourceLimits.restMutationRequestBytes
+) => {
   try {
-    return await readBoundedRequestBytes(
-      request,
-      assetResourceLimits.restMutationRequestBytes
-    );
+    return await readBoundedRequestBytes(request, maximumBytes);
   } catch (error) {
     if (error instanceof RequestByteLimitError) {
       throw new AssetRestPayloadTooLargeError(
@@ -52,8 +59,11 @@ const readAssetRestBody = async (request: Request) => {
   }
 };
 
-export const readAssetRestJson = async (request: Request) => {
-  const bytes = await readAssetRestBody(request);
+export const readAssetRestJson = async (
+  request: Request,
+  maximumBytes = assetResourceLimits.restMutationRequestBytes
+) => {
+  const bytes = await readAssetRestBody(request, maximumBytes);
   try {
     return JSON.parse(decodeUtf8(bytes)) as unknown;
   } catch (error) {
@@ -112,15 +122,40 @@ export const parseAssetRestFilename = (value: string | undefined | null) =>
     name: "filename",
   });
 
-export const parseAssetRestDescription = (value: string | undefined | null) => {
-  if (
-    value !== undefined &&
-    value !== null &&
-    value.length > assetResourceLimits.assetDescriptionCharacters
-  ) {
+export const parseAssetRestDescription = (
+  value: string | undefined | null,
+  encoding?: string | null
+) => {
+  if (value === undefined || value === null) {
+    return;
+  }
+  let description = value;
+  if (encoding !== undefined && encoding !== null) {
+    if (encoding !== assetDescriptionEncoding) {
+      throw new AssetRestRequestError(
+        "Assets API description encoding is invalid"
+      );
+    }
+    try {
+      const bytes = Buffer.from(value, "base64url");
+      if (
+        /^[A-Za-z0-9_-]*$/.test(value) === false ||
+        bytes.toString("base64url") !== value
+      ) {
+        throw new Error("Invalid base64url");
+      }
+      description = decodeUtf8(bytes);
+    } catch (cause) {
+      throw new AssetRestRequestError(
+        "Assets API description encoding is invalid",
+        { cause }
+      );
+    }
+  }
+  if (description.length > assetResourceLimits.assetDescriptionCharacters) {
     throw new AssetRestRequestError("Assets API description is invalid");
   }
-  return value ?? undefined;
+  return description;
 };
 
 export const parseAssetRestMetadataHeader = (
@@ -184,14 +219,19 @@ const getAssetRestErrorStatus = (error: unknown) => {
   }
   if (
     error instanceof AssetRepositoryConflictError ||
-    error instanceof AssetRevisionConflictError
+    error instanceof ContentCollectionError ||
+    error instanceof MarkdownMetadataError ||
+    error instanceof AssetRevisionConflictError ||
+    error instanceof AssetUploadCountLimitError
   ) {
     return 409;
   }
   if (
     error instanceof ZodError &&
     error.issues.some(
-      ({ message }) => message === assetFolderIssue.duplicateName
+      (issue) =>
+        issue.code === "custom" &&
+        issue.params?.assetFolderIssue === "duplicateName"
     )
   ) {
     return 409;
@@ -201,11 +241,16 @@ const getAssetRestErrorStatus = (error: unknown) => {
   }
   if (
     error instanceof AssetRestPayloadTooLargeError ||
+    error instanceof ByteLimitExceededError ||
     error instanceof AssetUploadSizeLimitError
   ) {
     return 413;
   }
-  if (error instanceof AssetRestRequestError || error instanceof ZodError) {
+  if (
+    error instanceof AssetRestRequestError ||
+    error instanceof InvalidAssetFileNameError ||
+    error instanceof ZodError
+  ) {
     return 400;
   }
   return 500;

@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { blockTemplateComponent } from "@webstudio-is/sdk";
+import { findContentBlockTemplateContainers } from "@webstudio-is/sdk";
 import {
   idAttribute,
   selectorIdAttribute,
@@ -31,21 +31,15 @@ export const Block = React.forwardRef<
     return <div>Content Block instance is undefined</div>;
   }
 
-  const templateInstanceId = instance.children.find(
-    (child) =>
-      child.type === "id" &&
-      instances.get(child.value)?.component === blockTemplateComponent
-  )?.value;
-
-  if (templateInstanceId === undefined) {
-    return <div>Content Block template child is not found</div>;
+  const templateInstances = findContentBlockTemplateContainers({
+    blockInstance: instance,
+    instances,
+  });
+  if (templateInstances.length !== 1) {
+    return <div>Content Block must contain exactly one Templates list</div>;
   }
-
-  const templateInstance = instances.get(templateInstanceId);
-
-  if (templateInstance === undefined) {
-    return <div>Content Block template instance is not found</div>;
-  }
+  const [templateInstance] = templateInstances;
+  const templateInstanceId = templateInstance.id;
 
   if (isDesignMode) {
     if (selectedInstanceSelector !== undefined) {

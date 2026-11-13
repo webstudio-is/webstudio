@@ -2,6 +2,7 @@ export { Slot } from "./slot";
 export { Fragment } from "./fragment";
 export { HtmlEmbed } from "./html-embed";
 export { MarkdownEmbed } from "./markdown-embed";
+export { Alert } from "./alert";
 export { Body } from "./body";
 export { Box } from "./box";
 export { Text } from "./text";
@@ -16,7 +17,10 @@ export { Superscript } from "./superscript";
 export { Subscript } from "./subscript";
 export { Button } from "./button";
 export { Input } from "./input";
-export { WebhookForm as Form } from "./webhook-form";
+export { ResourceForm } from "./resource-form";
+/** @deprecated Webhook Form is supported through the next release. Use ResourceForm for new forms. */
+export { WebhookForm } from "./webhook-form";
+/** @deprecated Use ResourceForm for managed submissions or an Element with tag form for native forms. */
 export { Form as RemixForm } from "./form";
 export { Image } from "./image";
 export { Blockquote } from "./blockquote";

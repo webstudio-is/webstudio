@@ -40,7 +40,7 @@ You do not need to install dependencies.
 
 1.  Log in to your Digital Ocean account and click on "Create" > "Droplets".
 
-    <img src="../../.gitbook/assets/webstudio-digital-ocean-coolify-1.png" alt="button to create new droplet" data-size="original">
+    <img src="../../.gitbook/assets/webstudio-digital-ocean-coolify-1.webp" alt="button to create new droplet" data-size="original">
 2. Select your preferred region.
 3. Select the Ubuntu image with [version that is supported by Docker](https://docs.docker.com/engine/install/ubuntu/#os-requirements).
    1. Note: In following steps, the automatic Docker install failed on Ubuntu versions higher than 22 during our setup. If yours fails, you can manually install Docker on the Droplet or use a different Ubuntu version and rerun the process.

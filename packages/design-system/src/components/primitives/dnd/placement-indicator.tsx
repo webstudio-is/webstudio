@@ -1,5 +1,6 @@
 import { Box } from "../../box";
-import { css, theme } from "../../../stitches.config";
+import { css } from "../../../stitches.config";
+import { cssVar } from "../../../css-var";
 import {
   type ChildrenOrientation,
   type Placement,
@@ -13,7 +14,7 @@ import { defaultGetValidChildren, type DropTarget } from "./use-drop";
 const placementStyle = css({
   boxSizing: "content-box",
   position: "absolute",
-  background: theme.colors.backgroundPrimary,
+  background: cssVar("--background-accent"),
   pointerEvents: "none",
 });
 

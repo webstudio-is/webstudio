@@ -1,4 +1,5 @@
 import {
+  PanelContent,
   Flex,
   Grid,
   Text,
@@ -9,15 +10,16 @@ import {
   SmallIconButton,
   IconButton,
   Tooltip,
+  InfoTooltip,
   ScrollArea,
   PanelBanner,
   Link,
+  LinkButton,
   Select,
   TextArea,
   Checkbox,
   theme,
-  rawTheme,
-  buttonStyle,
+  cssVar,
   Popover,
   PopoverTitle,
   PopoverTitleActions,
@@ -47,10 +49,10 @@ const StatusIcon = ({ status }: { status: "ok" | "error" | "pending" }) => (
       height: theme.sizes.controlHeight,
       color:
         status === "error"
-          ? theme.colors.foregroundDestructive
+          ? cssVar("--foreground-negative")
           : status === "pending"
-            ? theme.colors.foregroundSubtle
-            : theme.colors.foregroundSuccessText,
+            ? cssVar("--foreground-secondary")
+            : cssVar("--foreground-positive"),
     }}
   >
     {status === "error" ? <AlertIcon /> : <CheckCircleIcon />}
@@ -87,16 +89,10 @@ export const StagingDomain = () => (
           <Grid flow="column" align="center" gap={2}>
             <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
               <Label>Domain:</Label>
-              <Tooltip
+              <InfoTooltip
+                label="About domain name"
                 content="Domain can't be renamed once published"
-                variant="wrapped"
-              >
-                <InfoCircleIcon
-                  tabIndex={0}
-                  style={{ flexShrink: 0 }}
-                  color={rawTheme.colors.foregroundSubtle}
-                />
-              </Tooltip>
+              />
             </Flex>
             <InputField text="mono" value="my-project" disabled />
           </Grid>
@@ -107,16 +103,10 @@ export const StagingDomain = () => (
           <Grid flow="column" align="center" gap={2}>
             <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
               <Label>Password:</Label>
-              <Tooltip
+              <InfoTooltip
+                label="About staging password"
                 content="Read-only password for staging"
-                variant="wrapped"
-              >
-                <InfoCircleIcon
-                  tabIndex={0}
-                  style={{ flexShrink: 0 }}
-                  color={rawTheme.colors.foregroundSubtle}
-                />
-              </Tooltip>
+              />
             </Flex>
             <InputField text="mono" value="abc123" readOnly />
           </Grid>
@@ -181,7 +171,7 @@ export const CustomDomains = () => (
       >
         <Grid gap={2}>
           <Flex align="center" gap={1}>
-            <CheckCircleIcon color={rawTheme.colors.foregroundSuccessText} />
+            <CheckCircleIcon color={cssVar("--foreground-positive")} />
             <Text>Published 2 hours ago</Text>
           </Flex>
           <Grid gap={1}>
@@ -205,7 +195,7 @@ export const CustomDomains = () => (
             </Grid>
           </Grid>
           <Grid flow="column" gap={2}>
-            <Button color="neutral">Verify DNS</Button>
+            <Button>Verify DNS</Button>
             <Button color="destructive">Remove</Button>
           </Grid>
         </Grid>
@@ -220,7 +210,7 @@ export const CustomDomains = () => (
       >
         <Grid gap={2}>
           <Flex align="center" gap={1}>
-            <AlertIcon color={rawTheme.colors.foregroundDestructive} />
+            <AlertIcon color={cssVar("--foreground-negative")} />
             <Text color="destructive">
               DNS records not found. Add these records at your registrar:
             </Text>
@@ -240,7 +230,7 @@ export const CustomDomains = () => (
             <Text variant="mono">webstudio-verify=xyz789</Text>
           </Grid>
           <Grid flow="column" gap={2}>
-            <Button color="neutral">Check status</Button>
+            <Button>Check status</Button>
             <Button color="destructive">Remove</Button>
           </Grid>
         </Grid>
@@ -255,10 +245,10 @@ export const CustomDomains = () => (
       >
         <Grid gap={2}>
           <Flex align="center" gap={1}>
-            <InfoCircleIcon color={rawTheme.colors.foregroundSubtle} />
+            <InfoCircleIcon color={cssVar("--foreground-secondary")} />
             <Text color="subtle">Setting up SSL certificate...</Text>
           </Flex>
-          <Button color="neutral">Check status</Button>
+          <Button>Check status</Button>
         </Grid>
       </CollapsibleDomainSection>
 
@@ -271,14 +261,14 @@ export const CustomDomains = () => (
       >
         <Grid gap={2}>
           <Flex align="center" gap={1}>
-            <AlertIcon color={rawTheme.colors.foregroundDestructive} />
+            <AlertIcon color={cssVar("--foreground-negative")} />
             <Text color="destructive">
               SSL provisioning failed. Please verify your DNS records and try
               again.
             </Text>
           </Flex>
           <Grid flow="column" gap={2}>
-            <Button color="neutral">Verify DNS</Button>
+            <Button>Verify DNS</Button>
             <Button color="destructive">Remove</Button>
           </Grid>
         </Grid>
@@ -292,29 +282,29 @@ export const PublishButton = () => (
   <StorySection title="Publish Button">
     <Flex direction="column" gap="3" css={{ width: theme.spacing[33] }}>
       <Text variant="labels">Ready to publish</Text>
-      <Button color="positive" css={{ width: "100%" }}>
+      <Button color="primary" css={{ width: "100%" }}>
         Publish
       </Button>
 
       <Text variant="labels">Publishing with countdown</Text>
-      <Button color="positive" css={{ width: "100%" }}>
+      <Button color="primary" css={{ width: "100%" }}>
         Publishing (45s)
       </Button>
 
       <Text variant="labels">Publishing (pending)</Text>
-      <Button color="positive" state="pending" css={{ width: "100%" }}>
+      <Button color="primary" state="pending" css={{ width: "100%" }}>
         Publish
       </Button>
 
       <Text variant="labels">No domains selected</Text>
       <Tooltip content="Select at least one domain to publish">
-        <Button color="positive" disabled css={{ width: "100%" }}>
+        <Button color="primary" disabled css={{ width: "100%" }}>
           Publish
         </Button>
       </Tooltip>
 
       <Text variant="labels">Disabled (restricted features)</Text>
-      <Button color="positive" disabled css={{ width: "100%" }}>
+      <Button color="primary" disabled css={{ width: "100%" }}>
         Publish
       </Button>
 
@@ -323,7 +313,7 @@ export const PublishButton = () => (
         <Text color="destructive">
           Build timed out after 3 minutes. Please try again.
         </Text>
-        <Button color="positive" css={{ width: "100%" }}>
+        <Button color="primary" css={{ width: "100%" }}>
           Publish
         </Button>
       </Flex>
@@ -340,14 +330,9 @@ export const UpgradeBanners = () => (
         <Text variant="regularBold">
           Upgrade to publish more than 1 time per day:
         </Text>
-        <Link
-          className={buttonStyle({ color: "gradient" })}
-          color="contrast"
-          underline="none"
-          href="#"
-        >
+        <LinkButton color="primary" href="#">
           Upgrade
-        </Link>
+        </LinkButton>
       </PanelBanner>
 
       <Text variant="labels">Restricted pro features</Text>
@@ -412,7 +397,7 @@ export const UpgradeBanners = () => (
       <Text variant="labels">Unpublished domain reminder</Text>
       <PanelBanner>
         <Flex align="center" gap="1">
-          <InfoCircleIcon color={rawTheme.colors.foregroundMain} />
+          <InfoCircleIcon color={cssVar("--foreground-primary")} />
           <Text variant="regularBold">Don&apos;t forget to publish</Text>
         </Flex>
         <Text>
@@ -431,7 +416,7 @@ export const PublishDialogLayout = () => (
       direction="column"
       css={{
         width: theme.spacing[33],
-        border: `1px solid ${rawTheme.colors.borderMain}`,
+        border: `1px solid ${cssVar("--border-default")}`,
         borderRadius: theme.borderRadius[4],
       }}
     >
@@ -489,9 +474,16 @@ export const PublishDialogLayout = () => (
         <Separator />
       </Flex>
 
-      <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
-        <Button color="positive">Publish</Button>
-      </Flex>
+      <PanelContent as={Flex} direction="column" gap="2">
+        <Flex gap={2}>
+          <Button color="positive" css={{ flex: 1 }}>
+            Validate
+          </Button>
+          <Button color="primary" css={{ flex: 1 }}>
+            Publish
+          </Button>
+        </Flex>
+      </PanelContent>
     </Flex>
   </StorySection>
 );
@@ -504,12 +496,12 @@ export const ExportDialogLayout = () => (
         direction="column"
         css={{
           width: theme.spacing[33],
-          border: `1px solid ${rawTheme.colors.borderMain}`,
+          border: `1px solid ${cssVar("--border-default")}`,
           borderRadius: theme.borderRadius[4],
         }}
       >
         <PopoverTitle>Export</PopoverTitle>
-        <Grid columns={1} gap={3} css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Grid} columns={1} gap={3}>
           <Grid columns={2} gap={2} align="center">
             <Text color="main" variant="labels">
               Destination
@@ -558,7 +550,7 @@ export const ExportDialogLayout = () => (
                 readOnly
                 value="npx webstudio@latest"
               />
-              <Button type="button" color="neutral" prefix={<CopyIcon />}>
+              <Button type="button" prefix={<CopyIcon />}>
                 Copy
               </Button>
             </Flex>
@@ -579,14 +571,13 @@ export const ExportDialogLayout = () => (
               <Button
                 type="button"
                 css={{ flexShrink: 0 }}
-                color="neutral"
                 prefix={<CopyIcon />}
               >
                 Copy
               </Button>
             </Flex>
           </Grid>
-        </Grid>
+        </PanelContent>
       </Flex>
     </Popover>
   </StorySection>
@@ -600,12 +591,12 @@ export const ExportStaticLayout = () => (
         direction="column"
         css={{
           width: theme.spacing[33],
-          border: `1px solid ${rawTheme.colors.borderMain}`,
+          border: `1px solid ${cssVar("--border-default")}`,
           borderRadius: theme.borderRadius[4],
         }}
       >
         <PopoverTitle>Export</PopoverTitle>
-        <Grid columns={1} gap={3} css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Grid} columns={1} gap={3}>
           <Grid columns={2} gap={2} align="center">
             <Text color="main" variant="labels">
               Destination
@@ -619,15 +610,17 @@ export const ExportStaticLayout = () => (
             />
           </Grid>
 
-          <Button color="positive">Build and download static site</Button>
+          <Button color="primary">Build and download static site</Button>
           <Text color="subtle">
             Learn about deploying static sites{" "}
             <Link variant="inherit" color="inherit" href="#">
               here
             </Link>
           </Text>
-        </Grid>
+        </PanelContent>
       </Flex>
     </Popover>
   </StorySection>
 );
+
+undefined;

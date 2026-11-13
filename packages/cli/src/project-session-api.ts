@@ -1,3 +1,4 @@
+import { CliError } from "./errors";
 import {
   getPublicApiOperation,
   publicApiOperationRequiresServerSupport,
@@ -11,9 +12,12 @@ import {
   type ProjectSessionDiagnostic,
 } from "@webstudio-is/project-build/project-session";
 import {
+  assertCliEditingContractVersion,
   assertCliServerOperationSupported,
   createCliProjectSession,
   getCliServerApiContract,
+  requiresCliEditingContract,
+  type CliServerApiContract,
 } from "./project-session";
 import type { ApiConnection } from "./api-connection";
 
@@ -75,6 +79,7 @@ export const executeProjectSessionApiOperation = async ({
   connection,
   createProjectSession = createCliProjectSession,
   getServerApiContract = getCliServerApiContract,
+  apiContract,
   dryRun = false,
   refresh = false,
 }: {
@@ -83,6 +88,7 @@ export const executeProjectSessionApiOperation = async ({
   connection: ApiConnection;
   createProjectSession?: CreateProjectSession;
   getServerApiContract?: typeof getCliServerApiContract;
+  apiContract?: CliServerApiContract;
   dryRun?: boolean;
   refresh?: boolean;
 }) => {
@@ -94,9 +100,26 @@ export const executeProjectSessionApiOperation = async ({
     dryRun === true &&
     (runtimeOperationId === undefined || operation.method !== "mutation")
   ) {
-    throw new Error(
+    throw new CliError(
+      "INVALID_ARGUMENT",
       `${command} does not support --dry-run. Use --dry-run only with local-capable mutation tools; omit it for read or server-only tools.`
     );
+  }
+  const requiresServerSupport =
+    runtimeOperationId === undefined ||
+    publicApiOperationRequiresServerSupport(operation);
+  const requiresEditingContract = requiresCliEditingContract(operation, dryRun);
+  const contract =
+    requiresServerSupport || requiresEditingContract
+      ? (apiContract ?? (await getServerApiContract(connection)))
+      : undefined;
+  if (contract !== undefined) {
+    if (requiresServerSupport) {
+      assertCliServerOperationSupported(operation.id, contract);
+    }
+    if (requiresEditingContract) {
+      assertCliEditingContractVersion(contract);
+    }
   }
   const session = createProjectSession({ connection });
   await session.initialize();
@@ -107,13 +130,6 @@ export const executeProjectSessionApiOperation = async ({
         ...operation.writeNamespaces,
       ])
     );
-  }
-  if (
-    runtimeOperationId === undefined ||
-    publicApiOperationRequiresServerSupport(operation)
-  ) {
-    const contract = await getServerApiContract(connection);
-    assertCliServerOperationSupported(operation.id, contract);
   }
   const envelope =
     runtimeOperationId === undefined

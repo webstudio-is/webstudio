@@ -5,6 +5,7 @@ import {
   createErrorResponse,
   getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
+import { createId } from "@webstudio-is/sdk";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { unpublishBuild } from "@webstudio-is/project-build/server";
 import { validateDomain } from "./validate";
@@ -69,7 +70,7 @@ export const create = async (
     .from("Domain")
     .upsert(
       {
-        id: crypto.randomUUID(),
+        id: createId(),
         domain,
         status: "INITIALIZING",
       },
@@ -94,7 +95,7 @@ export const create = async (
   }
 
   const domainId = domainRow.data.id;
-  const txtRecord = crypto.randomUUID();
+  const txtRecord = createId();
 
   const result = await context.postgrest.client.from("ProjectDomain").insert({
     domainId,
@@ -230,15 +231,25 @@ export const remove = async (
   await unpublishBuild(
     { projectId: props.projectId, domain: domain.domain },
     context
-  ).catch((error) => {
-    if (
-      error instanceof Error &&
-      error.message === `Domain ${domain.domain} is not published`
-    ) {
-      return;
+  );
+
+  const connections = await context.postgrest.client
+    .from("ProjectDomain")
+    .select("domainId", { count: "exact", head: true })
+    .eq("domainId", props.domainId);
+
+  if (connections.error) {
+    return createErrorResponse(connections.error);
+  }
+
+  if (connections.count === 1) {
+    const releaseResult = await context.domain.domainTrpc.remove
+      .mutate({ domain: domain.domain })
+      .catch((error) => createErrorResponse(error));
+    if (releaseResult.success === false) {
+      return releaseResult;
     }
-    throw error;
-  });
+  }
 
   const deleteResult = await context.postgrest.client
     .from("ProjectDomain")
@@ -320,32 +331,43 @@ export const updateStatus = async (
 
   const { domain } = validationResult;
 
+  const projectDomains = await context.postgrest.client
+    .from("ProjectDomain")
+    .select("domain:Domain(id,domain)")
+    .eq("projectId", props.projectId);
+
+  if (projectDomains.error) {
+    return createErrorResponse(projectDomains.error);
+  }
+
+  const domainRow = projectDomains.data.find(
+    (item) => item.domain?.domain === domain
+  )?.domain;
+  if (domainRow == null) {
+    return createErrorResponse("Domain not found");
+  }
+
   // @todo: must be implemented as workflow/queue service part of 3rd party domain initialization process
   const statusResult = await context.domain.domainTrpc.getStatus.query({
     domain,
   });
-
   if (statusResult.success === false) {
     return statusResult;
   }
 
   const { data } = statusResult;
-
-  // update domain status
   const updatedDomainResult = await context.postgrest.client
     .from("Domain")
     .update({
       status: statusToStatusEnum(data.status),
       error: data.status === "error" ? data.error : null,
     })
-    .eq("domain", domain)
+    .eq("id", domainRow.id)
     .select("*")
     .single();
-
   if (updatedDomainResult.error) {
     return createErrorResponse(updatedDomainResult.error);
   }
-
   return { success: true, domain: updatedDomainResult.data };
 };
 

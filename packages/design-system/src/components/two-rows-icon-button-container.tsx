@@ -5,9 +5,10 @@
 
 import { forwardRef, type ReactNode, type Ref } from "react";
 import { css, theme, type CSS } from "../stitches.config";
+import { cssVar } from "../css-var";
 
 const curveStyle = css({
-  fill: theme.colors.borderMain,
+  fill: cssVar("--border-default"),
   alignSelf: "start",
   variants: { rotated: { true: { transform: "rotate(90deg)" } } },
 });

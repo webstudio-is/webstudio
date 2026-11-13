@@ -15,7 +15,6 @@ import {
   Content,
 } from "@radix-ui/react-accordion";
 import { getIndexWithinAncestorFromProps } from "@webstudio-is/sdk/runtime";
-import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk/runtime";
 
 export const Accordion = forwardRef<
   HTMLDivElement,
@@ -58,41 +57,9 @@ export const AccordionTrigger: ForwardRefExoticComponent<
 > = Trigger;
 
 export const AccordionContent: ForwardRefExoticComponent<
-  Omit<ComponentProps<typeof Content>, "asChild"> &
-    RefAttributes<HTMLDivElement>
-> = Content;
-
-/* BUILDER HOOKS */
-
-const namespace = "@webstudio-is/sdk-components-react-radix";
-
-// For each AccordionContent component within the selection,
-// we identify its closest parent Accordion component
-// and update its open prop bound to variable.
-export const hooksAccordion: Hook = {
-  onNavigatorSelect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:AccordionContent`) {
-        const accordion = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:Accordion`
-        );
-        const item = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:AccordionItem`
-        );
-        if (accordion && item) {
-          const itemValue =
-            context.getPropValue(item, "value") ??
-            context.indexesWithinAncestors.get(item.id)?.toString();
-
-          if (itemValue) {
-            context.setMemoryProp(accordion, "value", itemValue);
-          }
-        }
-      }
-    }
-  },
-};
+  Omit<ComponentPropsWithoutRef<typeof Content>, "asChild" | "forceMount"> & {
+    forceMount?: boolean;
+  } & RefAttributes<HTMLDivElement>
+> = forwardRef(({ forceMount, ...props }, ref) => (
+  <Content ref={ref} forceMount={forceMount ? true : undefined} {...props} />
+));

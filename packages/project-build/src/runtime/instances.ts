@@ -1,21 +1,36 @@
 import {
+  blockTemplateComponent,
+  coreMetas,
+  assignUniqueBlockTemplateNamesMutable,
   elementComponent,
+  findChildReferenceIndex,
+  findParentInstanceReference,
+  findWritableContentBlockDocumentBindings,
   findTreeInstanceIds,
   getHtmlTagsFromProps,
+  getExpressionBindingError,
+  expressionBindingMode,
   getStyleDeclKey,
   instance as instanceInput,
+  ROOT_INSTANCE_ID,
+  rootComponent,
   tags,
   type DataSource,
+  type ExpressionBindingMode,
   type Instance,
   type Instances,
   type Prop,
   type Props,
+  type PresetStyleDecl,
   type StyleDecl,
   type StyleSource,
   type StyleSourceSelection,
   type WebstudioData,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
+
+// Preserve the runtime API while the shared tree utilities are owned by SDK.
+export { findChildReferenceIndex, findParentInstanceReference };
 import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
@@ -33,15 +48,14 @@ import {
   throwBuilderValidationError,
 } from "./errors";
 import { replaceTextValue } from "./text-replacement";
-import { getExpressionErrors } from "./expression-validation";
+import {
+  getExpressionErrors,
+  unsupportedReadwriteExpressionError,
+} from "./expression-validation";
 import { createRuntimeMutation } from "./mutation";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
 import { validatePageSelector } from "./page-selector";
-import {
-  createPropClonePatches,
-  createPropDeletePayload,
-  createPropRenamePayload,
-} from "./props";
+import { createPropDeletePayload, createPropRenamePayload } from "./props";
 import {
   createTreeVariableRebindPayload,
   produceWebstudioDataMutation,
@@ -64,14 +78,82 @@ import {
   type InstancePath,
 } from "./slot";
 import { getReparentDropTargetMutable, type DroppableTarget } from "./tree";
-import {
-  createStyleClonePayload,
-  serializeStyleDeclarations,
-} from "./style-utils";
+import { serializeStyleDeclarations } from "./style-utils";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk/standard-attributes";
+import { mapAttributeNames } from "@webstudio-is/content-engine/jsx-attributes";
+import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
 import equal from "fast-deep-equal";
 import { z } from "zod";
+import {
+  type BlockTemplateNameConfirmation,
+  findBlockTemplateNameCollision,
+  getBlockTemplateNameConfirmation,
+} from "./block";
+
+const throwDuplicateBlockTemplateName = ({
+  name,
+  path,
+}: {
+  name: string;
+  path: "component" | "label" | "name" | "tag";
+}): never =>
+  throwBuilderValidationError("Template name must be unique", [
+    {
+      code: "duplicate_template_name",
+      path: [path],
+      message: `Template name "${name}" is already in use.`,
+      constraint: "unique_within:block_templates",
+      example: `${name} 2`,
+    },
+  ]);
+
+export const blockTemplateNameConfirmationInput = z
+  .object({
+    action: z.enum(["rename", "delete"]),
+    templates: z.array(
+      z.object({
+        instanceId: z.string(),
+        oldName: z.string(),
+        newName: z.string().optional(),
+      })
+    ),
+  })
+  .describe(
+    "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval."
+  );
+
+export const requireBlockTemplateNameConfirmation = ({
+  required,
+  confirm,
+  path,
+}: {
+  required: BlockTemplateNameConfirmation | undefined;
+  confirm: BlockTemplateNameConfirmation | undefined;
+  path:
+    | "component"
+    | "instanceIds"
+    | "instanceSelector"
+    | "label"
+    | "mode"
+    | "name"
+    | "tag";
+}) => {
+  if (required === undefined || equal(required, confirm)) {
+    return;
+  }
+  throwBuilderValidationError("Template name change requires confirmation", [
+    {
+      code: "template_name_change_requires_confirmation",
+      path: [path],
+      message:
+        required.action === "delete"
+          ? "Deleting this template may disconnect references in MDX files."
+          : "Renaming this template may disconnect references in MDX files.",
+      constraint: "requires_confirmation:template_name_references",
+      example: required,
+    },
+  ]);
+};
 
 export const insertIndexInput = z.number().int().nonnegative();
 const instanceEndPositionInput = z.literal("end");
@@ -119,18 +201,14 @@ export const reparentInstanceInput = z.object({
   }),
 });
 
-export const cloneInstanceInput = z.object({
-  sourceInstanceId: z.string(),
-  targetParentInstanceId: z.string().optional(),
-  insertIndex: insertIndexInput.optional(),
-});
-
 export const deleteInstancesInput = z.object({
   instanceIds: z.array(z.string()).min(1),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const deleteInstanceBySelectorInput = z.object({
   instanceSelector: z.array(z.string()).min(2),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const fillGridInput = z.object({
@@ -160,6 +238,7 @@ export const convertInstanceInput = z.object({
   component: instanceInput.shape.component,
   tag: z.string().min(1).optional(),
   currentTag: z.string().min(1).optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const unwrapInstanceInput = z.object({
@@ -175,74 +254,131 @@ export const setInstanceTagInput = z.object({
   instanceId: z.string(),
   tag: z.string(),
   legacyPropName: z.string().optional(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
 export const setInstanceLabelInput = z.object({
   instanceId: z.string(),
   label: z.string(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
-export const updateTextInstanceInput = z.object({
-  instanceId: z
-    .string()
-    .describe("Instance id containing the child to update."),
-  childIndex: z
-    .number()
-    .int()
-    .nonnegative()
-    .describe("Zero-based child index from list-texts or inspect-instance."),
-  text: z
-    .string()
-    .describe(
-      "Replacement visible text when mode is text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules."
-    ),
-  mode: z
-    .enum(["text", "expression"])
-    .optional()
-    .describe(
-      'Optional expected child type. Use "text" for plain visible text and "expression" for JavaScript expression children. There is no "replace" mode.'
-    ),
+export const setInstanceNameInput = z.object({
+  instanceId: z.string(),
+  name: z.string(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
-export const setTextContentInput = z.discriminatedUnion("operation", [
-  z.object({
-    operation: z.literal("set"),
-    instanceId: z.string().describe("Instance id to receive text content."),
+export const updateTextInstanceInput = z
+  .object({
+    instanceId: z
+      .string()
+      .describe("Instance id containing the child to update."),
+    childIndex: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe("Zero-based child index from list-texts or inspect-instance."),
     text: z
       .string()
       .describe(
-        "Visible text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules."
+        "Replacement visible text when mode is text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules."
       ),
     mode: z
       .enum(["text", "expression"])
-      .default("text")
+      .optional()
       .describe(
-        'Use "text" for plain visible text and "expression" for JavaScript expression children.'
+        'Optional expected child type. Use "text" for plain visible text and "expression" for JavaScript expression children. There is no "replace" mode.'
       ),
-  }),
-  z.object({
-    operation: z.literal("reset"),
-    instanceId: z.string().describe("Instance id to reset to no text content."),
-  }),
-  z.object({
-    operation: z.literal("inlineExpressions"),
-    instanceId: z
-      .string()
-      .describe("Instance id whose expression children will become text."),
-    replacements: z
-      .array(
-        z.object({
-          childIndex: z.number().int().nonnegative(),
-          expression: z.string(),
-          text: z.string(),
-        })
-      )
-      .min(1)
-      .describe(
-        "Evaluated text for every expression child. The index and original expression must match the current instance."
-      ),
-  }),
-]);
+    expressionBindingMode: expressionBindingMode.optional(),
+  })
+  .superRefine((input, context) => {
+    if (
+      input.mode !== "expression" &&
+      input.expressionBindingMode !== undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["expressionBindingMode"],
+        message: "Expression binding mode requires an expression child",
+      });
+      return;
+    }
+    if (input.mode === "expression") {
+      const error = getExpressionBindingError({
+        value: input.text,
+        mode: input.expressionBindingMode,
+      });
+      if (error !== undefined) {
+        context.addIssue({ code: "custom", path: ["text"], message: error });
+      }
+    }
+  });
+
+export const setTextContentInput = z
+  .discriminatedUnion("operation", [
+    z.object({
+      operation: z.literal("set"),
+      instanceId: z.string().describe("Instance id to receive text content."),
+      text: z
+        .string()
+        .describe(
+          "Visible text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules."
+        ),
+      mode: z
+        .enum(["text", "expression"])
+        .default("text")
+        .describe(
+          'Use "text" for plain visible text and "expression" for JavaScript expression children.'
+        ),
+      expressionBindingMode: expressionBindingMode.optional(),
+    }),
+    z.object({
+      operation: z.literal("reset"),
+      instanceId: z
+        .string()
+        .describe("Instance id to reset to no text content."),
+    }),
+    z.object({
+      operation: z.literal("inlineExpressions"),
+      instanceId: z
+        .string()
+        .describe("Instance id whose expression children will become text."),
+      replacements: z
+        .array(
+          z.object({
+            childIndex: z.number().int().nonnegative(),
+            expression: z.string(),
+            text: z.string(),
+          })
+        )
+        .min(1)
+        .describe(
+          "Evaluated text for every expression child. The index and original expression must match the current instance."
+        ),
+    }),
+  ])
+  .superRefine((input, context) => {
+    if (input.operation !== "set") {
+      return;
+    }
+    const error = getExpressionBindingError({
+      value: input.text,
+      mode: input.expressionBindingMode,
+    });
+    if (
+      input.mode !== "expression" &&
+      input.expressionBindingMode !== undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["expressionBindingMode"],
+        message: "Expression binding mode requires an expression child",
+      });
+    } else if (error !== undefined) {
+      context.addIssue({ code: "custom", path: ["text"], message: error });
+    }
+  });
 
 export const updateTextTreeInput = z.object({
   rootInstanceId: z.string(),
@@ -486,14 +622,6 @@ const getRequiredInstances = (
   return state.instances;
 };
 
-export const findChildReferenceIndex = (
-  children: Instance["children"],
-  instanceId: Instance["id"]
-) =>
-  children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
-
 export const createInstanceChild = (instanceId: Instance["id"]) =>
   ({ type: "id", value: instanceId }) as const;
 
@@ -665,18 +793,6 @@ export const getSameParentAdjustedInsertIndex = ({
   requestedIndex: number;
 }) => (requestedIndex > currentIndex ? requestedIndex - 1 : requestedIndex);
 
-export const findParentInstanceReference = (
-  instances: Instances,
-  instanceId: Instance["id"]
-) => {
-  for (const instance of instances.values()) {
-    const childIndex = findChildReferenceIndex(instance.children, instanceId);
-    if (childIndex !== -1) {
-      return { instance, childIndex };
-    }
-  }
-};
-
 export const getInstanceDepths = (
   instances: Pick<Instances, "get" | "values">,
   rootInstanceIds?: Instance["id"][]
@@ -810,33 +926,6 @@ export const replaceTextInput = z
       .describe("Maximum number of text children to replace."),
   })
   .superRefine(validatePageSelector);
-
-export const cloneInstanceSubtree = ({
-  instances,
-  rootInstanceId,
-  createId,
-}: {
-  instances: Map<Instance["id"], Instance>;
-  rootInstanceId: Instance["id"];
-  createId: () => Instance["id"];
-}) => {
-  const instanceIds = collectInstanceIds(instances, rootInstanceId);
-  const nextIdById = new Map(instanceIds.map((id) => [id, createId()]));
-  const clonedInstances = instanceIds.flatMap((instanceId) => {
-    const instance = instances.get(instanceId);
-    const nextId = nextIdById.get(instanceId);
-    if (instance === undefined || nextId === undefined) {
-      return [];
-    }
-    return [
-      [
-        nextId,
-        cloneInstanceWithNewIds({ instance, newInstanceIds: nextIdById }),
-      ] satisfies [string, Instance],
-    ];
-  });
-  return { clonedInstances, instanceIds, nextIdById };
-};
 
 export const findLocalStyleSourcesWithinInstances = (
   styleSources: Iterable<StyleSource>,
@@ -1066,6 +1155,28 @@ export const createInstanceMovePatches = ({
             requestedIndex: requestedInsertIndex,
           })
         : requestedInsertIndex;
+    if (
+      parent.instance.id === nextParent.id &&
+      insertIndex === parent.childIndex
+    ) {
+      continue;
+    }
+    if (parent.instance.id !== nextParent.id) {
+      const previousName = instance.name;
+      assignUniqueBlockTemplateNamesMutable({
+        instanceIds: [instance.id],
+        parent: nextParent,
+        instances: mutableInstances,
+        components: componentMetas.keys(),
+      });
+      if (instance.name !== previousName && instance.name !== undefined) {
+        patches.push({
+          op: previousName === undefined ? "add" : "replace",
+          path: [instance.id, "name"],
+          value: instance.name,
+        });
+      }
+    }
     patches.push({
       op: "remove" as const,
       path: [parent.instance.id, "children", parent.childIndex] as [
@@ -1114,6 +1225,7 @@ export const createInstanceAppendPayload = ({
   styleSources,
   styleSourceSelections,
   styles,
+  replaceIndex,
 }: {
   parent: Instance;
   instances: Instances;
@@ -1125,12 +1237,17 @@ export const createInstanceAppendPayload = ({
   styleSources: Iterable<StyleSource>;
   styleSourceSelections: Iterable<StyleSourceSelection>;
   styles: Iterable<StyleDecl>;
+  replaceIndex?: number;
 }) => {
   const parentChildren = parent.children ?? [];
+  const replacedChildren =
+    mode === "replace" && replaceIndex !== undefined
+      ? parentChildren.slice(replaceIndex, replaceIndex + 1)
+      : parentChildren;
   const replacedInstanceIds =
     mode === "replace"
       ? new Set(
-          parentChildren.flatMap((child) =>
+          replacedChildren.flatMap((child) =>
             child.type === "id"
               ? collectInstanceIds(instances, child.value)
               : []
@@ -1161,9 +1278,9 @@ export const createInstanceAppendPayload = ({
       patches: [
         ...(mode === "replace"
           ? sortChildRemovalPatches(
-              parentChildren.map((_child, index) => ({
+              replacedChildren.map((_child, index) => ({
                 op: "remove" as const,
-                path: [parent.id, "children", index] as [
+                path: [parent.id, "children", (replaceIndex ?? 0) + index] as [
                   string,
                   "children",
                   number,
@@ -1420,80 +1537,6 @@ const remapTextTreeTemporaryIds = ({
         child.type === "id" ? { ...child, value: remapId(child.value) } : child
       ),
     })),
-  };
-};
-
-export const createInstanceClonePayload = ({
-  instances,
-  sourceInstanceId,
-  targetParent,
-  insertIndex,
-  props,
-  styleSourceSelections,
-  styleSources,
-  styles,
-  createId,
-}: {
-  instances: Map<Instance["id"], Instance>;
-  sourceInstanceId: Instance["id"];
-  targetParent: Instance;
-  insertIndex: number;
-  props: Iterable<Prop>;
-  styleSourceSelections: Iterable<StyleSourceSelection>;
-  styleSources: Iterable<StyleSource>;
-  styles: Map<string, StyleDecl>;
-  createId: () => string;
-}):
-  | {
-      clonedRootId: Instance["id"];
-      clonedInstanceIds: Instance["id"][];
-      payload: BuilderPatchChange[];
-    }
-  | undefined => {
-  const { clonedInstances, nextIdById } = cloneInstanceSubtree({
-    instances,
-    rootInstanceId: sourceInstanceId,
-    createId,
-  });
-  const clonedRootId = nextIdById.get(sourceInstanceId);
-  if (clonedRootId === undefined) {
-    return;
-  }
-  const propPatches = createPropClonePatches({
-    nextIdById,
-    props,
-    createId,
-  });
-  return {
-    clonedRootId,
-    clonedInstanceIds: clonedInstances.map(([instanceId]) => instanceId),
-    payload: compactBuilderPatchPayload([
-      {
-        namespace: "instances",
-        patches: [
-          ...clonedInstances.map(([instanceId, instance]) => ({
-            op: "add" as const,
-            path: [instanceId],
-            value: instance,
-          })),
-          {
-            op: "add" as const,
-            path: [targetParent.id, "children", insertIndex],
-            value: createInstanceChild(clonedRootId),
-          },
-        ],
-      },
-      ...(propPatches.length === 0
-        ? []
-        : [{ namespace: "props" as const, patches: propPatches }]),
-      ...createStyleClonePayload({
-        styleSourceSelections,
-        styleSources,
-        styles,
-        nextIdById,
-        createId,
-      }),
-    ]),
   };
 };
 
@@ -1773,6 +1816,14 @@ const moveInstanceToParentMutable = (
   const [newParentId] = dropTarget.parentSelector;
   const newParent = data.instances.get(newParentId);
   const newChild = createInstanceChild(rootInstanceId);
+  if (newParent !== undefined) {
+    assignUniqueBlockTemplateNamesMutable({
+      instanceIds: [rootInstanceId],
+      parent: newParent,
+      instances: data.instances,
+      components: componentMetas.keys(),
+    });
+  }
   if (dropTarget.position === "end") {
     newParent?.children.push(newChild);
   } else {
@@ -1954,6 +2005,12 @@ export const wrapInstance = (
       selectedItem.instance.id,
       wrapperInstanceId
     );
+    assignUniqueBlockTemplateNamesMutable({
+      instanceIds: [wrapperInstanceId],
+      parent: parentInstance,
+      instances: nextInstances,
+      components: componentMetas.keys(),
+    });
     const wrapperSelector = [wrapperInstanceId, ...parentItem.instanceSelector];
     const isSatisfying = isTreeSatisfyingContentModel({
       instances: nextInstances,
@@ -2027,6 +2084,13 @@ export const wrapInstance = (
     createInstanceChild(wrapperInstanceId);
   nextInstances.set(parentInstanceId, nextParentInstance);
   nextInstances.set(wrapperInstanceId, wrapperInstance);
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: [wrapperInstanceId],
+    parent: nextParentInstance,
+    replacedInstanceIds: [instanceId],
+    instances: nextInstances,
+    components: componentMetas.keys(),
+  });
   const wrapperSelector = [
     wrapperInstanceId,
     ...input.instanceSelector.slice(1),
@@ -2251,6 +2315,14 @@ const unwrapInstanceMutable = ({
     parentInstance.children,
     selectedItem.instance.id
   );
+  assignUniqueBlockTemplateNamesMutable({
+    instanceIds: [selectedInstance.id],
+    parent: grandparentInstance,
+    replacedInstanceIds:
+      parentInstance.children.length === 0 ? [parentInstance.id] : [],
+    instances,
+    components: componentMetas.keys(),
+  });
   if (parentInstance.children.length === 0) {
     instances.delete(parentItem.instance.id);
   }
@@ -2284,6 +2356,25 @@ const unwrapInstanceMutable = ({
     ? { success: true }
     : { success: false, error: "Cannot unwrap instance" };
 };
+
+const getStandardPropRenames = ({
+  props,
+  instanceId,
+}: {
+  props: Iterable<Prop>;
+  instanceId: Instance["id"];
+}) =>
+  mapAttributeNames({
+    attributes: Array.from(props)
+      .filter((prop) => prop.instanceId === instanceId)
+      .map((prop) => ({ ...prop, originalName: prop.name })),
+    direction: "jsx-to-instance",
+    acceptsHtmlAttributes: true,
+  }).flatMap((prop) =>
+    prop.name === prop.originalName
+      ? []
+      : [{ propId: prop.id, name: prop.name, propIdPrefix: prop.instanceId }]
+  );
 
 export const convertInstance = (
   state: Pick<BuilderState, "instances" | "props"> &
@@ -2331,6 +2422,7 @@ export const convertInstance = (
       );
       const [selectedItem] = nextInstancePath;
       const selectedInstance = selectedItem.instance;
+      const previousInstance = { ...selectedInstance };
       if (selectedInstance.component === "Slot" && input.component !== "Slot") {
         detachSharedSlotChildrenMutable({
           data: draft,
@@ -2355,14 +2447,9 @@ export const convertInstance = (
             props: draft.props.values(),
           }).payload
         );
-        const renames = Array.from(draft.props.values()).flatMap((prop) => {
-          if (prop.instanceId !== selectedInstance.id) {
-            return [];
-          }
-          const name = reactPropsToStandardAttributes[prop.name];
-          return name === undefined
-            ? []
-            : [{ propId: prop.id, name, propIdPrefix: prop.instanceId }];
+        const renames = getStandardPropRenames({
+          props: draft.props.values(),
+          instanceId: selectedInstance.id,
         });
         if (renames.length > 0) {
           applyBuilderPatchPayloadMutable(
@@ -2379,6 +2466,17 @@ export const convertInstance = (
           nextInstance.tag = defaultTag;
         }
       }
+      const collision = findBlockTemplateNameCollision({
+        instance: previousInstance,
+        nextInstance,
+        instances: draft.instances,
+      });
+      if (collision !== undefined) {
+        return throwDuplicateBlockTemplateName({
+          name: collision.name,
+          path: "component",
+        });
+      }
       const isSatisfying = isTreeSatisfyingContentModel({
         instances: draft.instances,
         props: draft.props,
@@ -2391,6 +2489,15 @@ export const convertInstance = (
           "Converted tree violates content model"
         );
       }
+      requireBlockTemplateNameConfirmation({
+        required: getBlockTemplateNameConfirmation({
+          changes: [{ instance: previousInstance, nextInstance }],
+          instances: draft.instances,
+          props: draft.props.values(),
+        }),
+        confirm: input.templateNameConfirmation,
+        path: "component",
+      });
     });
     return createRuntimeMutation({
       payload,
@@ -2450,14 +2557,9 @@ export const convertInstance = (
         props: state.props.values(),
       }).payload
     );
-    const renames = Array.from(state.props.values()).flatMap((prop) => {
-      if (prop.instanceId !== instanceId) {
-        return [];
-      }
-      const name = reactPropsToStandardAttributes[prop.name];
-      return name === undefined
-        ? []
-        : [{ propId: prop.id, name, propIdPrefix: prop.instanceId }];
+    const renames = getStandardPropRenames({
+      props: state.props.values(),
+      instanceId,
     });
     if (renames.length > 0) {
       payload.push(
@@ -2489,6 +2591,17 @@ export const convertInstance = (
     }
   }
 
+  const collision = findBlockTemplateNameCollision({
+    instance,
+    nextInstance,
+    instances,
+  });
+  if (collision !== undefined) {
+    return throwDuplicateBlockTemplateName({
+      name: collision.name,
+      path: "component",
+    });
+  }
   const isSatisfying = canConvertInstance({
     instanceId,
     instanceSelector: input.instanceSelector,
@@ -2505,6 +2618,15 @@ export const convertInstance = (
       "Converted tree violates content model"
     );
   }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: [{ instance, nextInstance }],
+      instances,
+      props: state.props.values(),
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "component",
+  });
 
   payload.push({ namespace: "instances", patches: instancePatches });
   return createRuntimeMutation({
@@ -2714,6 +2836,19 @@ export const unwrapInstance = (
     );
   }
   nextInstances.set(grandparentInstanceId, nextGrandparentInstance);
+  let nextSelectedInstance = selectedInstance;
+  if (nextGrandparentInstance.component === blockTemplateComponent) {
+    nextSelectedInstance = { ...selectedInstance };
+    nextInstances.set(instanceId, nextSelectedInstance);
+    assignUniqueBlockTemplateNamesMutable({
+      instanceIds: [instanceId],
+      parent: nextGrandparentInstance,
+      replacedInstanceIds:
+        nextParentInstance.children.length === 0 ? [parentInstanceId] : [],
+      instances: nextInstances,
+      components: componentMetas.keys(),
+    });
+  }
   const nextInstanceSelector = [instanceId, ...input.instanceSelector.slice(2)];
   const isSatisfying = isTreeSatisfyingContentModel({
     instances: nextInstances,
@@ -2726,6 +2861,13 @@ export const unwrapInstance = (
   }
 
   const patches: BuilderPatchChange["patches"] = [];
+  if (nextSelectedInstance.name !== selectedInstance.name) {
+    patches.push({
+      op: selectedInstance.name === undefined ? "add" : "replace",
+      path: [instanceId, "name"],
+      value: nextSelectedInstance.name,
+    });
+  }
   if (nextParentInstance.children.length === 0) {
     patches.push({ op: "remove", path: [parentInstanceId] });
   } else {
@@ -2883,6 +3025,27 @@ export const setInstanceTag = (
   if (instance === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
+  const nextInstance = { ...instance, tag: input.tag };
+  const collision = findBlockTemplateNameCollision({
+    instance,
+    nextInstance,
+    instances,
+  });
+  if (collision !== undefined) {
+    return throwDuplicateBlockTemplateName({
+      name: collision.name,
+      path: "tag",
+    });
+  }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: [{ instance, nextInstance }],
+      instances,
+      props: state.props.values(),
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "tag",
+  });
 
   const payload: BuilderPatchChange[] = [];
   if (input.legacyPropName !== undefined) {
@@ -2920,7 +3083,7 @@ export const setInstanceTag = (
 };
 
 export const setInstanceLabel = (
-  state: Pick<BuilderState, "instances">,
+  state: Pick<BuilderState, "instances"> & Partial<Pick<BuilderState, "props">>,
   input: z.infer<typeof setInstanceLabelInput>
 ) => {
   const instances = getRequiredInstances(state);
@@ -2940,6 +3103,43 @@ export const setInstanceLabel = (
         )
       : [instance];
 
+  const prospectiveInstances = new Map(instances);
+  for (const targetInstance of targetInstances.filter(
+    ({ name }) => name === undefined
+  )) {
+    prospectiveInstances.set(targetInstance.id, { ...targetInstance, label });
+  }
+  for (const targetInstance of targetInstances) {
+    const collision = findBlockTemplateNameCollision({
+      instance: targetInstance,
+      nextInstance: prospectiveInstances.get(targetInstance.id)!,
+      instances: prospectiveInstances,
+    });
+    if (collision !== undefined) {
+      return throwDuplicateBlockTemplateName({
+        name: collision.name,
+        path: "label",
+      });
+    }
+  }
+  const legacyTemplates = targetInstances.filter(
+    ({ name }) => name === undefined
+  );
+  if (legacyTemplates.length > 0) {
+    requireBlockTemplateNameConfirmation({
+      required: getBlockTemplateNameConfirmation({
+        changes: legacyTemplates.map((targetInstance) => ({
+          instance: targetInstance,
+          nextInstance: prospectiveInstances.get(targetInstance.id),
+        })),
+        instances,
+        props: state.props?.values() ?? [],
+      }),
+      confirm: input.templateNameConfirmation,
+      path: "label",
+    });
+  }
+
   const patches: BuilderPatchChange["patches"] = [];
   for (const targetInstance of targetInstances) {
     if (targetInstance.label === label) {
@@ -2958,6 +3158,77 @@ export const setInstanceLabel = (
       instanceIds: targetInstances.map((targetInstance) => targetInstance.id),
       label,
     },
+    invalidatesNamespaces: ["instances"],
+  });
+};
+
+export const setInstanceName = (
+  state: Pick<BuilderState, "instances"> & Partial<Pick<BuilderState, "props">>,
+  input: z.infer<typeof setInstanceNameInput>
+) => {
+  const instances = getRequiredInstances(state);
+  const instance = instances.get(input.instanceId);
+  if (instance === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const parent = findParentInstanceReference(instances, instance.id)?.instance;
+  if (parent?.component !== blockTemplateComponent) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Only direct Content Block templates have an MDX name"
+    );
+  }
+
+  const name = input.name.trim();
+  if (isMdxTemplateComponentName(name) === false) {
+    return throwBuilderValidationError(
+      "Template name must be a PascalCase JavaScript identifier",
+      [
+        {
+          code: "invalid_template_name",
+          path: ["name"],
+          message:
+            "Use a name such as PromotionCard. Spaces and punctuation are not allowed.",
+          constraint: "javascript_component_identifier",
+          example: "PromotionCard",
+        },
+      ]
+    );
+  }
+
+  const nextInstance = { ...instance, name };
+  const collision = findBlockTemplateNameCollision({
+    instance,
+    nextInstance,
+    instances,
+  });
+  if (collision !== undefined) {
+    return throwDuplicateBlockTemplateName({
+      name: collision.name,
+      path: "name",
+    });
+  }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: [{ instance, nextInstance }],
+      instances,
+      props: state.props?.values() ?? [],
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "name",
+  });
+
+  const patches: BuilderPatchChange["patches"] = [];
+  if (instance.name !== name) {
+    patches.push({
+      op: instance.name === undefined ? "add" : "replace",
+      path: [instance.id, "name"],
+      value: name,
+    });
+  }
+  return createRuntimeMutation({
+    payload: compactBuilderPatchPayload([{ namespace: "instances", patches }]),
+    result: { instanceId: instance.id, name },
     invalidatesNamespaces: ["instances"],
   });
 };
@@ -2995,6 +3266,18 @@ export const deleteInstances = (
   if (error?.type === "parent-not-found") {
     return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
   }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: input.instanceIds.flatMap((instanceId) => {
+        const instance = mutationState.instances.get(instanceId);
+        return instance === undefined ? [] : [{ instance }];
+      }),
+      instances: mutationState.instances,
+      props: mutationState.props.values(),
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "instanceIds",
+  });
   return createRuntimeMutation({
     payload,
     result: { instanceIds },
@@ -3054,6 +3337,15 @@ export const deleteInstanceBySelector = (
     if (error?.type === "parent-not-found") {
       return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
     }
+    requireBlockTemplateNameConfirmation({
+      required: getBlockTemplateNameConfirmation({
+        changes: [{ instance: targetInstance }],
+        instances: draft.instances,
+        props: draft.props.values(),
+      }),
+      confirm: input.templateNameConfirmation,
+      path: "instanceSelector",
+    });
     instanceIds = deletePayload.instanceIds;
     applyBuilderPatchPayloadMutable(
       (namespace) => getWebstudioDataNamespace(draft, namespace),
@@ -3163,64 +3455,6 @@ export const updateTextTree = (
       idMap: Object.fromEntries(remapped.idMap),
     },
     invalidatesNamespaces: treeInvalidates,
-  });
-};
-
-export const cloneInstance = (
-  state: TreeMutationState,
-  input: z.infer<typeof cloneInstanceInput>,
-  context: BuilderRuntimeContext
-) => {
-  const mutationState = getRequiredTreeMutationState(state);
-  const source = mutationState.instances.get(input.sourceInstanceId);
-  if (source === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-  }
-  const targetParent =
-    input.targetParentInstanceId === undefined
-      ? findParentInstanceReference(mutationState.instances, source.id)
-          ?.instance
-      : mutationState.instances.get(input.targetParentInstanceId);
-  if (targetParent === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-  }
-  const insertIndex = input.insertIndex ?? targetParent.children.length;
-  if (insertIndex > targetParent.children.length) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Insert index is outside parent children"
-    );
-  }
-  const clone = createInstanceClonePayload({
-    instances: mutationState.instances,
-    sourceInstanceId: source.id,
-    targetParent,
-    insertIndex,
-    props: mutationState.props.values(),
-    styleSourceSelections: mutationState.styleSourceSelections.values(),
-    styleSources: mutationState.styleSources.values(),
-    styles: mutationState.styles,
-    createId: context.createId,
-  });
-  if (clone === undefined) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Source instance could not be cloned"
-    );
-  }
-  return createRuntimeMutation({
-    payload: clone.payload,
-    result: {
-      instanceId: clone.clonedRootId,
-      instanceIds: clone.clonedInstanceIds,
-    },
-    invalidatesNamespaces: [
-      "instances",
-      "props",
-      "styleSourceSelections",
-      "styleSources",
-      "styles",
-    ],
   });
 };
 
@@ -3337,22 +3571,71 @@ export const findTextContentChild = (
 export const createTextContentChild = ({
   type,
   value,
+  expressionBindingMode,
 }: {
   type: TextContentChild["type"];
   value: string;
-}): TextContentChild => ({ type, value });
+  expressionBindingMode?: ExpressionBindingMode;
+}): TextContentChild =>
+  type === "expression"
+    ? { type, value, mode: expressionBindingMode ?? "read" }
+    : { type, value };
 
 export const getTextContentErrors = ({
   type,
   value,
+  expressionBindingMode,
 }: {
   type: TextContentChild["type"];
   value: string;
+  expressionBindingMode?: ExpressionBindingMode;
 }) => {
   if (type === "text") {
     return [];
   }
-  return getExpressionErrors(value);
+  const bindingError = getExpressionBindingError({
+    value,
+    mode: expressionBindingMode,
+  });
+  return [
+    ...(bindingError === undefined ? [] : [bindingError]),
+    ...getExpressionErrors(value),
+  ];
+};
+
+const assertReadwriteTextBindingSupported = ({
+  state,
+  instance,
+  childIndex,
+  child,
+}: {
+  state: Pick<BuilderState, "instances" | "props">;
+  instance: Instance;
+  childIndex: number;
+  child: Extract<Instance["children"][number], { type: "expression" }>;
+}) => {
+  if (child.mode !== "readwrite") {
+    return;
+  }
+  const instances = getRequiredInstances(state);
+  const nextInstances = new Map(instances);
+  const children = [...instance.children];
+  children[childIndex] = child;
+  nextInstances.set(instance.id, { ...instance, children });
+  const isWritable = findWritableContentBlockDocumentBindings({
+    instances: nextInstances,
+    props: state.props ?? new Map(),
+  }).children.some(
+    (candidate) =>
+      candidate.instanceId === instance.id &&
+      candidate.childIndex === childIndex
+  );
+  if (isWritable === false) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      unsupportedReadwriteExpressionError
+    );
+  }
 };
 
 const throwTextExpressionValidationError = (errors: readonly string[]): never =>
@@ -3637,6 +3920,7 @@ type InstanceInspection = ReturnType<typeof serializeInstanceSummary> & {
   ancestors?: ReturnType<typeof getInstanceAncestors>;
   props?: Prop[];
   styles?: ReturnType<typeof serializeStyleDeclarations>;
+  presetStyles?: PresetStyleDecl[];
   children?: Array<ReturnType<typeof serializeInstanceSummary>>;
   bindings?: Prop[];
   sources?: string[];
@@ -3656,7 +3940,17 @@ export const inspectInstance = (
   }
 ) => {
   const instances = getRequiredInstances(state);
-  const instance = instances.get(input.instanceId);
+  const isRoot = input.instanceId === ROOT_INSTANCE_ID;
+  const instance: Instance | undefined = isRoot
+    ? {
+        type: "instance",
+        id: ROOT_INSTANCE_ID,
+        component: rootComponent,
+        tag: "html",
+        label: coreMetas[rootComponent].label,
+        children: [],
+      }
+    : instances.get(input.instanceId);
   if (instance === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
@@ -3682,7 +3976,11 @@ export const inspectInstance = (
       styleSources: state.styleSources?.values() ?? [],
       styleSourceSelections: state.styleSourceSelections?.values() ?? [],
       instanceIds: new Set([instance.id]),
+      includeTokens: isRoot,
     });
+    if (isRoot) {
+      details.presetStyles = coreMetas[rootComponent].presetStyle?.html ?? [];
+    }
   }
   if (include.has("children")) {
     const maxDepth = input.childDepth ?? 1;
@@ -3717,7 +4015,7 @@ export const inspectInstance = (
 };
 
 export const updateTextInstance = (
-  state: Pick<BuilderState, "instances">,
+  state: Pick<BuilderState, "instances" | "props">,
   input: z.infer<typeof updateTextInstanceInput>
 ) => {
   const instances = getRequiredInstances(state);
@@ -3735,7 +4033,19 @@ export const updateTextInstance = (
     );
   }
   const mode = input.mode ?? "text";
-  const errors = getTextContentErrors({ type: mode, value: input.text });
+  const expressionBindingMode =
+    mode === "expression" ? (input.expressionBindingMode ?? "read") : undefined;
+  if (mode !== "expression" && input.expressionBindingMode !== undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Expression binding mode requires an expression child"
+    );
+  }
+  const errors = getTextContentErrors({
+    type: mode,
+    value: input.text,
+    expressionBindingMode,
+  });
   if (errors.length > 0) {
     return throwTextExpressionValidationError(errors);
   }
@@ -3748,6 +4058,19 @@ export const updateTextInstance = (
   if (instance === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
+  const child = createTextContentChild({
+    type: mode,
+    value: input.text,
+    expressionBindingMode,
+  });
+  if (child.type === "expression") {
+    assertReadwriteTextBindingSupported({
+      state,
+      instance,
+      childIndex: input.childIndex,
+      child,
+    });
+  }
   const previousChild = instance.children[input.childIndex - 1];
   const nextChild = instance.children[input.childIndex + 1];
   const shouldMergePrevious = mode === "text" && previousChild?.type === "text";
@@ -3755,6 +4078,8 @@ export const updateTextInstance = (
   if (
     result.child.type === mode &&
     result.child.value === input.text &&
+    (result.child.type !== "expression" ||
+      result.child.mode === expressionBindingMode) &&
     shouldMergePrevious === false &&
     shouldMergeNext === false
   ) {
@@ -3798,7 +4123,7 @@ export const updateTextInstance = (
     payload: createTextContentUpdatePayload({
       instanceId: input.instanceId,
       childIndex: input.childIndex,
-      child: createTextContentChild({ type: mode, value: input.text }),
+      child,
     }),
     result: mutationResult,
     invalidatesNamespaces: ["instances"],
@@ -3887,7 +4212,7 @@ export const replaceText = (
 };
 
 export const setTextContent = (
-  state: Pick<BuilderState, "instances">,
+  state: Pick<BuilderState, "instances" | "props">,
   input: z.infer<typeof setTextContentInput>
 ) => {
   const instances = getRequiredInstances(state);
@@ -3964,9 +4289,23 @@ export const setTextContent = (
     });
   }
 
+  if (
+    input.mode !== "expression" &&
+    input.expressionBindingMode !== undefined
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Expression binding mode requires an expression child"
+    );
+  }
+  const expressionBindingMode =
+    input.mode === "expression"
+      ? (input.expressionBindingMode ?? "read")
+      : undefined;
   const errors = getTextContentErrors({
     type: input.mode,
     value: input.text,
+    expressionBindingMode,
   });
   if (errors.length > 0) {
     return throwTextExpressionValidationError(errors);
@@ -3975,12 +4314,24 @@ export const setTextContent = (
   const child = createTextContentChild({
     type: input.mode,
     value: input.text,
+    expressionBindingMode,
   });
+  if (child.type === "expression") {
+    assertReadwriteTextBindingSupported({
+      state,
+      instance,
+      childIndex: 0,
+      child,
+    });
+  }
   return createRuntimeMutation({
     payload:
       instance.children.length === 1 &&
       instance.children[0]?.type === child.type &&
-      instance.children[0].value === child.value
+      instance.children[0].value === child.value &&
+      (child.type !== "expression" ||
+        (instance.children[0].type === "expression" &&
+          instance.children[0].mode === child.mode))
         ? []
         : createTextContentSetPayload({
             instanceId: input.instanceId,

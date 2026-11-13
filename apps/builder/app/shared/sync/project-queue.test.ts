@@ -1,6 +1,4 @@
-/**
- * @vitest-environment jsdom
- */
+import { draftPersistence } from "./draft-persistence";
 import {
   describe,
   test,
@@ -430,6 +428,59 @@ describe("project-queue", () => {
     });
   });
 
+  test.each([true, false])(
+    "Preview waits for singleplayer PATCH persistence: %s",
+    async (success) => {
+      vi.spyOn(globalThis, "confirm").mockReturnValue(false);
+      draftPersistence.reset("project");
+      let save: ((value: { status: string }) => void) | undefined;
+      mockBuildPatch.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            save = resolve;
+          })
+      );
+      enqueueProjectDetails({
+        projectId: "project",
+        buildId: "build",
+        version: 1,
+        authPermit: "build",
+        authToken: undefined,
+      });
+      const storage = new ServerSyncStorage("project", initialState);
+      storage.sendTransaction(makeTx("pending"));
+      const done = vi.fn();
+      const saved = draftPersistence.wait("project", {
+        signal: new AbortController().signal,
+      });
+      const waiting = success
+        ? saved.then(done)
+        : expect(saved).rejects.toMatchObject({
+            name: "DraftPersistenceError",
+            reason: "save-failed",
+          });
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(mockBuildPatch).toHaveBeenCalled();
+      expect(done).not.toHaveBeenCalled();
+      save?.({ status: success ? "ok" : "authorization_error" });
+      await flush();
+      await waiting;
+      if (success) {
+        expect(done).toHaveBeenCalledOnce();
+      } else {
+        await expect(
+          draftPersistence.wait("project", {
+            signal: new AbortController().signal,
+          })
+        ).rejects.toMatchObject({
+          name: "DraftPersistenceError",
+          reason: "save-failed",
+        });
+      }
+      draftPersistence.reset();
+    }
+  );
+
   //  enqueueProjectDetails
 
   describe("enqueueProjectDetails", () => {
@@ -446,47 +497,38 @@ describe("project-queue", () => {
       expect(commands).toHaveLength(0);
     });
 
-    test("enqueues setDetails for 'edit' permit", () => {
-      const enqueueSpy = vi.spyOn(commandQueue, "enqueue");
-
-      enqueueProjectDetails({
-        projectId: "p1",
-        buildId: "b1",
-        version: 1,
-        authPermit: "edit",
-        authToken: "tok",
-      });
-
-      expect(enqueueSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: "setDetails",
+    test.each([
+      { authPermit: "edit", authToken: "tok" },
+      { authPermit: "own", authToken: undefined },
+    ] as const)(
+      "enqueues project details for '$authPermit' permit",
+      async ({ authPermit, authToken }) => {
+        enqueueProjectDetails({
           projectId: "p1",
-          version: 1,
           buildId: "b1",
-          authToken: "tok",
-        })
-      );
+          version: 1,
+          authPermit,
+          authToken,
+        });
+        commandQueue.enqueue({
+          type: "transactions",
+          projectId: "p1",
+          transactions: [makeTx(`tx-${authPermit}`)],
+        });
 
-      enqueueSpy.mockRestore();
-    });
+        await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 3);
+        await flush();
 
-    test("enqueues setDetails for 'own' permit", () => {
-      const enqueueSpy = vi.spyOn(commandQueue, "enqueue");
-
-      enqueueProjectDetails({
-        projectId: "p1",
-        buildId: "b1",
-        version: 1,
-        authPermit: "own",
-        authToken: undefined,
-      });
-
-      expect(enqueueSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ type: "setDetails" })
-      );
-
-      enqueueSpy.mockRestore();
-    });
+        expect(mockBuildPatch).toHaveBeenCalledWith(
+          expect.objectContaining({
+            projectId: "p1",
+            buildId: "b1",
+            version: 1,
+            authToken,
+          })
+        );
+      }
+    );
   });
 
   //  ServerSyncStorage
@@ -626,6 +668,8 @@ describe("project-queue", () => {
         status: "version_mismatched",
         errors: "Version mismatch",
       });
+      const completion = vi.fn();
+      onTransactionComplete("tx-1", completion);
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -644,6 +688,7 @@ describe("project-queue", () => {
       await flush();
 
       expect($syncStatus.get().status).toBe("fatal");
+      expect(completion).toHaveBeenCalledWith(false);
 
       vi.unstubAllGlobals();
     });
@@ -686,13 +731,22 @@ describe("project-queue", () => {
         vi.fn(() => false)
       );
 
+      const acceptedCompletion = vi.fn();
+      const failedCompletion = vi.fn();
+      onTransactionComplete("tx-accepted", acceptedCompletion);
+      onTransactionComplete("tx-failed", failedCompletion);
       mockBuildPatch.mockResolvedValue({
         status: "partial",
         version: 1,
         entries: [
           {
             seq: 0,
-            transactionId: "tx-1",
+            transactionId: "tx-accepted",
+            status: "accepted",
+          },
+          {
+            seq: 1,
+            transactionId: "tx-failed",
             status: "failed",
             errors: "Patch failed",
           },
@@ -709,7 +763,7 @@ describe("project-queue", () => {
       commandQueue.enqueue({
         type: "transactions",
         projectId: "p1",
-        transactions: [makeTx("tx-1")],
+        transactions: [makeTx("tx-accepted"), makeTx("tx-failed")],
       });
 
       await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 3);
@@ -719,6 +773,8 @@ describe("project-queue", () => {
         status: "fatal",
         error: "Patch failed",
       });
+      expect(acceptedCompletion).toHaveBeenCalledWith(true);
+      expect(failedCompletion).toHaveBeenCalledWith(false);
 
       vi.unstubAllGlobals();
     });

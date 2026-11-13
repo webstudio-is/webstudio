@@ -1,5 +1,17 @@
 import { expect, test, describe } from "vitest";
-import { isPathnamePattern, isAbsoluteUrl } from "./url-pattern";
+import {
+  isPathnamePattern,
+  isAbsoluteUrl,
+  removeTrailingSlash,
+} from "./url-pattern";
+
+test("removes trailing slashes without changing the root path", () => {
+  expect(removeTrailingSlash("/")).toBe("/");
+  expect(removeTrailingSlash("/about")).toBe("/about");
+  expect(removeTrailingSlash("/about/")).toBe("/about");
+  expect(removeTrailingSlash("/about///")).toBe("/about");
+  expect(removeTrailingSlash("/file%2Fname/")).toBe("/file%2Fname");
+});
 
 test("check pathname is pattern", () => {
   expect(isPathnamePattern("/:name")).toEqual(true);

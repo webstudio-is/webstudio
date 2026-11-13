@@ -1,9 +1,9 @@
 import { toValue } from "@webstudio-is/css-engine";
-import { theme } from "@webstudio-is/design-system";
 import { useComputedStyles } from "../../../shared/model";
 import { getPriorityStyleValueSource } from "../../../property-label";
 import { createBatchUpdate } from "../../../shared/use-style-data";
 import { AlignmentUi } from "./alignment-ui";
+import { getStyleSourceForeground } from "../../../style-source/color-recipes";
 
 export const FlexAlignment = () => {
   const styles = useComputedStyles([
@@ -21,16 +21,7 @@ export const FlexAlignment = () => {
   const isColumnDirection =
     flexDirectionValue === "column" || flexDirectionValue === "column-reverse";
 
-  let color = theme.colors.foregroundFlexUiMain;
-  if (styleValueSourceColor === "local") {
-    color = theme.colors.foregroundLocalFlexUi;
-  }
-  if (styleValueSourceColor === "overwritten") {
-    color = theme.colors.foregroundOverwrittenFlexUi;
-  }
-  if (styleValueSourceColor === "remote") {
-    color = theme.colors.foregroundRemoteFlexUi;
-  }
+  const color = getStyleSourceForeground(styleValueSourceColor);
 
   const alignment = ["start", "center", "end"];
 

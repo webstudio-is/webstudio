@@ -76,7 +76,16 @@ const topLevelCommandNames: ReadonlySet<string> = new Set([
 ]);
 
 const mcpOnlyToolNames = new Set(
-  listProjectSessionMcpTools(publicApiOperations)
+  listProjectSessionMcpTools(publicApiOperations, {
+    includeImport: true,
+    includeDownloadAsset: true,
+    includeScreenshot: true,
+    includeResponsiveScreenshot: true,
+    includeScreenshotDiff: true,
+    includeInstallOcr: true,
+    includePreview: true,
+    includeRestorePoints: true,
+  })
     .map((tool) => tool.name)
     .filter((name) => topLevelCommandNames.has(name) === false)
 );

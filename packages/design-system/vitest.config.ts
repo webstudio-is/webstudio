@@ -1,16 +1,4 @@
 import { defineConfig } from "vitest/config";
+import { createBrowserTestConfig } from "../../scripts/vitest-browser-workspace";
 
-export default defineConfig({
-  resolve: {
-    conditions: ["webstudio", "browser", "development|production"],
-  },
-  ssr: {
-    resolve: {
-      conditions: ["webstudio", "node", "development|production"],
-    },
-  },
-  test: {
-    environment: "jsdom",
-    setupFiles: ["./src/test-setup.ts"],
-  },
-});
+export default defineConfig(createBrowserTestConfig());

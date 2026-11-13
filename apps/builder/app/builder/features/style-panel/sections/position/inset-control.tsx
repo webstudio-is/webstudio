@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Grid, theme } from "@webstudio-is/design-system";
+import { cssVar, Grid, theme } from "@webstudio-is/design-system";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { useKeyboardNavigation } from "../shared/keyboard";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
@@ -151,7 +151,7 @@ export const InsetControl = () => {
         height: theme.spacing[18],
         "&:focus-visible": {
           borderRadius: theme.borderRadius[3],
-          outline: `1px solid ${theme.colors.backgroundPrimary}`,
+          outline: `1px solid ${cssVar("--border-focus")}`,
           outlineOffset: -1,
         },
         ...(readonly ? { opacity: 0.5, pointerEvents: "none" } : undefined),

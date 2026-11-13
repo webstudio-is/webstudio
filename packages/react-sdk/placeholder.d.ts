@@ -36,11 +36,26 @@ declare module "__CLIENT__" {
 
 declare module "__SERVER__" {
   import type { PageMeta, System, ResourceRequest } from "@webstudio-is/sdk";
+  import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
 
-  export const getResources: (props: { system: System }) => {
-    data: Map<string, ResourceRequest>;
-    action: Map<string, ResourceRequest>;
+  export const getResources: (props: {
+    system: System;
+    resources?: Record<string, any>;
+  }) => {
+    data: ResourceRequestGraph;
+    action: Map<string, { id: string; outputName: string }>;
+    contentData?: Map<string, ResourceRequest>;
   };
+
+  export const getManagedFormSubmissions: () => Map<
+    string,
+    { action: unknown; resourceIds: (string | null)[] }
+  >;
+
+  export const getManagedFormResourceGraph: (
+    formId: string,
+    props: { system: System; formData: unknown; browserInfo: unknown }
+  ) => ResourceRequestGraph | undefined;
 
   export const getPageMeta: (props: {
     system: System;
@@ -51,6 +66,15 @@ declare module "__SERVER__" {
   export const getRemixParams: ({ ...params }: Params) => Params;
 
   export const contactEmail: undefined | string;
+  export const emailDefaults: {
+    sender: string;
+    recipients: string;
+    subject: string;
+    body: string;
+    confirmationSubject: string;
+    confirmationBody: string;
+    confirmationBodyIsDefault: boolean;
+  };
 }
 
 declare module "__AUTH__" {
@@ -68,6 +92,7 @@ declare module "__SITEMAP__" {
 declare module "__ASSETS__" {
   import type { RuntimeAsset } from "@webstudio-is/sdk";
   export const assets: Record<string, RuntimeAsset>;
+  export const assetUrlsByPath: Record<string, string>;
 }
 
 declare module "__REDIRECT__" {

@@ -1,18 +1,78 @@
 import { beforeEach, describe, test, expect, vi } from "vitest";
-import { __testing__ } from "./upload-assets";
+import { assetType, type Asset } from "@webstudio-is/sdk";
+import { createAssetFolderFixture } from "@webstudio-is/sdk/testing";
+import type { Project } from "@webstudio-is/project";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import {
+  $assetFolders,
+  $assets,
+  $pages,
+  $project,
+} from "~/shared/sync/data-stores";
+import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
+import { __testing__, importAssets } from "./upload-assets";
 
 const {
   createUploadTicket,
   deduplicateAssetName,
   getFilesData,
   getUniqueFilesData,
+  safeSetAsset,
   submitAssetUpload,
 } = __testing__;
 const request = vi.fn<typeof fetch>();
 
+registerContainers();
+
 describe("upload-assets", () => {
   beforeEach(() => {
     request.mockReset();
+    $project.set(undefined);
+    $assetFolders.set(new Map());
+    $assets.set(new Map());
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+    serverSyncStore.transactionManager.currentStack = [];
+    serverSyncStore.transactionManager.undoneStack = [];
+    serverSyncStore.popAll();
+  });
+
+  test("commits a server-validated collection template repair", () => {
+    const configAsset: Asset = {
+      id: "config",
+      projectId: "project-id",
+      name: "collection.json",
+      filename: "collection",
+      folderId: "posts",
+      type: "file",
+      format: "json",
+      size: 1,
+      createdAt: "2026-09-06T00:00:00.000Z",
+      meta: {},
+    };
+    const templateAsset: Asset = {
+      ...configAsset,
+      id: "template",
+      name: "template.mdx",
+      filename: "template",
+      format: "mdx",
+    };
+    $project.set({ id: "project-id" } as Project);
+    $assetFolders.set(
+      new Map([
+        [
+          "posts",
+          createAssetFolderFixture({
+            id: "posts",
+            name: "Posts",
+          }),
+        ],
+      ])
+    );
+    $assets.set(new Map([[configAsset.id, configAsset]]));
+
+    safeSetAsset(templateAsset, "project-id");
+
+    expect($assets.get().get(templateAsset.id)).toEqual(templateAsset);
   });
 
   test("requests upload tickets without client-supplied asset ids", async () => {
@@ -30,6 +90,7 @@ describe("upload-assets", () => {
       createUploadTicket({
         authToken: "token",
         projectId: "project-id",
+        folderId: "folder-id",
         fileOrUrl: new File(["content"], "image.png", { type: "image/png" }),
         assetType: "image",
         request,
@@ -47,12 +108,37 @@ describe("upload-assets", () => {
     ];
     expect(init.body.has("assetId")).toBe(false);
     expect(init.body.get("projectId")).toBe("project-id");
+    expect(init.body.get("folderId")).toBe("folder-id");
     expect(init.body.get("type")).toBe("image");
     expect(init.body.get("filename")).toBe("image.png");
     expect(init.body.get("displayFilename")).toBe("image");
     expect(init.body.get("contentHash")).toBeNull();
     expect(init.headers.get("x-auth-token")).toBe("token");
   });
+
+  test.each(assetType.options)(
+    "reserves %s assets without changing their type",
+    async (type) => {
+      request.mockResolvedValue(
+        Response.json({
+          assetId: "server-asset-id",
+          name: "upload-name",
+          deduplicated: false,
+        })
+      );
+
+      await createUploadTicket({
+        authToken: "token",
+        projectId: "project-id",
+        fileOrUrl: new File(["content"], `asset.${type}`),
+        assetType: type,
+        request,
+      });
+
+      const [, init] = request.mock.calls[0] as [string, { body: FormData }];
+      expect(init.body.get("type")).toBe(type);
+    }
+  );
 
   test("keeps the display name separate from the sanitized storage name", async () => {
     request.mockResolvedValue(
@@ -78,6 +164,302 @@ describe("upload-assets", () => {
     const [, init] = request.mock.calls[0] as [string, { body: FormData }];
     expect(init.body.get("filename")).toBe("Campaign_photo.png");
     expect(init.body.get("displayFilename")).toBe("Campaign photo");
+  });
+
+  test("keeps collection filenames independent across folders", async () => {
+    $assets.set(
+      new Map([
+        [
+          "other-template",
+          {
+            id: "other-template",
+            projectId: "project-id",
+            name: "template-storage.mdx",
+            filename: "template",
+            folderId: "other-folder",
+            type: "file",
+            format: "mdx",
+            size: 1,
+            description: null,
+            createdAt: "2026-09-03T00:00:00.000Z",
+            meta: {},
+          } satisfies Asset,
+        ],
+      ])
+    );
+    request.mockResolvedValue(
+      Response.json({
+        assetId: "new-template",
+        name: "upload-name",
+        deduplicated: false,
+      })
+    );
+
+    await createUploadTicket({
+      authToken: "token",
+      projectId: "project-id",
+      folderId: "new-folder",
+      fileOrUrl: new File([], "template.mdx", { type: "text/mdx" }),
+      assetType: "file",
+      request,
+    });
+
+    const [, init] = request.mock.calls[0] as [string, { body: FormData }];
+    expect(init.body.get("filename")).toBe("template.mdx");
+  });
+
+  test("imports every asset type through the production upload queue", async () => {
+    $project.set({ id: "target-project" } as Project);
+    $assets.set(new Map());
+    const sources: Asset[] = [
+      {
+        id: "font",
+        projectId: "source-project",
+        name: "brand.woff2",
+        type: "font",
+        format: "woff2",
+        size: 1,
+        createdAt: "2026-01-01",
+        description: "Brand font",
+        meta: { family: "Brand", style: "normal", weight: 400 },
+      },
+      {
+        id: "video",
+        projectId: "source-project",
+        name: "demo.mp4",
+        type: "video",
+        format: "mp4",
+        size: 1,
+        createdAt: "2026-01-01",
+        meta: { width: 1920, height: 1080 },
+      },
+      {
+        id: "file",
+        projectId: "source-project",
+        name: "guide.pdf",
+        type: "file",
+        format: "pdf",
+        size: 1,
+        createdAt: "2026-01-01",
+        meta: {},
+      },
+    ];
+    const importedById = new Map(
+      sources.map((asset) => [
+        `imported-${asset.id}`,
+        { ...asset, id: `imported-${asset.id}`, projectId: "target-project" },
+      ])
+    );
+    const upload: NonNullable<
+      NonNullable<Parameters<typeof importAssets>[2]>["upload"]
+    > = vi.fn(async (type, [url]) => {
+      return new Map([[url, `imported-${type}`]]);
+    });
+    const waitForUpload = vi.fn(async (assetId: string) => {
+      const asset = importedById.get(assetId);
+      if (asset === undefined) {
+        throw new Error("Missing imported test asset");
+      }
+      return asset;
+    });
+
+    await expect(
+      importAssets(
+        "target-project",
+        sources.map((asset) => ({
+          asset,
+          url: `https://source.example.com/${asset.name}`,
+        })),
+        { upload, waitForUpload }
+      )
+    ).resolves.toEqual(
+      new Map(
+        sources.map((asset) => [
+          asset.id,
+          importedById.get(`imported-${asset.id}`),
+        ])
+      )
+    );
+
+    expect(upload).toHaveBeenNthCalledWith(
+      1,
+      "font",
+      [new URL("https://source.example.com/brand.woff2")],
+      { preserveFilename: true }
+    );
+    expect(upload).toHaveBeenNthCalledWith(
+      2,
+      "video",
+      [new URL("https://source.example.com/demo.mp4")],
+      { dimensions: { width: 1920, height: 1080 } }
+    );
+    expect(upload).toHaveBeenNthCalledWith(
+      3,
+      "file",
+      [new URL("https://source.example.com/guide.pdf")],
+      {}
+    );
+  });
+
+  test("uploads cross-deployment assets when destination metadata matches", async () => {
+    $project.set({ id: "target-project" } as Project);
+    const sourceAsset = {
+      id: "shared-id",
+      projectId: "source-project",
+      name: "hero.png",
+      type: "image",
+      format: "png",
+      size: 1,
+      createdAt: "2026-01-01",
+      description: null,
+      meta: { width: 100, height: 100 },
+    } satisfies Asset;
+    const existingAsset = {
+      ...sourceAsset,
+      projectId: "target-project",
+    } satisfies Asset;
+    const importedAsset = {
+      ...sourceAsset,
+      id: "imported-id",
+      projectId: "target-project",
+    } satisfies Asset;
+    $assets.set(new Map([[existingAsset.id, existingAsset]]));
+    const upload = vi.fn(async (_type, [url]: URL[]) => {
+      return new Map([[url, importedAsset.id]]);
+    });
+    const waitForUpload = vi.fn(async () => importedAsset);
+
+    await expect(
+      importAssets(
+        "target-project",
+        [
+          {
+            asset: sourceAsset,
+            url: "https://source.example.com/cgi/image/hero.png?format=raw",
+          },
+        ],
+        { upload, waitForUpload }
+      )
+    ).resolves.toEqual(new Map([[sourceAsset.id, importedAsset]]));
+
+    expect(upload).toHaveBeenCalledOnce();
+    expect(waitForUpload).toHaveBeenCalledWith(importedAsset.id);
+  });
+
+  test.each(["md", "mdx", "json"])(
+    "imports mutable %s documents without deduplicating them",
+    async (format) => {
+      $project.set({ id: "target-project" } as Project);
+      const sourceAsset = {
+        id: "article",
+        projectId: "source-project",
+        name: `article.${format}`,
+        type: "file",
+        format,
+        size: 1,
+        createdAt: "2026-01-01",
+        description: null,
+        meta: {},
+      } satisfies Asset;
+      const importedAsset = {
+        ...sourceAsset,
+        id: "article-copy",
+        projectId: "target-project",
+      } satisfies Asset;
+      const upload = vi.fn(async (_type, [url]: URL[]) => {
+        return new Map([[url, importedAsset.id]]);
+      });
+      const waitForUpload = vi.fn(async () => importedAsset);
+      const url = new URL(`https://source.example.com/article.${format}`);
+
+      await importAssets(
+        "target-project",
+        [{ asset: sourceAsset, url: url.href }],
+        { upload, waitForUpload }
+      );
+
+      expect(upload).toHaveBeenCalledWith("file", [url], {
+        deduplicate: false,
+      });
+    }
+  );
+
+  test("reuses matching assets from the current deployment", async () => {
+    $project.set({ id: "target-project" } as Project);
+    const existingAsset = {
+      id: "existing-id",
+      projectId: "target-project",
+      name: "hero.png",
+      type: "image",
+      format: "png",
+      size: 1,
+      createdAt: "2026-01-01",
+      description: null,
+      meta: { width: 100, height: 100 },
+    } satisfies Asset;
+    $assets.set(new Map([[existingAsset.id, existingAsset]]));
+    const upload = vi.fn();
+    const waitForUpload = vi.fn();
+
+    await expect(
+      importAssets(
+        "target-project",
+        [
+          {
+            asset: existingAsset,
+            url: `${window.location.origin}/cgi/image/hero.png?format=raw`,
+          },
+        ],
+        { upload, waitForUpload }
+      )
+    ).resolves.toEqual(new Map([[existingAsset.id, existingAsset]]));
+
+    expect(upload).not.toHaveBeenCalled();
+    expect(waitForUpload).not.toHaveBeenCalled();
+  });
+
+  test("requests content deduplication when importing an image again", async () => {
+    $project.set({ id: "target-project" } as Project);
+    const sourceAsset = {
+      id: "source-image",
+      projectId: "source-project",
+      name: "hero.png",
+      type: "image",
+      format: "png",
+      size: 4,
+      createdAt: "2026-01-01",
+      description: null,
+      meta: { width: 100, height: 100 },
+    } satisfies Asset;
+    const targetAsset = {
+      ...sourceAsset,
+      id: "target-image",
+      projectId: "target-project",
+      name: "stored-hero.png",
+    } satisfies Asset;
+    $assets.set(new Map([[targetAsset.id, targetAsset]]));
+    const url = "https://source.example.com/cgi/image/hero.png?format=raw";
+    const upload = vi.fn(
+      async (
+        _type: string,
+        [sourceUrl]: URL[],
+        _options?: { preserveFilename?: boolean }
+      ) => new Map([[sourceUrl, targetAsset.id]])
+    );
+    const waitForUpload = vi.fn(async () => targetAsset);
+
+    const imported = await importAssets(
+      "target-project",
+      [{ asset: sourceAsset, url }],
+      { upload, waitForUpload }
+    );
+
+    expect(imported.get(sourceAsset.id)).toEqual(targetAsset);
+    expect(upload).toHaveBeenCalledOnce();
+    const [type, [sourceUrl], options] = upload.mock.calls[0];
+    expect(type).toBe("image");
+    expect(sourceUrl.href).toBe(url);
+    expect(options).toEqual({ preserveFilename: true });
   });
 
   test("passes the existing browser content hash to the shared upload ticket", async () => {
@@ -112,6 +494,29 @@ describe("upload-assets", () => {
     expect(init.body.get("contentHash")).toBe("a".repeat(64));
   });
 
+  test("can reserve an independent asset with identical content", async () => {
+    request.mockResolvedValue(
+      Response.json({
+        assetId: "new-asset-id",
+        name: "new-name",
+        deduplicated: false,
+      })
+    );
+
+    await createUploadTicket({
+      authToken: "token",
+      projectId: "project-id",
+      fileOrUrl: new File([], "empty.mdx", { type: "text/mdx" }),
+      contentHash: "a".repeat(64),
+      deduplicate: false,
+      assetType: "file",
+      request,
+    });
+
+    const [, init] = request.mock.calls[0] as [string, { body: FormData }];
+    expect(init.body.get("contentHash")).toBeNull();
+  });
+
   test("reports non-error upload failures", async () => {
     request.mockRejectedValue("network down");
     const onCompleted = vi.fn();
@@ -128,6 +533,45 @@ describe("upload-assets", () => {
 
     expect(onCompleted).not.toHaveBeenCalled();
     expect(onError).toHaveBeenCalledWith("network down");
+  });
+
+  test("marks URL uploads separately from JSON file uploads", async () => {
+    request.mockResolvedValue(
+      Response.json({ uploadedAssets: [{ id: "asset" }] })
+    );
+
+    await submitAssetUpload({
+      authToken: undefined,
+      uploadName: "upload-name",
+      fileOrUrl: new URL("https://example.com/image.png"),
+      onCompleted: vi.fn(),
+      onError: vi.fn(),
+      request,
+    });
+
+    const [, init] = request.mock.calls[0] as [string, { headers: Headers }];
+    expect(init.headers.get("x-webstudio-asset-source")).toBe("url");
+  });
+
+  test("passes source video dimensions with URL uploads", async () => {
+    request.mockResolvedValue(
+      Response.json({ uploadedAssets: [{ id: "asset" }] })
+    );
+
+    await submitAssetUpload({
+      authToken: undefined,
+      uploadName: "video.mp4",
+      fileOrUrl: new URL("https://example.com/video.mp4"),
+      width: 1920,
+      height: 1080,
+      onCompleted: vi.fn(),
+      onError: vi.fn(),
+      request,
+    });
+
+    expect(request.mock.calls[0]?.[0]).toBe(
+      "/rest/assets/uploads/video.mp4?width=1920&height=1080"
+    );
   });
 
   test("keeps the selected folder throughout upload preparation", async () => {
@@ -159,6 +603,49 @@ describe("upload-assets", () => {
       contentHash,
       fingerprintId: JSON.stringify(["image.png", contentHash]),
     });
+  });
+
+  test("sends the source URL and stable filename for server content deduplication", async () => {
+    $assets.set(
+      new Map([
+        [
+          "existing",
+          {
+            id: "existing",
+            projectId: "target-project",
+            name: "hero.svg",
+            type: "image",
+            format: "svg",
+            size: 4,
+            createdAt: "2026-01-01",
+            description: null,
+            meta: { width: 100, height: 100 },
+          } satisfies Asset,
+        ],
+      ])
+    );
+    request.mockResolvedValue(
+      Response.json({
+        assetId: "existing",
+        name: "hero.svg",
+        deduplicated: true,
+      })
+    );
+    await createUploadTicket({
+      authToken: "token",
+      projectId: "target-project",
+      fileOrUrl: new URL(
+        "https://source.example.com/cgi/asset/hero.svg?format=raw"
+      ),
+      preserveFilename: true,
+      assetType: "image",
+      request,
+    });
+    const [_url, init] = request.mock.calls[0] as [string, { body: FormData }];
+    expect(init.body.get("filename")).toBe("hero.svg");
+    expect(init.body.get("sourceUrl")).toBe(
+      "https://source.example.com/cgi/asset/hero.svg?format=raw"
+    );
   });
 
   test("preserves identical file content with different filenames", async () => {
@@ -196,6 +683,25 @@ describe("upload-assets", () => {
 
     expect(uniqueFilesData.size).toBe(1);
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:1");
+  });
+
+  test("keeps identical content with the same filename in different folders", async () => {
+    const filesData = await getFilesData(
+      "image",
+      [
+        new File(["same"], "image.png", { type: "image/png" }),
+        new File(["same"], "image.png", { type: "image/png" }),
+      ],
+      "folder-a",
+      (file) => `blob:${file instanceof File ? file.name : "unknown"}`
+    );
+    filesData[1].folderId = "folder-b";
+    const revokeObjectURL = vi.fn();
+
+    const uniqueFilesData = getUniqueFilesData(filesData, revokeObjectURL);
+
+    expect(uniqueFilesData.size).toBe(2);
+    expect(revokeObjectURL).not.toHaveBeenCalled();
   });
 
   test("releases object URLs discarded during deduplication", async () => {

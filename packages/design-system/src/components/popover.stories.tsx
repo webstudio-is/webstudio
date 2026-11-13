@@ -22,7 +22,7 @@ const PopoverDemo = () => (
   <StorySection title="Popover">
     <Popover defaultOpen>
       <PopoverTrigger asChild>
-        <Button>Open</Button>
+        <Button color="primary">Open</Button>
       </PopoverTrigger>
       <PopoverContent>
         <Flex css={{ padding: theme.spacing[7] }}>
@@ -44,7 +44,7 @@ export const WithTitle = () => (
   <StorySection title="With title">
     <Popover defaultOpen>
       <PopoverTrigger asChild>
-        <Button>Open</Button>
+        <Button color="primary">Open</Button>
       </PopoverTrigger>
       <PopoverContent>
         <Flex direction="column" gap="2" style={{ padding: 12 }}>
@@ -60,7 +60,7 @@ export const WithTitleActions = () => (
   <StorySection title="With title actions">
     <Popover defaultOpen>
       <PopoverTrigger asChild>
-        <Button>Open</Button>
+        <Button color="primary">Open</Button>
       </PopoverTrigger>
       <PopoverContent>
         <Flex direction="column" gap="2" style={{ padding: 12 }}>
@@ -85,7 +85,7 @@ export const SideRight = () => (
     <Flex style={{ padding: 100 }}>
       <Popover defaultOpen>
         <PopoverTrigger asChild>
-          <Button>Right</Button>
+          <Button color="primary">Right</Button>
         </PopoverTrigger>
         <PopoverContent side="right">
           <Flex direction="column" gap="2" style={{ padding: 12 }}>
@@ -102,7 +102,7 @@ export const SideTop = () => (
     <Flex style={{ padding: 100 }}>
       <Popover defaultOpen>
         <PopoverTrigger asChild>
-          <Button>Top</Button>
+          <Button color="primary">Top</Button>
         </PopoverTrigger>
         <PopoverContent side="top">
           <Flex direction="column" gap="2" style={{ padding: 12 }}>
@@ -119,7 +119,7 @@ export const SideBottomWithOffset = () => (
     <Flex style={{ padding: 100 }}>
       <Popover defaultOpen>
         <PopoverTrigger asChild>
-          <Button>Bottom</Button>
+          <Button color="primary">Bottom</Button>
         </PopoverTrigger>
         <PopoverContent side="bottom" sideOffset={16}>
           <Flex direction="column" gap="2" style={{ padding: 12 }}>

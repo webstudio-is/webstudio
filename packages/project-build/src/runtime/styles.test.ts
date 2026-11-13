@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   type Breakpoint,
   getStyleDeclKey,
+  getTagStyleId,
   ROOT_INSTANCE_ID,
   type Instance,
   type Prop,
@@ -51,6 +52,7 @@ import {
   getReferencedCssVariables,
   getStyleSourceInsertionIndex,
   getStyleDeclarations,
+  listTagStyles,
   getUnusedCssVariableNames,
   performCssVariableRename,
   renameCssVariable,
@@ -61,6 +63,7 @@ import {
   styleReplaceInput,
   styleUpdateDeclarationsInput,
   styleUpdateInput,
+  selectedStyleUpdateDeclarationsInput,
   defineCssVariables,
   deleteDesignTokenStyles,
   deleteSelectedStyleDeclarations,
@@ -79,7 +82,6 @@ import {
   validateStyleSourceName,
   updateVarReferencesInProps,
 } from "./styles";
-import { createLocalStyleSourceClonePlan } from "./style-utils";
 import { getInputSchemaMetadata } from "../contracts/input-schema";
 import { getZodValidationIssues } from "./errors";
 import {
@@ -573,6 +575,9 @@ describe("css variable usage", () => {
     expect(collectCssVariableReferences("var(--special-$name)", regex)).toEqual(
       new Set(["--special-$name"])
     );
+    expect(
+      collectCssVariableReferences("var(--ancestor, var(--fallback))")
+    ).toEqual(new Set(["--ancestor", "--fallback"]));
   });
 
   test("finds css variable definitions and references", () => {
@@ -1067,8 +1072,75 @@ const instance = (id: string): Instance => ({
 });
 
 describe("runtime style operations", () => {
-  test.each([":hover, body", ":hover > div", "body:hover"])(
-    "rejects state selectors that escape the styled element when writing: %s",
+  test("rejects an unknown breakpoint coordinate", () => {
+    const result = styleUpdateInput.safeParse({
+      instanceId: "box",
+      property: "padding",
+      value: { type: "keyword", value: "8px" },
+      breakpointId: "mobile",
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("Expected the unknown breakpoint field to be rejected");
+    }
+    expect(
+      getZodValidationIssues(
+        result.error,
+        getInputSchemaMetadata(styleUpdateInput).inputJsonSchema
+      )
+    ).toEqual([
+      expect.objectContaining({
+        code: "unrecognized_keys",
+        path: ["breakpointId"],
+        constraint: "recognized_keys_only",
+      }),
+    ]);
+  });
+
+  test.each([
+    ":hover, body",
+    "body:hover",
+    ":hover + .tooltip",
+    ":hover ~ .tooltip",
+  ])("rejects unsupported state selectors when writing: %s", (state) => {
+    expect(
+      styleUpdateInput.safeParse({
+        instanceId: "box",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+        state,
+      })
+    ).toMatchObject({ success: false });
+    expect(
+      designTokenCreateInput.safeParse({
+        name: "Primary",
+        declarations: [
+          {
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state,
+          },
+        ],
+      })
+    ).toMatchObject({ success: false });
+    expect(
+      selectedStyleUpdateDeclarationsInput.safeParse({
+        updates: [
+          {
+            instanceId: "box",
+            styleSourceId: "token",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state,
+          },
+        ],
+      })
+    ).toMatchObject({ success: false });
+  });
+
+  test.each([":hover .button", ":hover > .icon"])(
+    "accepts a state targeting descendants in shared style inputs: %s",
     (state) => {
       expect(
         styleUpdateInput.safeParse({
@@ -1076,8 +1148,8 @@ describe("runtime style operations", () => {
           property: "color",
           value: { type: "keyword", value: "red" },
           state,
-        })
-      ).toMatchObject({ success: false });
+        }).success
+      ).toBe(true);
       expect(
         designTokenCreateInput.safeParse({
           name: "Primary",
@@ -1088,8 +1160,21 @@ describe("runtime style operations", () => {
               state,
             },
           ],
-        })
-      ).toMatchObject({ success: false });
+        }).success
+      ).toBe(true);
+      expect(
+        selectedStyleUpdateDeclarationsInput.safeParse({
+          updates: [
+            {
+              instanceId: "box",
+              styleSourceId: "token",
+              property: "color",
+              value: { type: "keyword", value: "red" },
+              state,
+            },
+          ],
+        }).success
+      ).toBe(true);
     }
   );
 
@@ -1103,56 +1188,29 @@ describe("runtime style operations", () => {
     ).toMatchObject({ success: true });
   });
 
-  test("preserves an editable compound state through mutation and generated CSS", () => {
-    const state = ":hover:focus-visible";
-    const mutation = updateStyleDeclarations(
-      {
-        breakpoints: runtimeBreakpoints,
-        instances: toMap([instance("box")]),
-        styles: new Map(),
-        styleSources: sources([local("local")]),
-        styleSourceSelections: new Map([
-          ["box", { instanceId: "box", values: ["local"] }],
-        ]),
-      },
-      {
-        updates: [
-          {
-            instanceId: "box",
-            property: "borderTopColor",
-            value: { type: "keyword", value: "currentcolor" },
-            state,
-          },
-        ],
-      },
-      { createId }
-    );
-    const patch = mutation.payload
-      .find((change) => change.namespace === "styles")
-      ?.patches.at(0);
-    if (patch === undefined || patch.op === "remove") {
-      throw new Error("Expected a style declaration patch");
+  test.each([
+    [":hover .button", ".box:hover .button"],
+    [":focus-within input", ".box:focus-within input"],
+    [
+      "[data-state=open] > [data-part=content]",
+      ".box[data-state=open] > [data-part=content]",
+    ],
+  ])(
+    "renders descendant states in generated CSS: %s",
+    (state, generatedSelector) => {
+      const sheet = createRegularStyleSheet();
+      const rule = sheet.addNestingRule(".box");
+      rule.setDeclaration({
+        breakpoint: "desktop",
+        selector: state,
+        property: "borderTopColor",
+        value: { type: "keyword", value: "currentcolor" },
+      });
+      expect(rule.toString({ breakpoint: "desktop" })).toContain(
+        `${generatedSelector} {\n  border-top-color: currentcolor\n}`
+      );
     }
-    const declaration = patch.value as StyleDecl;
-
-    expect(declaration).toMatchObject({
-      property: "borderTopColor",
-      state,
-      breakpointId: "desktop",
-    });
-
-    const sheet = createRegularStyleSheet();
-    const rule = sheet.addNestingRule(".box");
-    rule.setDeclaration({
-      breakpoint: declaration.breakpointId,
-      selector: declaration.state ?? "",
-      property: declaration.property,
-      value: declaration.value,
-    });
-    expect(rule.toString({ breakpoint: "desktop" })).toContain(
-      ".box:hover:focus-visible {\n  border-top-color: currentcolor\n}"
-    );
-  });
+  );
 
   test("rejects declarations for unknown breakpoints", () => {
     expect(() =>
@@ -1538,6 +1596,123 @@ describe("runtime style operations", () => {
         patches: [{ op: "remove", path: ["token:desktop:color:"] }],
       },
     ]);
+  });
+
+  test("editing a tag token creates a global source without attaching it", () => {
+    const id = getTagStyleId("button");
+    const mutation = updateSelectedStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: toMap([instance("button-instance")]),
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      {
+        updates: [
+          {
+            instanceId: "button-instance",
+            styleSourceId: id,
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state: ":hover",
+          },
+        ],
+      }
+    );
+
+    expect(mutation.payload).toContainEqual({
+      namespace: "styleSources",
+      patches: [
+        {
+          op: "add",
+          path: [id],
+          value: { type: "tag", id, tag: "button" },
+        },
+      ],
+    });
+    expect(mutation.payload).toContainEqual({
+      namespace: "styles",
+      patches: [
+        expect.objectContaining({
+          path: [`${id}:desktop:color::hover`],
+          value: expect.objectContaining({
+            styleSourceId: id,
+            state: ":hover",
+          }),
+        }),
+      ],
+    });
+    expect(
+      mutation.payload.some(
+        (change) => change.namespace === "styleSourceSelections"
+      )
+    ).toBe(false);
+  });
+
+  test("editing the html Tag style from Global root creates a global source", () => {
+    const id = getTagStyleId("html");
+    const mutation = updateSelectedStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: new Map(),
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      {
+        updates: [
+          {
+            instanceId: ROOT_INSTANCE_ID,
+            styleSourceId: id,
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      }
+    );
+
+    expect(mutation.payload).toContainEqual({
+      namespace: "styleSources",
+      patches: [
+        { op: "add", path: [id], value: { type: "tag", id, tag: "html" } },
+      ],
+    });
+    expect(
+      mutation.payload.some(
+        (change) => change.namespace === "styleSourceSelections"
+      )
+    ).toBe(false);
+  });
+
+  test("accepts a nested tag selector on a global Tag style", () => {
+    const id = getTagStyleId("button");
+    const mutation = updateSelectedStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: toMap([instance("button-instance")]),
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      {
+        updates: [
+          {
+            instanceId: "button-instance",
+            styleSourceId: id,
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state: " h2:hover",
+          },
+        ],
+      }
+    );
+    expect(mutation.payload).toContainEqual({
+      namespace: "styleSources",
+      patches: [
+        { op: "add", path: [id], value: { type: "tag", id, tag: "button" } },
+      ],
+    });
   });
 
   test("renames, locks, and deletes style sources", () => {
@@ -1978,6 +2153,47 @@ describe("serializeDesignTokens", () => {
   });
 });
 
+test("lists global Tag styles separately from design tokens", () => {
+  const divId = getTagStyleId("div");
+  const buttonId = getTagStyleId("button");
+  const declaration: StyleDecl = {
+    styleSourceId: divId,
+    breakpointId: "base",
+    property: "color",
+    state: ":hover",
+    value: { type: "keyword", value: "red" },
+  };
+  const state = {
+    styleSources: new Map<string, StyleSource>([
+      [divId, { type: "tag", id: divId, tag: "div" }],
+      [buttonId, { type: "tag", id: buttonId, tag: "button" }],
+      ["token", { type: "token", id: "token", name: "Primary" }],
+    ]),
+    styles: new Map([[getStyleDeclKey(declaration), declaration]]),
+  };
+  expect(listTagStyles(state).tagStyles).toEqual([
+    { id: buttonId, tag: "button", declarationCount: 0 },
+    { id: divId, tag: "div", declarationCount: 1 },
+  ]);
+  expect(listTagStyles(state, { tag: "div", verbose: true }).tagStyles).toEqual(
+    [
+      {
+        id: divId,
+        tag: "div",
+        declarationCount: 1,
+        declarations: [
+          {
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            breakpoint: "base",
+            state: ":hover",
+          },
+        ],
+      },
+    ]
+  );
+});
+
 test("expands style values without changing pagination or filters", () => {
   const largeValue = {
     type: "unparsed" as const,
@@ -2165,7 +2381,6 @@ describe("style declaration helpers", () => {
     expect(
       getInputSchemaMetadata(styleUpdateInput).inputJsonSchema.properties?.value
     ).toMatchObject({
-      description: "Typed CSS StyleValue object.",
       examples: [{ type: "keyword", value: "red" }],
       type: "object",
       properties: {
@@ -2291,6 +2506,42 @@ describe("style declaration helpers", () => {
         property,
         value: { type: "var", value: "radius" },
       }))
+    );
+  });
+
+  test("keeps unresolved transition variables together for browser parsing", () => {
+    const declarations = createStyleDeclsFromInput({
+      styleSourceId: "token",
+      property: "transition",
+      value: {
+        type: "unparsed",
+        value: "opacity 300ms var(--ease), transform var(--duration) ease",
+      },
+    });
+    expect(declarations).toEqual([
+      expect.objectContaining({
+        styleSourceId: "token",
+        breakpointId: "base",
+        property: "transition",
+        value: {
+          type: "unparsed",
+          value: "opacity 300ms var(--ease),transform var(--duration) ease",
+        },
+      }),
+    ]);
+
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".box");
+    for (const declaration of declarations) {
+      rule.setDeclaration({
+        breakpoint: declaration.breakpointId,
+        selector: "",
+        property: declaration.property,
+        value: declaration.value,
+      });
+    }
+    expect(rule.toString({ breakpoint: "base" })).toContain(
+      "transition: opacity 300ms var(--ease),transform var(--duration) ease"
     );
   });
 
@@ -3438,60 +3689,6 @@ describe("addStyleSourceToInstanceMutable", () => {
     expect(styleSourceSelections.get("instance")?.values).toEqual([
       "token",
       "local",
-    ]);
-  });
-});
-
-describe("createLocalStyleSourceClonePlan", () => {
-  test("clones local style sources and remaps copied selections", () => {
-    const plan = createLocalStyleSourceClonePlan({
-      styleSourceSelections: [
-        { instanceId: "source", values: ["token", "local"] },
-        { instanceId: "ignored", values: ["local"] },
-      ],
-      styleSources: [
-        { id: "token", type: "token", name: "Token" },
-        local("local"),
-      ],
-      newInstanceIds: new Map([["source", "copy"]]),
-      createId: () => "local-copy",
-    });
-
-    expect(plan.localStyleSourceIds).toEqual(
-      new Map([["local", "local-copy"]])
-    );
-    expect(plan.localStyleSources).toEqual([
-      { id: "local-copy", type: "local" },
-    ]);
-    expect(plan.selections).toEqual([
-      { instanceId: "copy", values: ["token", "local-copy"] },
-    ]);
-  });
-
-  test("reuses a cloned local style source across copied selections", () => {
-    let idIndex = 0;
-    const plan = createLocalStyleSourceClonePlan({
-      styleSourceSelections: [
-        { instanceId: "source-1", values: ["local"] },
-        { instanceId: "source-2", values: ["local"] },
-      ],
-      styleSources: [local("local")],
-      newInstanceIds: new Map([
-        ["source-1", "copy-1"],
-        ["source-2", "copy-2"],
-      ]),
-      createId: () => `local-copy-${idIndex++}`,
-    });
-
-    expect(plan.localStyleSourceIds).toEqual(
-      new Map([["local", "local-copy-0"]])
-    );
-    expect(plan.localStyleSources).toEqual([
-      { id: "local-copy-0", type: "local" },
-    ]);
-    expect(plan.selections).toEqual([
-      { instanceId: "copy-1", values: ["local-copy-0"] },
-      { instanceId: "copy-2", values: ["local-copy-0"] },
     ]);
   });
 });

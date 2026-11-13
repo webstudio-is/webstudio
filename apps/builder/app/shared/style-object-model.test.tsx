@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { HtmlTags } from "@webstudio-is/html-data";
 import {
   type Breakpoint,
@@ -8,8 +8,12 @@ import {
   type Instance,
   type StyleDecl,
   getStyleDeclKey,
+  getTagStyleId,
 } from "@webstudio-is/sdk";
-import { $, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
 import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import type {
   ColorValue,
@@ -22,7 +26,15 @@ import {
   type StyleObjectModel,
   getComputedStyleDecl,
   getPresetStyleDeclKey,
+  indexNestedTagStyles,
+  indexStyleSourceSelectionOrder,
 } from "./style-object-model";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Heading = createTemplateComponentFixture("Heading");
+const Input = createTemplateComponentFixture("Input");
+const Span = createTemplateComponentFixture("Span");
 
 /**
  * Create model fixture with a few features
@@ -95,13 +107,23 @@ const createModel = ({
   }
   return {
     styles,
+    nestedTagStyles: indexNestedTagStyles(styles),
+    tagStyleIds: new Map(),
     styleSourceSelections,
+    styleSourceSelectionOrder: indexStyleSourceSelectionOrder(
+      styleSourceSelections
+    ),
     presetStyles,
     instanceTags,
     instanceComponents,
     matchingBreakpoints: matchingBreakpoints ?? ["base"],
     matchingStates: matchingStates ?? new Set(),
   };
+};
+
+const setStyle = (model: StyleObjectModel, declaration: StyleDecl) => {
+  model.styles.set(getStyleDeclKey(declaration), declaration);
+  model.nestedTagStyles = indexNestedTagStyles(model.styles);
 };
 
 test("use cascaded style when specified and fallback to initial value", () => {
@@ -111,7 +133,7 @@ test("use cascaded style when specified and fallback to initial value", () => {
         width: 10px;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   const instanceSelector = ["body"];
   // cascaded property
@@ -138,7 +160,7 @@ test("support initial keyword", () => {
         width: initial;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   const instanceSelector = ["body"];
   expect(
@@ -162,11 +184,11 @@ test("support inherit keyword", () => {
       }
     `,
     jsx: (
-      <$.Box ws:id="level1" class="level1Local">
-        <$.Box ws:id="level2" class="level2Local">
-          <$.Box ws:id="level3" class="level3Local"></$.Box>
-        </$.Box>
-      </$.Box>
+      <Box ws:id="level1" class="level1Local">
+        <Box ws:id="level2" class="level2Local">
+          <Box ws:id="level3" class="level3Local"></Box>
+        </Box>
+      </Box>
     ),
   });
   const instanceSelector = ["level3", "level2", "level1"];
@@ -195,9 +217,9 @@ test("support unset keyword", () => {
       }
     `,
     jsx: (
-      <$.Box ws:id="level1" class="level1Local">
-        <$.Box ws:id="level2" class="level2Local"></$.Box>
-      </$.Box>
+      <Box ws:id="level1" class="level1Local">
+        <Box ws:id="level2" class="level2Local"></Box>
+      </Box>
     ),
   });
   const instanceSelector = ["level2", "level1"];
@@ -222,11 +244,11 @@ test("inherit style from ancestors", () => {
       }
     `,
     jsx: (
-      <$.Box ws:id="level1" class="level1Local">
-        <$.Box ws:id="level2" class="level2Local">
-          <$.Box ws:id="level3" class="level3Local"></$.Box>
-        </$.Box>
-      </$.Box>
+      <Box ws:id="level1" class="level1Local">
+        <Box ws:id="level2" class="level2Local">
+          <Box ws:id="level3" class="level3Local"></Box>
+        </Box>
+      </Box>
     ),
   });
   const instanceSelector = ["level3", "level2", "level1"];
@@ -256,9 +278,9 @@ test("support currentcolor keyword", () => {
       }
     `,
     jsx: (
-      <$.Box ws:id="level1" class="level1Local">
-        <$.Box ws:id="level2" class="level2Local"></$.Box>
-      </$.Box>
+      <Box ws:id="level1" class="level1Local">
+        <Box ws:id="level2" class="level2Local"></Box>
+      </Box>
     ),
   });
   const instanceSelector = ["level2", "level1"];
@@ -292,9 +314,9 @@ test("in color property currentcolor is inherited", () => {
       }
     `,
     jsx: (
-      <$.Box ws:id="level1" class="level1Local">
-        <$.Box ws:id="level2" class="level2Local"></$.Box>
-      </$.Box>
+      <Box ws:id="level1" class="level1Local">
+        <Box ws:id="level2" class="level2Local"></Box>
+      </Box>
     ),
   });
   const instanceSelector = ["level3", "level2", "level1"];
@@ -311,7 +333,7 @@ test("in root color property currentcolor is initial", () => {
         color: currentcolor;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   const instanceSelector = ["body"];
   expect(
@@ -328,7 +350,7 @@ test("support custom properties", () => {
         color: var(--my-property);
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   const instanceSelector = ["body"];
   expect(
@@ -349,7 +371,7 @@ test("compute single custom property without layers", () => {
         background-image: var(--gradient);
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   expect(
     getComputedStyleDecl({
@@ -372,7 +394,7 @@ test("support custom properties in layers", () => {
         background-image: var(--gradient-1), var(--gradient-2);
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   expect(
     getComputedStyleDecl({
@@ -397,7 +419,7 @@ test("parse single custom property without tuples", () => {
         filter: var(--noise);
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   expect(
     getComputedStyleDecl({
@@ -417,7 +439,7 @@ test("compute custom properties in shadows", () => {
         box-shadow: 10px 20px;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   const layers = model.styles.get("bodyLocal:base:boxShadow:")
     ?.value as LayersValue;
@@ -458,7 +480,7 @@ test("resolve custom property in color alpha channel", () => {
         color: #ff0000;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   // Mutate the color value to have a VarValue alpha, simulating parsed
   // Tailwind output like `rgb(28 25 23 / var(--tw-opacity))`
@@ -492,7 +514,7 @@ test("support custom properties in tuples", () => {
         filter: var(--noise-1) var(--noise-2);
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   expect(
     getComputedStyleDecl({
@@ -519,7 +541,7 @@ test("support custom properties in unparsed values", () => {
         box-shadow: var(--size) red, var(--size) blue;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   expect(
     getComputedStyleDecl({
@@ -564,7 +586,7 @@ test("support empty custom properties", () => {
         box-shadow: var(--inset) red;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   expect(
     getComputedStyleDecl({
@@ -592,7 +614,7 @@ test("use fallback value when custom property does not exist", () => {
         color: var(--my-property, red);
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   const instanceSelector = ["body"];
   expect(
@@ -608,7 +630,7 @@ test("use initial value when custom property does not exist", () => {
         color: var(--my-property);
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   const instanceSelector = ["body"];
   expect(
@@ -630,9 +652,9 @@ test("use inherited value when custom property does not exist", () => {
       }
     `,
     jsx: (
-      <$.Body ws:id="body" class="bodyLocal">
-        <$.Box ws:id="box" class="boxLocal"></$.Box>
-      </$.Body>
+      <Body ws:id="body" class="bodyLocal">
+        <Box ws:id="box" class="boxLocal"></Box>
+      </Body>
     ),
   });
   const instanceSelector = ["box", "body"];
@@ -659,11 +681,11 @@ test("inherit custom property", () => {
       }
     `,
     jsx: (
-      <$.Box ws:id="level1" class="level1Local">
-        <$.Box ws:id="level2" class="level2Local">
-          <$.Box ws:id="level3" class="level3Local"></$.Box>
-        </$.Box>
-      </$.Box>
+      <Box ws:id="level1" class="level1Local">
+        <Box ws:id="level2" class="level2Local">
+          <Box ws:id="level3" class="level3Local"></Box>
+        </Box>
+      </Box>
     ),
   });
   const instanceSelector = ["level3", "level2", "level1"];
@@ -690,9 +712,9 @@ test("resolve dependency cycles in custom properties", () => {
       }
     `,
     jsx: (
-      <$.Body ws:id="body" class="bodyLocal">
-        <$.Box ws:id="box" class="boxLocal"></$.Box>
-      </$.Body>
+      <Body ws:id="body" class="bodyLocal">
+        <Box ws:id="box" class="boxLocal"></Box>
+      </Body>
     ),
   });
   const instanceSelector = ["box", "body"];
@@ -719,9 +741,9 @@ test("resolve non-cyclic references in custom properties", () => {
       }
     `,
     jsx: (
-      <$.Body ws:id="body" class="bodyLocal">
-        <$.Box ws:id="box" class="boxLocal"></$.Box>
-      </$.Body>
+      <Body ws:id="body" class="bodyLocal">
+        <Box ws:id="box" class="boxLocal"></Box>
+      </Body>
     ),
   });
   const instanceSelector = ["box", "body"];
@@ -746,9 +768,9 @@ test("allow multiple usages of the same custom property", () => {
       }
     `,
     jsx: (
-      <$.Body ws:id="body" class="bodyLocal">
-        <$.Box ws:id="box" class="boxLocal"></$.Box>
-      </$.Body>
+      <Body ws:id="body" class="bodyLocal">
+        <Box ws:id="box" class="boxLocal"></Box>
+      </Body>
     ),
   });
   expect(
@@ -783,7 +805,7 @@ test("cascade value from matching breakpoints", () => {
         width: 10px;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
     matchingBreakpoints: ["base", "small", "large"],
   });
   const instanceSelector = ["body"];
@@ -810,7 +832,7 @@ test("ignore values from not matching breakpoints", () => {
         }
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
     // large is not matching breakpoint
     matchingBreakpoints: ["base", "small"],
   });
@@ -831,7 +853,7 @@ test("cascade value from matching style sources", () => {
         width: 10px;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyToken bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyToken bodyLocal"></Body>,
   });
   const instanceSelector = ["body"];
   // the latest token value wins
@@ -848,7 +870,7 @@ test("cascade values with matching states", () => {
         width: 20px;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
     matchingStates: new Set([":hover"]),
   });
   const instanceSelector = ["body"];
@@ -869,7 +891,7 @@ test("prefer stateless values over matching states", () => {
         width: 20px;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
     matchingStates: new Set([":hover"]),
   });
   const instanceSelector = ["body"];
@@ -890,7 +912,7 @@ test("ignore values from not matching states", () => {
         width: 30px;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
     matchingStates: new Set([":hover"]),
   });
   const instanceSelector = ["body"];
@@ -906,10 +928,10 @@ test("support html styles", () => {
   const model = createModel({
     css: "",
     jsx: (
-      <$.Body ws:id="bodyId" ws:tag="body">
-        <$.Span ws:id="spanId" ws:tag="span"></$.Span>
-        <$.Heading ws:id="headingId" ws:tag="h1"></$.Heading>
-      </$.Body>
+      <Body ws:id="bodyId" ws:tag="body">
+        <Span ws:id="spanId" ws:tag="span"></Span>
+        <Heading ws:id="headingId" ws:tag="h1"></Heading>
+      </Body>
     ),
   });
   // tag with browser styles
@@ -948,7 +970,7 @@ test("support preset styles", () => {
       `,
     },
     css: ``,
-    jsx: <$.Body ws:id="body" ws:tag="body"></$.Body>,
+    jsx: <Body ws:id="body" ws:tag="body"></Body>,
   });
   expect(
     getComputedStyleDecl({
@@ -976,7 +998,7 @@ test("ignore values from not matching states in preset styles", () => {
       `,
     },
     css: ``,
-    jsx: <$.Body ws:id="body" ws:tag="body"></$.Body>,
+    jsx: <Body ws:id="body" ws:tag="body"></Body>,
   });
   expect(
     getComputedStyleDecl({
@@ -999,7 +1021,7 @@ test("breakpoints are more specific than style sources", () => {
         width: 10px;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyToken bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyToken bodyLocal"></Body>,
     matchingBreakpoints: ["base", "small"],
   });
   // bigger breakpoint on current style source should overide
@@ -1025,7 +1047,7 @@ test("breakpoints are more specific than matching states", () => {
         width: 20px;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
     matchingBreakpoints: ["base", "small"],
     matchingStates: new Set([":hover"]),
   });
@@ -1056,7 +1078,7 @@ test("user styles are more specific than preset styles", () => {
         color: red;
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
     matchingStates: new Set([":hover"]),
   });
   expect(
@@ -1066,6 +1088,394 @@ test("user styles are more specific than preset styles", () => {
       property: "color",
     }).usedValue
   ).toEqual({ type: "keyword", value: "red" });
+});
+
+test("tag token provides the source for an unstyled matching element", () => {
+  const model = createModel({
+    css: "",
+    jsx: <Box ws:id="box" ws:tag="p" />,
+  });
+  const id = getTagStyleId("p");
+  const declaration: StyleDecl = {
+    styleSourceId: id,
+    breakpointId: "base",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  model.tagStyleIds.set("p", id);
+  setStyle(model, declaration);
+
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["box"],
+      property: "color",
+    }).source
+  ).toMatchObject({ styleSourceId: id, instanceId: "box" });
+});
+
+test("shows the div's nested h2 color when h2 is selected", () => {
+  const model = createModel({
+    css: "container { color: black; }",
+    jsx: (
+      <Box ws:id="container" class="container">
+        <Heading ws:id="heading" ws:tag="h2" class="headingLocal" />
+      </Box>
+    ),
+  });
+  const descendantStyle: StyleDecl = {
+    styleSourceId: "container",
+    breakpointId: "base",
+    state: " h2",
+    property: "color",
+    value: { type: "keyword", value: "purple" },
+  };
+  setStyle(model, descendantStyle);
+
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      styleSourceId: "headingLocal",
+      property: "color",
+    })
+  ).toMatchObject({
+    cascadedValue: { type: "keyword", value: "purple" },
+    usedValue: { type: "keyword", value: "purple" },
+    source: {
+      instanceId: "container",
+      styleSourceId: "container",
+      state: " h2",
+    },
+  });
+
+  for (const state of ['[a="123"]', ":hover", "::before"]) {
+    const scopedStyle: StyleDecl = {
+      ...descendantStyle,
+      state: ` h2${state}`,
+      value: { type: "keyword", value: "green" },
+    };
+    setStyle(model, scopedStyle);
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["heading", "container"],
+        styleSourceId: "headingLocal",
+        state,
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "green" });
+  }
+
+  model.styleSourceSelections.set("heading", {
+    instanceId: "heading",
+    values: ["headingToken"],
+  });
+  const headingStyle: StyleDecl = {
+    ...descendantStyle,
+    styleSourceId: "headingToken",
+    state: undefined,
+    value: { type: "keyword", value: "red" },
+  };
+  setStyle(model, headingStyle);
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "red" });
+});
+
+test("does not scan all declarations while resolving a selected descendant", () => {
+  const model = createModel({
+    css: "container { color: black; }",
+    jsx: (
+      <Box ws:id="container" class="container">
+        <Heading ws:id="heading" ws:tag="h2" />
+      </Box>
+    ),
+  });
+  setStyle(model, {
+    styleSourceId: "container",
+    breakpointId: "base",
+    state: " h2",
+    property: "color",
+    value: { type: "keyword", value: "purple" },
+  });
+  const values = vi.spyOn(model.styles, "values");
+  const selections = vi.spyOn(model.styleSourceSelections, Symbol.iterator);
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "purple" });
+  expect(values).not.toHaveBeenCalled();
+  expect(selections).not.toHaveBeenCalled();
+});
+
+test("keeps a descendant attribute state off its ancestor's inherited color", () => {
+  const model = createModel({
+    css: "container { color: black; }",
+    jsx: (
+      <Box ws:id="container" class="container">
+        <Heading ws:id="heading" ws:tag="h2" />
+      </Box>
+    ),
+    matchingStates: new Set(["[data-active]"]),
+  });
+  model.matchingStatesByInstanceId = new Map([
+    ["container", new Set()],
+    ["heading", new Set(["[data-active]"])],
+  ]);
+  const parentState: StyleDecl = {
+    styleSourceId: "container",
+    breakpointId: "base",
+    state: "[data-active]",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  const nestedState: StyleDecl = {
+    ...parentState,
+    state: " h2[data-active]",
+    property: "paddingTop",
+    value: { type: "unit", unit: "px", value: 10 },
+  };
+  for (const styleDecl of [parentState, nestedState]) {
+    setStyle(model, styleDecl);
+  }
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      styleSourceId: "heading",
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "black" });
+  model.matchingStatesByInstanceId?.set(
+    "container",
+    new Set(["[data-active]"])
+  );
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      styleSourceId: "heading",
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "red" });
+});
+
+test("matches saved nested tag casing and leading whitespace", () => {
+  const model = createModel({
+    css: "",
+    jsx: (
+      <Box ws:id="container" class="container">
+        <Heading ws:id="heading" ws:tag="h2" />
+      </Box>
+    ),
+  });
+  const styleDecl: StyleDecl = {
+    styleSourceId: "container",
+    breakpointId: "base",
+    state: "  H2",
+    property: "color",
+    value: { type: "keyword", value: "purple" },
+  };
+  setStyle(model, styleDecl);
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      property: "color",
+    })
+  ).toMatchObject({
+    usedValue: { type: "keyword", value: "purple" },
+    source: { state: "  H2" },
+  });
+});
+
+test("shows nested global Tag color and lets an attached Token override it", () => {
+  const model = createModel({
+    css: "",
+    jsx: (
+      <Box ws:id="container">
+        <Heading ws:id="heading" ws:tag="h2" class="headingToken" />
+      </Box>
+    ),
+    matchingBreakpoints: ["base", "small"],
+  });
+  const id = getTagStyleId("div");
+  model.tagStyleIds.set("div", id);
+  const globalStyle: StyleDecl = {
+    styleSourceId: id,
+    breakpointId: "base",
+    state: " h2:hover",
+    property: "color",
+    value: { type: "keyword", value: "purple" },
+  };
+  setStyle(model, globalStyle);
+  const selected = {
+    model,
+    instanceSelector: ["heading", "container"],
+    state: ":hover",
+    property: "color" as const,
+  };
+  expect(getComputedStyleDecl(selected).usedValue).toEqual({
+    type: "keyword",
+    value: "purple",
+  });
+  const headingTagId = getTagStyleId("h2");
+  model.tagStyleIds.set("h2", headingTagId);
+  const headingTagStyle: StyleDecl = {
+    ...globalStyle,
+    styleSourceId: headingTagId,
+    state: ":hover",
+    value: { type: "keyword", value: "red" },
+  };
+  setStyle(model, headingTagStyle);
+  expect(getComputedStyleDecl(selected).usedValue).toEqual({
+    type: "keyword",
+    value: "red",
+  });
+  const responsiveStyle: StyleDecl = {
+    ...globalStyle,
+    breakpointId: "small",
+    value: { type: "keyword", value: "green" },
+  };
+  setStyle(model, responsiveStyle);
+  expect(getComputedStyleDecl(selected).usedValue).toEqual({
+    type: "keyword",
+    value: "green",
+  });
+  const tokenStyle: StyleDecl = {
+    ...globalStyle,
+    styleSourceId: "headingToken",
+    state: ":hover",
+    value: { type: "keyword", value: "blue" },
+  };
+  setStyle(model, tokenStyle);
+  expect(getComputedStyleDecl(selected).usedValue).toEqual({
+    type: "keyword",
+    value: "blue",
+  });
+});
+
+test("matches breakpoint and source order for nested Tag styles", () => {
+  const model = createModel({
+    css: "",
+    jsx: (
+      <Box ws:id="outer" class="outer">
+        <Box ws:id="inner" class="inner">
+          <Heading ws:id="heading" ws:tag="h2" />
+        </Box>
+      </Box>
+    ),
+    matchingBreakpoints: ["base", "small"],
+  });
+  const innerStyle: StyleDecl = {
+    styleSourceId: "inner",
+    breakpointId: "base",
+    state: " h2",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  const outerStyle: StyleDecl = {
+    ...innerStyle,
+    styleSourceId: "outer",
+    breakpointId: "small",
+    value: { type: "keyword", value: "purple" },
+  };
+  setStyle(model, innerStyle);
+  setStyle(model, outerStyle);
+
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "inner", "outer"],
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "purple" });
+
+  model.styles.delete(getStyleDeclKey(outerStyle));
+  outerStyle.breakpointId = "base";
+  setStyle(model, outerStyle);
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "inner", "outer"],
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "red" });
+
+  model.styleSourceSelections = new Map(
+    [...model.styleSourceSelections].reverse()
+  );
+  model.styleSourceSelectionOrder = indexStyleSourceSelectionOrder(
+    model.styleSourceSelections
+  );
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "inner", "outer"],
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "purple" });
+});
+
+test("selected tag token remains the source when an instance overrides it", () => {
+  const model = createModel({
+    css: "local { color: blue; }",
+    jsx: <Box ws:id="box" ws:tag="p" class="local" />,
+  });
+  const id = getTagStyleId("p");
+  const declaration: StyleDecl = {
+    styleSourceId: id,
+    breakpointId: "base",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  model.tagStyleIds.set("p", id);
+  setStyle(model, declaration);
+
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["box"],
+      styleSourceId: id,
+      property: "color",
+    }).source
+  ).toMatchObject({ name: "overwritten", styleSourceId: id });
+});
+
+test("base instance style wins over responsive tag style", () => {
+  const model = createModel({
+    css: "local { color: blue; }",
+    jsx: <Box ws:id="box" ws:tag="p" class="local" />,
+    matchingBreakpoints: ["base", "small"],
+  });
+  const id = getTagStyleId("p");
+  const declaration: StyleDecl = {
+    styleSourceId: id,
+    breakpointId: "small",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  model.tagStyleIds.set("p", id);
+  setStyle(model, declaration);
+
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["box"],
+      property: "color",
+    })
+  ).toMatchObject({
+    usedValue: { type: "keyword", value: "blue" },
+    source: { styleSourceId: "local" },
+  });
 });
 
 test("preset styles are more specific than browser styles", () => {
@@ -1080,7 +1490,7 @@ test("preset styles are more specific than browser styles", () => {
       `,
     },
     css: ``,
-    jsx: <$.Body ws:id="body" ws:tag="body"></$.Body>,
+    jsx: <Body ws:id="body" ws:tag="body"></Body>,
   });
   expect(
     getComputedStyleDecl({
@@ -1098,7 +1508,7 @@ test("access cascaded value without resolving", () => {
         color: initial;
       }
     `,
-    jsx: <$.Body ws:id="body" class="local"></$.Body>,
+    jsx: <Body ws:id="body" class="local"></Body>,
   });
   expect(
     getComputedStyleDecl({
@@ -1117,9 +1527,9 @@ test("fallback cascaded value to initial value", () => {
       }
     `,
     jsx: (
-      <$.Body ws:id="body" class="body">
-        <$.Box ws:id="box" class="box"></$.Box>
-      </$.Body>
+      <Body ws:id="body" class="body">
+        <Box ws:id="box" class="box"></Box>
+      </Body>
     ),
   });
   expect(
@@ -1140,9 +1550,9 @@ test("fallback cascaded value to inherited unresolved value", () => {
       }
     `,
     jsx: (
-      <$.Body ws:id="body" class="body">
-        <$.Box ws:id="box" class="box"></$.Box>
-      </$.Body>
+      <Body ws:id="body" class="body">
+        <Box ws:id="box" class="box"></Box>
+      </Body>
     ),
   });
   expect(
@@ -1161,7 +1571,7 @@ test("work with unknown or invalid properties", () => {
         unknown-property: [object Object];
       }
     `,
-    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    jsx: <Body ws:id="body" class="bodyLocal"></Body>,
   });
   const instanceSelector = ["body"];
   expect(
@@ -1170,7 +1580,7 @@ test("work with unknown or invalid properties", () => {
       instanceSelector,
       property: "unknownProperty" as CssProperty,
     }).usedValue
-  ).toEqual({ type: "unparsed", value: "[object Object]" });
+  ).toEqual({ type: "invalid", value: "[object Object]" });
   expect(
     getComputedStyleDecl({
       model,
@@ -1191,7 +1601,7 @@ describe("selected style", () => {
           color: blue;
         }
       `,
-      jsx: <$.Body ws:id="body" class="token local"></$.Body>,
+      jsx: <Body ws:id="body" class="token local"></Body>,
     });
     expect(
       getComputedStyleDecl({
@@ -1210,7 +1620,7 @@ describe("selected style", () => {
           color: red;
         }
       `,
-      jsx: <$.Body ws:id="body" class="token local"></$.Body>,
+      jsx: <Body ws:id="body" class="token local"></Body>,
     });
     expect(
       getComputedStyleDecl({
@@ -1232,7 +1642,7 @@ describe("selected style", () => {
           color: blue;
         }
       `,
-      jsx: <$.Body ws:id="body" class="first second local"></$.Body>,
+      jsx: <Body ws:id="body" class="first second local"></Body>,
     });
     expect(
       getComputedStyleDecl({
@@ -1254,7 +1664,7 @@ describe("selected style", () => {
           color: green;
         }
       `,
-      jsx: <$.Body ws:id="body" class="local"></$.Body>,
+      jsx: <Body ws:id="body" class="local"></Body>,
     });
     expect(
       getComputedStyleDecl({
@@ -1280,7 +1690,7 @@ describe("selected style", () => {
           color: red;
         }
       `,
-      jsx: <$.Body ws:id="body" class="local"></$.Body>,
+      jsx: <Body ws:id="body" class="local"></Body>,
     });
     expect(
       getComputedStyleDecl({
@@ -1302,7 +1712,7 @@ describe("selected style", () => {
           color: blue;
         }
       `,
-      jsx: <$.Body ws:id="body" class="local"></$.Body>,
+      jsx: <Body ws:id="body" class="local"></Body>,
       matchingStates: new Set([":hover"]),
     });
     expect(
@@ -1324,7 +1734,7 @@ describe("selected style", () => {
           color: blue;
         }
       `,
-      jsx: <$.Body ws:id="body" class="local"></$.Body>,
+      jsx: <Body ws:id="body" class="local"></Body>,
       matchingStates: new Set([":hover", ":focus"]),
     });
     expect(
@@ -1349,7 +1759,7 @@ describe("selected style", () => {
           }
         }
       `,
-      jsx: <$.Body ws:id="body" class="local"></$.Body>,
+      jsx: <Body ws:id="body" class="local"></Body>,
       matchingBreakpoints: ["base", "small"],
     });
     expect(
@@ -1375,7 +1785,7 @@ describe("selected style", () => {
         `,
       },
       css: "",
-      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+      jsx: <Body ws:id="body" ws:tag="body" class="local"></Body>,
     });
     expect(
       getComputedStyleDecl({
@@ -1399,7 +1809,7 @@ describe("style value source", () => {
   test("default", () => {
     const model = createModel({
       css: "",
-      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+      jsx: <Body ws:id="body" ws:tag="body" class="local"></Body>,
     });
     expect(
       getComputedStyleDecl({
@@ -1420,7 +1830,7 @@ describe("style value source", () => {
         `,
       },
       css: "",
-      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+      jsx: <Body ws:id="body" ws:tag="body" class="local"></Body>,
     });
     expect(
       getComputedStyleDecl({
@@ -1446,9 +1856,7 @@ describe("style value source", () => {
           color: red;
         }
       `,
-      jsx: (
-        <$.Body ws:id="body" ws:tag="body" class="first second third"></$.Body>
-      ),
+      jsx: <Body ws:id="body" ws:tag="body" class="first second third"></Body>,
     });
     expect(
       getComputedStyleDecl({
@@ -1512,9 +1920,7 @@ describe("style value source", () => {
           color: blue;
         }
       `,
-      jsx: (
-        <$.Body ws:id="body" ws:tag="body" class="first second third"></$.Body>
-      ),
+      jsx: <Body ws:id="body" ws:tag="body" class="first second third"></Body>,
     });
     expect(
       getComputedStyleDecl({
@@ -1564,7 +1970,7 @@ describe("style value source", () => {
           color: red;
         }
       `,
-      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+      jsx: <Body ws:id="body" ws:tag="body" class="local"></Body>,
       matchingStates: new Set([":hover"]),
     });
     expect(
@@ -1606,7 +2012,7 @@ describe("style value source", () => {
           color: blue;
         }
       `,
-      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+      jsx: <Body ws:id="body" ws:tag="body" class="local"></Body>,
       matchingStates: new Set([":hover"]),
     });
     expect(
@@ -1650,7 +2056,7 @@ describe("style value source", () => {
           }
         }
       `,
-      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+      jsx: <Body ws:id="body" ws:tag="body" class="local"></Body>,
       matchingBreakpoints: ["base", "small"],
     });
     expect(
@@ -1691,13 +2097,13 @@ describe("style value source", () => {
         }
       `,
       jsx: (
-        <$.Body ws:id="body" ws:tag="body" class="bodyLocal">
-          <$.Box ws:id="outer" ws:tag="div" class="outerLocal">
-            <$.Box ws:id="box" ws:tag="div" class="boxLocal">
-              <$.Box ws:id="inner" ws:tag="div" class="innerLocal"></$.Box>
-            </$.Box>
-          </$.Box>
-        </$.Body>
+        <Body ws:id="body" ws:tag="body" class="bodyLocal">
+          <Box ws:id="outer" ws:tag="div" class="outerLocal">
+            <Box ws:id="box" ws:tag="div" class="boxLocal">
+              <Box ws:id="inner" ws:tag="div" class="innerLocal"></Box>
+            </Box>
+          </Box>
+        </Body>
       ),
     });
     expect(
@@ -1744,9 +2150,9 @@ describe("style value source", () => {
         }
       `,
       jsx: (
-        <$.Body ws:id="body" ws:tag="body" class="bodyLocal">
-          <$.Box ws:id="box" ws:tag="div" class="boxLocal"></$.Box>
-        </$.Body>
+        <Body ws:id="body" ws:tag="body" class="bodyLocal">
+          <Box ws:id="box" ws:tag="div" class="boxLocal"></Box>
+        </Body>
       ),
     });
     expect(
@@ -1777,7 +2183,7 @@ describe("pseudo-element inheritance", () => {
           content: "test";
         }
       `,
-      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+      jsx: <Box ws:id="box" class="boxLocal"></Box>,
     });
     const instanceSelector = ["box"];
 
@@ -1832,7 +2238,7 @@ describe("pseudo-element inheritance", () => {
           content: "test";
         }
       `,
-      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+      jsx: <Box ws:id="box" class="boxLocal"></Box>,
     });
     const instanceSelector = ["box"];
 
@@ -1877,7 +2283,7 @@ describe("pseudo-element inheritance", () => {
           font-size: 20px;
         }
       `,
-      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+      jsx: <Box ws:id="box" class="boxLocal"></Box>,
     });
     const instanceSelector = ["box"];
 
@@ -1913,7 +2319,7 @@ describe("pseudo-element inheritance", () => {
           color: inherit;
         }
       `,
-      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+      jsx: <Box ws:id="box" class="boxLocal"></Box>,
     });
     const instanceSelector = ["box"];
 
@@ -1948,7 +2354,7 @@ describe("pseudo-element inheritance", () => {
           color: initial;
         }
       `,
-      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+      jsx: <Box ws:id="box" class="boxLocal"></Box>,
     });
     const instanceSelector = ["box"];
 
@@ -1975,7 +2381,7 @@ describe("pseudo-element inheritance", () => {
           width: unset;
         }
       `,
-      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+      jsx: <Box ws:id="box" class="boxLocal"></Box>,
     });
     const instanceSelector = ["box"];
 
@@ -2016,7 +2422,7 @@ describe("pseudo-element inheritance", () => {
           color: green;
         }
       `,
-      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+      jsx: <Box ws:id="box" class="boxLocal"></Box>,
     });
     const instanceSelector = ["box"];
 
@@ -2074,7 +2480,7 @@ describe("pseudo-element inheritance", () => {
           width: var(--my-size);
         }
       `,
-      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+      jsx: <Box ws:id="box" class="boxLocal"></Box>,
     });
     const instanceSelector = ["box"];
 
@@ -2128,7 +2534,7 @@ describe("pseudo-element inheritance", () => {
           color: blue;
         }
       `,
-      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+      jsx: <Box ws:id="box" class="boxLocal"></Box>,
       matchingStates: new Set([":hover"]),
     });
     const instanceSelector = ["box"];
@@ -2165,7 +2571,7 @@ describe("pseudo-element inheritance", () => {
           color: gray;
         }
       `,
-      jsx: <$.Input ws:id="input" ws:tag="input" class="inputLocal"></$.Input>,
+      jsx: <Input ws:id="input" ws:tag="input" class="inputLocal"></Input>,
     });
     const instanceSelector = ["input"];
 

@@ -1,5 +1,6 @@
 import { useRef, useState, type DragEvent, type ChangeEvent } from "react";
 import {
+  PanelContent,
   Box,
   Button,
   Dialog,
@@ -18,6 +19,7 @@ import {
   TextArea,
   theme,
   toast,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
 import type { PageRedirect } from "@webstudio-is/sdk";
@@ -213,7 +215,9 @@ export const ImportRedirectsDialog = ({
       const skippedMessage =
         skippedParts.length > 0 ? ` (${skippedParts.join(", ")} skipped)` : "";
       toast.success(
-        `Imported ${valid.length} redirect${valid.length !== 1 ? "s" : ""}${skippedMessage}`
+        `Imported ${valid.length} redirect${
+          valid.length !== 1 ? "s" : ""
+        }${skippedMessage}`
       );
     } else {
       // Replace all - detect loops within the new set
@@ -229,7 +233,9 @@ export const ImportRedirectsDialog = ({
       const skippedMessage =
         skippedParts.length > 0 ? ` (${skippedParts.join(", ")} skipped)` : "";
       toast.success(
-        `Replaced all redirects with ${valid.length} new redirect${valid.length !== 1 ? "s" : ""}${skippedMessage}`
+        `Replaced all redirects with ${valid.length} new redirect${
+          valid.length !== 1 ? "s" : ""
+        }${skippedMessage}`
       );
     }
 
@@ -245,13 +251,7 @@ export const ImportRedirectsDialog = ({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent css={{ width: 520, maxHeight: "80vh" }}>
         <ScrollArea>
-          <Flex
-            direction="column"
-            css={{
-              padding: theme.panel.padding,
-            }}
-            gap="3"
-          >
+          <PanelContent as={Flex} direction="column" gap="3">
             {step === "input" && (
               <InputStep
                 textContent={textContent}
@@ -279,13 +279,17 @@ export const ImportRedirectsDialog = ({
                 onMergeModeChange={setMergeMode}
               />
             )}
-          </Flex>
+          </PanelContent>
         </ScrollArea>
 
         <DialogActions>
           {step === "input" && (
             <>
-              <Button onClick={handleParse} disabled={!textContent.trim()}>
+              <Button
+                color="primary"
+                onClick={handleParse}
+                disabled={!textContent.trim()}
+              >
                 Parse
               </Button>
               <DialogClose>
@@ -297,6 +301,7 @@ export const ImportRedirectsDialog = ({
           {step === "preview" && (
             <>
               <Button
+                color="primary"
                 onClick={handleImport}
                 disabled={parsedRedirects.length === 0}
               >
@@ -358,12 +363,14 @@ const InputStep = ({
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         css={{
-          border: `2px dashed ${isDragOver ? theme.colors.borderFocus : theme.colors.borderMain}`,
+          border: `2px dashed ${
+            isDragOver ? cssVar("--border-focus") : cssVar("--border-default")
+          }`,
           borderRadius: theme.borderRadius[6],
           padding: theme.spacing[9],
           textAlign: "center",
           backgroundColor: isDragOver
-            ? theme.colors.backgroundHover
+            ? cssVar("--overlay-interaction-hover")
             : "transparent",
           transition: "all 0.2s ease",
           cursor: "pointer",
@@ -379,11 +386,19 @@ const InputStep = ({
 
       <Flex align="center" gap="2">
         <Box
-          css={{ flex: 1, height: 1, backgroundColor: theme.colors.borderMain }}
+          css={{
+            flex: 1,
+            height: 1,
+            backgroundColor: cssVar("--border-default"),
+          }}
         />
-        <Text color="subtle">OR</Text>
+        <Text color="subtle">or</Text>
         <Box
-          css={{ flex: 1, height: 1, backgroundColor: theme.colors.borderMain }}
+          css={{
+            flex: 1,
+            height: 1,
+            backgroundColor: cssVar("--border-default"),
+          }}
         />
       </Flex>
 
@@ -430,7 +445,7 @@ const PreviewStep = ({
 
         <ScrollArea
           css={{
-            border: `1px solid ${theme.colors.borderMain}`,
+            border: `1px solid ${cssVar("--border-default")}`,
             borderRadius: theme.borderRadius[4],
             maxHeight: 200,
             overflow: "auto",
@@ -482,7 +497,7 @@ const PreviewStep = ({
           <Label>Unsupported ({skippedLines.length})</Label>
           <ScrollArea
             css={{
-              border: `1px solid ${theme.colors.borderMain}`,
+              border: `1px solid ${cssVar("--border-default")}`,
               borderRadius: theme.borderRadius[4],
               maxHeight: 120,
               overflow: "auto",
@@ -512,7 +527,7 @@ const PreviewStep = ({
           <Label>Duplicates ({duplicateRedirects.length})</Label>
           <ScrollArea
             css={{
-              border: `1px solid ${theme.colors.borderMain}`,
+              border: `1px solid ${cssVar("--border-default")}`,
               borderRadius: theme.borderRadius[4],
               maxHeight: 120,
               overflow: "auto",
@@ -573,7 +588,9 @@ const PreviewStep = ({
                 <Label htmlFor="import-mode-add">
                   Add to existing ({uniqueCount} new
                   {duplicateCount > 0
-                    ? `, ${duplicateCount} duplicate${duplicateCount !== 1 ? "s" : ""} skipped`
+                    ? `, ${duplicateCount} duplicate${
+                        duplicateCount !== 1 ? "s" : ""
+                      } skipped`
                     : ""}
                   )
                 </Label>

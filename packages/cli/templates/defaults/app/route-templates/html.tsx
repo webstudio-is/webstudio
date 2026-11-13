@@ -1,3 +1,4 @@
+import { isProtectedResourceReentry } from "@webstudio-is/sdk/protected-resource-fetch";
 import { type ComponentProps, memo, useMemo } from "react";
 import {
   type ServerRuntimeMetaFunction as MetaFunction,
@@ -12,12 +13,22 @@ import {
 import { useLoaderData } from "@remix-run/react";
 import {
   isLocalResource,
-  loadResource,
   loadResources,
   cachedFetch,
-  formIdFieldName,
-  formBotFieldName,
+  getSystemSearch,
 } from "@webstudio-is/sdk/runtime";
+import {
+  handleManagedFormSubmission,
+  handleDeprecatedWebhookFormSubmission,
+  getManagedFormFailure,
+  readFormDataWithLimit,
+  type ManagedFormResponse,
+} from "@webstudio-is/sdk/form/server";
+import {
+  managedFormRequestParamName,
+  formIdFieldName,
+  managedFormIdFieldName,
+} from "@webstudio-is/sdk/form";
 import { authenticateRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,
@@ -37,6 +48,8 @@ import {
 } from "__CLIENT__";
 import {
   getResources,
+  getManagedFormSubmissions,
+  getManagedFormResourceGraph,
   getPageMeta,
   getRemixParams,
   contactEmail,
@@ -46,6 +59,12 @@ import css from "__CSS__?url";
 import { sitemap } from "__SITEMAP__";
 import { authRoutes } from "__AUTH__";
 import { createGeneratedAssetResourceFetch } from "__ASSET_QUERY_RUNTIME__";
+import {
+  createManagedFormEmailSender,
+  createManagedFormResourceFetch,
+  validateManagedFormEmail,
+} from "__MANAGED_FORM_FETCH__";
+import { assetUrlsByPath } from "__ASSETS__";
 
 const authenticateProductionRequest = (request: Request) => {
   const host =
@@ -99,6 +118,11 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
+  // Node exports have no Worker entrypoint guard; stop requests through aliases here.
+  if (isProtectedResourceReentry(arg.request, projectId)) {
+    throw new Response(null, { status: 508 });
+  }
+
   const authRoute = authenticateProductionRequest(arg.request);
 
   const url = new URL(arg.request.url);
@@ -112,7 +136,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   const params = getRemixParams(arg.params);
   const system = {
     params,
-    search: Object.fromEntries(url.searchParams),
+    ...getSystemSearch(url.searchParams),
     origin: url.origin,
     pathname: url.pathname,
   };
@@ -127,6 +151,15 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     getResources({ system }).data,
     url,
     { signal: arg.request.signal }
+  );
+  Object.assign(
+    resources,
+    await loadResources(
+      generatedFetch,
+      getResources({ system, resources }).contentData ?? new Map(),
+      url,
+      { signal: arg.request.signal }
+    )
   );
   const pageMeta = getPageMeta({ system, resources });
 
@@ -247,82 +280,94 @@ const getRequestHost = (request: Request): string =>
 export const action = async ({
   request,
   context,
+  params,
 }: ActionFunctionArgs): Promise<
-  { success: true } | { success: false; errors: string[] }
+  { success: true } | { success: false; errors: string[] } | ManagedFormResponse
 > => {
+  if (isProtectedResourceReentry(request, projectId)) {
+    throw new Response(null, { status: 508 });
+  }
+
   authenticateProductionRequest(request);
 
+  let isManagedFormRequest = false;
   try {
     const url = new URL(request.url);
-    url.host = getRequestHost(request);
-
-    const formData = await request.formData();
+    isManagedFormRequest =
+      url.searchParams.get(managedFormRequestParamName) === "1";
+    url.searchParams.delete(managedFormRequestParamName);
+    if (!isManagedFormRequest) {
+      url.host = getRequestHost(request);
+    }
+    const formData = await readFormDataWithLimit(request);
 
     const system = {
-      params: {},
-      search: {},
+      params: getRemixParams(params ?? {}),
+      ...getSystemSearch(url.searchParams),
       origin: url.origin,
       pathname: url.pathname,
     };
 
-    const resourceName = formData.get(formIdFieldName);
-    let resource =
-      typeof resourceName === "string"
-        ? getResources({ system }).action.get(resourceName)
-        : undefined;
-
-    const formBotValue = formData.get(formBotFieldName);
-
-    if (formBotValue == null || typeof formBotValue !== "string") {
-      throw new Error("Form bot field not found");
+    const managedFormIds = formData.getAll(managedFormIdFieldName);
+    if (!isManagedFormRequest && managedFormIds.length > 0) {
+      throw new Error("Invalid Form submission");
     }
-
-    // Skip timestamp validation for Brave browser
-    // Brave Shields blocks matchMedia fingerprinting detection used in bot protection
-    // See: https://github.com/brave/brave-browser/issues/46541
-    if (formBotValue !== "brave") {
-      const submitTime = parseInt(formBotValue, 16);
-      // Assumes that the difference between the server time and the form submission time,
-      // including any client-server time drift, is within a 5-minute range.
-      // Note: submitTime might be NaN because formBotValue can be any string used for logging purposes.
-      // Example: `formBotValue: jsdom`, or `formBotValue: headless-env`
-      if (
-        Number.isNaN(submitTime) ||
-        Math.abs(Date.now() - submitTime) > 1000 * 60 * 5
-      ) {
-        throw new Error(`Form bot value invalid ${formBotValue}`);
+    const protectedFetch = createManagedFormResourceFetch({
+      request,
+      context,
+      projectDomain,
+    });
+    if (isManagedFormRequest) {
+      // Reject deprecated Webhook Form IDs on the new Form submission path.
+      if (managedFormIds.length !== 1 || formData.has(formIdFieldName)) {
+        throw new Error("Invalid Form submission");
       }
-    }
-
-    formData.delete(formIdFieldName);
-    formData.delete(formBotFieldName);
-
-    if (resource) {
-      resource.body = Object.fromEntries(formData);
-    } else {
-      if (contactEmail === undefined) {
-        throw new Error("Contact email not found");
-      }
-
-      resource = context.getDefaultActionResource?.({
-        url,
-        projectId,
-        contactEmail,
+      return await handleManagedFormSubmission({
+        request,
         formData,
+        url,
+        system,
+        configuration: (id) => getManagedFormSubmissions().get(id),
+        getGraph: (id, values) => getManagedFormResourceGraph(id, values),
+        createEmailSender: (data) =>
+          createManagedFormEmailSender({ context, formData: data, projectId }),
+        validateEmail: validateManagedFormEmail,
+        resourceFetch: protectedFetch,
+        validateDestination: protectedFetch.validateDestination,
+        trustedIp:
+          typeof context === "object" &&
+          context !== null &&
+          "cloudflare" in context
+            ? request.headers.get("cf-connecting-ip") ?? undefined
+            : undefined,
       });
     }
 
-    if (resource === undefined) {
-      throw Error("Resource not found");
-    }
-    const { ok, statusText } = await loadResource(fetch, resource);
-    if (ok) {
-      return { success: true };
-    }
-    return { success: false, errors: [statusText] };
+    // Compatibility path for saved, deprecated Webhook Forms.
+    return await handleDeprecatedWebhookFormSubmission({
+      request,
+      formData,
+      url,
+      resources: getResources({ system }),
+      contactEmail,
+      resourceFetch: protectedFetch,
+      dependencyFetch: await createGeneratedAssetResourceFetch({
+        request,
+        context,
+        fallback: customFetch,
+      }),
+      createEmailSender: (data) =>
+        createManagedFormEmailSender({ context, formData: data, projectId }),
+      validateEmail: validateManagedFormEmail,
+    });
   } catch (error) {
     console.error(error);
 
+    if (isManagedFormRequest) {
+      return getManagedFormFailure(
+        error instanceof Error ? error.message : "Unknown error"
+      );
+    }
     return {
       success: false,
       errors: [error instanceof Error ? error.message : "Unknown error"],
@@ -347,6 +392,7 @@ const Outlet = () => {
   const sdkContext = useMemo(
     () => ({
       ...constants,
+      assetUrlsByPath,
       resources,
       breakpoints,
       onError: console.error,

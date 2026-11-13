@@ -1,6 +1,9 @@
 import { Parser } from "acorn";
 import jsx from "acorn-jsx";
-import { webstudioJsxFragmentBuiltInHelpers } from "./bindings";
+import {
+  webstudioJsxBindingGuidance,
+  webstudioJsxCompilerPrimitiveNames,
+} from "./bindings";
 import { getErrorMessage, throwWebstudioJsxValidationError } from "./errors";
 
 const JsxParser = Parser.extend(jsx());
@@ -197,7 +200,7 @@ const hasModuleSyntax = (source: string) => {
 export const inspectWebstudioJsxFragmentSyntax = (source: string) => {
   if (hasModuleSyntax(source)) {
     return throwWebstudioJsxValidationError(
-      `Do not use import or export in JSX fragments. Use the built-in ${webstudioJsxFragmentBuiltInHelpers} helpers.`,
+      `Do not use import or export in JSX fragments. Use ${webstudioJsxBindingGuidance}.`,
       "declarative_jsx_without_modules"
     );
   }
@@ -205,26 +208,43 @@ export const inspectWebstudioJsxFragmentSyntax = (source: string) => {
   try {
     ast = parseWebstudioJsxFragmentExpression(source);
   } catch (error) {
+    const message = getErrorMessage(error);
+    const recovery =
+      " Every opening element must use the same closing tag or end with />. Fragment parsing is stateless, so refresh cannot repair unmatched JSX.";
     return throwWebstudioJsxValidationError(
-      `Could not parse JSX fragment. Pass Webstudio JSX such as <$.Box><$.Heading>Title</$.Heading></$.Box>. ${getErrorMessage(error)}`,
+      `Could not parse JSX fragment. Pass Webstudio JSX such as <section><Heading tag="h2">Title</Heading></section>. ${message}${recovery}`,
       "valid_webstudio_jsx_syntax",
-      getErrorMessage(error)
+      message
     );
   }
   const error = visitAst(ast, (node, context) => {
+    if (node.type === "JSXMemberExpression") {
+      const name = getJsxElementName(node);
+      const [namespace, primitive, nested] = name?.split(".") ?? [];
+      if (namespace !== "ws" || nested !== undefined) {
+        return `JSX component namespaces are not supported. Use the direct component identifier for "${name}".`;
+      }
+      if (
+        nested === undefined &&
+        primitive !== undefined &&
+        webstudioJsxCompilerPrimitiveNames.has(primitive) === false
+      ) {
+        return `Component "ws:${primitive}" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands. In JSX, use a lowercase HTML element such as <${primitive}>.`;
+      }
+    }
     if (node.type === "ImportExpression" || node.type === "Import") {
-      return `Do not use dynamic import() in JSX fragments. JSX fragments are declarative Webstudio project data; use the built-in ${webstudioJsxFragmentBuiltInHelpers} helpers.`;
+      return `Do not use dynamic import() in JSX fragments. JSX fragments are declarative Webstudio project data; use ${webstudioJsxBindingGuidance}.`;
     }
     if (node.type === "Identifier" && typeof node.name === "string") {
       if (
         restrictedRuntimeIdentifiers.has(node.name) &&
         isNonExecutingPropertyName(context) === false
       ) {
-        return `Do not access "${node.name}" in JSX fragments. JSX fragments are declarative Webstudio project data; use the built-in ${webstudioJsxFragmentBuiltInHelpers} helpers.`;
+        return `Do not access "${node.name}" in JSX fragments. JSX fragments are declarative Webstudio project data; use ${webstudioJsxBindingGuidance}.`;
       }
     }
     if (getMemberPropertyName(node) === "constructor") {
-      return `Do not access "constructor" in JSX fragments. JSX fragments are declarative Webstudio project data; use the built-in ${webstudioJsxFragmentBuiltInHelpers} helpers.`;
+      return `Do not access "constructor" in JSX fragments. JSX fragments are declarative Webstudio project data; use ${webstudioJsxBindingGuidance}.`;
     }
   });
   if (error !== undefined) {

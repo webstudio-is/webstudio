@@ -22,6 +22,7 @@ import type { Resource } from "@webstudio-is/sdk";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
+import { useAsyncValue } from "~/shared/use-async-value";
 import { $dataSources } from "~/shared/sync/data-stores";
 import { $props, $resources } from "~/shared/sync/data-stores";
 import {
@@ -39,8 +40,8 @@ import {
   UrlField,
   MethodField,
   Headers,
-  getResourceScopeForInstance,
-} from "../resource-panel";
+} from "../variable-editors/shared/resource-fields";
+import { getResourceScopeForInstance } from "../resource-scope";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { type ControlProps, VerticalLayout } from "../shared";
 import { PropertyLabel } from "../property-label";
@@ -74,8 +75,8 @@ const ResourceButton = forwardRef<
   ComponentProps<typeof NestedInputButton>
 >((props, ref) => {
   return (
-    <EnhancedTooltip content="Edit Resource">
-      <NestedInputButton {...props} ref={ref} aria-label="Edit Resource">
+    <EnhancedTooltip content="Edit resource">
+      <NestedInputButton {...props} ref={ref} aria-label="Edit resource">
         <GearIcon />
       </NestedInputButton>
     </EnhancedTooltip>
@@ -156,7 +157,7 @@ const ResourceControlPanel = ({
   const form = useRef<HTMLFormElement>(null);
   return (
     <FloatingPanel
-      title="Edit Resource"
+      title="Edit resource"
       open={isResourceOpen}
       onOpenChange={(isOpen) => {
         if (isOpen) {
@@ -276,9 +277,13 @@ export const ResourceControl = ({
 
   const id = useId();
   const bound = isLiteralExpression(urlExpression) === false;
-  const localValue = useDraftValue(
-    String(computeExpression(resource.url, variableValues) ?? ""),
-    (value) => updateResource({ ...resource, url: JSON.stringify(value) })
+  const evaluatedUrl = useAsyncValue(
+    () => computeExpression(resource.url, variableValues),
+    [resource.url, variableValues],
+    undefined
+  );
+  const localValue = useDraftValue(String(evaluatedUrl ?? ""), (value) =>
+    updateResource({ ...resource, url: JSON.stringify(value) })
   );
 
   return (

@@ -23,8 +23,7 @@ import {
   systemParameter,
 } from "@webstudio-is/sdk";
 import { getContentModePropNamesByTag } from "@webstudio-is/project-build/runtime";
-import type { PropMeta, Prop, Asset } from "@webstudio-is/sdk";
-import { InfoCircleIcon } from "@webstudio-is/icons";
+import type { PropMeta, Prop, Asset, WsComponentMeta } from "@webstudio-is/sdk";
 import {
   Label as BaseLabel,
   useIsTruncated,
@@ -32,9 +31,9 @@ import {
   Box,
   Flex,
   Grid,
+  InfoTooltip,
   Text,
   theme,
-  rawTheme,
 } from "@webstudio-is/design-system";
 import {
   $registeredComponentMetas,
@@ -54,7 +53,7 @@ export type PropValue =
   | { type: "boolean"; value: boolean }
   | { type: "json"; value: unknown }
   | { type: "string[]"; value: string[] }
-  | { type: "expression"; value: string }
+  | Pick<Extract<Prop, { type: "expression" }>, "type" | "value" | "mode">
   | { type: "asset"; value: Asset["id"] }
   | { type: "page"; value: Extract<Prop, { type: "page" }>["value"] }
   | { type: "action"; value: Extract<Prop, { type: "action" }>["value"] }
@@ -145,17 +144,10 @@ export const Label = ({
     <Flex align="center" css={{ gap: theme.spacing[3], width: "100%" }}>
       <Box>{label}</Box>
       {readOnly && (
-        <Tooltip
-          content={
-            "The value is controlled by an expression and cannot be changed."
-          }
-          variant="wrapped"
-        >
-          <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
-            tabIndex={0}
-          />
-        </Tooltip>
+        <InfoTooltip
+          label="About expression controlled value"
+          content="The value is controlled by an expression and cannot be changed."
+        />
       )}
     </Flex>
   );
@@ -303,7 +295,7 @@ export const humanizeAttribute = (string: string) => {
   return humanizeString(standardAttributesToReactProps[string] ?? string);
 };
 
-type Attribute = (typeof ariaAttributes)[number];
+type Attribute = (typeof ariaAttributes)[number] & { defaultValue?: string };
 
 const attributeToMeta = (attribute: Attribute): PropMeta => {
   const required = attribute.required ?? false;
@@ -316,6 +308,7 @@ const attributeToMeta = (attribute: Attribute): PropMeta => {
       required,
       options,
       description,
+      defaultValue: attribute.defaultValue,
     };
   }
   if (attribute.type === "url") {
@@ -339,6 +332,71 @@ const $contentModePropNamesByTag = computed(
   getContentModePropNamesByTag
 );
 
+const getInitialPropNames = (
+  selectedInstance: ReturnType<typeof $selectedInstance.get>,
+  metas: ReturnType<typeof $registeredComponentMetas.get>,
+  instancePropsMetas: Map<string, PropMeta>
+) => {
+  const initialPropNames = new Set<string>();
+  if (selectedInstance) {
+    const initialProps =
+      metas.get(selectedInstance.component)?.initialProps ?? [];
+    for (const propName of initialProps) {
+      const htmlName = reactPropsToStandardAttributes[propName];
+      initialPropNames.add(
+        htmlName && instancePropsMetas.has(htmlName) ? htmlName : propName
+      );
+    }
+  }
+  for (const [propName, propMeta] of instancePropsMetas) {
+    if (propName !== showAttribute && propMeta.required) {
+      initialPropNames.add(propName);
+    }
+  }
+  return initialPropNames;
+};
+
+const getInstancePropsMetas = (
+  meta: WsComponentMeta | undefined,
+  tag: string | undefined,
+  contentModePropNames: Set<string> | undefined
+): Map<string, PropMeta> => {
+  const propsMetas = new Map<Prop["name"], PropMeta>();
+  const addAttributes = (attributes: readonly Attribute[] | undefined) => {
+    if (attributes === undefined) {
+      return;
+    }
+    for (const attribute of [...attributes].reverse()) {
+      const propMeta = attributeToMeta(attribute);
+      propsMetas.set(
+        attribute.name,
+        contentModePropNames?.has(attribute.name)
+          ? { ...propMeta, contentMode: true }
+          : propMeta
+      );
+    }
+  };
+
+  // Build from lowest to highest precedence, then reverse for display order.
+  if (tag && meta?.htmlAttributes !== "hide") {
+    if (elementsByTag[tag].categories.includes("html-element")) {
+      addAttributes(ariaAttributes);
+      addAttributes(attributesByTag["*"]);
+    }
+    addAttributes(attributesByTag[tag]);
+  }
+  for (const [name, propMeta] of Object.entries(meta?.props ?? {}).reverse()) {
+    // Component props take precedence over their equivalent HTML attributes.
+    const htmlName = reactPropsToStandardAttributes[name];
+    if (htmlName) {
+      propsMetas.delete(htmlName);
+    }
+    propsMetas.set(name, propMeta);
+  }
+  propsMetas.set(showAttribute, showAttributeMeta);
+  return new Map(Array.from(propsMetas.entries()).reverse());
+};
+
 export const $selectedInstancePropsMetas = computed(
   [
     $selectedInstance,
@@ -346,94 +404,20 @@ export const $selectedInstancePropsMetas = computed(
     $instanceTags,
     $contentModePropNamesByTag,
   ],
-  (
-    instance,
-    metas,
-    instanceTags,
-    contentModePropNamesByTag
-  ): Map<string, PropMeta> => {
+  (instance, metas, instanceTags, contentModePropNamesByTag) => {
     if (instance === undefined) {
-      return new Map();
+      return new Map<string, PropMeta>();
     }
-    const meta = metas.get(instance.component);
     const tag = instanceTags.get(instance.id);
-    const propsMetas = new Map<Prop["name"], PropMeta>();
-    const contentModePropNames =
-      tag === undefined ? undefined : contentModePropNamesByTag.get(tag);
-    const toAttributeMeta = (attribute: Attribute): PropMeta => {
-      const propMeta = attributeToMeta(attribute);
-      if (contentModePropNames?.has(attribute.name)) {
-        return { ...propMeta, contentMode: true };
-      }
-      return propMeta;
-    };
-    // add html attributes only when instance has tag
-    if (tag) {
-      if (elementsByTag[tag].categories.includes("html-element")) {
-        for (const attribute of [...ariaAttributes].reverse()) {
-          propsMetas.set(attribute.name, toAttributeMeta(attribute));
-        }
-        // include global attributes only for html elements
-        if (attributesByTag["*"]) {
-          for (const attribute of [...attributesByTag["*"]].reverse()) {
-            propsMetas.set(attribute.name, toAttributeMeta(attribute));
-          }
-        }
-      }
-      if (attributesByTag[tag]) {
-        for (const attribute of [...attributesByTag[tag]].reverse()) {
-          propsMetas.set(attribute.name, toAttributeMeta(attribute));
-        }
-      }
-    }
-    for (const [name, propMeta] of Object.entries(
-      meta?.props ?? {}
-    ).reverse()) {
-      // when component property has the same name as html attribute in react
-      // override to deduplicate similar properties
-      // for example component can have own "className" and html has "class"
-      const htmlName = reactPropsToStandardAttributes[name];
-      if (htmlName) {
-        propsMetas.delete(htmlName);
-      }
-      propsMetas.set(name, propMeta);
-    }
-    propsMetas.set(showAttribute, showAttributeMeta);
-    // ui should render in the following order
-    // 1. system properties
-    // 2. component properties
-    // 3. specific tag attributes
-    // 4. global html attributes
-    // 5. aria attributes
-    return new Map(Array.from(propsMetas.entries()).reverse());
+    return getInstancePropsMetas(
+      metas.get(instance.component),
+      tag,
+      tag === undefined ? undefined : contentModePropNamesByTag.get(tag)
+    );
   }
 );
 
 export const $selectedInstanceInitialPropNames = computed(
   [$selectedInstance, $registeredComponentMetas, $selectedInstancePropsMetas],
-  (selectedInstance, metas, instancePropsMetas) => {
-    const initialPropNames = new Set<string>();
-    if (selectedInstance) {
-      const initialProps =
-        metas.get(selectedInstance.component)?.initialProps ?? [];
-      for (const propName of initialProps) {
-        // className -> class
-        if (instancePropsMetas.has(reactPropsToStandardAttributes[propName])) {
-          initialPropNames.add(reactPropsToStandardAttributes[propName]);
-        } else {
-          initialPropNames.add(propName);
-        }
-      }
-    }
-    for (const [propName, propMeta] of instancePropsMetas) {
-      // skip show attribute which is added as system prop
-      if (propName === showAttribute) {
-        continue;
-      }
-      if (propMeta.required) {
-        initialPropNames.add(propName);
-      }
-    }
-    return initialPropNames;
-  }
+  getInitialPropNames
 );

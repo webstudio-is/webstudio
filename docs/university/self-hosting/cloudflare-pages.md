@@ -16,11 +16,15 @@ See [export types](./#export-types) for more information about JavaScript applic
 
 Learn how to upload your static site to Cloudflare Pages.
 
+Cloudflare Pages uses a trailing slash for generated directory index pages.
+Review the [static site URL behavior](./#static-site-url-behavior) before
+deployment.
+
 <figure><img src="../../.gitbook/assets/cloudflare-pages-new-project.png" alt="Cloudflare Pages new project dashboard"><figcaption></figcaption></figure>
 
 ### Prerequisites
 
-Export your project using one of the [export methods](./#exporting).
+Export your project using one of the [export methods](./#export-methods).
 
 **How to upload your project to Cloudflare Pages:**
 

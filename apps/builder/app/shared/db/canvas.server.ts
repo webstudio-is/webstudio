@@ -7,11 +7,21 @@ import {
   loadBuildById,
   loadDevBuildByProjectId,
 } from "@webstudio-is/project-build/server";
-import { createBuildContentCompilationPlan } from "@webstudio-is/project-build";
+import {
+  createBuildContentCompilationPlan,
+  createPublishedMdxDependencyClosureResolver,
+  createPublishedBuildContentCompilationPlan,
+  getDynamicPublishedMdxSourceBlockIds,
+  getPublishedMdxContentDatabaseMaxBytes,
+  resolvePublishedMdxAssetCandidates,
+  type PublishedMdxTemplateOmission,
+  type PublishedMdxDependencyReadFailure,
+} from "@webstudio-is/project-build";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
   loadAssetDataByProject,
   preparePublishedAssetData,
+  validatePublishedAssetCollections,
 } from "@webstudio-is/asset-uploader/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
@@ -21,7 +31,10 @@ import {
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
-import { serializePages } from "@webstudio-is/project-migrations/pages";
+import {
+  migratePages,
+  serializePages,
+} from "@webstudio-is/project-migrations/pages";
 import { loadById } from "@webstudio-is/project/index.server";
 import { getUserById } from "./user.server";
 import { createAssetClient } from "../asset-client";
@@ -60,6 +73,7 @@ const serializeProjectBundle = ({
   const usedAssets = assets.filter(
     (asset) =>
       asset.type === "image" ||
+      asset.type === "video" ||
       asset.type === "file" ||
       (asset.type === "font" && fontFamilies.has(asset.meta.family))
   );
@@ -149,42 +163,152 @@ const loadProductionCanvasDataAndProject = async (
   };
 };
 
+const addProjectMetadataDependencies = {
+  getUserById,
+  preparePublishedAssetData,
+  validatePublishedAssetCollections,
+  createAssetClient,
+};
+
 const addProjectMetadata = async (
   data: ProjectBundle,
   project: Project,
-  context: AppContext
+  context: AppContext,
+  dependencies = addProjectMetadataDependencies,
+  options: {
+    onMdxTemplateOmissions?: (
+      issues: readonly PublishedMdxTemplateOmission[]
+    ) => void;
+    onMdxDependencyReadFailures?: (
+      failures: readonly PublishedMdxDependencyReadFailure[]
+    ) => void;
+    onMdxBlockInstanceId?: (blockInstanceId: string) => void;
+    loadMdxDependencySource?: (input: {
+      id: string;
+      revision: string;
+      contentRef: string;
+    }) => Promise<string>;
+    contentIndex?: "client";
+  } = {}
 ): Promise<PublishedProjectBundle> => {
   const user =
     project.userId === null
       ? undefined
-      : await getUserById(context, project.userId);
+      : await dependencies.getUserById(context, project.userId);
 
-  const assetRequirements = createBuildContentCompilationPlan(data.build);
+  const publicationBuild = {
+    ...data.build,
+    pages: migratePages(data.build.pages),
+  };
+  let candidateDiscoveryPlan: ReturnType<
+    typeof createBuildContentCompilationPlan
+  >;
+  let assetRequirements: ReturnType<
+    typeof createPublishedBuildContentCompilationPlan
+  >;
+  if (options.contentIndex === "client") {
+    // Static builds compile downloaded sources in the runner. Hosted builds
+    // still need query metadata; Markdown body references resolve at runtime.
+    if (data.build.deployment?.destination !== "static") {
+      assetRequirements = createBuildContentCompilationPlan(publicationBuild);
+    }
+  } else {
+    const dynamicBlockIds =
+      getDynamicPublishedMdxSourceBlockIds(publicationBuild);
+    const projectCandidates = resolvePublishedMdxAssetCandidates({
+      build: publicationBuild,
+      allowUnresolved: true,
+    });
+    const needsCandidateDiscovery = dynamicBlockIds.some(
+      (blockId) => projectCandidates.has(blockId) === false
+    );
+    candidateDiscoveryPlan = needsCandidateDiscovery
+      ? createBuildContentCompilationPlan(data.build)
+      : undefined;
+    assetRequirements =
+      candidateDiscoveryPlan ??
+      createPublishedBuildContentCompilationPlan(
+        publicationBuild,
+        projectCandidates
+      );
+  }
   let assetIndex: PublishedProjectBundle["assetIndex"];
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
+  let mdxTemplateOmissions: PublishedMdxTemplateOmission[] = [];
+  let mdxDependencyReadFailures: PublishedMdxDependencyReadFailure[] = [];
   if (assetRequirements !== undefined) {
-    const publishedAssetData = await preparePublishedAssetData({
+    const resolveMdxDependencies =
+      createPublishedMdxDependencyClosureResolver();
+    const publishedAssetData = await dependencies.preparePublishedAssetData({
       projectId: project.id,
       context,
-      assetStore: createAssetClient(),
-      contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
+      assetStore: dependencies.createAssetClient(),
+      contentDatabaseMaxBytes: getPublishedMdxContentDatabaseMaxBytes({
+        baseBytes: getContentDatabaseMaxBytes(),
+        assets: data.assets,
+      }),
       plan: assetRequirements,
       retainedAssetIds: data.assets
         .filter((asset) => asset.type === "font")
         .map((asset) => asset.id),
+      ...(assetRequirements.queries.some(({ id }) =>
+        id.startsWith("__content-block-mdx__:")
+      ) || candidateDiscoveryPlan !== undefined
+        ? {
+            resolvePlan: async (
+              artifact: NonNullable<PublishedProjectBundle["assetIndex"]>,
+              loadDocumentSource
+            ) => {
+              const nextOmissions: PublishedMdxTemplateOmission[] = [];
+              const nextReadFailures: PublishedMdxDependencyReadFailure[] = [];
+              const plan = await resolveMdxDependencies({
+                build: publicationBuild,
+                artifact,
+                loadDocumentSource:
+                  options.loadMdxDependencySource ?? loadDocumentSource,
+                onTemplateOmission: (issue) => nextOmissions.push(issue),
+                onDependencyReadFailure: (failure) =>
+                  nextReadFailures.push(failure),
+                onMdxBlockInstanceId: options.onMdxBlockInstanceId,
+              });
+              mdxTemplateOmissions = nextOmissions;
+              mdxDependencyReadFailures = nextReadFailures;
+              return plan!;
+            },
+          }
+        : {}),
     });
     assetIndex = publishedAssetData.artifact;
     publishedAssets = publishedAssetData.assets;
     publishedAssetFolders = publishedAssetData.assetFolders;
+  } else {
+    const publishedAssetData =
+      await dependencies.validatePublishedAssetCollections({
+        projectId: project.id,
+        context,
+        assetStore: dependencies.createAssetClient(),
+      });
+    const retainedFontIds = new Set(
+      data.assets
+        .filter((asset) => asset.type === "font")
+        .map((asset) => asset.id)
+    );
+    publishedAssets = publishedAssetData.assets.filter(
+      (asset) => asset.type !== "font" || retainedFontIds.has(asset.id)
+    );
+    publishedAssetFolders = publishedAssetData.assetFolders;
   }
+
+  options.onMdxTemplateOmissions?.(mdxTemplateOmissions);
+  options.onMdxDependencyReadFailures?.(mdxDependencyReadFailures);
 
   return {
     ...data,
     assets: publishedAssets,
     assetFolders: publishedAssetFolders,
     bundleVersion,
-    user: user ? { email: user.email } : undefined,
+    user: user ? { email: user.email, username: user.username } : undefined,
     projectDomain: project.domain,
     projectTitle: project.title,
     assetIndex,
@@ -253,7 +377,8 @@ export const loadPublishedProjectBundleByProjectId =
 
 export const loadProjectBundleByBuildId = async (
   buildId: string,
-  context: AppContext
+  context: AppContext,
+  { contentIndex }: { contentIndex?: "client" } = {}
 ): Promise<PublishedProjectBundle> => {
   const build = await loadBuildById(context, buildId);
   const project = await loadById(build.projectId, context);
@@ -263,13 +388,30 @@ export const loadProjectBundleByBuildId = async (
   return await addProjectMetadata(
     await createProjectBundle(build, context),
     project,
-    context
+    context,
+    addProjectMetadataDependencies,
+    { contentIndex }
   );
 };
 
 export const loadProjectBundleByProjectId = async (
   projectId: string,
-  context: AppContext
+  context: AppContext,
+  options: {
+    build?: Build;
+    onMdxTemplateOmissions?: (
+      issues: readonly PublishedMdxTemplateOmission[]
+    ) => void;
+    onMdxDependencyReadFailures?: (
+      failures: readonly PublishedMdxDependencyReadFailure[]
+    ) => void;
+    onMdxBlockInstanceId?: (blockInstanceId: string) => void;
+    loadMdxDependencySource?: (input: {
+      id: string;
+      revision: string;
+      contentRef: string;
+    }) => Promise<string>;
+  } = {}
 ): Promise<PublishedProjectBundle> => {
   const project = await loadById(projectId, context);
   if (project === null) {
@@ -277,15 +419,18 @@ export const loadProjectBundleByProjectId = async (
   }
   return await addProjectMetadata(
     await createProjectBundle(
-      await loadDevBuildByProjectId(context, projectId),
+      options.build ?? (await loadDevBuildByProjectId(context, projectId)),
       context
     ),
     project,
-    context
+    context,
+    addProjectMetadataDependencies,
+    options
   );
 };
 
 export const __testing__ = {
+  addProjectMetadata,
   createLoadPublishedProjectBundleByProjectId,
   serializeProjectBundle,
 };

@@ -9,11 +9,8 @@ import env from "../app/env/env.server";
 
 const execFileAsync = promisify(execFile);
 
-const composeBaseFile = fileURLToPath(
-  new URL("../docker-compose.yaml", import.meta.url)
-);
-const composeFile = fileURLToPath(
-  new URL("../docker-compose.e2e.yaml", import.meta.url)
+const backendScript = fileURLToPath(
+  new URL("../backend/run.sh", import.meta.url)
 );
 
 const postgrest = createClient(env.POSTGREST_URL, env.POSTGREST_API_KEY);
@@ -53,13 +50,10 @@ export const resetDatabase = async () => {
   `;
 
   await execFileAsync(
-    "docker",
+    "bash",
     [
-      "compose",
-      "-f",
-      composeBaseFile,
-      "-f",
-      composeFile,
+      backendScript,
+      process.env.E2E_BACKEND_MODE ?? "test",
       "exec",
       "-T",
       "db",

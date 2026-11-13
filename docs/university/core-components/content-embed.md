@@ -8,7 +8,12 @@ description: >-
 
 <div align="left">
 
-<figure><img src="../../.gitbook/assets/content-embed-component.png" alt="Content Embed Component"><figcaption></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/content-embed-component-dark.png">
+    <img src="../../.gitbook/assets/content-embed-component-light.png" alt="Content Embed card in the Components panel Data group" width="240">
+  </picture>
+</figure>
 
 </div>
 

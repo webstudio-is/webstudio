@@ -7,25 +7,25 @@
 >
   <path
     d="M5.40002 1.74376H10.6"
-    stroke="black"
+    stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
     d="M14.5 10.3562L14.5 5.15624"
-    stroke="black"
+    stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
     d="M1.5 10.3562L1.5 5.15624"
-    stroke="black"
+    stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
     d="M5.40002 14.2562H10.6"
-    stroke="black"
+    stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />

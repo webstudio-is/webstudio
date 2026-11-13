@@ -11,10 +11,19 @@ export type MarkdownMetadataErrorCode =
 
 export class MarkdownMetadataError extends Error {
   code: MarkdownMetadataErrorCode;
+  readonly line?: number;
+  readonly column?: number;
 
-  constructor(code: MarkdownMetadataErrorCode, message: string) {
-    super(message);
+  constructor(
+    code: MarkdownMetadataErrorCode,
+    message: string,
+    location?: { line: number; column: number },
+    cause?: unknown
+  ) {
+    super(message, { cause });
     this.name = "MarkdownMetadataError";
     this.code = code;
+    this.line = location?.line;
+    this.column = location?.column;
   }
 }

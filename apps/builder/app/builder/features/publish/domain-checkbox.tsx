@@ -1,11 +1,11 @@
 import { useStore } from "@nanostores/react";
+import { useEffect, useRef, useState } from "react";
 import {
   Flex,
   Tooltip,
   Text,
   theme,
-  Link,
-  buttonStyle,
+  LinkButton,
   Checkbox,
 } from "@webstudio-is/design-system";
 
@@ -39,6 +39,7 @@ export const __testing__ = { isCustomDomainPublishRestricted };
 
 interface DomainCheckboxProps {
   defaultChecked?: boolean;
+  validatedDomains?: readonly string[];
   domain: string;
   buildId: string | undefined;
   disabled?: boolean;
@@ -49,6 +50,35 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
   const { allowStagingPublish, canPublishToStagingOnly } =
     useStore($permissions);
   const project = useStore($project);
+  const restoredChecked =
+    props.validatedDomains?.includes(props.domain) ??
+    props.defaultChecked ??
+    false;
+  const [selected, setSelected] = useState(restoredChecked);
+  const previous = useRef({
+    buildId: props.buildId,
+    validatedDomains: props.validatedDomains,
+  });
+  const hasNewValidation =
+    props.validatedDomains !== undefined &&
+    previous.current.validatedDomains !== props.validatedDomains;
+  const hasNewBuild = previous.current.buildId !== props.buildId;
+
+  useEffect(() => {
+    if (hasNewValidation || hasNewBuild) {
+      setSelected(restoredChecked);
+    }
+    previous.current = {
+      buildId: props.buildId,
+      validatedDomains: props.validatedDomains,
+    };
+  }, [
+    hasNewValidation,
+    hasNewBuild,
+    props.validatedDomains,
+    props.buildId,
+    restoredChecked,
+  ]);
 
   if (project === undefined) {
     return;
@@ -66,15 +96,13 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
             <br />
             Upgrade to Pro account to publish to each domain individually.
             <br /> <br />
-            <Link
-              className={buttonStyle({ color: "gradient" })}
-              color="contrast"
-              underline="none"
+            <LinkButton
+              color="primary"
               href="https://webstudio.is/pricing"
               target="_blank"
             >
               Upgrade
-            </Link>
+            </LinkButton>
           </>
         </Flex>
       </Text>
@@ -100,7 +128,11 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
     canPublishToStagingOnly,
     isCustomDomain: props.isCustomDomain,
   });
-  const defaultChecked = isRestricted ? false : props.defaultChecked;
+  const checked = isRestricted
+    ? false
+    : hasNewValidation || hasNewBuild
+      ? restoredChecked
+      : selected;
   const disabled = isRestricted ? true : props.disabled;
 
   const hideDomainCheckbox =
@@ -114,7 +146,8 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
         <Checkbox
           disabled={disabled}
           key={props.buildId ?? "-"}
-          defaultChecked={hideDomainCheckbox || defaultChecked}
+          checked={hideDomainCheckbox || checked}
+          onCheckedChange={(value) => setSelected(value === true)}
           css={{ pointerEvents: "all" }}
           name={domainToPublishName}
           value={props.domain}

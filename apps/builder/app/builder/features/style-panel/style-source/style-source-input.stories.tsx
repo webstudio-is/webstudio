@@ -1,4 +1,5 @@
-import { nanoid } from "nanoid";
+import { createId } from "@webstudio-is/sdk";
+import type { StoryFn } from "@storybook/react";
 import { useState } from "react";
 import { Flex, StorySection, Text, theme } from "@webstudio-is/design-system";
 import {
@@ -6,6 +7,9 @@ import {
   type ItemSource,
   StyleSourceInput as StyleSourceInputComponent,
 } from ".";
+import { StyleSourceMenu as StyleSourceMenuComponent } from "./style-source-menu";
+
+const createNanoId = () => createId("nano");
 
 export default {
   title: "Style panel/Style Source Input",
@@ -22,7 +26,7 @@ type Item = {
 };
 
 const localItem: Item = {
-  id: nanoid(),
+  id: createNanoId(),
   label: "Local",
   source: "local",
   disabled: false,
@@ -32,7 +36,7 @@ const localItem: Item = {
 
 const getItems = (): Array<Item> => [
   {
-    id: nanoid(),
+    id: createNanoId(),
     label: "Token",
     source: "token",
     disabled: false,
@@ -40,7 +44,7 @@ const getItems = (): Array<Item> => [
     states: [],
   },
   {
-    id: nanoid(),
+    id: createNanoId(),
     label: "Tag",
     source: "tag",
     disabled: false,
@@ -55,7 +59,7 @@ const createItem = (
   setValue: (value: Array<Item>) => void
 ) => {
   const item: Item = {
-    id: nanoid(),
+    id: createNanoId(),
     label,
     source: "token",
     disabled: false,
@@ -78,7 +82,7 @@ export const StyleSourceInput = () => {
     localItem,
     ...getItems(),
     {
-      id: nanoid(),
+      id: createNanoId(),
       label: "Disabled",
       source: "token",
       disabled: true,
@@ -91,7 +95,7 @@ export const StyleSourceInput = () => {
   >({ styleSourceId: localItem.id });
   const [editingItemId, setEditingItemId] = useState<undefined | Item["id"]>();
 
-  const truncatedId = nanoid();
+  const truncatedId = createNanoId();
   const [truncated, setTruncated] = useState<Array<Item>>([
     {
       id: truncatedId,
@@ -177,5 +181,110 @@ export const StyleSourceInput = () => {
         </Flex>
       </Flex>
     </StorySection>
+  );
+};
+
+export const TokenMenu: StoryFn<typeof StyleSourceMenuComponent> = () => (
+  <StyleSourceMenuComponent
+    open
+    onOpenChange={() => {}}
+    selectedItemSelector={undefined}
+    item={{
+      id: "button-token",
+      label: "Button",
+      source: "token",
+      disabled: false,
+      locked: false,
+      states: [],
+    }}
+    hasStyles
+    states={[]}
+  />
+);
+
+export const TagStyle = () => {
+  const tagStyle: Item = {
+    id: "tag-style-div",
+    label: "div",
+    source: "tag",
+    disabled: false,
+    locked: false,
+    states: [":hover"],
+  };
+  const token: Item = {
+    id: "card-token",
+    label: "card",
+    source: "token",
+    disabled: false,
+    locked: false,
+    states: [],
+  };
+  const [value, setValue] = useState<Array<Item>>([tagStyle, token, localItem]);
+  const [selectedItemSelector, setSelectedItemSelector] = useState<
+    undefined | ItemSelector
+  >({ styleSourceId: tagStyle.id });
+
+  return (
+    <Flex
+      css={{
+        width: theme.sizes.sidebarWidth,
+        padding: theme.spacing[5],
+        boxSizing: "content-box",
+      }}
+    >
+      <StyleSourceInputComponent
+        inputRef={() => {}}
+        css={{ width: theme.sizes.sidebarWidth }}
+        items={getItems()}
+        value={value}
+        selectedItemSelector={selectedItemSelector}
+        componentStates={[
+          { type: "state", selector: ":hover", label: ":hover" },
+          {
+            type: "state",
+            selector: ":focus-visible",
+            label: ":focus-visible",
+          },
+        ]}
+        onSelectItem={setSelectedItemSelector}
+        onSort={setValue}
+      />
+    </Flex>
+  );
+};
+
+export const LocalTagSelector = () => {
+  const local: Item = {
+    ...localItem,
+    states: [" h2:hover", ":hover .button"],
+  };
+  const [selectedItemSelector, setSelectedItemSelector] = useState<
+    undefined | ItemSelector
+  >({ styleSourceId: local.id, state: " h2:hover" });
+
+  return (
+    <Flex
+      css={{
+        width: theme.sizes.sidebarWidth,
+        padding: theme.spacing[5],
+        boxSizing: "content-box",
+      }}
+    >
+      <StyleSourceInputComponent
+        inputRef={() => {}}
+        css={{ width: theme.sizes.sidebarWidth }}
+        value={[local]}
+        selectedItemSelector={selectedItemSelector}
+        componentStates={[
+          {
+            type: "state",
+            selector: ":hover .button",
+            label: ":hover .button",
+          },
+          { type: "tag", selector: " h2:hover", label: "h2:hover" },
+        ]}
+        onSelectItem={setSelectedItemSelector}
+      />
+    </Flex>
   );
 };

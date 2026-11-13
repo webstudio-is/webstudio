@@ -28,6 +28,7 @@ export type ContentRuntimeArtifact = Readonly<{
     edges: readonly RuntimeDocumentGraphEdge[];
   }>;
   contents?: Readonly<Record<string, string>>;
+  assetPaths?: Readonly<Record<string, string>>;
   assetReferences?: MarkdownAssetReferences;
   assetValueReferences?: AssetValueReferences;
   queries?: Readonly<Record<string, MaterializedAssetQuery>>;
@@ -55,7 +56,8 @@ const getInlineDocumentIds = (artifact: ContentArtifactV1) => {
 
 /** Projects the verified build artifact to the data executed in a Worker. */
 export const createContentRuntimeArtifact = (
-  artifact: ContentArtifactV1
+  artifact: ContentArtifactV1,
+  { includeContents = true }: { includeContents?: boolean } = {}
 ): ContentRuntimeArtifact => {
   const inlineDocumentIds = getInlineDocumentIds(artifact);
   const documentGraph =
@@ -77,8 +79,13 @@ export const createContentRuntimeArtifact = (
   return {
     revision: artifact.integrity.checksum,
     documents: artifact.documents,
+    ...(artifact.assetPaths === undefined
+      ? {}
+      : { assetPaths: artifact.assetPaths }),
     ...(documentGraph === undefined ? {} : { documentGraph }),
-    ...(artifact.contents === undefined ? {} : { contents: artifact.contents }),
+    ...(includeContents && artifact.contents !== undefined
+      ? { contents: artifact.contents }
+      : {}),
     ...(artifact.assetReferences === undefined
       ? {}
       : { assetReferences: artifact.assetReferences }),
@@ -108,6 +115,9 @@ export const getContentRuntimeArtifactRuntimeAssetIds = ({
           .map(({ assetId }) => assetId)
     )
   );
+  for (const id of Object.keys(artifact.assetPaths ?? {})) {
+    ids.add(id);
+  }
   if (includeDocuments) {
     for (const { _id } of artifact.documents) {
       ids.add(_id);

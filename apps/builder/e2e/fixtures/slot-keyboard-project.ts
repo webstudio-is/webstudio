@@ -1,3 +1,4 @@
+import type { BrowserContext } from "@playwright/test";
 import { createSeededBuilderProject } from "./builder-project";
 
 export type SeededSlotKeyboardProject = {
@@ -163,15 +164,18 @@ const createSlotKeyboardBuildData = ({
 };
 
 export const createSlotKeyboardProject = async ({
+  context,
   email = "slot-keyboard-e2e@webstudio.test",
   title = "Slot Keyboard E2E",
   builderToken = "slot-keyboard-e2e-builder-token",
 }: {
+  context: BrowserContext;
   email?: string;
   title?: string;
   builderToken?: string;
-} = {}): Promise<SeededSlotKeyboardProject> => {
+}): Promise<SeededSlotKeyboardProject> => {
   return await createSeededBuilderProject({
+    context,
     email,
     title,
     builderToken,

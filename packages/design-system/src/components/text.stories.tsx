@@ -1,3 +1,4 @@
+import { cssVar } from "../css-var";
 import { textVariants, Text as TextComponent } from "./text";
 import { StorySection, StoryGrid } from "./storybook";
 import { Flex } from "./flex";
@@ -33,7 +34,15 @@ export const Text = () => (
     <StorySection title="Colors">
       <StoryGrid>
         {colors.map((color) => (
-          <TextComponent key={color} color={color}>
+          <TextComponent
+            key={color}
+            color={color}
+            css={
+              color === "contrast"
+                ? { background: cssVar("--background-inverse") }
+                : undefined
+            }
+          >
             {color}
           </TextComponent>
         ))}

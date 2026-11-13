@@ -1,8 +1,12 @@
 // Fragment utilities own extracting, copying, and conflict-checking portable
 // Webstudio fragments. Put serialization-style instance subtree cloning and
 // fragment asset/style/data remapping here, not live tree placement decisions.
-import { nanoid } from "nanoid";
+import { migrateCodeTextContentMutable } from "@webstudio-is/project-migrations";
+import { parseCssValue } from "@webstudio-is/css-data";
+import { toValue } from "@webstudio-is/css-engine";
+import { produce } from "immer";
 import {
+  createId,
   type Asset,
   type Breakpoints,
   type DataSource,
@@ -19,12 +23,17 @@ import {
   findPageByIdOrPath,
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
+  getStyleDeclKey,
+  getAssetUrl,
   getHomePage,
+  isFormSubmission,
   portalComponent,
   webstudioFragment,
 } from "@webstudio-is/sdk";
+
 import {
   findAvailableVariables,
+  mapResourceExpressionsMutable,
   replaceDataSourcesInExpression,
   restoreExpressionVariables,
   unsetExpressionVariables,
@@ -48,9 +57,182 @@ import {
 } from "./style-copy";
 import { unwrap } from "./unwrap";
 import {
+  collectFontFamiliesFromStyleDecls,
   collectFontFamiliesFromStyleValue,
+  mapCssValueUrls,
   traverseStyleValue,
 } from "./style-utils";
+import { countDataSourceAssetReferences } from "./assets";
+import { throwBuilderRuntimeError } from "./errors";
+import {
+  ambiguousFormClipboardMessage,
+  hasAmbiguousFormInstance,
+} from "./fragment-identity";
+
+export const assertNoAmbiguousFormInstance = (
+  fragment: Pick<WebstudioFragment, "instances">
+) => {
+  if (hasAmbiguousFormInstance(fragment)) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      ambiguousFormClipboardMessage
+    );
+  }
+};
+
+const createNanoId = () => createId("nano");
+
+export const remapFragmentAssets = (
+  fragment: WebstudioFragment,
+  importedAssets: ReadonlyMap<Asset["id"], Asset>
+) => {
+  const replacementIds = new Map<Asset["id"], Asset["id"]>();
+  const replacementUrls = new Map<string, string>();
+  const replacementFontFamilies = new Map<string, string>();
+  for (const sourceAsset of fragment.assets) {
+    const importedAsset = importedAssets.get(sourceAsset.id);
+    if (importedAsset === undefined) {
+      throw new Error("Imported asset is missing");
+    }
+    if (
+      sourceAsset.id === importedAsset.id &&
+      (sourceAsset.type !== "font" ||
+        importedAsset.type !== "font" ||
+        sourceAsset.meta.family === importedAsset.meta.family)
+    ) {
+      continue;
+    }
+    if (sourceAsset.id !== importedAsset.id) {
+      if (sourceAsset.type === "image") {
+        const importedUrl = getAssetUrl(
+          importedAsset,
+          "https://webstudio.invalid"
+        );
+        replacementUrls.set(
+          new URL(sourceAsset.id, "https://webstudio.invalid").href,
+          importedUrl.pathname + importedUrl.search
+        );
+      }
+      for (const [sourceId, currentId] of replacementIds) {
+        if (currentId === sourceAsset.id) {
+          replacementIds.set(sourceId, importedAsset.id);
+        }
+      }
+      if (replacementIds.has(sourceAsset.id) === false) {
+        replacementIds.set(sourceAsset.id, importedAsset.id);
+      }
+    }
+    if (sourceAsset.type === "font" && importedAsset.type === "font") {
+      const from = sourceAsset.meta.family;
+      const to = importedAsset.meta.family;
+      if (from === to) {
+        continue;
+      }
+      for (const [original, current] of replacementFontFamilies) {
+        if (current === from) {
+          replacementFontFamilies.set(original, to);
+        }
+      }
+      if (replacementFontFamilies.has(from) === false) {
+        replacementFontFamilies.set(from, to);
+      }
+    }
+  }
+  const fontVariableStyleKeys = new Set<string>();
+  if (replacementFontFamilies.size > 0) {
+    collectFontFamiliesFromStyleDecls(fragment.styles, undefined, (style) => {
+      fontVariableStyleKeys.add(getStyleDeclKey(style));
+    });
+  }
+  return produce(fragment, (draft) => {
+    for (const prop of draft.props) {
+      if (prop.type === "asset") {
+        prop.value = replacementIds.get(prop.value) ?? prop.value;
+      }
+    }
+    for (const style of draft.styles) {
+      const isFontValue =
+        replacementFontFamilies.size > 0 &&
+        (style.property === "fontFamily" ||
+          fontVariableStyleKeys.has(getStyleDeclKey(style)));
+      traverseStyleValue(style.value, (item) => {
+        if (item.type === "image" && item.value.type === "asset") {
+          item.value.value =
+            replacementIds.get(item.value.value) ?? item.value.value;
+        }
+        if (replacementUrls.size > 0 && item.type === "unparsed") {
+          item.value = mapCssValueUrls(item.value, (url) => {
+            try {
+              return replacementUrls.get(
+                new URL(url, "https://webstudio.invalid").href
+              );
+            } catch {
+              return;
+            }
+          });
+        }
+        if (item.type === "fontFamily") {
+          const mapped = item.value.map(
+            (family) => replacementFontFamilies.get(family) ?? family
+          );
+          if (mapped.some((family, index) => family !== item.value[index])) {
+            item.value = mapped;
+          }
+        }
+        if (isFontValue && item.type === "unparsed") {
+          const parsed = parseCssValue("font-family", item.value);
+          let changed = false;
+          traverseStyleValue(parsed, (part) => {
+            if (part.type === "fontFamily") {
+              part.value = part.value.map((family) => {
+                const replacement = replacementFontFamilies.get(family);
+                changed ||= replacement !== undefined && replacement !== family;
+                return replacement ?? family;
+              });
+            }
+          });
+          if (changed) {
+            item.value = toValue(parsed);
+          }
+        }
+      });
+    }
+    draft.assets = [];
+  });
+};
+
+export const importFragmentAssets = async (
+  fragments: WebstudioFragment[],
+  importAssets: (assets: Asset[]) => Promise<Map<Asset["id"], Asset>>
+) => {
+  const assets = new Map(
+    fragments.flatMap((fragment) =>
+      fragment.assets.map((asset) => [asset.id, asset] as const)
+    )
+  );
+  const importedAssets =
+    assets.size === 0
+      ? new Map<Asset["id"], Asset>()
+      : await importAssets([...assets.values()]);
+  if (importedAssets.size !== assets.size) {
+    throw new Error("Imported asset is missing");
+  }
+  const assetIds = new Map(
+    [...importedAssets].map(([sourceId, asset]) => [sourceId, asset.id])
+  );
+  return {
+    fragments: new Map(
+      fragments.map((fragment) => [
+        fragment,
+        fragment.assets.length === 0
+          ? fragment
+          : remapFragmentAssets(fragment, importedAssets),
+      ])
+    ),
+    assetIds,
+    assets: importedAssets,
+  };
+};
 
 export type ContentModeCopyableProp = (input: {
   prop: Prop;
@@ -96,6 +278,13 @@ export const listFragmentExpressions = (fragment: WebstudioFragment) => [
 
 export const webstudioFragmentMutationInput = webstudioFragment.superRefine(
   (fragment, context) => {
+    if (hasAmbiguousFormInstance(fragment)) {
+      context.addIssue({
+        code: "custom",
+        message: ambiguousFormClipboardMessage,
+        path: ["instances"],
+      });
+    }
     for (const entry of listFragmentExpressions(fragment)) {
       const errors = getExpressionErrorMessages({
         expression: entry.expression,
@@ -114,6 +303,22 @@ const mergeUniqueByJson = <Item>(items: Item[]) =>
   Array.from(
     new Map(items.map((item) => [JSON.stringify(item), item])).values()
   );
+
+export const createWebstudioDataFromFragment = (
+  fragment: WebstudioFragment
+): Omit<WebstudioData, "pages"> => ({
+  instances: new Map(fragment.instances.map((item) => [item.id, item])),
+  props: new Map(fragment.props.map((item) => [item.id, item])),
+  assets: new Map(fragment.assets.map((item) => [item.id, item])),
+  dataSources: new Map(fragment.dataSources.map((item) => [item.id, item])),
+  resources: new Map(fragment.resources.map((item) => [item.id, item])),
+  breakpoints: new Map(fragment.breakpoints.map((item) => [item.id, item])),
+  styleSourceSelections: new Map(
+    fragment.styleSourceSelections.map((item) => [item.instanceId, item])
+  ),
+  styleSources: new Map(fragment.styleSources.map((item) => [item.id, item])),
+  styles: new Map(fragment.styles.map((item) => [getStyleDeclKey(item), item])),
+});
 
 export const mergeWebstudioFragments = (
   rootInstanceIds: Instance["id"][],
@@ -359,6 +564,11 @@ export const extractWebstudioFragment = (
       if (dataSource.type === "resource") {
         fragmentResourceIds.add(dataSource.resourceId);
       }
+      for (const assetId of assets.keys()) {
+        if (countDataSourceAssetReferences(dataSource, assetId) > 0) {
+          fragmentAssetIds.add(assetId);
+        }
+      }
     } else {
       unsetNameById.set(dataSource.id, dataSource.name);
     }
@@ -425,30 +635,9 @@ export const extractWebstudioFragment = (
       continue;
     }
     const newResource = structuredClone(unwrap(resource));
-    newResource.url = unsetExpressionVariables({
-      expression: newResource.url,
-      unsetNameById,
-    });
-    for (const header of newResource.headers) {
-      header.value = unsetExpressionVariables({
-        expression: header.value,
-        unsetNameById,
-      });
-    }
-    if (newResource.searchParams) {
-      for (const searchParam of newResource.searchParams) {
-        searchParam.value = unsetExpressionVariables({
-          expression: searchParam.value,
-          unsetNameById,
-        });
-      }
-    }
-    if (newResource.body) {
-      newResource.body = unsetExpressionVariables({
-        expression: newResource.body,
-        unsetNameById,
-      });
-    }
+    mapResourceExpressionsMutable(newResource, (expression) =>
+      unsetExpressionVariables({ expression, unsetNameById })
+    );
     fragmentResources.push(newResource);
   }
 
@@ -585,7 +774,7 @@ export const insertWebstudioFragmentCopy = ({
   onBreakpointLimitMerge,
   metas,
   contentModeCopyableProp,
-  createId = nanoid,
+  createId = createNanoId,
   // In content mode, insertion keeps content-editable instance data, creates
   // local styles for inserted instances, and avoids data/resource records.
   contentMode = false,
@@ -601,6 +790,7 @@ export const insertWebstudioFragmentCopy = ({
   createId?: () => string;
   contentMode?: boolean;
 }) => {
+  assertNoAmbiguousFormInstance(fragment);
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
   const newDataIds = {
@@ -622,6 +812,30 @@ export const insertWebstudioFragmentCopy = ({
     styles,
     styleSourceSelections,
   } = data;
+
+  const referencedTokenIds = new Map<string, string>();
+  for (const id of fragment.referenceTokenIds ?? []) {
+    const source = fragment.styleSources.find(
+      (candidate) => candidate.id === id
+    );
+    if (
+      source?.type !== "token" ||
+      fragment.styles.some((style) => style.styleSourceId === id)
+    ) {
+      return throwBuilderRuntimeError("BAD_REQUEST", "Invalid token reference");
+    }
+    const existing = Array.from(styleSources.values()).find(
+      (candidate) =>
+        candidate.type === "token" && candidate.name === source.name
+    );
+    if (existing === undefined) {
+      return throwBuilderRuntimeError(
+        "NOT_FOUND",
+        `Design token "${source.name}" was not found`
+      );
+    }
+    referencedTokenIds.set(id, existing.id);
+  }
 
   /**
    * insert reusables without changing their ids to not bloat data
@@ -664,6 +878,7 @@ export const insertWebstudioFragmentCopy = ({
     styleSourceIdMap = insertTokenStyleSources({
       fragmentStyleSources: fragment.styleSources,
       fragmentStyles: fragment.styles,
+      referencedTokenIds,
       styleSources,
       styles,
       breakpoints,
@@ -768,6 +983,14 @@ export const insertWebstudioFragmentCopy = ({
     maskedIdByName.set(dataSource.name, dataSource.id);
   }
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
+  const getNewResourceId = (resourceId: Resource["id"]) => {
+    let newResourceId = newResourceIds.get(resourceId);
+    if (newResourceId === undefined) {
+      newResourceId = createId();
+      newResourceIds.set(resourceId, newResourceId);
+    }
+    return newResourceId;
+  };
   if (contentMode === false) {
     for (let dataSource of fragment.dataSources) {
       const scopeInstanceId = dataSource.scopeInstanceId ?? "";
@@ -790,9 +1013,7 @@ export const insertWebstudioFragmentCopy = ({
         dataSource.scopeInstanceId =
           newInstanceIds.get(scopeInstanceId) ?? scopeInstanceId;
         if (dataSource.type === "resource") {
-          const newResourceId = createId();
-          newResourceIds.set(dataSource.resourceId, newResourceId);
-          dataSource.resourceId = newResourceId;
+          dataSource.resourceId = getNewResourceId(dataSource.resourceId);
         }
         dataSources.set(dataSource.id, dataSource);
       }
@@ -816,8 +1037,11 @@ export const insertWebstudioFragmentCopy = ({
     ) {
       continue;
     }
+    const isResourceFormAction =
+      prop.name === "action" &&
+      fragmentInstances.get(prop.instanceId)?.component === "ResourceForm";
     prop = clonePropForInstance({
-      prop: unwrap(prop),
+      prop: structuredClone(unwrap(prop)),
       propId: createId(),
       instanceId: newInstanceIds.get(prop.instanceId) ?? prop.instanceId,
     });
@@ -843,10 +1067,19 @@ export const insertWebstudioFragmentCopy = ({
     if (prop.type === "parameter") {
       prop.value = newDataSourceIds.get(prop.value) ?? prop.value;
     }
+    if (
+      prop.type === "json" &&
+      isResourceFormAction &&
+      isFormSubmission(prop.value)
+    ) {
+      prop.value = prop.value.map((action) => ({
+        ...action,
+        dataSourceId:
+          newDataSourceIds.get(action.dataSourceId) ?? action.dataSourceId,
+      }));
+    }
     if (prop.type === "resource") {
-      const newResourceId = createId();
-      newResourceIds.set(prop.value, newResourceId);
-      prop.value = newResourceId;
+      prop.value = getNewResourceId(prop.value);
     }
     props.set(prop.id, prop);
   }
@@ -858,46 +1091,12 @@ export const insertWebstudioFragmentCopy = ({
       }
       resource = structuredClone(unwrap(resource));
       resource.id = newResourceIds.get(resource.id) ?? resource.id;
-      resource.url = restoreExpressionVariables({
-        expression: resource.url,
-        maskedIdByName,
-      });
-      resource.url = replaceDataSourcesInExpression(
-        resource.url,
-        newDataSourceIds
+      mapResourceExpressionsMutable(resource, (expression) =>
+        replaceDataSourcesInExpression(
+          restoreExpressionVariables({ expression, maskedIdByName }),
+          newDataSourceIds
+        )
       );
-      for (const header of resource.headers) {
-        header.value = restoreExpressionVariables({
-          expression: header.value,
-          maskedIdByName,
-        });
-        header.value = replaceDataSourcesInExpression(
-          header.value,
-          newDataSourceIds
-        );
-      }
-      if (resource.searchParams) {
-        for (const searchParam of resource.searchParams) {
-          searchParam.value = restoreExpressionVariables({
-            expression: searchParam.value,
-            maskedIdByName,
-          });
-          searchParam.value = replaceDataSourcesInExpression(
-            searchParam.value,
-            newDataSourceIds
-          );
-        }
-      }
-      if (resource.body) {
-        resource.body = restoreExpressionVariables({
-          expression: resource.body,
-          maskedIdByName,
-        });
-        resource.body = replaceDataSourcesInExpression(
-          resource.body,
-          newDataSourceIds
-        );
-      }
       resources.set(resource.id, resource);
     }
   }
@@ -938,6 +1137,7 @@ export const insertWebstudioFragmentCopy = ({
     insertLocalStyleSourcesWithNewIds({
       ...localStyleSourceInput,
       contentMode: true,
+      styleSourceIdMap: referencedTokenIds,
       breakpoints,
       createId,
     });
@@ -952,6 +1152,7 @@ export const insertWebstudioFragmentCopy = ({
     });
   }
 
+  migrateCodeTextContentMutable({ instances, props });
   return { ...newDataIds, didMergeBreakpointsDueToLimit };
 };
 
@@ -1019,6 +1220,7 @@ export const detectFragmentTokenConflicts = ({
   return detectTokenConflicts({
     fragmentStyleSources: fragment.styleSources,
     fragmentStyles: fragment.styles,
+    referenceTokenIds: new Set(fragment.referenceTokenIds),
     existingStyleSources: targetData.styleSources,
     existingStyles: targetData.styles,
     breakpoints: targetData.breakpoints,

@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
-import { Box, Grid, ToggleButton } from "@webstudio-is/design-system";
+import { Box, Grid, IconToggleButton } from "@webstudio-is/design-system";
 import { keywordValues } from "@webstudio-is/css-data";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { rowCss } from "./utils";
@@ -48,6 +48,13 @@ export const BorderProperty = ({
    * from the shorthand property set and pass it instead.
    **/
   const firstPropertyName = borderProperties[0];
+  const getOptions = () => [
+    ...(keywordValues[firstPropertyName] ?? []).map((value) => ({
+      type: "keyword" as const,
+      value,
+    })),
+    ...$availableUnitVariables.get(),
+  ];
 
   const [showIndividualMode, setShowIndividualMode] = useSelectedInstanceKv(
     `${firstPropertyName}-showIndividualMode`,
@@ -81,13 +88,7 @@ export const BorderProperty = ({
             disabled={readonly}
             property={firstPropertyName}
             styleSource={styleValueSourceColor}
-            getOptions={() => [
-              ...(keywordValues[firstPropertyName] ?? []).map((value) => ({
-                type: "keyword" as const,
-                value,
-              })),
-              ...$availableUnitVariables.get(),
-            ]}
+            getOptions={getOptions}
             value={value}
             onUpdate={(newValue, options) => {
               const batch = createBatchUpdate();
@@ -107,13 +108,14 @@ export const BorderProperty = ({
         </Box>
 
         {individualModeIcon && (
-          <ToggleButton
+          <IconToggleButton
+            aria-label={`Toggle individual ${label.toLowerCase()} values`}
             disabled={readonly}
             pressed={showIndividualMode}
             onPressedChange={setShowIndividualMode}
           >
             {individualModeIcon}
-          </ToggleButton>
+          </IconToggleButton>
         )}
       </Grid>
       {showIndividualMode && (
@@ -125,12 +127,7 @@ export const BorderProperty = ({
               icon={borderPropertyOptions[styleDecl.property]?.icon}
               property={styleDecl.property}
               styleSource={styleDecl.source.name}
-              getOptions={() =>
-                (keywordValues[firstPropertyName] ?? []).map((value) => ({
-                  type: "keyword" as const,
-                  value,
-                }))
-              }
+              getOptions={getOptions}
               value={styleDecl.cascadedValue}
               onUpdate={setProperty(styleDecl.property)}
               onDelete={(options) =>

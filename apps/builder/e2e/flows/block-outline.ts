@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 import { waitForCanvasFrame } from "./builder";
 import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
 

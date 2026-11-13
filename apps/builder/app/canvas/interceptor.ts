@@ -1,15 +1,22 @@
-import { getAllPages, getPagePath, isAbsoluteUrl } from "@webstudio-is/sdk";
+import {
+  appendFormDataToSearchParams,
+  appendSystemSearch,
+  getAllPages,
+  getPagePath,
+  getSystemSearch,
+  isAbsoluteUrl,
+} from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
-  matchPathnamePattern,
   tokenizePathnamePattern,
 } from "@webstudio-is/project-build/runtime";
+import { matchPathnameRoutes } from "@webstudio-is/wsauth";
+import { toWebstudioParams } from "@webstudio-is/react-sdk";
 import { $selectedPage } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
-import { $isPreviewMode, $selectedPageHash } from "~/shared/nano-states";
+import { $isPreviewMode, requestPageNavigation } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
-import { comparePatterns } from "./shared/routing-priority";
 
 const getSelectedPagePathname = () => {
   const pages = $pages.get();
@@ -21,10 +28,21 @@ const getSelectedPagePathname = () => {
   }
 };
 
-const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
+export const switchPageAndUpdateSystem = (
+  href: string,
+  {
+    formData,
+    controlNames,
+    includeFallback = true,
+  }: {
+    formData?: FormData;
+    controlNames?: Iterable<string>;
+    includeFallback?: boolean;
+  } = {}
+) => {
   const pages = $pages.get();
   if (pages === undefined) {
-    return;
+    return false;
   }
   // preserve pathname when not specified in href/action
   if (href === "" || href.startsWith("?")) {
@@ -38,34 +56,47 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
     const pathname = getSelectedPagePathname();
     if (pathname) {
       const system = $currentSystem.get();
-      const searchParams = new URLSearchParams(
-        system.search as Record<string, string>
-      );
+      const searchParams = new URLSearchParams();
+      appendSystemSearch(searchParams, system.search);
       href = `${pathname}?${searchParams}${href}`;
     }
   }
   const pageHref = new URL(href, "https://any-valid.url");
-  // sort pages before matching to not depend on order of page creation
-  const sortedPages = getAllPages(pages).toSorted((leftPage, rightPage) =>
-    comparePatterns(leftPage.path, rightPage.path)
+  const matchedPage = matchPathnameRoutes(
+    getAllPages(pages).map((page) => ({
+      pattern: getPagePath(page.id, pages),
+      value: page,
+    })),
+    pageHref.pathname
   );
-  for (const page of sortedPages) {
-    const pagePath = getPagePath(page.id, pages);
-    const params = matchPathnamePattern(pagePath, pageHref.pathname);
-    if (params) {
-      // populate search params with form data values if available
-      if (formData) {
-        for (const [key, value] of formData.entries()) {
-          pageHref.searchParams.set(key, value.toString());
-        }
-      }
-      const search = Object.fromEntries(pageHref.searchParams);
-      $selectedPageHash.set({ hash: pageHref.hash });
-      selectPage(page.id);
-      updateCurrentSystem({ params, search });
-      break;
+  if (matchedPage) {
+    const { value: page, params } = matchedPage;
+    if (
+      includeFallback === false &&
+      (page.meta.status === "404" ||
+        getPagePath(page.id, pages) === "/*" ||
+        getPagePath(page.id, pages) === "*")
+    ) {
+      return false;
     }
+    // populate search params with form data values if available
+    if (formData) {
+      appendFormDataToSearchParams(
+        pageHref.searchParams,
+        formData,
+        controlNames ?? []
+      );
+    }
+    const search = getSystemSearch(pageHref.searchParams);
+    requestPageNavigation({ pageId: page.id, hash: pageHref.hash });
+    selectPage(page.id);
+    updateCurrentSystem({
+      params: toWebstudioParams(getPagePath(page.id, pages), params),
+      search: search.search,
+    });
+    return true;
   }
+  return false;
 };
 
 export const subscribeInterceptedEvents = () => {
@@ -133,13 +164,27 @@ export const subscribeInterceptedEvents = () => {
       if (form === undefined) {
         return;
       }
+      const action = form.getAttribute("action") ?? "";
+      const formMode = new URL(action, document.baseURI).searchParams.get(
+        "__webstudio__"
+      );
+      if (formMode === "resources" || formMode === "navigate") {
+        // The Form's action URL identifies submissions handled by ResourceForm.
+        return;
+      }
       // use attribute instead of form.action to get raw unresolved value
       // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#dom-fs-action
-      const action = form.getAttribute("action") ?? "";
       // lower case just for safety
       const method = form.method.toLowerCase();
       if (method === "get" && isAbsoluteUrl(action) === false) {
-        switchPageAndUpdateSystem(action, new FormData(form));
+        const formData =
+          event.submitter === null
+            ? new FormData(form)
+            : new FormData(form, event.submitter);
+        const controlNames = Array.from(form.elements, (control) =>
+          control.getAttribute("name")
+        ).filter((name): name is string => Boolean(name));
+        switchPageAndUpdateSystem(action, { formData, controlNames });
       }
     }
     // prevent submitting the form when clicking a button type submit

@@ -17,7 +17,13 @@ If you want to create a customized page for this, you will need to create a new 
 1. **Change the Status Code** from `200` to `404`
 2. **Set the Dynamic Path** to `/*` to catch all non-existent routes
 
-<figure><img src="../../.gitbook/assets/page-settings-general.png" alt="Page settings showing Status Code set to 404 and Path set to /*"><figcaption><p>Set the status code to 404 and the path to <code>/*</code></p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-general-dark.png">
+    <img src="../../.gitbook/assets/page-settings-general-light.png" alt="Page settings with path /* and status code 404" width="448">
+  </picture>
+  <figcaption><p>Set the status code to 404 and the path to <code>/*</code></p></figcaption>
+</figure>
 
 After that, you can design the page however you like.
 

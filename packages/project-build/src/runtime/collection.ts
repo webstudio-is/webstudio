@@ -30,6 +30,12 @@ const collectionDataInput = z.discriminatedUnion("type", [
   }),
 ]);
 
+export const conflictResolutionInput = z
+  .enum(["ours", "theirs", "merge"])
+  .describe(
+    'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.'
+  );
+
 export const insertCollectionInput = z.object({
   parentInstanceId: z.string(),
   data: collectionDataInput.describe(
@@ -38,6 +44,7 @@ export const insertCollectionInput = z.object({
   itemFragment: webstudioFragmentMutationInput.describe(
     "One structured repeated-item fragment. Descendant expressions may reference collectionItem and collectionItemKey."
   ),
+  conflictResolution: conflictResolutionInput.optional(),
   mode: instanceInsertModeInput.optional(),
   insertIndex: insertIndexInput.optional(),
 });
@@ -75,7 +82,7 @@ const getItemRootInstanceId = (fragment: WebstudioFragment) => {
   ) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
-      "Collection itemFragment must contain exactly one root instance. Wrap repeated sibling elements in one ws:element or component."
+      "Collection itemFragment must contain exactly one root instance. Wrap repeated sibling elements in one lowercase HTML element or registered component."
     );
   }
   const instances = new Map(
@@ -230,6 +237,7 @@ export const createCollectionFragment = ({
             instances: state.instances,
             dataSources: state.dataSources,
           }),
+          mode: "read",
         };
   const parameterDataSources = [item.dataSource, itemKey.dataSource];
   assertNoIdCollision(

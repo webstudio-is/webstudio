@@ -1,9 +1,9 @@
 import { useState } from "react";
 import {
+  PanelContent,
   EnhancedTooltip,
   Grid,
   SmallToggleButton,
-  theme,
 } from "@webstudio-is/design-system";
 import {
   toValue,
@@ -70,7 +70,7 @@ export const AnimationTransforms = ({
     }
   }
   return (
-    <Grid gap={2} css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Grid} gap={2}>
       <Grid gap={1}>
         <FieldLabel
           resettable={styles.translate !== undefined}
@@ -294,6 +294,6 @@ export const AnimationTransforms = ({
           />
         </Grid>
       </Grid>
-    </Grid>
+    </PanelContent>
   );
 };

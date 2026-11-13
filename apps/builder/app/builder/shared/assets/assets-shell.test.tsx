@@ -27,6 +27,45 @@ const renderer = createAssetManagerTestRenderer();
 afterEach(renderer.cleanup);
 
 describe("AssetsShell", () => {
+  test.each([true, false])(
+    "places folder notices after filters and before content (empty: %s)",
+    (isEmpty) => {
+      const content = (
+        <button type="button" data-folder-content>
+          Back
+        </button>
+      );
+      const container = renderer.render(
+        <AssetsShell
+          searchProps={{}}
+          filters={
+            <button type="button" data-filter>
+              Filter
+            </button>
+          }
+          contentNotice={<div role="alert">Unavailable</div>}
+          isEmpty={isEmpty}
+          emptyContent={content}
+          type="file"
+        >
+          {content}
+        </AssetsShell>
+      );
+      const notice = container.querySelector('[role="alert"]')!;
+      expect(notice).not.toBeNull();
+      expect(
+        container
+          .querySelector("[data-filter]")!
+          .compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).not.toBe(0);
+      expect(
+        notice.compareDocumentPosition(
+          container.querySelector("[data-folder-content]")!
+        ) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).not.toBe(0);
+    }
+  );
+
   test("centers the empty state independently from empty folder content", () => {
     const container = renderer.render(
       <AssetsShell

@@ -166,6 +166,29 @@ const normalizeSettlements = (
   });
 
 describe("document graph query resolution", () => {
+  test("resolves references across more than 20 matching candidates", async () => {
+    const { artifact, graph, sources } = await createCategorizedGraphFixture({
+      categoryCounts: { News: 29 },
+    });
+    const load = vi.fn(async (node: (typeof graph.nodes)[number]) => ({
+      format: "json" as const,
+      revision: node.revision,
+      source: sources[node.id],
+    }));
+    const database = createContentDatabase({ artifact });
+
+    const result = await database.queryWithDocumentGraph({
+      request: createCategoryRequests(["News"])[0],
+      load,
+    });
+
+    expect(result.items).toHaveLength(20);
+    expect(result.items[0]).toMatchObject({
+      properties: { author: { name: "author" } },
+    });
+    expect(load).toHaveBeenCalledTimes(30);
+  });
+
   test("matches independent query policy for materialized results and errors", async () => {
     const entry = createCanonicalAssetFileEntry({
       projectId: "project",
@@ -316,17 +339,26 @@ describe("document graph query resolution", () => {
     const { artifact } = await compileContentArtifact({
       projectId: "project",
       entries,
-      assetValueReferences: Object.fromEntries(
-        entries.map(({ assetId }) => [
-          assetId,
-          [
-            {
-              path: ["properties", "featureImage"],
-              assetId: "hero",
-            },
-          ],
-        ])
-      ),
+      assetValueReferences: {
+        ...Object.fromEntries(
+          entries.map(({ assetId }) => [
+            assetId,
+            [
+              {
+                path: ["properties", "featureImage"],
+                assetId: "hero",
+              },
+            ],
+          ])
+        ),
+        "author-ada": [
+          {
+            path: ["properties", "profileImage"],
+            assetId: "ada-avatar",
+            structured: true,
+          },
+        ],
+      },
       documentGraph: graph,
     });
     const sources: Record<string, string> = {
@@ -334,7 +366,7 @@ describe("document graph query resolution", () => {
         '{"author":{"$ref":"../authors/ada.json"},"featureImage":"./assets/hero.png"}',
       "post-grace":
         '{"author":{"$ref":"../authors/grace.json"},"featureImage":"./assets/hero.png"}',
-      "author-ada": '{"name":"Ada"}',
+      "author-ada": '{"name":"Ada","profileImage":{"$ref":"./ada.png"}}',
       "author-grace": '{"name":"Grace"}',
     };
     const load = vi.fn(async (node: (typeof graph.nodes)[number]) => ({
@@ -372,6 +404,7 @@ describe("document graph query resolution", () => {
             includeMetadata: false,
             fields: [
               ["properties", "author", "name"],
+              ["properties", "author", "profileImage", "src"],
               ["properties", "featureImage"],
             ],
           },
@@ -381,6 +414,10 @@ describe("document graph query resolution", () => {
       load,
       runtimeAssets: {
         hero: { url: "/cgi/image/hero.png?format=raw" },
+        "ada-avatar": {
+          url: "/cgi/image/ada.png?format=raw",
+          description: "Portrait of Ada",
+        },
       },
     });
 
@@ -389,7 +426,12 @@ describe("document graph query resolution", () => {
         {
           id: "post-ada",
           properties: {
-            author: { name: "Ada" },
+            author: {
+              name: "Ada",
+              profileImage: {
+                src: "/cgi/image/ada.png?format=raw",
+              },
+            },
             featureImage: "/cgi/image/hero.png?format=raw",
           },
         },

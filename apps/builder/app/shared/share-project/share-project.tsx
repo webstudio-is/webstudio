@@ -11,6 +11,7 @@ import { shallowEqual } from "shallow-equal";
 import { type Role, roleLabels } from "@webstudio-is/project";
 import { roleDescriptions } from "~/shared/permissions";
 import {
+  PanelContent,
   Box,
   Button,
   css,
@@ -19,11 +20,10 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  rawTheme,
   Separator,
   Switch,
   theme,
-  Tooltip,
+  InfoTooltip,
   Collapsible,
   keyframes,
   Text,
@@ -33,12 +33,13 @@ import {
   Checkbox,
   Grid,
   PanelBanner,
+  cssVar,
+  declareCssVar,
 } from "@webstudio-is/design-system";
 import {
   CopyIcon,
   EllipsesIcon,
   PlusIcon,
-  InfoCircleIcon,
   UpgradeIcon,
 } from "@webstudio-is/icons";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
@@ -46,12 +47,7 @@ import { useIds } from "../form-utils";
 import type { BuilderMode } from "../nano-states";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
-  <Flex
-    direction="column"
-    css={{ padding: theme.panel.padding }}
-    gap="1"
-    {...props}
-  />
+  <PanelContent as={Flex} direction="column" gap="1" {...props} />
 );
 
 const UpgradeLink = () => (
@@ -80,17 +76,15 @@ const PermissionTooltip = ({
   title: string;
   children: ReactNode;
 }) => (
-  <Tooltip
+  <InfoTooltip
+    label={`About ${title.toLowerCase()}`}
     content={
       <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
         <Text variant="titles">{title}</Text>
         <Text>{children}</Text>
       </Flex>
     }
-    variant="wrapped"
-  >
-    <InfoCircleIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
-  </Tooltip>
+  />
 );
 
 const PermissionTooltipContent = ({
@@ -323,7 +317,7 @@ const Menu = ({
         <Button
           prefix={<EllipsesIcon />}
           color="ghost"
-          aria-label="Menu Button for options"
+          aria-label="Options menu"
         ></Button>
       </PopoverTrigger>
       <PopoverContent
@@ -350,7 +344,7 @@ const Menu = ({
                 setIsOpen(false);
               }
             }}
-            placeholder="Share Project"
+            placeholder="Share project"
             name="Name"
             autoFocus
           />
@@ -470,8 +464,6 @@ const itemStyle = css({
   display: "flex",
   alignItems: "center",
   gap: theme.spacing[3],
-  padding: theme.panel.padding,
-  backgroundColor: theme.colors.backgroundPanel,
 });
 
 export type LinkOptions = {
@@ -530,12 +522,13 @@ const SharedLinkItem = ({
   };
 
   return (
-    <Box
+    <PanelContent
+      as={Box}
       className={itemStyle()}
       role="group"
       aria-label={`Share link ${currentLink.name}`}
     >
-      <Label css={{ flexGrow: 1 }}>{currentLink.name}</Label>
+      <Label truncate>{currentLink.name}</Label>
       <CopyToClipboard
         text={builderUrl({
           authToken: currentLink.token,
@@ -554,7 +547,7 @@ const SharedLinkItem = ({
         onDelete={onDelete}
         allowAdditionalPermissions={allowAdditionalPermissions}
       />
-    </Box>
+    </PanelContent>
   );
 };
 
@@ -569,6 +562,10 @@ type ShareProjectProps = {
   isFreePlan: boolean;
 };
 
+const collapsibleContentHeight = declareCssVar(
+  "--radix-collapsible-content-height"
+);
+
 const animateCollapsibleHeight = keyframes({
   "0%": {
     height: 0,
@@ -576,7 +573,7 @@ const animateCollapsibleHeight = keyframes({
     opacity: 0,
   },
   "100%": {
-    height: "var(--radix-collapsible-content-height)",
+    height: cssVar(collapsibleContentHeight),
     overflow: "hidden",
     opacity: 1,
   },
@@ -614,9 +611,8 @@ export const ShareProject = ({
   ));
 
   const create = (
-    <Box className={itemStyle({ css: { py: theme.spacing["7"] } })}>
+    <PanelContent as={Box} className={itemStyle()}>
       <Button
-        color="neutral"
         state={isPending ? "pending" : undefined}
         prefix={
           isPending ? <Flex css={{ width: theme.spacing[7] }} /> : <PlusIcon />
@@ -627,7 +623,7 @@ export const ShareProject = ({
       >
         {links.length === 0 ? "Share a custom link" : "Add another link"}
       </Button>
-    </Box>
+    </PanelContent>
   );
 
   return (
@@ -655,3 +651,5 @@ export const ShareProject = ({
     </Flex>
   );
 };
+
+undefined;

@@ -1,6 +1,7 @@
 import isEqual from "fast-deep-equal";
 import { forwardRef, useState, type ComponentProps } from "react";
 import {
+  PanelContent,
   Grid,
   theme,
   Select,
@@ -213,7 +214,7 @@ const AnimationConfig = ({
     ((value: undefined, isEphemeral: true) => void);
 }) => {
   return (
-    <Grid gap={2} css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Grid} gap={2}>
       <Grid gap={1} align="center" columns={2}>
         <FieldLabel description="Type of the timeline defines how the animation is triggered.">
           Type
@@ -296,13 +297,13 @@ const AnimationConfig = ({
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
           <FieldLabel description={insetDescription}>
             {value.axis === "inline" || value.axis === "x"
-              ? "Left Inset"
-              : "Top Inset"}
+              ? "Left inset"
+              : "Top inset"}
           </FieldLabel>
           <FieldLabel description={insetDescription}>
             {value.axis === "inline" || value.axis === "x"
-              ? "Right Inset"
-              : "Bottom Inset"}
+              ? "Right inset"
+              : "Bottom inset"}
           </FieldLabel>
           <InsetValueInput
             value={value.insetStart ?? { type: "keyword", value: "auto" }}
@@ -326,7 +327,7 @@ const AnimationConfig = ({
           />
         </Grid>
       )}
-    </Grid>
+    </PanelContent>
   );
 };
 
@@ -431,7 +432,7 @@ export const AnimationSection = ({
         <AnimationsSelect
           action={
             <FloatingPanel
-              title="Advanced Animation"
+              title="Advanced animation"
               placement="bottom-within"
               content={
                 <AnimationConfig value={value} onChange={handleChange} />

@@ -132,7 +132,7 @@ describe("api runtime adapter", () => {
       input: {
         projectId: "project-1",
         parentInstanceId: "root-1",
-        component: "Form",
+        component: "ResourceForm",
       },
     });
 

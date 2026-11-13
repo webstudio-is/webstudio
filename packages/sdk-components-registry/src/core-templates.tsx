@@ -1,0 +1,403 @@
+/** @jsxImportSource @webstudio-is/template */
+/** Assembles core templates that depend on registered React components. */
+import { createElement, type ElementType, type ReactNode } from "react";
+import { Webstudio1cIcon } from "@webstudio-is/icons/svg";
+import {
+  blockComponent,
+  contentBlockDocumentProp,
+  contentBlockMdxTemplateDescriptors,
+  defaultVisitorConfirmationBody,
+  elementComponent,
+  getDefaultContentBlockTemplateName,
+  type ContentBlockMdxTemplateDescriptor,
+} from "@webstudio-is/sdk";
+import { intrinsicCoreTemplates } from "@webstudio-is/sdk/core-templates";
+import {
+  browserInfoParameterName,
+  formDataParameterName,
+} from "@webstudio-is/sdk/runtime";
+import {
+  ActionValue,
+  FormActionsValue,
+  css,
+  expression,
+  Parameter,
+  PlaceholderValue,
+  ResourceValue,
+  setInstanceMeta,
+  setTemplateMeta,
+  type TemplateMeta,
+  Variable,
+  ws,
+} from "@webstudio-is/template";
+import {
+  Button,
+  CodeText,
+  HtmlEmbed,
+  Input,
+  Label,
+  ResourceForm,
+  Paragraph,
+  Textarea,
+} from "@webstudio-is/sdk-components-react/components";
+import { componentsById } from "./components";
+
+const BlockTemplate = ws.blockTemplate;
+const blockDocument = new Parameter(contentBlockDocumentProp);
+const formData = new Parameter(formDataParameterName);
+const browserInfo = new Parameter(browserInfoParameterName);
+const formState = new Variable("formState", "initial");
+const formProgress = new Variable("formProgress", {
+  status: "idle",
+  loaded: 0,
+  total: 0,
+  files: [],
+});
+const formResults = new Variable("results", []);
+const formErrors = new Variable("errors", []);
+const formError = new Parameter("collectionItem");
+const ownerEmail = new ResourceValue("Email to owner", {
+  control: "email",
+  email: {
+    recipientMode: "project",
+    subject: expression`"Contact form: " + (${formData}.subject ?? "New message")`,
+    body: expression`\`\${${browserInfo}.pageUrl ? \`Page: \${${browserInfo}.pageUrl}
+
+\` : ""}\${${formData}}\``,
+  },
+  url: expression`""`,
+  method: "post",
+});
+const visitorEmail = new ResourceValue("Email to visitor", {
+  control: "email",
+  email: {
+    recipientMode: "visitor",
+    visitorEmailField: "email",
+    subject: expression`${formData}.subject ?? "Your message"`,
+    body: JSON.stringify(defaultVisitorConfirmationBody),
+    confirmationSubject: "formSubject",
+    confirmationBody: "default",
+    includeAttachments: false,
+  },
+  url: expression`""`,
+  method: "post",
+});
+
+const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(
+  ({ resolutionKey }) => resolutionKey === "element:li"
+);
+if (listItemMdxTemplateDescriptor?.kind !== "element") {
+  throw new Error("Expected the Content Block list item template descriptor");
+}
+
+const createContentBlockMdxTemplate = (
+  descriptor: ContentBlockMdxTemplateDescriptor
+) => {
+  if (descriptor.kind === "element") {
+    const name = getDefaultContentBlockTemplateName({
+      component: elementComponent,
+      tag: descriptor.tag,
+    });
+    if (descriptor.tag === "ul" || descriptor.tag === "ol") {
+      return setTemplateMeta(
+        { name, label: descriptor.label },
+        createElement(
+          descriptor.tag,
+          { key: descriptor.resolutionKey },
+          createElement(listItemMdxTemplateDescriptor.tag)
+        )
+      );
+    }
+    return setTemplateMeta(
+      { name, label: descriptor.label },
+      createElement(descriptor.tag, { key: descriptor.resolutionKey })
+    );
+  }
+
+  const component = componentsById.get(descriptor.component);
+  if (component === undefined) {
+    throw new Error(
+      `Content Block component template "${descriptor.component}" is not registered`
+    );
+  }
+  const children =
+    descriptor.component === "CodeText"
+      ? 'const status = "ready";'
+      : descriptor.component === "Alert"
+        ? createElement(
+            Paragraph,
+            undefined,
+            new PlaceholderValue(
+              "Add helpful context here."
+            ) as unknown as ReactNode
+          )
+        : undefined;
+  return setTemplateMeta(
+    {
+      name: getDefaultContentBlockTemplateName({
+        component: descriptor.component,
+      }),
+      label: descriptor.label,
+    },
+    createElement(
+      component as ElementType,
+      { key: descriptor.resolutionKey },
+      children
+    )
+  );
+};
+
+const contentBlockDefaultTemplates = contentBlockMdxTemplateDescriptors.flatMap(
+  (descriptor) => [
+    ...(descriptor.resolutionKey === "component:CodeText"
+      ? [
+          setTemplateMeta(
+            { name: "HtmlEmbed" },
+            <HtmlEmbed key="custom:HtmlEmbed" />
+          ),
+        ]
+      : []),
+    createContentBlockMdxTemplate(descriptor),
+  ]
+);
+
+const blockMeta: TemplateMeta = {
+  category: "general",
+  template: (
+    <ws.block document={blockDocument}>
+      {setInstanceMeta(
+        { label: "Templates" },
+        <BlockTemplate>{contentBlockDefaultTemplates}</BlockTemplate>
+      )}
+      <p>
+        The Content Block component designates regions on the page where
+        pre-styled instances can be inserted in{" "}
+        <a href="https://wstd.us/content-block">Content mode</a>.
+      </p>
+      <ul>
+        <li>
+          In Content mode, you can edit content inside this Content Block and
+          add new instances predefined in templates. Content outside Content
+          Blocks is read-only.
+        </li>
+        <li>
+          To predefine instances for insertion in Content mode, switch to Design
+          mode and add them to the Templates container.
+        </li>
+        <li>
+          To insert predefined instances in Content mode, click the + button
+          while hovering over the Content Block on the canvas and choose an
+          instance from the list.
+        </li>
+      </ul>
+    </ws.block>
+  ),
+};
+
+const builtWithWebstudioMeta: TemplateMeta = {
+  category: "other",
+  description:
+    "A “Built with Webstudio” badge should be added to every project page on the free plan. This helps Webstudio spread awareness as a platform.",
+  icon: Webstudio1cIcon,
+  template: setInstanceMeta(
+    { label: "Built with Webstudio" },
+    <a
+      href="https://webstudio.is/?via=badge"
+      target="_blank"
+      ws:style={css`
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        z-index: 1000;
+        padding: 6px 10px;
+        right: 16px;
+        bottom: 16px;
+        color: rgba(251, 252, 253, 1);
+        font-family: system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        text-decoration-line: none;
+        text-wrap-mode: nowrap;
+        background-clip: padding-box, border-box;
+        background-origin: padding-box, border-box;
+        background-image:
+          linear-gradient(135deg, #4a4efa 0%, #bd2fdb 66%, #ec59ce 100%),
+          linear-gradient(
+            135deg,
+            #92fddc 0%,
+            #7d7ffb 31.94%,
+            #ed72fe 64.24%,
+            #fdd791 100%
+          );
+      `}
+    >
+      {setInstanceMeta(
+        { label: "Logo" },
+        <HtmlEmbed
+          code={Webstudio1cIcon}
+          ws:style={css`
+            display: block;
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+          `}
+        />
+      )}
+      {setInstanceMeta({ label: "Text" }, <div>Built with Webstudio</div>)}
+    </a>
+  ),
+};
+
+export const coreTemplates = {
+  ...intrinsicCoreTemplates,
+  form: {
+    category: "forms",
+    label: "Form (Beta)",
+    description: "Collect information and submit it to Resource actions.",
+    template: (
+      <ResourceForm
+        action={new FormActionsValue([ownerEmail, visitorEmail])}
+        formData={formData}
+        browserInfo={browserInfo}
+        onStateChange={
+          new ActionValue(["state"], expression`${formState} = state`)
+        }
+        onProgressChange={
+          new ActionValue(["value"], expression`${formProgress} = value`)
+        }
+        onResultChange={
+          new ActionValue(
+            ["result"],
+            expression`({results: ${formResults} = result.results, errors: ${formErrors} = result.errors})`
+          )
+        }
+      >
+        {setInstanceMeta(
+          { label: "Form content" },
+          <div
+            ws:show={expression`${formState} === 'initial' || ${formState} === 'error'`}
+            ws:style={css`
+              display: flex;
+              flex-direction: column;
+              align-items: start;
+              gap: 16px;
+            `}
+          >
+            <Label>
+              {new PlaceholderValue("Name")}
+              <Input name="name" autoComplete="name" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Email")}
+              <Input name="email" type="email" autoComplete="email" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Subject")}
+              <Input name="subject" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Message")}
+              <Textarea name="message" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Attachment")}
+              <Input
+                name="attachment"
+                type="file"
+                ws:style={css`
+                  border-style: none;
+                `}
+              />
+            </Label>
+            <Button type="submit">{new PlaceholderValue("Submit")}</Button>
+          </div>
+        )}
+        {setInstanceMeta(
+          { label: "Progress" },
+          <div
+            ws:show={expression`${formProgress}.status === 'pending'`}
+            role="status"
+            aria-live="polite"
+          >
+            <span>{new PlaceholderValue("Submitting…")}</span>
+            <span
+              ws:show={expression`${formProgress}.loaded >= 0 && ${formProgress}.total > 0`}
+            >
+              {
+                expression`" " + ((((${formProgress}.loaded / 100000) + 0.5) | 0) / 10) + " MB / " + ((((${formProgress}.total / 100000) + 0.5) | 0) / 10) + " MB"` as unknown as ReactNode
+              }
+            </span>
+          </div>
+        )}
+        {setInstanceMeta(
+          { label: "Success message" },
+          <div ws:show={expression`${formState} === 'success'`} role="status">
+            {
+              new PlaceholderValue(
+                "Thanks for contacting us. Your message has been sent."
+              )
+            }
+          </div>
+        )}
+        {setInstanceMeta(
+          { label: "Error message" },
+          <div
+            ws:show={expression`${formState} === 'error'`}
+            role="alert"
+            ws:style={css`
+              margin-block-start: 12px;
+              padding: 12px 16px;
+              border: 1px solid #f1c5c2;
+              border-inline-start: 4px solid #c52a28;
+              border-radius: 6px;
+              background-color: #fff7f6;
+              color: #7f1d1d;
+            `}
+          >
+            <p
+              ws:style={css`
+                margin: 0 0 8px;
+                font-weight: 600;
+              `}
+            >
+              {
+                new PlaceholderValue(
+                  "We could not send your message. Please try again."
+                )
+              }
+            </p>
+            <ul
+              ws:style={css`
+                display: grid;
+                gap: 4px;
+                margin: 0;
+                padding-inline-start: 20px;
+              `}
+            >
+              <ws.collection data={expression`${formErrors}`} item={formError}>
+                <li
+                  ws:style={css`
+                    overflow-wrap: anywhere;
+                  `}
+                >
+                  {expression`${formError}.message` as unknown as ReactNode}
+                </li>
+              </ws.collection>
+            </ul>
+          </div>
+        )}
+      </ResourceForm>
+    ),
+  },
+  [blockComponent]: blockMeta,
+  code_text: {
+    category: "typography",
+    template: <CodeText>{'const status = "ready";'}</CodeText>,
+  },
+  builtWithWebstudio: builtWithWebstudioMeta,
+} satisfies Record<string, TemplateMeta>;

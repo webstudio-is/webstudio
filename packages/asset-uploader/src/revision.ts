@@ -1,5 +1,7 @@
 import {
+  detectAssetType,
   formatAssetName,
+  getFileNameParts,
   isTextFileAsset,
   type Asset,
 } from "@webstudio-is/sdk";
@@ -15,17 +17,24 @@ import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
-
-export class AssetRevisionConflictError extends Error {}
+import { AssetRevisionConflictError } from "@webstudio-is/content-engine/asset-content-repository";
+export { AssetRevisionConflictError } from "@webstudio-is/content-engine/asset-content-repository";
 
 const getRevisionFilename = ({
   name,
   filename,
+  extension,
 }: {
   name: string;
   filename: string | null;
+  extension?: string;
 }) => {
-  return sanitizeS3Key(formatAssetName({ name, filename }));
+  const displayName = formatAssetName({ name, filename });
+  if (extension === undefined) {
+    return sanitizeS3Key(displayName);
+  }
+  const { basename } = getFileNameParts(displayName);
+  return sanitizeS3Key(`${basename}.${extension}`);
 };
 
 export const swapAssetFileWithClient = async (
@@ -96,12 +105,19 @@ export const updateAssetContent = async (
     assetId,
     projectId,
     expectedName,
+    extension,
     data,
+    prepareData,
   }: {
     assetId: Asset["id"];
     projectId: string;
     expectedName: string;
+    extension?: string;
     data: ReadableStream<Uint8Array>;
+    prepareData?: (input: {
+      asset: Asset;
+      data: ReadableStream<Uint8Array>;
+    }) => Promise<ReadableStream<Uint8Array>>;
   },
   assetClient: AssetObjectStore,
   context: AppContext
@@ -129,17 +145,35 @@ export const updateAssetContent = async (
   if (isTextFileAsset({ format: currentAsset.file.format }) === false) {
     throw new Error("This asset is not an editable text file");
   }
+  if (
+    extension !== undefined &&
+    isTextFileAsset({ format: extension }) === false
+  ) {
+    throw new Error("The new extension must be an editable text file format");
+  }
+
+  const asset = formatAsset({
+    assetId: currentAsset.id,
+    projectId: currentAsset.projectId,
+    filename: currentAsset.filename,
+    description: currentAsset.description,
+    folderId: currentAsset.folderId,
+    file: currentAsset.file,
+  });
+  const preparedData =
+    prepareData === undefined ? data : await prepareData({ asset, data });
 
   const revisionName = createUniqueAssetFilename(
     getRevisionFilename({
       name: currentAsset.name,
       filename: currentAsset.filename,
+      extension: extension?.toLowerCase(),
     })
   );
   const insertedFile = await context.postgrest.client.from("File").insert({
     name: revisionName,
     status: "UPLOADING",
-    format: "file",
+    format: detectAssetType(revisionName),
     size: 0,
     uploaderProjectId: projectId,
     createdAt: currentAsset.file.createdAt,
@@ -148,7 +182,7 @@ export const updateAssetContent = async (
 
   const file = await uploadFileData(
     revisionName,
-    data,
+    preparedData,
     assetClient,
     context,
     undefined,

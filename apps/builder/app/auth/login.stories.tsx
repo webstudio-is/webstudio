@@ -28,3 +28,19 @@ export const Auth: StoryFn<typeof LoginComponent> = () => {
     </StorySection>
   );
 };
+
+export const Dark = Auth.bind({});
+Dark.globals = { colorScheme: "dark" };
+
+export const Error = () => {
+  const router = createRouter(
+    <LoginComponent
+      isGoogleEnabled
+      isGithubEnabled={false}
+      isSecretLoginEnabled
+      errorMessage="Authentication failed"
+      devPlanNames={["Free", "Pro"]}
+    />
+  );
+  return <RouterProvider router={router} />;
+};

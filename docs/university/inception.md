@@ -14,7 +14,7 @@ Inception is best for exploring and iterating on visual ideas. When you are read
 
 {% embed url="https://www.youtube.com/watch?v=KI5JHpzBK1s" %}
 
-<figure><img src="../.gitbook/assets/inception-overview.png" alt="Inception workspace showing generated frames on the canvas and the prompt panel"><figcaption><p>Inception workspace</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/inception-overview.webp" alt="Inception workspace showing generated frames on the canvas and the prompt panel"><figcaption><p>Inception workspace</p></figcaption></figure>
 
 ## Core concepts
 
@@ -84,7 +84,7 @@ Use variants when you want to compare different layouts, visual styles, or inter
 
 The model selector chooses which AI model should generate the design. Inception gives you access to dozens of models, so you can choose the one that best fits the task, budget, and quality bar.
 
-<figure><img src="../.gitbook/assets/inception-model-selector.png" alt="Inception model selector dropdown showing multiple AI model options"><figcaption><p>Model selector</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/inception-model-selector.webp" alt="Inception model selector dropdown showing multiple AI model options"><figcaption><p>Model selector</p></figcaption></figure>
 
 The available models can change depending on what you are doing.
 
@@ -108,7 +108,7 @@ You can combine:
 
 Style choices are applied to new generations and broad frame edits. They are disabled while a frame is streaming or when you are editing a selected element.
 
-<figure><img src="../.gitbook/assets/inception-style-picker.png" alt="Inception style picker showing style preset options"><figcaption><p>Style picker presets</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/inception-style-picker.webp" alt="Inception style picker showing style preset options"><figcaption><p>Style picker presets</p></figcaption></figure>
 
 ### Custom styles
 
@@ -125,7 +125,7 @@ To create one:
 
 When you upload a reference image, Inception analyzes it and turns it into a style brief. You can save the result and reuse it in later prompts.
 
-<figure><img src="../.gitbook/assets/inception-custom-style.png" alt="Inception custom style workflow with a reference style"><figcaption><p>Custom style</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/inception-custom-style.webp" alt="Inception custom style workflow with a reference style"><figcaption><p>Custom style</p></figcaption></figure>
 
 ## Working with frames
 
@@ -179,7 +179,7 @@ Selected edits are useful for changes like:
 
 Selected edits generate one update at a time.
 
-<figure><img src="../.gitbook/assets/inception-selected-edit.png" alt="Inception frame with a selected element and the prompt panel prepared for a selected edit"><figcaption><p>Selected element edit</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/inception-selected-edit.webp" alt="Inception frame with a selected element and the prompt panel prepared for a selected edit"><figcaption><p>Selected element edit</p></figcaption></figure>
 
 ### Edit text directly
 
@@ -275,7 +275,7 @@ Inception uses credits. Open the main menu to view your balance, buy credits, or
 
 The **Buy credits** dialog shows available credit packages. Credits are one-time purchases and can be bought again when needed.
 
-<figure><img src="../.gitbook/assets/inception-buy-credits.png" alt="Inception Buy credits dialog showing available credit packages"><figcaption><p>Buy credits</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/inception-buy-credits.webp" alt="Inception Buy credits dialog showing available credit packages"><figcaption><p>Buy credits</p></figcaption></figure>
 
 ### Balance
 

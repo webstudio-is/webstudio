@@ -14,3 +14,5 @@ for (const library of componentMetaLibraries) {
     componentMetas.set(getComponentName(library, exportName), meta);
   }
 }
+
+export { animationComponentNamespace, radixComponentNamespace } from "./shared";

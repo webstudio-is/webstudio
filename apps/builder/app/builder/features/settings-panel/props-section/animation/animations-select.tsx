@@ -7,14 +7,14 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   rawTheme,
-  CssValueListItem,
+  InteractiveListItem,
   SmallToggleButton,
   SmallIconButton,
   Box,
   Label,
   Grid,
   useSortable,
-  CssValueListArrowFocus,
+  InteractiveListArrowFocus,
   FloatingPanel,
   DialogTitle,
   Tooltip,
@@ -96,10 +96,12 @@ const parseScrollAnimations = (text: string): ScrollAnimation[] => {
 const AnimationContextMenu = ({
   action,
   onChange,
+  onOpenChange,
   children,
 }: {
   action: AnimationAction;
   onChange: (newAction: AnimationAction) => void;
+  onOpenChange: (open: boolean) => void;
   children: ReactNode;
 }) => {
   const lastClickedAnimationIndex = useRef(-1);
@@ -152,7 +154,7 @@ const AnimationContextMenu = ({
   };
 
   return (
-    <ContextMenu>
+    <ContextMenu onOpenChange={onOpenChange}>
       <ContextMenuTrigger
         onPointerDown={(event) => {
           if (event.target instanceof HTMLElement) {
@@ -193,6 +195,7 @@ export const AnimationsSelect = ({
   const [newAnimationHint, setNewAnimationHint] = useState<string | undefined>(
     undefined
   );
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
 
   const newAnimations = newAnimationsPerType[value.type];
 
@@ -219,6 +222,7 @@ export const AnimationsSelect = ({
   return (
     <AnimationContextMenu
       action={value}
+      onOpenChange={setContextMenuOpen}
       onChange={(newAction) => handleChange(newAction, false)}
     >
       <CollapsibleSectionRoot
@@ -297,7 +301,7 @@ export const AnimationsSelect = ({
           </SectionTitle>
         }
       >
-        <CssValueListArrowFocus dragItemId={dragItemId}>
+        <InteractiveListArrowFocus dragItemId={dragItemId}>
           <Grid ref={sortableRefCallback}>
             {value.animations.map((animation, index) => {
               const isEnabled = isAnimationEnabled(animation.enabled) ?? true;
@@ -332,8 +336,20 @@ export const AnimationsSelect = ({
                     />
                   }
                   offset={floatingPanelOffset}
+                  onInteractOutside={(event) => {
+                    const originalEvent = event.detail.originalEvent;
+                    if (
+                      contextMenuOpen ||
+                      (originalEvent instanceof PointerEvent &&
+                        originalEvent.button === 2) ||
+                      (originalEvent.target instanceof Element &&
+                        originalEvent.target.closest('[role="menu"]') !== null)
+                    ) {
+                      event.preventDefault();
+                    }
+                  }}
                 >
-                  <CssValueListItem
+                  <InteractiveListItem
                     key={index}
                     {...{ [copyAttribute]: index }}
                     label={
@@ -413,7 +429,7 @@ export const AnimationsSelect = ({
             })}
             {placementIndicator}
           </Grid>
-        </CssValueListArrowFocus>
+        </InteractiveListArrowFocus>
       </CollapsibleSectionRoot>
     </AnimationContextMenu>
   );

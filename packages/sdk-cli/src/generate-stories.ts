@@ -13,8 +13,14 @@ import {
   coreMetas,
   generateCss,
 } from "@webstudio-is/sdk";
-import { generateWebstudioComponent } from "@webstudio-is/react-sdk";
+import { generateManagedFormComponent } from "@webstudio-is/react-sdk";
 import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
+
+export type StoryTemplate = {
+  meta: TemplateMeta;
+  /** Overrides only the generated Storybook file and export name. */
+  storyName?: string;
+};
 
 const WS_NAMESPACE = "ws";
 const BASE_NAMESPACE = "@webstudio-is/sdk-components-react/components";
@@ -69,10 +75,22 @@ const generateComponentImports = ({
   return componentImports;
 };
 
-const getStoriesImports = ({ hasState }: { hasState: boolean }) =>
-  hasState
+const getStoriesImports = ({
+  hasState,
+  usedRuntimeHelpers,
+}: {
+  hasState: boolean;
+  usedRuntimeHelpers: Set<"renderText" | "formatManagedFormErrors">;
+}) =>
+  (usedRuntimeHelpers.has("renderText")
+    ? `import { renderText } from "@webstudio-is/react-sdk/runtime";\n`
+    : "") +
+  (usedRuntimeHelpers.has("formatManagedFormErrors")
+    ? `import { formatManagedFormErrors } from "@webstudio-is/sdk";\n`
+    : "") +
+  (hasState
     ? `import { useVariableState } from "@webstudio-is/react-sdk/runtime";\n`
-    : "";
+    : "");
 
 const getStoriesExports = (name: string, css: string) => `
 export default {
@@ -97,14 +115,18 @@ export { Story as ${name} }
 
 export const generateStories = async ({
   packageName,
+  components,
   templates,
   metas,
+  namespaceComponents = new Map(),
   namespaceMetas = new Map(),
   outputDir = "src/__generated__",
 }: {
   packageName: string;
-  templates: Record<string, TemplateMeta>;
+  components: Record<string, object>;
+  templates: readonly StoryTemplate[];
   metas: Record<string, WsComponentMeta>;
+  namespaceComponents?: Map<string, Record<string, object>>;
   namespaceMetas?: Map<string, Record<string, WsComponentMeta>>;
   outputDir?: string;
 }) => {
@@ -115,14 +137,49 @@ export const generateStories = async ({
       `Cannot generate stories for ${packageName} from package ${packageJson.name}`
     );
   }
-  const templatesMap = new Map<string, TemplateMeta>(Object.entries(templates));
   const metasMap = new Map<string, WsComponentMeta>(Object.entries(metas));
   const storiesDir = join(cwd(), outputDir);
   await mkdir(storiesDir, { recursive: true });
 
-  for (const [name, meta] of templatesMap) {
+  const componentIds = new Map<object, Instance["component"]>();
+  const registerComponents = (
+    namespace: string,
+    registeredComponents: Record<string, object>
+  ) => {
+    for (const [name, component] of Object.entries(registeredComponents)) {
+      const componentId =
+        namespace === BASE_NAMESPACE ||
+        namespace === "@webstudio-is/sdk-components-react"
+          ? name
+          : `${namespace}:${name}`;
+      componentIds.set(component, componentId);
+    }
+  };
+  registerComponents(packageName, components);
+  for (const [namespace, components] of namespaceComponents) {
+    registerComponents(namespace, components);
+  }
+
+  const storyNameByFile = new Map<string, string>();
+  for (const { meta, storyName } of templates) {
     const rootInstanceId = "root";
-    const data = renderTemplate(meta.template);
+    const data = renderTemplate(meta.template, undefined, [], { componentIds });
+    const rootComponent = data.instances[0]?.component;
+    if (rootComponent === undefined) {
+      throw Error("A story template must have a component at its root");
+    }
+    const [, componentName] = parseComponentName(rootComponent);
+    const name = storyName ?? componentName;
+    const storyFile = `${kebabCase(name)}.stories.tsx`;
+    const existingName = storyNameByFile.get(storyFile);
+    if (existingName !== undefined) {
+      throw new Error(
+        existingName === name
+          ? `Story name "${name}" is generated more than once`
+          : `Story names "${existingName}" and "${name}" generate the same file`
+      );
+    }
+    storyNameByFile.set(storyFile, name);
     const instances: Instances = new Map([
       [
         rootInstanceId,
@@ -184,6 +241,7 @@ export const generateStories = async ({
       assets: new Map(),
       breakpoints,
       styles: new Map(data.styles.map((item) => [getStyleDeclKey(item), item])),
+      styleSources: new Map(data.styleSources.map((item) => [item.id, item])),
       styleSourceSelections: new Map(
         data.styleSourceSelections.map((item) => [item.instanceId, item])
       ),
@@ -191,20 +249,24 @@ export const generateStories = async ({
       assetBaseUrl: "/",
       atomic: false,
     });
-    const scope = createScope(["Component", "Story", "props", "useState"]);
-    let content = "";
-    content += getStoriesImports({
-      hasState: data.dataSources.some(
-        (dataSource) => dataSource.type === "variable"
-      ),
-    });
-    content += generateComponentImports({
+    const scope = createScope([
+      "Component",
+      "Story",
+      "props",
+      "useState",
+      "renderText",
+      "formatManagedFormErrors",
+    ]);
+    const componentImports = generateComponentImports({
       scope,
       packageName: packageJson.name,
       components,
     });
-    content += `\n`;
-    content += generateWebstudioComponent({
+    const usedRuntimeHelpers = new Set<
+      "renderText" | "formatManagedFormErrors"
+    >();
+    const component = generateManagedFormComponent({
+      usedRuntimeHelpers,
       classesMap: classes,
       scope,
       name: `Component`,
@@ -215,11 +277,18 @@ export const generateStories = async ({
       dataSources: new Map(data.dataSources.map((prop) => [prop.id, prop])),
       metas: usedMetas,
     });
+    let content = "";
+    content += getStoriesImports({
+      usedRuntimeHelpers,
+      hasState: data.dataSources.some(
+        (dataSource) => dataSource.type === "variable"
+      ),
+    });
+    content += componentImports;
+    content += `\n`;
+    content += component;
 
     content += getStoriesExports(name, cssText);
-    await writeFile(
-      join(storiesDir, kebabCase(name) + ".stories.tsx"),
-      content
-    );
+    await writeFile(join(storiesDir, storyFile), content);
   }
 };

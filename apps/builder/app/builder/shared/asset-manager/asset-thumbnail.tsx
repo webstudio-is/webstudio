@@ -1,7 +1,19 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useStore } from "@nanostores/react";
-import { Box, styled, Text } from "@webstudio-is/design-system";
-import { PageIcon, TextCapitalizeIcon } from "@webstudio-is/icons";
+import {
+  Box,
+  styled,
+  Text,
+  Tooltip,
+  IconButton,
+  cssVar,
+} from "@webstudio-is/design-system";
+import {
+  ListViewIcon,
+  AlertCircleIcon,
+  PageIcon,
+  TextCapitalizeIcon,
+} from "@webstudio-is/icons";
 import { wsVideoLoader } from "@webstudio-is/image";
 import { UploadingAnimation } from "./uploading-animation";
 import { AssetDeleteDialog, AssetSettings } from "./asset-settings";
@@ -24,11 +36,13 @@ import {
 import type { MimeCategory } from "@webstudio-is/sdk";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { $authPermit, $permissions } from "~/shared/nano-states";
+import { canConfigureContentCollections } from "../assets/content-collections";
 import { replaceAsset } from "~/builder/shared/assets";
 import { validateFiles } from "~/builder/shared/assets/asset-upload";
 import { createAssetManagerClipboardActions } from "./asset-manager-clipboard";
 import { setAssetManagerDragPreview } from "./asset-manager-drag-preview";
 import { type AssetManagerItemActions } from "./asset-manager-item-menu";
+import { collectionEntryCanvasUnavailableMessage } from "./collection-entry-navigation";
 import {
   AssetManagerThumbnail,
   AssetManagerThumbnailMenu,
@@ -39,6 +53,9 @@ const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
 
 const CATEGORY_ICON_MAP: Partial<Record<MimeCategory, IconComponent>> = {
   font: TextCapitalizeIcon,
+};
+const unavailableOpenOnCanvas = {
+  disabledDescription: collectionEntryCanvasUnavailableMessage,
 };
 
 const getFileIcon = (format: string): IconComponent => {
@@ -87,9 +104,11 @@ const StyledWebstudioVideo = styled("video", mediaPreviewStyle);
 const GenericFilePreview = ({
   ext,
   format,
+  isCollectionFile = false,
 }: {
   ext: string;
   format: string;
+  isCollectionFile?: boolean;
 }) => {
   const Icon = getFileIcon(format);
   const showExtension = Icon === PageIcon;
@@ -97,29 +116,70 @@ const GenericFilePreview = ({
   return (
     <Box css={{ position: "relative" }}>
       <Icon size={48} strokeWidth={0.5} />
-      {showExtension && (
-        <Text
-          variant="tiny"
-          color="subtle"
+      {isCollectionFile ? (
+        <Box
           css={{
             position: "absolute",
-            top: 30,
-            left: "50%",
-            transform: "translateX(-50%)",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
           }}
         >
-          {ext.toUpperCase()}
-        </Text>
+          <ListViewIcon size={16} aria-label="Collection file" />
+        </Box>
+      ) : (
+        showExtension && (
+          <Text
+            variant="tiny"
+            color="subtle"
+            css={{
+              position: "absolute",
+              top: 30,
+              left: "50%",
+              transform: "translateX(-50%)",
+            }}
+          >
+            {ext.toUpperCase()}
+          </Text>
+        )
       )}
     </Box>
   );
 };
 
+const VideoPreview = ({
+  src,
+  ext,
+  format,
+}: {
+  src: string;
+  ext: string;
+  format: string;
+}) => {
+  const [failedSrc, setFailedSrc] = useState<string>();
+
+  if (failedSrc === src) {
+    return <GenericFilePreview ext={ext} format={format} />;
+  }
+
+  return (
+    <StyledWebstudioVideo
+      src={src}
+      preload="metadata"
+      muted
+      onError={() => setFailedSrc(src)}
+    />
+  );
+};
+
 type AssetThumbnailProps = {
+  entryError?: string;
   assetContainer: AssetContainer;
   interactions: AssetManagerThumbnailInteractions;
   onChange?: (assetContainer: AssetContainer) => void;
   onOpen?: () => void;
+  onEntrySettings?: () => void;
+  onEntryOpenOnCanvas?: () => void;
   selected?: boolean;
   forcedSelection?: boolean;
   folderPath?: string;
@@ -127,6 +187,10 @@ type AssetThumbnailProps = {
   onElementChange?: (element: HTMLElement | null) => void;
   selectionActions?: AssetManagerItemActions;
   onMove?: () => void;
+  isCollectionEntry?: boolean;
+  isCollectionReserved?: boolean;
+  isCollectionFile?: boolean;
+  unavailableDestinationFolderIds?: ReadonlySet<string>;
 };
 
 export const AssetThumbnail = ({
@@ -134,6 +198,8 @@ export const AssetThumbnail = ({
   interactions,
   onChange,
   onOpen,
+  onEntrySettings,
+  onEntryOpenOnCanvas,
   selected,
   forcedSelection,
   folderPath,
@@ -141,12 +207,35 @@ export const AssetThumbnail = ({
   onElementChange,
   selectionActions,
   onMove,
+  isCollectionEntry = false,
+  isCollectionReserved = false,
+  isCollectionFile = false,
+  unavailableDestinationFolderIds,
+  entryError,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const authPermit = useStore($authPermit);
+  const collectionActionBlocked = isCollectionReserved;
+  const settingsBlocked =
+    isCollectionReserved && !canConfigureContentCollections(authPermit);
+  const settingsBlockedRef = useRef(settingsBlocked);
+  settingsBlockedRef.current = settingsBlocked;
+  const canMutate = authPermit !== "view" && collectionActionBlocked === false;
+  const canMutateRef = useRef(canMutate);
+  canMutateRef.current = canMutate;
+  const isCollectionEntryRef = useRef(isCollectionEntry);
+  isCollectionEntryRef.current = isCollectionEntry;
+  useEffect(() => {
+    if (canMutate === false) {
+      setDeleteOpen(false);
+    }
+    if (settingsBlocked) {
+      setSettingsOpen(false);
+    }
+  }, [canMutate, settingsBlocked]);
   const { canDownloadAssets } = useStore($permissions);
   const { asset } = assetContainer;
   const getDragItems = interactions.getDragItems;
@@ -162,6 +251,7 @@ export const AssetThumbnail = ({
         ? assetContainer.asset.projectId
         : "uploading",
   };
+  const clipboardActions = createAssetManagerClipboardActions(item);
   const download = () => {
     if (assetContainer.status !== "uploaded") {
       return;
@@ -175,22 +265,80 @@ export const AssetThumbnail = ({
     assetContainer.status === "uploading"
       ? {}
       : {
-          open: onOpen,
-          settings: () => setSettingsOpen(true),
+          ...(isCollectionEntry
+            ? {
+                editFile: onOpen,
+                ...(isCollectionReserved
+                  ? {}
+                  : {
+                      openOnCanvas:
+                        onEntryOpenOnCanvas ?? unavailableOpenOnCanvas,
+                    }),
+              }
+            : { open: onOpen }),
+          entrySettings: onEntrySettings,
+          settings: settingsBlocked
+            ? undefined
+            : () => {
+                if (settingsBlockedRef.current === false) {
+                  setSettingsOpen(true);
+                }
+              },
           ...(authPermit === "view"
             ? {}
             : {
-                ...createAssetManagerClipboardActions(item),
-                move: onMove,
-                delete: () => setDeleteOpen(true),
+                cut: () => {
+                  if (canMutateRef.current) {
+                    clipboardActions.cut();
+                  }
+                },
+                copy: () => {
+                  if (canMutateRef.current) {
+                    clipboardActions.copy();
+                  }
+                },
+                duplicate: () => {
+                  if (
+                    canMutateRef.current &&
+                    isCollectionEntryRef.current === false
+                  ) {
+                    clipboardActions.duplicate();
+                  }
+                },
+                ...(isCollectionEntry && !isCollectionReserved
+                  ? { duplicate: undefined }
+                  : {}),
+                move:
+                  onMove === undefined
+                    ? undefined
+                    : () => {
+                        if (canMutateRef.current) {
+                          onMove();
+                        }
+                      },
+                delete: () => {
+                  if (canMutateRef.current) {
+                    setDeleteOpen(true);
+                  }
+                },
                 ...(asset.type === "image"
-                  ? { replace: () => replaceInputRef.current?.click() }
+                  ? {
+                      replace: () => {
+                        if (canMutateRef.current) {
+                          replaceInputRef.current?.click();
+                        }
+                      },
+                    }
                   : {}),
               }),
           ...(authPermit !== "view" && canDownloadAssets ? { download } : {}),
         };
 
   const handleReplaceFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (canMutateRef.current === false) {
+      event.target.value = "";
+      return;
+    }
     const file = validateFiles(Array.from(event.target.files ?? []))[0];
     if (file !== undefined) {
       replaceAsset(asset.id, file);
@@ -200,7 +348,12 @@ export const AssetThumbnail = ({
 
   useEffect(() => {
     const element = elementRef.current;
-    if (element === null || canDrag === false || isUploading) {
+    if (
+      element === null ||
+      canDrag === false ||
+      isUploading ||
+      isCollectionReserved
+    ) {
       return;
     }
     return draggable({
@@ -219,11 +372,19 @@ export const AssetThumbnail = ({
         items: getDragItems({ type: "asset", id: asset.id }),
       }),
     });
-  }, [asset.id, canDrag, getDragItems, isUploading]);
+  }, [asset.id, canDrag, getDragItems, isUploading, isCollectionReserved]);
 
   const displayedActions =
     forcedSelection && selected ? (selectionActions ?? actions) : actions;
-
+  const disabledActions = isCollectionReserved
+    ? new Set<keyof AssetManagerItemActions>([
+        "cut",
+        "copy",
+        "duplicate",
+        "move",
+        "delete",
+      ])
+    : undefined;
   return (
     <>
       <input
@@ -236,6 +397,7 @@ export const AssetThumbnail = ({
       <AssetManagerThumbnail
         item={{ type: "asset", id: asset.id }}
         actions={displayedActions}
+        disabledActions={disabledActions}
         interactions={interactions}
         selected={selected}
         forcedSelection={forcedSelection}
@@ -258,15 +420,21 @@ export const AssetThumbnail = ({
               width={64}
             />
           ) : assetType === "video" ? (
-            <StyledWebstudioVideo
+            <VideoPreview
               src={
                 assetContainer.status === "uploading"
                   ? assetContainer.objectURL
                   : wsVideoLoader({ src: asset.name })
               }
+              ext={ext}
+              format={asset.format}
             />
           ) : (
-            <GenericFilePreview ext={ext} format={asset.format} />
+            <GenericFilePreview
+              ext={ext}
+              format={asset.format}
+              isCollectionFile={isCollectionFile}
+            />
           )
         }
         label={basename}
@@ -285,21 +453,52 @@ export const AssetThumbnail = ({
         }}
         header={
           assetContainer.status === "uploaded" ? (
-            <AssetSettings
-              asset={assetContainer.asset}
-              open={settingsOpen}
-              onOpenChange={(open) => {
-                setSettingsOpen(open);
-              }}
-              onDelete={actions.delete}
-              onReplace={actions.replace}
-            >
-              <AssetManagerThumbnailMenu
-                actions={displayedActions}
-                label={`Actions for ${formatAssetName(asset)}`}
-                onPointerDown={() => interactions.onContextMenuSelection(item)}
-              />
-            </AssetSettings>
+            <>
+              {entryError !== undefined && (
+                <Tooltip content={entryError} variant="wrapped">
+                  <IconButton
+                    aria-label={`Review errors in ${formatAssetName(asset)}`}
+                    css={{ pointerEvents: "auto" }}
+                    onClick={onEntrySettings ?? onOpen}
+                  >
+                    <AlertCircleIcon color={cssVar("--foreground-negative")} />
+                  </IconButton>
+                </Tooltip>
+              )}
+              <AssetSettings
+                asset={assetContainer.asset}
+                open={settingsOpen && settingsBlocked === false}
+                onOpenChange={(open) => {
+                  setSettingsOpen(open);
+                }}
+                onDelete={
+                  typeof actions.delete === "function"
+                    ? actions.delete
+                    : undefined
+                }
+                onReplace={
+                  typeof actions.replace === "function"
+                    ? actions.replace
+                    : undefined
+                }
+                canRename={!isCollectionEntry && !isCollectionReserved}
+                canMove={!isCollectionReserved}
+                isCollectionFile={isCollectionFile}
+                canSaveChanges={authPermit !== "view" && !settingsBlocked}
+                unavailableDestinationFolderIds={
+                  unavailableDestinationFolderIds
+                }
+              >
+                <AssetManagerThumbnailMenu
+                  actions={displayedActions}
+                  disabledActions={disabledActions}
+                  label={`Actions for ${formatAssetName(asset)}`}
+                  onPointerDown={() =>
+                    interactions.onContextMenuSelection(item)
+                  }
+                />
+              </AssetSettings>
+            </>
           ) : undefined
         }
       >
@@ -308,7 +507,7 @@ export const AssetThumbnail = ({
       {assetContainer.status === "uploaded" && (
         <AssetDeleteDialog
           asset={assetContainer.asset}
-          open={deleteOpen}
+          open={deleteOpen && canMutate}
           onOpenChange={setDeleteOpen}
         />
       )}

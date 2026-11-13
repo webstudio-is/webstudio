@@ -8,6 +8,10 @@ describe("wouldCreateLoop", () => {
       expect(wouldCreateLoop("/about", "/about", [])).toBe(true);
     });
 
+    test("returns true for self-redirect through trailing-slash normalization", () => {
+      expect(wouldCreateLoop("/about", "/about/", [])).toBe(true);
+    });
+
     test("returns true for self-redirect with existing redirects", () => {
       const existing: PageRedirect[] = [
         { old: "/other", new: "/page", status: "301" },
@@ -67,6 +71,13 @@ describe("wouldCreateLoop", () => {
         { old: "/b", new: "/a", status: "301" },
       ];
       expect(wouldCreateLoop("/a", "/b", existing)).toBe(true);
+    });
+
+    test("returns true when targets loop through trailing-slash normalization", () => {
+      const existing: PageRedirect[] = [
+        { old: "/b", new: "/a/", status: "301" },
+      ];
+      expect(wouldCreateLoop("/a", "/b/", existing)).toBe(true);
     });
 
     test("returns false when no loop exists", () => {

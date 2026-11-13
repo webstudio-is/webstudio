@@ -34,12 +34,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const expectedName = parseAssetRestFilename(
       url.searchParams.get("expectedName")
     );
+    const extensionValue = url.searchParams.get("extension");
+    const extension =
+      extensionValue === null
+        ? undefined
+        : parseAssetRestFilename(extensionValue);
 
     const asset = await (
       await createAssetRestRepository(request, "edit")
     ).updateContent({
       assetId,
       expectedName,
+      extension,
       data: requireAssetRestBody(request),
     });
     return json(

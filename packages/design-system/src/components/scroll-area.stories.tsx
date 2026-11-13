@@ -1,8 +1,8 @@
 import { StorySection } from "./storybook";
 import { ScrollArea as ScrollAreaComponent } from "./scroll-area";
 import { Text } from "./text";
-import { theme } from "..";
 import { Flex } from "./flex";
+import { cssVar } from "../css-var";
 
 export default {
   title: "Scroll Area",
@@ -21,7 +21,7 @@ export const ScrollArea = () => {
   const css = {
     height: 100,
     width: 100,
-    background: theme.colors.backgroundPanel,
+    background: cssVar("--background-primary"),
   };
   return (
     <>

@@ -1,15 +1,18 @@
 import { describe, expect, test } from "vitest";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { createMemoryRouter } from "react-router";
 import {
   generateRedirectUrl as generateRemixRedirectUrl,
   matchRedirect as matchRemixRedirect,
   redirectRequest as redirectRemixRequest,
+  shouldCheckRedirectsOnNavigation as shouldCheckRemixRedirectsOnNavigation,
 } from "../templates/defaults/app/redirect-url";
 import {
   generateRedirectUrl as generateReactRouterRedirectUrl,
   matchRedirect as matchReactRouterRedirect,
   redirectRequest as redirectReactRouterRequest,
+  shouldCheckRedirectsOnNavigation as shouldCheckReactRouterRedirectsOnNavigation,
 } from "../templates/react-router/app/redirect-url";
 
 const implementations = [
@@ -18,12 +21,15 @@ const implementations = [
     generateRedirectUrl: generateRemixRedirectUrl,
     matchRedirect: matchRemixRedirect,
     redirectRequest: redirectRemixRequest,
+    shouldCheckRedirectsOnNavigation: shouldCheckRemixRedirectsOnNavigation,
   },
   {
     name: "React Router",
     generateRedirectUrl: generateReactRouterRedirectUrl,
     matchRedirect: matchReactRouterRedirect,
     redirectRequest: redirectReactRouterRequest,
+    shouldCheckRedirectsOnNavigation:
+      shouldCheckReactRouterRedirectsOnNavigation,
   },
 ] as const;
 
@@ -92,7 +98,61 @@ for (const {
   generateRedirectUrl,
   matchRedirect,
   redirectRequest,
+  shouldCheckRedirectsOnNavigation,
 } of implementations) {
+  test(`${name}: follows a project redirect during client navigation with a custom 404`, async () => {
+    const checkedPaths: string[] = [];
+    const redirects = [{ old: "/old", new: "/new" }];
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          loader: ({ request }) => {
+            checkedPaths.push(new URL(request.url).pathname);
+            return redirectRequest(request, redirects);
+          },
+          shouldRevalidate: ({
+            currentUrl,
+            nextUrl,
+            defaultShouldRevalidate,
+          }) =>
+            defaultShouldRevalidate ||
+            shouldCheckRedirectsOnNavigation(currentUrl, nextUrl),
+          children: [
+            { index: true, loader: () => null },
+            { path: "new", loader: () => null },
+            {
+              path: "*",
+              loader: () => {
+                throw new Response("Not Found", { status: 404 });
+              },
+            },
+          ],
+        },
+      ],
+      { initialEntries: ["/"] }
+    );
+    try {
+      await new Promise<void>((resolve) => {
+        if (router.state.initialized) {
+          resolve();
+          return;
+        }
+        const unsubscribe = router.subscribe((state) => {
+          if (state.initialized) {
+            unsubscribe();
+            resolve();
+          }
+        });
+      });
+      await router.navigate("/old");
+      expect(router.state.location.pathname).toBe("/new");
+      expect(checkedPaths).toContain("/old");
+    } finally {
+      router.dispose();
+    }
+  });
+
   describe(`${name}: generateRedirectUrl`, () => {
     const cases: Array<{
       name: string;
@@ -205,10 +265,22 @@ for (const {
         expected: { url: "/new", status: 301 },
       },
       {
-        name: "path-only source ignores request query",
+        name: "path-only source preserves request query",
         requestPath: "/old?x=1",
         redirects: [{ old: "/old", new: "/new", status: 302 }],
-        expected: { url: "/new", status: 302 },
+        expected: { url: "/new?x=1", status: 302 },
+      },
+      {
+        name: "pattern source preserves request query",
+        requestPath: "/blog/post?utm_source=test",
+        redirects: [{ old: "/blog/:slug", new: "/articles/:slug" }],
+        expected: { url: "/articles/post?utm_source=test", status: 301 },
+      },
+      {
+        name: "target query replaces request query",
+        requestPath: "/old?utm_source=test",
+        redirects: [{ old: "/old", new: "/new?from=legacy" }],
+        expected: { url: "/new?from=legacy", status: 301 },
       },
       {
         name: "matches exact path with trailing slash",
@@ -485,7 +557,13 @@ for (const {
           { old: "/old", new: "/path" },
           { old: "/old?x=1", new: "/query" },
         ],
-        expected: { url: "/path", status: 301 },
+        expected: { url: "/path?x=1", status: 301 },
+      },
+      {
+        name: "hash-only target preserves the request path and query",
+        requestPath: "/old?x=1",
+        redirects: [{ old: "/old", new: "#top" }],
+        expected: { url: "/old?x=1#top", status: 301 },
       },
     ];
 
@@ -527,11 +605,6 @@ for (const {
       {
         name: "does not match nested paths for exact sources",
         requestPath: "/old/nested",
-        redirects: [{ old: "/old", new: "/new" }],
-      },
-      {
-        name: "does not normalize trailing slash",
-        requestPath: "/old/",
         redirects: [{ old: "/old", new: "/new" }],
       },
       {
@@ -613,6 +686,68 @@ for (const {
 
     test.each(nonMatchingCases)("$name", ({ requestPath, redirects }) => {
       expect(matchRedirect(url(requestPath), redirects)).toBeUndefined();
+    });
+
+    test("does not use a project redirect for its trailing-slash variant", () => {
+      expect(
+        matchRedirect(url("/old/"), [{ old: "/old", new: "/new" }])
+      ).toBeUndefined();
+    });
+
+    test.each([
+      {
+        name: "normalizes a static path",
+        requestPath: "/about/",
+        location: "/about",
+      },
+      {
+        name: "normalizes a concrete dynamic path",
+        requestPath: "/blog/post/",
+        location: "/blog/post",
+      },
+      {
+        name: "preserves the query string",
+        requestPath: "/about/?campaign=launch",
+        location: "/about?campaign=launch",
+      },
+      {
+        name: "removes repeated trailing slashes",
+        requestPath: "/about///",
+        location: "/about",
+      },
+      {
+        name: "preserves encoded path segments",
+        requestPath: "/file%2Fname/",
+        location: "/file%2Fname",
+      },
+    ])(
+      "returns canonical redirect response: $name",
+      ({ requestPath, location }) => {
+        const response = redirectRequest(new Request(url(requestPath)), []);
+        expect(response?.status).toBe(301);
+        expect(response?.headers.get("Location")).toBe(location);
+      }
+    );
+
+    test("does not redirect the root path", () => {
+      expect(redirectRequest(new Request(url("/")), [])).toBeUndefined();
+    });
+
+    test.each(["//other.example/", "///other.example/"])(
+      "does not create an external redirect from %s",
+      (requestPath) => {
+        expect(
+          redirectRequest(new Request(url(requestPath)), [])
+        ).toBeUndefined();
+      }
+    );
+
+    test("gives an exact project redirect precedence", () => {
+      const response = redirectRequest(new Request(url("/old/")), [
+        { old: "/old/", new: "/new" },
+      ]);
+      expect(response?.status).toBe(301);
+      expect(response?.headers.get("Location")).toBe("/new");
     });
 
     test.each(nonMatchingCases)(

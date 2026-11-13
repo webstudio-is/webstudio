@@ -1,10 +1,14 @@
-import { shallowEqual } from "shallow-equal";
 import warnOnce from "warn-once";
-import type { Instance } from "@webstudio-is/sdk";
+import { getTagStyleId, type Instance } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
-import { propertiesData } from "@webstudio-is/css-data";
+import {
+  isPseudoElement,
+  propertiesData,
+  validateSelector,
+} from "@webstudio-is/css-data";
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
+import { areSetsEqual } from "~/shared/collection-equality";
 import {
   $isResizingCanvas,
   $selectedInstanceSizes,
@@ -12,11 +16,16 @@ import {
   $stylesIndex,
   $propValuesByInstanceSelectorWithMemoryProps,
   $selectedInstanceStates,
+  $selectedInstanceStatesByInstanceId,
+  $selectedStyleState,
   $allSelectedInstanceSelectors,
   type UnitSizes,
   type PropertySizes,
 } from "~/shared/nano-states";
-import { $styleSourceSelections } from "~/shared/sync/data-stores";
+import {
+  $styleSourceSelections,
+  $styleSources,
+} from "~/shared/sync/data-stores";
 import {
   getAllElementsBoundingBox,
   getVisibleElementsByInstanceSelector,
@@ -29,7 +38,7 @@ import {
   $selectedInstanceOutline,
   $selectedInstanceOutlines,
 } from "~/shared/nano-states";
-import { $instances, $styles } from "~/shared/sync/data-stores";
+import { $instances } from "~/shared/sync/data-stores";
 import { inflateInstance } from "~/canvas/inflator";
 import {
   areInstanceSelectorsEqual,
@@ -124,12 +133,23 @@ const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
   };
 };
 
-const calculatePropertySizes = (element: HTMLElement) => {
-  const computedStyle = getComputedStyle(element);
+const readComputedStyles = (element: HTMLElement) => {
+  const selectedState = $selectedStyleState.get();
+  const pseudoElement =
+    selectedState && isPseudoElement(selectedState) ? selectedState : undefined;
   const propertySizes: PropertySizes = {};
+  const computedValues: Partial<Record<CssProperty, string>> = {};
+  let computedStyle: CSSStyleDeclaration;
+  try {
+    computedStyle = getComputedStyle(element, pseudoElement);
+  } catch {
+    // Some selectable pseudo-elements cannot be sampled with getComputedStyle.
+    return { propertySizes, computedValues };
+  }
   for (const property in propertiesData) {
+    const propertyValue = computedStyle.getPropertyValue(property);
+    computedValues[property as CssProperty] = propertyValue;
     try {
-      const propertyValue = computedStyle.getPropertyValue(property);
       const value = CSSStyleValue.parse(property, propertyValue);
       if (value instanceof CSSUnitValue) {
         propertySizes[property as CssProperty] = {
@@ -145,7 +165,42 @@ const calculatePropertySizes = (element: HTMLElement) => {
       // also firefox does not support CSSStyleValue
     }
   }
-  return propertySizes;
+  if (pseudoElement === undefined && computedStyle.aspectRatio === "auto") {
+    const parentStyle =
+      element.parentElement && getComputedStyle(element.parentElement);
+    const isOutOfFlow =
+      computedStyle.position === "absolute" ||
+      computedStyle.position === "fixed";
+    const isFlexItem = !isOutOfFlow && parentStyle?.display.includes("flex");
+    const isGridItem = !isOutOfFlow && parentStyle?.display.includes("grid");
+    const verticalWritingMode =
+      parentStyle?.writingMode.startsWith("vertical") ||
+      parentStyle?.writingMode.startsWith("sideways");
+    const flexMainHeight =
+      parentStyle?.flexDirection.startsWith("column") !== verticalWritingMode;
+    for (const property of ["min-width", "min-height"] as const) {
+      if (computedValues[property] !== "auto") {
+        continue;
+      }
+      const isMainAxis = (property === "min-height") === flexMainHeight;
+      const overflow =
+        property === "min-height"
+          ? computedStyle.overflowY
+          : computedStyle.overflowX;
+      const nonScrollable = overflow === "visible" || overflow === "clip";
+      // Flex and grid items can have a content-based automatic minimum only
+      // on non-scrollable axes. Flex cross-axis minima always use zero.
+      if (
+        parentStyle?.display === "contents" ||
+        (isGridItem && nonScrollable) ||
+        (isFlexItem && isMainAxis && nonScrollable)
+      ) {
+        continue;
+      }
+      computedValues[property] = "0px";
+    }
+  }
+  return { propertySizes, computedValues };
 };
 
 const subscribeSelectedInstance = (
@@ -235,37 +290,114 @@ const subscribeSelectedInstance = (
     const [element] = elements;
     // trigger style recomputing every time instance styles are changed
     const unitSizes = calculateUnitSizes(element);
-    const propertySizes = calculatePropertySizes(element);
-    $selectedInstanceSizes.set({ unitSizes, propertySizes });
+    const { propertySizes, computedValues } = readComputedStyles(element);
+    $selectedInstanceSizes.set({ unitSizes, propertySizes, computedValues });
 
-    const availableStates = new Set<string>();
-    const instanceStyleSourceIds = new Set(
-      $styleSourceSelections.get().get(instanceId)?.values
-    );
-    const styles = $styles.get();
-    for (const styleDecl of styles.values()) {
-      if (
-        instanceStyleSourceIds.has(styleDecl.styleSourceId) &&
-        styleDecl.state
-      ) {
-        availableStates.add(styleDecl.state);
-      }
-    }
-    const activeStates = new Set<string>();
-    for (const state of availableStates) {
-      try {
-        // pseudo classes like :open or :current are not supported in .matches method
-        if (element.matches(state)) {
-          activeStates.add(state);
-        }
-      } catch {
-        warnOnce(true, `state selector "${state}" is invalid`);
-      }
-    }
-
-    if (
-      !shallowEqual(activeStates.keys(), $selectedInstanceStates.get().keys())
+    const styleSourceSelections = $styleSourceSelections.get();
+    const styleSources = $styleSources.get();
+    const { stylesByStyleSourceId } = $stylesIndex.get();
+    const matchingStatesByInstanceId = new Map<string, Set<string>>();
+    const elementsByInstanceId = new Map<string, HTMLElement>();
+    for (
+      let ancestor: HTMLElement | null = element;
+      ancestor;
+      ancestor = ancestor.parentElement
     ) {
+      const id = ancestor.getAttribute(selectorIdAttribute)?.split(",")[0];
+      if (id) {
+        elementsByInstanceId.set(id, ancestor);
+      }
+    }
+    for (const [index, id] of selectedInstanceSelector.entries()) {
+      const target = elementsByInstanceId.get(id);
+      if (!target) {
+        continue;
+      }
+      const ownSources = new Set(styleSourceSelections.get(id)?.values);
+      ownSources.add(getTagStyleId(target.localName));
+      const ancestorSources = new Set<string>();
+      for (const ancestorId of selectedInstanceSelector.slice(index + 1)) {
+        for (const sourceId of styleSourceSelections.get(ancestorId)?.values ??
+          []) {
+          ancestorSources.add(sourceId);
+        }
+      }
+      for (
+        let ancestor = target.parentElement;
+        ancestor;
+        ancestor = ancestor.parentElement
+      ) {
+        const sourceId = getTagStyleId(ancestor.localName);
+        if (styleSources.get(sourceId)?.type === "tag") {
+          ancestorSources.add(sourceId);
+        }
+      }
+      const availableStates = new Set<string>();
+      const ancestorStates = new Set<string>();
+      const activeStates = new Set<string>();
+      for (const sourceId of ownSources) {
+        for (const styleDecl of stylesByStyleSourceId.get(sourceId) ?? []) {
+          if (styleDecl.state) {
+            availableStates.add(styleDecl.state);
+          }
+        }
+      }
+      for (const sourceId of ancestorSources) {
+        for (const styleDecl of stylesByStyleSourceId.get(sourceId) ?? []) {
+          if (styleDecl.state?.startsWith(" ")) {
+            ancestorStates.add(styleDecl.state);
+          }
+        }
+      }
+      for (const state of ancestorStates) {
+        const validation = validateSelector(state);
+        if (
+          validation.success &&
+          validation.type === "tag" &&
+          validation.tag.toLowerCase() === target.localName &&
+          validation.condition
+        ) {
+          try {
+            if (target.matches(state.trim())) {
+              activeStates.add(validation.condition);
+            }
+          } catch {
+            warnOnce(true, `state selector "${state}" is invalid`);
+          }
+        }
+      }
+      for (const state of availableStates) {
+        if (
+          validateSelector(state, { allowDescendants: false }).success === false
+        ) {
+          continue;
+        }
+        try {
+          // pseudo classes like :open or :current are not supported in .matches method
+          if (target.matches(state)) {
+            activeStates.add(state);
+          }
+        } catch {
+          warnOnce(true, `state selector "${state}" is invalid`);
+        }
+      }
+      matchingStatesByInstanceId.set(id, activeStates);
+    }
+    const previousStates = $selectedInstanceStatesByInstanceId.get();
+    if (
+      previousStates.size !== matchingStatesByInstanceId.size ||
+      [...matchingStatesByInstanceId].some(([id, states]) => {
+        const previous = previousStates.get(id);
+        return previous === undefined || !areSetsEqual(states, previous);
+      })
+    ) {
+      $selectedInstanceStatesByInstanceId.set(matchingStatesByInstanceId);
+    }
+    const activeStates =
+      matchingStatesByInstanceId.get(instanceId) ?? new Set<string>();
+
+    const selectedStates = $selectedInstanceStates.get();
+    if (!areSetsEqual(activeStates, selectedStates)) {
       $selectedInstanceStates.set(activeStates);
     }
   };
@@ -348,8 +480,10 @@ const subscribeSelectedInstance = (
   });
 
   updateObservers();
+  updateStores();
 
   const unsubscribe$stylesIndex = $stylesIndex.subscribe(update);
+  const unsubscribeSelectedStyleState = $selectedStyleState.subscribe(update);
   const unsubscribe$instances = $instances.subscribe(update);
   const unsubscribePropValuesStore =
     $propValuesByInstanceSelectorWithMemoryProps.subscribe(update);
@@ -398,6 +532,7 @@ const subscribeSelectedInstance = (
     unsubscribeScrollState();
     unsubscribeWindowResize();
     unsubscribe$stylesIndex();
+    unsubscribeSelectedStyleState();
     unsubscribe$instances();
     unsubscribePropValuesStore();
   };

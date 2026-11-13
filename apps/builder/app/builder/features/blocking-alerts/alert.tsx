@@ -1,9 +1,7 @@
-import { atom } from "nanostores";
-import { useStore } from "@nanostores/react";
 import type { ReactNode } from "react";
 import {
-  Button,
   css,
+  cssVar,
   Flex,
   Popover,
   PopoverContent,
@@ -18,27 +16,20 @@ const containerStyle = css({
   left: 0,
   width: "100vw",
   height: "100vh",
-  background: "rgba(0, 0, 0, 0.9)",
+  background: `oklch(from ${cssVar("--overlay-scrim")} l c h / 90%)`,
 });
 
 const contentStyle = css({
   width: theme.spacing[33],
-  color: theme.colors.foregroundDestructive,
+  color: cssVar("--foreground-negative"),
 });
 
-const $isAlertDismissed = atom(false);
+const scrimForeground = `light-dark(
+  ${cssVar("--foreground-on-inverse")},
+  ${cssVar("--foreground-primary")}
+)`;
 
-export const Alert = ({
-  message,
-  isDismissable,
-}: {
-  message: string | ReactNode;
-  isDismissable?: boolean;
-}) => {
-  const isAlertDismissed = useStore($isAlertDismissed);
-  if (isAlertDismissed) {
-    return;
-  }
+export const Alert = ({ message }: { message: string | ReactNode }) => {
   return (
     <Popover open>
       <PopoverContent css={{ zIndex: theme.zIndices.max }}>
@@ -50,17 +41,9 @@ export const Alert = ({
             className={contentStyle()}
           >
             <AlertIcon size={22} />
-            <Text color="contrast" align="center">
+            <Text align="center" css={{ color: scrimForeground }}>
               {message}
             </Text>
-            {isDismissable && (
-              <Button
-                color="destructive"
-                onClick={() => $isAlertDismissed.set(true)}
-              >
-                Dismiss
-              </Button>
-            )}
           </Flex>
         </Flex>
       </PopoverContent>

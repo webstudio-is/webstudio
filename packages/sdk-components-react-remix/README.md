@@ -1,3 +1,7 @@
-# Webstudio SDK Components
+# Webstudio Components for Remix
 
-Webstudio SDK is a TypeScript API that lets you use your Webstudio project or some components in your custom codebase or just render a complete Remix Document.
+Remix-specific adapters and compatibility components for Webstudio's React components.
+
+## Package boundary
+
+Owns Remix adapters and compatibility components. This package may depend on Remix; shared packages must not depend on it. Keep generic component behavior outside this package.

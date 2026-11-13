@@ -8,13 +8,13 @@ In Webstudio, a "Collection" is a powerful feature designed to manage and displa
 
 {% embed url="https://www.youtube.com/watch?v=2MrkfnjYuCo" %}
 
-## Dynamic Content Creation with Webstudio and Supabase
+## Create dynamic content with Webstudio and Supabase
 
-To create pages featuring dynamic content in Webstudio by integrating Supabase as your data source.
+This guide creates pages with dynamic content by using Supabase as the data source.
 
 ---
 
-### Setting Up Your Supabase Project
+### Set up your Supabase project
 
 1. Sign up for a free Supabase account.
 2. Create a new project. (You'll need to set a strong password for your project to proceed).
@@ -23,7 +23,7 @@ To create pages featuring dynamic content in Webstudio by integrating Supabase a
 
 ---
 
-### Uploading Images to Supabase Storage
+### Upload images to Supabase Storage
 
 1. Go to **Storage** in your Supabase dashboard
 2. Create a new bucket and set it as **public**
@@ -32,7 +32,7 @@ To create pages featuring dynamic content in Webstudio by integrating Supabase a
 
 ---
 
-### Configuring Row Level Security (RLS)
+### Configure Row Level Security
 
 1. Navigate to your table → "No active RLS policies"
 2. Create a new policy
@@ -41,31 +41,31 @@ To create pages featuring dynamic content in Webstudio by integrating Supabase a
 
 ---
 
-### Integrating Supabase with Webstudio
+### Integrate Supabase with Webstudio
 
-#### Getting the API URL
+#### Get the API URL
 
 1. Go to **Table Editor** → select your table
 2. Click **API** (at the top right of the table view)
 3. Switch the example code to **bash**
 4. Copy the URL provided
 
-#### Adding the Resource Variable
+#### Add the Resource variable
 
 1. In Webstudio, select your Collection's parent element
 2. Go to **Settings → Add Variable → Type: Resource**
 3. Paste the API URL
-4. Add a Header:
+4. Add a header:
    - Name: `apikey`
-   - Value: Your public API key from **Project settings → API**
+   - Value: Your publishable key from **Project settings → API Keys**
 
-{% hint style="info" %}
-The API key stays between you and the builder and is not exposed on the frontend.
+{% hint style="warning" %}
+Use only a Supabase publishable key (or the legacy `anon` key) in a website integration. Never use a secret or `service_role` key. Publishable keys identify the project but do not protect its data; configure Row Level Security policies and table grants for every operation the site permits. See [Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys) and [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security).
 {% endhint %}
 
 ---
 
-### Mapping Data and Finalizing Your Page
+### Map data and finish the page
 
 Map the data from Supabase to your Webstudio project. This involves setting up the data within your collection to inform Webstudio about the available data for use.
 

@@ -1,8 +1,8 @@
-import { Store } from "immerhin";
+import { Store, type Change } from "immerhin";
 import { enableMapSet, setAutoFreeze } from "immer";
 import { useEffect } from "react";
 import { batched } from "nanostores";
-import { nanoid } from "nanoid";
+import { createId } from "@webstudio-is/sdk";
 import { $project } from "./data-stores";
 import {
   $selectedPageHash,
@@ -11,9 +11,11 @@ import {
   $toastErrors,
   $selectedStyleSources,
   $selectedStyleState,
+  $temporaryTagStyleId,
   $dataSourceVariables,
   $dragAndDropState,
   $selectedInstanceStates,
+  $selectedInstanceStatesByInstanceId,
   $canvasIframeState,
   $uploadingFilesDataStore,
   $memoryProps,
@@ -78,14 +80,16 @@ import {
   selectInstance,
   selectInstances,
 } from "../nano-states/instance-selection";
-import { $selectedPageId } from "../nano-states/pages";
+import { $pageNavigation, $selectedPageId } from "../nano-states/pages";
 import { areSelectorListsEqual } from "../instance-utils/selection";
 import { $systemDataByPage } from "../system";
-import { $resourcesCache } from "../resources";
+import { $resourcesCache, $resourcesState } from "../resources";
 import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
+import { $externalContentRoots } from "../external-content-mutations";
+import { $externalContentHistory } from "../external-content-history";
 
 enableMapSet();
 // safari structuredClone fix
@@ -93,6 +97,17 @@ setAutoFreeze(false);
 
 export const clientSyncStore = new Store();
 export const serverSyncStore = new Store();
+export const externalContentSyncStore = new Store();
+const serverSyncRevertListeners = new Set<
+  (changes: readonly Change[]) => void
+>();
+
+export const subscribeServerSyncReverts = (
+  listener: (changes: readonly Change[]) => void
+) => {
+  serverSyncRevertListeners.add(listener);
+  return () => serverSyncRevertListeners.delete(listener);
+};
 
 const serverSyncStores = {
   pages: $pages,
@@ -126,6 +141,10 @@ export const registerContainers = () => {
   // synchronize patches
   for (const name of serverSyncStoreNames) {
     serverSyncStore.register<ServerSyncStoreValue>(
+      name,
+      serverSyncStores[name]
+    );
+    externalContentSyncStore.register<ServerSyncStoreValue>(
       name,
       serverSyncStores[name]
     );
@@ -237,7 +256,11 @@ class SelectedPageAndInstanceSyncObject {
         ) {
           return;
         }
-        sendTransaction({ id: nanoid(), object: this.name, payload: state });
+        sendTransaction({
+          id: createId("nano"),
+          object: this.name,
+          payload: state,
+        });
       }
     );
     signal.addEventListener("abort", unsubscribe);
@@ -305,7 +328,14 @@ export const __testing__ = {
 
 export const createObjectPool = () => {
   return new SyncObjectPool([
-    new ImmerhinSyncObject("server", serverSyncStore),
+    new ImmerhinSyncObject("server", serverSyncStore, {
+      onRevert: (changes) => {
+        for (const listener of serverSyncRevertListeners) {
+          listener(changes);
+        }
+      },
+    }),
+    new ImmerhinSyncObject("externalContent", externalContentSyncStore),
     new ImmerhinSyncObject("client", clientSyncStore),
     new SelectedPageAndInstanceSyncObject(),
     new NanostoresSyncObject("pointerPosition", $pointerPosition),
@@ -314,7 +344,9 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("project", $project),
     new NanostoresSyncObject("dataSourceVariables", $dataSourceVariables),
     new NanostoresSyncObject("resourcesCache", $resourcesCache),
+    new NanostoresSyncObject("resourcesState", $resourcesState),
     new NanostoresSyncObject("selectedPageHash", $selectedPageHash),
+    new NanostoresSyncObject("pageNavigation", $pageNavigation),
     new NanostoresSyncObject("selectedInstanceSizes", $selectedInstanceSizes),
     new NanostoresSyncObject(
       "selectedInstanceRenderState",
@@ -338,9 +370,14 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("toastErrors", $toastErrors),
     new NanostoresSyncObject("selectedStyleSources", $selectedStyleSources),
     new NanostoresSyncObject("selectedStyleState", $selectedStyleState),
+    new NanostoresSyncObject("temporaryTagStyleId", $temporaryTagStyleId),
     new NanostoresSyncObject("dragAndDropState", $dragAndDropState),
     new NanostoresSyncObject("ephemeralStyles", $ephemeralStyles),
     new NanostoresSyncObject("selectedInstanceStates", $selectedInstanceStates),
+    new NanostoresSyncObject(
+      "selectedInstanceStatesByInstanceId",
+      $selectedInstanceStatesByInstanceId
+    ),
     new NanostoresSyncObject("canvasIframeState", $canvasIframeState),
     new NanostoresSyncObject(
       "uploadingFilesDataStore",
@@ -379,6 +416,8 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("registeredTemplates", $registeredTemplates),
     new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),
     new NanostoresSyncObject("systemDataByPage", $systemDataByPage),
+    new NanostoresSyncObject("externalContentRoots", $externalContentRoots),
+    new NanostoresSyncObject("externalContentHistory", $externalContentHistory),
   ]);
 };
 

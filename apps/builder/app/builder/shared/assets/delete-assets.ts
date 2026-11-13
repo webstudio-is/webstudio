@@ -3,10 +3,13 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
 
-export const deleteAssets = (assetIds: Asset["id"][]) => {
+export const deleteAssets = (
+  assetIds: Asset["id"][],
+  { force = true }: { force?: boolean } = {}
+) => {
   executeRuntimeMutation({
     id: "assets.delete",
-    input: { assetIdsOrPrefixes: assetIds, force: true },
+    input: { assetIds, force },
   });
 
   // Wait for server to confirm transaction, then invalidate cache

@@ -19,6 +19,7 @@ const report: IssueReportInput = {
     reasoningEffort: "medium",
   },
   runtime: {
+    projectId: "project-123",
     cliVersion: "1.2.3",
     nodeVersion: "22.14.0",
     os: "linux",
@@ -26,6 +27,44 @@ const report: IssueReportInput = {
     architecture: "arm64",
     executionMode: "mcp",
     apiContractVersion: "public-api:client",
+    serverApiContractVersion: "public-api:server",
+    bundleVersion: "bundle:client",
+    recentFailure: {
+      entityIds: [
+        { field: "pageId", id: "page-123" },
+        { field: "instanceId", id: "instance-123" },
+      ],
+      tool: "preview.start",
+      code: "PROJECT_BUNDLE_INVALID",
+      errorType: "AssetRevisionConflictError",
+      requestId: "abc123-LIS",
+      httpStatus: 504,
+      elapsedMs: 17_000,
+      issues: [
+        {
+          path: ["assets", "0", "type"],
+          code: "invalid_value",
+          constraint: 'one of "font"|"image"|"video"|"file"',
+        },
+      ],
+    },
+    recentTargets: [
+      { tool: "screenshot", entityIds: [{ field: "pageId", id: "page-456" }] },
+      {
+        tool: "inspect-instance",
+        entityIds: [{ field: "instanceId", id: "instance-456" }],
+      },
+    ],
+    session: {
+      staleNamespaces: ["styles"],
+      missingNamespaces: ["instances"],
+      invalidatedNamespaces: [],
+    },
+    preview: {
+      stale: true,
+      hasRenderedVersion: true,
+      renderedVersionMatchesSession: false,
+    },
   },
   report: {
     userStory:
@@ -51,10 +90,31 @@ describe("GitHub issue reports", () => {
     expect(body).toContain(report.report.actualResult);
     expect(body).toContain("- Client: Codex 1.2.3");
     expect(body).toContain("- CLI: 1.2.3");
+    expect(body).toContain("- Project ID: `project-123`");
+    expect(body).toContain("- Recent targeted tool: `screenshot`");
+    expect(body).toContain("  - pageId: `page-456`");
+    expect(body).toContain("- Recent targeted tool: `inspect-instance`");
+    expect(body).toContain("  - instanceId: `instance-456`");
+    expect(body).toContain("- pageId: `page-123`");
+    expect(body).toContain("- instanceId: `instance-123`");
     expect(body).toContain("- Node.js: 22.14.0");
     expect(body).toContain("- Operating system: linux 6 (arm64)");
     expect(body).toContain("- Execution mode: mcp");
     expect(body).toContain("- API contract: public-api:client");
+    expect(body).toContain("- Server API contract: public-api:server");
+    expect(body).toContain("- Bundle contract: bundle:client");
+    expect(body).toContain("## Captured failure diagnostics");
+    expect(body).toContain("- Tool: `preview.start`");
+    expect(body).toContain("- Error code: `PROJECT_BUNDLE_INVALID`");
+    expect(body).toContain("- Error type: AssetRevisionConflictError");
+    expect(body).toContain("- Request ID: `abc123-LIS`");
+    expect(body).toContain("- HTTP status: `504`");
+    expect(body).toContain("- Duration: `17000ms`");
+    expect(body).toContain("stale=styles");
+    expect(body).toContain("version matches session=false");
+    expect(body).toContain(
+      '- `assets.0.type`: `invalid_value` (one of "font"|"image"|"video"|"file")'
+    );
     expect(body).toContain("- Model: gpt-5.6-sol");
     expect(body).toContain("- Reasoning effort: medium");
     expect(body).toContain(
@@ -71,6 +131,35 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("## Technical runtime");
     expect(body).toContain("- CLI: unknown");
     expect(body).toContain("- Node.js: unknown");
+  });
+
+  test("formats response and browser diagnostics without raw data", () => {
+    const responseReport = structuredClone(report);
+    if (responseReport.runtime?.recentFailure === undefined) {
+      throw new Error("Expected failure diagnostics");
+    }
+    responseReport.runtime.recentFailure.response = {
+      format: "json",
+      envelope: "result",
+      batchSize: 1,
+    };
+    responseReport.runtime.recentFailure.browser = {
+      exitSignal: "SIGABRT",
+      attempts: [{ browser: "chromium", source: "path" }],
+    };
+    responseReport.runtime.recentFailure.previewInstall = {
+      processErrorCode: "ETIMEDOUT",
+      terminated: true,
+    };
+
+    const body = formatIssueReport(responseReport);
+    expect(body).toContain("Response: json; envelope=result; batch size=1");
+    expect(body).toContain("Browser exit: SIGABRT");
+    expect(body).toContain("Browser attempts: chromium (path)");
+    expect(body).toContain("Preview install: ETIMEDOUT; process terminated");
+
+    responseReport.runtime.recentFailure.previewInstall = {};
+    expect(formatIssueReport(responseReport)).not.toContain("Preview install:");
   });
 
   test("discovers the repository installation before creating its token", async () => {

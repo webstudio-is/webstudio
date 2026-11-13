@@ -1,7 +1,8 @@
+import { isProtectedResourceReentry } from "@webstudio-is/sdk/protected-resource-fetch";
 import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
-import { isLocalResource, loadResources } from "@webstudio-is/sdk/runtime";
+import { isLocalResource, loadResources, getSystemSearch } from "@webstudio-is/sdk/runtime";
 import { authenticateRequest } from "@webstudio-is/wsauth";
-import { projectDomain } from "__CLIENT__";
+import { projectId, projectDomain } from "__CLIENT__";
 import { getPageMeta, getRemixParams, getResources } from "__SERVER__";
 import { sitemap } from "__SITEMAP__";
 import { authRoutes } from "__AUTH__";
@@ -57,6 +58,10 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
+  if (isProtectedResourceReentry(arg.request, projectId)) {
+    throw new Response(null, { status: 508 });
+  }
+
   const authRoute = authenticateProductionRequest(arg.request);
 
   const url = new URL(arg.request.url);
@@ -71,7 +76,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
 
   const system = {
     params,
-    search: Object.fromEntries(url.searchParams),
+    ...getSystemSearch(url.searchParams),
     origin: url.origin,
     pathname: url.pathname,
   };
@@ -86,6 +91,15 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     getResources({ system }).data,
     url,
     { signal: arg.request.signal }
+  );
+  Object.assign(
+    resources,
+    await loadResources(
+      generatedFetch,
+      getResources({ system, resources }).contentData ?? new Map(),
+      url,
+      { signal: arg.request.signal }
+    )
   );
   const pageMeta = getPageMeta({ system, resources });
 

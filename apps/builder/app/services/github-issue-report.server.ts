@@ -29,14 +29,108 @@ const formatRuntime = (runtime: IssueReportInput["runtime"]) =>
     "",
     `- CLI: ${runtime?.cliVersion ?? "unknown"}`,
     `- Node.js: ${runtime?.nodeVersion ?? "unknown"}`,
+    ...(runtime?.projectId === undefined
+      ? []
+      : [`- Project ID: \`${runtime.projectId}\``]),
+    ...(runtime?.recentTargets === undefined
+      ? []
+      : runtime.recentTargets.flatMap(({ tool, entityIds }) => [
+          `- Recent targeted tool: \`${tool}\``,
+          ...entityIds.map(({ field, id }) => `  - ${field}: \`${id}\``),
+        ])),
     ...(runtime === undefined
       ? []
       : [
           `- Operating system: ${runtime.os} ${runtime.osVersion} (${runtime.architecture})`,
           `- Execution mode: ${runtime.executionMode}`,
           `- API contract: ${runtime.apiContractVersion}`,
+          ...(runtime.serverApiContractVersion === undefined
+            ? []
+            : [`- Server API contract: ${runtime.serverApiContractVersion}`]),
+          `- Bundle contract: ${runtime.bundleVersion ?? "unknown"}`,
+        ]),
+    ...(runtime?.session === undefined
+      ? []
+      : [
+          `- Session namespace issues: stale=${runtime.session.staleNamespaces.join(",") || "none"}; missing=${runtime.session.missingNamespaces.join(",") || "none"}; invalidated=${runtime.session.invalidatedNamespaces.join(",") || "none"}`,
+        ]),
+    ...(runtime?.preview === undefined
+      ? []
+      : [
+          `- Preview: stale=${runtime.preview.stale}; rendered=${runtime.preview.hasRenderedVersion}; version matches session=${runtime.preview.renderedVersionMatchesSession ?? "unknown"}`,
         ]),
   ].join("\n");
+
+const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
+  const failure = runtime?.recentFailure;
+  if (failure === undefined) {
+    return "";
+  }
+  const issues = failure.issues ?? [];
+  const previewInstall = failure.previewInstall;
+  const previewInstallDetails = [
+    previewInstall?.processErrorCode,
+    previewInstall?.exitCode === undefined
+      ? undefined
+      : `exit code ${previewInstall.exitCode}`,
+    previewInstall?.terminated ? "process terminated" : undefined,
+  ]
+    .filter(Boolean)
+    .join("; ");
+  return [
+    "## Captured failure diagnostics",
+    "",
+    `- Tool: \`${failure.tool}\``,
+    `- Error code: \`${failure.code}\``,
+    ...(failure.errorType === undefined
+      ? []
+      : [`- Error type: ${failure.errorType}`]),
+    ...(failure.requestId === undefined
+      ? []
+      : [`- Request ID: \`${failure.requestId}\``]),
+    ...(failure.httpStatus === undefined
+      ? []
+      : [`- HTTP status: \`${failure.httpStatus}\``]),
+    ...(failure.elapsedMs === undefined
+      ? []
+      : [`- Duration: \`${failure.elapsedMs}ms\``]),
+    ...(failure.entityIds === undefined
+      ? []
+      : failure.entityIds.map(({ field, id }) => `- ${field}: \`${id}\``)),
+    ...(failure.response === undefined
+      ? []
+      : [
+          `- Response: ${failure.response.format}; envelope=${failure.response.envelope}${failure.response.batchSize === undefined ? "" : `; batch size=${failure.response.batchSize}`}`,
+        ]),
+    ...(failure.browser === undefined
+      ? []
+      : [
+          ...(failure.browser.exitSignal !== undefined
+            ? [`- Browser exit: ${failure.browser.exitSignal}`]
+            : failure.browser.exitCode === undefined
+              ? []
+              : [`- Browser exit: code ${failure.browser.exitCode}`]),
+          ...(failure.browser.attempts === undefined
+            ? []
+            : [
+                `- Browser attempts: ${failure.browser.attempts.map((attempt) => `${attempt.browser} (${attempt.source})`).join(", ")}`,
+              ]),
+        ]),
+    ...(previewInstallDetails === ""
+      ? []
+      : [`- Preview install: ${previewInstallDetails}`]),
+    ...(issues.length === 0
+      ? []
+      : [
+          "- Invalid fields:",
+          ...issues.map(
+            (issue) =>
+              `  - \`${issue.path.join(".") || "input"}\`: \`${issue.code}\` (${issue.constraint})`
+          ),
+        ]),
+    "",
+  ].join("\n");
+};
 
 export const formatIssueReport = ({
   agent,
@@ -89,6 +183,8 @@ ${report.technicalContext}
 - Category: ${category}
 
 ${formatRuntime(runtime)}
+
+${formatFailureDiagnostics(runtime)}
 
 ## Acceptance criteria
 

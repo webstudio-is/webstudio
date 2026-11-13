@@ -46,7 +46,7 @@ Input is a fundamental form control used to collect various types of user data i
 
 ## Form Usage
 
-Inputs should be placed within a [Form](form.md) or [Webhook Form](webhook-form.md):
+Place inputs within a [Form](form.md). Existing projects can also keep inputs within a [deprecated Webhook Form](webhook-form.md):
 
 ```
 Form
@@ -137,7 +137,7 @@ Common `autocomplete` values:
 ## Related Components
 
 - [Form](form.md) - Form container
-- [Webhook Form](webhook-form.md) - Form with webhook submission
+- [Webhook Form](webhook-form.md) - Deprecated form for existing webhook submissions
 - [Label](label.md) - Input labels
 - [Textarea](textarea.md) - Multi-line text input
 - [Select](select.md) - Dropdown selection

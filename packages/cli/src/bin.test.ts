@@ -8,12 +8,34 @@ import { expect, test } from "vitest";
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const localPath = join(packageRoot, "local.js");
+const publishedPath = join(packageRoot, "bin.js");
 const rootPackagePath = join(packageRoot, "../..", "package.json");
 
 test("keeps local source launcher wired to the root script", async () => {
   const rootPackageJson = JSON.parse(await readFile(rootPackagePath, "utf-8"));
 
   expect(rootPackageJson.scripts.webstudio).toBe("node packages/cli/local.js");
+});
+
+test("published launcher reports unsupported Node.js before loading the CLI", () => {
+  const unsupportedNodeVersion = "20.19.5";
+  const preload = `data:text/javascript,${encodeURIComponent(
+    `Object.defineProperty(process.versions, "node", { value: "${unsupportedNodeVersion}" });`
+  )}`;
+  const result = spawnSync(
+    process.execPath,
+    ["--import", preload, publishedPath, "--version"],
+    {
+      cwd: packageRoot,
+      encoding: "utf-8",
+    }
+  );
+
+  expect(result.status).toBe(1);
+  expect(result.stdout).toBe("");
+  expect(result.stderr).toBe(
+    `Webstudio CLI requires Node.js >=22.12.0. Detected Node.js ${unsupportedNodeVersion}. Install a supported Node.js version and try again.\n`
+  );
 });
 
 test("local launcher bootstraps source cli without caller-provided node options", () => {

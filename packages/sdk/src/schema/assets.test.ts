@@ -13,6 +13,9 @@ describe("mergeAssetMeta", () => {
     expect(
       mergeAssetMeta("image", { width: 100, height: 200 }, { width: 300 })
     ).toEqual({ width: 300, height: 200 });
+    expect(
+      mergeAssetMeta("video", { width: 1920, height: 1080 }, { width: 1280 })
+    ).toEqual({ width: 1280, height: 1080 });
   });
 
   test("rejects invalid and unsupported metadata", () => {

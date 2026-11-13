@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { issueReportInput } from "./issue-report";
+import { z } from "zod";
+import { issueReportEntityIdField, issueReportInput } from "./issue-report";
 
 const report = {
   trigger: "user-requested",
@@ -20,6 +21,18 @@ const report = {
     architecture: "arm64",
     executionMode: "mcp",
     apiContractVersion: "public-api:client",
+    bundleVersion: "bundle:client",
+    recentFailure: {
+      tool: "preview.start",
+      code: "PROJECT_BUNDLE_INVALID",
+      issues: [
+        {
+          path: ["assets", "0", "type"],
+          code: "invalid_value",
+          constraint: 'one of "font"|"image"|"video"|"file"',
+        },
+      ],
+    },
   },
   report: {
     userStory:
@@ -48,6 +61,87 @@ const report = {
 } as const;
 
 describe("issue report contract", () => {
+  test("preserves the negotiated server contract alongside the CLI contract", () => {
+    const runtime = {
+      ...report.runtime,
+      serverApiContractVersion: "public-api:server",
+    };
+    expect(issueReportInput.parse({ ...report, runtime }).runtime).toEqual(
+      runtime
+    );
+  });
+
+  test("advertised entity ID fields enforce the privacy rule", () => {
+    const schema = z.toJSONSchema(issueReportEntityIdField);
+    expect(schema.enum).toContain("pageId");
+    expect(schema.enum).toContain("sourceSlotId");
+    expect(schema.enum).not.toContain("authTokenId");
+    expect(schema.enum).not.toContain("billingSecretId");
+  });
+
+  test("accepts bounded project and entity IDs but rejects arbitrary input data", () => {
+    const runtime = {
+      ...report.runtime,
+      projectId: "project-123",
+      recentFailure: {
+        ...report.runtime.recentFailure,
+        entityIds: [
+          { field: "pageId", id: "page-123" },
+          { field: "instanceId", id: "instance_123" },
+          { field: "sourceSlotId", id: "slot-123" },
+          { field: "designTokenId", id: "token-123" },
+        ],
+      },
+    };
+    expect(issueReportInput.parse({ ...report, runtime }).runtime).toEqual(
+      runtime
+    );
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: { ...runtime, projectId: "https://secret.example.com" },
+      })
+    ).toThrow();
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...runtime,
+          recentFailure: {
+            ...runtime.recentFailure,
+            entityIds: [{ field: "authTokenId", id: "private" }],
+          },
+        },
+      })
+    ).toThrow();
+  });
+
+  test("accepts only safe IDs for recent targeted tools", () => {
+    const recentTarget = {
+      tool: "screenshot",
+      entityIds: [{ field: "pageId", id: "page-123" }],
+    };
+    expect(
+      issueReportInput.parse({
+        ...report,
+        runtime: { ...report.runtime, recentTargets: [recentTarget] },
+      }).runtime?.recentTargets
+    ).toEqual([recentTarget]);
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...report.runtime,
+          recentTargets: [
+            {
+              ...recentTarget,
+              path: "/private-page?authToken=secret",
+            },
+          ],
+        },
+      })
+    ).toThrow();
+  });
   test("accepts a complete anonymous LLM-authored report", () => {
     expect(issueReportInput.parse(report)).toEqual(report);
   });
@@ -66,6 +160,76 @@ describe("issue report contract", () => {
       issueReportInput.parse({
         ...report,
         deduplicationKey: "project/123@example.com",
+      })
+    ).toThrow();
+  });
+
+  test("accepts bounded response, browser, and preview diagnostics but no raw payloads", () => {
+    const failure = {
+      ...report.runtime.recentFailure,
+      errorType: "AssetRevisionConflictError",
+      requestId: "abc123-LIS",
+      response: { format: "json", envelope: "result", batchSize: 1 },
+      browser: {
+        exitSignal: "SIGABRT",
+        attempts: [{ browser: "chromium", source: "path" }],
+      },
+      previewInstall: { processErrorCode: "ETIMEDOUT", terminated: true },
+    };
+    expect(
+      issueReportInput.parse({
+        ...report,
+        runtime: { ...report.runtime, recentFailure: failure },
+      }).runtime?.recentFailure
+    ).toEqual(failure);
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...report.runtime,
+          recentFailure: { ...failure, responseBody: "private content" },
+        },
+      })
+    ).toThrow();
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...report.runtime,
+          recentFailure: { ...failure, requestId: "https://private.example" },
+        },
+      })
+    ).toThrow();
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...report.runtime,
+          recentFailure: {
+            ...failure,
+            browser: {
+              attempts: [
+                {
+                  browser: "chromium",
+                  source: "path",
+                  path: "/private/browser",
+                },
+              ],
+            },
+          },
+        },
+      })
+    ).toThrow();
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...report.runtime,
+          recentFailure: {
+            ...failure,
+            previewInstall: { stderr: "private registry token" },
+          },
+        },
       })
     ).toThrow();
   });

@@ -1,8 +1,10 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
+  cssVar,
   Grid,
   InputField,
   Label,
@@ -14,7 +16,7 @@ import { $assets } from "~/shared/sync/data-stores";
 import { Card } from "../../marketplace/card";
 import { ImageInfo } from "../image-info";
 import type { PageSettingsValues } from "@webstudio-is/project-build/runtime";
-import { computePageSettingsText, type OnChange } from "./shared";
+import { usePageSettingsText, type OnChange } from "./shared";
 
 export const MarketplaceSection = ({
   values,
@@ -29,7 +31,7 @@ export const MarketplaceSection = ({
     ({ property }) => property === "ws:category"
   );
   // @todo remove after all stores are migrated
-  const categoryFallback = computePageSettingsText(
+  const categoryFallback = usePageSettingsText(
     categoryMeta?.content ?? `""`,
     new Map()
   );
@@ -38,7 +40,7 @@ export const MarketplaceSection = ({
   const thumbnailAsset = assets.get(values.marketplace.thumbnailAssetId);
   const thumnailFallbackAsset = assets.get(values.socialImageAssetId);
   return (
-    <Grid gap={2} css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Grid} gap={2}>
       <Grid
         flow="column"
         gap={1}
@@ -81,7 +83,7 @@ export const MarketplaceSection = ({
             })
           }
         >
-          <Button color="neutral" css={{ justifySelf: "start" }}>
+          <Button css={{ justifySelf: "start" }}>
             Choose thumbnail from assets
           </Button>
         </ImageControl>
@@ -103,7 +105,7 @@ export const MarketplaceSection = ({
           css={{
             padding: theme.spacing[5],
             borderRadius: theme.borderRadius[4],
-            border: `1px solid ${theme.colors.borderMain}`,
+            border: `1px solid ${cssVar("--border-default")}`,
             justifySelf: "start",
           }}
         >
@@ -116,6 +118,6 @@ export const MarketplaceSection = ({
           </Grid>
         </Box>
       </Grid>
-    </Grid>
+    </PanelContent>
   );
 };

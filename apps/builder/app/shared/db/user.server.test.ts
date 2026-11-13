@@ -10,6 +10,7 @@ import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import {
   getUserById,
   createOrLoginWithDev,
+  createOrLoginWithOAuth,
   updateUserProjectsTags,
 } from "./user.server";
 
@@ -151,7 +152,44 @@ describe("createOrLoginWithDev (msw)", () => {
   });
 });
 
-// ─── updateUserProjectsTags ────────────────────────────────────
+// ─── createOrLoginWithOAuth ───────────────────────────────────
+
+describe("createOrLoginWithOAuth (msw)", () => {
+  test("syncs changed profile fields for an existing user", async () => {
+    const updatedUser = {
+      ...userRow,
+      username: "new-github-username",
+      image: "https://avatars.example.com/new",
+      provider: "github",
+    };
+    let capturedBody: unknown;
+
+    server.use(
+      db.get("User", () => json(userRow)),
+      db.patch("User", async ({ request }) => {
+        capturedBody = await request.json();
+        return json(updatedUser);
+      }),
+      db.get("Workspace", () => json({ id: "ws-1" }))
+    );
+
+    const result = await createOrLoginWithOAuth(createContext(), {
+      provider: "github",
+      displayName: "new-github-username",
+      emails: [{ value: "test@example.com" }],
+      photos: [{ value: "https://avatars.example.com/new" }],
+    } as Parameters<typeof createOrLoginWithOAuth>[1]);
+
+    expect(capturedBody).toEqual({
+      username: "new-github-username",
+      image: "https://avatars.example.com/new",
+      provider: "github",
+    });
+    expect(result.username).toBe("new-github-username");
+  });
+});
+
+// ─── updateUserProjectsTags ───────────────────────────────────
 
 describe("updateUserProjectsTags (msw)", () => {
   const tags = [{ id: "tag-1", label: "Design" }];

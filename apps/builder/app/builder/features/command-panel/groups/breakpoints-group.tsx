@@ -68,7 +68,7 @@ const getBreakpointLabel = (breakpoint: Breakpoint) => {
     return `${breakpoint.label}: ${breakpoint.condition}`;
   }
 
-  let label = "All Sizes";
+  let label = "All sizes";
   if (breakpoint.minWidth !== undefined) {
     label = `≥ ${breakpoint.minWidth} PX`;
   }

@@ -19,15 +19,15 @@
       "types": "./lib/types/components.d.ts",
       "import": "./lib/components.js"
     },
+    "./components": {
+      "webstudio": "./src/components.ts",
+      "types": "./lib/types/components.d.ts",
+      "import": "./lib/components.js"
+    },
     "./metas": {
       "webstudio": "./src/metas.ts",
       "types": "./lib/types/metas.d.ts",
       "import": "./lib/metas.js"
-    },
-    "./hooks": {
-      "webstudio": "./src/hooks.ts",
-      "types": "./lib/types/hooks.d.ts",
-      "import": "./lib/hooks.js"
     },
     "./templates": {
       "webstudio": "./src/templates.ts",
@@ -53,6 +53,7 @@
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/sdk-components-react": "workspace:*",
     "change-case": "^5.4.4",
     "nanostores": "^0.11.3",
     "react-error-boundary": "^5.0.0",
@@ -61,20 +62,19 @@
   "devDependencies": {
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "@vitest/browser": "^3.0.8",
+    "@vitest/browser": "3.1.1",
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/design-system": "workspace:*",
     "@webstudio-is/generate-arg-types": "workspace:*",
     "@webstudio-is/sdk-cli": "workspace:^",
-    "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "fast-glob": "^3.3.2",
-    "playwright": "^1.50.1",
+    "playwright": "1.50.1",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.37.0",
-    "vitest": "^3.1.2",
+    "vitest": "3.1.1",
     "zod": "^4.4.3"
   }
 }

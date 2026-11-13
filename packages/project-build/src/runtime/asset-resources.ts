@@ -3,13 +3,16 @@ import {
   assetQueryResourceConfigurationPatchInput,
   createDefaultStructuredAssetQueryResourceConfiguration,
   createStructuredAssetQueryResourceBody,
+  decodeDataVariableId,
   isAssetsResource,
-  parseStructuredAssetQueryResourceBody,
+  parseStructuredAssetQueryResourceBodyResult,
+  ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
   type AssetQueryWhereExpression,
   type Resource,
   type StructuredAssetQueryWhereBinding,
 } from "@webstudio-is/sdk";
+import { getExpressionIdentifiers } from "@webstudio-is/expression";
 import { mapQueryWhere } from "@webstudio-is/query-builder/runtime";
 import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
 import { z } from "zod";
@@ -18,6 +21,9 @@ import type { BuilderRuntimeContext } from "./context";
 import {
   createResource,
   normalizeResourceExpressionInput,
+  bindExpressionToInstanceScope,
+  optionalResourceScopeInstanceIdInput,
+  resourceScopeInstanceIdInput,
   unsetExpressionVariables,
   updateResource,
 } from "./data";
@@ -34,7 +40,7 @@ export const assetsResourceGetInput = z.object({ resourceId: z.string() });
 export const assetsResourceCreateInput = z.object({
   name: z.string().min(1),
   query: assetQueryResourceConfigurationInput.optional(),
-  scopeInstanceId: z.string(),
+  scopeInstanceId: resourceScopeInstanceIdInput,
   dataSourceName: z.string().optional(),
 });
 
@@ -48,7 +54,7 @@ export const assetsResourceUpdateInput = z.object({
     .refine((values) => Object.keys(values).length > 0, {
       error: "At least one Assets resource value is required.",
     }),
-  scopeInstanceId: z.string().optional(),
+  scopeInstanceId: optionalResourceScopeInstanceIdInput,
   dataSourceName: z.string().optional(),
 });
 
@@ -59,6 +65,47 @@ const normalizeWhere = (
     ...condition,
     value: normalizeResourceExpressionInput(condition.value),
   }));
+
+const assertQueryExpressionsInScope = ({
+  state,
+  scopeInstanceId,
+  query,
+}: {
+  state: Pick<BuilderState, "instances" | "dataSources">;
+  scopeInstanceId: string;
+  query: z.output<typeof assetQueryResourceConfigurationInput>;
+}) => {
+  if (state.instances === undefined || state.dataSources === undefined) {
+    return;
+  }
+  const expressions = [query.limit, query.offset];
+  mapQueryWhere(query.where, (condition) => {
+    if (typeof condition.value === "string") {
+      expressions.push(condition.value);
+    }
+    return condition;
+  });
+  for (const expression of expressions) {
+    if (typeof expression !== "string") {
+      continue;
+    }
+    const boundExpression = bindExpressionToInstanceScope({
+      expression,
+      instanceId: scopeInstanceId,
+      instances: state.instances,
+      dataSources: state.dataSources,
+    });
+    const unknownIdentifier = [
+      ...getExpressionIdentifiers(boundExpression),
+    ].find((identifier) => decodeDataVariableId(identifier) === undefined);
+    if (unknownIdentifier !== undefined) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Asset query expression references unavailable variable ${JSON.stringify(unknownIdentifier)}. Use a scoped variable name for dynamic data or a literal such as ${JSON.stringify(JSON.stringify(unknownIdentifier))}.`
+      );
+    }
+  }
+};
 
 const createAssetResourceBody = (
   configuration: z.output<typeof assetQueryResourceConfigurationInput>
@@ -92,7 +139,12 @@ const serializeAssetResource = ({
   resource: Resource;
   state: Pick<BuilderState, "dataSources">;
 }) => {
-  const configuration = parseStructuredAssetQueryResourceBody(resource.body);
+  const parsedConfiguration = parseStructuredAssetQueryResourceBodyResult(
+    resource.body
+  );
+  const configuration = parsedConfiguration.success
+    ? parsedConfiguration.value
+    : undefined;
   const dataSources = Array.from(state.dataSources?.values() ?? []);
   const unsetNameById = new Map(dataSources.map(({ id, name }) => [id, name]));
   unsetNameById.set(SYSTEM_VARIABLE_ID, "system");
@@ -111,7 +163,9 @@ const serializeAssetResource = ({
     ...(configuration === undefined
       ? {
           configurationError:
-            "Stored Assets query configuration could not be decoded.",
+            parsedConfiguration.success === false
+              ? parsedConfiguration.message
+              : "Stored Assets query configuration could not be decoded.",
         }
       : {
           query: {
@@ -171,9 +225,8 @@ const createStoredAssetsResource = ({
   query,
 }: {
   name: string;
-  query?: z.output<typeof assetQueryResourceConfigurationInput>;
+  query: z.output<typeof assetQueryResourceConfigurationInput>;
 }) => {
-  const configuration = assetQueryResourceConfigurationInput.parse(query ?? {});
   return {
     name,
     control: "system" as const,
@@ -186,7 +239,7 @@ const createStoredAssetsResource = ({
         value: { type: "literal" as const, value: "application/json" },
       },
     ],
-    body: createAssetResourceBody(configuration),
+    body: createAssetResourceBody(query),
   };
 };
 
@@ -196,10 +249,16 @@ export const createAssetsResource = (
   context: BuilderRuntimeContext
 ) => {
   const { name, scopeInstanceId, dataSourceName, query } = input;
+  const configuration = assetQueryResourceConfigurationInput.parse(query ?? {});
+  assertQueryExpressionsInScope({
+    state,
+    scopeInstanceId,
+    query: configuration,
+  });
   return createResource(
     state,
     {
-      resource: createStoredAssetsResource({ name, query }),
+      resource: createStoredAssetsResource({ name, query: configuration }),
       scopeInstanceId,
       dataSourceName: dataSourceName ?? name,
       exposeAsDataSource: true,
@@ -218,25 +277,45 @@ export const updateAssetsResource = (
     return throwBuilderRuntimeError("NOT_FOUND", "Assets resource not found");
   }
   const { name, query: queryUpdate } = input.values;
-  const storedConfiguration = parseStructuredAssetQueryResourceBody(
+  const parsedConfiguration = parseStructuredAssetQueryResourceBodyResult(
     resource.body
   );
-  if (storedConfiguration === undefined && queryUpdate === undefined) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Stored Assets query configuration could not be decoded; replace or remove the query to repair it"
-    );
+  const storedConfiguration = parsedConfiguration.success
+    ? parsedConfiguration.value
+    : undefined;
+  let query: z.output<typeof assetQueryResourceConfigurationInput>;
+  if (queryUpdate === undefined) {
+    if (storedConfiguration === undefined) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `${
+          parsedConfiguration.success === false
+            ? parsedConfiguration.message
+            : "Stored Assets query configuration could not be decoded."
+        } Replace or remove the query to repair it.`
+      );
+    }
+    query = storedConfiguration;
+  } else if (queryUpdate === null) {
+    query = createDefaultStructuredAssetQueryResourceConfiguration();
+  } else {
+    query = assetQueryResourceConfigurationInput.parse({
+      ...storedConfiguration,
+      ...queryUpdate,
+    });
   }
-  const currentQuery = storedConfiguration;
-  const query =
-    queryUpdate === undefined
-      ? currentQuery
-      : queryUpdate === null
-        ? createDefaultStructuredAssetQueryResourceConfiguration()
-        : assetQueryResourceConfigurationInput.parse({
-            ...currentQuery,
-            ...queryUpdate,
-          });
+  const currentDataSource = Array.from(state.dataSources?.values() ?? []).find(
+    (dataSource) =>
+      dataSource.type === "resource" && dataSource.resourceId === resource.id
+  );
+  assertQueryExpressionsInScope({
+    state,
+    scopeInstanceId:
+      input.scopeInstanceId ??
+      currentDataSource?.scopeInstanceId ??
+      ROOT_INSTANCE_ID,
+    query,
+  });
   return updateResource(
     state,
     {

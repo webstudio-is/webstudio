@@ -50,6 +50,9 @@ export const builderRuntimeCutoverManifests = [
       "projectSettings.getMarketplaceProduct",
       "projectSettings.update",
       "projectSettings.updateMarketplaceProduct",
+      "responseHeaders.list",
+      "responseHeaders.set",
+      "responseHeaders.delete",
     ] as const,
     callers: ["appRouter.api.projectSettings"] as const,
   },
@@ -135,6 +138,7 @@ export const builderRuntimeCutoverManifests = [
       "instances.insertComponent",
       "instances.insertCollection",
       "instances.insertFragment",
+      "instances.insertMdxText",
       "slots.attach",
       "slots.extract",
     ] as const,
@@ -144,6 +148,23 @@ export const builderRuntimeCutoverManifests = [
       "MCP insert-fragment",
       "MCP shared Slot authoring",
       "Builder components panel",
+    ] as const,
+  },
+  {
+    family: "content-block-source-operations",
+    operationIds: [
+      "contentBlocks.inspectSource",
+      "contentBlocks.connectSource",
+      "contentBlocks.switchSource",
+      "contentBlocks.disconnectSource",
+      "contentBlocks.editSource",
+      "contentBlocks.updateFrontmatter",
+      "contentBlocks.reloadSource",
+      "contentBlocks.migrateTemplateReferences",
+    ] as const,
+    callers: [
+      "Builder Content Block settings",
+      "MCP/CLI Content Block authoring",
     ] as const,
   },
   {
@@ -181,7 +202,11 @@ export const builderRuntimeCutoverManifests = [
   },
   {
     family: "instance-metadata-mutations",
-    operationIds: ["instances.setTag", "instances.setLabel"] as const,
+    operationIds: [
+      "instances.setTag",
+      "instances.setLabel",
+      "instances.setName",
+    ] as const,
     callers: ["Builder settings panel", "Builder navigator"] as const,
   },
   {
@@ -191,8 +216,19 @@ export const builderRuntimeCutoverManifests = [
   },
   {
     family: "style-reads",
-    operationIds: ["styles.getDeclarations", "designTokens.list"] as const,
-    callers: ["appRouter.api.styles", "appRouter.api.designTokens"] as const,
+    operationIds: [
+      "styles.getDeclarations",
+      "tagStyles.list",
+      "designTokens.list",
+      "designTokens.copy",
+    ] as const,
+    callers: [
+      "appRouter.api.styles",
+      "appRouter.api.designTokens",
+      "Builder token menu",
+      "MCP/CLI token transfer",
+      "MCP/CLI Tag style discovery",
+    ] as const,
   },
   {
     family: "style-declaration-mutations",
@@ -216,8 +252,13 @@ export const builderRuntimeCutoverManifests = [
       "designTokens.detach",
       "designTokens.extract",
       "designTokens.createAttached",
+      "designTokens.paste",
     ] as const,
-    callers: ["appRouter.api.designTokens"] as const,
+    callers: [
+      "appRouter.api.designTokens",
+      "Builder token paste",
+      "MCP/CLI token transfer",
+    ] as const,
   },
   {
     family: "style-source-mutations",

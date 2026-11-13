@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
+  encodeDataVariableId,
   elementComponent,
   isRootFolder,
   ROOT_FOLDER_ID,
@@ -58,6 +59,7 @@ import {
   nameToSlug,
   nameToPath,
   pageCreateInput,
+  pageUpdateInput,
   pageCustomMetadataSettingsInput,
   pageFieldsInput,
   pageGeneralSettingsInput,
@@ -67,6 +69,7 @@ import {
   pageTemplateSettingsInput,
   pageTextContentSettingsInput,
   pageSettingsDefaultValues,
+  pageSettingsUpdateInput,
   reparentOrphans,
   reparentOrphansMutable,
   savePagePathInHistory,
@@ -781,7 +784,6 @@ describe("serialized page helpers", () => {
           status: "404",
         },
       },
-      guidance: expect.stringContaining("No exact page exists"),
     });
   });
 
@@ -830,6 +832,70 @@ describe("serialized page helpers", () => {
       matchedPattern: true,
       matchedFallback: false,
     });
+  });
+
+  test("looks up pages with published route ranking and wildcard behavior", () => {
+    const pages = migratePages({
+      meta: {},
+      homePage: {
+        id: "home",
+        name: "Home",
+        path: "",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "homeBody",
+      },
+      pages: [
+        {
+          id: "docs-splat",
+          name: "Docs splat",
+          path: "/docs/*",
+          title: `"Docs splat"`,
+          meta: {},
+          rootInstanceId: "docsSplatBody",
+        },
+        {
+          id: "docs-optional",
+          name: "Docs optional",
+          path: "/docs/:slug?",
+          title: `"Docs optional"`,
+          meta: {},
+          rootInstanceId: "docsOptionalBody",
+        },
+        {
+          id: "docs-static",
+          name: "Docs static",
+          path: "/docs/guide",
+          title: `"Docs static"`,
+          meta: {},
+          rootInstanceId: "docsStaticBody",
+        },
+      ],
+      folders: [
+        createRootFolder([
+          "home",
+          "docs-splat",
+          "docs-optional",
+          "docs-static",
+        ]),
+      ],
+    });
+    const serializedPages = getSerializedPages({ pages });
+
+    for (const [path, expectedPageId] of [
+      ["/docs", "docs-optional"],
+      ["/docs/guide", "docs-static"],
+      ["/docs/other", "docs-optional"],
+      ["/docs/a/b", "docs-splat"],
+      ["/DOCS/GUIDE", "docs-static"],
+    ]) {
+      expect(
+        findSerializedPageByInput(serializedPages, { pagePath: path })?.id
+      ).toBe(expectedPageId);
+    }
+    expect(
+      findSerializedPageByInput(serializedPages, { pagePath: "/docs/*" })?.id
+    ).toBe("docs-splat");
   });
 
   test("serializes page summary and details with parent folder", () => {
@@ -1262,12 +1328,10 @@ describe("page input schemas", () => {
         },
       })
     ).toEqual([
-      expect.stringMatching(/^title: .*Plain fixed text is accepted/),
+      expect.stringMatching(/^title: .*quoted string expression/),
+      expect.stringMatching(/^meta.description: .*quoted string expression/),
       expect.stringMatching(
-        /^meta.description: .*Plain fixed text is accepted/
-      ),
-      expect.stringMatching(
-        /^meta.custom.0.content: .*Plain fixed text is accepted/
+        /^meta.custom.0.content: .*quoted string expression/
       ),
     ]);
   });
@@ -1793,7 +1857,7 @@ describe("createPage", () => {
         expect.objectContaining({
           path: ["title"],
           message: expect.stringContaining(
-            'Pass it as a string, not as a prop value object like {"type":"string","value":"..."}'
+            'Pass expression source as a string, not as a prop value object like {"type":"string","value":"..."}'
           ),
         }),
       ])
@@ -1817,16 +1881,21 @@ describe("createPage", () => {
     const pages = createPages();
     const mutation = createPage(
       { pages },
-      {
+      pageCreateInput.parse({
         name: "Atlas Ops Design System",
         path: "/atlas-ops-design-system",
-        title: "Atlas Ops Design System",
+        title: `"Atlas Ops Design System"`,
         meta: {
-          description: "Reusable interface examples for operations teams.",
-          socialImageUrl: "https://assets.example.com/atlas-og.png",
-          custom: [{ property: "og:title", content: "Atlas Ops" }],
+          description: `"Reusable interface examples for operations teams."`,
+          socialImageUrl: `"https://assets.example.com/atlas-og.png"`,
+          custom: [
+            {
+              property: "og:title",
+              content: `"Atlas Ops"`,
+            },
+          ],
         },
-      },
+      }),
       { createId: createIdFactory() }
     );
 
@@ -1874,18 +1943,136 @@ describe("createPage", () => {
     ]);
   });
 
-  test("accepts multi-sentence fixed page text", () => {
+  test("accepts a fixed page title with a spaced separator", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      pageCreateInput.parse({
+        name: "Pricing",
+        path: "/pricing",
+        title: `"Pricing - Plans"`,
+      }),
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({ title: `"Pricing - Plans"` }),
+      })
+    );
+  });
+
+  test("accepts a fixed page title that is not valid JavaScript", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      pageCreateInput.parse({
+        name: "Pricing",
+        path: "/pricing",
+        title: `"Pricing - Plans for teams"`,
+      }),
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({
+          title: `"Pricing - Plans for teams"`,
+        }),
+      })
+    );
+  });
+
+  test("does not guess whether unquoted page input is fixed text", () => {
+    expect(() =>
+      createPage(
+        { pages: createPages() },
+        { name: "Pricing", path: "/pricing", title: "Plans for teams" },
+        { createId: createIdFactory() }
+      )
+    ).toThrow(/Invalid Webstudio expression/);
+
+    const mutation = createPage(
+      { pages: createPages() },
+      { name: "Pricing", path: "/pricing", title: "Pricing - Plans" },
+      { createId: createIdFactory() }
+    );
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({ title: "Pricing - Plans" }),
+      })
+    );
+  });
+
+  test("preserves page expressions with explicit string concatenation", () => {
     const mutation = createPage(
       { pages: createPages() },
       {
+        name: "Pricing",
+        path: "/pricing",
+        title: 'pageTitle + " | Plans"',
+      },
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({ title: 'pageTitle + " | Plans"' }),
+      })
+    );
+  });
+
+  test("preserves numeric arithmetic in page expressions", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      { name: "Pricing", path: "/pricing", title: "price - 1" },
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({ title: "price - 1" }),
+      })
+    );
+  });
+
+  test("preserves addition between expression variables", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      { name: "Pricing", path: "/pricing", title: "first + second" },
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({ title: "first + second" }),
+      })
+    );
+  });
+
+  test("preserves parenthesized subtraction as an expression", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      { name: "Pricing", path: "/pricing", title: "(first - second)" },
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({ title: "(first - second)" }),
+      })
+    );
+  });
+
+  test("accepts multi-sentence fixed page text", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      pageCreateInput.parse({
         name: "Marques",
         path: "/marques",
-        title: "Marques. Toutes nos marques",
+        title: `"Marques. Toutes nos marques"`,
         meta: {
-          description:
-            "Toutes nos marques moto. Concessionnaire multimarque en Gironde.",
+          description: `"Toutes nos marques moto. Concessionnaire multimarque en Gironde."`,
         },
-      },
+      }),
       { createId: createIdFactory() }
     );
 
@@ -1931,11 +2118,62 @@ describe("createPage", () => {
         },
         { createId: createIdFactory() }
       )
-    ).toThrow(/title: .*Plain fixed text is accepted/);
+    ).toThrow(/title: .*quoted string expression/);
   });
 });
 
 describe("updatePage", () => {
+  test("binds readable page metadata variables to the page scope", () => {
+    const pages = createPages();
+    const instances = new Map([
+      ["pageBody", createPageRootInstance("pageBody")],
+    ]);
+    const dataSources = new Map([
+      [
+        "postForSlugId",
+        {
+          id: "postForSlugId",
+          scopeInstanceId: "pageBody",
+          name: "postForSlug",
+          type: "resource" as const,
+          resourceId: "postResourceId",
+        },
+      ],
+    ]);
+
+    expect(
+      updatePage(
+        { pages, instances, dataSources },
+        {
+          pageId: "page",
+          values: {
+            title: '"Slug: " + system.params.slug',
+            meta: {
+              description:
+                "postForSlug.data.at(0).field.Slug === system.params.slug ? postForSlug.data.at(0).field.Description : undefined",
+            },
+          },
+        }
+      ).payload
+    ).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "replace",
+            path: ["pages", "page", "title"],
+            value: `"Slug: " + ${encodeDataVariableId(":system")}.params.slug`,
+          },
+          {
+            op: "add",
+            path: ["pages", "page", "meta", "description"],
+            value: `${encodeDataVariableId("postForSlugId")}.data.at(0).field.Slug === ${encodeDataVariableId(":system")}.params.slug ? ${encodeDataVariableId("postForSlugId")}.data.at(0).field.Description : undefined`,
+          },
+        ],
+      },
+    ]);
+  });
+
   test("sets and clears draft", () => {
     const pages = createPages();
 
@@ -1998,16 +2236,16 @@ describe("updatePage", () => {
     expect(
       updatePage(
         { pages },
-        {
+        pageUpdateInput.parse({
           pageId: "page",
           values: {
-            title: "Pricing Plans",
+            title: `"Pricing Plans"`,
             meta: {
-              description: "Plans for teams.",
-              socialImageUrl: "https://assets.example.com/pricing-og.png",
+              description: `"Plans for teams."`,
+              socialImageUrl: `"https://assets.example.com/pricing-og.png"`,
             },
           },
-        }
+        })
       ).payload
     ).toEqual([
       {
@@ -2036,16 +2274,15 @@ describe("updatePage", () => {
   test("accepts multi-sentence fixed page text", () => {
     const mutation = updatePage(
       { pages: createPages() },
-      {
+      pageUpdateInput.parse({
         pageId: "page",
         values: {
-          title: "Marques. Toutes nos marques",
+          title: `"Marques. Toutes nos marques"`,
           meta: {
-            description:
-              "L'atelier présente toutes nos marques moto. Concessionnaire multimarque en Gironde.",
+            description: `"L'atelier présente toutes nos marques moto. Concessionnaire multimarque en Gironde."`,
           },
         },
-      }
+      })
     );
 
     expect(mutation.payload[0]?.patches).toEqual([
@@ -2075,7 +2312,7 @@ describe("updatePage", () => {
           },
         }
       )
-    ).toThrow(/title: .*Plain fixed text is accepted/);
+    ).toThrow(/title: .*quoted string expression/);
   });
 
   test("rejects updated page paths with unsupported URL pattern syntax", () => {
@@ -2129,6 +2366,15 @@ describe("updatePage", () => {
 });
 
 describe("updatePageMarketplace", () => {
+  test("rejects update-page fields that page settings does not accept", () => {
+    expect(
+      pageSettingsUpdateInput.safeParse({
+        pageId: "page",
+        values: { meta: { description: '"Description"' } },
+      }).success
+    ).toBe(false);
+  });
+
   test("updates settings, marketplace, and home page in one mutation", () => {
     const pages = createPages();
     const result = updatePageSettings(
@@ -2136,8 +2382,8 @@ describe("updatePageMarketplace", () => {
       {
         pageId: "page",
         values: {
-          title: "Landing",
-          description: "Welcome",
+          title: `"Landing"`,
+          description: `"Welcome"`,
           marketplace: {
             include: true,
             category: "Marketing",
@@ -2457,9 +2703,9 @@ describe("page settings validation", () => {
     ).toBe("/folder/post");
   });
 
-  test("accumulates duplicate path errors from the general section", () => {
+  test("accumulates duplicate path errors from the general section", async () => {
     const pages = createPages();
-    const errors = validatePageSettings({
+    const errors = await validatePageSettings({
       pages,
       pageId: undefined,
       values: createPageSettingsValues({ path: "/page" }),
@@ -2469,8 +2715,8 @@ describe("page settings validation", () => {
     expect(errors.path).toEqual(["All paths must be unique"]);
   });
 
-  test("accumulates auth errors with other field errors", () => {
-    const errors = validatePageSettings({
+  test("accumulates auth errors with other field errors", async () => {
+    const errors = await validatePageSettings({
       pages: createPages(),
       pageId: undefined,
       values: createPageSettingsValues({
@@ -2494,24 +2740,26 @@ describe("page settings validation", () => {
     });
   });
 
-  test("does not require auth when both credentials are empty", () => {
+  test("does not require auth when both credentials are empty", async () => {
     expect(
-      validatePageSettings({
-        pages: createPages(),
-        pageId: undefined,
-        values: createPageSettingsValues(),
-        variableValues: new Map(),
-      }).auth
+      (
+        await validatePageSettings({
+          pages: createPages(),
+          pageId: undefined,
+          values: createPageSettingsValues(),
+          variableValues: new Map(),
+        })
+      ).auth
     ).toBeUndefined();
   });
 
-  test("validates only visible document type sections", () => {
+  test("validates only visible document type sections", async () => {
     const invalidHtmlMetadata = {
       title: `""`,
       language: `"not a locale"`,
     };
 
-    const textErrors = validatePageSettings({
+    const textErrors = await validatePageSettings({
       pages: createPages(),
       pageId: undefined,
       values: createPageSettingsValues({
@@ -2526,7 +2774,7 @@ describe("page settings validation", () => {
     expect(textErrors.language).toBeUndefined();
     expect(textErrors.content).toBeDefined();
 
-    const xmlErrors = validatePageSettings({
+    const xmlErrors = await validatePageSettings({
       pages: createPages(),
       pageId: undefined,
       values: createPageSettingsValues({
@@ -2542,8 +2790,8 @@ describe("page settings validation", () => {
     expect(xmlErrors.content).toBeUndefined();
   });
 
-  test("allows redirect on the home page", () => {
-    const errors = validatePageSettings({
+  test("allows redirect on the home page", async () => {
+    const errors = await validatePageSettings({
       pages: createPages(),
       pageId: "home",
       values: createPageSettingsValues({

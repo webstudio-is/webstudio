@@ -1,0 +1,228 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import * as csstree from "css-tree";
+import { describe, expect, test } from "vitest";
+import {
+  getCssVariableReferences,
+  parseColorSource,
+} from "./color-source-utils";
+
+const source = readFileSync(resolve("src/colors/colors.css"), "utf8");
+
+const replaceDeclaration = ({
+  css,
+  selector,
+  property,
+  value,
+}: {
+  css: string;
+  selector?: string;
+  property: string;
+  value: string;
+}) => {
+  const stylesheet = csstree.parse(css);
+  let replacementCount = 0;
+  csstree.walk(stylesheet, {
+    visit: "Rule",
+    enter(node) {
+      if (
+        node.type !== "Rule" ||
+        (selector !== undefined && csstree.generate(node.prelude) !== selector)
+      ) {
+        return;
+      }
+      node.block.children.forEach((child) => {
+        if (child.type !== "Declaration" || child.property !== property) {
+          return;
+        }
+        child.value = csstree.parse(value, { context: "value" });
+        replacementCount += 1;
+      });
+    },
+  });
+  expect(replacementCount).toBe(1);
+  return csstree.generate(stylesheet);
+};
+
+const addRootDeclarations = (
+  css: string,
+  declarations: Record<string, string>
+) => {
+  const stylesheet = csstree.parse(css);
+  let rootCount = 0;
+  csstree.walk(stylesheet, {
+    visit: "Rule",
+    enter(node) {
+      if (node.type !== "Rule" || csstree.generate(node.prelude) !== ":root") {
+        return;
+      }
+      rootCount += 1;
+      for (const [property, value] of Object.entries(declarations)) {
+        node.block.children.appendData(
+          csstree.parse(`${property}:${value}`, { context: "declaration" })
+        );
+      }
+    },
+  });
+  expect(rootCount).toBe(1);
+  return csstree.generate(stylesheet);
+};
+
+describe("Craft color CSS source", () => {
+  test("parses CSS variable references with native fallback syntax", () => {
+    expect(
+      getCssVariableReferences(
+        "linear-gradient(var(--overlay-interaction-hover), var(--overlay-interaction-hover)), var(--background-primary, oklch(50% 0 0))"
+      )
+    ).toEqual([
+      "--overlay-interaction-hover",
+      "--overlay-interaction-hover",
+      "--background-primary",
+    ]);
+  });
+
+  test("parses theme parameters, scheme bounds, and semantic categories", () => {
+    const colors = parseColorSource(source);
+
+    expect(Object.keys(colors.theme.color)).toHaveLength(6);
+    expect(Object.keys(colors.theme.contrast)).toHaveLength(3);
+    expect(Object.keys(colors.scheme.light)).toEqual(
+      Object.keys(colors.scheme.dark)
+    );
+    expect(colors.derived).toHaveProperty("focus");
+    expect(Object.keys(colors.semantic)).toEqual([
+      "background",
+      "foreground",
+      "border",
+      "overlay",
+    ]);
+    expect(
+      Object.values(colors.semantic).reduce(
+        (count, category) => count + Object.keys(category).length,
+        0
+      )
+    ).toBe(41);
+    expect(colors.semantic.background).toHaveProperty("floating");
+    expect(colors.semantic.background).toHaveProperty("floating-raised");
+    expect(colors.semantic.background).toHaveProperty("floating-nested");
+    expect(colors.semantic.foreground).toHaveProperty("accent");
+    expect(colors.semantic.foreground).not.toHaveProperty("accent-floating");
+    expect(colors.semantic.background).toHaveProperty("text-selection");
+    expect(colors.semantic.foreground).toHaveProperty("on-text-selection");
+    expect(colors.semantic.background).toHaveProperty("positive-subtle");
+    expect(colors.semantic.background).toHaveProperty("accent-secondary");
+    expect(colors.semantic.foreground).toHaveProperty("accent-secondary");
+    expect(colors.semantic.foreground).toHaveProperty("on-accent-secondary");
+    expect(colors.semantic.background).not.toHaveProperty("accent-hover");
+    expect(colors.semantic.overlay).toHaveProperty("interaction-hover");
+  });
+
+  test("derives structural groups from the CSS source", () => {
+    const extendedSource = addRootDeclarations(source, {
+      "--theme-color-custom": "oklch(50% 0.1 300)",
+      "--color-custom":
+        "oklch(from var(--theme-color-custom) clamp(0.2, l, 0.48) c h)",
+      "--foreground-custom":
+        "oklch(from var(--color-custom) var(--scheme-foreground-soft-lightness) c h)",
+    });
+    const colors = parseColorSource(extendedSource);
+
+    expect(colors.theme.color.custom).toBe("oklch(50% 0.1 300)");
+    expect(colors.derived.custom).toContain("var(--theme-color-custom)");
+    expect(colors.semantic.foreground.custom).toContain("var(--color-custom)");
+  });
+
+  test("rejects color variables outside the owned root selectors", () => {
+    const invalidSource = `${source}
+      .feature {
+        --foreground-unvalidated: var(--color-foreground);
+      }
+    `;
+
+    expect(() => parseColorSource(invalidSource)).toThrow(
+      "Color variables may not be declared in .feature"
+    );
+  });
+
+  test("rejects owned root selectors nested in conditional rules", () => {
+    const invalidSource = source
+      .replace(":root {", "@media (prefers-contrast: more) { :root {")
+      .replace(
+        ':root[data-color-scheme="dark"] {',
+        '} :root[data-color-scheme="dark"] {'
+      );
+
+    expect(() => parseColorSource(invalidSource)).toThrow(
+      "Color variables may be declared only in top-level root selectors"
+    );
+  });
+
+  test("accepts standalone semantic color literals", () => {
+    const customSource = replaceDeclaration({
+      css: source,
+      property: "--background-primary",
+      value: "oklch(50% 0.2 250)",
+    });
+
+    expect(
+      getCssVariableReferences(
+        parseColorSource(customSource).semantic.background.primary
+      )
+    ).toEqual([]);
+  });
+
+  test("rejects circular semantic references", () => {
+    const firstCycle = replaceDeclaration({
+      css: source,
+      property: "--background-primary",
+      value: "var(--background-secondary)",
+    });
+    const cycle = replaceDeclaration({
+      css: firstCycle,
+      property: "--background-secondary",
+      value: "var(--background-primary)",
+    });
+
+    expect(() => parseColorSource(cycle)).toThrow(
+      "Circular color reference: --background-primary -> --background-secondary -> --background-primary"
+    );
+  });
+
+  test.each([
+    { selector: ":root", mode: "light" },
+    { selector: ':root[data-color-scheme="dark"]', mode: "dark" },
+  ])("rejects missing references in $mode scheme bounds", ({ selector }) => {
+    const invalidSource = replaceDeclaration({
+      css: source,
+      selector,
+      property: "--scheme-background-lightness",
+      value: "var(--scheme-missing)",
+    });
+
+    expect(() => parseColorSource(invalidSource)).toThrow(
+      `--scheme-background-lightness references missing variable --scheme-missing`
+    );
+  });
+
+  test("rejects duplicate root selectors and declarations", () => {
+    expect(() => parseColorSource(`${source}\n:root {}`)).toThrow(
+      "Duplicate color selector: :root"
+    );
+    const duplicate = addRootDeclarations(source, {
+      "--color-background": "var(--theme-color-neutral)",
+    });
+    expect(() => parseColorSource(duplicate)).toThrow(
+      "Duplicate color declaration: --color-background"
+    );
+  });
+
+  test("rejects cycles introduced by a dark scheme override", () => {
+    const cycle = replaceDeclaration({
+      css: source,
+      selector: ':root[data-color-scheme="dark"]',
+      property: "--scheme-background-lightness",
+      value: "var(--color-background)",
+    });
+    expect(() => parseColorSource(cycle)).toThrow("Circular color reference");
+  });
+});

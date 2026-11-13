@@ -7,7 +7,10 @@ import {
   css,
   List,
   ListItem,
+  InsetList,
+  InsetListItem,
   IconButton,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { ChevronUpIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -18,61 +21,54 @@ import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 import type { SortField, SortOrder } from "./sort";
 
+const projectColumns =
+  "minmax(0, 35fr) repeat(3, minmax(0, 20fr)) minmax(0, 5fr)";
+
 const tableStyles = css({
-  display: "table",
+  display: "grid",
+  alignContent: "start",
   width: "100%",
-  tableLayout: "fixed",
-  borderCollapse: "collapse",
   marginBottom: theme.spacing[13],
   minWidth: 550,
   flexGrow: 1,
 
   '& [role="rowgroup"]': {
-    display: "table-row-group",
+    display: "grid",
   },
 
   '& [role="row"]': {
-    display: "table-row",
+    display: "grid",
+    gridTemplateColumns: projectColumns,
+    alignItems: "center",
     position: "relative",
-    "&:focus-visible": {
-      outline: `1px solid ${theme.colors.borderFocus}`,
-    },
-    '&:has([role="cell"]):hover': {
-      background: theme.colors.backgroundHover,
-    },
+  },
+
+  "& [data-projects-header]": {
+    marginInline: theme.spacing[3],
   },
 
   '& [role="columnheader"]': {
-    display: "table-cell",
     padding: theme.spacing[5],
     paddingBottom: theme.spacing[3],
     textAlign: "left",
-    borderBottom: `1px solid ${theme.colors.borderMain}`,
-    "&:first-child": {
-      width: "35%",
-    },
-    "&:nth-child(2), &:nth-child(3), &:nth-child(4)": {
-      width: "20%",
-    },
-    "&:last-child": {
-      width: "5%",
-    },
+    borderBottom: `1px solid ${cssVar("--border-default")}`,
   },
 
   '& [role="cell"]': {
-    display: "table-cell",
     padding: theme.spacing[5],
-    verticalAlign: "middle",
+    minWidth: 0,
   },
 });
 
 type ProjectsListItemProps = {
+  index: number;
   project: DashboardProject;
   publisherHost: string;
   projectsTags: User["projectsTags"];
 };
 
 export const ProjectsListItem = ({
+  index,
   project: {
     id,
     title,
@@ -102,60 +98,62 @@ export const ProjectsListItem = ({
 
   return (
     <>
-      <ListItem index={0} asChild>
-        <div role="row">
-          <div role="cell">
-            <Flex direction="column" gap="1">
-              <Link
-                href={linkPath}
-                color="inherit"
-                underline="none"
-                tabIndex={-1}
-                stretched
-              >
-                {title}
-              </Link>
-              {isPublished && (
+      <ListItem index={index} asChild>
+        <InsetListItem asChild css={{ padding: 0 }}>
+          <div role="row">
+            <div role="cell">
+              <Flex direction="column" gap="1">
                 <Link
-                  href={`https://${displayDomain}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  color="subtle"
-                  underline="hover"
+                  href={linkPath}
+                  color="inherit"
+                  underline="none"
                   tabIndex={-1}
-                  aria-label={`Visit ${title} website at ${displayDomain}`}
-                  css={{ zIndex: 1 }}
+                  stretched
                 >
-                  {displayDomain}
+                  {title}
                 </Link>
-              )}
-            </Flex>
-          </div>
+                {isPublished && (
+                  <Link
+                    href={`https://${displayDomain}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    color="subtle"
+                    underline="hover"
+                    tabIndex={-1}
+                    aria-label={`Visit ${title} website at ${displayDomain}`}
+                    css={{ zIndex: 1 }}
+                  >
+                    {displayDomain}
+                  </Link>
+                )}
+              </Flex>
+            </div>
 
-          <div role="cell">
-            <Text color="subtle">
-              {latestBuildVirtual?.updatedAt
-                ? formatDate(latestBuildVirtual.updatedAt)
-                : formatDate(createdAt)}
-            </Text>
-          </div>
+            <div role="cell">
+              <Text color="subtle">
+                {latestBuildVirtual?.updatedAt
+                  ? formatDate(latestBuildVirtual.updatedAt)
+                  : formatDate(createdAt)}
+              </Text>
+            </div>
 
-          <div role="cell">
-            <Text color="subtle">
-              {isPublished && latestBuildVirtual
-                ? formatDate(latestBuildVirtual.createdAt)
-                : "Not published"}
-            </Text>
-          </div>
+            <div role="cell">
+              <Text color="subtle">
+                {isPublished && latestBuildVirtual
+                  ? formatDate(latestBuildVirtual.createdAt)
+                  : "Not published"}
+              </Text>
+            </div>
 
-          <div role="cell">
-            <Text color="subtle">{formatDate(createdAt)}</Text>
-          </div>
+            <div role="cell">
+              <Text color="subtle">{formatDate(createdAt)}</Text>
+            </div>
 
-          <div role="cell">
-            <ProjectMenu projectId={id} onOpenChange={setOpenDialog} />
+            <div role="cell">
+              <ProjectMenu projectId={id} onOpenChange={setOpenDialog} />
+            </div>
           </div>
-        </div>
+        </InsetListItem>
       </ListItem>
 
       <ProjectDialogs
@@ -201,7 +199,7 @@ export const ProjectsList = ({
       <List asChild>
         <div role="rowgroup">
           <ListItem index={0} asChild>
-            <div role="row">
+            <div role="row" data-projects-header>
               {columns.map((column, index) => (
                 <div role="columnheader" key={index}>
                   {column ? (
@@ -241,16 +239,17 @@ export const ProjectsList = ({
       </List>
 
       <List asChild>
-        <div role="rowgroup">
-          {projects.map((project) => (
+        <InsetList role="rowgroup">
+          {projects.map((project, index) => (
             <ProjectsListItem
               key={project.id}
+              index={index}
               project={project}
               publisherHost={publisherHost}
               projectsTags={projectsTags}
             />
           ))}
-        </div>
+        </InsetList>
       </List>
     </div>
   );

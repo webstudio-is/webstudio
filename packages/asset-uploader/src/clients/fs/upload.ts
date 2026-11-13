@@ -8,6 +8,7 @@ import {
   getAssetData,
 } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
+import type { AssetInfoFallback } from "../../client";
 
 export const uploadToFs = async ({
   name,
@@ -15,6 +16,7 @@ export const uploadToFs = async ({
   data: dataStream,
   maxSize,
   fileDirectory,
+  assetInfoFallback,
   assetDataOverride,
 }: {
   name: string;
@@ -22,6 +24,7 @@ export const uploadToFs = async ({
   data: AsyncIterable<Uint8Array>;
   maxSize: number;
   fileDirectory: string;
+  assetInfoFallback: AssetInfoFallback | undefined;
   assetDataOverride?: AssetDataOverride;
 }): Promise<AssetData> => {
   const filepath = resolve(fileDirectory, name);
@@ -31,16 +34,25 @@ export const uploadToFs = async ({
 
   const data = await buffer(limitSize(dataStream));
   const assetData = applyAssetDataOverride(
-    await getAssetData({
-      type: type.startsWith("image")
-        ? "image"
-        : type === "font"
-          ? "font"
-          : "file",
-      size: data.byteLength,
-      data,
-      name,
-    }),
+    type.startsWith("video") && assetInfoFallback !== undefined
+      ? {
+          size: data.byteLength,
+          format: assetInfoFallback.format,
+          meta: {
+            width: assetInfoFallback.width,
+            height: assetInfoFallback.height,
+          },
+        }
+      : await getAssetData({
+          type: type.startsWith("image")
+            ? "image"
+            : type === "font"
+              ? "font"
+              : "file",
+          size: data.byteLength,
+          data,
+          name,
+        }),
     assetDataOverride
   );
 

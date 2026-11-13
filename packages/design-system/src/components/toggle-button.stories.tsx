@@ -1,5 +1,5 @@
 import { BorderRadiusIndividualIcon } from "@webstudio-is/icons";
-import { ToggleButton as ToggleButtonComponent } from "./toggle-button";
+import { IconToggleButton, ToggleButton } from "./toggle-button";
 import { StorySection, StoryGrid } from "./storybook";
 
 const toggleButtonVariants = [
@@ -10,14 +10,18 @@ const toggleButtonVariants = [
   "remote",
 ] as const;
 
-export const ToggleButton = () => (
+export const IconToggleButtons = () => (
   <>
     <StorySection title="Variants">
       <StoryGrid horizontal>
         {toggleButtonVariants.map((variant) => (
-          <ToggleButtonComponent key={variant} variant={variant}>
+          <IconToggleButton
+            key={variant}
+            variant={variant}
+            aria-label={variant}
+          >
             <BorderRadiusIndividualIcon fill="currentColor" />
-          </ToggleButtonComponent>
+          </IconToggleButton>
         ))}
       </StoryGrid>
     </StorySection>
@@ -25,9 +29,14 @@ export const ToggleButton = () => (
     <StorySection title="Variants disabled">
       <StoryGrid horizontal>
         {toggleButtonVariants.map((variant) => (
-          <ToggleButtonComponent key={variant} variant={variant} disabled>
+          <IconToggleButton
+            key={variant}
+            variant={variant}
+            aria-label={variant}
+            disabled
+          >
             <BorderRadiusIndividualIcon fill="currentColor" />
-          </ToggleButtonComponent>
+          </IconToggleButton>
         ))}
       </StoryGrid>
     </StorySection>
@@ -35,13 +44,14 @@ export const ToggleButton = () => (
     <StorySection title="Variants on">
       <StoryGrid horizontal>
         {toggleButtonVariants.map((variant) => (
-          <ToggleButtonComponent
+          <IconToggleButton
             key={variant}
             variant={variant}
+            aria-label={variant}
             data-state="on"
           >
             <BorderRadiusIndividualIcon fill="currentColor" />
-          </ToggleButtonComponent>
+          </IconToggleButton>
         ))}
       </StoryGrid>
     </StorySection>
@@ -49,9 +59,14 @@ export const ToggleButton = () => (
     <StorySection title="Controlled pressed">
       <StoryGrid horizontal>
         {toggleButtonVariants.map((variant) => (
-          <ToggleButtonComponent key={variant} variant={variant} pressed>
+          <IconToggleButton
+            key={variant}
+            variant={variant}
+            aria-label={variant}
+            pressed
+          >
             <BorderRadiusIndividualIcon fill="currentColor" />
-          </ToggleButtonComponent>
+          </IconToggleButton>
         ))}
       </StoryGrid>
     </StorySection>
@@ -59,13 +74,27 @@ export const ToggleButton = () => (
     <StorySection title="Default pressed (uncontrolled)">
       <StoryGrid horizontal>
         {toggleButtonVariants.map((variant) => (
-          <ToggleButtonComponent key={variant} variant={variant} defaultPressed>
+          <IconToggleButton
+            key={variant}
+            variant={variant}
+            aria-label={variant}
+            defaultPressed
+          >
             <BorderRadiusIndividualIcon fill="currentColor" />
-          </ToggleButtonComponent>
+          </IconToggleButton>
         ))}
       </StoryGrid>
     </StorySection>
   </>
+);
+
+export const TextToggleButtons = () => (
+  <StorySection title="Text toggle buttons">
+    <StoryGrid horizontal>
+      <ToggleButton>Inactive</ToggleButton>
+      <ToggleButton pressed>Selected</ToggleButton>
+    </StoryGrid>
+  </StorySection>
 );
 
 export default {

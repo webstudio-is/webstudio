@@ -2,11 +2,11 @@
 
 As a thank you to our earliest adopters, we've decided to increase the limits of all existing accounts. Here below are the new limits to each account type:
 
-You can find your plan name from your dashboard beside your profile image as shown below.
+You can find your plan name in the Dashboard beside your profile image.
 
-<figure><img src="../.gitbook/assets/dashboard-plan-name.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/dashboard-plan-name.png" alt="Dashboard profile menu showing the current plan name"><figcaption></figcaption></figure>
 
-### Webstudio LTDs
+## Webstudio LTDs
 
 Purchase link: [https://wstd.us/pricing](https://wstd.us/pricing)
 
@@ -17,7 +17,7 @@ Purchase link: [https://wstd.us/pricing](https://wstd.us/pricing)
 | LTD T2    | unlimited    | 2M             |
 | LTD T3    | unlimited    | unlimited      |
 
-### RocketHub LTDs
+## RocketHub LTDs
 
 No longer available for purchase.
 
@@ -27,7 +27,7 @@ No longer available for purchase.
 | RocketHub T2 | unlimited    | 1M             |
 | RocketHub T3 | unlimited    | 2M             |
 
-### Appsumo LTDs
+## AppSumo LTDs
 
 No longer available for purchase.
 

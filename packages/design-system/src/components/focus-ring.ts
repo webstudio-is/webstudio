@@ -1,3 +1,4 @@
+import { cssVar } from "../css-var";
 import { theme, type CSS } from "../stitches.config";
 
 export const focusRingStyle = (props?: CSS) => ({
@@ -7,7 +8,7 @@ export const focusRingStyle = (props?: CSS) => ({
     inset: theme.spacing[3],
     outlineWidth: 1,
     outlineStyle: "solid",
-    outlineColor: theme.colors.borderFocus,
+    outlineColor: cssVar("--border-focus"),
     borderRadius: theme.borderRadius[3],
     pointerEvents: "none",
     ...props,

@@ -6,18 +6,27 @@ description: Use the Style Panel to apply CSS styles to any instance on your pag
 
 The Style Panel is on the right side of the builder. It exposes every CSS property visually and applies styles to the currently selected instance. All style changes are scoped by the active [breakpoint](breakpoints.md) and style source.
 
-<figure><img src="../../.gitbook/assets/style-panel.png" alt="Style Panel on the right side of the builder"><figcaption><p>The Style Panel</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/style-panel-dark.png">
+  <img src="../../.gitbook/assets/style-panel-light.png" alt="Style panel showing style sources, layout, grid child, and spacing controls" width="240">
+</picture>
 
 ## Style sources
 
-At the top of the Style Panel is the **style source bar**, which determines where styles are saved and how reusable they are. There are two types of style sources:
+At the top of the Style Panel is the **style source bar**, which determines where styles are saved and how reusable they are. There are three types of style sources:
 
 - **Local** — styles apply only to this instance. See [Design tokens](design-tokens.md) for the full explanation of Local vs. Tokens.
+
 - **Tokens** — reusable style groups shared across multiple instances. See [Design tokens](design-tokens.md).
+- **Tag styles** — site-wide styles for an HTML tag, such as `h1` or `button`. See [Tag styles](tag-styles.md).
+
+To reuse Local styles on another instance, open the Local source menu and choose **Copy**, then select the destination instance and paste. Webstudio merges the copied styles into that instance's Local source. Pasted values replace matching properties, states, and breakpoints; other Local styles remain.
 
 [CSS variables](css-variables.md) are not a style source — they are named values (e.g. `--color-brand`) defined on any instance in the Advanced section and referenced inside style inputs across the site.
 
 Style label colors indicate where each value comes from. See [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) for the full reference.
+
+Click a badge under Value comes from in a property tooltip to jump to that style source, breakpoint, or instance.
 
 ## Sections
 
@@ -192,9 +201,20 @@ Move, rotate, scale, or skew the instance without affecting layout.
 
 ### Advanced
 
-A free-form CSS property editor for anything not covered by the sections above. Type any valid CSS property name — autocomplete shows the full list — and enter its value.
+Advanced styles uses the code editor. Enter property: value declarations in the Local group; autocomplete suggests properties and values. Cascaded or inherited, Preset, and Global variables are read-only. Search highlights matches; press Enter or Shift+Enter in the search field to move between them. Click the maximize button in the editor, or press Option+Shift+X, to open the centered editor. Click a Local color swatch to edit it with the Style panel’s color picker; other swatches are previews.
+
+While you type in Advanced styles, valid Local declarations preview on the canvas. Your editor text stays as typed; changes save when you finish editing.
+
+In the code editor, Enter adds a missing semicolon before starting the next declaration. If an unknown property looks like a typo, the editor suggests a CSS property and does not save the typo. Otherwise, Webstudio saves the name as a CSS variable with a `--` prefix.
+
+Autocomplete includes standard, experimental, nonstandard, and obsolete CSS
+properties. A yellow warning marks any property that is not standard. Open the
+warning to review its status and browser-support risk, then select **Learn more
+on MDN** for compatibility details. Test these properties in the browsers your
+site supports before relying on them.
 
 **Common uses:**
+
 - Properties not exposed elsewhere: `cursor`, `pointer-events`, `will-change`, `content`, `list-style`, `appearance`, `resize`, `clip-path`, etc.
 - Defining [CSS variables](css-variables.md): add a property like `--my-color` with a value, and it becomes available to all child instances
 - Setting properties you know by name without searching the panel
@@ -202,6 +222,7 @@ A free-form CSS property editor for anything not covered by the sections above. 
 ## Related
 
 - [Design tokens](design-tokens.md) – Local styles, tokens, and how they work together
+- [Tag styles](tag-styles.md) – Set site-wide styles for HTML tags
 - [CSS variables](css-variables.md) – Named values used inside style inputs
 - [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) – What the blue, orange, and gray labels mean
 - [States and selectors](states-and-selectors.md) – Style hover, focus, and other states

@@ -18,8 +18,1044 @@ import {
   getResourceCacheKey,
   isLocalResource,
   loadResource,
+  loadResources,
+  type ResourceExchange,
+  type ResourceRequestGraph,
 } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
+import { createCloudflareManagedFormEmailSenderWithUrl } from "./managed-form-email";
+import {
+  loadResourceWithEmail,
+  loadResourcesWithEmail,
+} from "./email-resource-delivery";
+import {
+  loadResource as runtimeLoadResource,
+  loadResources as runtimeLoadResources,
+} from "./runtime";
+
+test("runtime exports the generic Resource loaders", () => {
+  expect(runtimeLoadResource).toBe(loadResource);
+  expect(runtimeLoadResources).toBe(loadResources);
+});
+
+test("Email graph adapter preserves a caller transport for other Resources", async () => {
+  const loadRequest = vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    data: "custom transport",
+  }));
+  const fetch = vi.fn<typeof globalThis.fetch>();
+  const result = await loadResourcesWithEmail(
+    fetch,
+    new Map([
+      [
+        "http",
+        {
+          name: "HTTP",
+          method: "get" as const,
+          url: "https://example.com",
+          searchParams: [],
+          headers: [],
+        },
+      ],
+    ]),
+    undefined,
+    { loadRequest }
+  );
+  expect(loadRequest).toHaveBeenCalledOnce();
+  expect(fetch).not.toHaveBeenCalled();
+  expect(result).toMatchObject({ http: { data: "custom transport" } });
+});
+
+test("Email Resources use the feature transport without an HTTP fetch", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>();
+  const result = await loadResourceWithEmail(fetch, {
+    name: "Owner email",
+    control: "email",
+    method: "post",
+    url: "",
+    searchParams: [],
+    headers: [],
+    email: {
+      recipientMode: "project",
+      recipients: [{ address: "owner@example.com" }],
+      subject: "New submission",
+      body: "Text",
+      includeAttachments: true,
+    },
+  });
+  expect(result).toMatchObject({ ok: false, status: 501 });
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+test("Email exchange inspection retains actual Email Service response headers", async () => {
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    "https://webstudio-email-service.wstd.workers.dev",
+    "preview-token",
+    new FormData(),
+    "project-id",
+    async () =>
+      Response.json(
+        {
+          result: {
+            data: {
+              ok: true,
+              status: 200,
+              statusText: "OK",
+              data: { id: "message-id" },
+            },
+          },
+        },
+        {
+          status: 202,
+          statusText: "Accepted",
+          headers: { "x-email-service-id": "message-id" },
+        }
+      )
+  );
+  const exchanges: Array<{
+    kind?: string;
+    status: number;
+    statusText: string;
+    header: string | null;
+  }> = [];
+  const onEmailRequest = vi.fn();
+  const onEmailResponse = vi.fn();
+
+  await loadResourceWithEmail(
+    vi.fn<typeof globalThis.fetch>(),
+    {
+      name: "Receipt email",
+      control: "email",
+      method: "post",
+      url: "",
+      searchParams: [],
+      headers: [],
+      email: {
+        recipientMode: "project",
+        recipients: [{ address: "team@example.com" }],
+        subject: "New submission",
+        body: "Submitted",
+        includeAttachments: false,
+      },
+    },
+    undefined,
+    {
+      sendEmail,
+      onEmailRequest,
+      onEmailResponse,
+      onExchange: (exchange) => {
+        exchanges.push({
+          kind: exchange.kind,
+          status: exchange.response.status,
+          statusText: exchange.response.statusText,
+          header: exchange.response.headers.get("x-email-service-id"),
+        });
+      },
+    }
+  );
+
+  expect(exchanges).toEqual([
+    {
+      kind: "email",
+      status: 202,
+      statusText: "Accepted",
+      header: "message-id",
+    },
+  ]);
+  expect(onEmailRequest).toHaveBeenCalledOnce();
+  expect(onEmailResponse).toHaveBeenCalledOnce();
+});
+
+test("Email inspection keeps raw HTTP response separate from failed delivery outcome", async () => {
+  const serviceBody = {
+    error: { code: "DELIVERY_FAILED", message: "Delivery was rejected" },
+  };
+  const providerResponse = Response.json(serviceBody, {
+    status: 200,
+    headers: { "x-email-service-id": "request-id" },
+  });
+  const readBody = vi.spyOn(providerResponse, "text");
+  const cloneResponse = vi.spyOn(providerResponse, "clone");
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    "https://webstudio-email-service.wstd.workers.dev",
+    "preview-token",
+    new FormData(),
+    "project-id",
+    async () => providerResponse
+  );
+  const exchanges: Array<{
+    response: { status: number; headers: Headers; data: unknown };
+    outcome?: { ok: boolean; status: number; data: unknown };
+  }> = [];
+
+  const result = await loadResourceWithEmail(
+    vi.fn<typeof globalThis.fetch>(),
+    {
+      name: "Receipt email",
+      control: "email",
+      method: "post",
+      url: "",
+      searchParams: [],
+      headers: [],
+      email: {
+        recipientMode: "project",
+        recipients: [{ address: "team@example.com" }],
+        subject: "New submission",
+        body: "Submitted",
+        includeAttachments: false,
+      },
+    },
+    undefined,
+    {
+      sendEmail,
+      onExchange: (exchange) => {
+        exchanges.push(exchange);
+      },
+    }
+  );
+
+  expect(result).toMatchObject({ ok: false, status: 502 });
+  expect(exchanges).toHaveLength(1);
+  expect(exchanges[0]).toMatchObject({
+    response: {
+      status: 200,
+      data: serviceBody,
+    },
+    outcome: {
+      ok: false,
+      status: 502,
+    },
+  });
+  expect(exchanges[0]?.response.headers.get("x-email-service-id")).toBe(
+    "request-id"
+  );
+  expect(readBody).toHaveBeenCalledOnce();
+  expect(cloneResponse).not.toHaveBeenCalled();
+});
+
+test("Email inspection preserves a non-JSON HTTP 200 error body", async () => {
+  const providerResponse = new Response("upstream delivery error", {
+    status: 200,
+    headers: { "content-type": "text/plain" },
+  });
+  const readBody = vi.spyOn(providerResponse, "text");
+  const cloneResponse = vi.spyOn(providerResponse, "clone");
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    "https://webstudio-email-service.wstd.workers.dev",
+    "preview-token",
+    new FormData(),
+    "project-id",
+    async () => providerResponse
+  );
+  const exchanges: Array<{
+    response: { status: number; data: unknown };
+    outcome?: { ok: boolean; status: number };
+  }> = [];
+
+  const result = await loadResourceWithEmail(
+    vi.fn<typeof globalThis.fetch>(),
+    {
+      name: "Receipt email",
+      control: "email",
+      method: "post",
+      url: "",
+      searchParams: [],
+      headers: [],
+      email: {
+        recipientMode: "project",
+        recipients: [{ address: "team@example.com" }],
+        subject: "New submission",
+        body: "Submitted",
+        includeAttachments: false,
+      },
+    },
+    undefined,
+    {
+      sendEmail,
+      onExchange: (exchange) => {
+        exchanges.push(exchange);
+      },
+    }
+  );
+
+  expect(result).toMatchObject({ ok: false, status: 502 });
+  expect(exchanges).toHaveLength(1);
+  expect(exchanges[0]).toMatchObject({
+    response: { status: 200, data: "upstream delivery error" },
+    outcome: { ok: false, status: 502 },
+  });
+  expect(readBody).toHaveBeenCalledOnce();
+  expect(cloneResponse).not.toHaveBeenCalled();
+});
+
+test.each(["\r", "\n", "\r\n"])(
+  "rejects a resolved Email subject containing %j before the provider path",
+  async (lineBreak) => {
+    const fetch = vi.fn<typeof globalThis.fetch>();
+    await expect(
+      loadResourceWithEmail(fetch, {
+        name: "Owner email",
+        control: "email",
+        method: "post",
+        url: "",
+        searchParams: [],
+        headers: [],
+        email: {
+          recipientMode: "project",
+          recipients: [{ address: "owner@example.com" }],
+          subject: `Hello${lineBreak}Bcc: intruder@example.com`,
+          body: "Text",
+          includeAttachments: true,
+        },
+      })
+    ).rejects.toThrow("Email subject must be text without line breaks");
+    expect(fetch).not.toHaveBeenCalled();
+  }
+);
+
+test("omits undefined request headers instead of sending the string undefined", async () => {
+  let submitted: Request | undefined;
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    submitted = new Request(input, init);
+    return Response.json({ accepted: true });
+  });
+  await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [
+      { name: "X-Forwarded-For", value: undefined },
+      { name: "User-Agent", value: "Visitor Browser" },
+    ],
+  });
+  expect(submitted?.headers.has("X-Forwarded-For")).toBe(false);
+  expect(submitted?.headers.get("User-Agent")).toBe("Visitor Browser");
+});
+
+test("resolves request resources after their dependency documents", async () => {
+  const requestedUrls: string[] = [];
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+    const url = String(input);
+    requestedUrls.push(url);
+    if (url.endsWith("/posts")) {
+      return Response.json({ id: "author-id" });
+    }
+    return Response.json({ name: "Ada" });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "posts",
+        outputName: "Posts",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Posts",
+          method: "get",
+          url: "https://example.com/posts",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "author",
+        outputName: "Author",
+        dependencies: ["posts"],
+        createRequest: (documents) => ({
+          name: "Author",
+          method: "get",
+          url: `https://example.com/authors/${
+            (documents.get("posts") as { data: { id: string } }).data.id
+          }`,
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "unused",
+        outputName: "Unused",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Unused",
+          method: "get",
+          url: "https://example.com/unused",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+    ],
+    rootIds: ["author"],
+  };
+
+  await expect(loadResources(fetch, graph)).resolves.toEqual({
+    Author: {
+      data: { name: "Ada" },
+      ok: true,
+      status: 200,
+      statusText: "",
+    },
+  });
+  expect(requestedUrls).toEqual([
+    "https://example.com/posts",
+    "https://example.com/authors/author-id",
+  ]);
+});
+
+test("retries only failed roots without replaying successful siblings or dependencies", async () => {
+  const calls: string[] = [];
+  let failingAttempts = 0;
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+    const url = String(input);
+    calls.push(url);
+    if (url.endsWith("/failed")) {
+      failingAttempts += 1;
+      return failingAttempts === 1
+        ? new Response("Temporary failure", { status: 503 })
+        : Response.json({ recovered: true });
+    }
+    return Response.json({ id: "dependency-id" });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "dependency",
+        outputName: "Dependency",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Dependency",
+          method: "get",
+          url: "https://example.com/dependency",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      ...["failed", "succeeded"].map((id) => ({
+        id,
+        outputName: id,
+        dependencies: ["dependency"],
+        createRequest: (documents: ReadonlyMap<string, unknown>) => ({
+          name: id,
+          method: "post" as const,
+          url: `https://example.com/${id}`,
+          searchParams: [],
+          headers: [],
+          body: (documents.get("dependency") as { data: unknown }).data,
+        }),
+      })),
+    ],
+    rootIds: ["failed", "succeeded"],
+  };
+
+  await expect(
+    loadResources(fetch, graph, undefined, {
+      shouldRetryFailedRoot: () => true,
+    })
+  ).resolves.toMatchObject({
+    failed: { ok: true, data: { recovered: true } },
+    succeeded: { ok: true },
+  });
+  expect(calls.filter((url) => url.endsWith("/dependency"))).toHaveLength(1);
+  expect(calls.filter((url) => url.endsWith("/failed"))).toHaveLength(2);
+  expect(calls.filter((url) => url.endsWith("/succeeded"))).toHaveLength(1);
+});
+
+test("a second failed root attempt is final and cancellation is not retried", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>(
+    async () => new Response("Still failing", { status: 422 })
+  );
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "root",
+        outputName: "Root",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Root",
+          method: "post",
+          url: "https://example.com/root",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+    ],
+    rootIds: ["root"],
+  };
+  await expect(
+    loadResources(fetch, graph, undefined, {
+      shouldRetryFailedRoot: () => true,
+    })
+  ).resolves.toMatchObject({ Root: { ok: false, status: 422 } });
+  expect(fetch).toHaveBeenCalledTimes(2);
+
+  fetch.mockClear();
+  const controller = new AbortController();
+  controller.abort();
+  await expect(
+    loadResources(
+      fetch,
+      new Map([["Root", graph.resources[0].createRequest(new Map())]]),
+      undefined,
+      {
+        shouldRetryFailedRoot: () => true,
+        signal: controller.signal,
+      }
+    )
+  ).resolves.toMatchObject({ Root: { status: 499 } });
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("cancelling a graph root during its first attempt does not retry", async () => {
+  const controller = new AbortController();
+  let requestStarted = () => {};
+  const started = new Promise<void>((resolve) => {
+    requestStarted = resolve;
+  });
+  const fetch = vi.fn<typeof globalThis.fetch>(async (_input, init) => {
+    requestStarted();
+    return new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () =>
+        reject(new DOMException("Aborted", "AbortError"))
+      );
+    });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "root",
+        outputName: "Root",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Root",
+          method: "post",
+          url: "https://example.com/root",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+    ],
+    rootIds: ["root"],
+  };
+  const pending = loadResources(fetch, graph, undefined, {
+    shouldRetryFailedRoot: () => true,
+    signal: controller.signal,
+  });
+  await started;
+  controller.abort();
+  await expect(pending).rejects.toMatchObject({ code: "REQUEST_CANCELLED" });
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("applies action request overrides after resolving remote dependencies", async () => {
+  const requests: Array<{ url: string; body: string | null }> = [];
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    const url = String(input);
+    requests.push({ url, body: (init?.body as string | undefined) ?? null });
+    return url.endsWith("/author")
+      ? Response.json({ id: "author-123" })
+      : Response.json({ ok: true });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "author",
+        outputName: "Author",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Author",
+          method: "get",
+          url: "https://example.com/author",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "submit",
+        outputName: "Submit",
+        dependencies: ["author"],
+        createRequest: (documents) => ({
+          name: "Submit",
+          method: "post",
+          url: `https://example.com/submit/${
+            (documents.get("author") as { data: { id: string } }).data.id
+          }`,
+          searchParams: [],
+          headers: [],
+          body: { stale: true },
+        }),
+      },
+    ],
+    rootIds: ["submit"],
+  };
+
+  await expect(
+    loadResources(fetch, graph, undefined, {
+      requestOverrides: new Map([
+        ["submit", { body: { email: "ada@example.com" } }],
+      ]),
+    })
+  ).resolves.toEqual({
+    Submit: {
+      data: { ok: true },
+      ok: true,
+      status: 200,
+      statusText: "",
+    },
+  });
+  expect(requests).toEqual([
+    { url: "https://example.com/author", body: null },
+    {
+      url: "https://example.com/submit/author-123",
+      body: JSON.stringify({ email: "ada@example.com" }),
+    },
+  ]);
+});
+
+test("sends file bodies as multipart and preserves repeated fields and bytes", async () => {
+  const bytes = new Uint8Array([0, 128, 255]);
+  const file = new File([bytes], "file.bin", {
+    type: "application/octet-stream",
+  });
+  let submitted: Request | undefined;
+  let preparedRequest: ResourceExchange["request"] | undefined;
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    submitted = new Request(input, init);
+    return Response.json({ accepted: true });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "upload",
+        outputName: "Upload",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Upload",
+          method: "post",
+          url: "https://example.com/upload",
+          searchParams: [],
+          headers: [{ name: "Content-Type", value: '"application/json"' }],
+          body: {
+            topics: ["design", "development"],
+            attachment: file,
+          },
+        }),
+      },
+    ],
+    rootIds: ["upload"],
+  };
+
+  await expect(
+    loadResources(fetch, graph, undefined, {
+      onResourceExchange: (_id, exchange) => {
+        preparedRequest = exchange.request;
+      },
+    })
+  ).resolves.toMatchObject({
+    Upload: { ok: true, data: { accepted: true } },
+  });
+  expect(preparedRequest).toMatchObject({
+    type: "prepared-http",
+    method: "POST",
+    url: "https://example.com/upload",
+    body: expect.any(FormData),
+  });
+  if (
+    preparedRequest &&
+    "type" in preparedRequest &&
+    preparedRequest.type === "prepared-http"
+  ) {
+    expect(preparedRequest.headers.has("content-type")).toBe(false);
+  }
+  expect(submitted?.headers.get("content-type")).toMatch(
+    /^multipart\/form-data; boundary=/
+  );
+  const multipart = await submitted?.formData();
+  expect(multipart?.getAll("topics")).toEqual(["design", "development"]);
+  const submittedFile = multipart?.get("attachment") as File;
+  expect(submittedFile.name).toBe("file.bin");
+  expect(submittedFile.type).toBe("application/octet-stream");
+  expect(new Uint8Array(await submittedFile.arrayBuffer())).toEqual(bytes);
+});
+
+test("uses JSON content type for object bodies unless configured otherwise", async () => {
+  const contentTypes: Array<string | null> = [];
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    const request = new Request(input, init);
+    contentTypes.push(request.headers.get("content-type"));
+    expect(await request.json()).toEqual({ message: "Hello" });
+    return Response.json({ accepted: true });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "default-type",
+        outputName: "DefaultType",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Default type",
+          method: "post",
+          url: "https://example.com/default",
+          searchParams: [],
+          headers: [],
+          body: { message: "Hello" },
+        }),
+      },
+      {
+        id: "custom-type",
+        outputName: "CustomType",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Custom type",
+          method: "post",
+          url: "https://example.com/custom",
+          searchParams: [],
+          headers: [{ name: "Content-Type", value: "text/plain" }],
+          body: { message: "Hello" },
+        }),
+      },
+    ],
+    rootIds: ["default-type", "custom-type"],
+  };
+
+  await loadResources(fetch, graph);
+  expect(contentTypes.sort()).toEqual(["application/json", "text/plain"]);
+});
+
+test.each([
+  ["array", ["first", "second"], "application/json", '["first","second"]'],
+  ["number", 42, "application/json", "42"],
+  ["boolean", false, "application/json", "false"],
+  ["string", "hello", "text/plain", "hello"],
+] as const)(
+  "automatic body format sends %s with its matching content type",
+  async (_kind, body, expectedType, expectedBody) => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = new Request(input, init);
+      expect(request.headers.get("content-type")).toBe(expectedType);
+      expect(await request.text()).toBe(expectedBody);
+      return Response.json({ accepted: true });
+    });
+    await loadResource(fetch, {
+      name: "Submit",
+      method: "post",
+      url: "https://example.com/submit",
+      searchParams: [],
+      headers: [],
+      bodyFormat: "auto",
+      body,
+    });
+    expect(fetch).toHaveBeenCalledOnce();
+  }
+);
+
+test("uses an explicit multipart body format for text fields", async () => {
+  let submitted: Request | undefined;
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    submitted = new Request(input, init);
+    return Response.json({ accepted: true });
+  });
+  await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [{ name: "Content-Type", value: "application/json" }],
+    bodyFormat: "multipart",
+    body: { topics: ["design", "development"] },
+  });
+  expect(submitted?.headers.get("content-type")).toMatch(
+    /^multipart\/form-data; boundary=/
+  );
+  expect((await submitted?.formData())?.getAll("topics")).toEqual([
+    "design",
+    "development",
+  ]);
+});
+
+test("rejects explicit JSON with uploaded files without sending a request", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>();
+  const result = await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [],
+    bodyFormat: "json",
+    body: { attachment: new File(["hello"], "hello.txt") },
+  });
+  expect(fetch).not.toHaveBeenCalled();
+  expect(result).toMatchObject({
+    ok: false,
+    status: 400,
+    data: { error: { code: "INVALID_BODY_FORMAT" } },
+  });
+});
+
+test("explicit JSON sets JSON content type even after a saved header", async () => {
+  let contentType: string | null = null;
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    const request = new Request(input, init);
+    contentType = request.headers.get("content-type");
+    expect(await request.json()).toEqual({ message: "Hello" });
+    return Response.json({ accepted: true });
+  });
+  await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [{ name: "Content-Type", value: "text/plain" }],
+    bodyFormat: "json",
+    body: { message: "Hello" },
+  });
+  expect(contentType).toBe("application/json");
+});
+
+test("explicit JSON sends an array body as JSON", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    const request = new Request(input, init);
+    expect(request.headers.get("content-type")).toBe("application/json");
+    expect(await request.json()).toEqual(["first", "second"]);
+    return Response.json({ accepted: true });
+  });
+  await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [],
+    bodyFormat: "json",
+    body: ["first", "second"],
+  });
+  expect(fetch).toHaveBeenCalledOnce();
+});
+
+test("rejects multipart with a scalar body without sending a request", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>();
+  const result = await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [],
+    bodyFormat: "multipart",
+    body: "plain text",
+  });
+  expect(fetch).not.toHaveBeenCalled();
+  expect(result).toMatchObject({
+    ok: false,
+    status: 400,
+    data: { error: { code: "INVALID_BODY_FORMAT" } },
+  });
+});
+
+test("ignores a stale body format on a GET request", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    const request = new Request(input, init);
+    expect(request.method).toBe("GET");
+    expect(request.body).toBeNull();
+    return Response.json({ accepted: true });
+  });
+  const result = await loadResource(fetch, {
+    name: "Read",
+    method: "get",
+    url: "https://example.com/read",
+    searchParams: [],
+    headers: [],
+    bodyFormat: "multipart",
+  });
+  expect(result.ok).toBe(true);
+  expect(fetch).toHaveBeenCalledOnce();
+});
+
+test("runs independent resources concurrently while keeping dependency chains serial", async () => {
+  const independentIds = Array.from(
+    { length: 19 },
+    (_, index) => `independent-${index}`
+  );
+  const initialRequestIds = new Set(["chain-first", ...independentIds]);
+  const requestedUrls: string[] = [];
+  let active = 0;
+  let maximumActive = 0;
+  let initialRequestCount = 0;
+  let releaseInitialRequests = () => {};
+  const initialRequestsReleased = new Promise<void>((resolve) => {
+    releaseInitialRequests = resolve;
+  });
+  let resolveInitialRequestsStarted = () => {};
+  const initialRequestsStarted = new Promise<void>((resolve) => {
+    resolveInitialRequestsStarted = resolve;
+  });
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+    const url = String(input);
+    requestedUrls.push(url);
+    active += 1;
+    maximumActive = Math.max(maximumActive, active);
+    const requestId = url.split("/").at(-1);
+    if (requestId !== undefined && initialRequestIds.has(requestId)) {
+      initialRequestCount += 1;
+      if (initialRequestCount === initialRequestIds.size) {
+        resolveInitialRequestsStarted();
+      }
+      await initialRequestsReleased;
+    }
+    const response =
+      requestId === "chain-first"
+        ? Response.json({ id: "chain-document" })
+        : Response.json({ requestId });
+    active -= 1;
+    return response;
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "chain-first",
+        outputName: "Chain first",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Chain first",
+          method: "get",
+          url: "https://example.com/chain-first",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "chain-second",
+        outputName: "Chain second",
+        dependencies: ["chain-first"],
+        createRequest: (documents) => ({
+          name: "Chain second",
+          method: "get",
+          url: `https://example.com/chain-second/${
+            (documents.get("chain-first") as { data: { id: string } }).data.id
+          }`,
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "chain-third",
+        outputName: "Chain third",
+        dependencies: ["chain-second"],
+        createRequest: () => ({
+          name: "Chain third",
+          method: "get",
+          url: "https://example.com/chain-third",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      ...independentIds.map((id) => ({
+        id,
+        outputName: id,
+        dependencies: [],
+        createRequest: () => ({
+          name: id,
+          method: "get" as const,
+          url: `https://example.com/${id}`,
+          searchParams: [],
+          headers: [],
+        }),
+      })),
+    ],
+    rootIds: ["chain-third", ...independentIds],
+  };
+
+  const resultPromise = loadResources(fetch, graph);
+  await initialRequestsStarted;
+
+  expect(initialRequestCount).toBe(20);
+  expect(maximumActive).toBe(20);
+  expect(requestedUrls).not.toContain(
+    "https://example.com/chain-second/chain-document"
+  );
+
+  releaseInitialRequests();
+  const result = await resultPromise;
+
+  expect(fetch).toHaveBeenCalledTimes(22);
+  const chainSecondIndex = requestedUrls.indexOf(
+    "https://example.com/chain-second/chain-document"
+  );
+  const chainThirdIndex = requestedUrls.indexOf(
+    "https://example.com/chain-third"
+  );
+  expect(chainSecondIndex).toBeGreaterThanOrEqual(20);
+  expect(chainThirdIndex).toBeGreaterThan(chainSecondIndex);
+  expect(result["Chain third"]).toMatchObject({
+    data: { requestId: "chain-third" },
+  });
+});
+
+test.each(["legacy map", "request graph"] as const)(
+  "bounds concurrent resource requests from a %s",
+  async (inputType) => {
+    let active = 0;
+    let maximumActive = 0;
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => {
+      active += 1;
+      maximumActive = Math.max(maximumActive, active);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      active -= 1;
+      return Response.json({});
+    });
+    const requests = new Map<string, ResourceRequest>();
+    for (let index = 0; index < 21; index += 1) {
+      requests.set(`resource-${index}`, {
+        name: `Resource ${index}`,
+        method: "get",
+        url: `https://example.com/${index}`,
+        searchParams: [],
+        headers: [],
+      });
+    }
+    const graph: ResourceRequestGraph = {
+      resources: Array.from(requests, ([id, request]) => ({
+        id,
+        outputName: id,
+        dependencies: [],
+        createRequest: () => request,
+      })),
+      rootIds: Array.from(requests.keys()),
+    };
+
+    await loadResources(fetch, inputType === "legacy map" ? requests : graph);
+
+    expect(maximumActive).toBe(20);
+  }
+);
+
+test("preserves structured cancellation results for legacy request maps", async () => {
+  const controller = new AbortController();
+  controller.abort(new Error("cancelled"));
+  const fetch = vi.fn<typeof globalThis.fetch>(async (_input, init) => {
+    init?.signal?.throwIfAborted();
+    return Response.json({});
+  });
+  const request: ResourceRequest = {
+    name: "Resource",
+    method: "get",
+    url: "https://example.com/resource",
+    searchParams: [],
+    headers: [],
+  };
+
+  await expect(
+    loadResources(fetch, new Map([["Resource", request]]), undefined, {
+      signal: controller.signal,
+    })
+  ).resolves.toMatchObject({
+    Resource: {
+      ok: false,
+      data: {
+        error: { code: "REQUEST_CANCELLED" },
+      },
+      status: 499,
+    },
+  });
+});
 
 test("builds canonical Assets command URLs", () => {
   expect(assetsUploadsApiUrl).toBe("/rest/assets/uploads");
@@ -230,6 +1266,52 @@ describe("loadResource", () => {
       status: 200,
       statusText: "",
     });
+  });
+
+  test("logs the response body when a resource request fails", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: "INVALID_REQUEST",
+          issues: [{ path: ["query", "where"] }],
+        }),
+        { status: 400 }
+      )
+    );
+
+    await loadResource(mockFetch, {
+      name: "resource",
+      url: "https://example.com/resource",
+      searchParams: [],
+      method: "get",
+      headers: [],
+    });
+
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining('"code": "INVALID_REQUEST"')
+    );
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining('"path": [\n        "query",\n        "where"')
+    );
+  });
+
+  test("bounds resource error diagnostics", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetch.mockResolvedValue(
+      new Response("x".repeat(3000), { status: 500 })
+    );
+
+    await loadResource(mockFetch, {
+      name: "resource",
+      url: "https://example.com/resource",
+      searchParams: [],
+      method: "get",
+      headers: [],
+    });
+
+    expect(error).toHaveBeenCalledWith(expect.stringContaining("…truncated"));
+    expect(error.mock.calls[0]?.[0]).not.toContain("x".repeat(2001));
   });
 
   test("exposes Assets query results as an ID-keyed resource value", async () => {
@@ -511,6 +1593,39 @@ describe("loadResource", () => {
     });
   });
 
+  test("preserves the first abort reason when cancellation precedes timeout", async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    let rejectFetch = () => {};
+    mockFetch.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectFetch = () => reject(new DOMException("Aborted", "AbortError"));
+        })
+    );
+    const pending = loadResource(
+      mockFetch,
+      {
+        name: "resource",
+        url: "https://example.com/resource",
+        searchParams: [],
+        method: "get",
+        headers: [],
+      },
+      undefined,
+      { signal: controller.signal, timeoutMs: 100 }
+    );
+
+    controller.abort();
+    await vi.advanceTimersByTimeAsync(100);
+    rejectFetch();
+
+    await expect(pending).resolves.toMatchObject({
+      data: { error: { code: "REQUEST_CANCELLED" } },
+      status: 499,
+    });
+  });
+
   test("aborts at the deadline and returns a structured timeout", async () => {
     vi.useFakeTimers();
     mockFetch.mockImplementation(
@@ -546,6 +1661,34 @@ describe("loadResource", () => {
       },
       status: 504,
       statusText: "Resource request exceeded 100ms",
+    });
+  });
+
+  test("times out when fetch ignores its abort signal", async () => {
+    vi.useFakeTimers();
+    mockFetch.mockImplementation(() => new Promise(() => {}));
+    const pending = loadResource(
+      mockFetch,
+      {
+        name: "resource",
+        url: "https://example.com/resource",
+        searchParams: [],
+        method: "get",
+        headers: [],
+      },
+      undefined,
+      { timeoutMs: 100 }
+    );
+    let result: Awaited<typeof pending> | undefined;
+    void pending.then((value) => {
+      result = value;
+    });
+
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(result).toMatchObject({
+      data: { error: { code: "REQUEST_TIMEOUT" } },
+      status: 504,
     });
   });
 
@@ -701,4 +1844,86 @@ describe("getResourceCacheKey", () => {
 
     expect(new Set(keys).size).toBe(requests.length);
   });
+});
+
+test("optional exchange observer records the same serialized fetch and each retry", async () => {
+  const observed: Array<{
+    id: string;
+    method: string;
+    url: string;
+    body: string;
+    status: number;
+    responseHeader: string | null;
+    finalUrl?: string;
+  }> = [];
+  const fetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementation(async (input, init) => {
+      expect(input).toBe("https://example.com/send?q=submitted");
+      expect(init).toMatchObject({
+        method: "post",
+        body: '{"email":"ada@example.com"}',
+      });
+      const response = Response.json(
+        { accepted: fetch.mock.calls.length > 1 },
+        {
+          status: fetch.mock.calls.length === 1 ? 500 : 201,
+          headers: { "X-Response": "captured" },
+        }
+      );
+      Object.defineProperty(response, "url", {
+        value: "https://example.com/final",
+      });
+      return response;
+    });
+  const graph: ResourceRequestGraph = {
+    rootIds: ["action"],
+    resources: [
+      {
+        id: "action",
+        outputName: "result",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Request",
+          method: "post",
+          url: "https://example.com/send",
+          searchParams: [{ name: "q", value: "submitted" }],
+          headers: [],
+          body: { email: "ada@example.com" },
+        }),
+      },
+    ],
+  };
+  await loadResources(fetch, graph, undefined, {
+    shouldRetryFailedRoot: () => true,
+    onResourceExchange: async (id, exchange) => {
+      if (
+        !("type" in exchange.request) ||
+        exchange.request.type !== "prepared-http"
+      ) {
+        throw Error("Expected HTTP transport");
+      }
+      observed.push({
+        id,
+        method: exchange.request.method,
+        url: exchange.request.url,
+        body: String(exchange.request.body),
+        status: exchange.response.status,
+        responseHeader: exchange.response.headers.get("X-Response"),
+        finalUrl: exchange.response.url,
+      });
+    },
+  });
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(observed).toEqual(
+    [500, 201].map((status) => ({
+      id: "action",
+      method: "POST",
+      url: "https://example.com/send?q=submitted",
+      body: '{"email":"ada@example.com"}',
+      status,
+      responseHeader: "captured",
+      finalUrl: "https://example.com/final",
+    }))
+  );
 });

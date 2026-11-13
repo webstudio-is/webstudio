@@ -4,6 +4,7 @@ type Attribute = {
   required?: boolean;
   type: "string" | "boolean" | "number" | "select" | "url";
   options?: string[];
+  defaultValue?: string;
 };
 
 const attribute_accumulate_1kar0jt: Attribute = {
@@ -3966,6 +3967,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
         "button",
       ],
       required: true,
+      defaultValue: "text",
     },
     attribute_value_15qkpz,
     attribute_width_d9q964,

@@ -1,5 +1,5 @@
 {
-  "bundleVersion": "bundle-i6o13q",
+  "bundleVersion": "bundle-1u9ug3c",
   "build": {
     "id": "1b66ee06-8ea5-4420-9a0e-e0d3a67aca32",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
@@ -3258,7 +3258,7 @@
           "instanceId": "zJkrskDJhaEk-nOSRWrGg",
           "name": "data",
           "type": "expression",
-          "value": "[\n  {\n    \"path\": \"/\",\n    \"lastModified\": \"2024-05-07\"\n  },\n  {\n    \"path\": \"/olegs-test\",\n    \"lastModified\": \"2024-05-07\"\n  }\n]"
+          "value": "[\n  {\n    \"path\": \"/\",\n    \"lastModified\": \"2024-05-07\"\n  },\n  {\n    \"path\": \"/acme-test\",\n    \"lastModified\": \"2024-05-07\"\n  }\n]"
         }
       ],
       [
@@ -4760,7 +4760,7 @@
         {
           "type": "instance",
           "id": "isNSM3wXcnHFikwNPlEOL",
-          "component": "Form",
+          "component": "WebhookForm",
           "label": "Form with custom props",
           "children": [
             {
@@ -4908,7 +4908,7 @@
         {
           "type": "instance",
           "id": "-1RvizaBcVpHsjvnYxn1c",
-          "component": "Form",
+          "component": "WebhookForm",
           "label": "Default form",
           "children": [
             {
@@ -7261,8 +7261,11 @@
       "createdAt": "2026-01-14T02:59:19.806+00:00",
       "updatedAt": "2026-01-14T02:59:19.806+00:00",
       "format": "webm",
-      "meta": {},
-      "type": "file"
+      "meta": {
+        "width": 480,
+        "height": 270
+      },
+      "type": "video"
     },
     {
       "id": "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59",
@@ -7300,8 +7303,11 @@
       "createdAt": "2026-01-14T02:59:28.168+00:00",
       "updatedAt": "2026-01-14T02:59:28.168+00:00",
       "format": "mp4",
-      "meta": {},
-      "type": "file"
+      "meta": {
+        "width": 202,
+        "height": 360
+      },
+      "type": "video"
     },
     {
       "id": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
@@ -7320,7 +7326,8 @@
   ],
   "assetFolders": [],
   "user": {
-    "email": "hello@webstudio.is"
+    "email": "hello@webstudio.is",
+    "username": "admin"
   },
   "projectDomain": "webstudio-fixture-project-a-0su3o",
   "projectTitle": "webstudio-fixture-project-a",

@@ -1,7 +1,7 @@
 import {
-  reactPropsToStandardAttributes,
-  standardAttributesToReactProps,
-} from "@webstudio-is/react-sdk";
+  getInstancePropName,
+  getJsxPropName,
+} from "@webstudio-is/content-engine/jsx-attributes";
 import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
 import { propsToArgTypes } from "../arg-types";
 
@@ -54,10 +54,20 @@ export const getDescription = (
   currentDescription: string | undefined,
   customDescriptions: { [key in string]: string } = {}
 ): string | undefined => {
+  const jsxPropName = getJsxPropName({
+    instancePropName: propName,
+    acceptsHtmlAttributes: true,
+  });
+  const instancePropName = getInstancePropName({
+    jsxPropName: propName,
+    acceptsHtmlAttributes: true,
+  });
   const name =
-    standardAttributesToReactProps[propName] ||
-    reactPropsToStandardAttributes[propName] ||
-    propName.toLowerCase();
+    jsxPropName !== propName
+      ? jsxPropName
+      : instancePropName !== propName
+        ? instancePropName
+        : propName.toLowerCase();
   return (
     customDescriptions[propName] ||
     customDescriptions[name] ||

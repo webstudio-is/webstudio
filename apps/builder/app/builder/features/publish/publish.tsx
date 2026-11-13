@@ -1,6 +1,7 @@
 import stripIndent from "strip-indent";
 import { computed } from "nanostores";
 import {
+  useCallback,
   useEffect,
   useState,
   useOptimistic,
@@ -8,11 +9,15 @@ import {
   startTransition,
   useRef,
   useId,
+  type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Button,
+  cssVar,
   Tooltip,
+  InfoTooltip,
   IconButton,
   Grid,
   Flex,
@@ -26,10 +31,15 @@ import {
   theme,
   TextArea,
   Link,
+  LinkButton,
   PanelBanner,
-  buttonStyle,
   toast,
   RadioGroup,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Popover,
   PopoverTrigger,
   PopoverContent,
@@ -41,15 +51,22 @@ import {
   SmallIconButton,
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import {
+  $registeredComponentMetas,
+  $planFeatures,
+  $selectedPageId,
+  selectInstance,
   $authTokenPermissions,
   $editingPageId,
   $permissions,
   $stagingUsername,
   $stagingPassword,
 } from "~/shared/nano-states";
-import { $publisherHost } from "~/shared/sync/data-stores";
+import {
+  $assetFolders,
+  $assets,
+  $publisherHost,
+} from "~/shared/sync/data-stores";
 import {
   $publishDialog,
   setActiveSidebarPanel,
@@ -58,16 +75,25 @@ import { $project } from "~/shared/sync/data-stores";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
+  AlertIcon,
+  CheckCircleIcon,
   CopyIcon,
   GearIcon,
   UpgradeIcon,
   HelpIcon,
   InfoCircleIcon,
+  EllipsesIcon,
+  PlusIcon,
+  SpinnerIcon,
+  TerminalIcon,
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import type { Templates } from "@webstudio-is/sdk";
+import {
+  publishedDeploymentDestination,
+  type Templates,
+} from "@webstudio-is/sdk";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
@@ -76,33 +102,263 @@ import {
   $instances,
   $pages,
   $projectSettings,
+  $props,
   $resources,
 } from "~/shared/sync/data-stores";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
+import { getInstanceLink } from "~/shared/instance-utils/link";
 import {
   getRestrictedFeatures,
   type RestrictedFeature,
 } from "./restricted-features";
 import {
-  invalidatePublishActivity,
-  PublishStatusButton,
-} from "./publish-details-dialog";
+  findPageAndSelectorByInstanceId,
+  formatPrePublishAuditFinding,
+  runPrePublishAudit,
+} from "@webstudio-is/project-build/runtime";
+import { getContentDatabasePublishFindings } from "./content-database-publish-warning";
+import {
+  PublishValidationResults,
+  type PublishValidationFinding,
+} from "./publish-validation-results";
+import {
+  selectPublishSessionItems,
+  usePublishSession,
+  type PublishSessionItem,
+} from "./use-publish-session";
+import { PublishActions, usePublishValidationState } from "./publish-actions";
+import { flushExternalContentProject } from "~/shared/external-content-roots";
+import { getPublishValidationErrorMessage } from "./publish-error";
+import { runPublishAfterBestEffortChecks } from "./publish-preflight";
 
-const getShortPublishError = (message: string) =>
-  message.length <= 200 ? message : `${message.slice(0, 197)}…`;
+const getPrePublishInstanceTarget = (
+  instanceId: string,
+  pageId?: string,
+  instanceSelector?: string[]
+) => {
+  const pages = $pages.get();
+  const instances = $instances.get();
+  if (pages === undefined || instances.has(instanceId) === false) {
+    return;
+  }
+  const target =
+    pageId === undefined || instanceSelector === undefined
+      ? findPageAndSelectorByInstanceId(pages, instances, instanceId)
+      : { pageId, instanceSelector };
+  const href = getInstanceLink(target.instanceSelector);
+  if (href === undefined) {
+    return;
+  }
+  return { ...target, href };
+};
+
+const PrePublishInstanceLink = ({
+  instanceId,
+  pageId,
+  instanceSelector,
+  children,
+}: {
+  instanceId: string;
+  pageId?: string;
+  instanceSelector?: string[];
+  children: ReactNode;
+}) => {
+  const target = getPrePublishInstanceTarget(
+    instanceId,
+    pageId,
+    instanceSelector
+  );
+  if (target === undefined) {
+    return null;
+  }
+  return (
+    <Link
+      href={target.href}
+      onClick={(event) => {
+        if (
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+        event.preventDefault();
+        $selectedPageId.set(target.pageId);
+        selectInstance(target.instanceSelector);
+        $publishDialog.set("none");
+      }}
+    >
+      {children}
+    </Link>
+  );
+};
+
+const getPrePublishAuditFindings = (): PublishValidationFinding[] => {
+  const findings = runPrePublishAudit({
+    pages: $pages.get(),
+    instances: $instances.get(),
+    props: $props.get(),
+    dataSources: $dataSources.get(),
+    resources: $resources.get(),
+    assets: $assets.get(),
+    metas: $registeredComponentMetas.get(),
+  });
+  return findings.flatMap((finding) => {
+    if (finding.severity !== "error" && finding.severity !== "warning") {
+      return [];
+    }
+    const context = Object.entries(finding.location)
+      .filter(
+        ([key, value]) => key !== "instanceSelector" && value !== undefined
+      )
+      .map(([key, value]) => `${key}: ${value}`);
+    const reportText = [
+      `${finding.severity.toUpperCase()}: ${formatPrePublishAuditFinding(
+        finding
+      )}`,
+      `Rule: ${finding.ruleId}`,
+      ...context,
+    ].join("\n");
+    return [
+      {
+        severity: finding.severity,
+        title: formatPrePublishAuditFinding(finding),
+        summary: formatPrePublishAuditFinding(finding).slice(0, 160),
+        link:
+          finding.location.instanceId === undefined ? undefined : (
+            <PrePublishInstanceLink
+              instanceId={finding.location.instanceId}
+              pageId={finding.location.pageId}
+              instanceSelector={finding.location.instanceSelector}
+            >
+              Show element
+            </PrePublishInstanceLink>
+          ),
+        details: context.length === 0 ? undefined : context.join(" · "),
+        reportText,
+      },
+    ];
+  });
+};
+
+const runPublishDiagnostics = async (
+  projectId: Project["id"],
+  domains?: string[]
+) => {
+  const cssBuildWarningText =
+    "Some project styles cannot be processed for publishing. Publishing can continue using base and font styles.";
+  const auditFindings = getPrePublishAuditFindings();
+  const validation =
+    domains === undefined
+      ? undefined
+      : await nativeClient.api.publish.validate.query({
+          projectId,
+          target: "staging",
+          domains,
+        });
+  const diagnostics =
+    validation?.diagnostics ??
+    (await nativeClient.build.contentDatabasePublishDiagnostics.query({
+      projectId,
+    }));
+  const contentFindings = getContentDatabasePublishFindings(diagnostics).map(
+    (finding) => ({
+      ...finding,
+      link:
+        finding.relatedInstanceId === undefined ? undefined : (
+          <PrePublishInstanceLink instanceId={finding.relatedInstanceId}>
+            Open Content Block
+          </PrePublishInstanceLink>
+        ),
+    })
+  );
+  const cssWarning =
+    validation?.cssValid === false
+      ? [
+          {
+            severity: "warning" as const,
+            title: cssBuildWarningText,
+            reportText: cssBuildWarningText,
+          },
+        ]
+      : [];
+  const findings = [...auditFindings, ...contentFindings, ...cssWarning];
+  return {
+    passed: findings.every(({ severity }) => severity !== "error"),
+    findings,
+  };
+};
+
+const runPublishValidation = async (
+  projectId: Project["id"],
+  domains: string[]
+) => {
+  await flushExternalContentProject({ projectId });
+  return runPublishDiagnostics(projectId, domains);
+};
+
+const reportPublishValidationFailure = (
+  error: unknown,
+  setFindings: (findings: PublishValidationFinding[]) => void,
+  publishingContinues = false
+) => {
+  const diagnosticMessage = getPublishValidationErrorMessage(error, {
+    assets: $assets.get(),
+    assetFolders: $assetFolders.get(),
+  });
+  const message = publishingContinues
+    ? `${diagnosticMessage}\n\nThe publish request was sent without waiting for these diagnostics.`
+    : diagnosticMessage;
+  if ($publishDialog.get() === "none") {
+    toast.error(message.slice(0, 200));
+    return;
+  }
+  const mcpUrl = "https://wstd.us/mcp";
+  const mcpUrlIndex = message.indexOf(mcpUrl);
+  const details =
+    mcpUrlIndex === -1 ? (
+      message
+    ) : (
+      <>
+        {message.slice(0, mcpUrlIndex)}
+        <Link href={mcpUrl} target="_blank" rel="noreferrer">
+          Webstudio MCP
+        </Link>
+        {message.slice(mcpUrlIndex + mcpUrl.length)}
+      </>
+    );
+  setFindings([
+    {
+      severity: "error",
+      title: publishingContinues
+        ? "Publish checks couldn’t complete"
+        : "Unable to complete publish validation",
+      details,
+      reportText: `ERROR: Unable to complete publish validation\n${message}`,
+    },
+  ]);
+};
 
 type ChangeProjectDomainProps = {
   project: Project;
   projectState: "idle" | "submitting";
   refresh: () => Promise<void>;
+  validatedDomains?: readonly string[];
+  onOpenReport: (domain: string) => void;
+  latestSession?: PublishSessionItem;
 };
 
 const ChangeProjectDomain = ({
   project,
   refresh,
+  validatedDomains,
+  onOpenReport,
+  latestSession,
 }: ChangeProjectDomainProps) => {
   const id = useId();
   const currentSystem = useStore($currentSystem);
@@ -164,41 +420,82 @@ const ChangeProjectDomain = ({
     toast.success(result.message);
   };
 
-  const { statusText, status } =
-    project.latestBuildVirtual != null
-      ? getPublishStatusAndText(project.latestBuildVirtual)
+  const latestProjectDomainBuild =
+    project.latestBuildVirtual?.domain === project.domain
+      ? project.latestBuildVirtual
+      : undefined;
+
+  const { statusText, color, Icon } =
+    latestProjectDomainBuild != null
+      ? getPublishStatusAndText(latestProjectDomainBuild)
       : {
           statusText: "Not published",
-          status: "PENDING" as const,
+          color: cssVar("--foreground-secondary"),
+          Icon: InfoCircleIcon,
         };
+  const SessionIcon =
+    latestSession?.availability === "pending"
+      ? SpinnerIcon
+      : latestSession?.outcome === "failed"
+        ? AlertIcon
+        : latestSession?.outcome === "succeeded"
+          ? CheckCircleIcon
+          : Icon;
+  const sessionColor =
+    latestSession?.availability === "pending"
+      ? cssVar("--foreground-warning")
+      : latestSession?.outcome === "failed"
+        ? cssVar("--foreground-negative")
+        : latestSession?.outcome === "succeeded"
+          ? cssVar("--foreground-positive")
+          : color;
+  const sessionStatusText =
+    latestSession?.availability === "pending"
+      ? "Publishing started"
+      : latestSession?.outcome === "failed"
+        ? "Publish failed"
+        : latestSession?.outcome === "succeeded"
+          ? "Published"
+          : statusText;
 
-  // Check if the wstd domain specifically is published (not just any custom domain)
-  const isPublished = project.latestBuildVirtual?.domain === project.domain;
+  const isPublished = latestProjectDomainBuild != null;
 
   return (
     <CollapsibleDomainSection
       title={pageUrl.host}
       prefix={
         <DomainCheckbox
-          defaultChecked={project.latestBuildVirtual?.domain === domain}
-          buildId={project.latestBuildVirtual?.buildId}
+          defaultChecked={latestProjectDomainBuild?.domain === domain}
+          validatedDomains={validatedDomains}
+          buildId={latestProjectDomainBuild?.buildId}
           domain={domain}
         />
       }
       suffix={
         <Grid flow="column" align="center">
-          <PublishStatusButton
-            label={pageUrl.host}
-            activity={error ?? statusText}
-            latestBuildId={project.latestBuildVirtual?.buildId}
-            status={
-              error !== undefined || status === "FAILED"
-                ? "error"
-                : status === "PENDING"
-                  ? "pending"
-                  : "success"
+          <Tooltip
+            content={
+              error !== undefined ? error : <Text>{sessionStatusText}</Text>
             }
-          />
+          >
+            <IconButton
+              type="button"
+              aria-label={`Publish report: ${pageUrl.host}`}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onOpenReport(project.domain);
+              }}
+              css={{
+                color:
+                  error !== undefined
+                    ? cssVar("--foreground-negative")
+                    : sessionColor,
+              }}
+            >
+              {error !== undefined ? <AlertIcon /> : <SessionIcon />}
+            </IconButton>
+          </Tooltip>
 
           <CopyToClipboard
             text={pageUrl.toString()}
@@ -215,16 +512,10 @@ const ChangeProjectDomain = ({
         <Grid flow="column" align="center" gap={2}>
           <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
             <Label htmlFor={id}>Domain:</Label>
-            <Tooltip
+            <InfoTooltip
+              label="About domain name"
               content="Domain can't be renamed once published. Unpublish to enable renaming."
-              variant="wrapped"
-            >
-              <InfoCircleIcon
-                tabIndex={0}
-                style={{ flexShrink: 0 }}
-                color={rawTheme.colors.foregroundSubtle}
-              />
-            </Tooltip>
+            />
           </Flex>
           <InputField
             text="mono"
@@ -274,16 +565,10 @@ const ChangeProjectDomain = ({
           <Grid flow="column" align="center" gap={2}>
             <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
               <Label htmlFor={`${id}-password`}>Password:</Label>
-              <Tooltip
+              <InfoTooltip
+                label="About staging password"
                 content="This password is read-only and cannot be changed. It is the same for every user. This prevents phishing attacks."
-                variant="wrapped"
-              >
-                <InfoCircleIcon
-                  tabIndex={0}
-                  style={{ flexShrink: 0 }}
-                  color={rawTheme.colors.foregroundSubtle}
-                />
-              </Tooltip>
+              />
             </Flex>
             <InputField
               text="mono"
@@ -331,32 +616,395 @@ const $restrictedFeatures = computed(
     })
 );
 
-const usePublishCountdown = (isPublishing: boolean) => {
-  const [countdown, setCountdown] = useState<number | undefined>(undefined);
+const COUNTDOWN_DURATION = 60_000;
+const STATUS_REFRESH_RETRY_DELAY = 5_000;
+const STATUS_REFRESH_MAX_ATTEMPTS = 3;
+
+const usePublishProgress = (projectId: Project["id"]) => {
+  const manualValidationFindings = useManualValidationFindings();
+  const invalidateManualFindings = manualValidationFindings.invalidate;
+  const [startedAt, setStartedAt] = useState<number>();
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishFindings, setPublishFindings] = useState<
+    PublishValidationFinding[]
+  >([]);
+  const [publishDiagnosticsDomains, setPublishDiagnosticsDomains] = useState<
+    string[]
+  >([]);
+  const publishDiagnosticsSession = useRef(0);
+  const [publishErrorState, setPublishErrorState] = useState<{
+    value: JSX.Element | string;
+    source: "request" | "transport" | "status";
+    domains?: string[];
+  }>();
+  const [now, setNow] = useState(Date.now);
+  const isMounted = useRef(false);
+  const requestBaselineBuildId = useRef<string>();
+  const hasStartedPublishRequest = useRef(false);
+  const refreshGeneration = useRef(0);
+  const recoveredPoll = useRef<{
+    generation: number;
+    promise: Promise<void>;
+  }>();
 
   useEffect(() => {
-    if (isPublishing === false) {
-      setCountdown(undefined);
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    publishDiagnosticsSession.current += 1;
+    setPublishFindings([]);
+    setPublishDiagnosticsDomains([]);
+    setPublishErrorState(undefined);
+    setIsPublishing(false);
+    invalidateManualFindings();
+  }, [projectId, invalidateManualFindings]);
+
+  const isCurrentProject = useCallback(
+    () => isMounted.current && $project.get()?.id === projectId,
+    [projectId]
+  );
+
+  const beginPopoverRefresh = useCallback(() => {
+    refreshGeneration.current += 1;
+    return refreshGeneration.current;
+  }, []);
+
+  const isRefreshCurrent = useCallback(
+    (generation: number) =>
+      isCurrentProject() && refreshGeneration.current === generation,
+    [isCurrentProject]
+  );
+
+  const setPublishError = (
+    value: JSX.Element | string | undefined,
+    domains?: string[]
+  ) => {
+    setPublishErrorState(
+      value === undefined ? undefined : { value, source: "request", domains }
+    );
+  };
+
+  const setPublishStatusError = useCallback((value: JSX.Element | string) => {
+    setPublishErrorState({ value, source: "status" });
+  }, []);
+
+  const clearErrors = useCallback(() => {
+    setPublishErrorState(undefined);
+  }, []);
+
+  const beginPublishDiagnostics = useCallback((domains: string[] = []) => {
+    const session = ++publishDiagnosticsSession.current;
+    setPublishFindings([]);
+    setPublishDiagnosticsDomains(domains);
+    return {
+      isCurrent: () => publishDiagnosticsSession.current === session,
+      setFindings: (findings: PublishValidationFinding[]) => {
+        if (publishDiagnosticsSession.current === session) {
+          setPublishFindings(findings);
+        }
+      },
+    };
+  }, []);
+
+  const reconcileRefreshedProject = useCallback((project: Project) => {
+    const build = project.latestBuildVirtual;
+    if (build == null) {
+      setPublishErrorState((current) =>
+        current?.source === "status" ? undefined : current
+      );
       return;
     }
+    const { status, statusText } = getPublishStatusAndText(build);
+    const isNewBuild =
+      build.buildId !== undefined &&
+      build.buildId !== requestBaselineBuildId.current;
+    if (status === "FAILED") {
+      if (hasStartedPublishRequest.current && isNewBuild) {
+        setPublishErrorState({ value: statusText, source: "status" });
+      }
+    } else {
+      setPublishErrorState((current) =>
+        current?.source === "status" ||
+        (isNewBuild && current?.source === "transport")
+          ? undefined
+          : current
+      );
+    }
+  }, []);
 
-    setCountdown(60);
+  const watchPendingPublish = useCallback(
+    (
+      refresh: () => Promise<Project | undefined>,
+      generation = refreshGeneration.current
+    ) => {
+      if (recoveredPoll.current?.generation === generation) {
+        return recoveredPoll.current.promise;
+      }
+      const polling = waitForPublishStatus(refresh, () =>
+        isRefreshCurrent(generation)
+      )
+        .then((result) => {
+          if (isRefreshCurrent(generation) === false) {
+            return;
+          }
+          reportPublishResult({
+            result,
+            setPublishError: setPublishStatusError,
+            isCurrentProject,
+          });
+        })
+        .finally(() => {
+          if (recoveredPoll.current?.promise === polling) {
+            recoveredPoll.current = undefined;
+          }
+        });
+      recoveredPoll.current = { generation, promise: polling };
+      return polling;
+    },
+    [isCurrentProject, isRefreshCurrent, setPublishStatusError]
+  );
 
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev === undefined || prev <= 0) {
-          return 0;
+  useEffect(() => {
+    if (isPublishing === false || showCountdown === false) {
+      return;
+    }
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [isPublishing, showCountdown]);
+
+  const countdown =
+    isPublishing && showCountdown && startedAt !== undefined
+      ? Math.max(0, Math.ceil((COUNTDOWN_DURATION - (now - startedAt)) / 1000))
+      : undefined;
+
+  const dismissCountdown = useCallback(() => setShowCountdown(false), []);
+
+  const start = (publish: () => Promise<void>) => {
+    const startedAt = Date.now();
+    hasStartedPublishRequest.current = true;
+    requestBaselineBuildId.current =
+      $project.get()?.latestBuildVirtual?.buildId;
+    setStartedAt(startedAt);
+    setNow(startedAt);
+    setShowCountdown(true);
+    setIsPublishing(true);
+    setPublishErrorState(undefined);
+    publish()
+      .catch((error) => {
+        console.error(error);
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        if (isCurrentProject()) {
+          setPublishErrorState({ value: message, source: "transport" });
         }
-        return prev - 1;
-      });
-    }, 1000);
+        if ($publishDialog.get() !== "publish" || !isCurrentProject()) {
+          toast.error(message);
+        }
+      })
+      .finally(() => setIsPublishing(false));
+  };
 
+  return {
+    manualValidationFindings,
+    isPublishing,
+    publishFindings,
+    publishDiagnosticsDomains,
+    setPublishFindings,
+    beginPublishDiagnostics,
+    publishError: publishErrorState?.value,
+    publishErrorDomains: publishErrorState?.domains,
+    setPublishError,
+    setPublishStatusError,
+    clearErrors,
+    isCurrentProject,
+    beginPopoverRefresh,
+    isRefreshCurrent,
+    reconcileRefreshedProject,
+    watchPendingPublish,
+    countdown,
+    start,
+    dismissCountdown,
+  };
+};
+
+const waitForPublishStatus = async (
+  refresh: () => Promise<Project | undefined>,
+  isCurrentProject: () => boolean,
+  previousBuildId?: string
+) => {
+  let sleepTime = 15000;
+  const timeToFinish = Date.now() + PENDING_TIMEOUT + 2 * sleepTime;
+
+  while (Date.now() < timeToFinish && isCurrentProject()) {
+    try {
+      const refreshedProject = await refresh();
+      if (isCurrentProject() === false) {
+        return;
+      }
+      if (
+        refreshedProject !== undefined &&
+        (previousBuildId === undefined ||
+          refreshedProject.latestBuildVirtual?.buildId !== previousBuildId)
+      ) {
+        const { statusText, status } =
+          refreshedProject.latestBuildVirtual != null
+            ? getPublishStatusAndText(refreshedProject.latestBuildVirtual)
+            : {
+                statusText: "Not published",
+                status: "PENDING" as const,
+              };
+
+        if (status === "PUBLISHED" || status === "FAILED") {
+          return { status, statusText };
+        }
+      }
+    } catch (error) {
+      if (isCurrentProject() === false) {
+        return;
+      }
+      // A failed status request should not stop watching an ongoing publish.
+      console.error("Could not refresh publish status", error);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, sleepTime));
+    sleepTime = Math.max(5000, sleepTime - 5000);
+  }
+};
+
+const refreshUntilSuccess = async (
+  refresh: (showError: boolean) => Promise<Project | undefined>,
+  isOpen: () => boolean,
+  onPending: (project: Project) => void = () => {}
+) => {
+  for (
+    let attempt = 1;
+    attempt <= STATUS_REFRESH_MAX_ATTEMPTS && isOpen();
+    attempt++
+  ) {
+    const isLastAttempt = attempt === STATUS_REFRESH_MAX_ATTEMPTS;
+    try {
+      const refreshedProject = await refresh(isLastAttempt);
+      if (refreshedProject !== undefined) {
+        if (
+          refreshedProject.latestBuildVirtual != null &&
+          getPublishStatusAndText(refreshedProject.latestBuildVirtual)
+            .status === "PENDING"
+        ) {
+          onPending(refreshedProject);
+        }
+        return;
+      }
+    } catch (error) {
+      console.error("Could not refresh publish status", error);
+      if (isLastAttempt && isOpen()) {
+        toast.error(error instanceof Error ? error.message : "Unknown error");
+      }
+    }
+
+    if (isLastAttempt === false && isOpen()) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, STATUS_REFRESH_RETRY_DELAY)
+      );
+    }
+  }
+};
+
+const reportPublishResult = ({
+  result,
+  timesLeft,
+  maxDailyPublishesPerUser,
+  setPublishError,
+  isCurrentProject = () => true,
+}: {
+  result: Awaited<ReturnType<typeof waitForPublishStatus>>;
+  timesLeft?: number;
+  maxDailyPublishesPerUser?: number;
+  setPublishError: (error: string | JSX.Element) => void;
+  isCurrentProject?: () => boolean;
+}) => {
+  if (result?.status === "PUBLISHED") {
+    if ($publishDialog.get() === "none") {
+      toast.success(
+        <>
+          The project has been successfully published.{" "}
+          {timesLeft !== undefined &&
+            maxDailyPublishesPerUser !== undefined &&
+            timesLeft > 0 &&
+            timesLeft <= 10 && (
+              <div>
+                You have {timesLeft} out of {maxDailyPublishesPerUser} daily
+                publications remaining. The counter resets tomorrow.
+              </div>
+            )}
+        </>,
+        { duration: 10000 }
+      );
+    }
+    return;
+  }
+
+  if (result?.status === "FAILED") {
+    if ($publishDialog.get() !== "publish" || !isCurrentProject()) {
+      toast.error(result.statusText);
+    }
+    if (isCurrentProject()) {
+      setPublishError(result.statusText);
+    }
+  }
+};
+
+const useManualValidationFindings = () => {
+  const [findings, setFindings] = useState<PublishValidationFinding[]>([]);
+  const [domains, setDomains] = useState<string[]>();
+  const session = useRef(0);
+  const requestedDomains = useRef<string[]>([]);
+
+  useEffect(() => {
     return () => {
-      clearInterval(interval);
+      session.current += 1;
     };
-  }, [isPublishing]);
+  }, []);
 
-  return countdown;
+  const begin = useCallback((domains: string[] = []) => {
+    session.current += 1;
+    requestedDomains.current = domains;
+    setFindings([]);
+    setDomains(undefined);
+    return session.current;
+  }, []);
+
+  const invalidate = useCallback(() => {
+    session.current += 1;
+    setFindings([]);
+    setDomains(undefined);
+  }, []);
+
+  const isCurrent = useCallback((id: number) => session.current === id, []);
+
+  const update = useCallback((id: number, next: PublishValidationFinding[]) => {
+    if (session.current === id) {
+      setFindings(next);
+      setDomains(next.length > 0 ? requestedDomains.current : undefined);
+    }
+  }, []);
+
+  return { findings, domains, begin, invalidate, isCurrent, update };
+};
+
+const matchesValidatedDomains = (form: HTMLFormElement, domains: string[]) => {
+  const selected = new Set(domains);
+  const current = new FormData(form)
+    .getAll(domainToPublishName)
+    .map((domain) => domain.toString());
+  return (
+    current.length === selected.size &&
+    current.every((domain) => selected.has(domain))
+  );
 };
 
 const Publish = ({
@@ -365,21 +1013,38 @@ const Publish = ({
   disabled,
   refresh,
   restrictedFeatures,
+  validation,
+  progress,
+  session,
+  onOpenReport,
 }: {
   project: Project;
   timesLeft: number;
   disabled: boolean;
   refresh: () => Promise<void>;
   restrictedFeatures: Map<string, RestrictedFeature>;
+  validation: ReturnType<typeof usePublishValidationState>;
+  progress: ReturnType<typeof usePublishProgress>;
+  session: ReturnType<typeof usePublishSession>;
+  onOpenReport: (
+    domain: string | undefined,
+    tab: "warnings" | "errors" | "publish"
+  ) => void;
 }) => {
-  const { maxDailyPublishesPerUser } = useStore($permissions);
-  const { userPublishCount } = useUserPublishCount();
-  const [isPublishing, setIsPublishing] = useOptimistic(false);
+  const validationFindings = progress.manualValidationFindings;
+  const { countdown, isCurrentProject } = progress;
+  const { validationState, update: onValidationStateChange } = validation;
+  const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
+  const { invalidate: invalidateValidationFindings } = validationFindings;
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
   const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
     useState(false);
-  const countdown = usePublishCountdown(isPublishing);
+  const previousDomainsKey = useRef<string>();
+  const hasPendingState = project.latestBuildVirtual
+    ? getPublishStatusAndText(project.latestBuildVirtual).status === "PENDING"
+    : false;
+  const isPublishInProgress = progress.isPublishing || hasPendingState;
 
   useEffect(() => {
     const form = buttonRef.current?.closest("form");
@@ -393,6 +1058,16 @@ const Publish = ({
       const domainsSelected = formData
         .getAll(domainToPublishName)
         .map((domain) => domain.toString());
+      const domainsKey = domainsSelected.join("\u0000");
+
+      if (
+        previousDomainsKey.current !== undefined &&
+        previousDomainsKey.current !== domainsKey
+      ) {
+        invalidateValidationFindings();
+        onValidationStateChange("idle");
+      }
+      previousDomainsKey.current = domainsKey;
 
       setHasSelectedDomains(domainsSelected.length > 0);
 
@@ -415,23 +1090,53 @@ const Publish = ({
       attributeFilter: ["value", "checked"],
     });
 
+    if (validationFindings.domains !== undefined) {
+      if (matchesValidatedDomains(form, validationFindings.domains)) {
+        previousDomainsKey.current = validationFindings.domains.join("\u0000");
+      } else {
+        invalidateValidationFindings();
+      }
+    }
+
     handleFormInput();
 
     return () => {
       observer.disconnect();
     };
-  }, [project.domain]);
+  }, [
+    invalidateValidationFindings,
+    onValidationStateChange,
+    project.domain,
+    validationFindings.domains,
+  ]);
 
   const publish = async (domains: string[]) => {
-    const publishResult = await nativeClient.domain.publish
-      .mutate({
-        projectId: project.id,
-        domains,
-        destination: "saas",
-      })
-      .finally(() => invalidatePublishActivity(project.id));
+    const previousBuildId = $project.get()?.latestBuildVirtual?.buildId;
+    const publishResult = await nativeClient.domain.publish.mutate({
+      projectId: project.id,
+      domains,
+      destination: publishedDeploymentDestination,
+    });
 
     if (publishResult.success === false) {
+      if ("auditFindings" in publishResult) {
+        progress.setPublishFindings(
+          publishResult.auditFindings.flatMap((finding) =>
+            finding.severity === "info"
+              ? []
+              : [
+                  {
+                    severity: finding.severity,
+                    title: finding.message,
+                    summary: finding.message,
+                    reportText: `${finding.severity.toUpperCase()}: ${finding.message}`,
+                  },
+                ]
+          )
+        );
+        onOpenReport(domains[0], "errors");
+        return;
+      }
       console.error(publishResult.error);
 
       let error: JSX.Element | string = publishResult.error;
@@ -455,12 +1160,11 @@ const Publish = ({
           </>
         );
       }
+      progress.setPublishError(error, domains);
       if (publishResult.error === "NOT_IMPLEMENTED") {
         toast.info(error);
       } else {
-        toast.error(
-          typeof error === "string" ? getShortPublishError(error) : error
-        );
+        toast.error(typeof error === "string" ? error.slice(0, 200) : error);
       }
 
       if (process.env.NODE_ENV === "development") {
@@ -471,123 +1175,157 @@ const Publish = ({
       return;
     }
 
-    let sleepTime = 15000;
-    const timeToFinish = Date.now() + PENDING_TIMEOUT + 2 * sleepTime;
+    session.record({
+      attemptId: publishResult.attemptId,
+      buildId: publishResult.buildId,
+      executionHandle: publishResult.executionHandle,
+      target: "site",
+      domains,
+      findings: publishResult.findings.flatMap((finding) =>
+        finding.severity === "info"
+          ? []
+          : [
+              {
+                severity: finding.severity,
+                title: finding.message,
+                summary: finding.message,
+                reportText: `${finding.severity.toUpperCase()}: ${finding.message}`,
+              },
+            ]
+      ),
+    });
 
-    // Wait until project is published or failed
-    while (Date.now() < timeToFinish) {
-      await refresh();
-
-      const project = $project.get();
-
-      if (project == null) {
-        throw new Error("Project not found");
-      }
-
-      const { statusText, status } =
-        project.latestBuildVirtual != null
-          ? getPublishStatusAndText(project.latestBuildVirtual)
-          : {
-              statusText: "Not published",
-              status: "PENDING" as const,
-            };
-
-      if (status === "PUBLISHED") {
-        toast.success(
-          <>
-            The project has been successfully published.{" "}
-            {timesLeft > 0 && timesLeft <= 10 && (
-              <div>
-                You have {timesLeft} out of {maxDailyPublishesPerUser} daily
-                publications remaining. The counter resets tomorrow.
-              </div>
-            )}
-          </>,
-          { duration: 10000 }
-        );
-        break;
-      }
-
-      if (status === "FAILED") {
-        toast.error(statusText);
-        break;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, sleepTime));
-
-      sleepTime = Math.max(5000, sleepTime - 5000);
-    }
+    const result = await waitForPublishStatus(
+      () =>
+        getRefreshedProject({
+          projectId: project.id,
+          isCurrent: isCurrentProject,
+        }),
+      isCurrentProject,
+      previousBuildId
+    );
+    reportPublishResult({
+      result,
+      timesLeft,
+      maxDailyPublishesPerUser,
+      setPublishError: progress.setPublishStatusError,
+      isCurrentProject,
+    });
   };
 
-  const handlePublish = (formData: FormData) => {
-    // Custom domain checkboxes are disabled on free plan so they are never
-    // submitted — only the staging (wstd.io) domain can appear in formData.
-    const domains = formData
+  const getDomainsFromForm = (formData: FormData) =>
+    formData
       .getAll(domainToPublishName)
       .map((domainEntry) => domainEntry.toString());
 
+  const handleValidate = async (formData: FormData) => {
+    const domains = getDomainsFromForm(formData);
+    const session = validationFindings.begin(domains);
+    progress.clearErrors();
+    progress.beginPublishDiagnostics(domains);
     if (domains.length === 0) {
       toast.error("Please select at least one domain to publish");
       return;
     }
 
-    startTransition(async () => {
-      setIsPublishing(true);
-
-      try {
-        await publish(domains);
-      } catch (error) {
-        toast.error(
-          getShortPublishError(
-            error instanceof Error ? error.message : "Unknown error"
-          )
-        );
+    try {
+      const checks = await runPublishValidation(project.id, domains);
+      if (validationFindings.isCurrent(session) === false) {
+        return;
       }
-    });
+      validationFindings.update(session, checks.findings);
+      onOpenReport(
+        undefined,
+        checks.findings.some(({ severity }) => severity === "error")
+          ? "errors"
+          : "warnings"
+      );
+      if (checks.passed === false) {
+        onValidationStateChange("idle");
+        return;
+      }
+      onValidationStateChange("passed");
+    } catch (error) {
+      if (validationFindings.isCurrent(session) === false) {
+        return;
+      }
+      onValidationStateChange("idle");
+      reportPublishValidationFailure(error, (findings) =>
+        validationFindings.update(session, findings)
+      );
+      onOpenReport(undefined, "errors");
+    }
   };
 
-  const hasPendingState = project.latestBuildVirtual
-    ? getPublishStatusAndText(project.latestBuildVirtual).status === "PENDING"
-    : false;
+  const handlePublish = (formData: FormData) => {
+    validationFindings.invalidate();
+    progress.clearErrors();
+    const domains = getDomainsFromForm(formData);
+    const diagnostics = progress.beginPublishDiagnostics(domains);
+    // Custom domain checkboxes are disabled on free plan so they are never
+    // submitted — only the staging (wstd.io) domain can appear in formData.
+    if (domains.length === 0) {
+      toast.error("Please select at least one domain to publish");
+      return;
+    }
 
-  const isPublishInProgress = isPublishing || hasPendingState;
-  const showPendingState =
-    isPublishInProgress && (countdown === undefined || countdown === 0);
+    progress.start(() =>
+      runPublishAfterBestEffortChecks({
+        checks: async () => {
+          const checks = await runPublishDiagnostics(project.id, domains);
+          diagnostics.setFindings(checks.findings);
+        },
+        onCheckFailure: (error) => {
+          if (diagnostics.isCurrent()) {
+            reportPublishValidationFailure(
+              error,
+              diagnostics.setFindings,
+              true
+            );
+          }
+        },
+        publish: () => publish(domains),
+      })
+    );
+  };
+
+  const getForm = () => buttonRef.current?.closest("form");
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
-      <Tooltip
-        content={
-          isPublishInProgress
-            ? "Publish process in progress"
-            : hasSelectedDomains
-              ? undefined
-              : "Select at least one domain to publish"
+      <PublishActions
+        publishButtonRef={buttonRef}
+        validationState={validationState}
+        validateDisabled={disabled || isPublishInProgress}
+        publishDisabled={
+          hasSelectedDomains === false ||
+          disabled ||
+          (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
+          userPublishCount >= maxDailyPublishesPerUser
         }
-      >
-        <Button
-          ref={buttonRef}
-          type="button"
-          onClick={() => {
-            const form = buttonRef.current?.closest("form");
-            if (form) {
-              handlePublish(new FormData(form));
-            }
-          }}
-          color="positive"
-          state={showPendingState ? "pending" : undefined}
-          disabled={
-            hasSelectedDomains === false ||
-            disabled ||
-            (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
-            userPublishCount >= maxDailyPublishesPerUser
-          }
-        >
-          {countdown !== undefined && countdown > 0
+        publishInProgress={isPublishInProgress}
+        publishPending={
+          isPublishInProgress && (countdown === undefined || countdown === 0)
+        }
+        hasSelectedDomains={hasSelectedDomains}
+        publishLabel={
+          countdown !== undefined && countdown > 0
             ? `Publishing (${countdown}s)`
-            : "Publish"}
-        </Button>
-      </Tooltip>
+            : "Publish"
+        }
+        onValidate={async () => {
+          const form = getForm();
+          if (form) {
+            await handleValidate(new FormData(form));
+          }
+        }}
+        onPublish={() => {
+          const form = getForm();
+          if (form) {
+            handlePublish(new FormData(form));
+          }
+        }}
+      />
     </Flex>
   );
 };
@@ -627,9 +1365,15 @@ const getStaticPublishStatusAndText = ({
 const PublishStatic = ({
   projectId,
   templates,
+  session,
+  onOpenReport,
+  onFindings,
 }: {
   projectId: Project["id"];
   templates: readonly Templates[];
+  session: ReturnType<typeof usePublishSession>;
+  onOpenReport: (tab?: "warnings" | "errors" | "publish") => void;
+  onFindings: (findings: PublishValidationFinding[]) => void;
 }) => {
   const project = useStore($project);
   const [_, startTransition] = useTransition();
@@ -642,6 +1386,15 @@ const PublishStatic = ({
     project.latestStaticBuild == null
       ? { status: "LOADED" as const, statusText: "Not published" }
       : getStaticPublishStatusAndText(project.latestStaticBuild);
+  const latestSession = session.items.find((item) => item.target === "static");
+  const sessionStatus =
+    latestSession?.availability === "pending"
+      ? "PENDING"
+      : latestSession?.outcome === "failed"
+        ? "FAILED"
+        : latestSession?.outcome === "succeeded"
+          ? "PUBLISHED"
+          : status;
 
   const [isPending, setIsPendingOptimistic] = useOptimistic(false);
 
@@ -649,111 +1402,160 @@ const PublishStatic = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
-      <Flex gap="2" align="center">
-        <PublishStatusButton
-          label="Static export"
-          activity={statusText}
-          latestBuildId={project.latestStaticBuild?.buildId}
-          status={
-            isPublishInProgress
-              ? "pending"
-              : status === "FAILED"
-                ? "error"
-                : status === "PUBLISHED"
-                  ? "success"
-                  : "warning"
-          }
-        />
+      <Flex gap={2} align="center">
         <Tooltip
-          content={isPublishInProgress ? "Preparing static site" : undefined}
+          content={
+            latestSession?.outcome === "failed" ? "Publish failed" : statusText
+          }
         >
-          <Button
+          <IconButton
             type="button"
-            color="positive"
-            state={isPublishInProgress ? "pending" : undefined}
-            onClick={() => {
-              startTransition(async () => {
-                try {
-                  setIsPendingOptimistic(true);
+            aria-label="Publish report: Static export"
+            onClick={() => onOpenReport()}
+          >
+            {sessionStatus === "FAILED" ? (
+              <AlertIcon />
+            ) : sessionStatus === "PUBLISHED" ? (
+              <CheckCircleIcon />
+            ) : sessionStatus === "PENDING" ? (
+              <SpinnerIcon />
+            ) : (
+              <InfoCircleIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+      </Flex>
 
-                  const result = await nativeClient.domain.publish
-                    .mutate({
+      <Tooltip
+        content={isPublishInProgress ? "Preparing static site" : undefined}
+      >
+        <Button
+          type="button"
+          color="primary"
+          state={isPublishInProgress ? "pending" : undefined}
+          onClick={() => {
+            onFindings([]);
+
+            startTransition(async () => {
+              try {
+                setIsPendingOptimistic(true);
+                const result = await runPublishAfterBestEffortChecks({
+                  checks: async () => {
+                    const checks = await runPublishDiagnostics(projectId);
+                    onFindings(checks.findings);
+                  },
+                  onCheckFailure: (error) =>
+                    reportPublishValidationFailure(error, onFindings, true),
+                  publish: () =>
+                    nativeClient.domain.publish.mutate({
                       projectId,
                       destination: "static",
                       templates: [...templates],
-                    })
-                    .finally(() => invalidatePublishActivity(projectId));
+                    }),
+                });
 
-                  if (result.success === false) {
-                    const message = getShortPublishError(result.error);
-                    toast.error(message);
-                    return;
-                  }
-
-                  const name = "name" in result ? result.name : undefined;
-
-                  if (name == null) {
-                    toast.error('File name must be defined in "result"');
-                    return;
-                  }
-
-                  const timeout = 10000;
-
-                  // Repeat few more times than timeout
-                  const repeat = PENDING_TIMEOUT / timeout + 5;
-
-                  for (let i = 0; i !== repeat; i++) {
-                    await new Promise((resolve) =>
-                      setTimeout(resolve, timeout)
+                if (result.success === false) {
+                  if ("auditFindings" in result) {
+                    onFindings(
+                      result.auditFindings.flatMap((finding) =>
+                        finding.severity === "info"
+                          ? []
+                          : [
+                              {
+                                severity: finding.severity,
+                                title: finding.message,
+                                summary: finding.message,
+                                reportText: `${finding.severity.toUpperCase()}: ${finding.message}`,
+                              },
+                            ]
+                      )
                     );
-
-                    await refreshProject();
-
-                    const latestStaticBuild = $project.get()?.latestStaticBuild;
-
-                    if (latestStaticBuild == null) {
-                      continue;
-                    }
-
-                    const { status } =
-                      getStaticPublishStatusAndText(latestStaticBuild);
-
-                    if (status !== "PENDING") {
-                      break;
-                    }
+                    onOpenReport("errors");
+                  } else {
+                    toast.error(result.error.slice(0, 200));
                   }
+                  return;
+                }
+
+                session.record({
+                  attemptId: result.attemptId,
+                  buildId: result.buildId,
+                  executionHandle: result.executionHandle,
+                  target: "static",
+                  domains: [],
+                  findings: result.findings.flatMap((finding) =>
+                    finding.severity === "info"
+                      ? []
+                      : [
+                          {
+                            severity: finding.severity,
+                            title: finding.message,
+                            summary: finding.message,
+                            reportText: `${finding.severity.toUpperCase()}: ${finding.message}`,
+                          },
+                        ]
+                  ),
+                });
+                const name = "name" in result ? result.name : undefined;
+                if (name == null) {
+                  toast.error('File name must be defined in "result"');
+                  return;
+                }
+
+                const timeout = 10000;
+
+                // Repeat few more times than timeout
+                const repeat = PENDING_TIMEOUT / timeout + 5;
+
+                for (let i = 0; i !== repeat; i++) {
+                  await new Promise((resolve) => setTimeout(resolve, timeout));
+
+                  await refreshProject();
 
                   const latestStaticBuild = $project.get()?.latestStaticBuild;
 
                   if (latestStaticBuild == null) {
-                    throw new Error("Static build not found");
+                    continue;
                   }
 
-                  const { status, statusText } =
+                  const { status } =
                     getStaticPublishStatusAndText(latestStaticBuild);
 
-                  if (status === "FAILED") {
-                    // Report if Export failed
-                    toast.error(statusText);
+                  if (status !== "PENDING") {
+                    break;
                   }
-
-                  if (status === "PUBLISHED") {
-                    window.location.href = `/cgi/static/ssg/${name}`;
-                  }
-                } catch (error) {
-                  toast.error(
-                    getShortPublishError(
-                      error instanceof Error ? error.message : "Unknown error"
-                    )
-                  );
                 }
-              });
-            }}
-          >
-            Build and download static site
-          </Button>
-        </Tooltip>
-      </Flex>
+
+                const latestStaticBuild = $project.get()?.latestStaticBuild;
+
+                if (latestStaticBuild == null) {
+                  throw new Error("Static build not found");
+                }
+
+                const { status, statusText } =
+                  getStaticPublishStatusAndText(latestStaticBuild);
+
+                if (status === "FAILED") {
+                  // Report if Export failed
+                  toast.error(statusText);
+                }
+
+                if (status === "PUBLISHED") {
+                  window.location.href = `/cgi/static/ssg/${name}`;
+                }
+              } catch (error) {
+                toast.error(
+                  error instanceof Error
+                    ? error.message.slice(0, 200)
+                    : "Unknown error"
+                );
+              }
+            });
+          }}
+        >
+          Build and download static site
+        </Button>
+      </Tooltip>
     </Flex>
   );
 };
@@ -787,25 +1589,43 @@ const useUserPublishCount = () => {
   }, [load, project?.id]);
   return {
     userPublishCount: data?.success ? data.data : 0,
-    maxDailyPublishesPerUser,
+    maxDailyPublishesPerUser:
+      data?.success && "limit" in data ? data.limit : maxDailyPublishesPerUser,
   };
 };
 
-const refreshProject = async () => {
-  const result = await nativeClient.domain.project.query(
-    {
-      projectId: $project.get()!.id,
-    }
-    // Pass abort signal
-    // { signal: undefined }
-  );
-
-  if (result.success) {
-    $project.set(result.project);
+const getRefreshedProject = async ({
+  projectId,
+  showError = true,
+  query = () => nativeClient.domain.project.query({ projectId }),
+  isCurrent = () => true,
+}: {
+  projectId: Project["id"];
+  showError?: boolean;
+  query?: () => ReturnType<typeof nativeClient.domain.project.query>;
+  isCurrent?: () => boolean;
+}) => {
+  if ($project.get()?.id !== projectId || !isCurrent()) {
     return;
   }
 
-  toast.error(result.error);
+  const result = await query();
+  if ($project.get()?.id !== projectId || !isCurrent()) {
+    return;
+  }
+
+  if (result.success) {
+    $project.set(result.project);
+    return result.project;
+  }
+
+  if (showError) {
+    toast.error(result.error);
+  }
+};
+
+const refreshProject = async () => {
+  await getRefreshedProject({ projectId: $project.get()!.id });
 };
 
 const buttonLinkClass = css({
@@ -824,15 +1644,13 @@ const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
         <Text variant="regularBold">
           Upgrade to publish more than {maxDailyPublishesPerUser} times per day:
         </Text>
-        <Link
-          className={buttonStyle({ color: "gradient" })}
-          color="contrast"
-          underline="none"
+        <LinkButton
+          color="primary"
           href="https://webstudio.is/pricing"
           target="_blank"
         >
           Upgrade
-        </Link>
+        </LinkButton>
       </PanelBanner>
     );
   }
@@ -925,9 +1743,17 @@ const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
+  validation: ReturnType<typeof usePublishValidationState>;
+  progress: ReturnType<typeof usePublishProgress>;
+  session: ReturnType<typeof usePublishSession>;
+  onOpenReport: (
+    domain: string | undefined,
+    tab: "warnings" | "errors" | "publish"
+  ) => void;
 }) => {
   const restrictedFeatures = useStore($restrictedFeatures);
   const [newDomains, setNewDomains] = useState(new Set<string>());
+  const [isAddingDomain, setIsAddingDomain] = useState(false);
 
   const project = useStore($project);
 
@@ -951,59 +1777,112 @@ const Content = (props: {
   );
 
   return (
-    <form>
-      <ScrollArea>
-        <RadioGroup name="publishDomain">
-          <ChangeProjectDomain
-            refresh={refreshProject}
-            projectState={projectState}
-            project={project}
-          />
+    <>
+      <PopoverTitle
+        suffix={
+          <PopoverTitleActions>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <IconButton type="button" aria-label="Publish options">
+                  <EllipsesIcon />
+                </IconButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  icon={<PlusIcon />}
+                  onSelect={() => setIsAddingDomain(true)}
+                >
+                  Add new domain
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  icon={<TerminalIcon />}
+                  onSelect={props.onExportClick}
+                >
+                  Export
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  icon={<GearIcon />}
+                  onSelect={() => $openProjectSettings.set("publish")}
+                >
+                  Publish settings
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <PopoverClose />
+          </PopoverTitleActions>
+        }
+      >
+        Publish
+      </PopoverTitle>
+      <form>
+        <ScrollArea>
+          <RadioGroup name="publishDomain">
+            <ChangeProjectDomain
+              refresh={refreshProject}
+              projectState={projectState}
+              project={project}
+              validatedDomains={props.progress.manualValidationFindings.domains}
+              onOpenReport={(domain) => props.onOpenReport(domain, "publish")}
+              latestSession={props.session.items.find(
+                (item) =>
+                  item.target === "site" &&
+                  item.domains.includes(project.domain)
+              )}
+            />
 
-          <Domains
-            newDomains={newDomains}
-            domains={project.domainsVirtual}
+            <Domains
+              newDomains={newDomains}
+              domains={project.domainsVirtual}
+              refresh={refreshProject}
+              project={project}
+              validatedDomains={props.progress.manualValidationFindings.domains}
+              onOpenReport={(domain) => props.onOpenReport(domain, "publish")}
+              sessionItems={props.session.items}
+            />
+          </RadioGroup>
+        </ScrollArea>
+        <Flex direction="column" justify="end" css={{ height: 0 }}>
+          <Separator />
+        </Flex>
+        <PanelContent as={Flex} direction="column" gap="2">
+          <AddDomain
+            projectId={props.projectId}
+            isOpen={isAddingDomain}
+            onOpenChange={setIsAddingDomain}
             refresh={refreshProject}
-            project={project}
+            onCreate={(domain) => {
+              setNewDomains((prev) => new Set([...prev, domain]));
+            }}
           />
-        </RadioGroup>
-      </ScrollArea>
-      <Flex direction="column" justify="end" css={{ height: 0 }}>
-        <Separator />
-      </Flex>
-      <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
-        <AddDomain
-          projectId={props.projectId}
-          refresh={refreshProject}
-          onCreate={(domain) => {
-            setNewDomains((prev) => {
-              return new Set([...prev, domain]);
-            });
-          }}
-          onExportClick={props.onExportClick}
-        />
-        <UpgradeBanner hasCustomDomains={hasCustomDomains} />
-        {hasUnpublishedDomains && (
-          <PanelBanner>
-            <Flex align="center" gap="1">
-              <InfoCircleIcon color={rawTheme.colors.foregroundMain} />
-              <Text variant="regularBold">Don't forget to publish</Text>
-            </Flex>
-            <Text>
-              You have a custom domain that hasn't been published yet. Hit
-              publish to make it live.
-            </Text>
-          </PanelBanner>
-        )}
-        <Publish
-          project={project}
-          refresh={refreshProject}
-          timesLeft={maxDailyPublishesPerUser - userPublishCount}
-          disabled={false}
-          restrictedFeatures={restrictedFeatures}
-        />
-      </Flex>
-    </form>
+          {isAddingDomain && <Separator />}
+          <UpgradeBanner hasCustomDomains={hasCustomDomains} />
+          {hasUnpublishedDomains && (
+            <PanelBanner>
+              <Flex align="center" gap="1">
+                <InfoCircleIcon color={cssVar("--foreground-primary")} />
+                <Text variant="regularBold">Don't forget to publish</Text>
+              </Flex>
+              <Text>
+                You have a custom domain that hasn't been published yet. Hit
+                publish to make it live.
+              </Text>
+            </PanelBanner>
+          )}
+          <Publish
+            project={project}
+            refresh={refreshProject}
+            timesLeft={maxDailyPublishesPerUser - userPublishCount}
+            disabled={false}
+            restrictedFeatures={restrictedFeatures}
+            validation={props.validation}
+            progress={props.progress}
+            session={props.session}
+            onOpenReport={props.onOpenReport}
+          />
+        </PanelContent>
+      </form>
+    </>
   );
 };
 
@@ -1045,12 +1924,17 @@ type DeployTargets = keyof typeof deployTargets;
 const isDeployTargets = (value: string): value is DeployTargets =>
   Object.keys(deployTargets).includes(value);
 
-const ExportContent = (props: { projectId: Project["id"] }) => {
+const ExportContent = (props: {
+  projectId: Project["id"];
+  session: ReturnType<typeof usePublishSession>;
+  onOpenReport: (tab?: "warnings" | "errors" | "publish") => void;
+  onFindings: (findings: PublishValidationFinding[]) => void;
+}) => {
   const npxCommand = "npx webstudio@latest";
   const [deployTarget, setDeployTarget] = useState<DeployTargets>("docker");
 
   return (
-    <Grid columns={1} gap={3} css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Grid} columns={1} gap={3}>
       <Grid columns={1} gap={2}>
         <div />
         <Grid columns={2} gap={2} align={"center"}>
@@ -1077,6 +1961,9 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
           <PublishStatic
             projectId={props.projectId}
             templates={deployTargets[deployTarget].ssgTemplates}
+            session={props.session}
+            onOpenReport={props.onOpenReport}
+            onFindings={props.onFindings}
           />
           <div />
           <Text color="subtle">
@@ -1154,7 +2041,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
                 value={npxCommand}
               />
               <CopyToClipboard text={npxCommand}>
-                <Button type="button" color="neutral" prefix={<CopyIcon />}>
+                <Button type="button" prefix={<CopyIcon />}>
                   Copy
                 </Button>
               </CopyToClipboard>
@@ -1192,7 +2079,6 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
                 <Button
                   type="button"
                   css={{ flexShrink: 0 }}
-                  color="neutral"
                   prefix={<CopyIcon />}
                 >
                   Copy
@@ -1217,7 +2103,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
           </Grid>
         </Grid>
       )}
-    </Grid>
+    </PanelContent>
   );
 };
 
@@ -1228,82 +2114,254 @@ type PublishProps = {
 export const PublishButton = ({ projectId }: PublishProps) => {
   const publishDialog = useStore($publishDialog);
   const authTokenPermissions = useStore($authTokenPermissions);
+  const { allowAdvancedPublishDiagnostics = false } = useStore($planFeatures);
+  const session = usePublishSession(projectId, allowAdvancedPublishDiagnostics);
+  const [staticFindings, setStaticFindings] = useState<
+    PublishValidationFinding[]
+  >([]);
+  const [selectedReport, setSelectedReport] = useState<{
+    target: "static" | "site";
+    domain?: string;
+    tab: "warnings" | "errors" | "publish";
+  }>();
+  useEffect(() => {
+    setSelectedReport(undefined);
+    setStaticFindings([]);
+  }, [projectId]);
+  const validation = usePublishValidationState(publishDialog);
+  const publishProgress = usePublishProgress(projectId);
+  const {
+    dismissCountdown,
+    reconcileRefreshedProject,
+    watchPendingPublish,
+    beginPopoverRefresh,
+    isRefreshCurrent,
+  } = publishProgress;
+  useEffect(() => {
+    if (publishDialog !== "publish") {
+      dismissCountdown();
+    }
+  }, [publishDialog, dismissCountdown]);
+  useEffect(() => {
+    // Refresh a build that finished while the popover was closed, including
+    // after a publish status request failed.
+    if (publishDialog === "publish" && publishProgress.isPublishing === false) {
+      let isOpen = true;
+      const generation = beginPopoverRefresh();
+      void refreshUntilSuccess(
+        async (showError) => {
+          const refreshedProject = await getRefreshedProject({
+            projectId,
+            showError,
+            isCurrent: () => isOpen && isRefreshCurrent(generation),
+          });
+          if (
+            isOpen &&
+            isRefreshCurrent(generation) &&
+            refreshedProject !== undefined
+          ) {
+            reconcileRefreshedProject(refreshedProject);
+          }
+          return refreshedProject;
+        },
+        () => isOpen,
+        () => {
+          void watchPendingPublish(
+            () =>
+              getRefreshedProject({
+                projectId,
+                showError: false,
+                isCurrent: () => isRefreshCurrent(generation),
+              }),
+            generation
+          );
+        }
+      );
+      return () => {
+        isOpen = false;
+      };
+    }
+  }, [
+    projectId,
+    publishDialog,
+    publishProgress.isPublishing,
+    reconcileRefreshedProject,
+    watchPendingPublish,
+    beginPopoverRefresh,
+    isRefreshCurrent,
+  ]);
   const { canPublishToStagingOnly } = useStore($permissions);
   const isPublishEnabled =
     authTokenPermissions.canPublish || canPublishToStagingOnly;
-
   const tooltipContent = isPublishEnabled
     ? undefined
     : "Only the owner, an admin, or content editors with publish permissions can publish projects";
 
   const handleExportClick = () => {
+    validation.reset();
+    publishProgress.dismissCountdown();
     $publishDialog.set("export");
   };
 
   const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen === false) {
+      validation.reset();
+      publishProgress.dismissCountdown();
+    }
     $publishDialog.set(isOpen ? "publish" : "none");
   };
 
-  return (
-    <Popover
-      modal
-      open={publishDialog !== "none"}
-      onOpenChange={handleOpenChange}
-    >
-      <Tooltip
-        side="bottom"
-        content={tooltipContent ?? "Publish to Webstudio Cloud"}
-        sideOffset={Number.parseFloat(rawTheme.spacing[5])}
-      >
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            disabled={isPublishEnabled === false}
-            color="positive"
-          >
-            Publish
-          </Button>
-        </PopoverTrigger>
-      </Tooltip>
-
-      <PopoverContent
-        sideOffset={Number.parseFloat(rawTheme.spacing[8])}
-        css={{
-          width: theme.spacing[33],
-          maxWidth: theme.spacing[33],
-          marginRight: theme.spacing[3],
-        }}
-      >
-        {publishDialog === "export" && (
-          <>
-            <PopoverTitle>Export</PopoverTitle>
-            <ExportContent projectId={projectId} />
-          </>
-        )}
-
-        {publishDialog === "publish" && (
-          <>
-            <PopoverTitle
-              suffix={
-                <PopoverTitleActions>
-                  <IconButton
-                    type="button"
-                    onClick={() => {
-                      $openProjectSettings.set("publish");
-                    }}
-                  >
-                    <GearIcon />
-                  </IconButton>
-                  <PopoverClose />
-                </PopoverTitleActions>
-              }
-            >
-              Publish
-            </PopoverTitle>
-            <Content projectId={projectId} onExportClick={handleExportClick} />
-          </>
-        )}
-      </PopoverContent>
-    </Popover>
+  const openSiteReport = (
+    domain: string | undefined,
+    tab: "warnings" | "errors" | "publish"
+  ) => {
+    $publishDialog.set("none");
+    setSelectedReport({ target: "site", domain, tab });
+  };
+  const openStaticReport = (
+    tab: "warnings" | "errors" | "publish" = "publish"
+  ) => {
+    $publishDialog.set("none");
+    setSelectedReport({ target: "static", tab });
+  };
+  const reportItems = selectPublishSessionItems(
+    session.items,
+    selectedReport?.target ?? "site",
+    selectedReport?.domain
   );
+  const latestReportItem = reportItems[0];
+  const domain = selectedReport?.domain;
+  const candidateFindings: PublishValidationFinding[] = [
+    ...(selectedReport?.target === "static"
+      ? staticFindings
+      : [
+          ...(domain === undefined ||
+          publishProgress.manualValidationFindings.domains?.includes(domain)
+            ? publishProgress.manualValidationFindings.findings
+            : []),
+          ...(domain === undefined ||
+          publishProgress.publishDiagnosticsDomains.includes(domain)
+            ? publishProgress.publishFindings
+            : []),
+          ...(publishProgress.publishError === undefined ||
+          (domain !== undefined &&
+            publishProgress.publishErrorDomains !== undefined &&
+            !publishProgress.publishErrorDomains.includes(domain))
+            ? []
+            : [
+                {
+                  severity: "error" as const,
+                  title: publishProgress.publishError,
+                  summary:
+                    typeof publishProgress.publishError === "string"
+                      ? publishProgress.publishError.slice(0, 160)
+                      : "Publish failed",
+                  reportText:
+                    typeof publishProgress.publishError === "string"
+                      ? publishProgress.publishError
+                      : "Publish failed",
+                },
+              ]),
+        ]),
+    ...(latestReportItem?.findings ?? []),
+    ...(latestReportItem?.issues?.map((issue) => ({
+      severity: issue.severity,
+      title: issue.message,
+      summary: issue.message,
+      source: "build" as const,
+      reportText: `${issue.severity.toUpperCase()}: ${issue.message}`,
+    })) ?? []),
+  ];
+  const reportFindings = candidateFindings.filter(
+    (finding, index, all) =>
+      all.findIndex(
+        (other) =>
+          other.reportText === finding.reportText &&
+          other.source === finding.source
+      ) === index
+  );
+
+  return (
+    <>
+      <Popover
+        modal
+        open={publishDialog !== "none"}
+        onOpenChange={handleOpenChange}
+      >
+        <Tooltip
+          side="bottom"
+          content={tooltipContent ?? "Publish to Webstudio Cloud"}
+          sideOffset={Number.parseFloat(rawTheme.spacing[5])}
+        >
+          <PopoverTrigger asChild>
+            <Button type="button" disabled={isPublishEnabled === false}>
+              Publish
+            </Button>
+          </PopoverTrigger>
+        </Tooltip>
+
+        <PopoverContent
+          css={{
+            width: theme.spacing[33],
+            maxWidth: theme.spacing[33],
+            marginRight: theme.spacing[3],
+          }}
+        >
+          {publishDialog === "export" && (
+            <>
+              <PopoverTitle>Export</PopoverTitle>
+              <ExportContent
+                projectId={projectId}
+                session={session}
+                onOpenReport={openStaticReport}
+                onFindings={(findings) => {
+                  if ($project.get()?.id === projectId) {
+                    setStaticFindings(findings);
+                  }
+                }}
+              />
+            </>
+          )}
+
+          {publishDialog === "publish" && (
+            <Content
+              projectId={projectId}
+              onExportClick={handleExportClick}
+              validation={validation}
+              progress={publishProgress}
+              session={session}
+              onOpenReport={openSiteReport}
+            />
+          )}
+        </PopoverContent>
+      </Popover>
+      <PublishValidationResults
+        findings={reportFindings}
+        open={selectedReport !== undefined}
+        onOpenChange={(open) => {
+          if (open === false) {
+            setSelectedReport(undefined);
+          }
+        }}
+        target={
+          selectedReport?.target === "static"
+            ? "Static export"
+            : selectedReport?.domain
+        }
+        initialTab={selectedReport?.tab}
+        items={reportItems}
+        isPro={allowAdvancedPublishDiagnostics}
+        onLoadLog={session.loadLog}
+      />
+    </>
+  );
+};
+
+export const __testing__ = {
+  usePublishProgress,
+  useManualValidationFindings,
+  waitForPublishStatus,
+  refreshUntilSuccess,
+  getRefreshedProject,
+  reportPublishResult,
 };

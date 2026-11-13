@@ -1,13 +1,155 @@
 import { describe, expect, test } from "vitest";
 import {
   camelCaseProperty,
+  hasUnsupportedCssTemplateRules,
+  hasCssSyntaxError,
   parseClassBasedSelector,
   parseCss,
+  parseSingleCssDeclaration,
   parseMediaQuery,
 } from "./parse-css";
 import { propertyVarTestFixtures } from "./__generated__/property-var-test-fixtures";
 
+test("single declaration parser rejects CSS that changes the rule structure", () => {
+  expect(
+    parseSingleCssDeclaration('content:"a; } b"', "content").errors
+  ).toEqual([]);
+  expect(
+    parseSingleCssDeclaration("color:red; width:10px", "color").errors.length
+  ).toBeGreaterThan(0);
+  expect(
+    parseSingleCssDeclaration("color:red} b{width:10px", "color").errors.length
+  ).toBeGreaterThan(0);
+});
+
+test("single declaration parser rejects recovered syntax errors", () => {
+  expect(
+    parseSingleCssDeclaration("color:rgb(1, 2, 3", "color").errors.length
+  ).toBeGreaterThan(0);
+});
+
+test.each([
+  ["", false],
+  ["a{color:red}", false],
+  ["/* comment */ @media (min-width: 600px) { a { color: red } }", false],
+  ["a{--p\\ \\>\\ \\.figma-block-translate:none}", false],
+  ["a{color:red}}", true],
+  ["a{color:rgb(1, 2, 3}", true],
+  ["a{color:red/*}", true],
+] as const)("detects stylesheet syntax errors in %s", (css, expected) => {
+  expect(hasCssSyntaxError(css)).toBe(expected);
+});
+
 describe("Parse CSS", () => {
+  test("flex with a nested calc basis matches explicit longhands", () => {
+    const basis = "calc((100% - var(--space-lg)) / 2)";
+    const shorthand = parseCss(`.test { flex: 0 1 ${basis}; }`, new Map());
+    const longhands = parseCss(
+      `.test { flex-grow: 0; flex-shrink: 1; flex-basis: ${basis}; }`,
+      new Map()
+    );
+    expect(shorthand.styles).toEqual(longhands.styles);
+  });
+
+  test.each([
+    ["", "", "1", "1"],
+    ["2 ", "", "2", "1"],
+    ["", " 2", "2", "1"],
+    ["", " 2 3", "2", "3"],
+  ])(
+    "flex function basis between %s and %s matches explicit longhands",
+    (before, after, grow, shrink) => {
+      const basis = "calc((100% - var(--gap)) / 2)";
+      expect(
+        parseCss(`.test { flex: ${before}${basis}${after}; }`, new Map()).styles
+      ).toEqual(
+        parseCss(
+          `.test { flex-grow: ${grow}; flex-shrink: ${shrink}; flex-basis: ${basis}; }`,
+          new Map()
+        ).styles
+      );
+    }
+  );
+
+  test("border color-mix with a variable matches explicit longhands", () => {
+    const color = "color-mix(in srgb, var(--accent) 50%, transparent)";
+    const shorthand = parseCss(
+      `.test { border-top: 1px solid ${color}; }`,
+      new Map()
+    );
+    const longhands = parseCss(
+      `.test {
+        border-top-width: 1px;
+        border-top-style: solid;
+        border-top-color: ${color};
+      }`,
+      new Map()
+    );
+    expect(shorthand.styles).toEqual(longhands.styles);
+  });
+
+  test.each([
+    ["16px/1.5", "16px", "1.5", "var(--font-body)"],
+    ["16px / 24px", "16px", "24px", "var(--font-body)"],
+    ["16px/var(--leading)", "16px", "var(--leading)", "var(--font-body)"],
+    ["16px", "16px", "initial", "var(--font-body)"],
+  ])(
+    "font shorthand %s %s %s %s matches explicit longhands",
+    (sizeAndHeight, size, height, family) => {
+      const shorthand = parseCss(
+        `.test { font: 600 ${sizeAndHeight} ${family} }`,
+        new Map()
+      );
+      const longhands = parseCss(
+        `.test {
+          font-style: initial;
+          font-variant-caps: initial;
+          font-weight: 600;
+          font-stretch: initial;
+          font-size: ${size};
+          line-height: ${height};
+          font-family: ${family};
+        }`,
+        new Map()
+      );
+      expect(shorthand.styles).toEqual(longhands.styles);
+    }
+  );
+
+  test("detects rules unsupported by template CSS", () => {
+    expect(hasUnsupportedCssTemplateRules("color: red")).toBe(false);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@media (min-width: 768px) { color: blue }"
+      )
+    ).toBe(false);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "--brand: red; color: var(--brand, currentColor)"
+      )
+    ).toBe(false);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@MEDIA (min-width: 768px) { color: blue }"
+      )
+    ).toBe(false);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@keyframes fade { from { opacity: 0 } to { opacity: 1 } }"
+      )
+    ).toBe(true);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@media (min-width: 768px) { .child { color: blue } }"
+      )
+    ).toBe(true);
+    expect(
+      hasUnsupportedCssTemplateRules(
+        "@media (min-width: 768px) { @keyframes fade { from { opacity: 0 } } }"
+      )
+    ).toBe(true);
+  });
+
   test("longhand property name with keyword value", () => {
     expect(
       parseCss(`.test { background-color: red }`, new Map()).styles
@@ -580,6 +722,16 @@ describe("Parse CSS", () => {
     ]);
   });
 
+  test.each([
+    ["-ms-grid-columns", "1fr"],
+    ["-moz-orient", "vertical"],
+    ["-webkit-mask-attachment", "fixed"],
+  ])("keep prefix for known MDN property %s", (property, value) => {
+    expect(parseCss(`a { ${property}: ${value}; }`, new Map()).styles).toEqual([
+      expect.objectContaining({ property }),
+    ]);
+  });
+
   test("keep prefix for -webkit-text-stroke", () => {
     // shorthand expands to prefixed longhands while preserving the prefix
     expect(
@@ -757,6 +909,11 @@ test("parse media queries", () => {
           color: green;
         }
       }
+      @MEDIA (min-width: 1024px) {
+        a {
+          color: blue;
+        }
+      }
    `,
       new Map()
     ).styles
@@ -772,6 +929,12 @@ test("parse media queries", () => {
       selector: "a",
       property: "color",
       value: { type: "keyword", value: "green" },
+    },
+    {
+      breakpoint: `(min-width:1024px)`,
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
     },
   ]);
 });
@@ -1489,7 +1652,7 @@ test("parse &:functional-pseudo as state", () => {
   expect(parseCss(`&:nth-child(2) { color: red }`, new Map()).styles).toEqual([
     {
       selector: "",
-      state: ":nth-child",
+      state: ":nth-child(2)",
       property: "color",
       value: { type: "keyword", value: "red" },
     },
@@ -1872,6 +2035,23 @@ test("shorthand: var() in transition is substituted and expanded", () => {
   );
 });
 
+test("transition with unresolved vars keeps the authored shorthand", () => {
+  const result = parseCss(
+    ".box { transition: opacity 300ms var(--ease), transform var(--duration) ease; }",
+    new Map()
+  );
+
+  expect(result.styles).toEqual([
+    expect.objectContaining({
+      property: "transition",
+      value: {
+        type: "unparsed",
+        value: "opacity 300ms var(--ease),transform var(--duration) ease",
+      },
+    }),
+  ]);
+});
+
 // ─── Comprehensive var() substitution in shorthands ───────────────────────────
 
 const u = (value: number, unit: string) =>
@@ -2135,6 +2315,68 @@ describe("var() substitution — CSS var() inline fallback", () => {
           "border-left-color",
           expect.objectContaining({ type: "var", value: "border-color" })
         ),
+      ])
+    );
+  });
+
+  const unresolvedBorderColorCases: Array<[string, string[], number, string]> =
+    [
+      [
+        "border-bottom: 1.5px solid var(--color-variable);",
+        ["bottom"],
+        1.5,
+        "color-variable",
+      ],
+      ["border-top: 1px solid var(--x);", ["top"], 1, "x"],
+      [
+        "border: 1.5px solid var(--x);",
+        ["top", "right", "bottom", "left"],
+        1.5,
+        "x",
+      ],
+      ["border-right: 1.5px solid var(--x);", ["right"], 1.5, "x"],
+      ["border-left: 1.5px solid var(--x);", ["left"], 1.5, "x"],
+    ];
+
+  test.each(unresolvedBorderColorCases)(
+    "maps the unresolved color var in %s without corrupting width or style",
+    (css, sides, width, varName) => {
+      const result = decls(css);
+      const color = expect.objectContaining({ type: "var", value: varName });
+      expect(result).toEqual(
+        expect.arrayContaining(
+          sides.flatMap((side) => [
+            prop(`border-${side}-width`, u(width, "px")),
+            prop(`border-${side}-style`, kw("solid")),
+            prop(`border-${side}-color`, color),
+          ])
+        )
+      );
+    }
+  );
+
+  test("maps an unresolved border width var to width from its position", () => {
+    expect(decls("border-bottom: var(--x) solid red;")).toEqual(
+      expect.arrayContaining([
+        prop(
+          "border-bottom-width",
+          expect.objectContaining({ type: "var", value: "x" })
+        ),
+        prop("border-bottom-style", kw("solid")),
+        prop("border-bottom-color", kw("red")),
+      ])
+    );
+  });
+
+  test("maps an unresolved border style var to style from its position", () => {
+    expect(decls("border-bottom: 1px var(--x) red;")).toEqual(
+      expect.arrayContaining([
+        prop("border-bottom-width", u(1, "px")),
+        prop(
+          "border-bottom-style",
+          expect.objectContaining({ type: "var", value: "x" })
+        ),
+        prop("border-bottom-color", kw("red")),
       ])
     );
   });

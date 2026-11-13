@@ -2,8 +2,7 @@ name: Vercel Deploy Staging
 
 on:
   push:
-  pull_request_target:
-    types: [labeled, synchronize]
+  workflow_call:
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
@@ -17,29 +16,7 @@ permissions:
   pull-requests: write # needed to remove labels and comment
 
 jobs:
-  # Remove the safe-to-deploy label when new commits are pushed to a PR (requires re-review)
-  remove-label-on-update:
-    if: github.event_name == 'pull_request_target' && github.event.action == 'synchronize'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Remove safe-to-deploy label
-        uses: actions/github-script@v8
-        with:
-          script: |
-            await github.rest.issues.removeLabel({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              name: 'safe-to-deploy'
-            }).catch(() => {});
-            console.log('Removed safe-to-deploy label due to new commits. Re-review required.');
-
   deployment:
-    # Run on push (for repo branches) OR on labeled event with safe-to-deploy label (for fork PRs)
-    if: |
-      github.event_name == 'push' ||
-      (github.event_name == 'pull_request_target' && github.event.action == 'labeled' && github.event.label.name == 'safe-to-deploy')
-
     # Execute development and staging on staging branches
     # Execute only development on all other branches
     strategy:
@@ -125,11 +102,6 @@ jobs:
       builder-host: "${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
 
   deployment-host:
-    # Run on push (for repo branches) OR on labeled event with safe-to-deploy label (for fork PRs)
-    if: |
-      github.event_name == 'push' ||
-      (github.event_name == 'pull_request_target' && github.event.action == 'labeled' && github.event.label.name == 'safe-to-deploy')
-
     runs-on: ubuntu-latest
     outputs:
       development-builder-host: ${{ steps.host.outputs.value }}

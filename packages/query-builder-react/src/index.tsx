@@ -14,8 +14,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  CssValueListArrowFocus,
-  CssValueListItem,
+  InteractiveListArrowFocus,
+  InteractiveListItem,
   Flex,
   Grid,
   InputField,
@@ -28,6 +28,7 @@ import {
   SmallIconButton,
   Text,
   TextArea,
+  cssVar,
   theme,
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
@@ -113,7 +114,7 @@ const QuerySelectionListItem = ({
   settings?: ReactNode;
 }) => {
   const item = (
-    <CssValueListItem
+    <InteractiveListItem
       id={id}
       index={index}
       type="button"
@@ -340,12 +341,12 @@ const Group = <FieldType extends string, Operator extends string>({
         ...(root
           ? {
               paddingInline: shared.sectionPaddingInline,
-              borderTop: `1px solid ${theme.colors.borderMain}`,
+              borderTop: `1px solid ${cssVar("--border-default")}`,
               paddingTop: theme.spacing[7],
             }
           : {
               paddingLeft: theme.spacing[3],
-              borderLeft: `1px solid ${theme.colors.borderMain}`,
+              borderLeft: `1px solid ${cssVar("--border-default")}`,
             }),
       }}
     >
@@ -815,7 +816,7 @@ const QueryParameters = ({
         <Grid
           gap={2}
           css={{
-            borderTop: `1px solid ${theme.colors.borderMain}`,
+            borderTop: `1px solid ${cssVar("--border-default")}`,
             paddingTop: theme.spacing[7],
           }}
         >
@@ -832,7 +833,15 @@ const QueryParameters = ({
                   icon={<PlusIcon />}
                 />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" sideOffset={4}>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={4}
+                css={{
+                  maxHeight:
+                    "var(--radix-dropdown-menu-content-available-height)",
+                  overflowY: "auto",
+                }}
+              >
                 {selectionParameters.map((parameter, index) => (
                   <Fragment key={parameter.key}>
                     {index > 0 && <DropdownMenuSeparator />}
@@ -845,7 +854,7 @@ const QueryParameters = ({
               </DropdownMenuContent>
             </DropdownMenu>
           </Flex>
-          <CssValueListArrowFocus>
+          <InteractiveListArrowFocus>
             {selectionParameters.map((parameter) => {
               const { current, option } = getSelected(parameter);
               const selection = parameter.config.selection;
@@ -938,7 +947,7 @@ const QueryParameters = ({
                 </Grid>
               );
             })}
-          </CssValueListArrowFocus>
+          </InteractiveListArrowFocus>
         </Grid>
       )}
       {regularParameters.map((parameter) => {
@@ -1167,7 +1176,7 @@ export const StructuredQueryBuilder = <
               gap={2}
               css={{
                 paddingInline: sectionPaddingInline,
-                borderTop: `1px solid ${theme.colors.borderMain}`,
+                borderTop: `1px solid ${cssVar("--border-default")}`,
                 paddingTop: theme.spacing[7],
               }}
             >

@@ -1,0 +1,4 @@
+/* Login alone locks the UI document; dashboard routes retain document scrolling. */
+body {
+  overflow: hidden;
+}

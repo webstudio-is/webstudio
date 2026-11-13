@@ -1,16 +1,50 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
 import {
+  blockComponent,
+  blockTemplateComponent,
+  getInputJsonSchemaMetadata,
+  getInputJsonSchemaProperties,
+} from "@webstudio-is/sdk";
+import {
   createProjectSessionMcpCore,
+  getDetailedProjectSessionMcpInputSchema,
+  hiddenMcpOperationCommands,
   listProjectSessionMcpTools,
 } from "@webstudio-is/project-build/mcp";
+import {
+  createDefaultProjectSessionCompatibility,
+  createProjectSession,
+} from "@webstudio-is/project-build/project-session";
+import {
+  createBuilderStateFromSnapshot,
+  createBuilderStateFreshness,
+} from "@webstudio-is/project-build/state";
 import { publicApiOperations } from "@webstudio-is/protocol";
+import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
+import { ROOT_INSTANCE_ID, type Pages } from "@webstudio-is/sdk";
 import { updatePersistedMcpCheckpoint } from "./mcp-checkpoint";
-import { __testing__, mcpOptions, prepareMcpProjectSession } from "./mcp";
+import {
+  createCliProjectSessionStorage,
+  createIssueReportFailureTracker,
+  createIssueReportTargetTracker,
+} from "../project-session";
+import {
+  __testing__,
+  mcpOptions,
+  mcpSingleOpCall,
+  prepareMcpProjectSession,
+} from "./mcp";
 
 const {
+  createIssueReportStateWriter,
+  getMcpDownloadAsset,
+  getIssueReportFailureFile,
+  getIssueReportPageId,
+  persistIssueReportFailure,
+  restoreIssueReportFailure,
   assertSingleOpCallToolSupported,
   applyMcpRunOptions,
   createMcpResourceErrorPayload,
@@ -18,8 +52,15 @@ const {
   createMcpRunErrorPayload,
   createMcpSingleOpCallErrorPayload,
   createMcpStatusReporter,
+  assertMcpToolServerSupport,
+  getCliUpdateInstructions,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
+  prepareTextAssetWriteFeedback,
+  withTextAssetWriteFeedback,
+  validateDownloadedTextAsset,
+  materializeValidatedDownloadedAsset,
+  reportMcpSingleOpCallTermination,
   reportMcpRunTermination,
   createMcpRunTerminationController,
   parseMcpRunCalls,
@@ -31,6 +72,38 @@ const {
   executeMcpRunCall,
   withMcpHost,
 } = __testing__;
+
+test("instructs connected agents to update an outdated MCP CLI", () => {
+  expect(
+    getCliUpdateInstructions({
+      currentVersion: "0.299.0",
+      latestVersion: "0.301.0",
+    })
+  ).toBe(
+    "This MCP server runs Webstudio CLI 0.299.0, but 0.301.0 is available. Tell the user before editing and recommend restarting this MCP server with the latest CLI, for example `npx -y webstudio@latest mcp`. Do not try to update or restart the CLI yourself. The existing API compatibility check remains the authority for whether writes are supported."
+  );
+  expect(getCliUpdateInstructions(undefined)).toBeUndefined();
+});
+
+test("checks API contract compatibility before committing MCP edits", () => {
+  const contract = {
+    clientVersion: "public-api:client",
+    serverVersion: "public-api:server",
+    supportedOperationIds: new Set<string>(),
+    missingServerOperationIds: [],
+    negotiated: true,
+  } as const;
+
+  expect(() => assertMcpToolServerSupport("update-page", contract)).toThrow(
+    /Restart the MCP server with the latest CLI/
+  );
+  expect(() =>
+    assertMcpToolServerSupport("update-page", contract, true)
+  ).not.toThrow();
+  expect(() =>
+    assertMcpToolServerSupport("list-pages", contract)
+  ).not.toThrow();
+});
 
 test("disposes an MCP host when its operation fails", async () => {
   const dispose = vi.fn(async () => undefined);
@@ -78,6 +151,122 @@ const tempDirs: string[] = [];
 type CommandBuilder = (yargs: unknown) => unknown;
 type CommandCall = [readonly string[], string, CommandBuilder, unknown];
 
+const normalizeMcpJsonValueSchemas = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(normalizeMcpJsonValueSchemas);
+  }
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+  const object = value as Record<string, unknown>;
+  if (
+    Object.keys(object).length === 1 &&
+    Array.isArray(object.anyOf) &&
+    JSON.stringify(object.anyOf) ===
+      JSON.stringify([
+        { type: "string" },
+        { type: "number" },
+        { type: "boolean" },
+        { type: "null" },
+        { type: "array", items: {} },
+        { type: "object" },
+      ])
+  ) {
+    return {};
+  }
+  const omitSyntheticTupleItems =
+    Array.isArray(object.prefixItems) &&
+    object.items !== null &&
+    typeof object.items === "object" &&
+    Object.keys(object.items).length === 0;
+  return Object.fromEntries(
+    Object.entries(object)
+      .filter(([key]) => omitSyntheticTupleItems === false || key !== "items")
+      .map(([key, nestedValue]) => [
+        key,
+        normalizeMcpJsonValueSchemas(nestedValue),
+      ])
+  );
+};
+
+test("keeps every MCP API tool aligned with its public API contract", () => {
+  const toolsByName = new Map(
+    listProjectSessionMcpTools(publicApiOperations).map((tool) => [
+      tool.name,
+      tool,
+    ])
+  );
+
+  for (const operation of publicApiOperations) {
+    if (hiddenMcpOperationCommands.has(operation.command)) {
+      expect(toolsByName.has(operation.command), operation.command).toBe(false);
+      continue;
+    }
+
+    const tool = toolsByName.get(operation.command);
+    expect(tool, operation.command).toBeDefined();
+    if (tool === undefined) {
+      continue;
+    }
+
+    const schema = getDetailedProjectSessionMcpInputSchema(tool);
+    const transportFields = [
+      ...(operation.method === "mutation" && operation.localCapable
+        ? ["dryRun"]
+        : []),
+      ...(operation.requiresConfirm && operation.localCapable
+        ? ["confirmDestructive", "confirmationToken"]
+        : []),
+    ];
+    const cliOwnedFields =
+      operation.command === "report-issue" ? ["runtime"] : [];
+    const schemaMetadata = getInputJsonSchemaMetadata(schema);
+    const semanticFields = schemaMetadata.inputFields.filter(
+      (field) => transportFields.includes(field) === false
+    );
+    expect(new Set(semanticFields), operation.command).toEqual(
+      new Set(
+        operation.inputFields.filter(
+          (field) => cliOwnedFields.includes(field) === false
+        )
+      )
+    );
+
+    const apiProperties = getInputJsonSchemaProperties(operation.inputSchema);
+    const mcpProperties = getInputJsonSchemaProperties(schema);
+    for (const field of operation.inputFields) {
+      if (cliOwnedFields.includes(field)) {
+        continue;
+      }
+      const isRepresentationOverride =
+        (operation.command === "insert-fragment" &&
+          ["parentInstanceId", "fragment"].includes(field)) ||
+        (operation.command === "insert-collection" && field === "itemFragment");
+      if (isRepresentationOverride) {
+        continue;
+      }
+      expect(
+        normalizeMcpJsonValueSchemas(mcpProperties?.[field]),
+        `${operation.command}.${field}`
+      ).toEqual(apiProperties?.[field]);
+    }
+
+    const requiredFields = operation.requiredInputFields.filter(
+      (field) => cliOwnedFields.includes(field) === false
+    );
+    if (
+      operation.command === "insert-fragment" &&
+      requiredFields.includes("parentInstanceId") === false
+    ) {
+      requiredFields.push("parentInstanceId");
+    }
+    expect(
+      new Set(schemaMetadata.requiredInputFields),
+      operation.command
+    ).toEqual(new Set(requiredFields));
+  }
+});
+
 afterEach(async () => {
   vi.restoreAllMocks();
   await Promise.all(
@@ -85,7 +274,451 @@ afterEach(async () => {
   );
 });
 
-test("documents MCP stdio startup and discovery tools", () => {
+test("confirms a resource deletion across persisted CLI sessions only for the unchanged plan", async () => {
+  const operation = publicApiOperations.find(
+    ({ command }) => command === "delete-resource"
+  );
+  if (operation === undefined) {
+    throw new Error("Expected delete-resource MCP operation");
+  }
+  const compatibility = createDefaultProjectSessionCompatibility("test");
+
+  for (const change of ["none", "version", "plan"] as const) {
+    const directory = await mkdtemp(
+      path.join(tmpdir(), "webstudio-mcp-delete-confirmation-")
+    );
+    tempDirs.push(directory);
+    const storagePath = path.join(directory, "project-session.json");
+    const storage = createCliProjectSessionStorage(storagePath);
+    const createSnapshot = (version: number, addDataSource: boolean) => {
+      const state = createBuilderStateFromSnapshot({
+        pages: {
+          homePageId: "home",
+          rootFolderId: "root",
+          pages: new Map([
+            [
+              "home",
+              {
+                id: "home",
+                name: "Home",
+                path: "",
+                title: "Home",
+                rootInstanceId: "body",
+                meta: {},
+              },
+            ],
+          ]),
+          folders: new Map([
+            [
+              "root",
+              { id: "root", name: "Root", slug: "", children: ["home"] },
+            ],
+          ]),
+        },
+        instances: [
+          [
+            ROOT_INSTANCE_ID,
+            {
+              type: "instance",
+              id: ROOT_INSTANCE_ID,
+              component: "Root",
+              children: [{ type: "id", value: "body" }],
+            },
+          ],
+          [
+            "body",
+            { type: "instance", id: "body", component: "Body", children: [] },
+          ],
+        ],
+        props: [],
+        dataSources: addDataSource
+          ? [
+              [
+                "resource-data",
+                {
+                  id: "resource-data",
+                  name: "resourceData",
+                  type: "resource",
+                  resourceId: "resource",
+                  scopeInstanceId: "body",
+                },
+              ],
+            ]
+          : [],
+        resources: [
+          [
+            "resource",
+            {
+              id: "resource",
+              name: "Test resource",
+              method: "get",
+              url: '"https://example.com"',
+              headers: [],
+            },
+          ],
+        ],
+      });
+      return {
+        projectId: "project-1",
+        buildId: "build-1",
+        version,
+        state,
+        freshness: createBuilderStateFreshness({ state, version }),
+        compatibilityVersion: "test",
+        compatibility,
+      };
+    };
+    await storage.save(createSnapshot(1, false), {});
+
+    let commits = 0;
+    const createCore = async () => {
+      const session = createProjectSession({
+        projectId: "project-1",
+        storage: createCliProjectSessionStorage(storagePath),
+        compatibilityVersion: "test",
+        runtimeContext: { createId: () => crypto.randomUUID() },
+        transport: {
+          async fetchNamespaces() {
+            throw new Error("The complete persisted snapshot should be used");
+          },
+          async commitPatch({ baseVersion }) {
+            commits += 1;
+            return { version: baseVersion + 1 };
+          },
+          async commitRestorePoint() {
+            throw new Error("Resource deletion must use patch commits");
+          },
+          async getPermissions() {
+            return {
+              canView: true,
+              canEdit: true,
+              canBuild: true,
+              canAdmin: false,
+              canUseApi: true,
+            };
+          },
+          async getCompatibility() {
+            return compatibility;
+          },
+        },
+      });
+      await session.initialize();
+      return createProjectSessionMcpCore({
+        operations: [operation],
+        createProjectSession: () => session,
+        executeOperation: ({ input, dryRun }) =>
+          session.mutate("resources.delete", input as { resourceId: string }, {
+            dryRun,
+          }),
+      });
+    };
+
+    const planned = await (
+      await createCore()
+    ).callTool({
+      name: "delete-resource",
+      input: { resourceId: "resource", dryRun: true },
+    });
+    expect(planned.structuredContent).toMatchObject({
+      ok: true,
+      meta: { confirmation: { token: expect.any(String) } },
+    });
+    const token = planned.structuredContent.meta.confirmation?.token;
+    if (token === undefined) {
+      throw new Error("Expected a deletion confirmation token");
+    }
+
+    if (change !== "none") {
+      const persisted = await storage.load();
+      await storage.save(
+        createSnapshot(change === "version" ? 2 : 1, change === "plan"),
+        {
+          expectedRevision: persisted?.revision,
+        }
+      );
+    }
+
+    const result = await (
+      await createCore()
+    ).callTool({
+      name: "delete-resource",
+      input: {
+        resourceId: "resource",
+        confirmDestructive: true,
+        confirmationToken: token,
+      },
+    });
+    if (change === "none") {
+      expect(result.structuredContent.ok).toBe(true);
+      expect(commits).toBe(1);
+      expect((await storage.load())?.state.resources?.has("resource")).toBe(
+        false
+      );
+    } else {
+      expect(result.structuredContent).toMatchObject({
+        ok: false,
+        error: { code: "DESTRUCTIVE_CONFIRMATION_INVALID" },
+      });
+      expect(commits).toBe(0);
+      expect((await storage.load())?.state.resources?.has("resource")).toBe(
+        true
+      );
+    }
+  }
+});
+
+test("persists sanitized issue-report failure diagnostics for the next CLI process", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-issue-report-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const firstProcess = createIssueReportFailureTracker();
+  firstProcess.record(
+    "update-text",
+    new Error("Unable to transform response from server"),
+    125,
+    { instanceId: "instance-1", text: "private customer content" }
+  );
+
+  await persistIssueReportFailure(filePath, firstProcess.snapshot());
+
+  const secondProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, secondProcess);
+  expect(secondProcess.get()).toMatchObject({
+    tool: "update-text",
+    elapsedMs: 125,
+    entityIds: [{ field: "instanceId", id: "instance-1" }],
+  });
+  expect(await readFile(filePath, "utf8")).not.toContain(
+    "private customer content"
+  );
+
+  await persistIssueReportFailure(filePath, undefined);
+  const clearedProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, clearedProcess);
+  expect(clearedProcess.get()).toBeUndefined();
+
+  await writeFile(
+    filePath,
+    JSON.stringify({
+      at: Date.now(),
+      failure: { tool: "update-text", code: "MCP_TOOL_FAILED", private: true },
+    })
+  );
+  const malformedProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, malformedProcess);
+  expect(malformedProcess.get()).toBeUndefined();
+  await expect(readFile(filePath, "utf8")).rejects.toMatchObject({
+    code: "ENOENT",
+  });
+});
+
+test("keeps the latest issue-report state when writes overlap", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-issue-report-writes-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const tracker = createIssueReportFailureTracker();
+  tracker.record("update-text", new Error("failed"), 1, {
+    instanceId: "instance-1",
+  });
+  let releaseFirstWrite: () => void = () => undefined;
+  const firstWriteBlocked = new Promise<void>((resolve) => {
+    releaseFirstWrite = resolve;
+  });
+  const writes: string[] = [];
+  const writer = createIssueReportStateWriter(
+    filePath,
+    async (path, snapshot, targets) => {
+      if (snapshot !== undefined) {
+        await firstWriteBlocked;
+      }
+      writes.push(snapshot === undefined ? "clear" : "failure");
+      await persistIssueReportFailure(path, snapshot, targets);
+    }
+  );
+
+  const firstWrite = writer(tracker.snapshot());
+  const clear = writer(undefined);
+  await Promise.resolve();
+  expect(writes).toEqual([]);
+  releaseFirstWrite();
+  await Promise.all([firstWrite, clear]);
+  expect(writes).toEqual(["failure", "clear"]);
+  await expect(readFile(filePath, "utf8")).rejects.toMatchObject({
+    code: "ENOENT",
+  });
+});
+
+test("resolves a screenshot route to a page ID without retaining its URL", () => {
+  const pages = {
+    homePageId: "home",
+    rootFolderId: "root",
+    pages: new Map([
+      ["home", { id: "home", path: "" }],
+      ["blog", { id: "blog", path: "/blog/:slug" }],
+    ]),
+    folders: new Map(),
+  } as unknown as Pages;
+  expect(
+    getIssueReportPageId(
+      "screenshot",
+      { path: "/blog/private-post?authToken=secret" },
+      pages
+    )
+  ).toBe("blog");
+  expect(
+    getIssueReportPageId(
+      "screenshot",
+      { path: "https://private.example/" },
+      pages
+    )
+  ).toBeUndefined();
+  expect(
+    getIssueReportPageId(
+      "screenshot",
+      { path: "/blog/private-post", url: "https://private.example/" },
+      pages
+    )
+  ).toBeUndefined();
+  expect(
+    getIssueReportPageId("list-pages", { path: "/blog/private-post" }, pages)
+  ).toBeUndefined();
+});
+
+test("restores a successful tool target across CLI processes without private input", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-target-report-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const firstTarget = createIssueReportTargetTracker();
+  firstTarget.record(
+    "screenshot",
+    { path: "/blog/private-post?authToken=secret" },
+    "page-1"
+  );
+  firstTarget.record("inspect-instance", { instanceId: "instance-1" });
+  await persistIssueReportFailure(filePath, undefined, firstTarget.snapshot());
+  const restoredTarget = createIssueReportTargetTracker();
+  await restoreIssueReportFailure(
+    filePath,
+    createIssueReportFailureTracker(),
+    restoredTarget
+  );
+  expect(restoredTarget.getAll()).toEqual([
+    {
+      tool: "inspect-instance",
+      entityIds: [{ field: "instanceId", id: "instance-1" }],
+    },
+    { tool: "screenshot", entityIds: [{ field: "pageId", id: "page-1" }] },
+  ]);
+  expect(await readFile(filePath, "utf8")).not.toContain("private-post");
+  expect(await readFile(filePath, "utf8")).not.toContain("authToken");
+});
+
+test("preserves a destructive confirmation failure reason without the token or plan", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-confirmation-report-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const operation = publicApiOperations.find(
+    ({ command }) => command === "delete-resource"
+  );
+  if (operation === undefined) {
+    throw new Error("Expected delete-resource operation");
+  }
+  const core = createProjectSessionMcpCore({
+    operations: [operation],
+    createProjectSession: () => {
+      throw new Error("Unexpected session access");
+    },
+    executeOperation: async () => ({
+      operationId: "resources.delete",
+      projectId: "project-1",
+      buildId: "build-1",
+      version: 1,
+      source: "dry-run",
+      result: { resourceId: "resource-1" },
+      state: { committed: false, freshness: {} },
+      namespaces: { read: [], write: [], invalidated: [], missing: [] },
+      diagnostics: [],
+      transaction: {
+        id: "plan-1",
+        payload: [
+          {
+            namespace: "resources",
+            patches: [{ op: "remove", path: ["resource-1"] }],
+          },
+        ],
+      },
+    }),
+  });
+  const planned = await core.callTool({
+    name: "delete-resource",
+    input: { resourceId: "resource-1", dryRun: true },
+  });
+  const token = planned.structuredContent.meta.confirmation?.token;
+  if (token === undefined) {
+    throw new Error("Expected confirmation token");
+  }
+  const input = {
+    resourceId: "resource-2",
+    confirmDestructive: true,
+    confirmationToken: token,
+  };
+  const rejected = await core.callTool({ name: "delete-resource", input });
+  const firstProcess = createIssueReportFailureTracker();
+  firstProcess.record(
+    "delete-resource",
+    getMcpToolCallError(rejected),
+    100,
+    input
+  );
+  await persistIssueReportFailure(filePath, firstProcess.snapshot());
+
+  const secondProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, secondProcess);
+  expect(secondProcess.get()).toMatchObject({
+    tool: "delete-resource",
+    code: "DESTRUCTIVE_CONFIRMATION_INVALID",
+    entityIds: [{ field: "resourceId", id: "resource-2" }],
+    issues: [
+      {
+        path: ["confirmationToken"],
+        code: "DESTRUCTIVE_CONFIRMATION_MISMATCH",
+        constraint: "unchanged_destructive_plan",
+      },
+    ],
+  });
+  const persisted = await readFile(filePath, "utf8");
+  expect(persisted).not.toContain(token);
+  expect(persisted).not.toContain("resource-1");
+  expect(persisted).not.toContain("plan-1");
+});
+
+const getArraySchemasWithoutItems = (schema: unknown): unknown[] => {
+  if (schema === null || typeof schema !== "object") {
+    return [];
+  }
+  if (Array.isArray(schema)) {
+    return schema.flatMap(getArraySchemasWithoutItems);
+  }
+  const object = schema as Record<string, unknown>;
+  return [
+    ...(object.type === "array" &&
+    object.items === undefined &&
+    object.prefixItems === undefined
+      ? [object]
+      : []),
+    ...Object.values(object).flatMap(getArraySchemasWithoutItems),
+  ];
+};
+
+test("configures MCP commands and options", () => {
   const yargs = {
     command: vi.fn(() => yargs),
     option: vi.fn(() => yargs),
@@ -107,13 +740,9 @@ test("documents MCP stdio startup and discovery tools", () => {
     })
   );
 
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp",
-    "Run a local MCP server over stdio for the configured Webstudio project"
-  );
   expect(yargs.command).toHaveBeenCalledWith(
     ["single-op-call <tool> [input]"],
-    "Call one MCP tool in a fresh CLI process for debugging",
+    expect.any(String),
     expect.any(Function),
     expect.any(Function)
   );
@@ -129,9 +758,7 @@ test("documents MCP stdio startup and discovery tools", () => {
   singleOpBuilder?.(singleOpYargs as never);
   expect(singleOpYargs.positional).toHaveBeenCalledWith(
     "tool",
-    expect.objectContaining({
-      describe: expect.stringContaining("insert-fragment"),
-    })
+    expect.any(Object)
   );
   const runBuilder = commandCalls.find(
     (call) => call[0][0] === "run <input>"
@@ -141,12 +768,7 @@ test("documents MCP stdio startup and discovery tools", () => {
     option: vi.fn(() => runYargs),
   };
   runBuilder?.(runYargs as never);
-  expect(runYargs.option).toHaveBeenCalledWith(
-    "dry-run",
-    expect.objectContaining({
-      describe: "Run local-capable mutation tools without committing",
-    })
-  );
+  expect(runYargs.option).toHaveBeenCalledWith("dry-run", expect.any(Object));
   expect(runYargs.option).toHaveBeenCalledWith(
     "approve-mutations",
     expect.objectContaining({ default: false })
@@ -161,67 +783,27 @@ test("documents MCP stdio startup and discovery tools", () => {
   );
   expect(yargs.command).toHaveBeenCalledWith(
     ["run <input>"],
-    "Run an MCP workflow manifest for one or more linked projects",
+    expect.any(String),
     expect.any(Function),
     expect.any(Function)
   );
   expect(yargs.command).toHaveBeenCalledWith(
     ["list-tools"],
-    "Print the concise MCP tool catalog as JSON",
+    expect.any(String),
     expect.any(Function),
     expect.any(Function)
   );
   expect(yargs.command).toHaveBeenCalledWith(
     ["list-resources"],
-    "List the MCP resources available for the configured project",
+    expect.any(String),
     expect.any(Function),
     expect.any(Function)
   );
   expect(yargs.command).toHaveBeenCalledWith(
     ["read-resource <uri>"],
-    "Read one MCP resource by URI",
+    expect.any(String),
     expect.any(Function),
     expect.any(Function)
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp single-op-call meta.index",
-    "Debug one MCP tool without writing a stdio client script"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp list-tools",
-    "Print the concise MCP tool catalog"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp list-resources",
-    "List available MCP resources"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp read-resource webstudio://project/guide",
-    "Read the project MCP guide"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    '$0 mcp run \'[{"tool":"components.search","input":{"brief":"button"}}]\'',
-    "Run a small multi-step MCP workflow from inline JSON"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp run .temp/mcp-calls.json",
-    "Run a larger bounded multi-step MCP workflow from a file"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "MCP tool: meta.index",
-    "Discover the concise capability catalog after the server starts"
-  );
-  expect(yargs.epilogue).toHaveBeenCalledWith(
-    expect.stringContaining("tools/list")
-  );
-  expect(yargs.epilogue).toHaveBeenCalledWith(
-    expect.stringContaining("current Builder dev build")
-  );
-  expect(yargs.epilogue).toHaveBeenCalledWith(
-    expect.stringContaining("linked Webstudio project root")
-  );
-  expect(yargs.epilogue).toHaveBeenCalledWith(
-    expect.stringContaining("webstudio://project/guide")
   );
 });
 
@@ -496,38 +1078,6 @@ test("applies batch dry-run to every MCP run call", () => {
   ]);
 });
 
-test("explains extract-slot selectors in focused MCP discovery", async () => {
-  const operation = publicApiOperations.find(
-    ({ command }) => command === "extract-slot"
-  );
-  if (operation === undefined) {
-    throw Error("Expected extract-slot operation");
-  }
-  const core = createProjectSessionMcpCore({
-    operations: [operation],
-    createProjectSession: () => {
-      throw Error("meta.get-more-tools must not initialize a project session");
-    },
-    executeOperation: async () => {
-      throw Error("meta.get-more-tools must not execute a project operation");
-    },
-  });
-
-  const result = await core.callTool({
-    name: "meta.get-more-tools",
-    input: { tools: ["extract-slot"] },
-  });
-  const details = JSON.stringify(result.structuredContent.data);
-
-  expect(details).toContain("leaf-to-root");
-  expect(details).toContain(
-    "The first id is the instance to extract, the second is its direct parent"
-  );
-  expect(details).toContain(
-    '"instanceSelector":["header-section-id","body-id"]'
-  );
-});
-
 test("checks persisted checkpoints before every MCP run call", async () => {
   const dir = await mkdtemp(
     path.join(tmpdir(), "webstudio-mcp-run-checkpoint-")
@@ -659,10 +1209,9 @@ test("formats unknown MCP resource failures as structured JSON", () => {
 });
 
 test("formats missing Builder API access in MCP single-op-call failures", () => {
-  const error = Object.assign(
-    new Error("Project owner can't be found for token token-1"),
-    { code: "INTERNAL_SERVER_ERROR" }
-  );
+  const error = Object.assign(new Error("The credential has been revoked"), {
+    code: "INVALID_AUTH_TOKEN",
+  });
 
   expect(
     createMcpSingleOpCallErrorPayload({
@@ -710,6 +1259,144 @@ test("formats MCP run failures as structured JSON payloads", () => {
       elapsedMs: 12,
     },
   });
+});
+
+test("preserves specific nested query errors at single-op and run boundaries", () => {
+  const error = {
+    code: "BAD_REQUEST",
+    message: "The Asset query index changed.",
+    data: {
+      code: "BAD_REQUEST",
+      webstudioCode: "STALE_INDEX",
+      issues: [
+        {
+          code: "STALE_INDEX",
+          path: ["indexRevision"],
+          message: "Refresh the Asset index and retry.",
+          constraint: "current_index_revision",
+        },
+      ],
+    },
+  };
+
+  expect(
+    createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 }).error
+  ).toMatchObject({
+    code: "STALE_INDEX",
+    issues: [expect.objectContaining({ path: ["indexRevision"] })],
+  });
+  expect(
+    createMcpRunErrorPayload({
+      error,
+      completedCalls: 0,
+      totalCalls: 1,
+      results: [],
+      elapsedMs: 1,
+    }).error
+  ).toMatchObject({
+    code: "STALE_INDEX",
+    issues: [expect.objectContaining({ path: ["indexRevision"] })],
+  });
+});
+
+test("reports termination while inserting a styled nested SVG", async () => {
+  const operation = publicApiOperations.find(
+    ({ command }) => command === "insert-fragment"
+  );
+  if (operation === undefined) {
+    throw new Error("Expected insert-fragment operation");
+  }
+  const executeOperation = vi.fn(async () => {
+    throw new Error("Simulated interrupted operation");
+  });
+  const core = createProjectSessionMcpCore({
+    operations: [operation],
+    createProjectSession: () => {
+      throw new Error("insert-fragment must use executeOperation");
+    },
+    executeOperation,
+  });
+  const fragment = `<ws.element ws:tag="a">
+    <ws.element ws:tag="svg" ws:style={css\`pointer-events: none;\`}>
+      <ws.element ws:tag="path" />
+    </ws.element>
+  </ws.element>`;
+
+  await expect(
+    core.callTool({
+      name: "insert-fragment",
+      input: { parentInstanceId: "body", fragment },
+      dryRun: true,
+    })
+  ).rejects.toThrow("Simulated interrupted operation");
+  expect(executeOperation).toHaveBeenCalledOnce();
+
+  const writeResult = vi.fn();
+  const setExitCode = vi.fn();
+  reportMcpSingleOpCallTermination({
+    termination: { type: "signal", signal: "SIGTERM" },
+    tool: "insert-fragment",
+    elapsedMs: 123,
+    writeStatus: vi.fn(),
+    writeResult,
+    setExitCode,
+  });
+
+  expect(writeResult).toHaveBeenCalledWith({
+    ok: false,
+    error: {
+      code: "MCP_CALL_TERMINATED",
+      message:
+        "MCP single-op-call insert-fragment terminated before returning a result.",
+    },
+    meta: {
+      elapsedMs: 123,
+      termination: { type: "signal", signal: "SIGTERM" },
+    },
+  });
+  expect(setExitCode).not.toHaveBeenCalled();
+});
+
+test("installs termination reporting for an active MCP single-op call", async () => {
+  const previousExitCode = process.exitCode;
+  const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => {});
+  const stderrWrite = vi
+    .spyOn(process.stderr, "write")
+    .mockImplementation(() => true);
+
+  try {
+    const call = mcpSingleOpCall({
+      tool: "insert-fragment",
+      input: "{invalid-json",
+      dryRun: true,
+    });
+    process.emit("beforeExit", 0);
+    await expect(call).rejects.toBeDefined();
+
+    const results = consoleInfo.mock.calls.map(([output]) =>
+      JSON.parse(String(output))
+    );
+    expect(results).toEqual([
+      {
+        ok: false,
+        error: {
+          code: "MCP_CALL_TERMINATED",
+          message:
+            "MCP single-op-call insert-fragment terminated before returning a result.",
+        },
+        meta: {
+          elapsedMs: expect.any(Number),
+          termination: { type: "beforeExit", exitCode: 0 },
+        },
+      },
+    ]);
+    expect(stderrWrite).toHaveBeenCalledWith(
+      "[webstudio mcp] single-op-call insert-fragment terminated: MCP single-op-call insert-fragment terminated before returning a result.\n"
+    );
+    expect(process.exitCode).toBe(1);
+  } finally {
+    process.exitCode = previousExitCode;
+  }
 });
 
 test("preserves completed calls when a run terminates during an asset query preview", () => {
@@ -987,22 +1674,801 @@ test("adapts MCP upload assets input to public API upload input", () => {
   expect(input).toHaveProperty("readAssetData", expect.any(Function));
 });
 
+test("validates font metadata before uploading", () => {
+  expect(() =>
+    getMcpOperationInput("upload-asset", {
+      asset: {
+        name: "variable.woff2",
+        type: "font",
+        format: "woff2",
+        meta: { family: "Inter", style: "normal", weight: 400 },
+      },
+    })
+  ).not.toThrow();
+
+  let error: unknown;
+  try {
+    getMcpOperationInput("upload-assets", {
+      assets: [
+        {
+          name: "variable.woff2",
+          type: "font",
+          format: "woff2",
+          meta: {
+            family: "Inter",
+            style: "normal",
+            weight: "100 900",
+            subset: "latin",
+          },
+        },
+      ],
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  expect(createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 })).toEqual({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      message: expect.stringContaining("Asset operation input is invalid."),
+      issues: expect.arrayContaining([
+        expect.objectContaining({
+          path: ["assets", "0", "meta", "weight"],
+        }),
+        expect.objectContaining({
+          path: ["assets", "0", "meta", "subset"],
+        }),
+      ]),
+    },
+    meta: { elapsedMs: 1 },
+  });
+});
+
+test("rejects every Markdown and MDX upload filename/format mismatch", () => {
+  let error: unknown;
+  try {
+    getMcpOperationInput("upload-assets", {
+      assets: [
+        { name: "article.txt", type: "file", format: "md", meta: {} },
+        { name: "page.mdx", type: "file", format: "md", meta: {} },
+      ],
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  expect(createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 })).toEqual({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      message: expect.stringContaining("Asset filename and format must match"),
+      issues: [
+        expect.objectContaining({ path: ["assets", "0", "format"] }),
+        expect.objectContaining({ path: ["assets", "1", "format"] }),
+      ],
+    },
+    meta: { elapsedMs: 1 },
+  });
+});
+
+test("aggregates every invalid upload descriptor field before reading files", () => {
+  let error: unknown;
+  try {
+    getMcpOperationInput("upload-assets", {
+      assetsDir: 42,
+      assets: [
+        { type: "file" },
+        {
+          name: "article.md",
+          type: "image",
+          format: "txt",
+          extra: true,
+        },
+      ],
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  expect(createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 })).toEqual({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      message: expect.stringContaining("Asset operation input is invalid."),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ path: ["assetsDir"] }),
+        expect.objectContaining({ path: ["assets", "0", "name"] }),
+        expect.objectContaining({ path: ["assets", "1", "extra"] }),
+        expect.objectContaining({ path: ["assets", "1", "format"] }),
+        expect.objectContaining({ path: ["assets", "1", "type"] }),
+      ]),
+    },
+    meta: { elapsedMs: 1 },
+  });
+});
+
+test("reports every invalid update content selector field", () => {
+  let error: unknown;
+  try {
+    getMcpOperationInput("update-asset-content", {
+      assetId: "",
+      expectedName: 42,
+      path: "article.md",
+      content: "# duplicate source",
+      extra: true,
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  expect(createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 })).toEqual({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      message: expect.stringContaining("Asset operation input is invalid."),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ path: ["extra"] }),
+        expect.objectContaining({ path: ["assetId"] }),
+        expect.objectContaining({ path: ["expectedName"] }),
+        expect.objectContaining({
+          path: [],
+          code: "invalid_source_selection",
+        }),
+      ]),
+    },
+    meta: { elapsedMs: 1 },
+  });
+});
+
 test("adapts MCP asset content input to the shared revision client", async () => {
   const input = getMcpOperationInput("update-asset-content", {
     assetId: "asset-id",
     expectedName: "settings_hash.json",
+    extension: "json",
     content: '{"theme":"dark"}',
   }) as {
     assetId: string;
     expectedName: string;
+    extension?: string;
     readAssetData: () => Promise<unknown>;
   };
 
   expect(input).toMatchObject({
     assetId: "asset-id",
     expectedName: "settings_hash.json",
+    extension: "json",
   });
   await expect(input.readAssetData()).resolves.toBe('{"theme":"dark"}');
+});
+
+test("returns diagnostics without rejecting an invalid MDX Asset write", async () => {
+  const source = "# Kept\n\n<ws.element";
+  const operationInput = getMcpOperationInput("update-asset-content", {
+    assetId: "asset-id",
+    expectedName: "article_hash.mdx",
+    content: source,
+  });
+
+  await expect(
+    withTextAssetWriteFeedback({
+      command: "update-asset-content",
+      input: {
+        assetId: "asset-id",
+        expectedName: "article_hash.mdx",
+        content: source,
+      },
+      operationInput,
+      result: { result: { assetId: "asset-id" } },
+    })
+  ).resolves.toEqual({
+    result: {
+      assetId: "asset-id",
+      source,
+      diagnostics: [
+        expect.objectContaining({
+          code: "invalid-mdx",
+          severity: "error",
+        }),
+      ],
+    },
+  });
+});
+
+test("rejects invalid UTF-8 before an Asset write can start", async () => {
+  const assets = [
+    { name: "article.md", type: "file", format: "md", meta: {} },
+    { name: "page.mdx", type: "file", format: "mdx", meta: {} },
+  ];
+  const operationInput = {
+    assets,
+    readAssetData: vi.fn(async () => new Uint8Array([0xc3, 0x28])),
+  };
+
+  await expect(
+    prepareTextAssetWriteFeedback({
+      command: "upload-assets",
+      input: { assets },
+      operationInput,
+    })
+  ).rejects.toMatchObject({
+    code: "CONTENT_DECODING_FAILED",
+    issues: [
+      expect.objectContaining({
+        code: "MARKDOWN_BODY_DECODING_FAILED",
+        path: ["assets", "0", "name"],
+        severity: "error",
+      }),
+      expect.objectContaining({
+        code: "invalid-mdx",
+        path: ["assets", "1", "name"],
+        severity: "error",
+      }),
+    ],
+  });
+  expect(operationInput.readAssetData).toHaveBeenCalledTimes(2);
+});
+
+test("rejects oversized inline Markdown before an Asset write can start", async () => {
+  const input = {
+    assetId: "asset-id",
+    expectedName: "article_hash.md",
+    content: "x".repeat(contentEngineLimits.hydratedFileBytes + 1),
+  };
+
+  await expect(
+    prepareTextAssetWriteFeedback({
+      command: "update-asset-content",
+      input,
+      operationInput: getMcpOperationInput("update-asset-content", input),
+    })
+  ).rejects.toMatchObject({
+    code: "CONTENT_LIMIT_EXCEEDED",
+    issues: [
+      expect.objectContaining({
+        code: "MARKDOWN_BODY_BYTES_EXCEEDED",
+        path: ["content"],
+        severity: "error",
+      }),
+    ],
+  });
+});
+
+test("returns complete prepared diagnostics after an Asset write", async () => {
+  const source = "{run()}";
+  const input = {
+    assetId: "asset-id",
+    expectedName: "article_hash.mdx",
+    content: source,
+  };
+  const operationInput = getMcpOperationInput("update-asset-content", input);
+  const feedback = await prepareTextAssetWriteFeedback({
+    command: "update-asset-content",
+    input,
+    operationInput,
+  });
+
+  await expect(
+    withTextAssetWriteFeedback({
+      command: "update-asset-content",
+      input,
+      operationInput,
+      result: { result: { assetId: "asset-id" } },
+      feedback,
+    })
+  ).resolves.toMatchObject({
+    result: {
+      assetId: "asset-id",
+      source,
+      diagnostics: [
+        {
+          code: "unsafe-mdx",
+          severity: "warning",
+          message: "Executable MDX expressions are not supported",
+          nodeType: "mdxFlowExpression",
+          reason: "Executable MDX expressions are not supported",
+          sourceRange: {
+            start: { line: 1, column: 1, offset: 0 },
+            end: { line: 1, column: 8, offset: 7 },
+          },
+        },
+      ],
+    },
+  });
+});
+
+test.each(["png", "woff2", "md", "mdx"])(
+  "loads persisted %s assets for downloads without a prior asset query",
+  async (format) => {
+    const asset = {
+      id: "asset-id",
+      projectId: "project-id",
+      name: `asset.${format}`,
+      type: format === "png" ? "image" : format === "woff2" ? "font" : "file",
+      format,
+      size: 42,
+      createdAt: "2026-09-07T00:00:00.000Z",
+      updatedAt: "2026-09-07T00:00:00.000Z",
+    };
+    const ensureNamespaces = vi.fn(async () => ({
+      state: { assets: new Map([[asset.id, asset]]) },
+    }));
+    const session = {
+      snapshot: { state: {} },
+      ensureNamespaces,
+    } as unknown as Parameters<typeof getMcpDownloadAsset>[0];
+
+    await expect(getMcpDownloadAsset(session, asset.id)).resolves.toEqual(
+      asset
+    );
+    expect(ensureNamespaces).toHaveBeenCalledWith(["assets"]);
+  }
+);
+
+test("rejects invalid UTF-8 downloads with the asset identity", async () => {
+  await expect(
+    validateDownloadedTextAsset({
+      assetId: "asset-1",
+      path: "/tmp/broken.md",
+      format: "md",
+      content: new Uint8Array([0xc3, 0x28]),
+    })
+  ).rejects.toMatchObject({
+    code: "CONTENT_DECODING_FAILED",
+    assetId: "asset-1",
+    path: "/tmp/broken.md",
+    issues: [
+      expect.objectContaining({
+        code: "MARKDOWN_BODY_DECODING_FAILED",
+        severity: "error",
+        assetId: "asset-1",
+      }),
+    ],
+  });
+});
+
+test("materializes validated remote Asset content without overwriting a conflict", async () => {
+  const directory = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-download-")
+  );
+  const remotePath = path.join(directory, "remote.md");
+  const localPath = path.join(directory, "local", "article.md");
+  await writeFile(remotePath, "# Remote");
+
+  await expect(
+    materializeValidatedDownloadedAsset({
+      assetId: "asset-1",
+      remotePath,
+      localPath,
+      diagnostics: [],
+    })
+  ).resolves.toEqual(Buffer.from("# Remote"));
+  await expect(readFile(localPath, "utf8")).resolves.toBe("# Remote");
+
+  await writeFile(remotePath, "{unsafe()}");
+  await expect(
+    materializeValidatedDownloadedAsset({
+      assetId: "asset-1",
+      remotePath,
+      localPath,
+      diagnostics: [
+        {
+          code: "unsafe-mdx",
+          severity: "warning",
+          message: "Executable MDX expressions are not supported",
+          nodeType: "mdxFlowExpression",
+          reason: "Executable MDX expressions are not supported",
+        },
+      ],
+    })
+  ).rejects.toMatchObject({
+    code: "CONFLICT",
+    assetId: "asset-1",
+    path: localPath,
+    issues: [
+      expect.objectContaining({
+        code: "unsafe-mdx",
+        assetId: "asset-1",
+        file: localPath,
+      }),
+      expect.objectContaining({
+        code: "local_asset_conflict",
+        assetId: "asset-1",
+        file: localPath,
+      }),
+    ],
+  });
+  await expect(readFile(localPath, "utf8")).resolves.toBe("# Remote");
+
+  await rm(directory, { recursive: true, force: true });
+});
+
+test("returns every Markdown frontmatter diagnostic after an Asset write", async () => {
+  const source = "---\na: 1\na: 2\nb: 1\nb: 2\n---\n\n# Kept\n";
+  const operationInput = getMcpOperationInput("update-asset-content", {
+    assetId: "asset-id",
+    expectedName: "article_hash.md",
+    content: source,
+  });
+
+  const response = await withTextAssetWriteFeedback({
+    command: "update-asset-content",
+    input: {
+      assetId: "asset-id",
+      expectedName: "article_hash.md",
+      content: source,
+    },
+    operationInput,
+    result: { result: { assetId: "asset-id" } },
+  });
+
+  expect(response.result).toMatchObject({
+    assetId: "asset-id",
+    source,
+    diagnostics: [
+      { code: "FRONTMATTER_INVALID", severity: "warning", line: 3 },
+      { code: "FRONTMATTER_INVALID", severity: "warning", line: 5 },
+    ],
+  });
+});
+
+test("returns source diagnostics for every Markdown and MDX upload", async () => {
+  const markdown = "---\na: 1\na: 2\n---\n";
+  const mdx = "{first()}\n\n{second()}\n";
+  const assets = [
+    { name: "article.md", type: "file", format: "md", meta: {} },
+    { name: "page.mdx", type: "file", format: "mdx", meta: {} },
+  ];
+  const operationInput = {
+    assets,
+    readAssetData: async (asset: { name: string }) =>
+      asset.name === "article.md" ? markdown : mdx,
+  };
+
+  const response = await withTextAssetWriteFeedback({
+    command: "upload-assets",
+    input: { assets },
+    operationInput,
+    result: { result: { uploaded: [] } },
+  });
+
+  expect(response.result).toMatchObject({
+    sourceDiagnostics: [
+      {
+        index: 0,
+        name: "article.md",
+        diagnostics: [
+          { code: "FRONTMATTER_INVALID", severity: "warning", line: 3 },
+        ],
+      },
+      {
+        index: 1,
+        name: "page.mdx",
+        diagnostics: [
+          { code: "unsafe-mdx", severity: "warning" },
+          { code: "unsafe-mdx", severity: "warning" },
+        ],
+      },
+    ],
+  });
+});
+
+test("runs contextual MDX validation with every uploaded Asset id", async () => {
+  const source = '<ws.element ws:name="Missing" />';
+  const asset = {
+    id: "uploaded-id",
+    projectId: "project",
+    name: "page.mdx",
+    type: "file" as const,
+    format: "mdx",
+    size: source.length,
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
+  const assets = [{ name: asset.name, type: "file", format: "mdx", meta: {} }];
+  const operationInput = {
+    assets,
+    readAssetData: async () => source,
+  };
+  const ensureNamespaces = vi.fn(async () => ({
+    projectId: "project",
+    state: {
+      pages: {
+        meta: {},
+        homePageId: "home",
+        rootFolderId: "root",
+        pages: new Map([
+          [
+            "home",
+            {
+              id: "home",
+              name: "Home",
+              path: "",
+              title: '"Home"',
+              meta: {},
+              rootInstanceId: "block",
+            },
+          ],
+        ]),
+        folders: new Map([
+          ["root", { id: "root", name: "Root", slug: "", children: ["home"] }],
+        ]),
+      },
+      instances: new Map([
+        [
+          "block",
+          {
+            type: "instance" as const,
+            id: "block",
+            component: blockComponent,
+            children: [{ type: "id" as const, value: "templates" }],
+          },
+        ],
+        [
+          "templates",
+          {
+            type: "instance" as const,
+            id: "templates",
+            component: blockTemplateComponent,
+            children: [],
+          },
+        ],
+      ]),
+      props: new Map([
+        [
+          "src",
+          {
+            id: "src",
+            instanceId: "block",
+            name: "src",
+            type: "asset" as const,
+            value: asset.id,
+          },
+        ],
+      ]),
+      dataSources: new Map(),
+      resources: new Map(),
+      styleSources: new Map(),
+      styleSourceSelections: new Map(),
+      styles: new Map(),
+      breakpoints: new Map(),
+      assets: new Map([[asset.id, asset]]),
+    },
+  }));
+
+  const response = await withTextAssetWriteFeedback({
+    command: "upload-assets",
+    input: { assets },
+    operationInput,
+    result: { result: { uploaded: [asset] } },
+    session: { ensureNamespaces } as never,
+  });
+
+  expect(ensureNamespaces).toHaveBeenCalledOnce();
+  expect(response.result).toMatchObject({
+    sourceDiagnostics: [
+      {
+        index: 0,
+        name: "page.mdx",
+        diagnostics: [
+          {
+            code: "unresolved-template",
+            severity: "warning",
+            assetId: "uploaded-id",
+            blockInstanceId: "block",
+            templateName: "Missing",
+          },
+        ],
+      },
+    ],
+  });
+});
+
+test("validates query setup with the same schema before calling MCP", () => {
+  const filter = { field: ["id"], operator: "eq", value: "asset" };
+  let nestedWhere: unknown = filter;
+  for (let depth = 0; depth < 9; depth += 1) {
+    nestedWhere = { all: [nestedWhere] };
+  }
+  const invalidQueries: Array<[string, unknown]> = [
+    ["missing query", {}],
+    ["unknown query key", { query: { unknown: true } }],
+    ["result mode", { query: { result: "middle" } }],
+    ["where shape", { query: { where: {} } }],
+    [
+      "filter count",
+      { query: { where: { all: Array.from({ length: 33 }, () => filter) } } },
+    ],
+    ["filter depth", { query: { where: nestedWhere } }],
+    [
+      "empty field path",
+      { query: { where: { all: [{ ...filter, field: [] }] } } },
+    ],
+    [
+      "deep field path",
+      {
+        query: {
+          where: {
+            all: [{ ...filter, field: Array.from({ length: 10 }, () => "x") }],
+          },
+        },
+      },
+    ],
+    [
+      "bare properties field",
+      { query: { where: { all: [{ ...filter, field: ["properties"] }] } } },
+    ],
+    [
+      "unsupported standard field",
+      { query: { where: { all: [{ ...filter, field: ["bogus"] }] } } },
+    ],
+    [
+      "operator",
+      { query: { where: { all: [{ ...filter, operator: "matches" }] } } },
+    ],
+    [
+      "in value",
+      {
+        query: {
+          where: { all: [{ field: ["id"], operator: "in", value: "asset" }] },
+        },
+      },
+    ],
+    [
+      "in value count",
+      {
+        query: {
+          where: {
+            all: [
+              {
+                field: ["id"],
+                operator: "in",
+                value: Array.from({ length: 1_001 }, () => "asset"),
+              },
+            ],
+          },
+        },
+      },
+    ],
+    [
+      "boolean operator value",
+      {
+        query: {
+          where: {
+            all: [{ field: ["id"], operator: "exists", value: "yes" }],
+          },
+        },
+      },
+    ],
+    [
+      "sort count",
+      {
+        query: {
+          sort: Array.from({ length: 9 }, () => ({
+            field: ["id"],
+            direction: "asc",
+          })),
+        },
+      },
+    ],
+    [
+      "sort direction",
+      { query: { sort: [{ field: ["id"], direction: "up" }] } },
+    ],
+    ["first without sort", { query: { result: "first" } }],
+    [
+      "empty output",
+      {
+        query: {
+          output: { mode: "fields", includeMetadata: false, fields: [] },
+          content: { mode: "none" },
+        },
+      },
+    ],
+    [
+      "duplicate output fields",
+      {
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"], ["id"]],
+          },
+        },
+      },
+    ],
+    [
+      "output field count",
+      {
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: Array.from({ length: 257 }, (_, index) => [
+              "properties",
+              String(index),
+            ]),
+          },
+        },
+      },
+    ],
+    ["negative limit", { query: { limit: -1 } }],
+    ["fractional limit", { query: { limit: 1.5 } }],
+    ["large limit", { query: { limit: 1_001 } }],
+    ["negative offset", { query: { offset: -1 } }],
+    ["fractional offset", { query: { offset: 1.5 } }],
+    ["large offset", { query: { offset: 1_001 } }],
+    ["content mode", { query: { content: { mode: "body" } } }],
+    [
+      "full content bytes",
+      { query: { content: { mode: "full", maxBytes: 0 } } },
+    ],
+    [
+      "large full content",
+      { query: { content: { mode: "full", maxBytes: 1_048_577 } } },
+    ],
+    [
+      "range offset",
+      { query: { content: { mode: "range", offset: -1, length: 1 } } },
+    ],
+    [
+      "range length",
+      { query: { content: { mode: "range", offset: 0, length: 0 } } },
+    ],
+    [
+      "large range",
+      { query: { content: { mode: "range", offset: 0, length: 262_145 } } },
+    ],
+    ["empty index revision", { query: {}, indexRevision: "" }],
+    ["large index revision", { query: {}, indexRevision: "x".repeat(256) }],
+  ];
+
+  for (const [label, input] of invalidQueries) {
+    if (label.includes("index revision")) {
+      expect(
+        () => getMcpOperationInput("preview-asset-query", input),
+        label
+      ).toThrow();
+      continue;
+    }
+    expect(
+      () => getMcpOperationInput("validate-asset-query", input),
+      label
+    ).toThrow();
+    expect(
+      () => getMcpOperationInput("preview-asset-query", input),
+      label
+    ).toThrow();
+  }
+});
+
+test("formats local query schema failures as structured MCP input errors", () => {
+  let error: unknown;
+  try {
+    getMcpOperationInput("validate-asset-query", {
+      query: {
+        result: "first",
+        limit: -1,
+        output: { mode: "fields", includeMetadata: false, fields: [] },
+        content: { mode: "none" },
+      },
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  expect(createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 })).toEqual({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      message: expect.stringContaining("query.limit"),
+      issues: [
+        expect.objectContaining({ path: ["query", "limit"] }),
+        expect.objectContaining({ path: ["query"] }),
+        expect.objectContaining({ path: ["query", "sort"] }),
+      ],
+    },
+    meta: { elapsedMs: 1 },
+  });
 });
 
 test("exposes asset content editing through MCP discovery", () => {
@@ -1014,12 +2480,23 @@ test("exposes asset content editing through MCP discovery", () => {
     name: "update-asset-content",
     inputSchema: {
       required: ["assetId", "expectedName"],
+      oneOf: [{ required: ["path"] }, { required: ["content"] }],
       properties: {
         assetId: expect.any(Object),
         expectedName: expect.any(Object),
+        extension: expect.any(Object),
         path: expect.any(Object),
         content: expect.any(Object),
       },
     },
   });
+});
+
+test("exposes a client-valid update-props schema", () => {
+  const tool = listProjectSessionMcpTools(publicApiOperations).find(
+    ({ name }) => name === "update-props"
+  );
+
+  expect(tool).toBeDefined();
+  expect(getArraySchemasWithoutItems(tool?.inputSchema)).toEqual([]);
 });

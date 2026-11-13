@@ -71,6 +71,23 @@ describe("redirect source helpers", () => {
       false
     );
   });
+
+  test.each([
+    ["/docs/*", "/docs", true],
+    ["/docs/*", "/docs/setup", true],
+    ["/docs/*", "/docs123", false],
+    ["/docs/:rest*", "/docs", true],
+    ["/docs/:rest*", "/docs/setup/one", true],
+    ["/Docs/:slug", "/docs/%64emo", true],
+    ["/docs/:slug", "/docs", false],
+    ["/docs/:slug?", "/docs", true],
+    ["/docs/:slug?", "/docs/a/b", false],
+  ] as const)(
+    "matches redirect source %s against local URL %s: %s",
+    (source, url, expected) => {
+      expect(doesRedirectSourceMatchLocalUrl(source, url)).toBe(expected);
+    }
+  );
 });
 
 describe("findMatchingRedirect", () => {
@@ -256,6 +273,16 @@ describe("doesRedirectSourceOverridePagePath", () => {
   test("returns true when redirect splat overlaps page path", () => {
     expect(doesRedirectSourceOverridePagePath("/docs/*", "/docs/:id")).toBe(
       true
+    );
+  });
+
+  test("recognizes a redirect splat at its base page path", () => {
+    expect(doesRedirectSourceOverridePagePath("/docs/*", "/docs")).toBe(true);
+    expect(doesRedirectSourceOverridePagePath("/docs/:rest*", "/docs")).toBe(
+      true
+    );
+    expect(doesRedirectSourceOverridePagePath("/docs/*", "/docs-other")).toBe(
+      false
     );
   });
 

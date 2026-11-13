@@ -1,6 +1,8 @@
-import { type TemplateMeta, $, ws } from "@webstudio-is/template";
+/** @jsxImportSource @webstudio-is/template */
+import { type TemplateMeta, setInstanceMeta, ws } from "@webstudio-is/template";
 import { imagePlaceholderDataUrl } from "@webstudio-is/image";
 import { ContentEmbedIcon } from "@webstudio-is/icons/svg";
+import { HtmlEmbed } from "./html-embed";
 
 const htmlSample = `
 <h1>Styling HTML with Content Embed</h1>
@@ -58,8 +60,9 @@ export const meta: TemplateMeta = {
   description:
     "Content Embed allows styling of HTML, which can be provided via the Code property statically or loaded dynamically from any Resource, for example, from a CMS.",
   order: 3,
-  template: (
-    <$.HtmlEmbed ws:label="Content Embed" code={htmlSample}>
+  template: setInstanceMeta(
+    { label: "Content Embed" },
+    <HtmlEmbed code={htmlSample}>
       <ws.descendant ws:label="Paragraph" selector=" p" />
       <ws.descendant ws:label="Heading 1" selector=" h1" />
       <ws.descendant ws:label="Heading 2" selector=" h2" />
@@ -80,6 +83,6 @@ export const meta: TemplateMeta = {
       <ws.descendant ws:label="Table Row" selector=" tr" />
       <ws.descendant ws:label="Table Header Cell" selector=" th" />
       <ws.descendant ws:label="Table Cell" selector=" td" />
-    </$.HtmlEmbed>
+    </HtmlEmbed>
   ),
 };

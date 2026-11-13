@@ -1,10 +1,84 @@
-import { expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
+import { createRoot } from "react-dom/client";
+import { act } from "react-dom/test-utils";
+import { cleanStores } from "nanostores";
+import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, renderData } from "@webstudio-is/template";
-import { __testing__ } from "./use-switch-page";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
+import {
+  $authToken,
+  $builderMode,
+  $selectedPageHash,
+} from "~/shared/nano-states";
+import { $instances, $pages, $project } from "~/shared/sync/data-stores";
+import {
+  getInstanceLink,
+  getDeepLinkedInstanceSelection,
+  getInstanceSelectorFromUrl,
+} from "../instance-utils/link";
+import { __testing__, useHashLinkSync } from "./use-switch-page";
 
-const { getDeepLinkedInstanceSelection, shouldNavigateToPageState } =
-  __testing__;
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
+
+afterEach(() => {
+  cleanStores($authToken, $builderMode, $instances, $pages, $project);
+});
+
+test("hash navigation scrolls after the target Preview page renders", async () => {
+  const savedHash = $selectedPageHash.get();
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const scrollIntoView = vi.spyOn(HTMLElement.prototype, "scrollIntoView");
+  const PreviewPage = ({
+    rootId,
+    ready = true,
+  }: {
+    rootId: string;
+    ready?: boolean;
+  }) => {
+    useHashLinkSync(rootId);
+    return (
+      <div data-ws-id={rootId}>
+        {ready ? <div id="done">Done</div> : <div>Loading</div>}
+      </div>
+    );
+  };
+  try {
+    await act(async () => {
+      $selectedPageHash.set({ hash: "#done" });
+      root.render(<PreviewPage rootId="home-root" ready={false} />);
+    });
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    await act(async () =>
+      root.render(<PreviewPage rootId="thanks-root" ready={false} />)
+    );
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    await act(async () => root.render(<PreviewPage rootId="thanks-root" />));
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    expect(scrollIntoView.mock.instances[0]).toBe(
+      container.querySelector("#done")
+    );
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    scrollIntoView.mockRestore();
+    $selectedPageHash.set(savedHash);
+  }
+});
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Fragment = createTemplateComponentFixture("Fragment");
+const Heading = createTemplateComponentFixture("Heading");
+const Slot = createTemplateComponentFixture("Slot");
+
+const { shouldNavigateToPageState } = __testing__;
 
 test("preserves an instance deep link until URL state is initialized", () => {
   expect(
@@ -43,11 +117,11 @@ test("resolves a deep-linked instance to its page and full selector", () => {
     rootInstanceId: "body",
   });
   const { instances } = renderData(
-    <$.Body ws:id="body">
-      <$.Box ws:id="box">
-        <$.Heading ws:id="heading">Heading</$.Heading>
-      </$.Box>
-    </$.Body>
+    <Body ws:id="body">
+      <Box ws:id="box">
+        <Heading ws:id="heading">Heading</Heading>
+      </Box>
+    </Body>
   );
   expect(
     getDeepLinkedInstanceSelection({
@@ -68,30 +142,41 @@ test("restores the selected shared slot occurrence from its full selector", () =
     rootInstanceId: "body",
   });
   const { instances } = renderData(
-    <$.Body ws:id="body">
-      <$.Slot ws:id="slot-one">
-        <$.Fragment ws:id="fragment">
-          <$.Box ws:id="box"></$.Box>
-        </$.Fragment>
-      </$.Slot>
-      <$.Slot ws:id="slot-two">
-        <$.Fragment ws:id="fragment">
-          <$.Box ws:id="box"></$.Box>
-        </$.Fragment>
-      </$.Slot>
-    </$.Body>
+    <Body ws:id="body">
+      <Slot ws:id="slot-one">
+        <Fragment ws:id="fragment">
+          <Box ws:id="box"></Box>
+        </Fragment>
+      </Slot>
+      <Slot ws:id="slot-two">
+        <Fragment ws:id="fragment">
+          <Box ws:id="box"></Box>
+        </Fragment>
+      </Slot>
+    </Body>
   );
 
+  $pages.set(pages);
+  $instances.set(instances);
+  $project.set({ id: "090e6e14-ae50-4b2e-bd22-71733cec05bb" } as Project);
+  $authToken.set("share-token");
+  $builderMode.set("content");
+  const link = getInstanceLink(["box", "fragment", "slot-two", "body"]);
+  expect(link).toBeDefined();
+  const url = new URL(link!);
+  expect(url.hostname).toContain("p-090e6e14-ae50-4b2e-bd22-71733cec05bb");
+  expect(url.searchParams.get("authToken")).toBe("share-token");
+  expect(url.searchParams.get("mode")).toBe("content");
   expect(
     getDeepLinkedInstanceSelection({
-      instanceSelector: ["box", "fragment", "slot-one", "body"],
+      instanceSelector: getInstanceSelectorFromUrl(url.searchParams),
       canOpenPageTemplates: true,
       pages,
       instances,
     })
   ).toEqual({
     pageId: "home-page",
-    instanceSelector: ["box", "fragment", "slot-one", "body"],
+    instanceSelector: ["box", "fragment", "slot-two", "body"],
   });
 });
 
@@ -100,7 +185,7 @@ test("ignores missing deep-linked instances", () => {
     homePageId: "home-page",
     rootInstanceId: "body",
   });
-  const { instances } = renderData(<$.Body ws:id="body"></$.Body>);
+  const { instances } = renderData(<Body ws:id="body"></Body>);
 
   expect(
     getDeepLinkedInstanceSelection({

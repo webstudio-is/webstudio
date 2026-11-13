@@ -16,6 +16,25 @@ describe("evaluation suite runner", () => {
     await expect(pending).resolves.toEqual([6, 2, 4]);
   });
 
+  test("bounds concurrent evaluations and preserves result order", async () => {
+    const active = new Set<number>();
+    let peakConcurrency = 0;
+    const results = await runConcurrently(
+      [0, 1, 2, 3, 4],
+      async (value) => {
+        active.add(value);
+        peakConcurrency = Math.max(peakConcurrency, active.size);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        active.delete(value);
+        return value * 2;
+      },
+      2
+    );
+
+    expect(peakConcurrency).toBe(2);
+    expect(results).toEqual([0, 2, 4, 6, 8]);
+  });
+
   test("waits for every evaluation to clean up before reporting failures", async () => {
     const cleanedUp: string[] = [];
     await expect(

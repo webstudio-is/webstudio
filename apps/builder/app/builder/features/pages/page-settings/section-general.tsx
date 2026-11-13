@@ -2,32 +2,31 @@ import { type FocusEventHandler, useId } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Checkbox,
+  cssVar,
   Flex,
   Grid,
   InputErrorsTooltip,
   InputField,
   Label,
   Link,
+  LinkButton,
   ProChip,
   Select,
   Text,
   Tooltip,
-  buttonStyle,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { isLiteralExpression } from "@webstudio-is/expression";
 import { documentTypes, type Pages } from "@webstudio-is/sdk";
 import { HomeIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
-import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { $permissions } from "~/shared/nano-states";
 import { $pageRootScope } from "../page-utils";
 import type {
   PageSettingsErrors,
   PageSettingsValues,
 } from "@webstudio-is/project-build/runtime";
-import { computePageSettingsText, type OnChange } from "./shared";
+import { usePageSettingsText, type OnChange } from "./shared";
 
 const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
   event.target.select();
@@ -66,16 +65,14 @@ const PathField = ({
                     parameters and other features. You can publish to staging
                     for free; upgrade to Pro to publish to custom domains.
                   </Text>
-                  <Link
-                    className={buttonStyle({ color: "gradient" })}
+                  <LinkButton
+                    color="primary"
                     css={{ marginTop: theme.spacing[5], width: "100%" }}
-                    color="contrast"
-                    underline="none"
                     target="_blank"
                     href="https://webstudio.is/pricing"
                   >
                     Upgrade
-                  </Link>
+                  </LinkButton>
                 </>
               )}
             </>
@@ -83,7 +80,7 @@ const PathField = ({
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={-1}
           />
         </Tooltip>
@@ -146,14 +143,14 @@ const StatusField = ({
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={-1}
           />
         </Tooltip>
       </Flex>
       <BindableExpressionControl
         expression={value ?? ""}
-        value={String(computeExpression(value, variableValues) ?? "")}
+        value={usePageSettingsText(value, variableValues)}
         bound={value !== undefined && isLiteralExpression(value) === false}
         showBinding={showBindingControls}
         scope={scope}
@@ -222,16 +219,14 @@ const RedirectField = ({
                     staging for free; upgrade to Pro to publish to custom
                     domains.
                   </Text>
-                  <Link
-                    className={buttonStyle({ color: "gradient" })}
+                  <LinkButton
+                    color="primary"
                     css={{ marginTop: theme.spacing[5], width: "100%" }}
-                    color="contrast"
-                    underline="none"
                     target="_blank"
                     href="https://webstudio.is/pricing"
                   >
                     Upgrade
-                  </Link>
+                  </LinkButton>
                 </>
               )}
             </>
@@ -239,7 +234,7 @@ const RedirectField = ({
           variant="wrapped"
         >
           <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
+            color={cssVar("--foreground-secondary")}
             tabIndex={-1}
           />
         </Tooltip>
@@ -247,7 +242,7 @@ const RedirectField = ({
 
       <BindableExpressionControl
         expression={value ?? ""}
-        value={computePageSettingsText(value, variableValues)}
+        value={usePageSettingsText(value, variableValues)}
         bound={value !== undefined && isLiteralExpression(value) === false}
         showBinding={showBindingControls}
         scope={scope}
@@ -347,14 +342,14 @@ export const GeneralSection = ({
               </>
             ) : canSetHomePage === false ? (
               <>
-                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <HomeIcon color={cssVar("--foreground-secondary")} />
                 <Text color="subtle">
                   Stage this page for publish before setting it as the home page
                 </Text>
               </>
             ) : values.parentFolderId !== pages.rootFolderId ? (
               <>
-                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <HomeIcon color={cssVar("--foreground-secondary")} />
                 <Text
                   css={{
                     overflowWrap: "anywhere",
@@ -369,7 +364,7 @@ export const GeneralSection = ({
               </>
             ) : values.documentType !== "html" ? (
               <>
-                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <HomeIcon color={cssVar("--foreground-secondary")} />
                 <Text
                   css={{
                     overflowWrap: "anywhere",

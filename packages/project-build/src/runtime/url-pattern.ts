@@ -5,32 +5,6 @@ export { isPathnamePattern };
 
 const baseUrl = "http://url";
 
-const tryDecode = (encoded: string) => {
-  try {
-    return decodeURIComponent(encoded);
-  } catch {
-    return encoded;
-  }
-};
-
-export const matchPathnamePattern = (pattern: string, pathname: string) => {
-  try {
-    const groups = new URLPattern({ pathname: pattern }).exec({ pathname })
-      ?.pathname.groups;
-    if (groups) {
-      const decodedGroups: Record<string, undefined | string> = {};
-      for (const [name, value] of Object.entries(groups)) {
-        if (value) {
-          decodedGroups[name] = tryDecode(value);
-        }
-      }
-      return decodedGroups;
-    }
-  } catch {
-    // Invalid URLPattern syntax never matches.
-  }
-};
-
 // allowed syntax
 // :name - group without modifiers
 // :name? - group with optional modifier

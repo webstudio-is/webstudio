@@ -8,8 +8,8 @@ import {
 } from "@webstudio-is/css-data";
 import {
   Box,
-  CssValueListArrowFocus,
-  CssValueListItem,
+  InteractiveListArrowFocus,
+  InteractiveListItem,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -18,6 +18,7 @@ import {
   Grid,
   IconButton,
   Label,
+  PanelContent,
   SectionTitle,
   SectionTitleButton,
   SmallIconButton,
@@ -153,18 +154,13 @@ const TransformAdvancedPopover = ({
   const readonly = useReadonly();
   return (
     <FloatingPanel
-      title="Advanced Transform"
+      title="Advanced transform"
       placement="bottom-within"
       content={
-        <Grid
-          gap="2"
-          css={{
-            padding: theme.panel.padding,
-          }}
-        >
+        <PanelContent as={Grid} gap="2">
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
             <PropertyLabel
-              label="Backface Visibility"
+              label="Backface visibility"
               description={propertyDescriptions.backfaceVisibility}
               properties={["backface-visibility"]}
             />
@@ -186,7 +182,7 @@ const TransformAdvancedPopover = ({
             property="perspective-origin"
             disabled={readonly}
           />
-        </Grid>
+        </PanelContent>
       }
     >
       <TransformAdvancedButton unavailable={unavailable || readonly} />
@@ -282,7 +278,7 @@ export const Section = () => {
       }
     >
       {isAnyTransformPropertyAdded && (
-        <CssValueListArrowFocus>
+        <InteractiveListArrowFocus>
           <Flex direction="column">
             {transformPanels.map(
               (panel, index) =>
@@ -294,7 +290,7 @@ export const Section = () => {
                 )
             )}
           </Flex>
-        </CssValueListArrowFocus>
+        </InteractiveListArrowFocus>
       )}
     </CollapsibleSectionRoot>
   );
@@ -323,22 +319,17 @@ const TransformSection = ({
     <FloatingPanel
       title={humanizeString(panel)}
       content={
-        <Flex
-          direction="column"
-          css={{
-            padding: theme.panel.padding,
-          }}
-        >
+        <PanelContent as={Flex} direction="column">
           {panel === "translate" && (
             <TranslatePanelContent disabled={readonly} />
           )}
           {panel === "scale" && <ScalePanelContent disabled={readonly} />}
           {panel === "rotate" && <RotatePanelContent disabled={readonly} />}
           {panel === "skew" && <SkewPanelContent disabled={readonly} />}
-        </Flex>
+        </PanelContent>
       }
     >
-      <CssValueListItem
+      <InteractiveListItem
         id={panel}
         index={index}
         hidden={value.hidden}
@@ -372,7 +363,7 @@ const TransformSection = ({
             />
           </>
         }
-      ></CssValueListItem>
+      ></InteractiveListItem>
     </FloatingPanel>
   );
 };

@@ -71,7 +71,7 @@ To control animation visibility at a breakpoint:
 
 When disabled at a breakpoint, the animation won't run, but the element still displays in its final "in" state (as designed on the canvas).
 
-<figure><img src="../../.gitbook/assets/animation-group-disable-breakpoint.png" alt="Disable animation at breakpoint"><figcaption><p>Hover over an animation to reveal the visibility toggle for the current breakpoint</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/animation-group-disable-breakpoint-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/animation-group-disable-breakpoint-light.png" alt="Fade in animation row with its breakpoint visibility toggle" width="240"></picture><figcaption><p>Hover over an animation to reveal the visibility toggle for the current breakpoint</p></figcaption></figure>
 
 ### Debug mode
 

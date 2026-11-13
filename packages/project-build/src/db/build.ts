@@ -2,10 +2,13 @@ import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   AuthorizationError,
   authorizeProject,
+  getProjectPlanFeatures,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import {
+  createId,
+  hasCustomResponseHeaders,
   dataSource,
   type Deployment,
   type Resource,
@@ -16,28 +19,36 @@ import {
   type Breakpoint,
   type StyleSourceSelection,
   type StyleDecl,
-  getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { loadAssetsByProjectWithClient } from "@webstudio-is/asset-uploader/patch-assets-core.server";
 import {
+  hasHistoricalFormComponentIdentityVersion,
   migratePages,
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
+import {
+  migrateCodeTextContentMutable,
+  migrateContentBlockDocumentBindingsMutable,
+  migrateResourceFormInstancesMutable,
+} from "@webstudio-is/project-migrations";
 import { migrateResourcesMutable } from "@webstudio-is/project-migrations/resources";
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
 import { marketplaceProduct } from "../shared/marketplace";
 import {
   createProjectSettingsFromPages,
-  projectSettings,
+  parseProjectSettings,
   removeLegacyProjectSettingsFromPages,
 } from "../shared/project-settings";
-import { breakCyclesMutable } from "../shared/graph-utils";
 import { createPages } from "../template";
 import { serializeStyles } from "./styles";
 import { serializeStyleSourceSelections } from "./style-source-selections";
-import { parseConfig, serializeData } from "./build-parser";
+import {
+  parseCompactInstanceData,
+  parseConfig,
+  serializeData,
+} from "./build-parser";
 import {
   PrePublishAuditError,
   runPrePublishAudit,
@@ -53,14 +64,6 @@ export {
 
 const parseCompactData = <Item>(serialized: string) =>
   JSON.parse(serialized) as Item[];
-
-const parseCompactInstanceData = (serialized: string) => {
-  const instances = JSON.parse(serialized) as Instance[];
-
-  breakCyclesMutable(instances, (node) => node.component === "Slot");
-
-  return instances;
-};
 
 const parseMarketplaceProduct = (serialized: string | null | undefined) => {
   const value =
@@ -98,12 +101,24 @@ const parseCompactContentEngineData = (build: ContentEngineBuildRow) => {
 const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
-  const pages = migratePages(parseConfig<unknown>(build.pages));
+  const rawPages = parseConfig<unknown>(build.pages);
+  const hasModernFormMarker =
+    hasHistoricalFormComponentIdentityVersion(rawPages);
+  const pages = migratePages(rawPages);
+  const instances = parseCompactInstanceData(build.instances);
+  migrateResourceFormInstancesMutable(instances, hasModernFormMarker);
   const contentEngineData = parseCompactContentEngineData(build);
+  const contentData = {
+    instances: new Map(instances.map((instance) => [instance.id, instance])),
+    props: new Map(contentEngineData.props.map((prop) => [prop.id, prop])),
+  };
+  migrateCodeTextContentMutable(contentData, { codeOnly: true });
+  migrateContentBlockDocumentBindingsMutable(contentData);
+  contentEngineData.props = Array.from(contentData.props.values());
   const parsedProjectSettings =
     build.projectSettings === undefined || build.projectSettings === null
       ? createProjectSettingsFromPages(pages)
-      : projectSettings.parse(parseConfig<unknown>(build.projectSettings));
+      : parseProjectSettings(parseConfig<unknown>(build.projectSettings));
   return {
     id: build.id,
     projectId: build.projectId,
@@ -119,7 +134,7 @@ const parseCompactBuild = async (
       build.styleSourceSelections
     ),
     ...contentEngineData,
-    instances: parseCompactInstanceData(build.instances),
+    instances,
     deployment: parseDeployment(build.deployment),
     marketplaceProduct: parseMarketplaceProduct(build.marketplaceProduct),
   } satisfies CompactBuild;
@@ -285,7 +300,7 @@ export const createBuild = async (
   const data = createPages();
   const pages = removeLegacyProjectSettingsFromPages(data.pages);
   const newBuild = await context.postgrest.client.from("Build").insert({
-    id: crypto.randomUUID(),
+    id: createId(),
     projectId: props.projectId,
     pages: JSON.stringify(serializePages(pages)),
     projectSettings: JSON.stringify({ meta: {}, compiler: {} }),
@@ -346,10 +361,6 @@ export const unpublishBuild = async (
     }
     return deployment.domains.includes(props.domain);
   });
-
-  if (targetBuilds.length === 0) {
-    throw new Error(`Domain ${props.domain} is not published`);
-  }
 
   // Process all builds that contain this domain
   for (const targetBuild of targetBuilds) {
@@ -440,13 +451,6 @@ export const createProductionBuild = async (
       resources: new Map(devBuild.resources.map((item) => [item.id, item])),
       metas: componentMetas,
       assets: new Map(projectAssets.map((item) => [item.id, item])),
-      breakpoints: new Map(devBuild.breakpoints.map((item) => [item.id, item])),
-      styles: new Map(
-        devBuild.styles.map((item) => [getStyleDeclKey(item), item])
-      ),
-      styleSourceSelections: new Map(
-        devBuild.styleSourceSelections.map((item) => [item.instanceId, item])
-      ),
     });
     if (findings.some(({ severity }) => severity === "error")) {
       throw new PrePublishAuditError(findings);
@@ -468,10 +472,76 @@ export const createProductionBuild = async (
       throw build.error;
     }
     if (build.data !== null) {
-      return { id: build.data, auditFindings: findings };
+      const savedBuildId = build.data;
+      if (props.deployment.destination === "static") {
+        return { id: savedBuildId, auditFindings: findings };
+      }
+
+      try {
+        // Check the saved snapshot so concurrent development edits cannot bypass
+        // the Pro requirement. The caller publishes only after this check passes.
+        const snapshot = await context.postgrest.client
+          .from("Build")
+          .select("projectSettings,pages")
+          .eq("id", savedBuildId);
+        if (snapshot.error) {
+          throw snapshot.error;
+        }
+        if (snapshot.data.length !== 1) {
+          throw new Error("Cannot verify published response headers");
+        }
+        const savedBuild = snapshot.data[0];
+        const settings =
+          savedBuild.projectSettings === undefined ||
+          savedBuild.projectSettings === null
+            ? createProjectSettingsFromPages(
+                migratePages(parseConfig<unknown>(savedBuild.pages))
+              )
+            : parseProjectSettings(
+                parseConfig<unknown>(savedBuild.projectSettings)
+              );
+        if (!hasCustomResponseHeaders(settings.meta.customHeaders)) {
+          return { id: savedBuildId, auditFindings: findings };
+        }
+        // Use the saved staging domain, not caller-supplied deployment metadata.
+        const project = await context.postgrest.client
+          .from("Project")
+          .select("domain")
+          .eq("id", props.projectId)
+          .single();
+        if (project.error) {
+          throw project.error;
+        }
+        if (
+          props.deployment.domains.every(
+            (domain) => domain === project.data.domain
+          )
+        ) {
+          return { id: savedBuildId, auditFindings: findings };
+        }
+        const plan = await getProjectPlanFeatures(props.projectId, context);
+        if (plan.allowDynamicData !== true) {
+          throw new AuthorizationError(
+            "Custom headers are a Pro feature. Upgrade to Pro or reset the response headers to defaults to publish to custom domains. You can still publish to staging."
+          );
+        }
+      } catch (error) {
+        const cleanup = await context.postgrest.client
+          .from("Build")
+          .delete()
+          .eq("id", savedBuildId);
+        if (cleanup.error) {
+          throw new AggregateError(
+            [error, cleanup.error],
+            "Could not verify response headers or remove the unpublished build"
+          );
+        }
+        throw error;
+      }
+
+      return { id: savedBuildId, auditFindings: findings };
     }
   }
-
   throw Error(
     "The project changed during validation. Review the latest audit and publish again."
   );

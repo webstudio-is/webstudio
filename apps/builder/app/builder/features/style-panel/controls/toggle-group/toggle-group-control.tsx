@@ -6,7 +6,7 @@ import {
 import { AlertIcon } from "@webstudio-is/icons";
 import {
   Flex,
-  rawTheme,
+  cssVar,
   ToggleGroup,
   ToggleGroupButton,
   Tooltip,
@@ -68,13 +68,14 @@ export const ToggleGroupTooltip = ({
       content={
         <PropertyInfo
           title={label ?? humanizeString(properties[0])}
+          property={properties[0]}
           code={code}
           description={
             <Flex gap="2" direction="column">
               {description}
               {isAdvanced && (
                 <Flex gap="1">
-                  <AlertIcon color={rawTheme.colors.backgroundAlertMain} /> This
+                  <AlertIcon color={cssVar("--foreground-warning")} /> This
                   value was defined in the Advanced section.
                 </Flex>
               )}

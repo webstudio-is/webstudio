@@ -116,6 +116,27 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio list-redirects --json"],
   },
   {
+    command: "list-response-headers",
+    description: "List configured response header rules",
+    examples: ["webstudio list-response-headers --json"],
+  },
+  {
+    command: "set-response-header",
+    description:
+      "Add or replace a response header for a route. Omit route for all paths.",
+    requiredOptions: ["name", "value", "json"],
+    examples: [
+      "webstudio set-response-header --name Cache-Control --value 'public, max-age=60' --json",
+    ],
+  },
+  {
+    command: "delete-response-header",
+    description:
+      "Delete a response header for a route. Omit route for the all-paths rule.",
+    requiredOptions: ["name", "json"],
+    examples: ["webstudio delete-response-header --name Cache-Control --json"],
+  },
+  {
     command: "create-redirect",
     description: "Create a project redirect",
     requiredOptions: ["old", "new", "json"],
@@ -293,10 +314,10 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "search-project",
     description:
-      "Search instance labels, text, props including href and embeds, resource URLs, assets, and styles",
+      "Search synchronized Builder values in the CLI and return paged matches. Filters do not reduce synchronization; recognized credential fields are omitted.",
     examples: [
       'MCP tool: search-project {"query":"pricing"}',
-      'MCP tool: search-project {"query":"api.example.com","scopes":["resources"]}',
+      'MCP tool: search-project {"query":"api.example.com","namespaces":["resources"]}',
     ],
   },
   {
@@ -344,7 +365,7 @@ const curatedPublicApiOperationDocumentation = [
     description:
       "Insert authored/styled Webstudio JSX with components, text, props, tokens, and styles. The CLI converts the JSX string to structured Webstudio data before mutation.",
     examples: [
-      'MCP tool: insert-fragment {"parentInstanceId":"parent-id","fragment":"<ws.element ws:tag=\'section\' />"}',
+      'MCP tool: insert-fragment {"parentInstanceId":"parent-id","fragment":"<section />"}',
     ],
   },
   {
@@ -460,10 +481,26 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio get-styles --instance instance-id --json"],
   },
   {
+    command: "list-tag-styles",
+    description: "List global Tag styles and their declarations",
+    examples: [
+      "MCP tool: list-tag-styles {}",
+      'MCP tool: list-tag-styles {"tag":"button","verbose":true}',
+    ],
+  },
+  {
     command: "update-styles",
     description: "Create or update local style declarations",
     requiredOptions: ["input", "json"],
     examples: ["webstudio update-styles --input styles.json --json"],
+  },
+  {
+    command: "update-selected-styles",
+    description:
+      "Create or update selected style-source declarations. Use tag-style:<tag> to create or edit a global Tag style.",
+    examples: [
+      'MCP tool: update-selected-styles {"updates":[{"instanceId":"instance-id","styleSourceId":"tag-style:button","property":"color","value":{"type":"keyword","value":"red"}}]}',
+    ],
   },
   {
     command: "delete-styles",
@@ -629,7 +666,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "create-assets-resource",
     description:
-      'Create a scoped Assets resource. Omit query to use the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false, and using content mode none. Use markdown-body-ref when querying a Markdown body directly; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }. Preview concrete queries and inspect size diagnostics before saving.',
+      'Create a scoped Assets resource. Omit query to use the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown or MDX body; it resolves from storage and is never embedded in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }. Preview concrete queries and inspect size diagnostics before saving.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio create-assets-resource --input assets-resource.json --json",
@@ -638,7 +675,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-assets-resource",
     description:
-      'Update an Assets resource. Set query to null to restore the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown body; it requires storage-backed document resolution and never embeds the body in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }.',
+      'Update an Assets resource. Set query to null to restore the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown or MDX body; it resolves from storage and is never embedded in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio update-assets-resource --input assets-resource-update.json --json",
@@ -647,7 +684,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "validate-asset-query",
     description:
-      "Validate a structured Assets query and return its referenced dynamic fields and bounded operation counts.",
+      "Validate a structured Assets query and return every setup error or warning, referenced dynamic fields, and bounded operation counts.",
     examples: [
       'webstudio validate-asset-query \'{"query":{"where":{"all":[{"field":["properties","slug"],"operator":"eq","value":"hello-world"}]},"limit":1}}\'',
     ],
@@ -661,9 +698,18 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "simulate-form-submission",
+    description:
+      "Submit synthetic values to a saved Form on the trusted Builder server. Executes configured actions, including Email, so verify destinations and recipients first.",
+    requiredOptions: ["input", "json"],
+    examples: [
+      "webstudio simulate-form-submission --input form-simulation.json --json",
+    ],
+  },
+  {
     command: "get-asset-field-catalog",
     description:
-      "Get standard fields plus dynamic Markdown frontmatter and JSON fields with observed types, occurrence counts, optionality, and mixed-type state.",
+      "Get standard fields plus dynamic Markdown or MDX frontmatter and JSON fields with observed types, occurrence counts, optionality, and mixed-type state.",
     examples: ["webstudio get-asset-field-catalog --json"],
   },
   {
@@ -695,6 +741,16 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio delete-resource --resource resource-id --json"],
   },
   {
+    command: "validate-publish",
+    description:
+      "Validate publish access, selected domains, and content diagnostics without starting a publish. Use audit for project-wide quality checks.",
+    requiredOptions: ["target", "json"],
+    examples: [
+      "webstudio validate-publish --target production --json",
+      'MCP tool: validate-publish {"target":"production"}',
+    ],
+  },
+  {
     command: "publish",
     description:
       "Publish the configured project to staging or production, or prepare a static export. Uses the project domain by default and, for production, active verified custom domains. If local development cannot contact the deployment backend, the JSON response includes warning while still returning the local publish job id.",
@@ -721,16 +777,16 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "get-publish-report",
     description:
-      "Get the detailed structured report for a publish attempt. Requires a Pro or Team plan and an unexpired report.",
-    requiredOptions: ["attempt-id", "json"],
+      "Read the signed execution result for a publish attempt. Available log pages require an advanced diagnostics plan and are not retained by Webstudio.",
+    requiredOptions: ["build-id", "attempt-id", "execution-handle", "json"],
     examples: [
-      "webstudio get-publish-report --attempt-id publish-attempt-id --json",
+      "webstudio publish report --build-id build-id --attempt-id publish-attempt-id --execution-handle signed-handle --json",
     ],
   },
   {
     command: "unpublish",
     description:
-      "Remove staging or production deployment records for selected domains",
+      "Remove staging or production deployment records for selected domains. This completes without a publish job",
     requiredOptions: ["target", "confirm", "json"],
     examples: ["webstudio unpublish --target production --confirm --json"],
   },
@@ -824,7 +880,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "upload-asset",
     description:
-      "Upload one local asset file from a descriptor, optionally into an Asset Manager folder",
+      "Upload one local asset file from a descriptor, optionally into an Asset Manager folder. Markdown and MDX uploads return source diagnostics",
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio upload-asset --input asset.json --assets-dir .webstudio/assets --json",
@@ -833,7 +889,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "upload-assets",
     description:
-      "Upload local asset files from descriptors, optionally into Asset Manager folders",
+      "Upload local asset files from descriptors, optionally into Asset Manager folders; returns uploaded, retryable failures, commit-ambiguous forced uploads, and Markdown or MDX source diagnostics",
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio upload-assets --input assets.json --assets-dir .webstudio/assets --json",
@@ -842,9 +898,10 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-asset-content",
     description:
-      "Replace a text asset's content while preserving its stable asset id; provide exactly one of path or content and use the current asset name as expectedName",
+      "Replace a text Asset's content or extension without changing its ID. Provide path or content and its current name as expectedName. Markdown and MDX validation diagnostics are returned without blocking the save",
     examples: [
-      'MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.json","content":"{\\"theme\\":\\"dark\\"}"}',
+      `MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.json","content":"{theme:'dark'}"}`,
+      `MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.md","extension":"json","content":"{theme:'dark'}"}`,
       'MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"styles_hash.css","path":"./styles.css"}',
     ],
   },

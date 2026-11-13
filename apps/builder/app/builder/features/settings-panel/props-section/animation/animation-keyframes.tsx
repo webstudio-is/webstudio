@@ -1,8 +1,8 @@
-import { Fragment, useId, useMemo, useRef, useState } from "react";
+import { Fragment, useId, useRef, useState } from "react";
 import {
   type StyleValue,
-  toValue,
   type CssProperty,
+  toValue,
 } from "@webstudio-is/css-engine";
 import {
   Grid,
@@ -13,9 +13,9 @@ import {
   SectionTitleButton,
   SectionTitleLabel,
   FloatingPanel,
-  CssValueListItem,
+  InteractiveListItem,
   SmallIconButton,
-  CssValueListArrowFocus,
+  InteractiveListArrowFocus,
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import type { AnimationKeyframe } from "@webstudio-is/sdk";
@@ -23,8 +23,11 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input";
-import { CssEditor } from "~/builder/shared/css-editor";
-import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { LocalStyleBlockEditor } from "~/builder/shared/css-editor/local-style-block-editor";
+import {
+  $availableVariables,
+  $cssVarsMap,
+} from "~/builder/features/style-panel/shared/model";
 import { calcOffsets, findInsertionIndex, moveItem } from "./keyframe-helpers";
 import {
   AnimationTransforms,
@@ -124,32 +127,30 @@ const Keyframe = ({
   index,
   offsetPlaceholder,
   onChange,
+  onResetPreview,
   onDelete,
 }: {
   value: AnimationKeyframe;
   index: number;
   offsetPlaceholder: number;
   onChange: (value: AnimationKeyframe, isEphemeral: boolean) => void;
+  onResetPreview: () => void;
   onDelete: () => void;
 }) => {
   const offsetId = useId();
-  const declarations = useMemo(
-    () =>
-      (Object.keys(value.styles) as CssProperty[])
-        // avoid duplicating transform properties in css editor
-        .filter((property) => !transformProperties.includes(property))
-        .map((property) => {
-          const styleValue = value.styles[property];
-          return {
-            property,
-            source: { name: "local" },
-            cascadedValue: styleValue,
-            computedValue: styleValue,
-            usedValue: styleValue,
-          } satisfies ComputedStyleDecl;
-        }),
-    [value.styles]
+  const localStyles = new Map(
+    (Object.entries(value.styles) as [CssProperty, StyleValue][]).filter(
+      ([property]) => !transformProperties.includes(property)
+    )
   );
+  const mergeStyles = (styles: Map<CssProperty, StyleValue>) => {
+    const transforms = Object.fromEntries(
+      (Object.entries(value.styles) as [CssProperty, StyleValue][]).filter(
+        ([property]) => transformProperties.includes(property)
+      )
+    );
+    return { ...transforms, ...Object.fromEntries(styles) };
+  };
 
   return (
     <FloatingPanel
@@ -191,41 +192,26 @@ const Keyframe = ({
             }}
           />
 
-          <CssEditor
-            showSearch={false}
-            showAddStyleInput
-            propertiesPosition="top"
-            virtualize={false}
-            declarations={declarations}
-            onAddDeclarations={(addedStyleMap) => {
-              const styles = { ...value.styles };
-              for (const [property, value] of addedStyleMap) {
-                styles[property] = value;
+          <LocalStyleBlockEditor
+            styles={localStyles}
+            placeholderText="Add styles"
+            cssVars={$cssVarsMap.get()}
+            availableVariables={$availableVariables.get()}
+            onPreview={(styles) => {
+              if (styles === undefined) {
+                onResetPreview();
+              } else {
+                onChange({ ...value, styles: mergeStyles(styles) }, true);
               }
-              onChange({ ...value, styles }, false);
             }}
-            onDeleteProperty={(property, options = {}) => {
-              if (options.isEphemeral === true) {
-                return;
-              }
-              const styles = { ...value.styles };
-              delete styles[property];
-              onChange({ ...value, styles }, false);
-            }}
-            onSetProperty={(property) => {
-              return (newValue, options) => {
-                const styles = { ...value.styles, [property]: newValue };
-                onChange({ ...value, styles }, options?.isEphemeral ?? false);
-              };
-            }}
-            onDeleteAllDeclarations={() => {
-              onChange({ ...value, styles: {} }, false);
+            onApply={(styles) => {
+              onChange({ ...value, styles: mergeStyles(styles) }, false);
             }}
           />
         </Grid>
       }
     >
-      <CssValueListItem
+      <InteractiveListItem
         id={offsetPlaceholder.toString()}
         index={index}
         label={
@@ -245,7 +231,7 @@ const Keyframe = ({
             />
           </Tooltip>
         }
-      ></CssValueListItem>
+      ></InteractiveListItem>
     </FloatingPanel>
   );
 };
@@ -292,7 +278,7 @@ export const Keyframes = ({
       >
         <SectionTitleLabel>Keyframes</SectionTitleLabel>
       </SectionTitle>
-      <CssValueListArrowFocus>
+      <InteractiveListArrowFocus>
         {keyframes.map((value, index) => (
           <Fragment key={keyRefs.current[index]}>
             <Keyframe
@@ -319,6 +305,7 @@ export const Keyframes = ({
 
                 onChange(newValues, isEphemeral);
               }}
+              onResetPreview={() => onChange(undefined, true)}
               onDelete={() => {
                 const newValues = [...keyframes];
                 newValues.splice(index, 1);
@@ -327,7 +314,7 @@ export const Keyframes = ({
             />
           </Fragment>
         ))}
-      </CssValueListArrowFocus>
+      </InteractiveListArrowFocus>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Meta } from "@storybook/react";
-import { StorySection } from "@webstudio-is/design-system";
+import { cssVar, StorySection } from "@webstudio-is/design-system";
 import * as icons from "./index";
 
 export const Icons = ({
@@ -31,14 +31,14 @@ export const Icons = ({
                   height: 100,
                   margin: 5,
                   padding: 5,
-                  border: "solid 1px #f5f5f5",
+                  border: `solid 1px ${cssVar("--border-default")}`,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Icon width="32" height="32" color="black" />
+                <Icon width="32" height="32" />
                 <div
                   style={{
                     marginTop: 16,
@@ -47,7 +47,7 @@ export const Icons = ({
                     wordWrap: "break-word",
                     width: "100%",
                     fontSize: "14px",
-                    color: "#5a5a5a",
+                    color: cssVar("--foreground-secondary"),
                   }}
                 >
                   {name.replace(/Icon$/, "")}

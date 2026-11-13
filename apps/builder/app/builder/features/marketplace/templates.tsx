@@ -7,13 +7,13 @@ import {
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { useMemo } from "react";
 import {
+  PanelContent,
   Button,
   Flex,
   List,
   ListItem,
   ScrollArea,
   Separator,
-  theme,
   Link,
   Tooltip,
 } from "@webstudio-is/design-system";
@@ -190,11 +190,11 @@ export const Templates = ({
 
   return (
     <Flex direction="column" css={{ height: "100%" }}>
-      <Flex
+      <PanelContent
+        as={Flex}
         align="center"
         shrink="false"
         justify="between"
-        css={{ padding: theme.panel.padding }}
         gap="3"
       >
         <Button
@@ -202,7 +202,6 @@ export const Templates = ({
           onClick={() => {
             onOpenChange(false);
           }}
-          color="neutral"
         >
           {name}
         </Button>
@@ -231,7 +230,7 @@ export const Templates = ({
             <ExternalLinkIcon />
           </Link>
         </Tooltip>
-      </Flex>
+      </PanelContent>
       <Separator />
       <ScrollArea>
         {Array.from(templatesDataByCategory.keys())
@@ -287,3 +286,5 @@ export const Templates = ({
     </Flex>
   );
 };
+
+undefined;

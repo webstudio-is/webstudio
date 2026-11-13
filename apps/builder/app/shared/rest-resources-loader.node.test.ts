@@ -1,0 +1,282 @@
+import { expect, test, vi } from "vitest";
+import type { ResourceRequest } from "@webstudio-is/sdk";
+import {
+  loadResource,
+  resourceLoadConcurrency,
+} from "@webstudio-is/sdk/runtime";
+import {
+  loadResourceRequestList,
+  resourceRequestListSchema,
+} from "../services/resource-list-loader.server";
+import { getResourceKey } from "./resource-utils";
+
+test("limits each server resource batch to the shared concurrency", () => {
+  expect(
+    resourceRequestListSchema.safeParse(
+      Array.from({ length: resourceLoadConcurrency })
+    ).success
+  ).toBe(true);
+  expect(
+    resourceRequestListSchema.safeParse(
+      Array.from({ length: resourceLoadConcurrency + 1 })
+    ).success
+  ).toBe(false);
+});
+
+test("batches Assets while starting and preserving independent remote resources", async () => {
+  const events: string[] = [];
+  const assets: ResourceRequest[] = ["Tools", "Updates"].map((category) => ({
+    name: category,
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [{ name: "content-type", value: "application/json" }],
+    body: {
+      query: {
+        where: {
+          field: ["properties", "category"],
+          operator: "eq",
+          value: category,
+        },
+      },
+    },
+  }));
+  const remotes: ResourceRequest[] = ["First remote", "Second remote"].map(
+    (name) => ({
+      name,
+      method: "get",
+      url: "https://api.example/posts",
+      searchParams: [],
+      headers: [],
+    })
+  );
+  const requests = [assets[0], remotes[0], assets[1], remotes[1]];
+  const executeAssetQueries = vi.fn(async ({ resourceRequests }) => {
+    events.push("assets");
+    return resourceRequests.map((_: Request, index: number) =>
+      Response.json({
+        data: {
+          items: [{ id: `post-${index}`, title: `Post ${index}` }],
+          totalCount: 1,
+          hasMore: false,
+        },
+      })
+    );
+  });
+  const customFetch = vi.fn<typeof fetch>(async (_input, init) => {
+    events.push("remote");
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
+    return Response.json({ source: "remote" });
+  });
+  const request = new Request(
+    "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.localhost/rest/resources-loader",
+    { method: "POST" }
+  );
+
+  const output = await loadResourceRequestList(
+    {
+      request,
+      requestList: requests,
+      sourceOrigin: "https://source.example",
+      includeDiagnostics: false,
+      customFetch,
+    },
+    { executeAssetQueries: executeAssetQueries as never, loadResource }
+  );
+
+  expect(events).toEqual(["remote", "remote", "assets"]);
+  expect(executeAssetQueries).toHaveBeenCalledOnce();
+  expect(executeAssetQueries.mock.calls[0][0].resourceRequests).toHaveLength(2);
+  expect(customFetch).toHaveBeenCalledTimes(2);
+  expect(output.map(([key]) => key)).toEqual(requests.map(getResourceKey));
+  expect(output[0][1]).toMatchObject({
+    ok: true,
+    data: { "post-0": { title: "Post 0" } },
+  });
+  expect(output[1][1]).toMatchObject({ ok: true, data: { source: "remote" } });
+  expect(output[2][1]).toMatchObject({
+    ok: true,
+    data: { "post-1": { title: "Post 1" } },
+  });
+  expect(output[3][1]).toMatchObject({ ok: true, data: { source: "remote" } });
+});
+
+test("records non-bindable server duration and response size", async () => {
+  const resource: ResourceRequest = {
+    name: "Remote",
+    method: "get",
+    url: "https://api.example/posts",
+    searchParams: [],
+    headers: [],
+  };
+  const request = new Request(
+    "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.localhost/rest/resources-loader",
+    { method: "POST" }
+  );
+  const result = {
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    data: { title: "Post" },
+    __performance__: {
+      assetQuery: { resolvedDocumentCount: 2 },
+    },
+  };
+  const now = vi.fn().mockReturnValueOnce(10).mockReturnValueOnce(35.5);
+
+  const output = await loadResourceRequestList(
+    {
+      request,
+      requestList: [resource],
+      sourceOrigin: "https://source.example",
+      includeDiagnostics: false,
+      customFetch: vi.fn(),
+    },
+    {
+      executeAssetQueries: vi.fn() as never,
+      loadResource: vi.fn().mockResolvedValue(result),
+      now,
+    }
+  );
+
+  expect(output).toEqual([
+    [
+      getResourceKey(resource),
+      {
+        ...result,
+        __performance__: {
+          ...result.__performance__,
+          serverDurationMs: 25.5,
+          responseBytes: new TextEncoder().encode(
+            JSON.stringify({
+              ok: result.ok,
+              status: result.status,
+              statusText: result.statusText,
+              data: result.data,
+            })
+          ).byteLength,
+        },
+      },
+    ],
+  ]);
+});
+
+test("captures the actual request and response only for an explicitly inspected resource", async () => {
+  const resource: ResourceRequest = {
+    name: "Contact webhook",
+    method: "post",
+    url: "https://api.example/contacts?token=query-secret",
+    searchParams: [],
+    headers: [
+      { name: "content-type", value: "application/json" },
+      { name: "authorization", value: "Bearer header-secret" },
+    ],
+    body: {
+      email: "person@example.com",
+      message: "Hello",
+      password: "body-secret",
+    },
+  };
+  const otherResource: ResourceRequest = {
+    ...resource,
+    name: "Other webhook",
+    url: "https://api.example/other",
+  };
+  const request = new Request(
+    "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.localhost/rest/resources-loader",
+    { method: "POST" }
+  );
+  const customFetch = vi.fn<typeof fetch>(async (_input, _init) =>
+    Response.json(
+      { accepted: true },
+      { status: 201, headers: { "x-private-result": "response-secret" } }
+    )
+  );
+  const inspectKey = getResourceKey(resource);
+
+  const output = await loadResourceRequestList(
+    {
+      request,
+      requestList: [resource, otherResource],
+      sourceOrigin: "https://source.example",
+      includeDiagnostics: false,
+      customFetch,
+      inspectResourceKey: inspectKey,
+    },
+    { executeAssetQueries: vi.fn() as never, loadResource }
+  );
+
+  expect(output).toMatchObject({
+    resources: [
+      [inspectKey, { ok: true, status: 201, data: { accepted: true } }],
+      [getResourceKey(otherResource), { ok: true, data: { accepted: true } }],
+    ],
+    inspection: {
+      resourceId: inspectKey,
+      resourceName: "Contact webhook",
+      request: {
+        method: "POST",
+        url: "https://api.example/contacts?token=%5Bredacted%5D",
+        body: {
+          email: "person@example.com",
+          message: "Hello",
+          password: "[redacted]",
+        },
+      },
+      response: {
+        status: 201,
+        headers: [
+          { name: "content-type", value: "application/json" },
+          { name: "x-private-result", value: "response-secret" },
+        ],
+        body: { accepted: true },
+      },
+    },
+  });
+  expect(JSON.stringify(output)).not.toContain("query-secret");
+  expect(JSON.stringify(output)).not.toContain("header-secret");
+  expect(JSON.stringify(output)).not.toContain("body-secret");
+});
+
+test("returns every invalid resource field as structured diagnostics", async () => {
+  const request = new Request(
+    "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.localhost/rest/resources-loader",
+    { method: "POST" }
+  );
+  const invalidResource = {
+    name: 42,
+    method: "invalid",
+    searchParams: "invalid",
+    headers: "invalid",
+  };
+
+  const output = await loadResourceRequestList({
+    request,
+    requestList: [invalidResource],
+    sourceOrigin: "https://source.example",
+    includeDiagnostics: true,
+    customFetch: vi.fn(),
+  });
+
+  expect(output[0]?.[1]).toMatchObject({
+    ok: false,
+    status: 400,
+    statusText: "Bad Request",
+    data: {
+      error: {
+        code: "INVALID_REQUEST",
+        message: "Resource request is invalid",
+        retryable: false,
+        details: {
+          issues: expect.arrayContaining([
+            expect.objectContaining({ path: ["name"] }),
+            expect.objectContaining({ path: ["method"] }),
+            expect.objectContaining({ path: ["url"] }),
+            expect.objectContaining({ path: ["searchParams"] }),
+            expect.objectContaining({ path: ["headers"] }),
+          ]),
+        },
+      },
+    },
+  });
+});

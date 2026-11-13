@@ -40,6 +40,11 @@ import {
   startVisualStoryServer,
   startVisualStoryServers,
 } from "./story-server";
+import {
+  formatVisualRegressionDiagnostics,
+  getIsolatedVerificationServers,
+  getStoryPairs,
+} from "./run-utils";
 
 const repositoryRoot = process.cwd();
 const outputRoot = path.join(repositoryRoot, ".visual-regression");
@@ -281,6 +286,7 @@ const verifyChangedCaptures = async ({
   browserSession,
   checkout,
   baselineBundleDirectory,
+  currentBundleDirectory,
   servers,
 }: {
   comparisons: Awaited<ReturnType<typeof compareStories>>;
@@ -293,6 +299,7 @@ const verifyChangedCaptures = async ({
   browserSession: BrowserScreenshotSession | undefined;
   checkout: string;
   baselineBundleDirectory: string;
+  currentBundleDirectory: string;
   servers: Array<Awaited<ReturnType<typeof startVisualStoryServer>>>;
 }) => {
   const changedIds = comparisons
@@ -338,22 +345,27 @@ const verifyChangedCaptures = async ({
     return { comparisons, performed: true };
   }
 
-  const changedPairs = remainingChangedIds.flatMap((id) => {
-    const baseline = baselineEntries[id];
-    const current = currentEntries[id];
-    return baseline === undefined || current === undefined
-      ? []
-      : [{ baseline, current }];
+  const changedPairs = getStoryPairs({
+    ids: remainingChangedIds,
+    baselineEntries,
+    currentEntries,
   });
   if (cachedBaseline) {
     await installBaselineDependencies(checkout);
+    await Promise.all(servers.map((server) => server.close()));
+    servers.length = 0;
     servers.push(
-      await startVisualStoryServer({
-        root: checkout,
-        port: visualRegressionConfig.servers.baselinePort,
-        outputDirectory: baselineBundleDirectory,
-        storyFiles: changedPairs.map(({ baseline }) => baseline.file),
-      })
+      ...(await startVisualStoryServers(
+        getIsolatedVerificationServers({
+          repositoryRoot,
+          checkout,
+          baselineBundleDirectory,
+          currentBundleDirectory,
+          baselinePort: visualRegressionConfig.servers.baselinePort,
+          currentPort: visualRegressionConfig.servers.currentPort,
+          pairs: changedPairs,
+        })
+      ))
     );
   }
   const pairedVerification = await captureStoryPairs({
@@ -561,6 +573,7 @@ const main = async () => {
       browserSession,
       checkout,
       baselineBundleDirectory,
+      currentBundleDirectory,
       servers,
     });
     comparisons = verification.comparisons;
@@ -617,6 +630,9 @@ const main = async () => {
     throw new Error("Visual comparison did not produce a report.");
   }
   await writeScreenshotComparisonReport({ report, reportDirectory });
+  for (const line of formatVisualRegressionDiagnostics(report)) {
+    console.error(line);
+  }
   const comparisonResult = classifyScreenshotComparisonReport(report);
   const result =
     comparisonResult === "failure"

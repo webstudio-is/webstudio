@@ -2,11 +2,17 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { spinner } from "@clack/prompts";
-import { type PublishedProjectBundle } from "@webstudio-is/protocol";
+import {
+  bundleVersion,
+  historicalPublishedProjectBundle,
+  publishedProjectBundle,
+  type PublishedProjectBundle,
+} from "@webstudio-is/protocol";
 import {
   getApiErrorCode,
   loadProjectBundleByBuildId,
-  loadProjectBundleByProjectId,
+  loadBuilderDataByProjectId,
+  MissingJsonPropValueError,
   toLocalProjectBundle,
 } from "@webstudio-is/http-client";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
@@ -20,13 +26,99 @@ import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { downloadAssetFiles } from "../asset-files";
 import { resolveApiConnection } from "../api-connection";
 import { materializeManagedAgents } from "../managed-agents";
+import { serializedBuild } from "@webstudio-is/project-build/contracts";
+import {
+  createBuilderStateFromBuildData,
+  createSerializedBuilderBuildDataFromState,
+} from "@webstudio-is/project-build/state";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import {
+  hasHistoricalFormComponentIdentityVersion,
+  migratePages,
+  serializePages,
+} from "@webstudio-is/project-migrations/pages";
+import {
+  createBuildContentCompilationPlan,
+  createPublishedBuildContentCompilationPlan,
+  createPublishedMdxDependencyClosureResolver,
+  getDynamicPublishedMdxSourceBlockIds,
+  getPublishedMdxAssetIds,
+  getPublishedMdxContentDatabaseMaxBytes,
+  resolvePublishedMdxAssetCandidates,
+} from "@webstudio-is/project-build";
+import {
+  createReachableAssetContentCompilationPlan,
+  getHomePage,
+} from "@webstudio-is/sdk";
+import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
+import {
+  compileContentSource,
+  compileContentUntilPlanIsStable,
+} from "@webstudio-is/content-engine/compiler";
+import { createFileSystemContentSource } from "../filesystem-content-source";
+import { z } from "zod";
+import {
+  breakpoint,
+  styleDecl,
+  styleSource,
+  styleSourceSelection,
+  prop,
+  instance,
+  dataSource,
+  resource,
+} from "@webstudio-is/sdk/schema";
+
+// Builder data uses arrays rather than the keyed pairs in an export bundle.
+const builderData = serializedBuild.extend({
+  pages: historicalPublishedProjectBundle.shape.build.shape.pages,
+  breakpoints: breakpoint.array(),
+  styles: styleDecl.array(),
+  styleSources: styleSource.array(),
+  styleSourceSelections: styleSourceSelection.array(),
+  props: prop.array(),
+  instances: instance.array(),
+  dataSources: dataSource.array(),
+  resources: resource.array(),
+  assets: publishedProjectBundle.shape.assets,
+  assetFolders: publishedProjectBundle.shape.assetFolders,
+  project: z.object({ id: z.string(), title: z.string(), domain: z.string() }),
+});
+
+const loadCurrentProjectBundle = async (
+  connection: Awaited<ReturnType<typeof resolveApiConnection>>
+) => {
+  const data = builderData.parse(await loadBuilderDataByProjectId(connection));
+  if (
+    data.projectId !== connection.projectId ||
+    data.project.id !== connection.projectId
+  ) {
+    throw new Error("Source project does not match the linked project");
+  }
+  const hasModernFormMarker = hasHistoricalFormComponentIdentityVersion(
+    data.pages
+  );
+  const pages = migratePages(data.pages);
+  migrateResourceFormInstancesMutable(data.instances, hasModernFormMarker);
+  const state = createBuilderStateFromBuildData({ ...data, pages });
+  return publishedProjectBundle.parse({
+    bundleVersion,
+    origin: connection.origin,
+    projectDomain: data.project.domain,
+    projectTitle: data.project.title,
+    page: getHomePage(pages),
+    pages: Array.from(pages.pages.values()),
+    assets: data.assets,
+    assetFolders: data.assetFolders,
+    build: { ...data, ...createSerializedBuilderBuildDataFromState(state) },
+  });
+};
 
 export type SyncDependencies = {
   createFileIfNotExists: typeof createFileIfNotExists;
   downloadAssetFiles: typeof downloadAssetFiles;
   isFileExists: typeof isFileExists;
   loadProjectBundleByBuildId: typeof loadProjectBundleByBuildId;
-  loadProjectBundleByProjectId: typeof loadProjectBundleByProjectId;
+  loadCurrentProjectBundle: typeof loadCurrentProjectBundle;
   readFile: typeof readFile;
   resolveApiConnection: typeof resolveApiConnection;
   spinner: typeof spinner;
@@ -39,7 +131,7 @@ export const defaultSyncDependencies: SyncDependencies = {
   downloadAssetFiles,
   isFileExists,
   loadProjectBundleByBuildId,
-  loadProjectBundleByProjectId,
+  loadCurrentProjectBundle,
   readFile,
   resolveApiConnection,
   spinner,
@@ -65,10 +157,8 @@ export const syncOptions = (yargs: CommonYargsArgv) =>
 type SyncOptions = Partial<StrictYargsOptionsToInterface<typeof syncOptions>>;
 
 const unpublishedProjectBundleMessage = [
-  "Unable to synchronize project bundle because the project is not published.",
-  "`webstudio sync` downloads the published project bundle.",
-  "Publishing is not required for MCP editing. Do not ask the user to publish; use MCP tools against the latest editable build.",
-  "For visual verification, use `preview.start` or `webstudio preview --source session` instead.",
+  "The selected build cannot be exported.",
+  "Run `webstudio sync` without --buildId to export the current saved project without publishing.",
 ].join("\n");
 
 const isUnpublishedProjectBundleError = (error: unknown) => {
@@ -86,6 +176,10 @@ export const sync = async (
   const handleProjectBundleError = (error: unknown): never => {
     if (isUnpublishedProjectBundleError(error)) {
       syncing.stop(unpublishedProjectBundleMessage, 2);
+      throw new HandledCliError();
+    }
+    if (error instanceof MissingJsonPropValueError) {
+      syncing.stop(error.message, 2);
       throw new HandledCliError();
     }
     const compatibilityMessage = stopSpinnerWithError(
@@ -112,6 +206,7 @@ export const sync = async (
         serviceToken: options.authToken,
         origin: options.origin,
         headers: apiCompatibilityHeaders,
+        contentIndex: "client",
       });
       project.origin = options.origin;
     } catch (error) {
@@ -122,14 +217,11 @@ export const sync = async (
     try {
       connection = await dependencies.resolveApiConnection(dependencies);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      syncing.stop(
-        message.includes("Local config file")
-          ? "Local config file is not found. Please make sure current directory is a webstudio project"
-          : message.includes("Project config")
-            ? "Project config is not found, please run webstudio link"
-            : message,
-        2
+      stopSpinnerWithError(
+        syncing,
+        error,
+        "Unable to load project configuration",
+        "sync"
       );
       throw new HandledCliError();
     }
@@ -145,8 +237,9 @@ export const sync = async (
               authToken,
               origin,
               headers: apiCompatibilityHeaders,
+              contentIndex: "client",
             })
-          : await dependencies.loadProjectBundleByProjectId({
+          : await dependencies.loadCurrentProjectBundle({
               projectId,
               authToken,
               origin,
@@ -163,15 +256,72 @@ export const sync = async (
     throw new HandledCliError();
   }
 
-  if (project.assets.length > 0) {
-    syncing.message(`Downloading ${project.assets.length} asset files`);
+  const hasModernFormMarker = hasHistoricalFormComponentIdentityVersion(
+    project.build.pages
+  );
+  const canonicalInstances = project.build.instances.map(
+    ([id, instance]) => [id, { ...instance }] as [string, typeof instance]
+  );
+  migrateResourceFormInstancesMutable(
+    canonicalInstances.map(([, instance]) => instance),
+    hasModernFormMarker
+  );
+  project = publishedProjectBundle.parse({
+    ...project,
+    build: {
+      ...project.build,
+      pages: serializePages(migratePages(project.build.pages)),
+      instances: canonicalInstances,
+    },
+  });
+
+  const createContentSource = () =>
+    createFileSystemContentSource({
+      projectId: project.build.projectId,
+      assets: project.assets,
+      folders: new Map(
+        (project.assetFolders ?? []).map((folder) => [folder.id, folder])
+      ),
+    });
+
+  const isStaticBuild = project.build.deployment?.destination === "static";
+  const publicationBuild = {
+    ...project.build,
+    pages: migratePages(project.build.pages),
+  };
+  const allMdxAssetIds = getPublishedMdxAssetIds(project.assets);
+  const projectCandidates = resolvePublishedMdxAssetCandidates({
+    build: publicationBuild,
+    artifact: project.assetIndex,
+    allowUnresolved: true,
+    allMdxAssetIds,
+  });
+  const dynamicBlockIds =
+    getDynamicPublishedMdxSourceBlockIds(publicationBuild);
+  const publicationPlan = createPublishedBuildContentCompilationPlan(
+    publicationBuild,
+    projectCandidates
+  );
+  const needsMdxCompilation =
+    dynamicBlockIds.length > 0 ||
+    publicationPlan?.queries.some(({ id }) =>
+      id.startsWith("__content-block-mdx__:")
+    ) === true;
+  const assetsToDownload =
+    options.buildId !== undefined && !isStaticBuild && !needsMdxCompilation
+      ? project.assets.filter(
+          (asset) => asset.format !== "md" && asset.format !== "mdx"
+        )
+      : project.assets;
+  if (assetsToDownload.length > 0) {
+    syncing.message(`Downloading ${assetsToDownload.length} asset files`);
     if (project.origin === undefined) {
       syncing.stop("Asset origin is missing from project bundle", 2);
       throw new HandledCliError();
     }
     try {
       await dependencies.downloadAssetFiles({
-        assets: project.assets,
+        assets: assetsToDownload,
         origin: project.origin,
       });
     } catch (error) {
@@ -182,6 +332,74 @@ export const sync = async (
         "sync"
       );
       throw new HandledCliError();
+    }
+  }
+
+  if (
+    options.buildId !== undefined &&
+    ((isStaticBuild && project.assetIndex === undefined) || needsMdxCompilation)
+  ) {
+    const needsCandidateDiscovery = dynamicBlockIds.some(
+      (blockId) => projectCandidates.has(blockId) === false
+    );
+    const candidateDiscoveryPlan = needsCandidateDiscovery
+      ? createBuildContentCompilationPlan(publicationBuild)
+      : undefined;
+    const plan = candidateDiscoveryPlan ?? publicationPlan;
+    if (plan !== undefined) {
+      syncing.message("Preparing local content index");
+      const source = createContentSource();
+      const maxBytes = getPublishedMdxContentDatabaseMaxBytes({
+        baseBytes: parseContentDatabaseMaxBytes(
+          process.env.CONTENT_DATABASE_MAX_BYTES
+        ),
+        assets: project.assets,
+      });
+      const compile = async (compilationPlan: typeof plan) =>
+        (
+          await compileContentSource({
+            source,
+            projectId: project.build.projectId,
+            plan: compilationPlan,
+            maxBytes,
+          })
+        ).artifact;
+      if (
+        candidateDiscoveryPlan !== undefined ||
+        plan.queries.some(({ id }) => id.startsWith("__content-block-mdx__:"))
+      ) {
+        const resolvePlan = createPublishedMdxDependencyClosureResolver();
+        project.assetIndex = await compileContentUntilPlanIsStable({
+          plan,
+          compile,
+          resolvePlan: async (artifact) =>
+            await resolvePlan({
+              build: publicationBuild,
+              artifact,
+              allMdxAssetIds,
+            }),
+        });
+      } else {
+        project.assetIndex = await compile(plan);
+      }
+    }
+  } else if (options.buildId === undefined) {
+    const plan = createReachableAssetContentCompilationPlan({
+      props: project.build.props.map(([, value]) => value),
+      dataSources: project.build.dataSources.map(([, value]) => value),
+      resources: project.build.resources.map(([, value]) => value),
+    });
+    if (plan !== undefined) {
+      syncing.message("Preparing local content index");
+      const { artifact } = await compileContentSource({
+        source: createContentSource(),
+        projectId: project.build.projectId,
+        plan,
+        maxBytes: parseContentDatabaseMaxBytes(
+          process.env.CONTENT_DATABASE_MAX_BYTES
+        ),
+      });
+      project.assetIndex = artifact;
     }
   }
 

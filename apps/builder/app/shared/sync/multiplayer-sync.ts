@@ -1,3 +1,4 @@
+import { draftPersistence } from "./draft-persistence";
 import { createNanoEvents } from "nanoevents";
 import {
   $collaborators,
@@ -18,6 +19,7 @@ import {
 import { $awareness, type Awareness } from "~/shared/awareness";
 
 type MultiplayerSyncEmitterOptions = {
+  projectId?: string;
   clientId: string;
   getAuthToken?: () => Promise<string | undefined>;
   url: string;
@@ -52,6 +54,7 @@ export const startMultiplayerPresenceSync = (
 };
 
 export const createMultiplayerSyncEmitter = ({
+  projectId,
   clientId,
   getAuthToken,
   url,
@@ -63,6 +66,8 @@ export const createMultiplayerSyncEmitter = ({
     message: (message: SyncMessage) => void;
   }>();
   let clientSeq = 0;
+  let durableSeq = 0;
+  const remoteTransactions = new Map<string, number>();
   let tracker: ReturnType<typeof createMultiplayerRetryTracker>;
   let ws: WebSocketSyncEmitter | undefined;
 
@@ -89,6 +94,15 @@ export const createMultiplayerSyncEmitter = ({
       getAuthToken,
       url,
       onAck: (seq, version) => {
+        durableSeq = Math.max(durableSeq, seq);
+        for (const [id, transactionSeq] of remoteTransactions) {
+          if (transactionSeq <= durableSeq) {
+            if (projectId) {
+              draftPersistence.complete(projectId, id, true);
+            }
+            remoteTransactions.delete(id);
+          }
+        }
         tracker.handleAck({ type: "ack", seq, version });
         updateUnsaved();
       },
@@ -103,6 +117,15 @@ export const createMultiplayerSyncEmitter = ({
         updateUnsaved();
       },
       onBroadcast: (message) => {
+        // Other collaborators' changes become visible before the database ACK too.
+        if (
+          projectId &&
+          message.originClientId !== clientId &&
+          message.seq > durableSeq
+        ) {
+          draftPersistence.begin(projectId, message.transaction.id);
+          remoteTransactions.set(message.transaction.id, message.seq);
+        }
         tracker.handleBroadcast(message);
         updateUnsaved();
         events.emit("message", {
@@ -130,13 +153,24 @@ export const createMultiplayerSyncEmitter = ({
   };
 
   tracker = createMultiplayerRetryTracker({
-    onDropped: () => {
+    onDropped: ({ message }) => {
+      if (projectId) {
+        draftPersistence.complete(projectId, message.transactionId, false);
+      }
       updateUnsaved();
     },
-    onDurable: () => {
+    onDurable: ({ message }) => {
+      if (projectId) {
+        draftPersistence.complete(projectId, message.transactionId, true);
+      }
       updateUnsaved();
     },
-    onReload,
+    onReload: (message) => {
+      if (projectId) {
+        draftPersistence.invalidate(projectId);
+      }
+      onReload?.(message);
+    },
     onUserMessage,
     sendApply,
   });
@@ -171,6 +205,9 @@ export const createMultiplayerSyncEmitter = ({
         actorId: clientId,
         clientSeq,
       };
+      if (projectId) {
+        draftPersistence.begin(projectId, applyMessage.transactionId);
+      }
       tracker.track(applyMessage);
       updateUnsaved();
     },

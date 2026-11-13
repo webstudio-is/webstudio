@@ -59,13 +59,13 @@ export const meta: WsComponentMeta = {
       type: "number",
       control: "number",
       required: false,
-      contentMode: true,
+      contentMode: false,
     },
     height: {
       type: "number",
       control: "number",
       required: false,
-      contentMode: true,
+      contentMode: false,
     },
     alt: {
       type: "string",

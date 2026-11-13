@@ -20,7 +20,7 @@ Before starting, ensure you have the following:
 
 * **Flotiq account** – [Register here](https://flotiq.com).
 * **Flotiq API Key** – Learn more about [Flotiq API Keys](https://flotiq.com/docs).
-* **Webstudio account** – [Sign up here](https://webstudio.com).
+* **Webstudio account** – [Sign up here](https://webstudio.is).
 
 {% hint style="info" %}
 > Webstudio’s **Pro tier plan** is required to use the Resource feature. Flotiq does not require a paid plan.
@@ -49,19 +49,29 @@ Populate your content type with a few example blog posts to test your integratio
 
 [Dynamic pages](../foundations/cms.md) in Webstudio allow you to create a single template that dynamically changes based on the currently viewed URL.
 
-To create a page with a dynamic path, go to **Pages > Add New Page**. In the **Dynamic Path** field, use a parameter to represent the dynamic part of the URL, such as the slug of your blog posts.
+To create a page with a dynamic path, go to **Pages > Add New Page**. In **Page settings > Path**, use a parameter to represent the dynamic part of the URL, such as the slug of your blog posts.
 
-<figure><img src="../../.gitbook/assets/flotiq-dynamic-page.jpeg" alt="Create a Page with a Dynamic Path"><figcaption></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/flotiq-dynamic-page-dark.png">
+    <img src="../../.gitbook/assets/flotiq-dynamic-page-light.png" alt="Page settings with a dynamic path of /screenshot-demos-content/:slug" width="690">
+  </picture>
+</figure>
 
 In the [Address Bar](../foundations/cms.md#address-bar), provide a test value.
 
-<figure><img src="../../.gitbook/assets/flotiq-dynamic-path.png" alt="Set the dynamic path"><figcaption></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/flotiq-dynamic-path-dark.png">
+    <img src="../../.gitbook/assets/flotiq-dynamic-path-light.png" alt="Address popup with hello-world entered as the dynamic slug" width="620">
+  </picture>
+</figure>
 
 ### **Add a GraphQL Data Variable**
 
 [GraphQL data variables](../foundations/variables.md#graphql) fetch external content.
 
-Go to `Page Settings > Data variables > Add New Variable`.
+Select **Body** in the Navigator, then use the **Variables** section in the Settings panel to add a GraphQL Resource.
 
 Next, configure the variable:
 
@@ -95,11 +105,11 @@ Next, configure the variable:
 
 The variable should be configured as shown in the screenshot below:
 
-<figure><img src="../../.gitbook/assets/flotiq-data-variable.png" alt="Configure a data variable"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/flotiq-data-variable-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/flotiq-data-variable-light.png" alt="GraphQL variable with Flotiq query, dynamic slug, and example API key placeholder" width="322"></picture></figure>
 
 Test the variable - if it is configured correctly, the fetched Flotiq content will appear in the **Inspect Tool**.
 
-<figure><img src="../../.gitbook/assets/flotiq-inspect-tool.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/flotiq-inspect-tool.png" alt="Browser developer tools showing the Flotiq API response structure"><figcaption></figcaption></figure>
 
 ### **Bind Flotiq data to your page**
 
@@ -119,7 +129,7 @@ To bind data:
 > For images add an **Image Component**, and bind the **Source Property** to the image URL: `"https://api.flotiq.com/" + VariableName.data.data.blogpost.headerImage[0].url`.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/flotiq-bind-data.gif" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/flotiq-bind-data.gif" alt="Binding Flotiq response data to an instance in Webstudio"><figcaption></figcaption></figure>
 
 ### **Create a listing page**
 

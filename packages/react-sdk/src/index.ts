@@ -3,10 +3,14 @@ export * from "./components/components-utils";
 export * from "./props";
 export * from "./collection-utils";
 export type * from "./context";
-export type * from "./hook";
 export {
   generateWebstudioComponent,
   generateJsxElement,
   generateJsxChildren,
+  type PublishedContentBlock,
 } from "./component-generator";
-export * from "./__generated__/standard-attributes";
+export {
+  generateManagedFormComponent,
+  generateManagedFormJsxChildren,
+} from "./managed-form-component-generator";
+export * from "./standard-attributes";

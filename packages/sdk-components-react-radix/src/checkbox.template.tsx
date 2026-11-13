@@ -1,11 +1,13 @@
+/** @jsxImportSource @webstudio-is/template */
 import { CheckMarkIcon } from "@webstudio-is/icons/svg";
 import {
   type TemplateMeta,
-  $,
   css,
   PlaceholderValue,
+  setInstanceMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import { HtmlEmbed, Text } from "@webstudio-is/sdk-components-react/components";
+import { Checkbox, CheckboxIndicator, Label } from "./components";
 import {
   borderRadius,
   borderWidth,
@@ -23,16 +25,16 @@ export const meta: TemplateMeta = {
   description:
     "Use within a form to allow your users to toggle between checked and not checked. Group checkboxes by matching their “Name” properties. Unlike radios, any number of checkboxes in a group can be checked.",
   order: 101,
-  template: (
-    <radix.Label
-      ws:label="Checkbox Field"
+  template: setInstanceMeta(
+    { label: "Checkbox Field" },
+    <Label
       ws:style={css`
         display: flex;
         gap: ${spacing[2]};
         align-items: center;
       `}
     >
-      <radix.Checkbox
+      <Checkbox
         // peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background
         // focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
         // disabled:cursor-not-allowed disabled:opacity-50
@@ -58,7 +60,7 @@ export const meta: TemplateMeta = {
           }
         `}
       >
-        <radix.CheckboxIndicator
+        <CheckboxIndicator
           // flex items-center justify-center text-current
           ws:style={css`
             display: flex;
@@ -67,16 +69,16 @@ export const meta: TemplateMeta = {
             color: currentColor;
           `}
         >
-          <$.HtmlEmbed
-            ws:label="Indicator Icon"
-            ws:style={iconEmbedStyle}
-            code={CheckMarkIcon}
-          />
-        </radix.CheckboxIndicator>
-      </radix.Checkbox>
-      <$.Text ws:label="Checkbox Label" ws:tag="span">
-        {new PlaceholderValue("Checkbox")}
-      </$.Text>
-    </radix.Label>
+          {setInstanceMeta(
+            { label: "Indicator Icon" },
+            <HtmlEmbed ws:style={iconEmbedStyle} code={CheckMarkIcon} />
+          )}
+        </CheckboxIndicator>
+      </Checkbox>
+      {setInstanceMeta(
+        { label: "Checkbox Label" },
+        <Text tag="span">{new PlaceholderValue("Checkbox")}</Text>
+      )}
+    </Label>
   ),
 };

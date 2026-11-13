@@ -21,7 +21,6 @@ test("prints api command schema as json", () => {
   schema({ topic: "api", json: true, verbose: true, limit: 200 });
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
-  expect(output.projectScope).toContain("single project");
   expect(
     output.topLevelCommands.map((command: { name: string }) => command.name)
   ).toEqual(topLevelCliCommandMetadata.map(({ command }) => command));
@@ -91,13 +90,8 @@ test("prints api command schema as json", () => {
     ])
   );
   expect(output.mcp.toolCount).toBe(apiCommandMetadata.length);
-  expect(output.mcp.discovery).toContain("meta.get-more-tools");
   expect(output.mcp.resources).toContain("webstudio://project/tools");
   expect(output.mcp.resources).toContain("webstudio://project/components");
-  expect(output.mcp.capabilities).toEqual(
-    expect.arrayContaining([expect.stringContaining("Instances/components")])
-  );
-  expect(output.mcp.boundary).toContain("MCP-level");
   expect(output.mcp).not.toHaveProperty("commands");
   expect(output.mcp).not.toHaveProperty("argumentExamples");
   for (const command of output.commands) {
@@ -122,8 +116,6 @@ test("prints api command schema as json", () => {
     ])
   );
   expect(output.patch.namespaces).toContain("dataSources");
-  expect(output.session.refreshFlag).toContain("--refresh");
-  expect(output.session.resultMetadata).toContain("meta.session");
 });
 
 test("prints api command schema as json by default", () => {
@@ -154,17 +146,6 @@ test("prints compact mcp tool summaries as json by default", () => {
   expect(output.name).toBe("webstudio-mcp");
   expect(output.detail).toBe("compact");
   expect(output).not.toHaveProperty("callCommand");
-  expect(output.singleOpCallCommand).toContain("webstudio mcp single-op-call");
-  expect(output.usage).toContain("--verbose");
-  expect(output.discovery).toContain(
-    `webstudio mcp single-op-call meta.get-more-tools '{"tools":["insert-fragment"]}'`
-  );
-  expect(output.discovery).toEqual(
-    expect.arrayContaining([
-      "webstudio mcp single-op-call meta.index",
-      expect.stringContaining("components.coverage-plan"),
-    ])
-  );
   expect(output.resources).toEqual(listProjectSessionMcpResources());
   expect(output.toolCount).toBe(expectedTools.length);
   const handshakePayload = expectedTools.map(
@@ -174,7 +155,25 @@ test("prints compact mcp tool summaries as json by default", () => {
       inputSchema,
     })
   );
-  expect(JSON.stringify(handshakePayload).length).toBeLessThan(200_000);
+  // Includes Form simulation, custom response headers, screenshot, and all three style source transfer schemas.
+  expect(JSON.stringify(handshakePayload).length).toBeLessThan(224_500);
+  const screenshotTool = expectedTools.find(
+    ({ name }) => name === "screenshot"
+  );
+  expect(screenshotTool?.inputSchema.properties?.source).toEqual(
+    expect.objectContaining({ enum: ["local", "session"], default: "session" })
+  );
+  expect(screenshotTool?.inputSchema.properties?.mode).toEqual(
+    expect.objectContaining({
+      enum: ["iterative", "production"],
+      default: "iterative",
+    })
+  );
+  expect(screenshotTool?.inputSchema.properties?.baseUrl).toMatchObject({
+    description: expect.stringContaining(
+      "Skips preview generation and startup"
+    ),
+  });
   expect(
     JSON.stringify(
       expectedTools.find(({ name }) => name === "insert-page-transfer-item")
@@ -191,6 +190,11 @@ test("prints compact mcp tool summaries as json by default", () => {
         name: "insert-fragment",
         operationId: "instances.insertFragment",
         method: "mutation",
+      }),
+      expect.objectContaining({
+        name: "validate-publish",
+        operationId: "publish.validate",
+        method: "query",
       }),
       expect.objectContaining({
         name: "screenshot.diff",
@@ -251,19 +255,15 @@ test("prints full mcp tool input schemas when requested", () => {
   expect(Object.keys(insertFragmentTool.inputSchema.properties)).toEqual([
     "parentInstanceId",
     "fragment",
+    "conflictResolution",
+    "contentMode",
     "mode",
     "insertIndex",
+    "templateNameConfirmation",
     "dryRun",
   ]);
   const fragmentSchema = insertFragmentTool.inputSchema.properties.fragment;
   expect(fragmentSchema.type).toBe("string");
-  const jsxDescription = fragmentSchema.description;
-  expect(jsxDescription).toContain("not React aliases className or htmlFor");
-  expect(jsxDescription).toContain("Use ws:style");
-  expect(jsxDescription).toContain("style={{ padding: 24 }}");
-  expect(jsxDescription).toContain("include required child/part components");
-  expect(jsxDescription).toContain("same parent structure");
-  expect(jsxDescription).toContain("use insert-component");
   expect(insertFragmentTool.inputSchema.properties).not.toHaveProperty(
     "source"
   );

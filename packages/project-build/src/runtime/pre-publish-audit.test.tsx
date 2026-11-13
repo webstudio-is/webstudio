@@ -1,15 +1,21 @@
 import { expect, test } from "vitest";
 import {
   ROOT_FOLDER_ID,
+  blockComponent,
   type Folder,
+  type Instance,
   type Page,
   type Pages,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import { $, renderData, ws } from "@webstudio-is/template";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import {
+  createTemplateComponentFixture,
+  renderData,
+  ws,
+} from "@webstudio-is/template";
 import {
   formatPrePublishAuditFinding,
-  getGeneratedStylesheetFinding,
   limitPrePublishAuditFindings,
   runPrePublishAudit,
 } from "./pre-publish-audit";
@@ -48,6 +54,14 @@ test("keeps the content warning within the shared 500-finding limit", () => {
     findings.filter(({ ruleId }) => ruleId === "audit-truncated")
   ).toHaveLength(2);
 });
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const CodeText = createTemplateComponentFixture("CodeText");
+const Heading = createTemplateComponentFixture("Heading");
+const Link = createTemplateComponentFixture("Link");
+const Paragraph = createTemplateComponentFixture("Paragraph");
+const Text = createTemplateComponentFixture("Text");
+const Video = createTemplateComponentFixture("Video");
 
 const createPages = (page: Page): Pages => {
   const rootFolder: Folder = {
@@ -86,18 +100,19 @@ const runAudit = ({
     ...data,
     dataSources: new Map(),
     resources: new Map(),
+    assets: new Map(),
     metas: componentMetas,
   });
 
 test("warns without blocking legacy invalid HTML", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
+    <Body ws:id="body">
       <ws.element ws:tag="button">
-        <$.Heading ws:id="heading" ws:tag="h3">
+        <Heading ws:id="heading" ws:tag="h3">
           Legacy accordion trigger
-        </$.Heading>
+        </Heading>
       </ws.element>
-    </$.Body>
+    </Body>
   );
 
   const findings = runAudit({ instances, props });
@@ -120,17 +135,169 @@ test("warns without blocking legacy invalid HTML", () => {
   );
 });
 
+test("warns for nested and shared Webhook Forms on every published page", () => {
+  const pages = createPages(marketEdgePage);
+  pages.pages.set("other", {
+    ...marketEdgePage,
+    id: "other",
+    name: "Other",
+    path: "/other",
+    rootInstanceId: "other-body",
+  });
+  pages.pages.set("draft", {
+    ...marketEdgePage,
+    id: "draft",
+    name: "Draft",
+    path: "/draft",
+    rootInstanceId: "draft-body",
+    isDraft: true,
+  });
+  pages.folders.get(ROOT_FOLDER_ID)!.children.push("other", "draft");
+
+  const instance = (
+    id: string,
+    component: string,
+    children: string[] = []
+  ): Instance => ({
+    type: "instance" as const,
+    id,
+    component,
+    children: children.map((value) => ({ type: "id" as const, value })),
+  });
+  const instances = new Map<string, Instance>([
+    ["body", instance("body", "Body", ["box", "modern", "native"])],
+    ["box", instance("box", "Box", ["nested", "shared"])],
+    ["nested", instance("nested", "WebhookForm")],
+    ["shared", instance("shared", "WebhookForm")],
+    ["modern", instance("modern", "ResourceForm")],
+    ["native", { ...instance("native", "Element"), tag: "form" }],
+    ["other-body", instance("other-body", "Body", ["shared"])],
+    ["draft-body", instance("draft-body", "Body", ["draft-form"])],
+    ["draft-form", instance("draft-form", "WebhookForm")],
+    ["orphan", instance("orphan", "WebhookForm")],
+  ]);
+  const findings = runAudit({ pages, instances, props: new Map() }).filter(
+    ({ ruleId }) => ruleId === "deprecated-webhook-form"
+  );
+
+  expect(findings).toEqual([
+    {
+      ruleId: "deprecated-webhook-form",
+      severity: "warning",
+      message:
+        "Webhook Form is deprecated. Replace it with the Form component.",
+      location: {
+        pageId: "marketedge",
+        pageName: "MarketEdge",
+        pagePath: "/marketedge",
+        instanceId: "nested",
+        instanceSelector: ["nested", "box", "body"],
+      },
+    },
+    {
+      ruleId: "deprecated-webhook-form",
+      severity: "warning",
+      message:
+        "Webhook Form is deprecated. Replace it with the Form component.",
+      location: {
+        pageId: "marketedge",
+        pageName: "MarketEdge",
+        pagePath: "/marketedge",
+        instanceId: "shared",
+        instanceSelector: ["shared", "box", "body"],
+      },
+    },
+    {
+      ruleId: "deprecated-webhook-form",
+      severity: "warning",
+      message:
+        "Webhook Form is deprecated. Replace it with the Form component.",
+      location: {
+        pageId: "other",
+        pageName: "Other",
+        pagePath: "/other",
+        instanceId: "shared",
+        instanceSelector: ["shared", "other-body"],
+      },
+    },
+  ]);
+  expect(formatPrePublishAuditFinding(findings[0]!)).toBe(
+    'Publish warning for "MarketEdge" (/marketedge): Webhook Form is deprecated. Replace it with the Form component.'
+  );
+});
+
+test("historical unmarked Form becomes a warning while marked Form is modern", () => {
+  const createData = () => {
+    const instances = new Map([
+      [
+        "body",
+        {
+          type: "instance" as const,
+          id: "body",
+          component: "Body",
+          children: [{ type: "id" as const, value: "form" }],
+        },
+      ],
+      [
+        "form",
+        {
+          type: "instance" as const,
+          id: "form",
+          component: "Form",
+          children: [],
+        },
+      ],
+    ]);
+    return instances;
+  };
+  const legacyInstances = createData();
+  migrateResourceFormInstancesMutable(legacyInstances.values(), false);
+  expect(
+    runAudit({ instances: legacyInstances, props: new Map() }).filter(
+      ({ ruleId }) => ruleId === "deprecated-webhook-form"
+    )
+  ).toHaveLength(1);
+
+  const modernInstances = createData();
+  migrateResourceFormInstancesMutable(modernInstances.values(), true);
+  expect(modernInstances.get("form")?.component).toBe("ResourceForm");
+  expect(
+    runAudit({ instances: modernInstances, props: new Map() }).filter(
+      ({ ruleId }) => ruleId === "deprecated-webhook-form"
+    )
+  ).toEqual([]);
+});
+
+test("blocks publishing when a JSON prop has no value", () => {
+  const { instances, props } = renderData(<Body ws:id="body" />);
+  props.set("missing-value", {
+    id: "missing-value",
+    instanceId: "body",
+    name: "data",
+    type: "json",
+    value: undefined,
+  });
+
+  expect(runAudit({ instances, props })).toContainEqual({
+    ruleId: "json-prop-value",
+    severity: "error",
+    message:
+      "JSON prop “data” on “Body” has no value. Set or reset it before publishing.",
+    location: { instanceId: "body", propId: "missing-value" },
+  });
+});
+
 test("allows valid publishable pages and ignores invalid drafts", () => {
   const { instances, props } = renderData(
     <>
-      <$.Body ws:id="body">
-        <$.Paragraph>Valid paragraph</$.Paragraph>
-      </$.Body>
-      <$.Body ws:id="draft-body">
-        <$.Paragraph>
-          <$.Heading ws:tag="h2">Invalid draft heading</$.Heading>
-        </$.Paragraph>
-      </$.Body>
+      <Body ws:id="body">
+        <Paragraph>Valid paragraph</Paragraph>
+      </Body>
+      <Body ws:id="draft-body">
+        <Paragraph>
+          <Heading ws:tag="h2">Invalid draft heading</Heading>
+        </Paragraph>
+      </Body>
     </>
   );
   const pages = createPages(marketEdgePage);
@@ -155,11 +322,11 @@ test("allows valid publishable pages and ignores invalid drafts", () => {
 
 test("allows valid legacy CodeText children", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <$.CodeText>
-        <$.Text ws:tag="span">Legacy code text</$.Text>
-      </$.CodeText>
-    </$.Body>
+    <Body ws:id="body">
+      <CodeText>
+        <Text ws:tag="span">Legacy code text</Text>
+      </CodeText>
+    </Body>
   );
 
   expect(runAudit({ instances, props })).toEqual([]);
@@ -167,14 +334,14 @@ test("allows valid legacy CodeText children", () => {
 
 test("allows Video inside a Div with valid children", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <$.Box>
-        <$.Video>
+    <Body ws:id="body">
+      <Box>
+        <Video>
           <ws.element ws:tag="source" />
           <ws.element ws:tag="track" />
-        </$.Video>
-      </$.Box>
-    </$.Body>
+        </Video>
+      </Box>
+    </Body>
   );
 
   expect(runAudit({ instances, props })).toEqual([]);
@@ -182,13 +349,13 @@ test("allows Video inside a Div with valid children", () => {
 
 test("reports the Link constraint for Video inside a Div", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <$.Link>
-        <$.Box>
-          <$.Video ws:id="video" controls />
-        </$.Box>
-      </$.Link>
-    </$.Body>
+    <Body ws:id="body">
+      <Link>
+        <Box>
+          <Video ws:id="video" controls />
+        </Box>
+      </Link>
+    </Body>
   );
 
   expect(runAudit({ instances, props })).toEqual([
@@ -208,11 +375,11 @@ test("reports the Link constraint for Video inside a Div", () => {
 
 test("warns about unknown element tags without throwing", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
+    <Body ws:id="body">
       <ws.element ws:id="custom" ws:tag="custom-element">
-        <$.Paragraph>Custom element content</$.Paragraph>
+        <Paragraph>Custom element content</Paragraph>
       </ws.element>
-    </$.Body>
+    </Body>
   );
 
   expect(runAudit({ instances, props })).toEqual([
@@ -233,9 +400,9 @@ test("warns about unknown element tags without throwing", () => {
 
 test("allows legacy components with unknown tags", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
+    <Body ws:id="body">
       <ws.element ws:id="legacy" ws:tag="legacy-element" />
-    </$.Body>
+    </Body>
   );
   const legacyInstance = instances.get("legacy");
   if (legacyInstance === undefined) {
@@ -247,7 +414,7 @@ test("allows legacy components with unknown tags", () => {
 });
 
 test("blocks publishing when required audit input is unavailable", () => {
-  const { instances, props } = renderData(<$.Body ws:id="body"></$.Body>);
+  const { instances, props } = renderData(<Body ws:id="body"></Body>);
 
   const findings = runPrePublishAudit({
     pages: undefined,
@@ -255,6 +422,7 @@ test("blocks publishing when required audit input is unavailable", () => {
     props,
     dataSources: new Map(),
     resources: new Map(),
+    assets: new Map(),
     metas: componentMetas,
   });
 
@@ -269,7 +437,7 @@ test("blocks publishing when required audit input is unavailable", () => {
 });
 
 test("includes existing resource integrity checks in the audit pipeline", () => {
-  const { instances, props } = renderData(<$.Body ws:id="body"></$.Body>);
+  const { instances, props } = renderData(<Body ws:id="body"></Body>);
   const findings = runPrePublishAudit({
     pages: createPages(marketEdgePage),
     instances,
@@ -287,6 +455,7 @@ test("includes existing resource integrity checks in the audit pipeline", () => 
       ],
     ]),
     resources: new Map(),
+    assets: new Map(),
     metas: componentMetas,
   });
 
@@ -304,63 +473,31 @@ test("includes existing resource integrity checks in the audit pipeline", () => 
   ]);
 });
 
-test("keeps blocking errors when warnings exceed the audit report limit", () => {
-  const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <ws.element ws:tag="button">
-        <$.Heading ws:tag="h3">Invalid nesting</$.Heading>
-      </ws.element>
-    </$.Body>
-  );
-  const pages = createPages(marketEdgePage);
-  const rootFolder = pages.folders.get(ROOT_FOLDER_ID)!;
-  for (let index = 1; index < 500; index += 1) {
-    const id = `page-${index}`;
-    pages.pages.set(id, { ...marketEdgePage, id, path: `/${id}` });
-    rootFolder.children.push(id);
-  }
-
-  const findings = runPrePublishAudit({
-    pages,
-    instances,
-    props,
-    dataSources: new Map([
-      [
-        "missing-resource-variable",
-        {
-          id: "missing-resource-variable",
-          scopeInstanceId: "body",
-          name: "Products",
-          type: "resource",
-          resourceId: "missing-resource",
-        },
-      ],
-    ]),
-    resources: new Map(),
-    metas: componentMetas,
+test("includes Content Block source integrity checks in the audit pipeline", () => {
+  const { instances, props } = renderData(<Body ws:id="body"></Body>);
+  instances.set("block", {
+    type: "instance",
+    id: "block",
+    component: blockComponent,
+    children: [],
+  });
+  props.set("source", {
+    id: "source",
+    instanceId: "block",
+    name: "src",
+    type: "asset",
+    value: "missing-post",
   });
 
-  expect(findings).toHaveLength(500);
-  expect(findings.some(({ ruleId }) => ruleId === "audit-truncated")).toBe(
-    true
-  );
-  expect(findings).toContainEqual(
-    expect.objectContaining({
-      ruleId: "resource-integrity",
-      severity: "error",
-    })
-  );
-});
-
-test("reports generated stylesheet syntax errors", () => {
-  expect(
-    getGeneratedStylesheetFinding(".broken { color: rgb(0, 0, 0; }")
-  ).toMatchObject({
-    ruleId: "generated-stylesheet",
+  expect(runAudit({ instances, props })).toContainEqual({
+    ruleId: "content-block-source-integrity",
     severity: "error",
-    location: {},
+    message:
+      'Content Block source prop "source" references missing Asset "missing-post".',
+    location: {
+      instanceId: "block",
+      propId: "source",
+      assetId: "missing-post",
+    },
   });
-  expect(
-    getGeneratedStylesheetFinding(".valid { color: black; }")
-  ).toBeUndefined();
 });

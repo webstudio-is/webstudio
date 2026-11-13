@@ -1,4 +1,5 @@
 import { TextControl } from "./text";
+import { DateControl } from "./date";
 import { CodeControl } from "./code";
 import { NumberControl } from "./number";
 import { CheckControl } from "./check";
@@ -12,6 +13,7 @@ import { JsonControl } from "./json";
 import { JsonCodeControl } from "./json-code";
 import { TextContent } from "./text-content";
 import { ResourceControl } from "./resource-control";
+import { FormActionControl } from "./form-action";
 import { TagControl } from "./tag-control";
 import { TimeZoneControl } from "./time-zone";
 
@@ -59,8 +61,16 @@ export const renderControl = ({
     return <TextControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
+  if (meta.control === "date") {
+    return <DateControl key={key} meta={meta} prop={prop} {...rest} />;
+  }
+
   if (meta.control === "resource") {
     return <ResourceControl key={key} meta={meta} prop={prop} {...rest} />;
+  }
+
+  if (meta.control === "form-action") {
+    return <FormActionControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
   if (meta.control === "code") {

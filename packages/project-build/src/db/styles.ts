@@ -1,8 +1,35 @@
+import { generateStyleMap, hyphenateProperty } from "@webstudio-is/css-engine";
+import {
+  parseSingleCssDeclaration,
+  validateSelector,
+} from "@webstudio-is/css-data";
 import {
   type Styles,
   type StyleDecl,
   getStyleDeclKey,
+  styles,
 } from "@webstudio-is/sdk";
+
+export const parseGeneratedStyleDeclaration = ({
+  property,
+  value,
+}: StyleDecl): {
+  declaration?: { property: string; value: string };
+  errors: string[];
+} => {
+  const declarationCss = generateStyleMap(new Map([[property, value]]));
+  return parseSingleCssDeclaration(declarationCss, hyphenateProperty(property));
+};
+
+export const writableStyles = styles.refine((value) =>
+  Array.from(value.values()).every(
+    (style) =>
+      parseGeneratedStyleDeclaration(style).errors.length === 0 &&
+      (style.state === undefined ||
+        style.state === "" ||
+        validateSelector(style.state).success)
+  )
+);
 
 export const parseStyles = (stylesString: string): Styles => {
   const stylesList = JSON.parse(stylesString) as StyleDecl[];

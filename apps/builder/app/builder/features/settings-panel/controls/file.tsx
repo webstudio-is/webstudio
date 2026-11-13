@@ -45,6 +45,10 @@ export const FileControl = ({
   onChange,
 }: ControlProps<"file">) => {
   const id = useId();
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
 
   const localStringValue = useDraftValue(
     // use undefined for asset type to not delete
@@ -53,7 +57,7 @@ export const FileControl = ({
       ? String(computedValue)
       : undefined,
     (value) => {
-      if (value === undefined || prop?.type === "expression") {
+      if (value === undefined || binding.bindingState.overwritable === false) {
         return;
       }
       onChange({ type: "string", value });
@@ -61,10 +65,6 @@ export const FileControl = ({
   );
 
   const label = humanizeAttribute(meta.label || propName);
-  const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
-    fallbackExpression: JSON.stringify(computedValue),
-  });
   return (
     <VerticalLayout label={<PropertyLabel name={propName} />}>
       <Flex css={{ gap: theme.spacing[3] }} direction="column" justify="center">
@@ -90,9 +90,9 @@ export const FileControl = ({
           )}
         />
         <SelectAsset
-          prop={prop?.type === "asset" ? prop : undefined}
+          assetId={prop?.type === "asset" ? prop.value : undefined}
           accept={meta.accept}
-          onChange={onChange}
+          onChange={(assetId) => onChange({ type: "asset", value: assetId })}
         />
       </Flex>
     </VerticalLayout>

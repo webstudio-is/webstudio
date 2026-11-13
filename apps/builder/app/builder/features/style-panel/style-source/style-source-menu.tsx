@@ -1,7 +1,9 @@
-import { Fragment, useState } from "react";
+import { Fragment, useRef, useState } from "react";
+import { tags } from "@webstudio-is/sdk";
 import {
   Box,
   Combobox,
+  cssVar,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -10,7 +12,6 @@ import {
   DropdownMenuTrigger,
   Flex,
   InputErrorsTooltip,
-  rawTheme,
   styled,
   Text,
   theme,
@@ -22,13 +23,16 @@ import {
   validateSelector,
 } from "@webstudio-is/css-data";
 import {
+  menuTriggerGradientVar,
+  menuTriggerVisibilityOverrideVar,
+  menuTriggerVisibilityVar,
   menuCssVars,
   type ItemSource,
   type ItemSelector,
 } from "./style-source-control";
 
 export type SelectorConfig = {
-  type: "state" | "pseudoElement";
+  type: "state" | "pseudoElement" | "tag";
   selector: string;
   label: string;
   description?: string;
@@ -45,11 +49,10 @@ type IntermediateItem = {
   states: string[];
 };
 
-const menuTriggerVisibilityVar = "--ws-style-source-menu-trigger-visibility";
-const menuTriggerVisibilityOverrideVar =
-  "--ws-style-source-menu-trigger-visibility-override";
-const visibility = `var(${menuTriggerVisibilityOverrideVar}, var(${menuTriggerVisibilityVar}))`;
-const menuTriggerGradientVar = "--ws-style-source-menu-trigger-gradient";
+const visibility = cssVar(
+  menuTriggerVisibilityOverrideVar,
+  cssVar(menuTriggerVisibilityVar)
+);
 
 const MenuTrigger = styled("button", {
   display: "inline-flex",
@@ -64,7 +67,7 @@ const MenuTrigger = styled("button", {
   padding: 0,
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
-  color: theme.colors.foregroundContrastMain,
+  color: "inherit",
   visibility,
   "&:hover, &[data-state=open]": {
     ...menuCssVars({ show: true }),
@@ -77,7 +80,7 @@ const MenuTrigger = styled("button", {
       width: "100%",
       height: "100%",
       visibility,
-      backgroundColor: theme.colors.backgroundButtonHover,
+      backgroundColor: cssVar("--overlay-interaction-hover"),
       borderTopRightRadius: theme.borderRadius[4],
       borderBottomRightRadius: theme.borderRadius[4],
       pointerEvents: "none",
@@ -92,7 +95,7 @@ const MenuTriggerGradient = styled(Box, {
   width: theme.sizes.controlHeight,
   height: "100%",
   visibility,
-  background: `var(${menuTriggerGradientVar})`,
+  background: cssVar(menuTriggerGradientVar),
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   pointerEvents: "none",
@@ -101,14 +104,17 @@ const MenuTriggerGradient = styled(Box, {
 const selectorLabels = [
   "state",
   "pseudoElement",
+  "tag",
 ] satisfies SelectorConfig["type"][];
 
 const categoryLabels: Record<SelectorConfig["type"], string> = {
   state: "States",
   pseudoElement: "Pseudo elements",
+  tag: "Tag",
 };
 
 const menuActionDescriptions = {
+  copy: "Copy this source’s styles to paste them elsewhere.",
   rename: "Change the name of this token to better describe its purpose.",
   duplicate: "Create a copy of this token with all its styles.",
   convertToToken:
@@ -118,6 +124,8 @@ const menuActionDescriptions = {
   unlock: "Allow style changes on this token again.",
   detach: "Remove this token from the element without deleting it.",
   delete: "Permanently delete this token and all its styles from the project.",
+  addMore:
+    "Use :hover or [data-state=open] to style this element in a state, and ::before to style its pseudo-element. Start with a tag, such as h2, h2:hover, or h2::before, to style nested elements.",
 } as const;
 
 type MenuAction = keyof typeof menuActionDescriptions;
@@ -129,6 +137,7 @@ const canEditStyleSourceStyles = (item: IntermediateItem) =>
 const allSelectors = [
   ...Object.keys(pseudoClassDescriptions),
   ...Object.keys(pseudoElementDescriptions),
+  ...tags.filter((tag) => tag !== "html"),
 ];
 
 const getDescription = (selector: string, type: "state" | "pseudoElement") => {
@@ -165,31 +174,46 @@ const getSelectorDescription = (selector: string | null | undefined) => {
 
 const SelectorCombobox = ({
   existingSelectors,
+  onFocus,
+  onBlur,
   onSelect,
 }: {
   existingSelectors: string[];
+  onFocus: () => void;
+  onBlur: () => void;
   onSelect: (selector: string) => void;
 }) => {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string>();
 
   const handleSubmit = (selector: string) => {
-    const validation = validateSelector(selector);
+    let normalizedSelector = selector;
+    let validation = validateSelector(normalizedSelector);
+    if (validation.success === false) {
+      const tagSelector = ` ${selector}`;
+      const tagValidation = validateSelector(tagSelector);
+      if (tagValidation.success && tagValidation.type === "tag") {
+        normalizedSelector = tagSelector;
+        validation = tagValidation;
+      }
+    }
     if (validation.success === false) {
       setError(validation.error);
       return;
     }
     setError(undefined);
-    onSelect(selector);
+    onSelect(normalizedSelector);
     setValue("");
   };
 
   const availableItems = allSelectors.filter((selector) =>
-    existingSelectors.every((s) => s !== selector)
+    existingSelectors.every((s) => s.trim() !== selector)
   );
 
   return (
     <form
+      onFocus={onFocus}
+      onBlur={onBlur}
       onKeyDown={(event) => event.stopPropagation()}
       onSubmit={(event) => {
         event.preventDefault();
@@ -231,6 +255,7 @@ const SelectorCombobox = ({
 type StyleSourceMenuProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onReturnToInput?: () => void;
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
   hasStyles: boolean;
@@ -239,6 +264,7 @@ type StyleSourceMenuProps = {
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
+  onCopy?: (itemId: IntermediateItem["id"]) => void;
   onToggleLock?: (itemId: IntermediateItem["id"], locked: boolean) => void;
   onConvertToToken?: (itemId: IntermediateItem["id"]) => void;
   onDisable?: (itemId: IntermediateItem["id"]) => void;
@@ -249,18 +275,20 @@ type StyleSourceMenuProps = {
 };
 
 export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
+  const availableStates = props.states;
   const [highlightedSelector, setHighlightedSelector] = useState<{
     selector: string;
-    type: "state" | "pseudoElement";
+    type: "state" | "pseudoElement" | "tag";
     description?: string;
   }>();
   const [highlightedAction, setHighlightedAction] = useState<MenuAction>();
+  const escapePressed = useRef(false);
   const canEditStyles = canEditStyleSourceStyles(props.item);
 
   // Get description for highlighted or selected item
   const selectedState = props.selectedItemSelector?.state;
   const selectedConfig = selectedState
-    ? props.states.find((s) => s.selector === selectedState)
+    ? availableStates.find((s) => s.selector === selectedState)
     : undefined;
   const descriptionSelector =
     highlightedSelector ??
@@ -279,7 +307,12 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
 
   const selectorDescription = descriptionSelector
     ? (descriptionSelector.description ??
-      getDescription(descriptionSelector.selector, descriptionSelector.type))
+      (descriptionSelector.type === "tag"
+        ? undefined
+        : getDescription(
+            descriptionSelector.selector,
+            descriptionSelector.type
+          )))
     : undefined;
 
   // Get source description based on item source
@@ -288,7 +321,9 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
       ? "Style instances without creating a token or override a token locally."
       : props.item.source === "token"
         ? "Reuse styles across multiple instances by creating a token."
-        : undefined;
+        : props.item.source === "tag"
+          ? "Apply styles to every element with this tag."
+          : undefined;
 
   const description =
     actionDescription ?? selectorDescription ?? sourceDescription;
@@ -302,9 +337,21 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
         </MenuTrigger>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        onCloseAutoFocus={(event) => event.preventDefault()}
+        onKeyDown={(event) => {
+          event.stopPropagation();
+        }}
+        onEscapeKeyDown={() => {
+          escapePressed.current = true;
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (escapePressed.current) {
+            escapePressed.current = false;
+            queueMicrotask(() => props.onReturnToInput?.());
+          }
+        }}
         autoFocus
-        css={{ maxWidth: theme.spacing[26] }}
+        css={{ width: theme.spacing[26] }}
       >
         <DropdownMenuLabel>
           <Flex gap="1" justify="between" align="center">
@@ -312,11 +359,11 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
               {props.item.label}
             </Text>
             {props.hasStyles && (
-              <DotIcon size="12" color={rawTheme.colors.foregroundPrimary} />
+              <DotIcon size="12" color={cssVar("--foreground-accent")} />
             )}
           </Flex>
         </DropdownMenuLabel>
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
@@ -327,7 +374,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Rename
           </DropdownMenuItem>
         )}
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
@@ -336,6 +383,20 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             onSelect={() => props.onDuplicate?.(props.item.id)}
           >
             Duplicate
+          </DropdownMenuItem>
+        )}
+        {(props.item.source === "token" ||
+          props.item.source === "tag" ||
+          props.item.source === "local") && (
+          <DropdownMenuItem
+            onFocus={() => {
+              setHighlightedSelector(undefined);
+              setHighlightedAction("copy");
+            }}
+            disabled={!props.hasStyles}
+            onSelect={() => props.onCopy?.(props.item.id)}
+          >
+            Copy
           </DropdownMenuItem>
         )}
         {props.item.source === "token" && (
@@ -374,7 +435,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Clear styles
           </DropdownMenuItem>
         )}
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
@@ -385,7 +446,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Detach
           </DropdownMenuItem>
         )}
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             destructive={true}
             onFocus={() => {
@@ -399,7 +460,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
         )}
         {canEditStyles &&
           selectorLabels.map((currentCategory) => {
-            const categoryStates = props.states.filter(
+            const categoryStates = availableStates.filter(
               ({ type }) => type === currentCategory
             );
             if (categoryStates.length === 0) {
@@ -441,8 +502,8 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
                               <CheckMarkIcon
                                 color={
                                   props.item.states.includes(selector)
-                                    ? rawTheme.colors.foregroundPrimary
-                                    : rawTheme.colors.foregroundIconMain
+                                    ? cssVar("--foreground-accent")
+                                    : cssVar("--foreground-primary")
                                 }
                                 size={12}
                               />
@@ -465,7 +526,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
                             {props.item.states.includes(selector) && (
                               <DotIcon
                                 size="12"
-                                color={rawTheme.colors.foregroundPrimary}
+                                color={cssVar("--foreground-accent")}
                               />
                             )}
                           </Flex>
@@ -481,14 +542,31 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Add more</DropdownMenuLabel>
-            <Box css={{ padding: theme.spacing[4] }}>
-              <SelectorCombobox
-                existingSelectors={props.states.map((state) => state.selector)}
-                onSelect={(selector) =>
-                  props.onAddSelector?.(props.item.id, selector)
+            <DropdownMenuItem
+              asChild
+              onFocus={(event) => {
+                if (event.target === event.currentTarget) {
+                  event.currentTarget.querySelector("input")?.focus();
                 }
-              />
-            </Box>
+              }}
+              onSelect={(event) => event.preventDefault()}
+            >
+              <Box css={{ padding: theme.spacing[4], margin: 0 }}>
+                <SelectorCombobox
+                  existingSelectors={availableStates.map(
+                    (state) => state.selector
+                  )}
+                  onFocus={() => {
+                    setHighlightedSelector(undefined);
+                    setHighlightedAction("addMore");
+                  }}
+                  onBlur={() => setHighlightedAction(undefined)}
+                  onSelect={(selector) =>
+                    props.onAddSelector?.(props.item.id, selector)
+                  }
+                />
+              </Box>
+            </DropdownMenuItem>
           </>
         )}
         <DropdownMenuSeparator />

@@ -10,6 +10,7 @@ import {
   listComponentCatalogAvailableComponents,
 } from "@webstudio-is/project-build/runtime";
 import {
+  PanelContent,
   theme,
   Flex,
   ComponentCard,
@@ -46,6 +47,7 @@ const $metas = computed(
     const metasByCategory = listBuilderComponentPanelItems({
       metas: componentMetas,
       templates,
+      showDeprecatedSection: isFeatureEnabled("deprecatedComponents"),
       documentType: selectedPage?.meta.documentType ?? "html",
       showInternal: isFeatureEnabled("internalComponents"),
       getFallbackLabel: (component) => getInstanceLabel({ component }),
@@ -172,13 +174,13 @@ export const ComponentsPanel = ({
       <PanelTitle>Components</PanelTitle>
       <Separator />
 
-      <Box css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Box}>
         <SearchField
           {...searchFieldProps}
           autoFocus
           placeholder="Find components"
         />
-      </Box>
+      </PanelContent>
       <Separator />
 
       <ScrollArea ref={draggableContainerRef}>

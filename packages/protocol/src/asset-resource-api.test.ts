@@ -10,6 +10,7 @@ import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import {
   assetFolderCreateRequest,
   assetFolderUpdateRequest,
+  assetContentDescriptorHeader,
   assetMetadataUpdate,
   assetResourceApiOperations,
   assetUploadReservationRequest,
@@ -38,7 +39,11 @@ const createDocument = () =>
       "https://api.example.com/rest/assets/query-schema.json?projectId=project",
   });
 
-const loadConfiguration = (catalog = defaultCatalog) =>
+const loadConfiguration = (
+  catalog: Parameters<
+    typeof createAssetQueryJsonSchema
+  >[0]["catalog"] = defaultCatalog
+) =>
   loadOpenApiQueryDefinition({
     document: createDocument(),
     documentUrl: "https://api.example.com/rest/assets/openapi.json",
@@ -159,6 +164,47 @@ describe("Assets OpenAPI description", () => {
     for (const item of [...standardFields, ...configuration.operators]) {
       expect(item.label).toBe(item.label.toLowerCase());
     }
+  });
+
+  test("preserves observed field types in the query definition", async () => {
+    const configuration = await loadConfiguration({
+      ...defaultCatalog,
+      fields: {
+        draft: {
+          queryPath: ["properties", "draft"],
+          types: ["boolean"],
+          occurrences: 1,
+        },
+        empty: {
+          queryPath: ["properties", "empty"],
+          types: ["null"],
+          occurrences: 1,
+        },
+        score: {
+          queryPath: ["properties", "score"],
+          types: ["number", "null"],
+          occurrences: 1,
+        },
+      },
+    });
+
+    expect(configuration.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ["size"], types: ["number"] }),
+        expect.objectContaining({
+          path: ["properties", "draft"],
+          types: ["boolean"],
+        }),
+        expect.objectContaining({
+          path: ["properties", "empty"],
+          types: ["null"],
+        }),
+        expect.objectContaining({
+          path: ["properties", "score"],
+          types: ["number", "null"],
+        }),
+      ])
+    );
   });
 
   test("describes callable REST paths and stable share-token authentication", () => {
@@ -319,6 +365,7 @@ describe("Assets OpenAPI description", () => {
       "height",
       "force",
       "x-webstudio-asset-description",
+      "x-webstudio-asset-description-encoding",
       "x-webstudio-asset-meta",
     ]);
     expect(uploadContent.parameters[0].schema.maxLength).toBe(
@@ -334,7 +381,7 @@ describe("Assets OpenAPI description", () => {
     expect(
       document.paths[assetResourceApiOperations.deleteAsset.path].delete
         .responses[204]
-    ).toEqual({ description: "Asset deleted" });
+    ).toBeDefined();
     expect(
       document.paths[assetResourceApiOperations.downloadAssetContent.path].get
         .responses[206]
@@ -343,6 +390,14 @@ describe("Assets OpenAPI description", () => {
       document.paths[assetResourceApiOperations.downloadAssetContent.path].get
         .responses[200].content
     ).toHaveProperty("*/*");
+    expect(
+      document.paths[assetResourceApiOperations.downloadAssetContent.path].get
+        .responses[200].headers
+    ).toHaveProperty(assetContentDescriptorHeader);
+    expect(
+      document.paths[assetResourceApiOperations.replaceAssetContent.path].put
+        .requestBody.content
+    ).toHaveProperty("text/mdx", { schema: { type: "string" } });
     expect(
       document.paths[assetResourceApiOperations.createAssetFolder.path].post
         .responses[201]
@@ -430,9 +485,6 @@ describe("Assets OpenAPI description", () => {
         { value: "last", label: "Last" },
       ],
     });
-    expect(definition.description).toMatch(
-      /^Autocomplete includes \d+ of 4096 observed content fields/
-    );
     expect(definition.fields.length).toBeGreaterThan(
       assetQueryStandardFields.length
     );

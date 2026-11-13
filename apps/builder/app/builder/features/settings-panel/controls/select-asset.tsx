@@ -1,16 +1,17 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { Button, Flex, Text, FloatingPanel } from "@webstudio-is/design-system";
-import { acceptToMimeCategories } from "@webstudio-is/sdk";
+import { Button, Flex, FloatingPanel } from "@webstudio-is/design-system";
+import {
+  acceptToMimeCategories,
+  formatAssetName,
+  type Asset,
+} from "@webstudio-is/sdk";
 import { $assets } from "~/shared/sync/data-stores";
 import { AssetManager } from "~/builder/shared/asset-manager";
-import { type PropValue } from "../shared";
-import { formatAssetName } from "@webstudio-is/project-build/runtime";
 import { AssetUpload } from "~/builder/shared/assets";
 
-// tests whether we can use AssetManager for the given "accept" value
-const isImageAccept = (accept?: string) => {
+const acceptsImageUpload = (accept?: string) => {
   const acceptCategories = acceptToMimeCategories(accept || "");
   return (
     acceptCategories === "*" ||
@@ -20,39 +21,56 @@ const isImageAccept = (accept?: string) => {
 
 type Props = {
   accept?: string;
-  prop?: Extract<PropValue, { type: "asset" }>;
-  onChange: (value: Extract<PropValue, { type: "asset" }>) => void;
+  assetId?: Asset["id"];
+  title?: string;
+  triggerLabel?: string;
+  disabled?: boolean;
+  onChange: (assetId: Asset["id"]) => void;
 };
 
-export const SelectAsset = ({ prop, onChange, accept }: Props) => {
+export const SelectAsset = ({
+  accept,
+  assetId,
+  title,
+  triggerLabel,
+  disabled,
+  onChange,
+}: Props) => {
+  const [open, setOpen] = useState(false);
   const $asset = useMemo(
     () =>
       computed($assets, (assets) =>
-        prop ? assets.get(prop.value) : undefined
+        assetId === undefined ? undefined : assets.get(assetId)
       ),
-    [prop]
+    [assetId]
   );
 
   const asset = useStore($asset);
-
-  if (isImageAccept(accept) === false) {
-    return <Text color="destructive">Unsupported accept value: {accept}</Text>;
-  }
+  const acceptsImages = acceptsImageUpload(accept);
 
   return (
     <Flex gap={2} css={{ flex: 1 }} align="center">
       <FloatingPanel
-        title="Images"
-        titleSuffix={<AssetUpload type="image" accept={accept} />}
+        open={open}
+        onOpenChange={setOpen}
+        title={title ?? (acceptsImages ? "Images" : "Assets")}
+        titleSuffix={
+          acceptsImages ? (
+            <AssetUpload type="image" accept={accept} />
+          ) : undefined
+        }
         content={
           <AssetManager
-            onChange={(assetId) => onChange({ type: "asset", value: assetId })}
+            onChange={(assetId) => {
+              setOpen(false);
+              onChange(assetId);
+            }}
             accept={accept}
           />
         }
       >
-        <Button color="neutral" css={{ flex: 1 }}>
-          {asset ? formatAssetName(asset) : "Choose source"}
+        <Button css={{ flex: 1 }} disabled={disabled}>
+          {triggerLabel ?? (asset ? formatAssetName(asset) : "Choose source")}
         </Button>
       </FloatingPanel>
     </Flex>

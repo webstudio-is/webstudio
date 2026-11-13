@@ -15,6 +15,8 @@ import { isRootFolder, ROOT_FOLDER_ID } from "@webstudio-is/sdk";
 import { z } from "zod";
 
 type LegacyPages = {
+  /** Historical input only; read before normalizing paired pages and instances. */
+  formComponentIdentityVersion?: number;
   meta?: Pages["meta"];
   compiler?: Pages["compiler"];
   redirects?: Pages["redirects"];
@@ -22,6 +24,14 @@ type LegacyPages = {
   pages: Page[];
   folders?: Folder[];
 };
+
+export const hasHistoricalFormComponentIdentityVersion = (
+  pagesData: unknown
+): boolean =>
+  typeof pagesData === "object" &&
+  pagesData !== null &&
+  "formComponentIdentityVersion" in pagesData &&
+  pagesData.formComponentIdentityVersion !== undefined;
 
 export type SerializedPages = Omit<
   Pages,
@@ -136,9 +146,12 @@ export const migratePages = (pagesData: unknown): Pages => {
     const currentPages = pagesData as Pages;
     const result = pages.safeParse(currentPages);
     if (result.success && currentPages.pageTemplates !== undefined) {
+      if (hasHistoricalFormComponentIdentityVersion(currentPages)) {
+        return result.data;
+      }
       return currentPages;
     }
-    return {
+    const normalizedPages = {
       ...currentPages,
       pageTemplates: currentPages.pageTemplates ?? new Map(),
       folders: removeOrphanFolderChildren(
@@ -146,6 +159,10 @@ export const migratePages = (pagesData: unknown): Pages => {
         currentPages.folders
       ),
     };
+    if (hasHistoricalFormComponentIdentityVersion(currentPages)) {
+      return pages.parse(normalizedPages);
+    }
+    return normalizedPages;
   }
 
   if (isSerializedPages(pagesData)) {

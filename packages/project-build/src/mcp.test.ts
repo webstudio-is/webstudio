@@ -9,19 +9,29 @@ import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { parseExpressionAt } from "acorn";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
-import type { WsComponentMeta } from "@webstudio-is/sdk";
+import { parseDirectPathExpression } from "@webstudio-is/expression";
+import {
+  coreMetas,
+  ROOT_INSTANCE_ID,
+  rootComponent,
+  type WsComponentMeta,
+} from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { validateAssetQuery } from "@webstudio-is/content-engine";
 import { builderPatchTransactionSchema } from "./contracts/patch";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
-import { pageExpressionFieldHint, pageStatusFieldHint } from "./runtime/pages";
 import { imageDescriptionsSetInput } from "./runtime/assets";
 import { BuilderRuntimeError } from "./runtime/errors";
+import { executeBuilderRuntimeOperation } from "./runtime/registry";
+import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import {
   createProjectSessionMcpCore,
   createProjectSessionMcpServer,
   createMcpStdioTransport,
+  getDetailedProjectSessionMcpInputSchema,
   hiddenMcpOperationCommands,
+  isReadOnlyProjectSessionMcpTool,
   listProjectSessionMcpResources,
   listProjectSessionMcpTools,
   type PublicMcpOperation,
@@ -29,6 +39,7 @@ import {
   type ProjectSessionScreenshotInput,
 } from "./mcp";
 import { getComponentTemplates } from "./runtime/component-templates";
+import { insertFragmentInput } from "./runtime/components";
 import { createEmptyWebstudioFragment } from "./runtime/component-template";
 import {
   projectSessionBusyMessage,
@@ -91,7 +102,6 @@ const getSchemaProperties = (schema: unknown) =>
 
 const expectPageStatusInputSchema = (schema: unknown) => {
   expect(schema).toMatchObject({
-    description: pageStatusFieldHint,
     anyOf: expect.arrayContaining([
       expect.objectContaining({ type: "number" }),
       expect.objectContaining({ type: "string" }),
@@ -139,6 +149,31 @@ const getUnresolvedLocalSchemaRefs = (
     ...unresolved,
     ...Object.entries(object).flatMap(([key, value]) =>
       getUnresolvedLocalSchemaRefs(value, root, [...path, key])
+    ),
+  ];
+};
+
+const getArraySchemasWithoutItems = (
+  schema: unknown,
+  path: readonly string[] = []
+): string[] => {
+  if (schema === null || typeof schema !== "object") {
+    return [];
+  }
+  if (Array.isArray(schema)) {
+    return schema.flatMap((value, index) =>
+      getArraySchemasWithoutItems(value, [...path, String(index)])
+    );
+  }
+  const object = schema as Record<string, unknown>;
+  const current =
+    object.type === "array" && object.items === undefined
+      ? [path.join(".")]
+      : [];
+  return [
+    ...current,
+    ...Object.entries(object).flatMap(([name, value]) =>
+      getArraySchemasWithoutItems(value, [...path, name])
     ),
   ];
 };
@@ -292,16 +327,9 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     command: "insert-fragment",
     id: "instances.insertFragment",
     method: "mutation",
-    permit: "build",
+    permit: "edit",
     description: "Insert fragment",
-    inputSchema: getTestInputSchema(
-      z.object({
-        parentInstanceId: z.string(),
-        fragment: z.unknown(),
-        mode: z.enum(["append", "prepend", "replace"]).optional(),
-        insertIndex: z.number().optional(),
-      })
-    ),
+    inputSchema: getTestInputSchema(insertFragmentInput),
     readNamespaces: ["pages", "instances"],
     writeNamespaces: ["instances", "props", "styles"],
     invalidatesNamespaces: ["instances", "props", "styles"],
@@ -536,9 +564,10 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
 
 const testMcpGuidance: ProjectSessionMcpGuidance = {
   visualVerificationRule:
-    "Verify rendered visual/design work before finishing.",
+    "Ask before visual verification unless the user explicitly requested it.",
   getVisionVerificationLoop: ({ includeDiff }) =>
     [
+      "Ask whether the user wants visual verification and stop until they opt in.",
       "Make focused changes.",
       "Start preview.",
       "Install dependencies if missing.",
@@ -649,6 +678,58 @@ const createConnectedClient = async (
 };
 
 describe("project session mcp adapter", () => {
+  test("returns Global root defaults through the supported inspect-instance tool", async () => {
+    const contract = runtimeOperationContracts.find(
+      ({ command }) => command === "inspect-instance"
+    )!;
+    const adapter = createProjectSessionMcpCore({
+      operations: [
+        publicOperation({
+          ...contract,
+          description: contract.command,
+          method: "query",
+        }),
+      ],
+      createProjectSession: createSessionFactory(),
+      executeOperation: async ({ input }) =>
+        createEnvelope({
+          operationId: contract.id,
+          result: await executeBuilderRuntimeOperation({
+            id: contract.id,
+            state: { instances: new Map() },
+            input,
+          }),
+        }),
+    });
+    const discovery = await adapter.callTool({
+      name: "meta.get-more-tools",
+      input: { tools: ["inspect-instance"] },
+    });
+    const { tools } = discovery.structuredContent.data as {
+      tools: Array<{ mcpExamples: Array<{ instanceId?: string }> }>;
+    };
+    const rootExample = tools[0].mcpExamples.find(
+      ({ instanceId }) => instanceId === ROOT_INSTANCE_ID
+    );
+    expect(rootExample).toEqual({
+      instanceId: ROOT_INSTANCE_ID,
+      include: ["styles", "sources"],
+    });
+    const response = await adapter.callTool({
+      name: "inspect-instance",
+      input: rootExample,
+    });
+
+    expect(response.structuredContent).toMatchObject({
+      ok: true,
+      data: {
+        id: ROOT_INSTANCE_ID,
+        presetStyles: coreMetas[rootComponent].presetStyle!.html,
+        styles: [],
+      },
+    });
+  });
+
   test("lists restore-point tools only when the host supports them", () => {
     const restorePointToolNames = new Set([
       "create-restore-point",
@@ -792,6 +873,67 @@ describe("project session mcp adapter", () => {
     ]);
     expect(toolNames).toContain("insert-fragment");
     expect(toolNames).not.toContain("meta.get_more_tools");
+    const tokenTools = listProjectSessionMcpTools(
+      runtimeOperationContracts
+        .filter(
+          ({ id }) => id === "designTokens.copy" || id === "designTokens.paste"
+        )
+        .map((contract) =>
+          publicOperation({
+            command: contract.command,
+            id: contract.id,
+            method: contract.kind === "read" ? "query" : "mutation",
+            permit: contract.kind === "read" ? "view" : "edit",
+            description: contract.command,
+            inputSchema: contract.inputSchema,
+            readNamespaces: contract.readNamespaces,
+            writeNamespaces: contract.writeNamespaces,
+          })
+        )
+    ).filter(
+      (tool) =>
+        tool.name === "copy-design-token" || tool.name === "paste-design-token"
+    );
+    expect(tokenTools.map(({ name }) => name)).toEqual([
+      "copy-design-token",
+      "paste-design-token",
+    ]);
+    expect(tokenTools[0]?.inputSchema).toMatchObject({
+      anyOf: expect.arrayContaining([
+        expect.objectContaining({ required: ["tokenId"] }),
+        expect.objectContaining({ required: ["styleSourceId", "sourceType"] }),
+      ]),
+    });
+    expect(tokenTools[1]?.inputSchema.required).toContain("data");
+    const responseHeaderTools = listProjectSessionMcpTools(
+      runtimeOperationContracts
+        .filter(({ id }) => id.startsWith("responseHeaders."))
+        .map((contract) =>
+          publicOperation({
+            command: contract.command,
+            id: contract.id,
+            description: contract.command,
+            inputSchema: contract.inputSchema,
+          })
+        )
+    );
+    expect(responseHeaderTools.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        "list-response-headers",
+        "set-response-header",
+        "delete-response-header",
+      ])
+    );
+    expect(
+      responseHeaderTools.find(({ name }) => name === "set-response-header")
+        ?.inputSchema
+    ).toMatchObject({
+      required: ["name", "value"],
+      properties: {
+        name: { pattern: expect.any(String) },
+        value: { minLength: 1, pattern: expect.any(String) },
+      },
+    });
     const assetOperationTools = listProjectSessionMcpTools(
       runtimeOperationContracts
         .filter(
@@ -834,7 +976,6 @@ describe("project session mcp adapter", () => {
     expect(
       assetOperationTools.find(({ name }) => name === "duplicate-asset-folder")
     ).toMatchObject({
-      description: expect.stringContaining("Recursively duplicate"),
       inputSchema: expect.objectContaining({ required: ["folderId"] }),
     });
     expect(
@@ -859,9 +1000,6 @@ describe("project session mcp adapter", () => {
       (tool) => tool.name === "set-image-descriptions"
     );
     expect(imageDescriptionsTool).toMatchObject({
-      description: expect.stringContaining(
-        "agent-generated image descriptions"
-      ),
       inputSchema: expect.objectContaining({
         required: ["updates"],
       }),
@@ -896,6 +1034,10 @@ describe("project session mcp adapter", () => {
         getUnresolvedLocalSchemaRefs(tool.inputSchema),
         `MCP input schema has unresolved local references for ${tool.name}`
       ).toEqual([]);
+      expect(
+        getArraySchemasWithoutItems(tool.inputSchema),
+        `MCP input schema has array parameters without items for ${tool.name}`
+      ).toEqual([]);
       if (tool.outputSchema !== undefined) {
         expect(
           tool.outputSchema.type,
@@ -915,11 +1057,6 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(imageDescriptionsTool?.inputSchema)).toContain(
       "rendered image in context"
     );
-    expect(
-      JSON.stringify(
-        tools.find(({ name }) => name === "update-styles")?.inputSchema
-      )
-    ).toContain("JSON-compatible value.");
     expect(
       getSuccessfulOutputDataSchema(
         tools.find((tool) => tool.name === "refresh")?.outputSchema
@@ -985,9 +1122,7 @@ describe("project session mcp adapter", () => {
       ).toMatchObject({
         type: "object",
         required:
-          command === "preview.start"
-            ? ["url", "running", "mode"]
-            : ["running"],
+          command === "preview.start" ? ["running", "mode"] : ["running"],
         properties: {
           url: { type: "string" },
           pid: { type: "integer" },
@@ -1001,17 +1136,33 @@ describe("project session mcp adapter", () => {
     const insertFragmentTool = tools.find(
       (tool) => tool.name === "insert-fragment"
     );
+    const runtimeInsertFragmentProperties = Object.keys(
+      getInputSchemaMetadata(insertFragmentInput).inputJsonSchema.properties ??
+        {}
+    );
+    expect(
+      Object.keys(
+        insertFragmentTool === undefined
+          ? {}
+          : (getDetailedProjectSessionMcpInputSchema(insertFragmentTool)
+              .properties ?? {})
+      ).filter((property) => property !== "dryRun")
+    ).toEqual(runtimeInsertFragmentProperties);
     expect(insertFragmentTool?.inputSchema.required).toEqual([
       "parentInstanceId",
       "fragment",
     ]);
+    expect(insertFragmentTool?.annotations.permit).toBe("edit");
     expect(
       Object.keys(insertFragmentTool?.inputSchema.properties ?? {})
     ).toEqual([
       "parentInstanceId",
       "fragment",
+      "conflictResolution",
+      "contentMode",
       "mode",
       "insertIndex",
+      "templateNameConfirmation",
       "dryRun",
     ]);
     const fragmentSchema = insertFragmentTool?.inputSchema.properties?.fragment;
@@ -1020,18 +1171,6 @@ describe("project session mcp adapter", () => {
       tools.find((tool) => tool.name === "insert-fragment-verified")
         ?.inputSchema.required
     ).toEqual(["parentInstanceId", "fragment", "pagePath"]);
-    const jsxDescription =
-      typeof fragmentSchema === "object" &&
-      "description" in fragmentSchema &&
-      typeof fragmentSchema.description === "string"
-        ? fragmentSchema.description
-        : undefined;
-    expect(jsxDescription).toContain("not React aliases className or htmlFor");
-    expect(jsxDescription).toContain("Use ws:style");
-    expect(jsxDescription).toContain("style={{ padding: 24 }}");
-    expect(jsxDescription).toContain("include required child/part components");
-    expect(jsxDescription).toContain("same parent structure");
-    expect(jsxDescription).toContain("use insert-component");
     expect(insertFragmentTool?.inputSchema.properties).not.toHaveProperty(
       "source"
     );
@@ -1131,6 +1270,12 @@ describe("project session mcp adapter", () => {
         properties: expect.objectContaining({
           instanceId: { type: "string" },
           property: { type: "string" },
+          value: expect.objectContaining({
+            anyOf: expect.arrayContaining([
+              { type: "string" },
+              { type: "array", items: {} },
+            ]),
+          }),
         }),
       }),
     });
@@ -1155,50 +1300,27 @@ describe("project session mcp adapter", () => {
     );
   });
 
-  test("documents the queried Assets result shape in focused tools", () => {
-    const contracts = runtimeOperationContracts.filter(({ id }) =>
-      ["assetsResources.create", "assetsResources.update"].includes(id)
-    );
-    const tools = listProjectSessionMcpTools(
-      contracts.map((contract) =>
-        publicOperation({
-          command: contract.command,
-          id: contract.id,
-          method: "mutation",
-          permit: "build",
-          description: contract.command,
-          inputSchema: contract.inputSchema,
-          readNamespaces: contract.readNamespaces,
-          writeNamespaces: contract.writeNamespaces,
-          invalidatesNamespaces: contract.invalidatesNamespaces,
-          retryOnConflict: contract.retryOnConflict,
-        })
-      )
-    );
+  test("omits CLI-owned issue runtime from the MCP input schema", () => {
+    const [tool] = listProjectSessionMcpTools([
+      publicOperation({
+        command: "report-issue",
+        id: "reports.issue",
+        description: "Report an issue",
+        localCapable: false,
+        serverOnly: true,
+        inputSchema: getTestInputSchema(
+          z.object({
+            title: z.string(),
+            runtime: z
+              .object({ recentFailure: z.unknown().optional() })
+              .optional(),
+          })
+        ),
+      }),
+    ]);
 
-    const assetsResourceTools = tools.filter(({ name }) =>
-      ["create-assets-resource", "update-assets-resource"].includes(name)
-    );
-    expect(assetsResourceTools).toHaveLength(2);
-
-    for (const tool of assetsResourceTools) {
-      expect(tool.description).toContain("structured tool input");
-      expect(tool.description).toContain("Webstudio JavaScript expression");
-      expect(tool.description).toContain("<dataSourceName>.data");
-      expect(tool.description).toContain("<dataSourceName>.meta");
-      expect(tool.description).toContain("markdown-body-ref");
-      expect(tool.description).toContain("document reference");
-      expect(tool.description).toContain("content.text");
-      expect(tool.description).toContain("result one");
-      expect(tool.description).toContain(
-        "one final resource per rendered query"
-      );
-      expect(tool.description).toContain(
-        "static filters, limits, and offsets literal"
-      );
-      expect(tool.description).toContain("remove obsolete duplicates");
-      expect(getSchemaProperties(tool.inputSchema)).not.toEqual({});
-    }
+    expect(tool?.inputSchema.properties).toHaveProperty("title");
+    expect(tool?.inputSchema.properties).not.toHaveProperty("runtime");
   });
 
   test("defers oversized input schemas until focused discovery", async () => {
@@ -1231,15 +1353,143 @@ describe("project session mcp adapter", () => {
       name: "meta.get-more-tools",
       input: { tools: ["large-input"] },
     });
-    expect(JSON.stringify(details.structuredContent.data)).toContain(
-      description
+    expect(
+      JSON.stringify(details.structuredContent.data).length
+    ).toBeGreaterThan(JSON.stringify(tool?.inputSchema).length);
+  });
+
+  test("defers the nested Email Resource schema in upsert-resource-prop", async () => {
+    const contract = runtimeContractById.get("resources.upsertProp");
+    if (contract === undefined) {
+      throw new Error("Resource prop contract not found");
+    }
+    const operation = publicOperation({
+      command: contract.command,
+      id: contract.id,
+      description: contract.command,
+      inputSchema: contract.inputSchema,
+    });
+    const [tool] = listProjectSessionMcpTools([operation]);
+    expect(
+      JSON.stringify(tool?.inputSchema.properties?.resource).length
+    ).toBeLessThan(500);
+    expect(
+      getDetailedProjectSessionMcpInputSchema(tool!).properties?.resource
+    ).toHaveProperty("properties.email");
+
+    const adapter = createProjectSessionMcpCore({
+      operations: [operation],
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+    const details = await adapter.callTool({
+      name: "meta.get-more-tools",
+      input: { tools: ["upsert-resource-prop"] },
+    });
+    expect(details.structuredContent.data).toEqual(
+      expect.objectContaining({
+        tools: [
+          expect.objectContaining({
+            inputSchema: expect.objectContaining({
+              properties: expect.objectContaining({
+                resource: expect.objectContaining({
+                  properties: expect.objectContaining({
+                    email: expect.any(Object),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        ],
+      })
     );
+  });
+
+  test("keeps array items valid when deferring an oversized schema", () => {
+    const operation = publicOperation({
+      command: "large-array-input",
+      id: "test.largeArrayInput",
+      description: "Accept a large structured array",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          updates: {
+            type: "array",
+            items: {
+              type: "object",
+              description: "x".repeat(25_000),
+            },
+          },
+        },
+        required: ["updates"],
+      },
+    });
+
+    const [tool] = listProjectSessionMcpTools([operation]);
+    const updates = tool?.inputSchema.properties?.updates as
+      | Record<string, unknown>
+      | undefined;
+
+    expect(JSON.stringify(tool?.inputSchema).length).toBeLessThan(1_000);
+    expect(updates).toMatchObject({
+      type: "array",
+      items: {},
+    });
+  });
+
+  test("adds items to tuple input schemas", () => {
+    const operation = publicOperation({
+      command: "tuple-input",
+      id: "test.tupleInput",
+      description: "Accept a structured tuple",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          coordinates: {
+            type: "array",
+            prefixItems: [{ type: "number" }, { type: "number" }],
+          },
+        },
+        required: ["coordinates"],
+      },
+    });
+
+    const [tool] = listProjectSessionMcpTools([operation]);
+
+    expect(tool?.inputSchema.properties?.coordinates).toMatchObject({
+      type: "array",
+      items: {},
+      prefixItems: [{ type: "number" }, { type: "number" }],
+    });
   });
 
   test("downloads assets through the MCP host", async () => {
     const downloadAsset = vi.fn(async ({ assetId }: { assetId: string }) => ({
       assetId,
-      path: `/workspace/.webstudio/assets/${assetId}.png`,
+      path: `/workspace/.webstudio/assets/${assetId}.mdx`,
+      source: "# Kept\n\n{danger()}\n",
+      diagnostics: [
+        {
+          code: "unsafe-mdx" as const,
+          severity: "warning" as const,
+          message: "Executable MDX expressions are not supported",
+          sourceRange: {
+            start: { line: 3, column: 1, offset: 8 },
+            end: { line: 3, column: 11, offset: 18 },
+          },
+        },
+        {
+          code: "unresolved-template" as const,
+          severity: "warning" as const,
+          blockInstanceId: "content-block-1",
+          assetId,
+          contentRef: "asset:hero",
+          renderScope: "asset:hero:block:content-block-1",
+          templateName: "MissingCard",
+        },
+      ],
     }));
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
@@ -1257,12 +1507,28 @@ describe("project session mcp adapter", () => {
     expect(result.structuredContent).toMatchObject({
       data: {
         assetId: "hero",
-        path: "/workspace/.webstudio/assets/hero.png",
+        path: "/workspace/.webstudio/assets/hero.mdx",
+        source: "# Kept\n\n{danger()}\n",
+        diagnostics: [
+          expect.objectContaining({
+            code: "unsafe-mdx",
+            severity: "warning",
+          }),
+          expect.objectContaining({
+            code: "unresolved-template",
+            severity: "warning",
+            blockInstanceId: "content-block-1",
+            assetId: "hero",
+            contentRef: "asset:hero",
+            renderScope: "asset:hero:block:content-block-1",
+            templateName: "MissingCard",
+          }),
+        ],
       },
     });
   });
 
-  test("exposes page expression input descriptions to MCP clients", async () => {
+  test("exposes page expression inputs to MCP clients", async () => {
     const createPageContract = runtimeOperationContracts.find(
       (contract) => contract.id === "pages.create"
     );
@@ -1284,15 +1550,8 @@ describe("project session mcp adapter", () => {
     const [tool] = listProjectSessionMcpTools([createPageOperation]);
     const toolProperties = getSchemaProperties(tool?.inputSchema);
     const toolMetaProperties = getSchemaProperties(toolProperties.meta);
-
-    expect(toolProperties.title).toMatchObject({
-      type: "string",
-      description: pageExpressionFieldHint,
-    });
-    expect(toolMetaProperties.description).toMatchObject({
-      type: "string",
-      description: pageExpressionFieldHint,
-    });
+    expect(toolProperties.title).toMatchObject({ type: "string" });
+    expect(toolMetaProperties.description).toMatchObject({ type: "string" });
     expectPageStatusInputSchema(toolMetaProperties.status);
 
     const adapter = createProjectSessionMcpCore({
@@ -1314,13 +1573,9 @@ describe("project session mcp adapter", () => {
       toolDetailsProperties.meta
     );
 
-    expect(toolDetailsProperties.title).toMatchObject({
-      type: "string",
-      description: pageExpressionFieldHint,
-    });
+    expect(toolDetailsProperties.title).toMatchObject({ type: "string" });
     expect(toolDetailsMetaProperties.description).toMatchObject({
       type: "string",
-      description: pageExpressionFieldHint,
     });
     expectPageStatusInputSchema(toolDetailsMetaProperties.status);
   });
@@ -1365,7 +1620,27 @@ describe("project session mcp adapter", () => {
     }
 
     expect(tools.find((tool) => tool.name === "meta.guide")).toMatchObject({
-      inputSchema: expect.objectContaining({ required: ["brief"] }),
+      inputSchema: expect.objectContaining({
+        required: ["brief"],
+        properties: expect.objectContaining({
+          taskScope: expect.objectContaining({
+            enum: expect.arrayContaining([
+              "read-only-audit",
+              "focused-page-change",
+            ]),
+          }),
+          workflow: expect.objectContaining({
+            enum: expect.arrayContaining([
+              "general",
+              "markdown-blog",
+              "content-block-source",
+              "design-input",
+            ]),
+          }),
+          authoredFragment: expect.objectContaining({ type: "boolean" }),
+          reuseDesignSystem: expect.objectContaining({ type: "boolean" }),
+        }),
+      }),
       annotations: expect.objectContaining({ requiredInputFields: ["brief"] }),
     });
     expect(
@@ -2254,7 +2529,16 @@ describe("project session mcp adapter", () => {
     expect(altered).toMatchObject({
       structuredContent: {
         ok: false,
-        error: { code: "DESTRUCTIVE_CONFIRMATION_INVALID" },
+        error: {
+          code: "DESTRUCTIVE_CONFIRMATION_INVALID",
+          issues: [
+            {
+              code: "DESTRUCTIVE_CONFIRMATION_MISMATCH",
+              path: ["confirmationToken"],
+              constraint: "unchanged_destructive_plan",
+            },
+          ],
+        },
       },
     });
     expect(executeOperation).toHaveBeenCalledTimes(2);
@@ -2306,6 +2590,88 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).not.toHaveBeenCalled();
   });
 
+  test("reports unknown, missing, and wrong-type input fields together", async () => {
+    const createPageOperation = publicOperation({
+      command: "create-page",
+      id: "pages.create",
+      description: "Create a page",
+      method: "mutation",
+      inputSchema: getTestInputSchema(
+        z.object({ name: z.string(), path: z.string() })
+      ),
+    });
+    const executeOperation: ExecuteOperation = vi.fn();
+    const adapter = createProjectSessionMcpCore({
+      operations: [...publicMcpOperations, createPageOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    let error: unknown;
+    try {
+      await adapter.callTool({
+        name: "create-page",
+        input: { name: 42, unexpected: true },
+      });
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error).toMatchObject({
+      code: "INVALID_INPUT",
+      issues: [
+        expect.objectContaining({ path: ["path"], constraint: "required" }),
+        expect.objectContaining({ path: ["name"], constraint: "type:string" }),
+        expect.objectContaining({ path: ["unexpected"] }),
+      ],
+    });
+    expect(executeOperation).not.toHaveBeenCalled();
+  });
+
+  test("uses the shared query validator and keeps root input errors", async () => {
+    const operation = publicOperation({
+      command: "validate-asset-query",
+      id: "assetQueries.validate",
+      description: "Validate an Asset query",
+      inputSchema: getTestInputSchema(z.object({ query: z.unknown() })),
+    });
+    const executeOperation: ExecuteOperation = vi.fn();
+    const adapter = createProjectSessionMcpCore({
+      operations: [operation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const query = {
+      result: "first",
+      limit: -1,
+      output: { mode: "fields", includeMetadata: false, fields: [] },
+      content: { mode: "none" },
+      unexpected: true,
+    };
+    const sharedIssues = validateAssetQuery({ query })
+      .issues.filter(({ severity }) => severity === "error")
+      .map((issue) => ({ ...issue, constraint: issue.code }));
+
+    let error: unknown;
+    try {
+      await adapter.callTool({
+        name: "validate-asset-query",
+        input: { query, unexpectedRoot: true },
+      });
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error).toMatchObject({
+      code: "INVALID_INPUT",
+      issues: [
+        ...sharedIssues,
+        expect.objectContaining({ path: ["unexpectedRoot"] }),
+      ],
+    });
+    expect(executeOperation).not.toHaveBeenCalled();
+  });
+
   test("converts jsx fragments before executing insert operation", async () => {
     const executeOperation = createExecuteOperation(async () =>
       createEnvelope({
@@ -2322,12 +2688,23 @@ describe("project session mcp adapter", () => {
       executeOperation,
     });
 
+    expect(
+      adapter.listTools().find(({ name }) => name === "insert-fragment")
+        ?.inputSchema.properties?.conflictResolution
+    ).toEqual({
+      type: "string",
+      enum: ["ours", "theirs", "merge"],
+      description: expect.any(String),
+    });
+
     await adapter.callTool({
       name: "insert-fragment",
       input: {
         parentInstanceId: "body",
         fragment:
           '<ws.element ws:tag="section"><ws.element ws:tag="h2">Title</ws.element></ws.element>',
+        conflictResolution: "ours",
+        contentMode: true,
       },
     });
 
@@ -2342,6 +2719,8 @@ describe("project session mcp adapter", () => {
             expect.objectContaining({ component: "ws:element" }),
           ]),
         }),
+        conflictResolution: "ours",
+        contentMode: true,
         mode: undefined,
         insertIndex: undefined,
       },
@@ -2370,17 +2749,30 @@ describe("project session mcp adapter", () => {
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
       executeOperation,
+      startPreview: vi.fn(),
+      captureScreenshot: vi.fn(),
     });
 
     expect(adapter.listTools().map(({ name }) => name)).toContain(
       "insert-fragment-verified"
     );
+    expect(
+      adapter
+        .listTools()
+        .find(({ name }) => name === "insert-fragment-verified")?.inputSchema
+        .properties?.conflictResolution
+    ).toEqual({
+      type: "string",
+      enum: ["ours", "theirs", "merge"],
+      description: expect.any(String),
+    });
     const result = await adapter.callTool({
       name: "insert-fragment-verified",
       input: {
         parentInstanceId: "root-id",
         pagePath: "/account",
         fragment: '<ws.element ws:tag="section" />',
+        conflictResolution: "merge",
       },
     });
 
@@ -2388,6 +2780,7 @@ describe("project session mcp adapter", () => {
       1,
       expect.objectContaining({
         command: "insert-fragment",
+        input: expect.objectContaining({ conflictResolution: "merge" }),
         dryRun: false,
       })
     );
@@ -2412,6 +2805,13 @@ describe("project session mcp adapter", () => {
         },
       },
     });
+    expect(result.structuredContent.meta.next).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "Ask whether the user wants visual verification"
+        ),
+      ])
+    );
 
     const failingVerification = createExecuteOperation(async ({ command }) => {
       if (command === "verify-bindings") {
@@ -2485,6 +2885,8 @@ describe("project session mcp adapter", () => {
         data: { type: "expression", value: "Posts.data.items" },
         itemFragment:
           '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.title`}</ws.element></ws.element>',
+        mode: "prepend",
+        insertIndex: 2,
       },
     });
 
@@ -2502,8 +2904,8 @@ describe("project session mcp adapter", () => {
             expect.objectContaining({ component: "ws:element", tag: "h2" }),
           ]),
         }),
-        mode: undefined,
-        insertIndex: undefined,
+        mode: "prepend",
+        insertIndex: 2,
       },
       dryRun: false,
     });
@@ -2625,6 +3027,34 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).not.toHaveBeenCalled();
   });
 
+  test("names breakpoint when rejecting the breakpointId style field", async () => {
+    const executeOperation = createExecuteOperation();
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "update-styles",
+        input: {
+          updates: [
+            {
+              instanceId: "body",
+              breakpointId: "mobile",
+              property: "display",
+              value: { type: "keyword", value: "block" },
+            },
+          ],
+        },
+      })
+    ).rejects.toThrow(
+      "update-styles input.updates[0].breakpointId is not supported. Use input.updates[0].breakpoint instead."
+    );
+    expect(executeOperation).not.toHaveBeenCalled();
+  });
+
   test("normalizes insert-component position alias to mode", async () => {
     const executeOperation = createExecuteOperation(async () =>
       createEnvelope({
@@ -2659,9 +3089,11 @@ describe("project session mcp adapter", () => {
       operations,
       createProjectSession: createSessionFactory(),
       executeOperation,
+      startPreview: vi.fn(),
+      captureScreenshot: vi.fn(),
     });
 
-    const result = await adapter.callTool({
+    await adapter.callTool({
       name: "insert-component",
       input: {
         parentInstanceId: "body",
@@ -2680,33 +3112,6 @@ describe("project session mcp adapter", () => {
         },
       })
     );
-    expect(result.structuredContent.meta).toMatchObject({
-      next: [expect.stringContaining("run audit")],
-    });
-  });
-
-  test("requires binding verification after binding-related mutations", async () => {
-    const operation = publicOperation({
-      command: "bind-props",
-      id: "props.bind",
-      method: "mutation",
-      permit: "edit",
-      description: "Bind props",
-      writeNamespaces: ["props"],
-      invalidatesNamespaces: ["props"],
-    });
-    const adapter = createProjectSessionMcpCore({
-      operations: [operation],
-      createProjectSession: createSessionFactory(),
-      executeOperation: createExecuteOperation(),
-    });
-
-    const result = await adapter.callTool({ name: operation.command });
-
-    expect(result.structuredContent.meta.next).toEqual([
-      expect.stringContaining("run verify-bindings"),
-      expect.stringContaining("run audit"),
-    ]);
   });
 
   test("normalizes create-page description and preserves basic auth", async () => {
@@ -2793,6 +3198,57 @@ describe("project session mcp adapter", () => {
           },
         },
       })
+    );
+  });
+
+  test("unwraps a redundantly nested create-resource input", async () => {
+    const executeOperation = createExecuteOperation();
+    const createResourceOperation = publicOperation({
+      command: "create-resource",
+      id: "resources.create",
+      method: "mutation",
+      permit: "edit",
+      description: "Create resource",
+      inputSchema: getTestInputSchema(
+        z.object({
+          scopeInstanceId: z.string(),
+          dataSourceName: z.string(),
+          resource: z.object({
+            name: z.string(),
+            method: z.enum(["get", "post"]),
+            url: z.string(),
+            headers: z.array(z.unknown()),
+            searchParams: z.array(z.unknown()).optional(),
+          }),
+        })
+      ),
+      writeNamespaces: ["resources"],
+      invalidatesNamespaces: ["resources"],
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: [createResourceOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const input = {
+      scopeInstanceId: "root",
+      dataSourceName: "accountSession",
+      resource: {
+        name: "Account session via server",
+        method: "get",
+        url: "/api/auth/session",
+        headers: [],
+        searchParams: [],
+      },
+    };
+
+    await adapter.callTool({
+      name: "create-resource",
+      input: { resource: input },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ command: "create-resource", input })
     );
   });
 
@@ -3892,10 +4348,6 @@ describe("project session mcp adapter", () => {
       name: "meta.get-more-tools",
       input: { tools: '["insert-fragment"]' },
     });
-    const insertFragmentDetails = await adapter.callTool({
-      name: "meta.get-more-tools",
-      input: { tools: ["insert-fragment"] },
-    });
     const fuzzyDetails = await adapter.callTool({
       name: "meta.get-more-tools",
       input: { brief: "styles" },
@@ -3920,27 +4372,7 @@ describe("project session mcp adapter", () => {
     );
     expect(index.structuredContent.data).toEqual(
       expect.objectContaining({
-        readThisFirst: expect.stringContaining(
-          "first call meta.guide with the user's objective"
-        ),
-        delegatedAgentRule: expect.stringContaining(
-          "shortcut command such as webstudio meta.index"
-        ),
         startHere: expect.arrayContaining(["meta.guide", "workflow.next"]),
-        discovery: expect.objectContaining({
-          overview: expect.stringContaining(
-            "Do not call every discovery tool up front"
-          ),
-          tools: expect.stringContaining('"tools"'),
-          insertFragment: expect.stringContaining("parentInstanceId"),
-          components: expect.stringContaining('"brief"'),
-          workflow: expect.stringContaining("workflow.next"),
-        }),
-        rules: expect.arrayContaining([
-          expect.stringContaining(
-            "Use direct value tools for fixed text/props"
-          ),
-        ]),
         capabilities: expect.arrayContaining([
           expect.objectContaining({
             area: "publish",
@@ -3948,60 +4380,6 @@ describe("project session mcp adapter", () => {
           }),
         ]),
       })
-    );
-    const indexData = index.structuredContent.data as { readThisFirst: string };
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("delegated or non-streaming agent")
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining(
-        "Copying a `.webstudio` folder is not an isolated project clone"
-      )
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("pass `--dry-run` to local-capable mutations")
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining('components.coverage-plan {"detail":"roots"}')
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("`list-pages` does not accept `detail`")
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining(
-        "Do not take a broad task such as creating a full design-system page as one execution unit"
-      )
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining('workflow.next {"goal":"design-system-page"}')
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("one dry-run JSX section")
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("components.coverage-insert-next")
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("Phase commands do not include nextPhase")
-    );
-    expect(indexData.readThisFirst).not.toContain("Page details with");
-    const discovery = (
-      index.structuredContent.data as {
-        discovery: { insertFragment: string };
-      }
-    ).discovery;
-    expect(discovery.insertFragment).toContain("insert-fragment");
-    expect(discovery.insertFragment).toContain("parentInstanceId");
-    expect(discovery.insertFragment).toContain("not parentId");
-    expect(discovery.insertFragment).toContain("ws:style={css`...`}");
-    expect(discovery.insertFragment).toContain("style={{ padding: 24 }}");
-    expect(discovery.insertFragment).toContain("--input-file");
-    expect(discovery.insertFragment).not.toContain('ws:tag=\\"');
-    expect(JSON.stringify(index.structuredContent.data)).not.toContain(
-      "{ brief }"
-    );
-    expect(JSON.stringify(index.structuredContent.data)).not.toContain(
-      "({ brief })"
     );
     expect(index.structuredContent.data).not.toEqual(
       expect.objectContaining({
@@ -4034,13 +4412,7 @@ describe("project session mcp adapter", () => {
         goal: "design-system-page",
         phase: "discovery",
         mustReturnAfter: true,
-        parentVisibleCheckpoint: expect.stringContaining(
-          "acknowledge this checkpoint first"
-        ),
-        checkpoint: expect.objectContaining({
-          required: true,
-          instruction: expect.stringContaining("Stop after this workflow.next"),
-        }),
+        checkpoint: expect.objectContaining({ required: true }),
         allowedTools: ["components.coverage-plan"],
         nextPhase: "page-creation",
       })
@@ -4061,13 +4433,9 @@ describe("project session mcp adapter", () => {
         inputFile: expect.objectContaining({
           path: ".temp/design-system-section.json",
           contents: expect.objectContaining({
-            fragment: expect.stringContaining("ws:tag='h2'"),
+            fragment: expect.stringContaining("<h2>"),
           }),
         }),
-        constraints: expect.arrayContaining([
-          expect.stringContaining("Keep the dry-run fragment tiny"),
-          expect.stringContaining("do not use deprecated $.Box"),
-        ]),
         nextPhase: "commit-section",
       })
     );
@@ -4075,28 +4443,18 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         goal: "design-system-page",
         phase: "page-creation",
-        purpose: expect.stringContaining("Create it only if lookup proves"),
         allowedTools: expect.arrayContaining(["list-pages"]),
         commandPattern: expect.stringMatching(/list-pages.*limit/),
         fallbackCommandPattern: expect.stringMatching(
           /create-page.*\/design-system/
         ),
-        expectedReturn: expect.arrayContaining([
-          "whether /design-system already exists",
-          "if missing, report that create-page is the next phase action",
-        ]),
       })
     );
     expect(workflowPresentationPhase.structuredContent.data).toEqual(
       expect.objectContaining({
         goal: "design-system-page",
         phase: "presentation-pass",
-        purpose: expect.stringContaining("real design-system page"),
         allowedTools: expect.arrayContaining(["update-styles"]),
-        constraints: expect.arrayContaining([
-          expect.stringContaining("Do not treat coverage 72/72 as completion"),
-          expect.stringContaining("Keep every covered component"),
-        ]),
       })
     );
     expect(details.structuredContent.data).toEqual(
@@ -4111,9 +4469,6 @@ describe("project session mcp adapter", () => {
             inputSchema: expect.any(Object),
             inputFields: ["target", "domains"],
             mcpExamples: [{ target: "production" }],
-            inputNote: expect.stringContaining(
-              "Use direct value tools for fixed text/props"
-            ),
           }),
         ],
       })
@@ -4125,34 +4480,8 @@ describe("project session mcp adapter", () => {
         tools: [expect.objectContaining({ name: "meta.get-more-tools" })],
       })
     );
-    const [publishDetails] = (
-      details.structuredContent.data as {
-        tools: { inputNote: string }[];
-      }
-    ).tools;
-    expect(publishDetails?.inputNote).toContain(
-      "MCP tool arguments are JSON objects, not CLI flags"
-    );
-    expect(publishDetails?.inputNote).toContain(
-      "prefer insert-fragment so JSX is converted locally"
-    );
-    const [insertFragmentToolDetails] = (
-      insertFragmentDetails.structuredContent.data as {
-        tools: { mcpExamples: unknown[] }[];
-      }
-    ).tools;
-    const insertFragmentExamples = JSON.stringify(
-      insertFragmentToolDetails?.mcpExamples
-    );
-    expect(insertFragmentExamples).toContain("ws:style={css`");
-    expect(insertFragmentExamples).toContain("ws:tag='section'");
-    expect(insertFragmentExamples).toContain("style={{ padding: 32");
-    expect(insertFragmentExamples).toContain("ws:tokens");
-    expect(insertFragmentExamples).toContain("ActionValue");
-    expect(insertFragmentExamples).toContain("radix.SwitchThumb");
     expect(fuzzyDetails.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("capped"),
         count: expect.any(Number),
         omittedCount: expect.any(Number),
         tools: expect.any(Array),
@@ -4477,38 +4806,60 @@ describe("project session mcp adapter", () => {
     });
     const jsonLdGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Add JSON-LD structured data to the home page" },
+      input: {
+        brief: "Add JSON-LD structured data to the home page",
+        workflow: "json-ld",
+      },
     });
     const collectionGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Render an array of blog posts as repeated cards" },
+      input: {
+        brief: "Render an array of blog posts as repeated cards",
+        workflow: "collection",
+      },
     });
     const markdownBlogGuide = await adapter.callTool({
       name: "meta.guide",
       input: {
         brief:
           "Create a Markdown-based blog with overview and post pages from Assets",
+        workflow: "markdown-blog",
       },
     });
-    const expressionGuide = await adapter.callTool({
+    const contentBlockSourceGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Bind a dynamic expression to a prop" },
+      input: {
+        brief: "Connect an MDX article and make its designed header editable",
+        workflow: "content-block-source",
+      },
     });
     const authenticatedPageGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Build a Supabase authenticated account page" },
+      input: {
+        brief: "Build a Supabase authenticated account page",
+        workflow: "authenticated-page",
+      },
     });
     const fontAssetGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Upload and correct two font assets" },
+      input: {
+        brief: "Upload and correct two font assets",
+        workflow: "font-assets",
+      },
     });
     const designInputGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Recreate this Figma design as a responsive page" },
+      input: {
+        brief: "Recreate this Figma design as a responsive page",
+        workflow: "design-input",
+      },
     });
     const craftGuide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Add a section that preserves this Craft project" },
+      input: {
+        brief: "Add a section that preserves this Craft project",
+        workflow: "craft",
+      },
     });
     const authenticatedPageGuideTools = (
       authenticatedPageGuide.structuredContent.data as {
@@ -4526,12 +4877,9 @@ describe("project session mcp adapter", () => {
       }
     ).tools;
     expect(
-      designInputGuideTools.every((tool) => {
-        const keys = Object.keys(tool).join(",");
-        return tool.name === "update-styles"
-          ? keys === "name,inputSchema"
-          : keys === "name";
-      })
+      designInputGuideTools.every(
+        (tool) => Object.keys(tool).join(",") === "name"
+      )
     ).toBe(true);
     const getComponentToolNames = (
       getComponentDetails.structuredContent.data as {
@@ -4615,12 +4963,6 @@ describe("project session mcp adapter", () => {
     });
     expect(collectionGuide.structuredContent.data).toEqual(
       expect.objectContaining({
-        workflow: expect.arrayContaining([
-          expect.stringContaining("complete nested array/object"),
-          expect.stringContaining("insert-collection"),
-          expect.stringContaining("private parameters atomically"),
-          expect.stringContaining("stable unique id or slug"),
-        ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "insert-collection" }),
         ]),
@@ -4629,6 +4971,48 @@ describe("project session mcp adapter", () => {
     expect(markdownBlogGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         recipe: expect.objectContaining({
+          articleFormat: {
+            extension: "md",
+            editSurface: "asset-source-editor",
+            publishCompilation: false,
+            assetSyncDownloadsFiles: true,
+            visualAlternative: {
+              extension: "mdx",
+              editSurface: "content-block-canvas",
+              publishCompilation: true,
+              assetSyncDownloadsFiles: true,
+              workflow: "general",
+              tool: "connect-content-block-source",
+            },
+          },
+          executionOrder: [
+            { tool: "create-asset-folder", calls: 1 },
+            { tool: "upload-assets", calls: 1 },
+            { tool: "create-page", calls: 2 },
+            { tool: "validate-asset-query", calls: 2 },
+            { tool: "preview-asset-query", calls: 1 },
+            { tool: "meta.get-more-tools", calls: 1 },
+            { tool: "create-assets-resource", calls: 2 },
+            { tool: "insert-collection", calls: 1 },
+            { tool: "insert-fragment", calls: 1 },
+            { tool: "update-page", calls: 1 },
+            {
+              tool: "verify-page-responsive",
+              calls: 2,
+              terminal: true,
+            },
+          ],
+          pages: [
+            { path: "/blog", name: "Blog" },
+            { path: "/blog/:slug", name: "Blog article" },
+          ],
+          toolDiscovery: {
+            tool: "meta.get-more-tools",
+            when: "after-query-verification",
+            input: {
+              tools: ["create-assets-resource"],
+            },
+          },
           overviewResource: expect.objectContaining({
             dataSourceName: "posts",
             query: expect.objectContaining({
@@ -4637,12 +5021,34 @@ describe("project session mcp adapter", () => {
               offset: { type: "literal", value: 0 },
             }),
           }),
+          overviewValidationQuery: expect.objectContaining({
+            where: {
+              all: expect.arrayContaining([
+                expect.objectContaining({ value: "md" }),
+                expect.objectContaining({ value: "<blog-folder-id>" }),
+                expect.objectContaining({ value: true }),
+              ]),
+            },
+            limit: 20,
+            offset: 0,
+          }),
           detailResource: expect.objectContaining({
             dataSourceName: "post",
             query: expect.objectContaining({
               result: "one",
               content: { mode: "markdown-body-ref" },
             }),
+          }),
+          detailValidationQuery: expect.objectContaining({
+            result: "one",
+            where: {
+              all: expect.arrayContaining([
+                expect.objectContaining({ value: "md" }),
+                expect.objectContaining({ value: "<blog-folder-id>" }),
+                expect.objectContaining({ value: "aurora-trails" }),
+                expect.objectContaining({ value: true }),
+              ]),
+            },
           }),
           overviewCollection: expect.objectContaining({
             itemFragment: expect.stringContaining(
@@ -4651,7 +5057,7 @@ describe("project session mcp adapter", () => {
           }),
           detailFragment: expect.objectContaining({
             parentInstanceId: "<detail-root-id>",
-            fragment: expect.stringContaining("post.data.content.text"),
+            fragment: expect.any(String),
           }),
           detailPageSettings: expect.objectContaining({
             pageId: "<detail-page-id>",
@@ -4666,18 +5072,6 @@ describe("project session mcp adapter", () => {
             }),
           }),
         }),
-        workflow: expect.arrayContaining([
-          expect.stringContaining("meta.get-more-tools once"),
-          expect.stringContaining('"format":"md"'),
-          expect.stringContaining("do not create companion files"),
-          expect.stringContaining('"/blog/:slug"'),
-          expect.stringContaining("create one page per post"),
-          expect.stringContaining("exactly one scoped Assets resource"),
-          expect.stringContaining("only dynamic value"),
-          expect.stringContaining("without a Collection"),
-          expect.stringContaining("page settings"),
-          expect.stringContaining("Assets-backed content"),
-        ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "upload-assets" }),
           expect.objectContaining({ name: "list-pages" }),
@@ -4688,55 +5082,109 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
-    expect(expressionGuide.structuredContent.data).toEqual(
-      expect.objectContaining({
-        workflow: expect.arrayContaining([
-          expect.stringContaining("webstudio://project/expressions"),
-          expect.stringContaining("do not guess scoped identifier names"),
-          expect.stringContaining("one expression rather than a statement"),
-          expect.stringContaining("successful syntax validation"),
-        ]),
-      })
+    expect(contentBlockSourceGuide.structuredContent.data).toMatchObject({
+      routing: {
+        workflow: "content-block-source",
+        matchedBy: "explicit-workflow",
+      },
+      recipe: {
+        executionOrder: [
+          { tool: "inspect-instance", calls: 1 },
+          { tool: "connect-content-block-source", calls: 1 },
+          { tool: "inspect-content-block-source", calls: 1 },
+          {
+            tool: "update-text",
+            calls: "once per requested designed text field",
+          },
+          { tool: "update-content-block-frontmatter", calls: 1 },
+          { tool: "reload-content-block-source", calls: 1 },
+          { tool: "inspect-content-block-source", calls: 1 },
+          { tool: "audit", calls: 1 },
+        ],
+        connectSource: {
+          source: { type: "asset", assetId: "<md-or-mdx-asset-id>" },
+        },
+        designedTextBinding: {
+          tool: "update-text",
+          input: {
+            instanceId: "<designedTextInstanceId>",
+            childIndex: 0,
+            text: "<documentVariable>.frontmatter.<exactFieldPath>",
+            mode: "expression",
+            expressionBindingMode: "readwrite",
+          },
+        },
+      },
+      tools: expect.arrayContaining([
+        expect.objectContaining({ name: "update-text" }),
+        expect.objectContaining({ name: "audit" }),
+      ]),
+    });
+    const markdownBlogRecipe = (
+      markdownBlogGuide.structuredContent.data as {
+        recipe: {
+          detailResource: {
+            query: {
+              output: { fields: string[][] };
+            };
+          };
+          detailFragment: { fragment: string };
+          detailPageSettings: {
+            values: {
+              meta: { socialImageUrl: string };
+            };
+          };
+        };
+      }
+    ).recipe;
+    const detailFragment = await parseWebstudioJsxFragment(
+      markdownBlogRecipe.detailFragment.fragment
     );
+    const markdownEmbedInstances = detailFragment.instances.filter(
+      (instance) => instance.component === "MarkdownEmbed"
+    );
+    const markdownCodeProps = detailFragment.props.filter(
+      (prop) =>
+        prop.instanceId === markdownEmbedInstances[0]?.id &&
+        prop.name === "code" &&
+        prop.type === "expression"
+    );
+    expect(markdownEmbedInstances).toHaveLength(1);
+    expect(markdownCodeProps).toHaveLength(1);
+    expect(
+      parseDirectPathExpression(String(markdownCodeProps[0]?.value))?.path
+    ).toEqual(["post", "data", "content", "text"]);
+    expect(
+      markdownBlogRecipe.detailResource.query.output.fields
+    ).toContainEqual(["properties", "featureImage", "src"]);
+    expect(
+      markdownBlogRecipe.detailResource.query.output.fields
+    ).not.toContainEqual(["properties", "featureImage"]);
+    expect(
+      markdownBlogRecipe.detailPageSettings.values.meta.socialImageUrl
+    ).toBe('post.data.properties.featureImage.src ?? ""');
+    expect(
+      (
+        markdownBlogGuide.structuredContent.data as {
+          recipe: Record<string, unknown>;
+        }
+      ).recipe
+    ).not.toHaveProperty("detailCollection");
     expect(authenticatedPageGuide.structuredContent.data).toEqual(
       expect.objectContaining({
-        workflow: expect.arrayContaining([
-          expect.stringContaining("existing auth resources"),
-          expect.stringContaining("Call inspect-auth-context exactly once"),
-          expect.stringContaining(
-            "Do not call get-page-by-path to confirm that /account is absent"
-          ),
-          expect.stringContaining("Do not call meta.index after this guide"),
-          expect.stringContaining("Never place credentials"),
-          expect.stringContaining(
-            "exact terms signed-out, loading, signed-in, and failed-auth"
-          ),
-          expect.stringContaining("not an authorization boundary"),
-          expect.stringContaining(
-            "Use create-page's returned rootInstanceId directly"
-          ),
-          expect.stringContaining(
-            "Do not repeat list-variables when the fixture variable is not referenced"
-          ),
-          expect.stringContaining("copy its fixed request URL exactly"),
-          expect.stringContaining(
-            'url:"/api/auth/session",headers:[],searchParams:[]'
-          ),
-          expect.stringContaining(
-            "Do not call selector-based structural tools"
-          ),
-          expect.stringContaining("one expression-free semantic fragment"),
-          expect.stringContaining("Use that exact fragment verbatim"),
-          expect.stringContaining(
-            "Do not bind that server-only resource into local preview rendering"
-          ),
-          expect.stringContaining("insert-fragment-verified"),
-          expect.stringContaining("Call verify-page-responsive once"),
-          expect.stringContaining(
-            "Do not call preview.start, screenshot, screenshot.responsive, or audit separately"
-          ),
-          expect.stringContaining("bundled audit is the static evidence"),
-        ]),
+        recipe: {
+          createResourceInput: {
+            scopeInstanceId: "<account-root-id>",
+            dataSourceName: "accountSession",
+            resource: {
+              name: "Account session via server",
+              method: "get",
+              url: "/api/auth/session",
+              headers: [],
+              searchParams: [],
+            },
+          },
+        },
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "list-instances" }),
           expect.objectContaining({ name: "insert-fragment-verified" }),
@@ -4746,20 +5194,27 @@ describe("project session mcp adapter", () => {
     );
     expect(fontAssetGuide.structuredContent.data).toEqual(
       expect.objectContaining({
-        workflow: expect.arrayContaining([
-          expect.stringContaining("returned asset ids directly"),
-          expect.stringContaining("without re-uploading"),
-          expect.stringContaining("verify-font-assets exactly once"),
-          expect.stringContaining(
-            "do not call refresh or get-asset separately"
-          ),
-        ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "verify-font-assets" }),
         ]),
       })
     );
     expect(fontAssetGuide.structuredContent.data).not.toHaveProperty("brief");
+    expect(fontAssetGuide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        recipe: {
+          upload: {
+            tool: "upload-assets",
+            input: {
+              assetsDir: ".webstudio/assets",
+              assetFields: ["name", "type", "format", "meta"],
+              excludedAssetFields: ["path"],
+            },
+          },
+          audit: { tool: "audit", input: {} },
+        },
+      })
+    );
     for (const tool of (
       fontAssetGuide.structuredContent.data as {
         tools: Array<Record<string, unknown>>;
@@ -4771,64 +5226,42 @@ describe("project session mcp adapter", () => {
     }
     expect(designInputGuide.structuredContent.data).toEqual(
       expect.objectContaining({
-        workflow: expect.arrayContaining([
-          expect.stringContaining("Interpret the supplied design"),
-          expect.stringContaining(
-            "Before the first mutation, call inspect-design-context exactly once"
-          ),
-          expect.stringContaining(
-            "instead of calling list-pages, list-breakpoints"
-          ),
-          expect.stringContaining("Do not call meta.index"),
-          expect.stringContaining("Call create-page exactly once"),
-          expect.stringContaining(
-            "Do not call list-instances after the first mutation"
-          ),
-          expect.stringContaining("Do not call get-styles"),
-          expect.stringContaining("call verify-page-responsive once"),
-          expect.stringContaining("Call insert-fragment-verified exactly once"),
-          expect.stringContaining('{"pagePath":"/summer"}'),
-          expect.stringContaining("exactly the two supplied viewports"),
-          expect.stringContaining("bundled audit is the static evidence"),
-          expect.stringContaining("parallel design system"),
-          expect.stringContaining("semantic editable structure"),
-          expect.stringContaining("actual breakpoint ranges"),
-          expect.stringContaining(
-            'Represent literal CSS values as {"type":"keyword","value":"..."}'
-          ),
-          expect.stringContaining(
-            "Do not call preview.start, screenshot, screenshot.responsive, or audit separately"
-          ),
-        ]),
+        recipe: {
+          insertion: { includeStyles: false },
+          tokenReuse: {
+            minimumAttachments: 1,
+            source: "inspect-design-context",
+          },
+          responsiveStyles: {
+            tool: "update-styles",
+            breakpointSource: "inspect-design-context",
+            minimumBreakpointSpecificUpdates: 1,
+          },
+        },
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "inspect-design-context" }),
           expect.objectContaining({ name: "components.search" }),
           expect.objectContaining({ name: "insert-fragment-verified" }),
           expect.objectContaining({ name: "attach-design-token" }),
           expect.objectContaining({ name: "verify-page-responsive" }),
-          expect.objectContaining({
-            name: "update-styles",
-            inputSchema: expect.objectContaining({
-              properties: expect.objectContaining({
-                updates: expect.objectContaining({ type: "array" }),
-              }),
-            }),
-          }),
+          expect.objectContaining({ name: "update-styles" }),
         ]),
       })
     );
     expect(craftGuide.structuredContent.data).toEqual(
       expect.objectContaining({
-        workflow: expect.arrayContaining([
-          expect.stringContaining('"scopes":["craft"]'),
-          expect.stringContaining("do not add Craft"),
-          expect.stringContaining("only the first reported"),
-          expect.stringContaining("templateCompatibility"),
-        ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "audit" }),
         ]),
       })
+    );
+
+    const specializedGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Update one font asset reference" },
+    });
+    expect(specializedGuide.structuredContent.data).not.toHaveProperty(
+      "focusedCorrection"
     );
   });
 
@@ -4851,6 +5284,30 @@ describe("project session mcp adapter", () => {
       })
     ).rejects.toThrow(
       "meta.guide input.brief must be a string when provided. Received boolean."
+    );
+    await expect(
+      adapter.callTool({
+        name: "meta.guide",
+        input: { brief: "Audit this page", taskScope: "audit" },
+      })
+    ).rejects.toThrow(
+      "meta.guide input.taskScope must be one of read-only-audit, small-value-or-reference-correction, focused-page-change, visual-change, structural-project-change, project-wide-migration."
+    );
+    await expect(
+      adapter.callTool({
+        name: "meta.guide",
+        input: { brief: "Build a blog", workflow: "blog" },
+      })
+    ).rejects.toThrow(
+      "meta.guide input.workflow must be one of general, markdown-blog, json-ld, collection, expression, authenticated-page, font-assets, design-input, content-block-source, craft."
+    );
+    await expect(
+      adapter.callTool({
+        name: "meta.guide",
+        input: { brief: "Insert a fragment", authoredFragment: "yes" },
+      })
+    ).rejects.toThrow(
+      "meta.guide input.authoredFragment must be a boolean when provided. Received string."
     );
     await expect(
       adapter.callTool({
@@ -4891,6 +5348,40 @@ describe("project session mcp adapter", () => {
       "workflow.next input.phase must be one of discovery, page-creation, dry-run-section, commit-section, coverage-batch, presentation-pass."
     );
     expect(session.initialize).not.toHaveBeenCalled();
+  });
+
+  test("gets metadata for a hidden required template child", async () => {
+    const session = createSession({
+      initialize: vi.fn(),
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(session),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const details = await adapter.callTool({
+      name: "components.get",
+      input: { component: "VimeoPreviewImage" },
+    });
+    const listing = await adapter.callTool({
+      name: "components.list",
+      input: { source: "all" },
+    });
+
+    expect(details.structuredContent.data).toEqual(
+      expect.objectContaining({
+        found: true,
+        component: "VimeoPreviewImage",
+        standaloneInsertable: false,
+        contentModel: expect.objectContaining({ category: "none" }),
+      })
+    );
+    expect(JSON.stringify(listing.structuredContent.data)).not.toContain(
+      "VimeoPreviewImage"
+    );
   });
 
   test("exposes structured component discovery without full resource parsing", async () => {
@@ -5061,6 +5552,10 @@ describe("project session mcp adapter", () => {
       name: "components.get",
       input: { component: "ws:collection" },
     });
+    const blockTemplateDetails = await adapter.callTool({
+      name: "components.get",
+      input: { component: "ws:block-template" },
+    });
     const italicDetails = await adapter.callTool({
       name: "components.get",
       input: { component: "Italic" },
@@ -5098,7 +5593,6 @@ describe("project session mcp adapter", () => {
     expect(session.initialize).not.toHaveBeenCalled();
     expect(summary.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("Default summary is compact"),
         total: expect.any(Number),
         templateCount: expect.any(Number),
         standaloneInsertableCount: expect.any(Number),
@@ -5122,7 +5616,8 @@ describe("project session mcp adapter", () => {
           }),
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Checkbox",
-            jsxElement: "<radix.Checkbox />",
+            jsxName: "RadixCheckbox",
+            jsxElement: "<RadixCheckbox />",
             hasTemplate: true,
             templateRootComponents: [
               "@webstudio-is/sdk-components-react-radix:Label",
@@ -5131,7 +5626,8 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({
             component:
               "@webstudio-is/sdk-components-react-radix:SelectItemIndicator",
-            jsxElement: "<radix.SelectItemIndicator />",
+            jsxName: "SelectItemIndicator",
+            jsxElement: "<SelectItemIndicator />",
             standaloneInsertable: false,
           }),
         ]),
@@ -5139,7 +5635,6 @@ describe("project session mcp adapter", () => {
     );
     expect(componentRegistry.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("compact metadata"),
         source: "all",
         documentType: "html",
         items: expect.arrayContaining([
@@ -5195,13 +5690,8 @@ describe("project session mcp adapter", () => {
     ).toBeLessThan(50_000);
     expect(coveragePlan.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("intentionally compact"),
         checkpoint: expect.objectContaining({
           required: true,
-          instruction: expect.stringContaining(
-            "Stop after this coverage-plan response"
-          ),
-          nextAllowedAfterReport: expect.stringContaining("create the page"),
         }),
         total: expect.any(Number),
         rootCount: expect.any(Number),
@@ -5265,7 +5755,6 @@ describe("project session mcp adapter", () => {
     );
     expect(fullCoveragePlan.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("design-system coverage"),
         documentType: "html",
         total: expect.any(Number),
         rootCount: expect.any(Number),
@@ -5336,7 +5825,6 @@ describe("project session mcp adapter", () => {
     );
     expect(find.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("compact, and paged"),
         count: expect.any(Number),
         totalCount: expect.any(Number),
         pagination: expect.objectContaining({
@@ -5429,9 +5917,6 @@ describe("project session mcp adapter", () => {
         standaloneInsertable: false,
         contentModel: expect.any(Object),
         props: expect.any(Object),
-        usage: expect.stringContaining(
-          "Do not insert this component standalone"
-        ),
       })
     );
     expect(buttonDetails.structuredContent.data).toEqual(
@@ -5462,53 +5947,42 @@ describe("project session mcp adapter", () => {
         templateRootComponents: [
           "@webstudio-is/sdk-components-react-radix:Label",
         ],
-        usage: expect.stringContaining("templateRootComponents"),
       })
     );
     expect(animationGroupDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "@webstudio-is/sdk-components-animation:AnimateChildren",
-        animationUsage: expect.stringContaining(
-          "Animation Group is the root animation controller"
-        ),
         props: expect.objectContaining({
           action: expect.objectContaining({ type: "animationAction" }),
         }),
-        usage: expect.stringContaining('fill:"backwards"'),
       })
     );
     expect(textAnimationDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "@webstudio-is/sdk-components-animation:AnimateText",
-        animationUsage: expect.stringContaining("splitBy"),
         props: expect.objectContaining({
           slidingWindow: expect.objectContaining({ defaultValue: 5 }),
           splitBy: expect.objectContaining({
             options: expect.arrayContaining(["char", "space"]),
           }),
         }),
-        usage: expect.stringContaining("direct child of Animation Group"),
       })
     );
     expect(staggerAnimationDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "@webstudio-is/sdk-components-animation:StaggerAnimation",
-        animationUsage: expect.stringContaining("direct children"),
         props: expect.objectContaining({
           slidingWindow: expect.objectContaining({ defaultValue: 1 }),
         }),
-        usage: expect.stringContaining("slidingWindow 0"),
       })
     );
     expect(videoAnimationDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "@webstudio-is/sdk-components-animation:VideoAnimation",
         hasTemplate: true,
-        animationUsage: expect.stringContaining("Video child template"),
         props: expect.objectContaining({
           timeline: expect.objectContaining({ type: "boolean" }),
         }),
-        usage: expect.stringContaining("seek-friendly videos"),
       })
     );
     expect(selectDetails.structuredContent.data).toEqual(
@@ -5526,9 +6000,6 @@ describe("project session mcp adapter", () => {
               "@webstudio-is/sdk-components-react-radix:SelectItemIndicator",
           },
         ]),
-        usage: expect.stringContaining(
-          "nest them according to templateRequiredEdges"
-        ),
       })
     );
     expect(jsonLdDetails.structuredContent.data).toEqual(
@@ -5545,17 +6016,24 @@ describe("project session mcp adapter", () => {
     expect(collectionDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "ws:collection",
-        description: expect.stringContaining("array or object"),
-        collectionUsage: expect.stringMatching(
-          /insert-collection.*private item\/itemKey parameters.*atomically/
-        ),
-        usage: expect.stringContaining("internal Collection parameter"),
         props: expect.objectContaining({
           data: expect.objectContaining({ type: "json", required: true }),
           item: expect.objectContaining({ type: "string" }),
           itemKey: expect.objectContaining({ type: "string" }),
         }),
       })
+    );
+    expect(collectionDetails.structuredContent.data).not.toHaveProperty(
+      "jsxElement"
+    );
+    expect(blockTemplateDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        component: "ws:block-template",
+        standaloneInsertable: false,
+      })
+    );
+    expect(blockTemplateDetails.structuredContent.data).not.toHaveProperty(
+      "jsxElement"
     );
     expect(selectTemplateDetails.structuredContent.data).toEqual(
       expect.objectContaining({
@@ -5573,6 +6051,697 @@ describe("project session mcp adapter", () => {
         }),
       })
     );
+  });
+
+  test("searches registry-only templates without duplicating component templates", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const formSearch = await adapter.callTool({
+      name: "components.search",
+      input: { brief: "Form (Beta)" },
+    });
+    expect(formSearch.structuredContent.data).toEqual(
+      expect.objectContaining({
+        usage: expect.stringContaining("templates.get"),
+        components: expect.arrayContaining([
+          expect.objectContaining({
+            component: "form",
+            label: "Form (Beta)",
+            template: "template:form",
+            hasTemplate: true,
+            standaloneInsertable: true,
+            insertWith: "form",
+          }),
+        ]),
+      })
+    );
+    const formResults = (
+      formSearch.structuredContent.data as {
+        components: { component: string; template?: string }[];
+      }
+    ).components;
+    expect(formResults[0]?.component).toBe("form");
+    const formResult = formResults.find(
+      ({ template }) => template === "template:form"
+    );
+    expect(formResult).toBeDefined();
+    const formDetails = await adapter.callTool({
+      name: "templates.get",
+      input: { template: formResult?.template },
+    });
+    expect(formDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        found: true,
+        name: "template:form",
+        meta: expect.objectContaining({
+          source: "template",
+          component: "form",
+        }),
+      })
+    );
+    const formIdSearch = await adapter.callTool({
+      name: "components.search",
+      input: { brief: "template:form" },
+    });
+    expect(formIdSearch.structuredContent.data).toEqual(
+      expect.objectContaining({
+        components: expect.arrayContaining([
+          expect.objectContaining({ template: "template:form" }),
+        ]),
+      })
+    );
+    const broadFormSearch = await adapter.callTool({
+      name: "components.search",
+      input: { brief: "form", limit: 25 },
+    });
+    expect(broadFormSearch.structuredContent.data).toEqual(
+      expect.objectContaining({
+        components: expect.arrayContaining([
+          expect.objectContaining({ template: "template:form" }),
+        ]),
+      })
+    );
+
+    const selectSearch = await adapter.callTool({
+      name: "components.search",
+      input: { brief: "radix select", limit: 25 },
+    });
+    const selectComponents = (
+      selectSearch.structuredContent.data as {
+        components: { component: string }[];
+      }
+    ).components;
+    expect(
+      selectComponents.filter(
+        ({ component }) =>
+          component === "@webstudio-is/sdk-components-react-radix:Select"
+      )
+    ).toHaveLength(1);
+  });
+
+  test("omits the deprecated Webhook Form from MCP discovery", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const search = await adapter.callTool({
+      name: "components.search",
+      input: { brief: "form", limit: 25 },
+    });
+    const matches = (
+      search.structuredContent.data as {
+        components: { component: string; template?: string }[];
+      }
+    ).components;
+    expect(matches).toContainEqual(
+      expect.objectContaining({ template: "template:form" })
+    );
+    expect(matches.some(({ component }) => component === "WebhookForm")).toBe(
+      false
+    );
+
+    const formResult = matches.find(
+      ({ template }) => template === "template:form"
+    );
+    expect(formResult?.component).toBe("form");
+    for (const component of [formResult!.component, "ResourceForm"]) {
+      const formDetails = await adapter.callTool({
+        name: "components.get",
+        input: { component },
+      });
+      expect(formDetails.structuredContent.data).toEqual(
+        expect.objectContaining({
+          found: true,
+          component: "ResourceForm",
+          props: expect.objectContaining({ action: expect.any(Object) }),
+        })
+      );
+    }
+    const formTemplate = await adapter.callTool({
+      name: "templates.get",
+      input: { template: formResult!.template },
+    });
+    expect(formTemplate.structuredContent.data).toEqual(
+      expect.objectContaining({ found: true })
+    );
+    const formTemplateByRoot = await adapter.callTool({
+      name: "templates.get",
+      input: { component: "ResourceForm" },
+    });
+    expect(formTemplateByRoot.structuredContent.data).toEqual(
+      expect.objectContaining({
+        found: true,
+        name: "template:form",
+        meta: expect.objectContaining({ component: "form" }),
+      })
+    );
+
+    const details = await adapter.callTool({
+      name: "components.get",
+      input: { component: "WebhookForm" },
+    });
+    const template = await adapter.callTool({
+      name: "templates.get",
+      input: { component: "WebhookForm" },
+    });
+    expect(details.structuredContent.data).toEqual(
+      expect.objectContaining({ found: false })
+    );
+    expect(template.structuredContent.data).toEqual(
+      expect.objectContaining({ found: false })
+    );
+
+    for (const name of ["components.list", "templates.list"] as const) {
+      let offset = 0;
+      do {
+        const result = await adapter.callTool({
+          name,
+          input: { offset, limit: 100 },
+        });
+        const data = result.structuredContent.data as {
+          items: { meta: { component: string } }[];
+          pagination: { nextOffset?: number };
+        };
+        expect(
+          data.items.every(({ meta }) => meta.component !== "WebhookForm")
+        ).toBe(true);
+        offset = data.pagination.nextOffset ?? 0;
+      } while (offset !== 0);
+    }
+
+    let cursor: string | undefined;
+    do {
+      const query = new URLSearchParams({ limit: "100", verbose: "true" });
+      if (cursor !== undefined) {
+        query.set("cursor", cursor);
+      }
+      const resource = await adapter.readResource({
+        uri: `webstudio://project/components?${query}`,
+      });
+      const data = JSON.parse(resource.contents[0]?.text ?? "{}") as {
+        components: { component: string }[];
+        nextCursor?: string;
+      };
+      expect(
+        data.components.some(({ component }) => component === "WebhookForm")
+      ).toBe(false);
+      cursor = data.nextCursor;
+    } while (cursor !== undefined);
+  });
+
+  test("rejects new deprecated Webhook Forms through MCP insertion paths", async () => {
+    const executeOperation = createExecuteOperation();
+    const operations = [
+      ...publicMcpOperations,
+      ...(["wrap-instance", "convert-instance"] as const).map((command) =>
+        publicOperation({
+          command,
+          id: `instances.${command}`,
+          description: command,
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({
+              instanceSelector: z.array(z.string()),
+              component: z.string(),
+            })
+          ),
+          writeNamespaces: ["instances"],
+        })
+      ),
+      publicOperation({
+        command: "update-text-tree",
+        id: "instances.updateTextTree",
+        description: "Update text tree",
+        method: "mutation",
+        permit: "edit",
+        inputSchema: getTestInputSchema(
+          z.object({ rootInstanceId: z.string(), instances: z.array(z.any()) })
+        ),
+        writeNamespaces: ["instances"],
+      }),
+      publicOperation({
+        command: "integrate-runtime-ui",
+        id: "runtimeUi.integrate",
+        description: "Integrate runtime UI",
+        method: "mutation",
+        permit: "edit",
+        inputSchema: getTestInputSchema(
+          z.object({ parentInstanceId: z.string(), structure: z.any() })
+        ),
+        writeNamespaces: ["instances"],
+      }),
+      ...(
+        ["insert-component", "insert-fragment", "insert-collection"] as const
+      ).map((command) =>
+        publicOperation({
+          command,
+          id: `instances.${command}`,
+          description: command,
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({
+              parentInstanceId: z.string(),
+              component: z.string().optional(),
+              fragment: z.any().optional(),
+              itemFragment: z.any().optional(),
+              data: z.any().optional(),
+            })
+          ),
+          writeNamespaces: ["instances"],
+        })
+      ),
+      publicOperation({
+        command: "verify-bindings",
+        id: "project.verifyBindings",
+        description: "verify-bindings",
+      }),
+    ];
+    const adapter = createProjectSessionMcpCore({
+      operations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "insert-component",
+        input: { parentInstanceId: "body", component: "WebhookForm" },
+      })
+    ).rejects.toThrow("Webhook Form is deprecated");
+    for (const name of ["wrap-instance", "convert-instance"] as const) {
+      await expect(
+        adapter.callTool({
+          name,
+          input: {
+            instanceSelector: ["instance", "body"],
+            component: "WebhookForm",
+          },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
+    for (const id of ["new-form", "existing-rich-text-child"]) {
+      await expect(
+        adapter.callTool({
+          name: "update-text-tree",
+          input: {
+            rootInstanceId: "rich-text-root",
+            instances: [
+              {
+                type: "instance",
+                id,
+                component: "WebhookForm",
+                children: [],
+              },
+            ],
+          },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
+    const deprecatedFormFragment =
+      await parseWebstudioJsxFragment("<WebhookForm />");
+    for (const structure of [
+      { type: "fragment", fragment: deprecatedFormFragment },
+      {
+        type: "collection",
+        data: { type: "json", value: [{ name: "example" }] },
+        itemFragment: deprecatedFormFragment,
+      },
+    ]) {
+      await expect(
+        adapter.callTool({
+          name: "integrate-runtime-ui",
+          input: { parentInstanceId: "body", structure },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
+    for (const name of [
+      "insert-fragment",
+      "insert-fragment-verified",
+    ] as const) {
+      await expect(
+        adapter.callTool({
+          name,
+          input: {
+            parentInstanceId: "body",
+            ...(name === "insert-fragment-verified"
+              ? { pagePath: "/contact" }
+              : {}),
+            fragment: "<WebhookForm />",
+          },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
+    await expect(
+      adapter.callTool({
+        name: "insert-collection",
+        input: {
+          parentInstanceId: "body",
+          data: { type: "json", value: [{ name: "example" }] },
+          itemFragment: "<WebhookForm />",
+        },
+      })
+    ).rejects.toThrow("Webhook Form is deprecated");
+    expect(executeOperation).not.toHaveBeenCalled();
+  });
+
+  test("rejects cloning a saved deprecated Webhook Form subtree through MCP", async () => {
+    const executeOperation = createExecuteOperation(async ({ command }) => {
+      if (command === "list-instances") {
+        return createEnvelope({
+          operationId: "instances.list",
+          result: { instances: [{ id: "legacy", component: "WebhookForm" }] },
+        });
+      }
+      throw new Error(`Unexpected mutation: ${command}`);
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: [
+        ...publicMcpOperations,
+        publicOperation({
+          command: "duplicate-instance",
+          id: "instances.duplicateAfterItself",
+          description: "Duplicate instance",
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({
+              sourceInstanceId: z.string(),
+              parentInstanceId: z.string(),
+            })
+          ),
+          writeNamespaces: ["instances"],
+        }),
+      ],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    for (const name of ["clone-instance", "duplicate-instance"] as const) {
+      await expect(
+        adapter.callTool({
+          name,
+          input: {
+            sourceInstanceId: "saved-form",
+            ...(name === "clone-instance"
+              ? { targetParentInstanceId: "body" }
+              : { parentInstanceId: "body" }),
+          },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
+    expect(executeOperation).toHaveBeenNthCalledWith(1, {
+      command: "list-instances",
+      input: {
+        rootInstanceId: "saved-form",
+        component: "WebhookForm",
+        limit: 1,
+      },
+      dryRun: false,
+    });
+    expect(executeOperation).toHaveBeenNthCalledWith(2, {
+      command: "list-instances",
+      input: {
+        rootInstanceId: "saved-form",
+        component: "WebhookForm",
+        limit: 1,
+      },
+      dryRun: false,
+    });
+    expect(executeOperation).toHaveBeenCalledTimes(2);
+  });
+
+  test("keeps Editor page-template copying available while guarding other deprecated-form copies", async () => {
+    const inputs = [
+      ["insert-mdx-text", { parentInstanceId: "body", source: "<Contact />" }],
+      ["duplicate-page", { projectId: "project", pageId: "page" }],
+      [
+        "duplicate-page-template",
+        { projectId: "project", templateId: "template" },
+      ],
+      [
+        "create-page-from-template",
+        {
+          projectId: "project",
+          templateId: "template",
+          name: "Contact copy",
+          path: "/contact-copy",
+        },
+      ],
+      ["duplicate-folder", { projectId: "project", folderId: "folder" }],
+      ["insert-page-transfer-item", { projectId: "project" }],
+    ] as const;
+    const operations = [
+      ...publicMcpOperations,
+      ...inputs.map(([command]) =>
+        publicOperation({
+          command,
+          id: `test.${command}`,
+          description: command,
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({
+              projectId: z.string().optional(),
+              parentInstanceId: z.string().optional(),
+              source: z.string().optional(),
+              pageId: z.string().optional(),
+              templateId: z.string().optional(),
+              folderId: z.string().optional(),
+              name: z.string().optional(),
+              path: z.string().optional(),
+            })
+          ),
+          writeNamespaces: ["pages", "instances"],
+        })
+      ),
+    ];
+    const executeOperation = createExecuteOperation(
+      async ({ command, dryRun }) => {
+        if (command === "create-page-from-template" && dryRun === false) {
+          return createEnvelope({
+            operationId: command,
+            result: { pageId: "copied-page" },
+          });
+        }
+        if (dryRun === false) {
+          throw new Error(`Unexpected committed copy: ${command}`);
+        }
+        return createEnvelope({
+          operationId: command,
+          source: "dry-run",
+          result: {},
+          transaction: {
+            id: `planned-${command}`,
+            payload: [
+              {
+                namespace: "instances",
+                patches: [
+                  {
+                    op: "add",
+                    path: ["copied-form"],
+                    value: { id: "copied-form", component: "WebhookForm" },
+                  },
+                ],
+              },
+            ],
+          },
+        });
+      }
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    for (const [name, input] of inputs) {
+      if (name === "create-page-from-template") {
+        const result = await adapter.callTool({ name, input });
+        expect(result.structuredContent.data).toEqual({
+          pageId: "copied-page",
+        });
+        continue;
+      }
+      await expect(adapter.callTool({ name, input })).rejects.toThrow(
+        "Webhook Form is deprecated"
+      );
+    }
+    expect(executeOperation).toHaveBeenCalledTimes(inputs.length);
+    expect(
+      vi
+        .mocked(executeOperation)
+        .mock.calls.every(
+          ([call]) =>
+            call.dryRun === (call.command !== "create-page-from-template")
+        )
+    ).toBe(true);
+  });
+
+  test("rejects a copied deprecated Webhook Form in a root Map replacement", async () => {
+    const executeOperation = createExecuteOperation(async ({ dryRun }) => {
+      if (dryRun === false) {
+        throw new Error("Unexpected committed copy");
+      }
+      return createEnvelope({
+        operationId: "pages.duplicate",
+        source: "dry-run",
+        result: {},
+        transaction: {
+          id: "planned-page-copy",
+          payload: [
+            {
+              namespace: "instances",
+              patches: [
+                {
+                  op: "replace",
+                  path: [],
+                  value: new Map([
+                    [
+                      "copied-form",
+                      { id: "copied-form", component: "WebhookForm" },
+                    ],
+                  ]),
+                },
+              ],
+            },
+          ],
+        },
+      });
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: [
+        ...publicMcpOperations,
+        publicOperation({
+          command: "duplicate-page",
+          id: "pages.duplicate",
+          description: "Duplicate page",
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({ projectId: z.string(), pageId: z.string() })
+          ),
+          writeNamespaces: ["pages", "instances"],
+        }),
+      ],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "duplicate-page",
+        input: { projectId: "project", pageId: "source-page" },
+      })
+    ).rejects.toThrow("Webhook Form is deprecated");
+    expect(executeOperation).toHaveBeenCalledTimes(1);
+  });
+
+  test("keeps copying pages without deprecated Webhook Forms available through MCP", async () => {
+    const executeOperation = createExecuteOperation(async ({ dryRun }) =>
+      createEnvelope({
+        operationId: "pages.duplicate",
+        source: dryRun ? "dry-run" : "remote",
+        result: { pageId: "copied-page" },
+        ...(dryRun
+          ? {
+              transaction: {
+                id: "planned-page-copy",
+                payload: [
+                  {
+                    namespace: "instances" as const,
+                    patches: [
+                      {
+                        op: "add" as const,
+                        path: ["copied-box"],
+                        value: { id: "copied-box", component: "Box" },
+                      },
+                    ],
+                  },
+                ],
+              },
+            }
+          : {}),
+      })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: [
+        ...publicMcpOperations,
+        publicOperation({
+          command: "duplicate-page",
+          id: "pages.duplicate",
+          description: "Duplicate page",
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({ projectId: z.string(), pageId: z.string() })
+          ),
+          writeNamespaces: ["pages", "instances"],
+        }),
+      ],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    const result = await adapter.callTool({
+      name: "duplicate-page",
+      input: { projectId: "project", pageId: "source-page" },
+    });
+    expect(result.structuredContent.data).toEqual({ pageId: "copied-page" });
+    expect(
+      vi.mocked(executeOperation).mock.calls.map(([call]) => call.dryRun)
+    ).toEqual([true, false]);
+  });
+
+  test("rejects raw MCP patches that create a deprecated Webhook Form", async () => {
+    const executeOperation = createExecuteOperation();
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    for (const patch of [
+      {
+        op: "add",
+        path: ["legacy-form"],
+        value: { id: "legacy-form", component: "WebhookForm" },
+      },
+      {
+        op: "replace",
+        path: ["existing", "component"],
+        value: "WebhookForm",
+      },
+      {
+        op: "replace",
+        path: [],
+        value: {
+          "legacy-form": { id: "legacy-form", component: "WebhookForm" },
+        },
+      },
+    ]) {
+      await expect(
+        adapter.callTool({
+          name: "apply-patch",
+          input: {
+            transactions: [
+              {
+                id: "legacy-form-insert",
+                payload: [{ namespace: "instances", patches: [patch] }],
+              },
+            ],
+          },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
+    expect(executeOperation).not.toHaveBeenCalled();
   });
 
   test("hides explicit hidden component metas even when templates are visible", async () => {
@@ -5619,6 +6788,10 @@ describe("project session mcp adapter", () => {
         name: "components.find",
         input: { brief: "ConcealedWidget" },
       });
+      const search = await adapter.callTool({
+        name: "components.search",
+        input: { brief: "ConcealedWidget" },
+      });
       const details = await adapter.callTool({
         name: "components.get",
         input: { component },
@@ -5632,6 +6805,12 @@ describe("project session mcp adapter", () => {
         })
       );
       expect(find.structuredContent.data).toEqual(
+        expect.objectContaining({
+          components: [],
+          count: 0,
+        })
+      );
+      expect(search.structuredContent.data).toEqual(
         expect.objectContaining({
           components: [],
           count: 0,
@@ -5707,25 +6886,25 @@ describe("project session mcp adapter", () => {
         covered: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Switch",
-            jsxElement: "<radix.Switch />",
+            jsxElement: "<Switch />",
           }),
         ]),
         missing: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Select",
-            jsxElement: "<radix.Select />",
+            jsxElement: "<RadixSelect />",
           }),
         ]),
         missingRoots: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Select",
-            jsxElement: "<radix.Select />",
+            jsxElement: "<RadixSelect />",
           }),
         ]),
         missingParts: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:AccordionItem",
-            jsxElement: "<radix.AccordionItem />",
+            jsxElement: "<AccordionItem />",
           }),
         ]),
       })
@@ -5961,22 +7140,11 @@ describe("project session mcp adapter", () => {
             result: { instances },
           });
         }
-        if (command === "insert-fragment") {
-          const fragment =
-            isTestRecord(input) && isTestRecord(input.fragment)
-              ? input.fragment
-              : undefined;
+        if (command === "insert-component") {
           expect(input).toEqual(
             expect.objectContaining({
               parentInstanceId: "animation-group",
-              fragment: expect.objectContaining({
-                instances: expect.arrayContaining([
-                  expect.objectContaining({
-                    component:
-                      "@webstudio-is/sdk-components-animation:AnimateText",
-                  }),
-                ]),
-              }),
+              component: "@webstudio-is/sdk-components-animation:AnimateText",
             })
           );
           instances.push({
@@ -5985,16 +7153,14 @@ describe("project session mcp adapter", () => {
             depth: 2,
           });
           return createEnvelope({
-            operationId: "instances.insertFragment",
+            operationId: "instances.insertComponent",
             result: {
-              rootInstanceIds: ["animate-text"],
               instanceIds: ["animate-text"],
               parentInstanceId:
                 isTestRecord(input) &&
                 typeof input.parentInstanceId === "string"
                   ? input.parentInstanceId
                   : undefined,
-              fragment,
             },
             state: { committed: true, freshness: {} },
             version: 2,
@@ -6019,16 +7185,10 @@ describe("project session mcp adapter", () => {
     });
 
     expect(executeOperation).toHaveBeenNthCalledWith(2, {
-      command: "insert-fragment",
+      command: "insert-component",
       input: expect.objectContaining({
         parentInstanceId: "animation-group",
-        fragment: expect.objectContaining({
-          instances: expect.arrayContaining([
-            expect.objectContaining({
-              component: "@webstudio-is/sdk-components-animation:AnimateText",
-            }),
-          ]),
-        }),
+        component: "@webstudio-is/sdk-components-animation:AnimateText",
       }),
       dryRun: false,
     });
@@ -6036,7 +7196,7 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         inserted: expect.objectContaining({
           component: "@webstudio-is/sdk-components-animation:AnimateText",
-          mode: "fragment",
+          mode: "component",
         }),
         parentInstanceId: "animation-group",
       })
@@ -6129,6 +7289,7 @@ describe("project session mcp adapter", () => {
         browser: "auto",
         waitUntil: "networkidle",
         waitForSelector: "#ready",
+        waitForFonts: false,
         waitForTimeout: 500,
         timeout: 10_000,
       },
@@ -6154,6 +7315,7 @@ describe("project session mcp adapter", () => {
         browserPath: undefined,
         waitUntil: "networkidle",
         waitForSelector: "#ready",
+        waitForFonts: false,
         waitForTimeout: 500,
         timeout: 10_000,
       },
@@ -6183,6 +7345,7 @@ describe("project session mcp adapter", () => {
         ],
         fullPage: true,
         source: "session",
+        waitForFonts: false,
       },
     });
 
@@ -6193,6 +7356,7 @@ describe("project session mcp adapter", () => {
           viewport: { width: 1440, height: 900 },
           fullPage: true,
           source: "session",
+          waitForFonts: false,
         }),
         expect.objectContaining({
           path: "/pricing",
@@ -6261,7 +7425,7 @@ describe("project session mcp adapter", () => {
     const index = await adapter.callTool({ name: "meta.index" });
     const guide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "visual verification" },
+      input: { brief: "visual verification", taskScope: "visual-change" },
     });
 
     expect(index.structuredContent.data).toEqual(
@@ -6271,6 +7435,9 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    expect(
+      (index.structuredContent.data as { visionLoop: string[] }).visionLoop[0]
+    ).toBe(testMcpGuidance.getVisionVerificationLoop({ includeDiff: true })[0]);
     expect(guide.structuredContent.data).toEqual(
       expect.objectContaining({
         workflow: expect.arrayContaining([
@@ -6414,6 +7581,19 @@ describe("project session mcp adapter", () => {
     ).rejects.toThrow("screenshot requires url or path.");
   });
 
+  test("declares the screenshot target requirement in its MCP schema", () => {
+    const screenshotTool = listProjectSessionMcpTools(publicMcpOperations, {
+      includeScreenshot: true,
+    }).find((tool) => tool.name === "screenshot");
+
+    expect(screenshotTool?.inputSchema).toMatchObject({
+      oneOf: expect.arrayContaining([
+        expect.objectContaining({ required: ["url"] }),
+        expect.objectContaining({ required: ["path"] }),
+      ]),
+    });
+  });
+
   test("rejects ambiguous screenshot base URL input", async () => {
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
@@ -6460,11 +7640,11 @@ describe("project session mcp adapter", () => {
         input: {
           baseUrl: "http://127.0.0.1:5177",
           path: "/design-system",
-          port: 5173,
+          source: "session",
         },
       })
     ).rejects.toThrow(
-      "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, source, mode, or imageDomains."
+      "screenshot baseUrl uses an existing preview/site and cannot be combined with source, mode, or imageDomains."
     );
   });
 
@@ -6717,22 +7897,18 @@ describe("project session mcp adapter", () => {
 
     const started = await adapter.callTool({
       name: "preview.start",
-      input: { host: "127.0.0.1", port: 5173, source: "session" },
+      input: { source: "session" },
     });
     const status = await adapter.callTool({ name: "preview.status" });
     const stopped = await adapter.callTool({ name: "preview.stop" });
     const index = await adapter.callTool({ name: "meta.index" });
     const guide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "visual verification" },
+      input: { brief: "visual verification", taskScope: "visual-change" },
     });
 
     expect(startPreview).toHaveBeenCalledWith(
-      {
-        host: "127.0.0.1",
-        port: 5173,
-        source: "session",
-      },
+      { source: "session" },
       expect.objectContaining({ report: expect.any(Function) })
     );
     expect(getPreviewStatus).toHaveBeenCalledOnce();
@@ -6818,28 +7994,360 @@ describe("project session mcp adapter", () => {
     );
   });
 
-  test("rejects invalid preview ports", async () => {
+  test("exposes Preview form submission only with a handler and preserves repeated inputs", async () => {
+    const submitPreviewForm = vi.fn(async () => ({
+      status: "submitted" as const,
+      formState: "success",
+      results: [],
+      errors: [],
+      exchanges: [],
+      pageUrl: "http://127.0.0.1:5173/contact",
+      correlationId: "form-1",
+    }));
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
       startPreview: vi.fn(),
       getPreviewStatus: vi.fn(),
+      submitPreviewForm,
     });
-
-    await expect(
-      adapter.callTool({
-        name: "preview.start",
-        input: { port: 70000 },
-      })
-    ).rejects.toThrow("preview port must be an integer between 0 and 65535.");
+    expect(adapter.listTools().map((tool) => tool.name)).toContain(
+      "preview.submit-form"
+    );
+    const result = await adapter.callTool({
+      name: "preview.submit-form",
+      input: {
+        path: "/contact",
+        selector: "form",
+        values: [
+          { name: "tag", value: "first" },
+          { name: "tag", value: "second" },
+        ],
+        submitter: "button[type=submit]",
+      },
+    });
+    expect(submitPreviewForm).toHaveBeenCalledWith({
+      path: "/contact",
+      selector: "form",
+      values: [
+        { name: "tag", value: "first" },
+        { name: "tag", value: "second" },
+      ],
+      submitter: "button[type=submit]",
+    });
+    expect(result.structuredContent.data).toMatchObject({
+      status: "submitted",
+    });
   });
 
-  test("allows preview hosts to allocate a port", async () => {
+  test("exposes server-side Form simulation only with a handler and preserves synthetic repeated fields", async () => {
+    const simulateForm = vi.fn(async () => ({
+      success: true,
+      status: 200,
+      results: [{ status: 201, resourceId: "receiver" }],
+      errors: [],
+    }));
+    const withoutHandler = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+    expect(withoutHandler.listTools().map((tool) => tool.name)).not.toContain(
+      "forms.simulate-submission"
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      simulateForm,
+    });
+    expect(adapter.listTools().map((tool) => tool.name)).toContain(
+      "forms.simulate-submission"
+    );
+    const input = {
+      path: "/contact",
+      siteOrigin: "https://site.example",
+      formId: "saved-form",
+      values: [
+        { name: "tag", value: "first" },
+        { name: "tag", value: "second" },
+      ],
+    };
+    const result = await adapter.callTool({
+      name: "forms.simulate-submission",
+      input,
+    });
+    expect(simulateForm).toHaveBeenCalledWith(input);
+    expect(result.structuredContent.data).toMatchObject({
+      success: true,
+      results: [{ resourceId: "receiver", status: 201 }],
+    });
+  });
+
+  test("uses proportional verification for small value corrections", async () => {
+    const searchOperation = publicOperation({
+      command: "search-project",
+      id: "project.search",
+      description: "Search project data",
+      inputSchema: getTestInputSchema(
+        z.object({
+          query: z.string(),
+          namespaces: z.array(z.string()).optional(),
+        })
+      ),
+      readNamespaces: ["pages", "instances", "props"],
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: [...publicMcpOperations, searchOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(),
+      startPreview: vi.fn(),
+      getPreviewStatus: vi.fn(),
+      guidance: testMcpGuidance,
+    });
+
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief: "Correct one asset reference on the pricing page",
+        taskScope: "small-value-or-reference-correction",
+      },
+    });
+
+    expect(guide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        taskScope: "small-value-or-reference-correction",
+        focusedCorrection: {
+          search: {
+            tool: "search-project",
+            requiredInput: ["query"],
+            calls: 1,
+          },
+          edit: { strategy: "smallest-semantic-mutation" },
+          verify: { strategy: "targeted-assertions" },
+        },
+        tools: expect.arrayContaining([
+          expect.objectContaining({
+            name: "search-project",
+            requiredInputFields: ["query"],
+            inputFields: expect.arrayContaining(["query", "namespaces"]),
+          }),
+        ]),
+        visionLoop: [],
+        slowOperation: expect.objectContaining({
+          confirmationRequired: true,
+          operation: "full production preview",
+        }),
+      })
+    );
+  });
+
+  test("keeps explicit read-only custom-code audits read-only", async () => {
+    const readOnlyOperations = [
+      ...publicMcpOperations,
+      publicOperation({
+        command: "search-project",
+        id: "project.search",
+        description: "Search project data for known values",
+      }),
+      publicOperation({
+        command: "inspect-instance",
+        id: "instances.inspect",
+        description: "Inspect one instance and its props",
+      }),
+      publicOperation({
+        command: "get-project-settings",
+        id: "project.getSettings",
+        description: "Read project settings",
+      }),
+      publicOperation({
+        command: "snapshot",
+        id: "project.snapshot",
+        description: "Read a bounded project snapshot",
+      }),
+    ];
+    const adapter = createProjectSessionMcpCore({
+      operations: readOnlyOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      guidance: testMcpGuidance,
+    });
+
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief:
+          "Perform a read-only custom-code consolidation audit against the provided design for this existing page. Return an ordered inventory of HTML Embeds, CSS, scripts, selectors, and runtime dependencies. Do not mutate, create, insert, update, delete, rename, reorder, publish, or change project settings.",
+        taskScope: "read-only-audit",
+      },
+    });
+    const data = guide.structuredContent.data as {
+      taskScope: string;
+      routing: Record<string, unknown>;
+      constraints: Record<string, unknown>;
+      tools: Array<{ name: string }>;
+    };
+    const toolNames = data.tools.map(({ name }) => name);
+    const mutationToolNames = new Set(
+      readOnlyOperations
+        .filter(({ method }) => method === "mutation")
+        .map(({ command }) => command)
+    );
+
+    expect(data.taskScope).toBe("read-only-audit");
+    expect(data.routing).toEqual({
+      matchedBy: "explicit-read-only",
+      workflow: "read-only-discovery",
+      broadContextTools: [],
+      authoredFragment: false,
+    });
+    expect(data.constraints).toEqual({
+      readOnly: true,
+      mutationToolsExcluded: true,
+    });
+    expect(toolNames).toEqual(
+      expect.arrayContaining([
+        "search-project",
+        "list-instances",
+        "inspect-instance",
+        "get-project-settings",
+        "snapshot",
+      ])
+    );
+    expect(toolNames.filter((name) => mutationToolNames.has(name))).toEqual([]);
+    expect(
+      data.tools.every(({ name }) => {
+        const tool = adapter
+          .listTools()
+          .find((candidate) => candidate.name === name);
+        return (
+          tool !== undefined &&
+          tool.annotations.method === "query" &&
+          isReadOnlyProjectSessionMcpTool(tool)
+        );
+      })
+    ).toBe(true);
+    expect(
+      toolNames.filter((name) =>
+        [
+          "inspect-design-context",
+          "insert-fragment-verified",
+          "attach-design-token",
+          "update-styles",
+          "verify-page-responsive",
+          "preview.status",
+          "screenshot.diff",
+        ].includes(name)
+      )
+    ).toEqual([]);
+  });
+
+  test("does not infer task scope from brief prose", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief:
+          "Perform a read-only custom-code consolidation audit against the provided design for this existing page. Return an ordered inventory of HTML Embeds, CSS, scripts, selectors, and runtime dependencies. Do not mutate, create, insert, update, delete, rename, reorder, publish, or change project settings.",
+      },
+    });
+
+    expect(guide.structuredContent.data).toMatchObject({
+      taskScope: "focused-page-change",
+      routing: { workflow: "general" },
+    });
+    expect(guide.structuredContent.data).not.toHaveProperty("constraints");
+  });
+
+  test("routes an authored component insertion without broad discovery", async () => {
+    const operations = [
+      ...publicMcpOperations,
+      publicOperation({
+        command: "create-variable",
+        id: "variables.create",
+        description: "Create a variable in a known container",
+      }),
+      publicOperation({
+        command: "bind-props",
+        id: "props.bind",
+        description: "Bind component interactions to variables",
+      }),
+    ];
+    const adapter = createProjectSessionMcpCore({
+      operations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      guidance: testMcpGuidance,
+    });
+
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief:
+          "Insert an authored timer component with insert-fragment into the known container. Create variables and bind its interactions while keeping the existing design.",
+        taskScope: "structural-project-change",
+        authoredFragment: true,
+      },
+    });
+    const data = guide.structuredContent.data as {
+      taskScope: string;
+      routing?: Record<string, unknown>;
+      tools: Array<{ name: string }>;
+    };
+    const toolNames = data.tools.map(({ name }) => name);
+
+    expect(data.taskScope).toBe("structural-project-change");
+    expect(data.routing).toEqual({
+      matchedBy: "general-tool-ranking",
+      workflow: "general",
+      broadContextTools: [],
+      authoredFragment: true,
+    });
+    expect(toolNames).toEqual(
+      expect.arrayContaining([
+        "insert-fragment",
+        "create-variable",
+        "bind-props",
+      ])
+    );
+    expect(toolNames).not.toContain("inspect-design-context");
+    expect(toolNames).not.toContain("components.search");
+  });
+
+  test("does not infer authored fragment routing from brief prose", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief: "Insert an authored fragment and reuse design system tokens",
+      },
+    });
+
+    expect(guide.structuredContent.data).toMatchObject({
+      routing: {
+        workflow: "general",
+        authoredFragment: false,
+      },
+    });
+  });
+
+  test("preflights production preview before starting slow work", async () => {
     const startPreview = vi.fn(async () => ({
       url: "http://127.0.0.1:5173/",
       running: true,
-      mode: "iterative" as const,
+      mode: "production" as const,
     }));
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
@@ -6849,29 +8357,104 @@ describe("project session mcp adapter", () => {
       getPreviewStatus: vi.fn(),
     });
 
-    await adapter.callTool({ name: "preview.start", input: { port: 0 } });
+    const result = await adapter.callTool({
+      name: "preview.start",
+      input: { mode: "production", maxDurationMs: 10_000 },
+    });
 
-    expect(startPreview).toHaveBeenCalledWith(
-      expect.objectContaining({ port: 0 }),
-      expect.objectContaining({ report: expect.any(Function) })
+    expect(startPreview).not.toHaveBeenCalled();
+    expect(result.structuredContent.data).toEqual(
+      expect.objectContaining({
+        confirmationRequired: true,
+        operation: "production preview build",
+        estimatedDuration: "30–60 seconds",
+        confirmationToken: expect.any(String),
+        fasterAlternative: expect.objectContaining({
+          operation: "targeted route validation",
+        }),
+      })
+    );
+
+    const confirmationToken = (
+      result.structuredContent.data as { confirmationToken: string }
+    ).confirmationToken;
+    const confirmed = await adapter.callTool({
+      name: "preview.start",
+      input: {
+        mode: "production",
+        maxDurationMs: 10_000,
+        confirmSlow: true,
+        confirmationToken,
+      },
+    });
+
+    expect(startPreview).toHaveBeenCalledOnce();
+    expect(confirmed.structuredContent.data).toEqual(
+      expect.objectContaining({ running: true, mode: "production" })
     );
   });
 
-  test("rejects empty preview host", async () => {
+  test.each([{ port: 5173 }, { host: "127.0.0.1" }])(
+    "keeps preview network binding under runner control for %o",
+    async (input) => {
+      const startPreview = vi.fn();
+      const adapter = createProjectSessionMcpCore({
+        operations: publicMcpOperations,
+        createProjectSession: createSessionFactory(),
+        executeOperation: createExecuteOperation(),
+        startPreview,
+        getPreviewStatus: vi.fn(),
+      });
+
+      await expect(
+        adapter.callTool({ name: "preview.start", input })
+      ).rejects.toThrow(
+        "preview.start does not accept host or port. The MCP runner selects an available local address and returns its URL."
+      );
+      expect(startPreview).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each([{ port: 5173 }, { host: "127.0.0.1" }])(
+    "keeps screenshot network binding under runner control for %o",
+    async (networkInput) => {
+      const captureScreenshot = vi.fn();
+      const adapter = createProjectSessionMcpCore({
+        operations: publicMcpOperations,
+        createProjectSession: createSessionFactory(),
+        executeOperation: createExecuteOperation(),
+        captureScreenshot,
+      });
+
+      await expect(
+        adapter.callTool({
+          name: "screenshot",
+          input: { path: "/", ...networkInput },
+        })
+      ).rejects.toThrow(
+        "screenshot does not accept host or port. The MCP runner selects an available local address and returns its URL."
+      );
+      expect(captureScreenshot).not.toHaveBeenCalled();
+    }
+  );
+
+  test("does not advertise MCP network binding fields", () => {
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(),
       startPreview: vi.fn(),
       getPreviewStatus: vi.fn(),
     });
 
-    await expect(
-      adapter.callTool({
-        name: "preview.start",
-        input: { host: "" },
-      })
-    ).rejects.toThrow("preview host must not be empty.");
+    for (const name of ["preview.start", "screenshot"]) {
+      const tool = adapter
+        .listTools()
+        .find((candidate) => candidate.name === name);
+      expect(tool?.inputSchema.properties).not.toHaveProperty("host");
+      expect(tool?.inputSchema.properties).not.toHaveProperty("port");
+    }
   });
 
   test("uses discovery tools when meta guide has no brief", async () => {
@@ -6936,7 +8519,10 @@ describe("project session mcp adapter", () => {
     );
     const guide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Create an authenticated page" },
+      input: {
+        brief: "Create an authenticated page",
+        workflow: "authenticated-page",
+      },
     });
     const guideToolNames = (
       guide.structuredContent.data as { tools: Array<{ name: string }> }
@@ -6993,7 +8579,10 @@ describe("project session mcp adapter", () => {
     );
     const guide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Recreate this design as a responsive page" },
+      input: {
+        brief: "Recreate this design as a responsive page",
+        workflow: "design-input",
+      },
     });
     const guideToolNames = (
       guide.structuredContent.data as { tools: Array<{ name: string }> }
@@ -7041,7 +8630,10 @@ describe("project session mcp adapter", () => {
     );
     const guide = await adapter.callTool({
       name: "meta.guide",
-      input: { brief: "Upload and manage font assets" },
+      input: {
+        brief: "Upload and manage font assets",
+        workflow: "font-assets",
+      },
     });
     const guideToolNames = (
       guide.structuredContent.data as { tools: Array<{ name: string }> }
@@ -7099,7 +8691,7 @@ describe("project session mcp adapter", () => {
         updates: [
           {
             instanceId: "body",
-            breakpointId: "base",
+            breakpoint: "base",
             property: "display",
             value: "grid",
           },
@@ -7216,7 +8808,6 @@ describe("project session mcp adapter", () => {
     expect((tools.contents[0]?.text ?? "").length).toBeLessThan(16_000);
     expect(JSON.parse(toolsOverview.contents[0]?.text ?? "{}")).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("Short tool overview"),
         count: expect.any(Number),
         capabilities: expect.arrayContaining([
           expect.objectContaining({
@@ -7229,59 +8820,24 @@ describe("project session mcp adapter", () => {
     expect(toolsOverview.contents[0]?.text).not.toContain("inputSchema");
     expect(JSON.parse(guide.contents[0]?.text ?? "{}")).toEqual(
       expect.objectContaining({
-        readThisFirst: expect.stringContaining(
-          "do one small discovery step, then act"
-        ),
-        delegatedAgentRule: expect.stringContaining(
-          "shortcut command such as webstudio meta.index"
-        ),
         startHere: expect.arrayContaining(["meta.index"]),
-        discovery: expect.objectContaining({
-          overview: expect.stringContaining(
-            "Do not call every discovery tool up front"
-          ),
-          components: expect.stringContaining("components.summary"),
-        }),
-        rules: expect.arrayContaining([
-          expect.stringContaining(
-            "Use direct value tools for fixed text/props"
-          ),
-        ]),
       })
     );
     expect(accessibilityReview.contents[0]).toEqual(
       expect.objectContaining({
         mimeType: "text/markdown",
-        text: expect.stringContaining("# Webstudio Accessibility Review"),
       })
-    );
-    expect(accessibilityReview.contents[0]?.text).toContain(
-      "Community-Access/accessibility-agents"
     );
     expect(expressions.contents[0]).toEqual(
       expect.objectContaining({
         mimeType: "text/markdown",
-        text: expect.stringContaining("# Webstudio Expressions"),
       })
-    );
-    expect(expressions.contents[0]?.text).toContain("Supported string methods");
-    expect(expressions.contents[0]?.text).toContain("- `toLowerCase`");
-    expect(expressions.contents[0]?.text).toContain("- `join`");
-    expect(expressions.contents[0]?.text).toContain(
-      "leave identifier property names unquoted"
-    );
-    expect(expressions.contents[0]?.text).not.toContain(
-      "{{allowedStringMethods}}"
-    );
-    expect(expressions.contents[0]?.text).toContain(
-      "Collection creates internal `collectionItem` and `collectionItemKey`"
     );
     const componentOverviewData = JSON.parse(
       componentsOverview.contents[0]?.text ?? "{}"
     );
     expect(componentOverviewData).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("components.list"),
         count: expect.any(Number),
         namespaces: expect.objectContaining({
           "@webstudio-is/sdk-components-react-radix": expect.any(Number),
@@ -7489,6 +9045,8 @@ describe("project session mcp adapter", () => {
       ],
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
+      additionalInstructions:
+        "This MCP server runs CLI 0.299.0; CLI 0.301.0 is available.",
     });
     const { client, close } = await createConnectedClient(server);
 
@@ -7502,6 +9060,12 @@ describe("project session mcp adapter", () => {
         name: "webstudio",
         version: "0.0.0",
       });
+      expect(client.getInstructions()).toContain(
+        "This MCP server runs CLI 0.299.0; CLI 0.301.0 is available."
+      );
+      expect(client.getInstructions()).toContain(
+        "For any multi-step authoring task"
+      );
       const listedTools = await client.listTools();
       expect(
         listedTools.tools.find(({ name }) => name === "list-pages")?.annotations
@@ -7580,14 +9144,11 @@ describe("project session mcp adapter", () => {
         listedTools.tools.find(({ name }) => name === "list-pages")
       ).not.toHaveProperty("_meta");
       expect(
-        listedTools.tools.find(({ name }) => name === "delete-instance")
-      ).not.toHaveProperty("description");
-      expect(
-        listedTools.tools.find(({ name }) => name === "meta.guide")?.description
-      ).toBeTypeOf("string");
-      expect(
-        listedTools.tools.find(({ name }) => name === "list-pages")?.description
-      ).toBeTypeOf("string");
+        listedTools.tools.filter(
+          ({ description }) =>
+            typeof description !== "string" || description.trim() === ""
+        )
+      ).toEqual([]);
       expect(
         JSON.stringify(
           listedTools.tools.find(({ name }) => name === "list-pages")
@@ -7889,6 +9450,7 @@ describe("project session mcp adapter", () => {
   });
 
   test("sends sparse protocol-native tool lifecycle logging", async () => {
+    const onToolSuccess = vi.fn();
     const server = await createProjectSessionMcpServer({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
@@ -7898,6 +9460,7 @@ describe("project session mcp adapter", () => {
           result: [{ id: "home" }],
         })
       ),
+      onToolSuccess,
     });
     const [clientTransport, serverTransport] =
       InMemoryTransport.createLinkedPair();
@@ -7934,6 +9497,9 @@ describe("project session mcp adapter", () => {
           },
         ])
       );
+      expect(onToolSuccess).toHaveBeenCalledWith("list-pages", {
+        includeFolders: true,
+      });
     } finally {
       await client.close();
       await server.close();
@@ -7941,6 +9507,8 @@ describe("project session mcp adapter", () => {
   });
 
   test("returns schema-valid rendered failures and stores their artifact manifest through the server", async () => {
+    const onToolSuccess = vi.fn();
+    const onToolFailure = vi.fn();
     const storeRenderedAuditArtifacts = vi.fn(async () => "/manifest.json");
     const executeOperation = createExecuteOperation(async ({ command }) => {
       if (command === "list-pages") {
@@ -7993,6 +9561,8 @@ describe("project session mcp adapter", () => {
       stopPreview: vi.fn(),
       captureScreenshot: vi.fn(),
       storeRenderedAuditArtifacts,
+      onToolSuccess,
+      onToolFailure,
     });
     const { client, close } = await createConnectedClient(server);
 
@@ -8001,6 +9571,17 @@ describe("project session mcp adapter", () => {
         name: "audit",
         arguments: { rendered: true, verbose: true },
       });
+
+      expect(onToolSuccess).not.toHaveBeenCalledWith(
+        "audit",
+        expect.anything()
+      );
+      expect(onToolFailure).toHaveBeenCalledWith(
+        "audit",
+        expect.objectContaining({ code: "RENDERED_AUDIT_FAILED" }),
+        expect.any(Number),
+        { rendered: true, verbose: true }
+      );
 
       expect(result).toMatchObject({
         isError: true,
@@ -8089,6 +9670,93 @@ describe("project session mcp adapter", () => {
         expect.stringMatching(/^tool list-pages succeeded in \d+ms$/)
       );
     } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+
+  test("does not crash when a tool heartbeat outlives its MCP connection", async () => {
+    let finishOperation: ((value: ProjectSessionEnvelope) => void) | undefined;
+    const reportLog = vi.fn();
+    const executeOperation = createExecuteOperation(
+      async () =>
+        await new Promise<ProjectSessionEnvelope>((resolve) => {
+          finishOperation = resolve;
+        })
+    );
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+      reportLog,
+      toolHeartbeatIntervalMs: 5,
+    });
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    await Promise.all([
+      server.connect(serverTransport),
+      client.connect(clientTransport),
+    ]);
+
+    try {
+      const pending = client
+        .callTool({ name: "list-pages", arguments: { includeFolders: true } })
+        .catch(() => undefined);
+      await vi.waitFor(() => expect(finishOperation).toBeTypeOf("function"));
+      const countHeartbeats = () =>
+        reportLog.mock.calls.filter(
+          ([, message]) =>
+            typeof message === "string" &&
+            message.startsWith("tool list-pages still running after ")
+        ).length;
+      const beforeDisconnect = countHeartbeats();
+      await client.close();
+      await vi.waitFor(() =>
+        expect(countHeartbeats()).toBeGreaterThan(beforeDisconnect)
+      );
+      finishOperation?.(
+        createEnvelope({ operationId: "pages.list", result: [] })
+      );
+      await pending;
+    } finally {
+      await server.close();
+    }
+  });
+
+  test("reports logging notification failure while MCP remains connected", async () => {
+    const reportLog = vi.fn();
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      reportLog,
+    });
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    await Promise.all([
+      server.connect(serverTransport),
+      client.connect(clientTransport),
+    ]);
+
+    const sendLoggingMessage = vi
+      .spyOn(server, "sendLoggingMessage")
+      .mockRejectedValue(new Error("transport failed"));
+    try {
+      await client.callTool({
+        name: "list-pages",
+        arguments: { includeFolders: true },
+      });
+      await vi.waitFor(() =>
+        expect(reportLog).toHaveBeenCalledWith(
+          "error",
+          "MCP logging notification failed"
+        )
+      );
+      expect(sendLoggingMessage).toHaveBeenCalled();
+    } finally {
+      sendLoggingMessage.mockRestore();
       await client.close();
       await server.close();
     }
@@ -8272,7 +9940,17 @@ describe("project session mcp adapter", () => {
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
       captureScreenshot: vi.fn(async () => {
-        throw new Error("Chromium executable was not found");
+        throw Object.assign(new Error("Chromium executable was not found"), {
+          issues: [
+            {
+              code: "browser_ipc_permission_denied",
+              path: [],
+              message:
+                "The operating system denied browser IPC or socket access.",
+              constraint: "stage:browser-startup",
+            },
+          ],
+        });
       }),
     });
     const { client, close } = await createConnectedClient(server);
@@ -8289,6 +9967,13 @@ describe("project session mcp adapter", () => {
           error: {
             code: "SCREENSHOT_CAPTURE_FAILED",
             message: expect.stringContaining("preview.status"),
+            issues: [
+              {
+                code: "browser_ipc_permission_denied",
+                path: [],
+                constraint: "stage:browser-startup",
+              },
+            ],
           },
         },
       });
@@ -8302,6 +9987,7 @@ describe("project session mcp adapter", () => {
       "Project session snapshot changed on disk."
     ) as Error & { code: string };
     error.code = "PROJECT_SESSION_BUSY";
+    const onToolFailure = vi.fn();
     const server = await createProjectSessionMcpServer({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
@@ -8312,6 +9998,7 @@ describe("project session mcp adapter", () => {
         typeof error === "object" && error !== null && "code" in error
           ? (error as { code?: string }).code
           : undefined,
+      onToolFailure,
     });
     const { client, close } = await createConnectedClient(server);
 
@@ -8334,7 +10021,71 @@ describe("project session mcp adapter", () => {
           },
         })
       );
+      expect(onToolFailure).toHaveBeenCalledWith(
+        "list-pages",
+        error,
+        expect.any(Number),
+        {}
+      );
+
+      await client.callTool({
+        name: "list-instances",
+        arguments: { rootInstanceId: "instance-1" },
+      });
+      expect(onToolFailure).toHaveBeenCalledWith(
+        "list-instances",
+        error,
+        expect.any(Number),
+        { rootInstanceId: "instance-1" }
+      );
+
+      await client.callTool({
+        name: "customer/project",
+        arguments: {},
+      });
+      expect(onToolFailure.mock.calls.at(-1)?.[0]).toBe("unknown");
     } finally {
+      await close();
+    }
+  });
+
+  test("waits for failure diagnostics persistence before returning the tool error", async () => {
+    const error = new Error("operation failed");
+    let finishPersistence: () => void = () => undefined;
+    let callbackStarted = false;
+    let callbackFinished = false;
+    const persistence = new Promise<void>((resolve) => {
+      finishPersistence = resolve;
+    });
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(async () => {
+        throw error;
+      }),
+      onToolFailure: async () => {
+        callbackStarted = true;
+        await persistence;
+        callbackFinished = true;
+      },
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      let callFinished = false;
+      const call = client
+        .callTool({ name: "list-pages", arguments: {} })
+        .finally(() => {
+          callFinished = true;
+        });
+      await vi.waitFor(() => expect(callbackStarted).toBe(true));
+      expect(callbackFinished).toBe(false);
+      expect(callFinished).toBe(false);
+      finishPersistence();
+      await call;
+      expect(callbackFinished).toBe(true);
+    } finally {
+      finishPersistence();
       await close();
     }
   });
@@ -8404,6 +10155,180 @@ describe("project session mcp adapter", () => {
     }
   });
 
+  test("returns all input shape errors through the MCP server", async () => {
+    const executeOperation = createExecuteOperation();
+    const createPageOperation = publicOperation({
+      command: "create-page",
+      id: "pages.create",
+      description: "Create a page",
+      method: "mutation",
+      inputSchema: getTestInputSchema(
+        z.object({ name: z.string(), path: z.string() })
+      ),
+    });
+    const server = await createProjectSessionMcpServer({
+      operations: [...publicMcpOperations, createPageOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "create-page",
+        arguments: { name: 42, unexpected: true },
+      });
+      expect(result.structuredContent).toMatchObject({
+        ok: false,
+        error: {
+          code: "INVALID_INPUT",
+          issues: [
+            expect.objectContaining({ path: ["path"], constraint: "required" }),
+            expect.objectContaining({
+              path: ["name"],
+              constraint: "type:string",
+            }),
+            expect.objectContaining({ path: ["unexpected"] }),
+          ],
+        },
+      });
+      expect(executeOperation).not.toHaveBeenCalled();
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns every Markdown upload input error through the MCP server", async () => {
+    const executeOperation = createExecuteOperation();
+    const uploadAssetsOperation = publicOperation({
+      command: "upload-assets",
+      id: "assets.uploadMany",
+      description: "Upload Assets",
+      method: "mutation",
+      inputSchema: getTestInputSchema(
+        z.object({
+          assets: z.array(
+            z.object({
+              name: z.string(),
+              type: z.string(),
+              format: z.string().optional(),
+            })
+          ),
+          assetsDir: z.string().optional(),
+        })
+      ),
+    });
+    const server = await createProjectSessionMcpServer({
+      operations: [...publicMcpOperations, uploadAssetsOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "upload-assets",
+        arguments: {
+          assets: [
+            { name: 42, type: "file", format: "md" },
+            { name: "page.mdx", type: "image", format: "md" },
+          ],
+          unexpected: true,
+        },
+      });
+      expect(result.structuredContent).toMatchObject({
+        ok: false,
+        error: {
+          code: "INVALID_INPUT",
+          issues: expect.arrayContaining([
+            expect.objectContaining({
+              path: ["assets", "0", "name"],
+              constraint: "type:string",
+            }),
+            expect.objectContaining({
+              path: ["assets", "1", "format"],
+              code: "asset_filename_format_mismatch",
+            }),
+            expect.objectContaining({
+              path: ["assets", "1", "type"],
+              code: "markdown_asset_type_mismatch",
+            }),
+            expect.objectContaining({ path: ["unexpected"] }),
+          ]),
+        },
+      });
+      expect(executeOperation).not.toHaveBeenCalled();
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns every Asset content update input error through the MCP server", async () => {
+    const executeOperation = createExecuteOperation();
+    const baseInputSchema = getTestInputSchema(
+      z.object({
+        assetId: z.string().min(1),
+        expectedName: z.string().min(1),
+        extension: z.string().min(1).optional(),
+        path: z.string().min(1).optional(),
+        content: z.string().optional(),
+      })
+    );
+    const updateAssetContentOperation = publicOperation({
+      command: "update-asset-content",
+      id: "assets.updateContent",
+      description: "Update Asset content",
+      method: "mutation",
+      inputSchema: {
+        ...baseInputSchema,
+        oneOf: [{ required: ["path"] }, { required: ["content"] }],
+      },
+    });
+    const server = await createProjectSessionMcpServer({
+      operations: [...publicMcpOperations, updateAssetContentOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "update-asset-content",
+        arguments: {
+          assetId: 42,
+          expectedName: "",
+          path: "article.md",
+          content: "# Duplicate source",
+          unexpected: true,
+        },
+      });
+      expect(result.structuredContent).toMatchObject({
+        ok: false,
+        error: {
+          code: "INVALID_INPUT",
+          issues: expect.arrayContaining([
+            expect.objectContaining({
+              path: ["assetId"],
+              constraint: "type:string",
+            }),
+            expect.objectContaining({
+              path: ["expectedName"],
+              constraint: "minLength:1",
+            }),
+            expect.objectContaining({
+              path: [],
+              constraint: "exactly_one_of:path|content",
+            }),
+            expect.objectContaining({ path: ["unexpected"] }),
+          ]),
+        },
+      });
+      expect(executeOperation).not.toHaveBeenCalled();
+    } finally {
+      await close();
+    }
+  });
+
   test("returns equivalent structured runtime validation issues", async () => {
     const issue = {
       code: "invalid_expression",
@@ -8440,6 +10365,47 @@ describe("project session mcp adapter", () => {
           message:
             'Page input is invalid.\nvalues.title: Invalid Webstudio expression (valid_webstudio_expression). Example: "pageTitle ?? \\"Pricing\\"". Detail: Unexpected token at 1:4',
           issues: [issue],
+        },
+        meta: {},
+      });
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns an INVALID_INPUT breakpoint hint through MCP", async () => {
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "update-styles",
+        arguments: {
+          updates: [
+            {
+              instanceId: "body",
+              breakpointId: "mobile",
+              property: "display",
+              value: { type: "keyword", value: "block" },
+            },
+          ],
+        },
+      });
+      expect(result.structuredContent).toEqual({
+        ok: false,
+        error: {
+          code: "INVALID_INPUT",
+          message: expect.stringContaining("use breakpoint instead"),
+          issues: [
+            expect.objectContaining({
+              path: ["updates", "0", "breakpointId"],
+              constraint: "field:breakpoint",
+            }),
+          ],
         },
         meta: {},
       });

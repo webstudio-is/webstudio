@@ -1,9 +1,17 @@
 import { enableMapSet } from "immer";
 import { expect, test, describe } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import type { StyleDecl } from "@webstudio-is/sdk";
+import {
+  coreMetas,
+  getTagStyleId,
+  ROOT_INSTANCE_ID,
+  type StyleDecl,
+} from "@webstudio-is/sdk";
 import { registerContainers } from "~/shared/sync/sync-stores";
-import { $selectedStyleSources } from "~/shared/nano-states";
+import {
+  $registeredComponentMetas,
+  $selectedStyleSources,
+} from "~/shared/nano-states";
 import {
   $assets,
   $breakpoints,
@@ -25,6 +33,7 @@ const {
   duplicateStyleSource,
   getComponentStates,
   reorderStyleSources,
+  $availableStyleSources,
 } = __testing__;
 
 enableMapSet();
@@ -50,6 +59,36 @@ const setupSelectedBody = () => {
   $styles.set(new Map());
   selectInstance(["body"]);
 };
+
+test("Global root offers only the html Tag style first", () => {
+  setupSelectedBody();
+  $registeredComponentMetas.set(new Map(Object.entries(coreMetas)));
+  $styleSources.set(
+    new Map([
+      [getTagStyleId("p"), { type: "tag", id: getTagStyleId("p"), tag: "p" }],
+      ["token", { type: "token", id: "token", name: "Token" }],
+    ])
+  );
+  selectInstance([ROOT_INSTANCE_ID]);
+
+  expect($availableStyleSources.get().map(({ id }) => id)).toEqual([
+    getTagStyleId("html"),
+    "token",
+  ]);
+});
+
+test("keeps token suggestions stable when selecting another instance", () => {
+  setupSelectedBody();
+  $registeredComponentMetas.set(new Map(Object.entries(coreMetas)));
+  $styleSources.set(
+    new Map([["token", { type: "token", id: "token", name: "Token" }]])
+  );
+  const token = $availableStyleSources.get().find(({ id }) => id === "token");
+  selectInstance([ROOT_INSTANCE_ID]);
+  expect($availableStyleSources.get().find(({ id }) => id === "token")).toBe(
+    token
+  );
+});
 
 describe("getComponentStates", () => {
   test("returns predefined states for tag", () => {

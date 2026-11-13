@@ -22,8 +22,7 @@ export const Breadcrumbs = () => {
             return (
               <Fragment key={index}>
                 <Button
-                  color="dark-ghost"
-                  css={{ color: "inherit" }}
+                  color="ghost"
                   key={instance.id}
                   onClick={() => {
                     selectInstance(instanceSelector);

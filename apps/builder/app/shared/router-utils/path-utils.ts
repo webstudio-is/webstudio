@@ -153,8 +153,40 @@ export const getCanvasUrl = () => {
   return `/canvas`;
 };
 
-export const restResourcesLoader = ({ diagnostics = false } = {}) =>
-  `/rest/resources-loader${diagnostics ? "?diagnostics=true" : ""}`;
+export const restResourcesLoader = ({
+  diagnostics = false,
+  inspect,
+}: {
+  diagnostics?: boolean;
+  inspect?: string;
+} = {}) => {
+  const params = new URLSearchParams();
+  if (diagnostics) {
+    params.set("diagnostics", "true");
+  }
+  if (inspect !== undefined) {
+    params.set("inspect", inspect);
+  }
+  const query = params.toString();
+  return `/rest/resources-loader${query === "" ? "" : `?${query}`}`;
+};
 
 export const marketplacePath = (method: string) =>
   `/builder/marketplace/${method}`;
+
+// Editor navigation does not change the Builder data loaded by the route.
+export const areBuilderDataUrlsEqual = (currentUrl: URL, nextUrl: URL) => {
+  const current = new URL(currentUrl);
+  const next = new URL(nextUrl);
+  for (const param of [
+    "pageId",
+    "instance",
+    "instanceId",
+    "mode",
+    "pageHash",
+  ]) {
+    current.searchParams.delete(param);
+    next.searchParams.delete(param);
+  }
+  return current.href === next.href;
+};

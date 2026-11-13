@@ -27,13 +27,21 @@ import {
   $propsIndex,
   $selectedBreakpoint,
   $selectedInstanceStates,
+  $selectedInstanceStatesByInstanceId,
   $selectedOrLastStyleSourceSelector,
 } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
-import { $styles, $styleSourceSelections } from "~/shared/sync/data-stores";
+import {
+  $props,
+  $styles,
+  $styleSourceSelections,
+  $styleSources,
+} from "~/shared/sync/data-stores";
 import {
   getComputedStyleDecl,
   getPresetStyleDeclKey,
+  indexNestedTagStyles,
+  indexStyleSourceSelectionOrder,
   type ComputedStyleDecl,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
@@ -61,9 +69,34 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
   return presetStyles;
 });
 
+const $indexedStyles = computed($styles, (styles) => ({
+  styles,
+  nestedTagStyles: indexNestedTagStyles(styles),
+}));
+
+const $indexedSelections = computed($styleSourceSelections, (selections) => ({
+  selections,
+  order: indexStyleSourceSelectionOrder(selections),
+}));
+
+const $tagStyleIds = computed($styleSources, (styleSources) => {
+  const ids = new Map<string, string>();
+  for (const source of styleSources.values()) {
+    if (source.type === "tag") {
+      ids.set(source.tag, source.id);
+    }
+  }
+  return ids;
+});
+
 export const $instanceTags = computed(
-  [$registeredComponentMetas, $propsIndex, $selectedInstancePathWithRoot],
-  (metas, propsIndex, instancePath) => {
+  [
+    $registeredComponentMetas,
+    $propsIndex,
+    $props,
+    $selectedInstancePathWithRoot,
+  ],
+  (metas, propsIndex, props, instancePath) => {
     const instanceTags = new Map<Instance["id"], HtmlTags>();
     if (instancePath === undefined) {
       return instanceTags;
@@ -72,6 +105,7 @@ export const $instanceTags = computed(
       const tag = getHtmlTagFromInstance({
         instance,
         metas,
+        props,
         htmlTagsByInstanceId: propsIndex.htmlTagsByInstanceId,
       });
       if (tag !== undefined) {
@@ -123,12 +157,16 @@ const getDefinedStyles = ({
   matchingBreakpoints: matchingBreakpointsArray,
   styleSourceSelections,
   styles,
+  tagStyleIds,
+  instanceTags,
 }: {
   instancePath: InstancePath;
   metas: Map<string, WsComponentMeta>;
   matchingBreakpoints: Breakpoint["id"][];
   styleSourceSelections: StyleSourceSelections;
   styles: Styles;
+  tagStyleIds: Map<string, string>;
+  instanceTags: Map<Instance["id"], HtmlTags>;
 }) => {
   type Defined = {
     property: CssProperty;
@@ -159,6 +197,15 @@ const getDefinedStyles = ({
         } else {
           inheritedStyleSources.add(styleSourceId);
         }
+      }
+    }
+    const tag = instanceTags.get(instance.id);
+    const tagStyleId = tag ? tagStyleIds.get(tag) : undefined;
+    if (tagStyleId) {
+      if (instance.id === startingInstanceSelector[0]) {
+        instanceStyleSources.add(tagStyleId);
+      } else {
+        inheritedStyleSources.add(tagStyleId);
       }
     }
   }
@@ -201,31 +248,39 @@ const getDefinedStyles = ({
 
 export const $styleObjectModel = computed(
   [
-    $styles,
-    $styleSourceSelections,
+    $indexedStyles,
+    $tagStyleIds,
+    $indexedSelections,
     $presetStyles,
     $instanceTags,
     $instanceComponents,
     $matchingBreakpoints,
     $selectedInstanceStates,
+    $selectedInstanceStatesByInstanceId,
   ],
   (
-    styles,
-    styleSourceSelections,
+    { styles, nestedTagStyles },
+    tagStyleIds,
+    { selections: styleSourceSelections, order: styleSourceSelectionOrder },
     presetStyles,
     instanceTags,
     instanceComponents,
     matchingBreakpoints,
-    matchingStates
+    matchingStates,
+    matchingStatesByInstanceId
   ): StyleObjectModel => {
     return {
       styles,
+      nestedTagStyles,
+      tagStyleIds,
       styleSourceSelections,
+      styleSourceSelectionOrder,
       presetStyles,
       instanceTags,
       instanceComponents,
       matchingBreakpoints,
       matchingStates,
+      matchingStatesByInstanceId,
     };
   }
 );
@@ -258,6 +313,8 @@ export const $computedStyleDeclarations = computed(
       matchingBreakpoints,
       styleSourceSelections,
       styles,
+      tagStyleIds: model.tagStyleIds,
+      instanceTags: model.instanceTags,
     });
     // In advanced mode we assume user knows the properties they need, so we don't need to show these.
     // @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871

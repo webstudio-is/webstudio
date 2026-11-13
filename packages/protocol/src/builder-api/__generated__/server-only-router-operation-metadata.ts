@@ -22,6 +22,62 @@ export const serverOnlyRouterOperationMetadata = {
       required: [],
     },
   },
+  "forms.simulateSubmission": {
+    id: "forms.simulateSubmission",
+    command: "simulate-form-submission",
+    method: "mutation",
+    path: "api.forms.simulateSubmission",
+    client: "simulateFormSubmission",
+    permit: "build",
+    inputSchema: {
+      type: "object",
+      properties: {
+        formId: {
+          type: "string",
+          minLength: 1,
+        },
+        path: {
+          type: "string",
+          minLength: 1,
+          maxLength: 2048,
+        },
+        siteOrigin: {
+          type: "string",
+          format: "uri",
+        },
+        values: {
+          maxItems: 100,
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: {
+                type: "string",
+                minLength: 1,
+                maxLength: 256,
+              },
+              value: {
+                type: "string",
+                maxLength: 10000,
+              },
+            },
+            required: ["name", "value"],
+          },
+        },
+        arrayNames: {
+          default: [],
+          maxItems: 100,
+          type: "array",
+          items: {
+            type: "string",
+            minLength: 1,
+            maxLength: 256,
+          },
+        },
+      },
+      required: ["formId", "path", "values"],
+    },
+  },
   "projects.permissions": {
     id: "projects.permissions",
     command: "permissions",
@@ -188,6 +244,355 @@ export const serverOnlyRouterOperationMetadata = {
               minLength: 1,
               maxLength: 100,
             },
+            serverApiContractVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            bundleVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
+            recentFailure: {
+              type: "object",
+              properties: {
+                tool: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 160,
+                },
+                code: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 160,
+                },
+                errorType: {
+                  type: "string",
+                  pattern: "^[A-Za-z][A-Za-z0-9]{0,99}(Error|Exception)$",
+                },
+                requestId: {
+                  type: "string",
+                  pattern: "^[A-Za-z0-9_-]{1,100}$",
+                },
+                httpStatus: {
+                  type: "integer",
+                  minimum: 100,
+                  maximum: 599,
+                },
+                elapsedMs: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                entityIds: {
+                  maxItems: 20,
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      field: {
+                        type: "string",
+                        enum: [
+                          "formId",
+                          "requestId",
+                          "jobId",
+                          "buildId",
+                          "attemptId",
+                          "domainId",
+                          "blockInstanceId",
+                          "assetId",
+                          "pageId",
+                          "parentFolderId",
+                          "socialImageAssetId",
+                          "thumbnailAssetId",
+                          "faviconAssetId",
+                          "breakpointId",
+                          "templateId",
+                          "sourceTemplateId",
+                          "targetTemplateId",
+                          "folderId",
+                          "targetFolderId",
+                          "scopeInstanceId",
+                          "resourceId",
+                          "instanceId",
+                          "styleSourceId",
+                          "childId",
+                          "rootInstanceId",
+                          "parentInstanceId",
+                          "sourceSlotId",
+                          "sourceInstanceId",
+                          "targetParentInstanceId",
+                          "designTokenId",
+                          "dataSourceId",
+                          "parentId",
+                          "fromAssetId",
+                          "toAssetId",
+                        ],
+                      },
+                      id: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 160,
+                        pattern: "^[A-Za-z0-9_-]+$",
+                      },
+                    },
+                    required: ["field", "id"],
+                    additionalProperties: false,
+                  },
+                },
+                issues: {
+                  maxItems: 30,
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      path: {
+                        maxItems: 30,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          maxLength: 200,
+                        },
+                      },
+                      code: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 100,
+                      },
+                      constraint: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 500,
+                      },
+                    },
+                    required: ["path", "code", "constraint"],
+                    additionalProperties: false,
+                  },
+                },
+                response: {
+                  type: "object",
+                  properties: {
+                    format: {
+                      type: "string",
+                      enum: ["json", "html", "other"],
+                    },
+                    envelope: {
+                      type: "string",
+                      enum: ["result", "error", "other", "missing"],
+                    },
+                    batchSize: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 1000,
+                    },
+                  },
+                  required: ["format", "envelope"],
+                  additionalProperties: false,
+                },
+                browser: {
+                  type: "object",
+                  properties: {
+                    exitSignal: {
+                      type: "string",
+                      enum: [
+                        "SIGABRT",
+                        "SIGBUS",
+                        "SIGFPE",
+                        "SIGHUP",
+                        "SIGILL",
+                        "SIGINT",
+                        "SIGKILL",
+                        "SIGPIPE",
+                        "SIGQUIT",
+                        "SIGSEGV",
+                        "SIGSYS",
+                        "SIGTERM",
+                        "SIGTRAP",
+                      ],
+                    },
+                    exitCode: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 255,
+                    },
+                    attempts: {
+                      maxItems: 10,
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          browser: {
+                            type: "string",
+                            enum: ["chromium", "chrome", "edge", "brave"],
+                          },
+                          source: {
+                            type: "string",
+                            enum: [
+                              "option",
+                              "env",
+                              "path",
+                              "platform",
+                              "playwright",
+                              "chrome-launcher",
+                            ],
+                          },
+                        },
+                        required: ["browser", "source"],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  additionalProperties: false,
+                  required: [],
+                },
+                previewInstall: {
+                  type: "object",
+                  properties: {
+                    processErrorCode: {
+                      type: "string",
+                      pattern: "^[A-Z][A-Z0-9_]{0,159}$",
+                    },
+                    exitCode: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 255,
+                    },
+                    terminated: {
+                      type: "boolean",
+                    },
+                  },
+                  additionalProperties: false,
+                  required: [],
+                },
+              },
+              required: ["tool", "code"],
+              additionalProperties: false,
+            },
+            recentTargets: {
+              maxItems: 3,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  tool: {
+                    type: "string",
+                    minLength: 1,
+                    maxLength: 160,
+                  },
+                  entityIds: {
+                    minItems: 1,
+                    maxItems: 20,
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        field: {
+                          type: "string",
+                          enum: [
+                            "formId",
+                            "requestId",
+                            "jobId",
+                            "buildId",
+                            "attemptId",
+                            "domainId",
+                            "blockInstanceId",
+                            "assetId",
+                            "pageId",
+                            "parentFolderId",
+                            "socialImageAssetId",
+                            "thumbnailAssetId",
+                            "faviconAssetId",
+                            "breakpointId",
+                            "templateId",
+                            "sourceTemplateId",
+                            "targetTemplateId",
+                            "folderId",
+                            "targetFolderId",
+                            "scopeInstanceId",
+                            "resourceId",
+                            "instanceId",
+                            "styleSourceId",
+                            "childId",
+                            "rootInstanceId",
+                            "parentInstanceId",
+                            "sourceSlotId",
+                            "sourceInstanceId",
+                            "targetParentInstanceId",
+                            "designTokenId",
+                            "dataSourceId",
+                            "parentId",
+                            "fromAssetId",
+                            "toAssetId",
+                          ],
+                        },
+                        id: {
+                          type: "string",
+                          minLength: 1,
+                          maxLength: 160,
+                          pattern: "^[A-Za-z0-9_-]+$",
+                        },
+                      },
+                      required: ["field", "id"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["tool", "entityIds"],
+                additionalProperties: false,
+              },
+            },
+            session: {
+              type: "object",
+              properties: {
+                staleNamespaces: {
+                  maxItems: 50,
+                  type: "array",
+                  items: {
+                    type: "string",
+                    maxLength: 100,
+                  },
+                },
+                missingNamespaces: {
+                  maxItems: 50,
+                  type: "array",
+                  items: {
+                    type: "string",
+                    maxLength: 100,
+                  },
+                },
+                invalidatedNamespaces: {
+                  maxItems: 50,
+                  type: "array",
+                  items: {
+                    type: "string",
+                    maxLength: 100,
+                  },
+                },
+              },
+              required: [
+                "staleNamespaces",
+                "missingNamespaces",
+                "invalidatedNamespaces",
+              ],
+              additionalProperties: false,
+            },
+            preview: {
+              type: "object",
+              properties: {
+                stale: {
+                  type: "boolean",
+                },
+                hasRenderedVersion: {
+                  type: "boolean",
+                },
+                renderedVersionMatchesSession: {
+                  type: "boolean",
+                },
+              },
+              required: ["stale", "hasRenderedVersion"],
+              additionalProperties: false,
+            },
           },
           required: [
             "cliVersion",
@@ -200,7 +605,7 @@ export const serverOnlyRouterOperationMetadata = {
           ],
           additionalProperties: false,
           description:
-            "Anonymous CLI-collected runtime metadata without host, user, path, environment, network, location, project, or argument data.",
+            "CLI-collected runtime metadata with the project ID and bounded entity IDs from recent tool inputs; no raw arguments, URLs, credentials, or customer content.",
         },
         report: {
           type: "object",
@@ -290,7 +695,7 @@ export const serverOnlyRouterOperationMetadata = {
       ],
       additionalProperties: false,
       description:
-        "Anonymous LLM-authored technical report. Generalize context, exclude all identifying or project-specific data, and preserve only stable tool, schema, error, version, and input-shape details.",
+        "LLM-authored technical report. The CLI attaches the project ID and recognized IDs from recent tool inputs. Generalize all other context; exclude names, URLs, credentials, customer content, and raw tool data.",
     },
   },
   "build.get": {
@@ -341,7 +746,7 @@ export const serverOnlyRouterOperationMetadata = {
     method: "mutation",
     path: "api.build.patch",
     client: "applyBuildPatch",
-    permit: "build",
+    permit: "edit",
     invalidatesNamespaces: [
       "pages",
       "instances",
@@ -630,6 +1035,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -645,6 +1051,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -665,6 +1072,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode", "offset", "length"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -680,6 +1088,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
               ],
             },
@@ -1016,6 +1425,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -1031,6 +1441,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -1051,6 +1462,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode", "offset", "length"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -1066,6 +1478,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
               ],
             },
@@ -1279,6 +1692,30 @@ export const serverOnlyRouterOperationMetadata = {
       additionalProperties: true,
     },
   },
+  "publish.validate": {
+    id: "publish.validate",
+    command: "validate-publish",
+    method: "query",
+    path: "api.publish.validate",
+    client: "validatePublish",
+    permit: "edit",
+    inputSchema: {
+      type: "object",
+      properties: {
+        target: {
+          type: "string",
+          enum: ["staging", "production"],
+        },
+        domains: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+      },
+      required: ["target"],
+    },
+  },
   "publish.list": {
     id: "publish.list",
     command: "list-publishes",
@@ -1395,11 +1832,26 @@ export const serverOnlyRouterOperationMetadata = {
     inputSchema: {
       type: "object",
       properties: {
-        attemptId: {
+        buildId: {
           type: "string",
         },
+        attemptId: {
+          type: "string",
+          format: "uuid",
+          pattern:
+            "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+        },
+        executionHandle: {
+          type: "string",
+          maxLength: 2048,
+        },
+        cursor: {
+          type: "integer",
+          minimum: -9007199254740991,
+          maximum: 9007199254740991,
+        },
       },
-      required: ["attemptId"],
+      required: ["buildId", "attemptId", "executionHandle"],
     },
   },
   "publish.unpublish": {

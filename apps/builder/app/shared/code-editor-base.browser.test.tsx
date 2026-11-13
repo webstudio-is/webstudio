@@ -1,0 +1,330 @@
+import { act } from "react-dom/test-utils";
+import { createRoot, type Root } from "react-dom/client";
+import { EditorSelection } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
+import { autocompletion, startCompletion } from "@codemirror/autocomplete";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { userEvent } from "@vitest/browser/context";
+import {
+  cssVar,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  selectedItemBackground,
+} from "@webstudio-is/design-system";
+import "@webstudio-is/design-system/global.css";
+import {
+  EditorContent,
+  EditorDialogButton,
+  EditorDialogControl,
+  EditorDialog,
+} from "./code-editor-base";
+
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
+
+let container: HTMLDivElement;
+let root: Root;
+const rangeGetClientRects = Object.getOwnPropertyDescriptor(
+  Range.prototype,
+  "getClientRects"
+);
+
+beforeEach(() => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+  );
+  Object.defineProperty(Range.prototype, "getClientRects", {
+    configurable: true,
+    value: () => [new DOMRect(0, 0, 20, 16)],
+  });
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+});
+
+afterEach(() => {
+  act(() => root.unmount());
+  container.remove();
+  document.documentElement.removeAttribute("data-color-scheme");
+  vi.unstubAllGlobals();
+  if (rangeGetClientRects === undefined) {
+    delete (Range.prototype as { getClientRects?: unknown }).getClientRects;
+  } else {
+    Object.defineProperty(
+      Range.prototype,
+      "getClientRects",
+      rangeGetClientRects
+    );
+  }
+});
+
+test.each(["light", "dark"] as const)(
+  "uses the shared selection color in %s mode",
+  async (mode) => {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() => {
+      root.render(
+        <EditorContent
+          value="selected text"
+          onChange={() => {}}
+          onChangeComplete={() => {}}
+        />
+      );
+    });
+
+    const editor = container.querySelector<HTMLElement>('[role="textbox"]');
+    if (editor === null) {
+      throw new Error("Expected the code editor");
+    }
+    const view = EditorView.findFromDOM(editor);
+    if (view === null) {
+      throw new Error("Expected the CodeMirror view");
+    }
+    act(() => {
+      view.dispatch({
+        selection: EditorSelection.range(0, view.state.doc.length),
+      });
+      view.focus();
+    });
+    await act(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        )
+    );
+
+    const selection = container.querySelector<HTMLElement>(
+      ".cm-selectionBackground"
+    );
+    if (selection === null) {
+      throw new Error("Expected a rendered selection");
+    }
+    const reference = document.createElement("span");
+    reference.style.background = cssVar("--background-text-selection");
+    reference.style.color = "var(--foreground-on-text-selection)";
+    document.body.appendChild(reference);
+
+    const selectionColor = getComputedStyle(selection).backgroundColor;
+    const referenceColor = getComputedStyle(reference).backgroundColor;
+    const content = container.querySelector<HTMLElement>(".cm-content");
+    if (content === null) {
+      throw new Error("Expected editor content");
+    }
+    const selectedTextColor = getComputedStyle(content, "::selection").color;
+    const referenceTextColor = getComputedStyle(reference).color;
+    reference.remove();
+    expect(selectionColor).toBe(referenceColor);
+    expect(selectedTextColor).toBe(referenceTextColor);
+  }
+);
+
+test("scopes disabled styles to the Webstudio code editor", () => {
+  act(() => {
+    root.render(
+      <fieldset disabled>
+        <EditorContent
+          value="disabled editor"
+          onChange={() => {}}
+          onChangeComplete={() => {}}
+        />
+        <div className="cm-editor" data-foreign-editor />
+      </fieldset>
+    );
+  });
+
+  const editors = container.querySelectorAll<HTMLElement>(".cm-editor");
+  const foreignEditor = container.querySelector<HTMLElement>(
+    "[data-foreign-editor]"
+  );
+  if (editors[0] === undefined || foreignEditor === null) {
+    throw new Error("Expected both code editors");
+  }
+
+  expect(getComputedStyle(editors[0]).opacity).toBe("0.3");
+  expect(getComputedStyle(foreignEditor).opacity).toBe("1");
+});
+
+test.each(["light", "dark"] as const)(
+  "distinguishes the selected autocomplete row in %s mode",
+  async (mode) => {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() =>
+      root.render(
+        <EditorContent
+          value="a"
+          onChange={() => {}}
+          onChangeComplete={() => {}}
+          extensions={[
+            autocompletion({
+              override: [
+                () => ({
+                  from: 0,
+                  options: [{ label: "alpha" }, { label: "alpine" }],
+                }),
+              ],
+            }),
+          ]}
+        />
+      )
+    );
+    const editor = container.querySelector<HTMLElement>('[role="textbox"]')!;
+    const view = EditorView.findFromDOM(editor)!;
+    act(() => {
+      view.dispatch({ selection: { anchor: 1 } });
+      view.focus();
+      startCompletion(view);
+    });
+    await vi.waitFor(() =>
+      expect(
+        document.querySelectorAll('.cm-tooltip-autocomplete [role="option"]')
+          .length
+      ).toBe(2)
+    );
+    const selected = document.querySelector<HTMLElement>(
+      '.cm-tooltip-autocomplete [aria-selected="true"]'
+    )!;
+    const unselected = document.querySelector<HTMLElement>(
+      '.cm-tooltip-autocomplete [role="option"]:not([aria-selected="true"])'
+    )!;
+    const reference = document.createElement("div");
+    reference.style.backgroundColor = selectedItemBackground;
+    document.body.appendChild(reference);
+    try {
+      expect(getComputedStyle(selected).backgroundColor).toBe(
+        getComputedStyle(reference).backgroundColor
+      );
+      expect(getComputedStyle(selected).backgroundColor).not.toBe(
+        getComputedStyle(unselected).backgroundColor
+      );
+    } finally {
+      reference.remove();
+    }
+  }
+);
+
+test("uses the standard icon button hover style for editor maximize", async () => {
+  act(() => {
+    root.render(
+      <div style={{ width: 320, height: 160 }}>
+        <EditorDialogControl>
+          <EditorContent
+            value="editor content"
+            onChange={() => {}}
+            onChangeComplete={() => {}}
+          />
+          <EditorDialogButton aria-label="Expand" />
+        </EditorDialogControl>
+      </div>
+    );
+  });
+
+  const maximizeButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Expand"]'
+  );
+  if (maximizeButton === null) {
+    throw new Error("Expected the maximize button");
+  }
+  await userEvent.hover(maximizeButton.parentElement!);
+  await userEvent.hover(maximizeButton);
+  expect(getComputedStyle(maximizeButton).backgroundColor).not.toBe(
+    "rgba(0, 0, 0, 0)"
+  );
+});
+
+test("keeps editor chrome in form dialogs but removes it in editor dialogs", () => {
+  act(() => {
+    root.render(
+      <Dialog open>
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle>Settings</DialogTitle>
+          <EditorContent
+            value="settings code"
+            onChange={() => {}}
+            onChangeComplete={() => {}}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  });
+  const formEditor = document.querySelector<HTMLElement>(
+    '[role="dialog"] .cm-editor'
+  )?.parentElement;
+  expect(formEditor).toBeDefined();
+  expect(getComputedStyle(formEditor!).borderLeftWidth).toBe("1px");
+  expect(getComputedStyle(formEditor!).paddingLeft).not.toBe("0px");
+
+  act(() => {
+    root.render(
+      <EditorDialog
+        open
+        title="Code editor"
+        content={
+          <EditorContent
+            value="full editor"
+            onChange={() => {}}
+            onChangeComplete={() => {}}
+          />
+        }
+      />
+    );
+  });
+  const fullEditor = document.querySelector<HTMLElement>(
+    '[role="dialog"] .cm-editor'
+  )?.parentElement;
+  expect(fullEditor).toBeDefined();
+  expect(getComputedStyle(fullEditor!).borderLeftWidth).toBe("0px");
+  expect(getComputedStyle(fullEditor!).paddingLeft).toBe("0px");
+});
+
+test.each(["light", "dark"] as const)(
+  "keeps the CSS editor shortcut footer on the dialog surface in %s mode",
+  (mode) => {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() => {
+      root.render(
+        <EditorDialog
+          open
+          title="CSS value"
+          content={
+            <EditorContent
+              value="1fr"
+              showShortcuts
+              onChange={() => {}}
+              onChangeComplete={() => {}}
+            />
+          }
+        />
+      );
+    });
+
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+    const footer = dialog
+      ?.querySelector<HTMLElement>(".cm-editor")
+      ?.parentElement?.querySelector<HTMLElement>(":scope > div:first-child");
+    if (dialog === null || footer === null || footer === undefined) {
+      throw new Error("Expected the CSS editor dialog and shortcut footer");
+    }
+
+    const context = document.createElement("canvas").getContext("2d");
+    if (context === null) {
+      throw new Error("Expected canvas color evaluation");
+    }
+    context.fillStyle = getComputedStyle(dialog).backgroundColor;
+    context.fillRect(0, 0, 1, 1);
+    const surface = context.getImageData(0, 0, 1, 1).data;
+    context.fillStyle = getComputedStyle(footer).backgroundColor;
+    context.fillRect(0, 0, 1, 1);
+    const underFooter = context.getImageData(0, 0, 1, 1).data;
+
+    for (const channel of [0, 1, 2]) {
+      expect(Math.abs(underFooter[channel] - surface[channel])).toBeLessThan(2);
+    }
+  }
+);

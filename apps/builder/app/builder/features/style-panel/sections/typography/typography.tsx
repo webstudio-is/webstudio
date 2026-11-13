@@ -1,5 +1,6 @@
 import { forwardRef, type ComponentProps } from "react";
 import {
+  PanelContent,
   Flex,
   Grid,
   EnhancedTooltip,
@@ -71,7 +72,11 @@ export const properties = [
 export const Section = () => {
   return (
     <StyleSection label="Typography" properties={properties}>
-      <Flex gap="2" direction="column">
+      <Flex
+        gap="2"
+        direction="column"
+        css={{ paddingInline: theme.panel.paddingInline }}
+      >
         <TypographySectionFont />
         <TypographySectionSizing />
         <TypographySectionAdvanced />
@@ -280,31 +285,31 @@ AdvancedOptionsButton.displayName = "AdvancedOptionsButton";
 const TypographySectionAdvancedPopover = () => {
   return (
     <FloatingPanel
-      title="Advanced Typography"
+      title="Advanced typography"
       placement="bottom-within"
       content={
-        <Grid
+        <PanelContent
+          as={Grid}
           css={{
-            padding: theme.panel.padding,
             gap: theme.spacing[9],
             width: theme.spacing[30],
           }}
         >
           <Grid css={{ gridTemplateColumns: "5fr 5fr" }} gap={2}>
             <PropertyLabel
-              label="White Space Collapse"
+              label="White space collapse"
               description={propertyDescriptions.whiteSpaceCollapse}
               properties={["white-space-collapse"]}
             />
             <SelectControl property="white-space-collapse" />
             <PropertyLabel
-              label="Text Wrap Mode"
+              label="Text wrap mode"
               description={propertyDescriptions.textWrapMode}
               properties={["text-wrap-mode"]}
             />
             <SelectControl property="text-wrap-mode" />
             <PropertyLabel
-              label="Text Wrap Style"
+              label="Text wrap style"
               description={propertyDescriptions.textWrapStyle}
               properties={["text-wrap-style"]}
             />
@@ -358,7 +363,7 @@ const TypographySectionAdvancedPopover = () => {
               />
             </Box>
             <PropertyLabel
-              label="Text Overflow"
+              label="Text overflow"
               description={propertyDescriptions.textOverflow}
               properties={["text-overflow"]}
             />
@@ -382,7 +387,7 @@ const TypographySectionAdvancedPopover = () => {
               />
             </Box>
           </Grid>
-        </Grid>
+        </PanelContent>
       }
     >
       <AdvancedOptionsButton />

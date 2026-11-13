@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   compileDocumentSourceGraph,
+  createDocumentSourceUrl,
   DocumentSourceCompilationError,
 } from "./source-compiler";
 
@@ -34,6 +35,67 @@ const documents = [
 ];
 
 describe("document source graph compiler", () => {
+  test("rejects invalid reference markers in supplied frontmatter", async () => {
+    await expect(
+      compileDocumentSourceGraph({
+        documents: [
+          {
+            ...documents[1],
+            source: "---\nname: Ada\n---\nBody",
+            frontmatter: { avatar: { $ref: 42 } },
+          },
+        ],
+      })
+    ).rejects.toMatchObject({
+      code: "DOCUMENT_ANALYSIS_FAILED",
+      documentId: "author",
+      cause: {
+        code: "INVALID_REFERENCE_MARKER",
+        referenceId: "#frontmatter/avatar",
+      },
+    });
+  });
+
+  test.each(["markdown", "mdx"] as const)(
+    "discovers %s references from supplied frontmatter without reading its body",
+    async (format) => {
+      const expected = await compileDocumentSourceGraph({ documents });
+      const graph = await compileDocumentSourceGraph({
+        documents: documents.map((document) =>
+          document.id === "author"
+            ? {
+                ...document,
+                format,
+                frontmatter: {
+                  name: "Ada",
+                  avatar: { $ref: "../media/ada.json#/url" },
+                },
+                source: {
+                  async *[Symbol.asyncIterator]() {
+                    yield await Promise.reject<Uint8Array>(
+                      new Error("Markdown body must not be downloaded")
+                    );
+                  },
+                },
+              }
+            : document
+        ),
+      });
+      expect(graph.edges).toEqual(expected.edges);
+      expect(graph.nodes).toEqual(
+        expected.nodes.map((node) =>
+          node.id === "author" ? { ...node, format } : node
+        )
+      );
+    }
+  );
+
+  test("encodes every Asset path segment as document URL data", () => {
+    expect(createDocumentSourceUrl("authors/Ada #1/プロフィール.md")).toBe(
+      "https://content.webstudio.local/authors/Ada%20%231/%E3%83%97%E3%83%AD%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB.md"
+    );
+  });
+
   test("discovers mixed-format references and compiles a deterministic graph", async () => {
     const graph = await compileDocumentSourceGraph({
       documents: [...documents].reverse(),
@@ -100,6 +162,54 @@ describe("document source graph compiler", () => {
         referenceId: "#/author",
       }),
     } satisfies Partial<DocumentSourceCompilationError>);
+  });
+
+  test("ignores invalid catalog entries outside the selected root closure", async () => {
+    const graph = await compileDocumentSourceGraph({
+      documents: [
+        { ...documents[0], source: '{"title":"Selected"}' },
+        {
+          ...documents[1],
+          id: "unrelated-one",
+          documentUrl: "https://content.webstudio.test/unrelated.md",
+        },
+        {
+          ...documents[1],
+          id: "unrelated-two",
+          documentUrl: "https://content.webstudio.test/unrelated.md",
+        },
+      ],
+      rootIds: ["post"],
+    });
+
+    expect(graph.nodes.map(({ id }) => id)).toEqual(["post"]);
+  });
+
+  test("reports every reachable reference failure", async () => {
+    await expect(
+      compileDocumentSourceGraph({
+        documents: [
+          {
+            ...documents[0],
+            id: "first",
+            documentUrl: "https://content.webstudio.test/posts/first.json",
+            source: '{"author":{"$ref":"../missing/first.md#frontmatter"}}',
+          },
+          {
+            ...documents[0],
+            id: "second",
+            documentUrl: "https://content.webstudio.test/posts/second.json",
+            source: '{"author":{"$ref":"../missing/second.md#frontmatter"}}',
+          },
+        ],
+        rootIds: ["first", "second"],
+      })
+    ).rejects.toMatchObject({
+      errors: [
+        { code: "TARGET_NOT_FOUND", sourceDocumentId: "first" },
+        { code: "TARGET_NOT_FOUND", sourceDocumentId: "second" },
+      ],
+    });
   });
 
   test("rejects an already-cancelled compilation before reading sources", async () => {

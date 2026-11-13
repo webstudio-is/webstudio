@@ -1,12 +1,22 @@
 import { z } from "zod";
 import { parseCssValue } from "@webstudio-is/css-data";
+import { getExpressionValueKind } from "@webstudio-is/expression";
 import {
+  acceptToMimePatterns,
+  doesAssetMatchMimePatterns,
+  blockComponent,
+  contentBlockSourceProp,
   createAnimationActionInput,
+  findWritableContentBlockDocumentBindings,
+  getExpressionBindingError,
+  expressionBindingMode,
+  type Asset,
   prop as propSchema,
   type Instance,
   type Prop,
   type PropMeta,
 } from "@webstudio-is/sdk";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { validateJsonLd } from "@webstudio-is/sdk/runtime";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
@@ -15,6 +25,7 @@ import {
   addExpressionValidationIssues,
   getExpressionErrorMessages,
   getExpressionErrors,
+  unsupportedReadwriteExpressionError,
 } from "./expression-validation";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { validateHtmlEmbedCode } from "./html-embed";
@@ -50,6 +61,7 @@ export const createPropValue = ({
   type,
   value,
   required,
+  mode,
 }: {
   id: Prop["id"];
   instanceId: Instance["id"];
@@ -57,15 +69,20 @@ export const createPropValue = ({
   type: Prop["type"];
   value: unknown;
   required?: boolean;
-}): Prop =>
-  propSchema.parse({
+  mode?: Extract<Prop, { type: "expression" }>["mode"];
+}): Prop => {
+  const expressionMode = type === "expression" ? (mode ?? "read") : undefined;
+  const input = {
     id,
     instanceId,
     name,
     type,
     value,
-    required,
-  });
+    ...(required === undefined ? {} : { required }),
+    ...(expressionMode === undefined ? {} : { mode: expressionMode }),
+  };
+  return propSchema.parse(input);
+};
 
 export const createPropBindingFromInput = ({
   id,
@@ -76,7 +93,12 @@ export const createPropBindingFromInput = ({
   id: Prop["id"];
   instanceId: Instance["id"];
   name: Prop["name"];
-  binding: Pick<Prop, "type" | "value">;
+  binding:
+    | Pick<Extract<Prop, { type: "expression" }>, "type" | "value" | "mode">
+    | Pick<
+        Extract<Prop, { type: "parameter" | "resource" | "action" }>,
+        "type" | "value"
+      >;
 }): Prop =>
   createPropValue({
     id,
@@ -84,6 +106,7 @@ export const createPropBindingFromInput = ({
     name,
     type: binding.type,
     value: binding.value,
+    mode: binding.type === "expression" ? binding.mode : undefined,
   });
 
 export const listPropExpressions = ({
@@ -118,9 +141,11 @@ export const listPropExpressions = ({
 export const getPropValueErrors = ({
   type,
   value,
+  mode,
 }: {
   type: Prop["type"];
   value?: unknown;
+  mode?: Extract<Prop, { type: "expression" }>["mode"];
 }) => {
   if (type !== "expression") {
     return listPropExpressions({ type, value }).flatMap(
@@ -132,7 +157,14 @@ export const getPropValueErrors = ({
         })
     );
   }
-  return getExpressionErrors(String(value));
+  const bindingError = getExpressionBindingError({
+    value: String(value),
+    mode,
+  });
+  return [
+    ...(bindingError === undefined ? [] : [bindingError]),
+    ...getExpressionErrors(String(value)),
+  ];
 };
 
 export const isPrimitiveValue = (value: unknown) => {
@@ -218,6 +250,7 @@ const propValueInputVariants = [
       .describe(
         "One Webstudio JavaScript expression, not a statement or function. Read webstudio://project/expressions for syntax and scope rules."
       ),
+    mode: expressionBindingMode.optional(),
   }),
   z.object({
     ...propValueBaseInput,
@@ -258,6 +291,7 @@ export const dataPropBindingInput = z.discriminatedUnion("type", [
       .describe(
         "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax."
       ),
+    mode: expressionBindingMode.optional(),
   }),
   z.object({ type: z.literal("parameter"), value: z.string() }),
   z.object({ type: z.literal("resource"), value: z.string() }),
@@ -278,7 +312,11 @@ export const propBindingInput = z
   .object({
     propId: runtimeGeneratedIdInput,
     instanceId: z.string(),
-    name: z.string(),
+    name: z
+      .string()
+      .describe(
+        'Prop name. A bound "style" prop must evaluate to an object such as { color: themeColor }, never a CSS declaration string.'
+      ),
     binding: z.discriminatedUnion("type", [
       ...dataPropBindingInput.options,
       actionPropBindingInput,
@@ -290,9 +328,25 @@ export const propBindingInput = z
       getPropValueErrors({
         type: value.binding.type,
         value: value.binding.value,
+        mode:
+          value.binding.type === "expression" ? value.binding.mode : undefined,
       }),
       ["binding", "value"]
     );
+    if (
+      value.name === "style" &&
+      value.binding.type === "expression" &&
+      !["object", "unknown"].includes(
+        getExpressionValueKind({ expression: value.binding.value })
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["binding", "value"],
+        message:
+          'A bound "style" prop must evaluate to an object keyed by style properties, for example { color: themeColor }.',
+      });
+    }
   });
 
 export const propUpdatesInput = z.object({
@@ -341,7 +395,7 @@ export type PropValueUpdate =
   | Pick<Extract<Prop, { type: "boolean" }>, "type" | "value">
   | Pick<Extract<Prop, { type: "json" }>, "type" | "value">
   | Pick<Extract<Prop, { type: "string[]" }>, "type" | "value">
-  | Pick<Extract<Prop, { type: "expression" }>, "type" | "value">
+  | Pick<Extract<Prop, { type: "expression" }>, "type" | "value" | "mode">
   | Pick<Extract<Prop, { type: "asset" }>, "type" | "value">
   | Pick<Extract<Prop, { type: "page" }>, "type" | "value">
   | Pick<Extract<Prop, { type: "action" }>, "type" | "value">
@@ -447,7 +501,12 @@ export const createPropValueInputFromProp = (prop: Prop): PropValueInput => {
     case "resource":
       return { ...base, type: prop.type, value: prop.value };
     case "expression":
-      return { ...base, type: prop.type, value: prop.value };
+      return {
+        ...base,
+        type: prop.type,
+        value: prop.value,
+        mode: prop.mode,
+      };
     case "action":
       return { ...base, type: prop.type, value: prop.value };
     case "animationAction":
@@ -472,9 +531,11 @@ type ValidatedPropInputResult =
   | { success: true; prop: Prop }
   | { success: false; errors: string[] };
 
-type PropValueInputWithId = Omit<z.infer<typeof propValueInput>, "propId"> & {
-  propId?: Prop["id"];
-};
+type WithOptionalPropId<Input> = Input extends unknown
+  ? Omit<Input, "propId"> & { propId?: Prop["id"] }
+  : never;
+
+type PropValueInputWithId = WithOptionalPropId<z.infer<typeof propValueInput>>;
 
 type PropBindingInputWithId = Omit<
   z.infer<typeof propBindingInput>,
@@ -504,6 +565,7 @@ export const createValidatedPropValueFromInput = (
       type: value.type,
       value: value.value,
       required: value.required,
+      mode: value.type === "expression" ? value.mode : undefined,
     }),
   };
 };
@@ -515,6 +577,8 @@ export const createValidatedPropBindingFromInput = (
   const errors = getPropValueErrors({
     type: binding.binding.type,
     value: binding.binding.value,
+    mode:
+      binding.binding.type === "expression" ? binding.binding.mode : undefined,
   });
   if (errors.length > 0) {
     return { success: false, errors };
@@ -543,28 +607,6 @@ export const clonePropForInstance = ({
   id: propId,
   instanceId,
 });
-
-export const createPropClonePatches = ({
-  nextIdById,
-  props,
-  createId,
-}: {
-  nextIdById: Map<Instance["id"], Instance["id"]>;
-  props: Iterable<Prop>;
-  createId: () => Prop["id"];
-}) =>
-  Array.from(props).flatMap((prop) => {
-    const nextInstanceId = nextIdById.get(prop.instanceId);
-    if (nextInstanceId === undefined) {
-      return [];
-    }
-    const nextProp = clonePropForInstance({
-      prop,
-      propId: createId(),
-      instanceId: nextInstanceId,
-    });
-    return [{ op: "add" as const, path: [nextProp.id], value: nextProp }];
-  });
 
 export const createPropUpsertPayload = ({
   props,
@@ -615,6 +657,38 @@ export const createPropUpsertPayload = ({
   };
 };
 
+export const getMediaAssetPropNames = (
+  component: Instance["component"]
+): readonly string[] =>
+  component === "Image" ? ["width", "height", "alt"] : [];
+
+export const getPropAssetError = ({
+  instance,
+  prop,
+  asset,
+}: {
+  instance: Instance;
+  prop: Pick<Prop, "name" | "type">;
+  asset: Asset | undefined;
+}) => {
+  // Pending uploads do not have an asset record yet.
+  if (prop.type !== "asset" || asset === undefined) {
+    return;
+  }
+  const meta = componentMetas.get(instance.component)?.props?.[prop.name];
+  if (
+    (getMediaAssetPropNames(instance.component).includes(prop.name) &&
+      asset.type !== "image") ||
+    (meta?.control === "file" &&
+      !doesAssetMatchMimePatterns(
+        asset,
+        acceptToMimePatterns(meta.accept ?? "")
+      ))
+  ) {
+    return "This asset type is not allowed for this property.";
+  }
+};
+
 export const getPropIdsToDelete = ({
   instanceComponent,
   instanceProps,
@@ -630,13 +704,11 @@ export const getPropIdsToDelete = ({
     propIds.add(prop.id);
   }
   if (instanceComponent === "Image" && propName === "src") {
-    const widthProp = instanceProps.get("width");
-    if (widthProp) {
-      propIds.add(widthProp.id);
-    }
-    const heightProp = instanceProps.get("height");
-    if (heightProp) {
-      propIds.add(heightProp.id);
+    for (const name of ["width", "height"]) {
+      const sizeProp = instanceProps.get(name);
+      if (sizeProp) {
+        propIds.add(sizeProp.id);
+      }
     }
   }
   return propIds;
@@ -801,6 +873,58 @@ const assertRuntimeInstance = (
 const throwPropErrors = (errors: string[]) =>
   throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
 
+const assertReadwritePropBindingsSupported = ({
+  instances,
+  props,
+  nextProps,
+}: {
+  instances: Map<Instance["id"], Instance>;
+  props: Map<Prop["id"], Prop>;
+  nextProps: readonly Prop[];
+}) => {
+  const readwritePropIds = new Set(
+    nextProps.flatMap((prop) =>
+      prop.type === "expression" && prop.mode === "readwrite" ? [prop.id] : []
+    )
+  );
+  if (readwritePropIds.size === 0) {
+    return;
+  }
+  const nextPropsById = new Map(props);
+  for (const prop of nextProps) {
+    nextPropsById.set(prop.id, prop);
+  }
+  const writablePropIds = new Set(
+    findWritableContentBlockDocumentBindings({
+      instances,
+      props: nextPropsById,
+    }).props.map(({ propId }) => propId)
+  );
+  for (const propId of readwritePropIds) {
+    if (writablePropIds.has(propId) === false) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        unsupportedReadwriteExpressionError
+      );
+    }
+  }
+};
+
+const assertGenericPropMutationAllowed = (
+  instance: Instance,
+  name: Prop["name"]
+) => {
+  if (
+    instance.component === blockComponent &&
+    name === contentBlockSourceProp
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Use Content Block source operations to connect, switch, or disconnect its source."
+    );
+  }
+};
+
 const getHtmlEmbedCodeErrors = (instance: Instance, update: PropValueInput) => {
   if (
     instance.component !== "HtmlEmbed" ||
@@ -830,14 +954,31 @@ const getJsonLdCodeErrors = (instance: Instance, update: PropValueInput) => {
 };
 
 export const updateProps = (
-  state: Pick<BuilderState, "instances" | "props">,
+  state: Pick<BuilderState, "instances" | "props" | "assets">,
   input: z.infer<typeof propUpdatesInput>,
   context: { createId: () => string }
 ) => {
   const { instances, props } = getRequiredPropState(state);
-  const nextProps = input.updates.map((update) => {
+  const updatesByProp = new Map<string, (typeof input.updates)[number]>();
+  for (const update of input.updates) {
+    const key = JSON.stringify([update.instanceId, update.name]);
+    updatesByProp.delete(key);
+    updatesByProp.set(key, update);
+  }
+  const updates = [...updatesByProp.values()];
+  const nextProps = updates.map((update) => {
     assertRuntimeInstance(instances, update.instanceId);
     const instance = instances.get(update.instanceId)!;
+    assertGenericPropMutationAllowed(instance, update.name);
+    const assetError = getPropAssetError({
+      instance,
+      prop: update,
+      asset:
+        update.type === "asset" ? state.assets?.get(update.value) : undefined,
+    });
+    if (assetError !== undefined) {
+      return throwBuilderRuntimeError("BAD_REQUEST", assetError);
+    }
     const htmlEmbedCodeErrors = getHtmlEmbedCodeErrors(instance, update);
     const codeErrors = [
       ...htmlEmbedCodeErrors,
@@ -856,6 +997,39 @@ export const updateProps = (
     }
     return nextProp.prop;
   });
+  for (const source of [...nextProps]) {
+    const instance = instances.get(source.instanceId)!;
+    const asset =
+      source.type === "asset" ? state.assets?.get(source.value) : undefined;
+    if (
+      source.name !== "src" ||
+      source.type !== "asset" ||
+      (asset !== undefined && asset.type !== "image") ||
+      isDynamicPropType(findProp(props.values(), instance.id, "src")?.type)
+    ) {
+      continue;
+    }
+    for (const name of getMediaAssetPropNames(instance.component)) {
+      const existing = findProp(props.values(), instance.id, name);
+      if (
+        isDynamicPropType(existing?.type) ||
+        findProp(nextProps, instance.id, name)
+      ) {
+        continue;
+      }
+      nextProps.push(
+        createPropValue({
+          id: existing?.id ?? context.createId(),
+          instanceId: instance.id,
+          name,
+          type: "asset",
+          value: source.value,
+          required: existing?.required,
+        })
+      );
+    }
+  }
+  assertReadwritePropBindingsSupported({ instances, props, nextProps });
   const { payload, propIds } = createPropUpsertPayload({
     props: props.values(),
     nextProps,
@@ -962,6 +1136,8 @@ export const bindProps = (
   const { instances, props } = getRequiredPropState(state);
   const nextProps = input.bindings.map((binding) => {
     assertRuntimeInstance(instances, binding.instanceId);
+    const instance = instances.get(binding.instanceId)!;
+    assertGenericPropMutationAllowed(instance, binding.name);
     const existing = findProp(props.values(), binding.instanceId, binding.name);
     const nextProp = createValidatedPropBindingFromInput(
       { ...binding, propId: binding.propId ?? existing?.id },
@@ -972,6 +1148,7 @@ export const bindProps = (
     }
     return nextProp.prop;
   });
+  assertReadwritePropBindingsSupported({ instances, props, nextProps });
   const { payload, propIds } = createPropUpsertPayload({
     props: props.values(),
     nextProps,
@@ -988,6 +1165,12 @@ export const deleteProps = (
   input: z.infer<typeof propDeletionsInput>
 ) => {
   const { instances, props } = getRequiredPropState(state);
+  for (const deletion of input.deletions) {
+    const instance = instances.get(deletion.instanceId);
+    if (instance !== undefined) {
+      assertGenericPropMutationAllowed(instance, deletion.name);
+    }
+  }
   const { missingInstanceId, payload, propIds } = createPropDeletePayload({
     instances,
     props: props.values(),

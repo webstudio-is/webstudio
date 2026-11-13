@@ -3,14 +3,31 @@
 
 
       import type { PageMeta } from "@webstudio-is/sdk";
+      import { toWebstudioParams } from "@webstudio-is/react-sdk";
       import type { System, ResourceRequest } from "@webstudio-is/sdk";
-export const getResources = (_props: { system: System }) => {
-  const _data = new Map<string, ResourceRequest>([
+import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
+export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
+  const _data: ResourceRequestGraph = {
+    resources: [
+    ],
+    rootIds: [
+    ],
+  }
+  const _contentData = new Map<string, ResourceRequest>()
+  const _action = new Map<string, { id: string; outputName: string }>([
   ])
-  const _action = new Map<string, ResourceRequest>([
-  ])
-  return { data: _data, action: _action }
+  return { data: _data, action: _action, contentData: _contentData }
 }
+
+
+      import type { ManagedFormResourceGraph } from "@webstudio-is/sdk/runtime";
+import { createFormEmailDataProxy } from "@webstudio-is/sdk";
+import { createJsonStringifyProxy } from "@webstudio-is/sdk/to-string";
+export const getManagedFormResourceGraph = (formId: string, _managedFormProps: { system: System; formData: unknown; browserInfo: unknown }): ManagedFormResourceGraph | undefined => {
+  switch (formId) {
+    default: return undefined;
+  }
+};
 
 
       export const getPageMeta = ({
@@ -36,11 +53,13 @@ export const getResources = (_props: { system: System }) => {
 };
 
 
-      type Params = Record<string, string | undefined>;
-export const getRemixParams = ({ ...params }: Params): Params => {
-  return params
-}
+      export const getRemixParams = (params: Record<string, string | undefined>) => toWebstudioParams("/radix", params);
 
+      export const getManagedFormSubmissions = () =>
+        new Map<string, { action: unknown; resourceIds: (string | null)[] }>(
+          []
+        );
 
+      /** @deprecated Generated only for saved Webhook Forms. */
       export const contactEmail = "hello@webstudio.is";
     

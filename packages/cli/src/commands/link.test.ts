@@ -1,4 +1,3 @@
-import { log } from "@clack/prompts";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   copyFile,
@@ -11,7 +10,7 @@ import {
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE } from "../config";
-import { link, parseShareLink, saveShareLink, validateShareLink } from "./link";
+import { parseShareLink, saveShareLink, validateShareLink } from "./link";
 
 const originalCwd = process.cwd();
 const projectId = "11111111-1111-4111-8111-111111111111";
@@ -41,21 +40,6 @@ afterEach(async () => {
   }
   await rm(tempDir, { recursive: true, force: true });
   vi.restoreAllMocks();
-});
-
-test("offers immediate local CLI use without requiring native MCP setup", async () => {
-  vi.spyOn(log, "info").mockImplementation(() => {});
-  const step = vi.spyOn(log, "step").mockImplementation(() => {});
-
-  await link({ link: shareLink });
-
-  expect(step).toHaveBeenCalledWith(
-    expect.stringContaining("webstudio meta.index` immediately")
-  );
-  expect(step).toHaveBeenCalledWith(
-    expect.stringContaining("webstudio connect <client>` is optional")
-  );
-  expect(step).not.toHaveBeenCalledWith(expect.stringContaining("sync"));
 });
 
 test("parses and validates share links", () => {

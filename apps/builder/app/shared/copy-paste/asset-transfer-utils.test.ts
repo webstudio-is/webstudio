@@ -1,0 +1,316 @@
+import { expect, test, vi } from "vitest";
+import type { Asset, WebstudioFragment } from "@webstudio-is/sdk";
+import { transferFragmentAssets } from "./asset-transfer-utils";
+
+const imageAsset = {
+  id: "source-image",
+  projectId: "source-project",
+  name: "hero.png",
+  type: "image",
+  size: 128,
+  format: "png",
+  createdAt: "2026-01-01T00:00:00.000Z",
+  description: null,
+  meta: { width: 1200, height: 800 },
+} satisfies Asset;
+
+const fontAsset = {
+  id: "source-font",
+  projectId: "source-project",
+  name: "heading.woff2",
+  type: "font",
+  size: 64,
+  format: "woff2",
+  createdAt: "2026-01-01T00:00:00.000Z",
+  description: null,
+  meta: { family: "Source heading", style: "normal", weight: 600 },
+} satisfies Asset;
+
+const fragment = {
+  children: [{ type: "id", value: "image" }],
+  instances: [
+    { type: "instance", id: "image", component: "Image", children: [] },
+  ],
+  assets: [imageAsset, fontAsset],
+  dataSources: [],
+  resources: [],
+  props: [
+    {
+      id: "image-src",
+      instanceId: "image",
+      name: "src",
+      type: "asset",
+      value: imageAsset.id,
+    },
+  ],
+  breakpoints: [],
+  styleSourceSelections: [],
+  styleSources: [],
+  styles: [
+    {
+      styleSourceId: "local",
+      breakpointId: "base",
+      property: "backgroundImage",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "image",
+            value: { type: "asset", value: imageAsset.id },
+          },
+        ],
+      },
+    },
+    {
+      styleSourceId: "local",
+      breakpointId: "base",
+      property: "fontFamily",
+      value: {
+        type: "fontFamily",
+        value: [fontAsset.meta.family, "sans-serif"],
+      },
+    },
+  ],
+} satisfies WebstudioFragment;
+
+test("still validates imported assets without rewriting unchanged references", async () => {
+  const importAssets = vi.fn(
+    async () => new Map(fragment.assets.map((asset) => [asset.id, asset]))
+  );
+  const result = await transferFragmentAssets({
+    sourceOrigin: "https://source.example.com",
+    projectId: "target-project",
+    fragments: [fragment],
+    importAssets,
+  });
+  expect(importAssets).toHaveBeenCalledOnce();
+  expect(result.success).toBe(true);
+  if (result.success === false) {
+    return;
+  }
+  const transferred = result.fragments.get(fragment)!;
+  expect(transferred.assets).toEqual([]);
+  expect(transferred.props).toBe(fragment.props);
+  expect(transferred.styles).toBe(fragment.styles);
+  expect(result.assetIds).toEqual(
+    new Map(fragment.assets.map((asset) => [asset.id, asset.id]))
+  );
+});
+
+test("imports and remaps every fragment asset reference", async () => {
+  const importedImage = {
+    ...imageAsset,
+    id: "imported-image",
+    projectId: "target-project",
+  } satisfies Asset;
+  const importedFont = {
+    ...fontAsset,
+    id: "imported-font",
+    projectId: "target-project",
+    meta: { ...fontAsset.meta, family: "Imported heading" },
+  } satisfies Asset;
+  const importAssets = vi.fn(
+    async () =>
+      new Map<Asset["id"], Asset>([
+        [imageAsset.id, importedImage],
+        [fontAsset.id, importedFont],
+      ])
+  );
+
+  const result = await transferFragmentAssets({
+    sourceOrigin: "https://source.example.com",
+    projectId: "target-project",
+    fragments: [fragment],
+    importAssets,
+  });
+
+  expect(importAssets).toHaveBeenCalledWith("target-project", [
+    {
+      asset: imageAsset,
+      url: "https://source.example.com/cgi/image/hero.png?format=raw",
+    },
+    {
+      asset: fontAsset,
+      url: "https://source.example.com/cgi/asset/heading.woff2?format=raw",
+    },
+  ]);
+  expect(result.success).toBe(true);
+  if (result.success === false) {
+    return;
+  }
+  expect(result.assets).toEqual(
+    new Map<Asset["id"], Asset>([
+      [imageAsset.id, importedImage],
+      [fontAsset.id, importedFont],
+    ])
+  );
+  expect(result.fragments.get(fragment)).toEqual({
+    ...fragment,
+    assets: [],
+    props: [expect.objectContaining({ value: importedImage.id })],
+    styles: [
+      expect.objectContaining({
+        value: {
+          type: "layers",
+          value: [
+            {
+              type: "image",
+              value: { type: "asset", value: importedImage.id },
+            },
+          ],
+        },
+      }),
+      expect.objectContaining({
+        value: {
+          type: "fontFamily",
+          value: [importedFont.meta.family, "sans-serif"],
+        },
+      }),
+    ],
+  });
+});
+
+test("transfers many asset references without scanning styles for every asset", async () => {
+  const assetCount = 400;
+  const styleCount = 6000;
+  const assets = Array.from(
+    { length: assetCount },
+    (_, index): Asset => ({
+      ...imageAsset,
+      id: `source-${index}`,
+      name: `image-${index}.png`,
+    })
+  );
+  const assetRichFragment: WebstudioFragment = {
+    ...fragment,
+    children: [],
+    instances: [],
+    assets,
+    props: [],
+    styles: Array.from({ length: styleCount }, (_, index) => ({
+      styleSourceId: `style-${index}`,
+      breakpointId: "base",
+      property: "backgroundImage",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "image",
+            value: {
+              type: "asset",
+              value: assets[index % assetCount].id,
+            },
+          },
+        ],
+      },
+    })),
+  };
+  const start = performance.now();
+  const result = await transferFragmentAssets({
+    sourceOrigin: "https://source.example.com",
+    projectId: "target-project",
+    fragments: [assetRichFragment],
+    importAssets: async () =>
+      new Map(
+        assets.map((asset) => [
+          asset.id,
+          { ...asset, id: `imported-${asset.id}` },
+        ])
+      ),
+  });
+  const elapsed = performance.now() - start;
+
+  expect(result.success).toBe(true);
+  if (result.success === false) {
+    return;
+  }
+  expect(result.fragments.get(assetRichFragment)?.styles[0].value).toEqual({
+    type: "layers",
+    value: [
+      { type: "image", value: { type: "asset", value: "imported-source-0" } },
+    ],
+  });
+  expect(elapsed).toBeLessThan(1500);
+}, 20000);
+
+test("keeps same-project asset transfers fast when references do not change", async () => {
+  const assets = Array.from(
+    { length: 20000 },
+    (_, index): Asset => ({
+      ...imageAsset,
+      id: `image-${index}`,
+    })
+  );
+  const unchangedFragment: WebstudioFragment = {
+    ...fragment,
+    assets,
+    styles: Array.from({ length: 6000 }, (_, index) => ({
+      styleSourceId: `style-${index}`,
+      breakpointId: "base",
+      property: "backgroundImage",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "image",
+            value: { type: "asset", value: assets[index].id },
+          },
+        ],
+      },
+    })),
+  };
+  const start = performance.now();
+  const result = await transferFragmentAssets({
+    sourceOrigin: "https://source.example.com",
+    projectId: "target-project",
+    fragments: [unchangedFragment],
+    importAssets: async () => new Map(assets.map((asset) => [asset.id, asset])),
+  });
+  const elapsed = performance.now() - start;
+
+  expect(result.success).toBe(true);
+  if (result.success === false) {
+    return;
+  }
+  expect(result.fragments.get(unchangedFragment)?.styles).toBe(
+    unchangedFragment.styles
+  );
+  expect(elapsed).toBeLessThan(700);
+}, 20000);
+
+test("preserves sequential remapping when an imported ID matches another source ID", async () => {
+  const first = { ...imageAsset, id: "source-a" };
+  const second = { ...imageAsset, id: "source-b" };
+  const chainedFragment: WebstudioFragment = {
+    ...fragment,
+    assets: [first, second],
+    props: [
+      {
+        id: "image-src",
+        instanceId: "image",
+        name: "src",
+        type: "asset",
+        value: first.id,
+      },
+    ],
+    styles: [],
+  };
+  const result = await transferFragmentAssets({
+    sourceOrigin: "https://source.example.com",
+    projectId: "target-project",
+    fragments: [chainedFragment],
+    importAssets: async () =>
+      new Map([
+        [first.id, { ...first, id: second.id }],
+        [second.id, { ...second, id: "target-c" }],
+      ]),
+  });
+
+  expect(result.success).toBe(true);
+  if (result.success === false) {
+    return;
+  }
+  expect(result.fragments.get(chainedFragment)?.props[0]).toMatchObject({
+    value: "target-c",
+  });
+});

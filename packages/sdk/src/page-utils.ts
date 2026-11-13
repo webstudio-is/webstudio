@@ -1,4 +1,4 @@
-import { executeExpression } from "./expression";
+import { parseJsonExpression } from "@webstudio-is/expression";
 import {
   isPageDraft,
   type Folder,
@@ -157,7 +157,7 @@ export const isPageEligibleForSitemap = (page: Page) =>
   (page.meta.documentType ?? "html") === "html" &&
   // A dynamic expression cannot be evaluated without its resource data, so it
   // remains eligible just as it did for static sitemap generation.
-  executeExpression(page.meta.excludePageFromSearch) !== true;
+  parseJsonExpression(page.meta.excludePageFromSearch) !== true;
 
 export const getStaticSiteMapXml = (pages: Pages, updatedAt: string) => {
   const allPages = getPublishablePages(pages);

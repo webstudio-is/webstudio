@@ -125,7 +125,6 @@ export const ImageControl = ({
         }
       >
         <Button
-          color="neutral"
           disabled={disabled}
           css={{ maxWidth: "100%", justifySelf: "right" }}
         >
@@ -135,3 +134,5 @@ export const ImageControl = ({
     </Flex>
   );
 };
+
+undefined;

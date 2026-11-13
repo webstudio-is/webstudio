@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -11,7 +11,12 @@ import {
   createCliProjectRestorePointStorage,
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
+  createIssueReportFailure,
+  createIssueReportFailureTracker,
+  createIssueReportTarget,
+  createIssueReportTargetTracker,
   addIssueReportRuntime,
+  assertCliEditingContractVersion,
   getCliServerApiContract,
   getCliProjectSessionFile,
   getCliProjectRestorePointsFile,
@@ -30,13 +35,399 @@ test("adds anonymous local runtime metadata only to issue reports", () => {
     architecture: "arm64",
     executionMode: "mcp" as const,
     apiContractVersion: "public-api:client",
+    bundleVersion: "bundle:client",
+    recentFailure: {
+      tool: "preview.start",
+      code: "PROJECT_BUNDLE_INVALID",
+      issues: [
+        {
+          path: ["assets", "0", "type"],
+          code: "invalid_value",
+          constraint: "one of supported asset types",
+        },
+      ],
+    },
   };
 
-  expect(addIssueReportRuntime("report-issue", report, runtime)).toEqual({
+  expect(addIssueReportRuntime("report-issue", report, () => runtime)).toEqual({
     ...report,
     runtime,
   });
-  expect(addIssueReportRuntime("audit", report, runtime)).toBe(report);
+  expect(addIssueReportRuntime("audit", report, () => runtime)).toBe(report);
+});
+
+test("captures safe preview install failure details without npm output", () => {
+  const error = Object.assign(new Error("private npm output"), {
+    code: "PREVIEW_DEPENDENCY_INSTALL_FAILED",
+    cause: Object.assign(new Error("private local path"), {
+      code: "ETIMEDOUT",
+      killed: true,
+      stderr: "private registry token",
+    }),
+  });
+
+  expect(createIssueReportFailure("preview.start", error)).toEqual({
+    tool: "preview.start",
+    code: "PREVIEW_DEPENDENCY_INSTALL_FAILED",
+    previewInstall: { processErrorCode: "ETIMEDOUT", terminated: true },
+  });
+
+  const npmExit = Object.assign(new Error("private npm output"), {
+    code: "PREVIEW_DEPENDENCY_INSTALL_FAILED",
+    cause: Object.assign(new Error("private registry token"), {
+      code: 1,
+      stderr: "private registry token",
+    }),
+  });
+  expect(createIssueReportFailure("preview.start", npmExit)).toEqual({
+    tool: "preview.start",
+    code: "PREVIEW_DEPENDENCY_INSTALL_FAILED",
+    previewInstall: { exitCode: 1 },
+  });
+});
+
+test("keeps only anonymous structured fields from the latest tool failure", () => {
+  const error = Object.assign(new Error("Asset customer-logo.png is invalid"), {
+    code: "PROJECT_BUNDLE_INVALID",
+    issues: [
+      {
+        path: ["assets", "0", "type"],
+        code: "invalid_value",
+        message: "Customer-specific value is unsupported",
+        constraint: "one of supported asset types",
+        detail: "Asset customer-logo.png belongs to project-123",
+      },
+    ],
+  });
+
+  expect(createIssueReportFailure("preview.start", error)).toEqual({
+    tool: "preview.start",
+    code: "PROJECT_BUNDLE_INVALID",
+    issues: [
+      {
+        path: ["assets", "0"],
+        code: "invalid_value",
+        constraint: "one of supported asset types",
+      },
+    ],
+  });
+
+  expect(
+    createIssueReportFailure("unknown", {
+      code: "dynamic-code",
+      issues: error.issues,
+    })
+  ).toEqual({
+    tool: "unknown",
+    code: "MCP_TOOL_FAILED",
+  });
+
+  expect(
+    createIssueReportFailure("insert-fragment", {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: ["fragment"],
+          code: "invalid_webstudio_jsx",
+          message: "Fragment contains private project content",
+          constraint: "valid_webstudio_jsx_syntax",
+          detail: "Unexpected token near customer data",
+        },
+      ],
+    })
+  ).toEqual({
+    tool: "insert-fragment",
+    code: "INVALID_INPUT",
+    issues: [
+      {
+        path: ["fragment"],
+        code: "invalid_webstudio_jsx",
+        constraint: "valid_webstudio_jsx_syntax",
+      },
+    ],
+  });
+
+  expect(
+    createIssueReportFailure("select-instance", {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: ["instanceId"],
+          code: "invalid_type",
+          message: "Expected string",
+          constraint: "type:string",
+        },
+      ],
+    }).issues?.[0].path
+  ).toEqual(["instanceId"]);
+
+  const sensitiveKey = "customer-secret-key";
+  const serialized = JSON.stringify(
+    createIssueReportFailure("update-styles", {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: ["updates", "0", sensitiveKey],
+          code: "invalid_type",
+          message: "Expected string",
+          constraint: "type:string",
+        },
+      ],
+    })
+  );
+  expect(serialized).not.toContain(sensitiveKey);
+  expect(JSON.parse(serialized).issues[0].path).toEqual(["updates", "0"]);
+
+  const rootSecret = JSON.stringify(
+    createIssueReportFailure("update-styles", {
+      code: "INVALID_INPUT",
+      issues: [
+        { path: [sensitiveKey], code: "unrecognized", constraint: "known key" },
+      ],
+    })
+  );
+  expect(rootSecret).not.toContain(sensitiveKey);
+
+  expect(
+    createIssueReportFailure("update-styles", {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: [sensitiveKey, "0"],
+          code: "invalid_type",
+          message: "Expected string",
+          constraint: "type:string",
+        },
+      ],
+    }).issues?.[0].path
+  ).toEqual([]);
+});
+
+test("retains safe error types and request IDs without leaking error messages", () => {
+  class AssetRevisionConflictError extends Error {}
+  const cause = Object.assign(
+    new AssetRevisionConflictError("Private article name"),
+    {
+      requestId: "abc123-LIS",
+    }
+  );
+  const failure = createIssueReportFailure(
+    "update-content-block-frontmatter",
+    new Error("Private project details", { cause })
+  );
+
+  expect(failure).toEqual({
+    tool: "update-content-block-frontmatter",
+    code: "MCP_TOOL_FAILED",
+    errorType: "AssetRevisionConflictError",
+    requestId: "abc123-LIS",
+  });
+  expect(JSON.stringify(failure)).not.toContain("Private");
+});
+
+test("captures only recognized IDs from nested failed tool input", () => {
+  const failure = createIssueReportFailure(
+    "update-styles",
+    Object.assign(new Error("private content"), { code: "INVALID_INPUT" }),
+    20,
+    {
+      pageId: "page-1",
+      sourceSlotId: "slot-1",
+      randomId: "private-1",
+      updates: [
+        {
+          instanceId: "instance-1",
+          dataSourceId: "variable-1",
+          value: { pageId: "private-customer-value" },
+        },
+        { instanceId: "instance-1", value: "private content" },
+      ],
+      authTokenId: "secret-1",
+      nested: { url: "https://secret.example.com", randomId: "secret-2" },
+    }
+  );
+  expect(failure.entityIds).toEqual([
+    { field: "pageId", id: "page-1" },
+    { field: "sourceSlotId", id: "slot-1" },
+    { field: "instanceId", id: "instance-1" },
+    { field: "dataSourceId", id: "variable-1" },
+  ]);
+  expect(JSON.stringify(failure)).not.toContain("secret");
+  expect(JSON.stringify(failure)).not.toContain("private-1");
+  expect(JSON.stringify(failure)).not.toContain("private-customer-value");
+});
+
+test("captures failure timing and HTTP status", () => {
+  expect(
+    createIssueReportFailure(
+      "preview-asset-query",
+      new Error("Request failed", {
+        cause: Object.assign(new Error("Gateway timeout"), { status: 504 }),
+      }),
+      17_000
+    )
+  ).toEqual({
+    tool: "preview-asset-query",
+    code: "MCP_TOOL_FAILED",
+    httpStatus: 504,
+    elapsedMs: 17_000,
+  });
+});
+
+test("keeps a failed mutation available after a successful diagnostic read", () => {
+  let now = 1_000;
+  const tracker = createIssueReportFailureTracker(() => now);
+  tracker.record(
+    "create-page",
+    new Error("Unable to transform response from server"),
+    750,
+    { pageId: "page-1" }
+  );
+  tracker.succeed("list-pages");
+  expect(tracker.get()?.tool).toBe("create-page");
+  expect(tracker.get()?.entityIds).toEqual([{ field: "pageId", id: "page-1" }]);
+  now += 60_000;
+  expect(tracker.get()?.tool).toBe("create-page");
+  now += 10 * 60_000;
+  expect(tracker.get()).toBeUndefined();
+  tracker.record("screenshot", new Error("Browser failed"), 120);
+  tracker.succeed("report-issue");
+  expect(tracker.get()).toBeUndefined();
+
+  const restored = createIssueReportFailureTracker(() => now);
+  restored.restore({ tool: "update-text", code: "MCP_TOOL_FAILED" }, now + 1);
+  expect(restored.get()).toBeUndefined();
+  restored.restore(
+    { tool: "update-text", code: "MCP_TOOL_FAILED" },
+    now - 10 * 60_000 - 1
+  );
+  expect(restored.get()).toBeUndefined();
+});
+
+test("keeps validated IDs from recent targeted tools without private input", () => {
+  let now = 1_000;
+  const tracker = createIssueReportTargetTracker(() => now);
+  tracker.record("inspect-instance", {
+    instanceId: "instance-1",
+    url: "https://private.example/?authToken=secret",
+  });
+  expect(tracker.record("list-pages", {})).toBe(false);
+  expect(tracker.getAll()?.[0]).toEqual({
+    tool: "inspect-instance",
+    entityIds: [{ field: "instanceId", id: "instance-1" }],
+  });
+  expect(
+    tracker.record(
+      "screenshot",
+      { path: "/blog/private-slug?authToken=secret" },
+      "page-1"
+    )
+  ).toBe(true);
+  expect(tracker.getAll()).toEqual([
+    { tool: "screenshot", entityIds: [{ field: "pageId", id: "page-1" }] },
+    {
+      tool: "inspect-instance",
+      entityIds: [{ field: "instanceId", id: "instance-1" }],
+    },
+  ]);
+  tracker.record("screenshot", { path: "/blog/another-post" }, "page-1");
+  expect(tracker.getAll()).toHaveLength(2);
+  expect(JSON.stringify(tracker.snapshot())).not.toContain("private");
+  expect(
+    createIssueReportTarget("inspect-instance", {
+      instanceId: "https://secret",
+    })
+  ).toBeUndefined();
+  now += 10 * 60_000 + 1;
+  expect(tracker.getAll()).toBeUndefined();
+});
+
+test("reports only the shape of an untransformable server response", () => {
+  const error = Object.assign(
+    new Error("Unable to transform response from server"),
+    {
+      name: "TRPCClientError",
+      meta: {
+        response: new Response("private customer content", {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+        responseJSON: [{ result: "private customer content" }],
+      },
+    }
+  );
+  const failure = createIssueReportFailure(
+    "create-page",
+    new Error("Page creation failed", { cause: error })
+  );
+  expect(failure).toEqual({
+    tool: "create-page",
+    code: "API_RESPONSE_TRANSFORM_FAILED",
+    httpStatus: 200,
+    response: { format: "json", envelope: "result", batchSize: 1 },
+  });
+  expect(JSON.stringify(failure)).not.toContain("private customer content");
+});
+
+test("reports browser family and exit signal without executable paths", () => {
+  const failure = createIssueReportFailure("screenshot", {
+    code: "SCREENSHOT_CAPTURE_FAILED",
+    cause: {
+      code: "BROWSER_STARTUP_FAILED",
+      processExit: { signal: "SIGABRT" },
+      attempts: [
+        { browser: "chromium", source: "path", path: "/private/browser" },
+      ],
+    },
+  });
+  expect(failure).toEqual({
+    tool: "screenshot",
+    code: "SCREENSHOT_CAPTURE_FAILED",
+    browser: {
+      exitSignal: "SIGABRT",
+      attempts: [{ browser: "chromium", source: "path" }],
+    },
+  });
+  expect(JSON.stringify(failure)).not.toContain("/private/browser");
+  expect(
+    createIssueReportFailure("screenshot", {
+      code: "BROWSER_STARTUP_FAILED",
+      processExit: { signal: "SIGCUSTOMERSECRET" },
+      attempts: [
+        {
+          browser: "private-browser",
+          source: "path",
+          path: "/private/browser",
+        },
+      ],
+    })
+  ).toEqual({ tool: "screenshot", code: "BROWSER_STARTUP_FAILED" });
+});
+
+test("reports a browser DevTools disconnect without including private details", () => {
+  const failure = createIssueReportFailure("verify-page-responsive", {
+    code: "BROWSER_SESSION_CLOSED",
+    issues: [
+      {
+        code: "browser_devtools_connection_closed",
+        path: [],
+        message: "The browser DevTools connection closed during capture.",
+        constraint: "devtools_connection_available",
+      },
+    ],
+  });
+
+  expect(failure).toEqual({
+    tool: "verify-page-responsive",
+    code: "BROWSER_SESSION_CLOSED",
+    issues: [
+      {
+        path: [],
+        code: "browser_devtools_connection_closed",
+        constraint: "devtools_connection_available",
+      },
+    ],
+  });
 });
 
 test("scopes project session files for explicitly selected projects", () => {
@@ -238,6 +629,36 @@ describe("cli project session storage", () => {
     expect(await storage.list()).toHaveLength(19);
   });
 
+  test("persists session state without the Web Crypto global", async () => {
+    vi.stubGlobal("crypto", undefined);
+    const directory = await createTemporaryDirectory();
+    const state = createBuilderStateFromSnapshot({});
+    const snapshot = {
+      projectId: "project-1",
+      buildId: "build-1",
+      version: 1,
+      state,
+      freshness: createBuilderStateFreshness({ state, version: 1 }),
+      compatibilityVersion: "test",
+      compatibility: {
+        sessionVersion: "test",
+        runtimeContractVersion: "test-runtime",
+        projectSchemaVersion: "test-schema",
+      },
+    };
+
+    await expect(
+      createCliProjectSessionStorage(
+        join(directory, ".webstudio", "project-session.json")
+      ).save(snapshot, {})
+    ).resolves.toEqual({ revision: expect.any(String) });
+    await expect(
+      createCliProjectRestorePointStorage(
+        join(directory, ".webstudio", "restore-points.json")
+      ).create("Before mutation", snapshot)
+    ).resolves.toEqual(expect.objectContaining({ id: expect.any(String) }));
+  });
+
   test("persists builder state snapshots as JSON and checks revisions", async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, ".webstudio", "project-session.json");
@@ -321,7 +742,7 @@ describe("cli project session storage", () => {
         },
         { expectedRevision: "stale" }
       )
-    ).rejects.toThrow("changed on disk");
+    ).rejects.toMatchObject({ code: "PROJECT_SESSION_BUSY" });
 
     await expect(
       storage.save(
@@ -333,6 +754,105 @@ describe("cli project session storage", () => {
       )
     ).resolves.toEqual({ revision: expect.any(String) });
   });
+
+  test.each([
+    { marker: 1, expected: "ResourceForm" },
+    { marker: undefined, expected: "WebhookForm" },
+  ])(
+    "normalizes historical $expected in session and restore storage",
+    async ({ marker, expected }) => {
+      const directory = await createTemporaryDirectory();
+      const sessionPath = join(directory, ".webstudio", "project-session.json");
+      const restorePath = join(directory, ".webstudio", "restore-points.json");
+      const sessionStorage = createCliProjectSessionStorage(sessionPath);
+      const restoreStorage = createCliProjectRestorePointStorage(restorePath);
+      const state = createBuilderStateFromSnapshot({
+        pages: {
+          homePageId: "home",
+          rootFolderId: "root",
+          pages: new Map([
+            [
+              "home",
+              {
+                id: "home",
+                name: "Home",
+                path: "",
+                title: "Home",
+                rootInstanceId: "form",
+                meta: {},
+              },
+            ],
+          ]),
+          folders: new Map([
+            [
+              "root",
+              { id: "root", name: "Root", slug: "", children: ["home"] },
+            ],
+          ]),
+        },
+        instances: [
+          [
+            "form",
+            {
+              type: "instance",
+              id: "form",
+              component: "ResourceForm",
+              children: [],
+            },
+          ],
+        ],
+      });
+      const snapshot = {
+        projectId: "project-1",
+        buildId: "build-1",
+        version: 3,
+        state,
+        freshness: createBuilderStateFreshness({ state, version: 3 }),
+        compatibilityVersion: "test",
+        compatibility: {
+          sessionVersion: "test",
+          runtimeContractVersion: "test-runtime",
+          projectSchemaVersion: "test-schema",
+        },
+      };
+      const { revision } = (await sessionStorage.save(snapshot, {}))!;
+      const point = await restoreStorage.create("Historical", snapshot);
+
+      const makeHistorical = (saved: {
+        state: {
+          instances: [string, { component: string }][];
+          pages: Record<string, unknown>;
+        };
+      }) => {
+        saved.state.instances[0][1].component = "Form";
+        if (marker !== undefined) {
+          saved.state.pages.formComponentIdentityVersion = marker;
+        }
+        return saved;
+      };
+      await writeFile(
+        sessionPath,
+        JSON.stringify(
+          makeHistorical(JSON.parse(await readFile(sessionPath, "utf8")))
+        )
+      );
+      const restoreFile = JSON.parse(await readFile(restorePath, "utf8"));
+      makeHistorical(restoreFile.points[0].snapshot);
+      await writeFile(restorePath, JSON.stringify(restoreFile));
+
+      const loaded = await sessionStorage.load();
+      const restored = await restoreStorage.get(point.id);
+      for (const result of [loaded, restored]) {
+        expect(result?.state.instances?.get("form")?.component).toBe(expected);
+        expect(result?.state.pages).not.toHaveProperty(
+          "formComponentIdentityVersion"
+        );
+        expect(result?.compatibilityVersion).toBe("test");
+        expect(result?.version).toBe(3);
+      }
+      expect(loaded?.revision).toBe(revision);
+    }
+  );
 });
 
 describe("CLI/server operation contract", () => {
@@ -384,6 +904,38 @@ describe("CLI/server operation contract", () => {
       operations.some((operation) => operation.command === "insert-fragment")
     ).toBe(false);
     expect(operations.some((operation) => operation.serverOnly)).toBe(false);
+  });
+
+  test("rejects edits early when the MCP CLI uses a different API contract", () => {
+    expect(() =>
+      assertCliEditingContractVersion({
+        clientVersion: "public-api:client",
+        serverVersion: "public-api:server",
+        supportedOperationIds: new Set(),
+        missingServerOperationIds: [],
+        negotiated: true,
+      })
+    ).toThrow(
+      "The Webstudio CLI and API use different editing contracts. Expected public-api:server, received public-api:client. Restart the MCP server with the latest CLI; if it is already current, retry after the Webstudio API deployment is updated."
+    );
+
+    expect(() =>
+      assertCliEditingContractVersion({
+        clientVersion: "public-api:client",
+        serverVersion: "public-api:client",
+        supportedOperationIds: new Set(),
+        missingServerOperationIds: [],
+        negotiated: true,
+      })
+    ).not.toThrow();
+    expect(() =>
+      assertCliEditingContractVersion({
+        clientVersion: "public-api:client",
+        supportedOperationIds: new Set(),
+        missingServerOperationIds: [],
+        negotiated: false,
+      })
+    ).not.toThrow();
   });
 });
 
@@ -585,6 +1137,59 @@ test("rejects incomplete project session snapshots before preview generation", (
 });
 
 describe("cli project session transport", () => {
+  test("preserves JSON gateway status when mapping remote error codes", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify([
+              {
+                error: {
+                  message: "Gateway Timeout",
+                  code: -32603,
+                  data: {
+                    code: "INTERNAL_SERVER_ERROR",
+                    httpStatus: 504,
+                    path: "builderApi.apply-patch",
+                  },
+                },
+              },
+            ]),
+            {
+              status: 504,
+              headers: { "content-type": "application/json" },
+            }
+          )
+      )
+    );
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+    });
+
+    await expect(
+      transport.commitPatch({
+        projectId: "project-1",
+        buildId: "build-1",
+        baseVersion: 1,
+        transactions: [],
+      })
+    ).rejects.toMatchObject({
+      name: "INTERNAL_SERVER_ERROR",
+      code: "INTERNAL_SERVER_ERROR",
+      cause: {
+        data: {
+          code: "INTERNAL_SERVER_ERROR",
+          httpStatus: 504,
+        },
+      },
+    });
+  });
+
   test("adapts public API build snapshots into project-session state", async () => {
     const transport = createCliProjectSessionTransport({
       connection: {
@@ -624,6 +1229,7 @@ describe("cli project session transport", () => {
           ],
           homePageId: "home",
           rootFolderId: "root",
+          formComponentIdentityVersion: 1,
           meta: { siteName: "Acme" },
           compiler: { atomicStyles: true },
           redirects: [{ old: "/old", new: "/new", status: "301" }],
@@ -644,6 +1250,12 @@ describe("cli project session transport", () => {
               type: "instance",
               id: "body",
               component: "Body",
+              children: [{ type: "id", value: "form" }],
+            },
+            {
+              type: "instance",
+              id: "form",
+              component: "Form",
               children: [],
             },
           ],
@@ -657,6 +1269,9 @@ describe("cli project session transport", () => {
     });
 
     expect(snapshot.state.pages?.pages.get("home")?.name).toBe("Home");
+    expect("formComponentIdentityVersion" in (snapshot.state.pages ?? {})).toBe(
+      false
+    );
     expect(snapshot.state.pages?.pageTemplates?.get("template-1")?.name).toBe(
       "Landing"
     );
@@ -669,10 +1284,60 @@ describe("cli project session transport", () => {
       "home",
     ]);
     expect(snapshot.state.instances?.get("body")?.component).toBe("Body");
+    expect(snapshot.state.instances?.get("form")?.component).toBe(
+      "ResourceForm"
+    );
     expect(snapshot.state.projectSettings).toEqual({
       meta: { siteName: "Canonical Acme" },
       compiler: { atomicStyles: false },
     });
+  });
+
+  test("reconstructs unmarked old-server Form snapshots as WebhookForm", async () => {
+    const includes: string[][] = [];
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+      getBuildSnapshot: async ({ include }) => {
+        includes.push(include ?? []);
+        return {
+          projectId: "project-1",
+          buildId: "build-1",
+          version: 1,
+          homePageId: "home",
+          rootFolderId: "root",
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              path: "",
+              title: "Home",
+              rootInstanceId: "body",
+              meta: {},
+            },
+          ],
+          folders: [{ id: "root", name: "Root", slug: "", children: ["home"] }],
+          instances: [
+            { type: "instance", id: "form", component: "Form", children: [] },
+          ],
+        };
+      },
+    });
+
+    const snapshot = await transport.fetchNamespaces({
+      projectId: "project-1",
+      namespaces: ["instances"],
+    });
+    expect("formComponentIdentityVersion" in (snapshot.state.pages ?? {})).toBe(
+      false
+    );
+    expect(snapshot.state.instances?.get("form")?.component).toBe(
+      "WebhookForm"
+    );
+    expect(includes[0]).toContain("pages");
   });
 
   test("falls back to legacy page settings when the server rejects projectSettings", async () => {
@@ -686,9 +1351,17 @@ describe("cli project session transport", () => {
       getBuildSnapshot: async (input) => {
         includes.push(input.include);
         if (input.include?.includes("projectSettings")) {
-          throw new Error(
-            'invalid_enum_value: received "projectSettings", expected one of pages|folders'
-          );
+          throw Object.assign(new Error("Unsupported include"), {
+            data: {
+              code: "BAD_REQUEST",
+              issues: [
+                {
+                  code: "invalid_value",
+                  path: ["include", input.include.indexOf("projectSettings")],
+                },
+              ],
+            },
+          });
         }
         return {
           projectId: "project-1",
@@ -807,6 +1480,9 @@ describe("cli project session transport", () => {
   test("keeps configured project id for default server operation transport", async () => {
     let requestBody = "";
     let requestUrl = "";
+    const issueReportRuntime = vi.fn(() => {
+      throw new Error("issue report runtime should be lazy");
+    });
     const fetch = vi.fn(async (request: URL | RequestInfo) => {
       if (request instanceof Request) {
         requestUrl = request.url;
@@ -836,6 +1512,7 @@ describe("cli project session transport", () => {
         origin: "https://example.com",
         authToken: "token",
       },
+      issueReportRuntime,
     });
 
     await transport.executeServerOperation?.({
@@ -846,9 +1523,10 @@ describe("cli project session transport", () => {
     const requestText = `${requestUrl}\n${requestBody}`;
     expect(requestText).toContain("project-1");
     expect(requestText).not.toContain("other-project");
+    expect(issueReportRuntime).not.toHaveBeenCalled();
   });
 
-  test("adds anonymous runtime metadata to issue report requests", async () => {
+  test("adds project ID and runtime metadata to issue report requests", async () => {
     let requestBody = "";
     const fetch = vi.fn(
       async (request: URL | RequestInfo, init?: RequestInit) => {
@@ -912,6 +1590,7 @@ describe("cli project session transport", () => {
       0: { runtime?: Record<string, unknown> };
     };
     expect(body[0].runtime).toEqual({
+      projectId: "project-1",
       cliVersion: expect.any(String),
       nodeVersion: process.versions.node,
       os: process.platform,
@@ -919,6 +1598,7 @@ describe("cli project session transport", () => {
       architecture: process.arch,
       executionMode: "mcp",
       apiContractVersion: expect.any(String),
+      bundleVersion: expect.any(String),
     });
   });
 });

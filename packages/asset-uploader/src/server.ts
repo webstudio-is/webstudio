@@ -13,6 +13,8 @@ export * from "./field-catalog";
 export * from "./query-preview";
 export * from "./query-performance";
 export * from "./publication";
+export * from "./collection-persistence";
+export { formatAsset } from "./utils/format-asset";
 export * from "./clients/fs/fs";
 export * from "./clients/s3/s3";
 export { assetDataOverride } from "./utils/get-asset-data";

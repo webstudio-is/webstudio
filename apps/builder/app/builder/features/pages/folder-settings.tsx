@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Button,
   DialogClose,
   DialogTitle,
@@ -7,15 +8,15 @@ import {
   Grid,
   InputErrorsTooltip,
   InputField,
+  InfoTooltip,
   Label,
   DialogTitleActions,
   ScrollArea,
   TitleSuffixSpacer,
   Tooltip,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
+import { TrashIcon } from "@webstudio-is/icons";
 import { type Folder, getFolderById } from "@webstudio-is/sdk";
 import {
   folderSettingsDefaultValues,
@@ -80,7 +81,7 @@ const FormFields = ({
   return (
     <Grid css={{ height: "100%" }}>
       <ScrollArea>
-        <Grid gap={3} css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Grid} gap={3}>
           <Grid gap={1}>
             <Label htmlFor={fieldIds.name}>Folder name</Label>
             <InputErrorsTooltip errors={errors.name}>
@@ -104,15 +105,10 @@ const FormFields = ({
           <Grid gap={1}>
             <Flex align="center" css={{ gap: theme.spacing[3] }}>
               <Label htmlFor={fieldIds.slug}>Slug</Label>
-              <Tooltip
-                content={"Slug will be used as part of the path to the page"}
-                variant="wrapped"
-              >
-                <InfoCircleIcon
-                  color={rawTheme.colors.foregroundSubtle}
-                  tabIndex={0}
-                />
-              </Tooltip>
+              <InfoTooltip
+                label="About folder slug"
+                content="Slug will be used as part of the path to the page"
+              />
             </Flex>
             <InputErrorsTooltip errors={errors.slug}>
               <InputField
@@ -132,7 +128,7 @@ const FormFields = ({
               />
             </InputErrorsTooltip>
           </Grid>
-        </Grid>
+        </PanelContent>
       </ScrollArea>
     </Grid>
   );
@@ -193,6 +189,7 @@ export const NewFolderSettings = ({
             )}
             <TitleSuffixSpacer />
             <Button
+              color="primary"
               state={isSubmitting ? "pending" : "auto"}
               onClick={handleSubmit}
               tabIndex={2}

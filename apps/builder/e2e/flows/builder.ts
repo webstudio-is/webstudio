@@ -1,5 +1,5 @@
-import type { Frame, Page } from "playwright";
-import { getProjectBuilderUrl } from "../harness";
+import type { Frame, Page } from "@playwright/test";
+import { getProjectBuilderUrl } from "../test";
 
 const delay = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -128,16 +128,22 @@ export const openProjectBuilder = async ({
   authToken,
   mode,
   features,
+  pageId,
 }: {
   page: Page;
   projectId: string;
   authToken?: string;
   mode?: "content" | "preview";
   features?: string[];
+  pageId?: string;
 }): Promise<Frame> => {
-  await page.goto(
+  const url = new URL(
     getProjectBuilderUrl({ projectId, authToken, mode, features })
   );
+  if (pageId !== undefined) {
+    url.searchParams.set("pageId", pageId);
+  }
+  await page.goto(url.href);
   await page
     .waitForLoadState("networkidle", { timeout: builderNetworkIdleTimeout })
     .catch(() => undefined);

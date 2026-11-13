@@ -35,6 +35,42 @@ const assetItemApiPath = `${assetsApiUrl}/{assetId}`;
 const assetContentApiPath = `${assetItemApiPath}/content`;
 const assetFolderItemApiPath = `${assetsFoldersApiUrl}/{folderId}`;
 
+export const assetContentDescriptorHeader =
+  "x-webstudio-asset-content-descriptor";
+export const assetDescriptionHeader = "x-webstudio-asset-description";
+export const assetDescriptionEncodingHeader =
+  "x-webstudio-asset-description-encoding";
+export const assetDescriptionEncoding = "base64url";
+
+export const assetContentDescriptor = z.object({
+  id: z.string(),
+  projectId: z.string(),
+  name: z.string(),
+  type: assetType,
+  format: z.string(),
+  size: z.number().nonnegative(),
+  createdAt: z.string(),
+  updatedAt: z.string().optional(),
+});
+export type AssetContentDescriptor = z.infer<typeof assetContentDescriptor>;
+
+export const serializeAssetContentDescriptor = (
+  value: AssetContentDescriptor
+) => encodeURIComponent(JSON.stringify(assetContentDescriptor.parse(value)));
+
+export const parseAssetContentDescriptor = (value: string | null) => {
+  if (value === null) {
+    throw new Error("Asset content response is missing its revision identity");
+  }
+  try {
+    return assetContentDescriptor.parse(JSON.parse(decodeURIComponent(value)));
+  } catch (cause) {
+    throw new Error("Asset content response has an invalid revision identity", {
+      cause,
+    });
+  }
+};
+
 const operation = <
   OperationId extends string,
   Method extends string,
@@ -139,6 +175,7 @@ export const assetUploadReservationRequest = z.strictObject({
     .string()
     .regex(/^[a-f0-9]{64}$/)
     .optional(),
+  sourceUrl: z.url().optional(),
 });
 
 /** Concrete query payload accepted by the Assets REST API. */
@@ -439,15 +476,17 @@ const decorateAssetQuerySchema = ({
     {
       operators: AssetQueryOperator[];
       fields: AssetOpenApiField[];
+      types: readonly AssetObservedFieldType[];
       reference: string;
     }
   >();
   for (const field of fields) {
     const operators = getAssetQueryOperatorsForFieldTypes(field.types);
-    const key = operators.join(",");
+    const key = `${operators.join(",")}:${field.types.join(",")}`;
     const group = fieldGroups.get(key) ?? {
       operators,
       fields: [],
+      types: field.types,
       reference: definitionReference(`AssetQueryField${fieldGroups.size}`),
     };
     group.fields.push(field);
@@ -476,28 +515,31 @@ const decorateAssetQuerySchema = ({
         ],
       },
     ],
-    ...[...fieldGroups.values()].map(({ fields: groupFields }, index) => [
-      `AssetQueryField${index}`,
-      {
-        type: "array",
-        minItems: 1,
-        maxItems: assetResourceLimits.fieldPathDepth,
-        items: { type: "string", minLength: 1 },
-        oneOf: [
-          ...groupFields.flatMap((field) =>
-            field.label === undefined
-              ? []
-              : [{ const: field.path, title: field.label }]
-          ),
-          ...(() => {
-            const paths = groupFields.flatMap((field) =>
-              field.label === undefined ? [field.path] : []
-            );
-            return paths.length === 0 ? [] : [{ enum: paths }];
-          })(),
-        ],
-      },
-    ]),
+    ...[...fieldGroups.values()].map(
+      ({ fields: groupFields, types }, index) => [
+        `AssetQueryField${index}`,
+        {
+          type: "array",
+          "x-webstudio-field-types": types,
+          minItems: 1,
+          maxItems: assetResourceLimits.fieldPathDepth,
+          items: { type: "string", minLength: 1 },
+          oneOf: [
+            ...groupFields.flatMap((field) =>
+              field.label === undefined
+                ? []
+                : [{ const: field.path, title: field.label }]
+            ),
+            ...(() => {
+              const paths = groupFields.flatMap((field) =>
+                field.label === undefined ? [field.path] : []
+              );
+              return paths.length === 0 ? [] : [{ enum: paths }];
+            })(),
+          ],
+        },
+      ]
+    ),
   ]);
 
   const visit = (value: unknown, property?: string): unknown => {
@@ -862,6 +904,13 @@ const assetFolderParameters = [
   projectIdParameter,
 ];
 const binarySchema = { type: "string", format: "binary" } as const;
+const assetContentResponseHeaders = {
+  [assetContentDescriptorHeader]: {
+    description:
+      "URI-encoded JSON identity of the exact Asset revision in this response",
+    schema: { type: "string" },
+  },
+};
 
 /**
  * OpenAPI is both the transport description and the sole query-authoring
@@ -991,14 +1040,19 @@ export const createAssetResourceOpenApi = ({
               schema: { type: "boolean", default: false },
             },
             {
-              name: "x-webstudio-asset-description",
+              name: assetDescriptionHeader,
               in: "header",
               required: false,
-              description: "Asset description",
-              schema: {
-                type: "string",
-                maxLength: assetResourceLimits.assetDescriptionCharacters,
-              },
+              description: `Asset description, encoded according to ${assetDescriptionEncodingHeader}`,
+              schema: { type: "string" },
+            },
+            {
+              name: assetDescriptionEncodingHeader,
+              in: "header",
+              required: false,
+              description:
+                "Encoding used for the Asset description header. Omit for legacy ASCII descriptions.",
+              schema: { type: "string", enum: [assetDescriptionEncoding] },
             },
             {
               name: "x-webstudio-asset-meta",
@@ -1082,6 +1136,7 @@ export const createAssetResourceOpenApi = ({
           responses: {
             200: {
               description: "Complete asset content",
+              headers: assetContentResponseHeaders,
               content: {
                 "*/*": {
                   schema: binarySchema,
@@ -1091,6 +1146,7 @@ export const createAssetResourceOpenApi = ({
             206: {
               description: "Partial asset content",
               headers: {
+                ...assetContentResponseHeaders,
                 "Content-Range": { schema: { type: "string" } },
               },
               content: {
@@ -1117,6 +1173,12 @@ export const createAssetResourceOpenApi = ({
               true,
               assetResourceLimits.assetFilenameCharacters
             ),
+            queryParameter(
+              "extension",
+              "Optional editable text format for the replacement revision",
+              false,
+              assetResourceLimits.assetFilenameCharacters
+            ),
           ],
           requestBody: {
             required: true,
@@ -1125,6 +1187,7 @@ export const createAssetResourceOpenApi = ({
                 schema: binarySchema,
               },
               "text/markdown": { schema: { type: "string" } },
+              "text/mdx": { schema: { type: "string" } },
               "application/json": { schema: {} },
             },
           },

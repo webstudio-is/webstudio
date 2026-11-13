@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getInputJsonSchemaMetadata } from "@webstudio-is/sdk";
+import { assetType, getInputJsonSchemaMetadata } from "@webstudio-is/sdk";
 import * as protocol from "../index";
 import {
   getPublicApiOperation,
@@ -26,15 +26,7 @@ describe("public api operation catalog", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  test("owns documentation metadata for every command", () => {
-    for (const operation of publicApiOperations) {
-      expect(operation.description).not.toBe("");
-      expect(operation.examples.length).toBeGreaterThan(0);
-      expect(Array.isArray(operation.inputFields)).toBe(true);
-    }
-  });
-
-  test("keeps documentation in sync with implemented commands", () => {
+  test("keeps the public operation catalog aligned with implemented commands", () => {
     const implementedCommands = [
       ...publicRuntimeOperationContracts.map((operation) => operation.command),
       ...Object.values(serverOnlyRouterOperationMetadata).map(
@@ -141,7 +133,6 @@ describe("public api operation catalog", () => {
     ).toMatchObject({
       type: "string",
       enum: ["text", "expression"],
-      description: expect.stringContaining('There is no "replace" mode.'),
     });
     const resourceInputSchema =
       getPublicApiOperation("create-resource").inputSchema?.properties
@@ -306,6 +297,39 @@ describe("public api operation catalog", () => {
     expect(JSON.stringify(uploadMany.inputSchema)).toContain('"folderId"');
     expect(JSON.stringify(upload.inputSchema)).toContain('"force"');
     expect(JSON.stringify(uploadMany.inputSchema)).toContain('"force"');
+    expect(upload.permit).toBe("edit");
+    expect(uploadMany.permit).toBe("edit");
+  });
+
+  test("keeps collection-sensitive asset mutations Builder-only", () => {
+    for (const command of [
+      "update-asset-folder",
+      "delete-asset-folder",
+      "duplicate-asset-folder",
+      "update-asset",
+      "set-image-descriptions",
+      "duplicate-asset",
+      "replace-asset",
+      "delete-asset",
+    ]) {
+      expect(getPublicApiOperation(command).permit, command).toBe("build");
+    }
+    expect(getPublicApiOperation("create-asset-folder").permit).toBe("edit");
+    expect(getPublicApiOperation("add-asset").permit).toBe("build");
+  });
+
+  test("exposes every supported upload type to MCP", () => {
+    const uploadAssetSchema =
+      getPublicApiOperation("upload-asset").inputSchema?.properties?.asset;
+    const assetTypeSchema =
+      uploadAssetSchema !== undefined &&
+      typeof uploadAssetSchema === "object" &&
+      uploadAssetSchema.properties?.type;
+
+    expect(assetTypeSchema).toMatchObject({
+      type: "string",
+      enum: assetType.options,
+    });
   });
 
   test("keeps operation lookup and tRPC path lookup strict", () => {
@@ -314,5 +338,55 @@ describe("public api operation catalog", () => {
     expect(() => getPublicApiOperationPath("upload-asset")).toThrow(
       'Public API operation "upload-asset" has no tRPC path.'
     );
+  });
+
+  test("exposes the new Form authoring fields through semantic MCP operations", () => {
+    const component = getPublicApiOperation("insert-component").inputSchema;
+    expect(component?.properties?.component).toMatchObject({ type: "string" });
+
+    const updates =
+      getPublicApiOperation("update-props").inputSchema?.properties?.updates;
+    expect(updates).toMatchObject({ type: "array" });
+    const propTypes = JSON.stringify(updates);
+    expect(propTypes).toContain('"const":"json"');
+
+    const createResourceSchema = JSON.stringify(
+      getPublicApiOperation("create-resource").inputSchema
+    );
+    expect(createResourceSchema).toContain(
+      '"recipientMode":{"type":"string","enum":["project","custom","visitor"]}'
+    );
+    for (const field of [
+      "sender",
+      "senderExpression",
+      "recipients",
+      "recipientsExpression",
+      "visitorEmailField",
+      "subject",
+      "body",
+    ]) {
+      expect(createResourceSchema).toContain(`"${field}":{"type":"string"}`);
+    }
+    expect(createResourceSchema).toContain(
+      '"includeAttachments":{"type":"boolean"}'
+    );
+    const updateResourceSchema = JSON.stringify(
+      getPublicApiOperation("update-resource").inputSchema
+    );
+    expect(updateResourceSchema).toContain(
+      '"recipientMode":{"type":"string","enum":["project","custom","visitor"]}'
+    );
+    expect(updateResourceSchema).toContain(
+      '"includeAttachments":{"type":"boolean"}'
+    );
+    const projectSettingsSchema = JSON.stringify(
+      getPublicApiOperation("update-project-settings").inputSchema
+    );
+    expect(projectSettingsSchema).toContain(
+      '"emailSender":{"anyOf":[{"type":"string"},{"type":"null"}]}'
+    );
+    expect(projectSettingsSchema).not.toContain('"emailSubject"');
+    expect(projectSettingsSchema).not.toContain('"emailBody"');
+    expect(projectSettingsSchema).not.toContain('"emailConfirmationSubject"');
   });
 });

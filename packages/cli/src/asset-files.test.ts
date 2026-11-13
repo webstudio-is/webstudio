@@ -13,6 +13,7 @@ import type { Asset } from "@webstudio-is/sdk";
 import {
   createLocalAssetDataReader,
   createLocalUpdateAssetContentInput,
+  downloadAssetFiles,
   getLocalAssetPath,
   materializeAssetFile,
 } from "./asset-files";
@@ -68,6 +69,7 @@ test("creates asset content readers from inline content or a file", async () => 
   const fromContent = createLocalUpdateAssetContentInput({
     assetId: "asset",
     expectedName: "content_old.json",
+    extension: "json",
     content: '{"source":"inline"}',
     readFile,
   });
@@ -81,6 +83,7 @@ test("creates asset content readers from inline content or a file", async () => 
   await expect(fromContent.readAssetData()).resolves.toBe(
     '{"source":"inline"}'
   );
+  expect(fromContent.extension).toBe("json");
   await expect(fromPath.readAssetData()).resolves.toEqual(
     Buffer.from('{"source":"file"}')
   );
@@ -139,6 +142,40 @@ test("downloads asset files when they are missing from the synced asset cache", 
   expect(fetch).toHaveBeenCalledWith(
     "https://example.com/cgi/image/image.png?format=raw"
   );
+});
+
+test("downloads no more than 10 asset files concurrently", async () => {
+  let active = 0;
+  let peak = 0;
+  const releases: Array<() => void> = [];
+  const fetch = vi.fn(async () => {
+    active += 1;
+    peak = Math.max(peak, active);
+    await new Promise<void>((resolve) => releases.push(resolve));
+    active -= 1;
+    return new Response("article");
+  });
+  globalThis.fetch = fetch;
+  const assets = Array.from({ length: 20 }, (_, index) => ({
+    ...asset,
+    id: `article-${index}`,
+    name: `article-${index}.mdx`,
+    type: "file" as const,
+    format: "mdx",
+    meta: {},
+  }));
+
+  const downloading = downloadAssetFiles({
+    assets,
+    origin: "https://example.com",
+  });
+  await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(10));
+  expect(peak).toBe(10);
+  releases.splice(0).forEach((release) => release());
+  await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(20));
+  expect(peak).toBe(10);
+  releases.splice(0).forEach((release) => release());
+  await downloading;
 });
 
 test("retries asset download once after a server error", async () => {

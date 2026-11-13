@@ -1,6 +1,9 @@
 import { describe, test, expect } from "vitest";
+import { fontMeta } from "@webstudio-is/fonts";
+import { asset, assetType } from "./schema/assets";
 import {
   ALLOWED_FILE_TYPES,
+  InvalidAssetFileNameError,
   getMimeTypeByExtension,
   getMimeTypeByFilename,
   isAllowedExtension,
@@ -16,6 +19,7 @@ import {
   decodePathFragment,
   getAssetUrl,
   toRuntimeAsset,
+  toAssetReferenceRuntimeData,
   acceptToMimePatterns,
   acceptToMimeCategories,
   getAssetMime,
@@ -35,6 +39,22 @@ test("hashes asset content with SHA-256", async () => {
   ).resolves.toBe(
     "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
   );
+});
+
+test("rejects a font format stored as a generic file", () => {
+  expect(
+    asset.safeParse({
+      id: "font-1",
+      projectId: "project-1",
+      size: 100,
+      name: "font.woff2",
+      description: null,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      format: "woff2",
+      meta: {},
+      type: "file",
+    }).success
+  ).toBe(false);
 });
 
 describe("getFileExtension", () => {
@@ -136,7 +156,9 @@ describe("allowed-file-types", () => {
       ["txt", "plain"],
       ["csv", "plain"],
       ["md", "markdown"],
+      ["mdx", "markdown"],
       ["js", "javascript"],
+      ["mjs", "javascript"],
       ["css", "css"],
       ["json", "json"],
       ["html", "html"],
@@ -160,12 +182,14 @@ describe("allowed-file-types", () => {
       expect(getMimeTypeByExtension("png")).toBe("image/png");
       expect(getMimeTypeByExtension("pdf")).toBe("application/pdf");
       expect(getMimeTypeByExtension("mp4")).toBe("video/mp4");
+      expect(getMimeTypeByExtension("mdx")).toBe("text/mdx");
     });
 
     test("is case-insensitive", () => {
       expect(getMimeTypeByExtension("JPG")).toBe("image/jpeg");
       expect(getMimeTypeByExtension("PNG")).toBe("image/png");
       expect(getMimeTypeByExtension("PDF")).toBe("application/pdf");
+      expect(getMimeTypeByExtension("MDX")).toBe("text/mdx");
     });
 
     test("returns undefined for invalid extension", () => {
@@ -179,6 +203,7 @@ describe("allowed-file-types", () => {
       expect(getMimeTypeByFilename("image.jpg")).toBe("image/jpeg");
       expect(getMimeTypeByFilename("document.pdf")).toBe("application/pdf");
       expect(getMimeTypeByFilename("video.mp4")).toBe("video/mp4");
+      expect(getMimeTypeByFilename("module.mjs")).toBe("text/javascript");
     });
 
     test("handles files with multiple dots", () => {
@@ -262,6 +287,10 @@ describe("allowed-file-types", () => {
         extension: "pdf",
         mimeType: "application/pdf",
       });
+      expect(validateFileName("module.mjs")).toEqual({
+        extension: "mjs",
+        mimeType: "text/javascript",
+      });
     });
 
     test("is case-insensitive", () => {
@@ -289,6 +318,9 @@ describe("allowed-file-types", () => {
     });
 
     test("throws error for disallowed extensions", () => {
+      expect(() => validateFileName("malware.exe")).toThrow(
+        InvalidAssetFileNameError
+      );
       expect(() => validateFileName("malware.exe")).toThrow(
         'File type "exe" is not allowed'
       );
@@ -459,6 +491,20 @@ describe("allowed-file-types", () => {
   });
 
   describe("detectAssetType", () => {
+    test("detects only canonical asset types", () => {
+      expect(assetType.options).toEqual(["font", "image", "video", "file"]);
+      for (const filename of [
+        "image.png",
+        "font.woff2",
+        "video.mp4",
+        "document.pdf",
+      ]) {
+        expect(assetType.safeParse(detectAssetType(filename)).success).toBe(
+          true
+        );
+      }
+    });
+
     test("detects image files", () => {
       expect(detectAssetType("photo.jpg")).toBe("image");
       expect(detectAssetType("image.png")).toBe("image");
@@ -1027,10 +1073,10 @@ describe("allowed-file-types", () => {
       format: "woff2" as const,
       description: null,
       createdAt: "2024-01-01",
-      meta: {
+      meta: fontMeta.parse({
         family: "Inter",
         variationAxes: {},
-      },
+      }),
     };
 
     const mockGenericAsset = {
@@ -1054,6 +1100,29 @@ describe("allowed-file-types", () => {
       });
     });
 
+    test("converts image asset metadata for structured references", () => {
+      expect(
+        toAssetReferenceRuntimeData(mockImageAsset, "https://example.com")
+      ).toEqual({
+        id: "image-1",
+        url: "/cgi/image/photo.jpg?format=raw",
+        name: "photo.jpg",
+        description: "A photo",
+        mimeType: "image/jpeg",
+        projectId: "project-1",
+        size: 1024,
+        type: "image",
+        format: "jpg",
+        createdAt: "2024-01-01",
+        meta: {
+          width: 1920,
+          height: 1080,
+        },
+        width: 1920,
+        height: 1080,
+      });
+    });
+
     test("converts static font asset with metadata", () => {
       const result = toRuntimeAsset(mockFontAsset, "https://example.com");
       expect(result).toEqual({
@@ -1064,7 +1133,7 @@ describe("allowed-file-types", () => {
       });
     });
 
-    test("converts variable font asset without style/weight", () => {
+    test("defaults variable font style and omits weight", () => {
       const result = toRuntimeAsset(
         mockVariableFontAsset,
         "https://example.com"
@@ -1072,6 +1141,7 @@ describe("allowed-file-types", () => {
       expect(result).toEqual({
         url: "/cgi/asset/variable-font.woff2?format=raw",
         family: "Inter",
+        style: "normal",
       });
     });
 

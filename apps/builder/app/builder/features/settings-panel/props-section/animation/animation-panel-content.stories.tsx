@@ -1,5 +1,5 @@
 import { AnimationPanelContent } from "./animation-panel-content";
-import { StorySection, theme } from "@webstudio-is/design-system";
+import { StorySection, cssVar, theme } from "@webstudio-is/design-system";
 import { useState } from "react";
 import type { ScrollAnimation, ViewAnimation } from "@webstudio-is/sdk";
 
@@ -13,7 +13,7 @@ export default {
     (Story: React.ComponentType) => (
       <div
         style={{
-          background: theme.colors.backgroundPanel,
+          background: cssVar("--background-primary"),
           padding: 16,
           width: theme.sizes.sidebarWidth,
         }}

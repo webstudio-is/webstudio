@@ -1,5 +1,15 @@
 import { styled, theme } from "../stitches.config";
 import { textVariants } from "./text";
+import { cssVar } from "../css-var";
+import { rotateBoundedBackgroundHue } from "../color-utils";
+
+const neutralBackground = `color-mix(in oklab, ${cssVar(
+  "--foreground-primary"
+)} 58%, ${cssVar("--background-primary")})`;
+const purpleBackground = rotateBoundedBackgroundHue(
+  cssVar("--background-accent"),
+  72
+);
 
 export const Chip = styled("span", textVariants.labels, {
   boxSizing: "border-box",
@@ -20,23 +30,23 @@ export const Chip = styled("span", textVariants.labels, {
   textDecoration: "none",
 
   "&:focus-visible": {
-    outline: `1px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${cssVar("--border-focus")}`,
     outlineOffset: "1px",
   },
 
   variants: {
     color: {
       neutral: {
-        backgroundColor: theme.colors.foregroundTextSubtle,
-        color: theme.colors.foregroundContrastMain,
+        backgroundColor: neutralBackground,
+        color: cssVar("--foreground-on-inverse"),
       },
       green: {
-        backgroundColor: theme.colors.backgroundSuccessMain,
-        color: theme.colors.foregroundContrastMain,
+        backgroundColor: cssVar("--background-positive"),
+        color: cssVar("--foreground-on-positive"),
       },
       purple: {
-        backgroundColor: theme.colors.backgroundStyleSourceBreakpoint,
-        color: theme.colors.foregroundContrastMain,
+        backgroundColor: purpleBackground,
+        color: cssVar("--foreground-on-accent"),
       },
     },
   },

@@ -8,6 +8,7 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import { buildPatchTransaction } from "@webstudio-is/protocol";
+import { getApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-compatibility";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
@@ -102,6 +103,7 @@ const createContext = (
     planFeatures: {
       allowAdditionalPermissions,
     },
+    apiClient: { type: "browser", version: undefined },
   }) as AppContext;
 
 const createToken = (
@@ -242,6 +244,10 @@ describe("api build patch commits", () => {
     expect(patchBuild).toHaveBeenNthCalledWith(
       1,
       {
+        assetStore: expect.objectContaining({
+          readFile: expect.any(Function),
+          uploadFile: expect.any(Function),
+        }),
         buildId: "build",
         projectId: "project",
         clientVersion: 1,
@@ -252,6 +258,10 @@ describe("api build patch commits", () => {
     expect(patchBuild).toHaveBeenNthCalledWith(
       2,
       {
+        assetStore: expect.objectContaining({
+          readFile: expect.any(Function),
+          uploadFile: expect.any(Function),
+        }),
         buildId: "build",
         projectId: "project",
         clientVersion: 1,
@@ -264,6 +274,32 @@ describe("api build patch commits", () => {
       },
       ctx
     );
+  });
+
+  test("rejects an old CLI contract before committing a patch", async () => {
+    const ctx = createContext(true);
+    ctx.apiClient = { type: "cli", version: "old", contractVersion: undefined };
+    const patchBuild = vi.spyOn(projectApi, "patchBuild");
+
+    let error: unknown;
+    try {
+      await commitBuildTransactions({
+        ctx,
+        projectId: "project",
+        buildId: "build",
+        clientVersion: 1,
+        transactions: [transaction],
+      });
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(getApiCompatibilityPayload(error)).toMatchObject({
+      reason: "clientVersionUnsupported",
+      target: "cli",
+      action: { type: "updateCli" },
+    });
+    expect(patchBuild).not.toHaveBeenCalled();
   });
 
   test("maps patch conflicts and errors to TRPC errors", async () => {
@@ -420,6 +456,21 @@ describe("api build snapshot", () => {
         marketplaceProduct: { categories: ["template"] },
       })
     );
+  });
+
+  test("omits the historical Form identity version from public snapshots", () => {
+    const pages = createDefaultPages({ rootInstanceId: "root-1" });
+    const snapshot = createBuildSnapshot({
+      build: {
+        id: "build-1",
+        version: 1,
+        pages,
+      } as SnapshotBuildInput,
+      include: new Set(["pages"]),
+      projectId: "project-1",
+    });
+
+    expect("formComponentIdentityVersion" in snapshot).toBe(false);
   });
 });
 

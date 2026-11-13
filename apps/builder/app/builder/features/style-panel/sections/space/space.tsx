@@ -1,3 +1,4 @@
+import { Flex, theme } from "@webstudio-is/design-system";
 import { useState, useRef } from "react";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import { SpaceLayout } from "./layout";
@@ -13,8 +14,14 @@ import { StyleSection } from "../../shared/style-section";
 import { useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
-import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
+import {
+  $isAltPressed,
+  useModifierKeys,
+  type Modifiers,
+} from "../../shared/modifier-keys";
 import { useReadonly } from "../../shared/readonly";
+import { useStore } from "@nanostores/react";
+import { getComputedValuePreview } from "../../shared/computed-value-preview";
 
 const movementMapSpace = {
   "margin-top": ["margin-bottom", "margin-right", "padding-top", "margin-left"],
@@ -94,6 +101,7 @@ const Cell = ({
   onPopoverClose,
   onHover,
   property,
+  isAltPreviewed,
   getActiveProperties,
   scrubStatus,
 }: {
@@ -101,6 +109,7 @@ const Cell = ({
   onPopoverClose: () => void;
   onHover: (target: HoverTarget | undefined) => void;
   property: SpaceStyleProperty;
+  isAltPreviewed: boolean;
   getActiveProperties: (modifiers?: Modifiers) => CssProperty[];
   scrubStatus: ReturnType<typeof useScrub> & { readonly: boolean };
 }) => {
@@ -108,6 +117,10 @@ const Cell = ({
   const finalValue =
     (scrubStatus.isActive && scrubStatus.values[property]) ||
     styleDecl.cascadedValue;
+  const preview =
+    isAltPreviewed && !scrubStatus.isActive
+      ? getComputedValuePreview(property, finalValue, styleDecl)
+      : undefined;
 
   return (
     <>
@@ -120,7 +133,7 @@ const Cell = ({
         onClose={onPopoverClose}
       />
       <ValueText
-        value={finalValue}
+        value={preview ? { type: "unparsed", value: preview } : finalValue}
         source={styleDecl.source.name}
         onMouseEnter={(event) =>
           onHover({ property, element: event.currentTarget })
@@ -143,6 +156,7 @@ export { spaceProperties as properties };
 
 export const Section = () => {
   const readonly = useReadonly();
+  const isAltPressed = useStore($isAltPressed);
   const styles = useComputedStyles(spaceProperties);
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
   const styleValue = styles.find(
@@ -212,70 +226,82 @@ export const Section = () => {
 
   return (
     <StyleSection label="Space" properties={spaceProperties}>
-      <SpaceLayout
-        disabled={readonly}
-        ref={layoutRef}
-        onClick={(event) => {
-          const property = hoverTarget?.property;
-          const styleValueSource = styles.find(
-            (styleDecl) => styleDecl.property === property
-          )?.source.name;
+      <Flex
+        direction="column"
+        gap="2"
+        css={{ paddingInline: theme.panel.paddingInline }}
+      >
+        <SpaceLayout
+          disabled={readonly}
+          ref={layoutRef}
+          onClick={(event) => {
+            const property = hoverTarget?.property;
+            const styleValueSource = styles.find(
+              (styleDecl) => styleDecl.property === property
+            )?.source.name;
 
-          if (
-            readonly === false &&
-            property &&
-            // reset when the value is set and after try to edit two sides
-            (styleValueSource === "local" || styleValueSource === "overwritten")
-          ) {
-            if (event.shiftKey && event.altKey) {
-              const properties = getSpaceModifiersGroup(property, {
-                shiftKey: true,
-                altKey: false,
-              });
-              const batch = createBatchUpdate();
-              for (const property of properties) {
-                batch.deleteProperty(property);
+            if (
+              readonly === false &&
+              property &&
+              // reset when the value is set and after try to edit two sides
+              (styleValueSource === "local" ||
+                styleValueSource === "overwritten")
+            ) {
+              if (event.shiftKey && event.altKey) {
+                const properties = getSpaceModifiersGroup(property, {
+                  shiftKey: true,
+                  altKey: false,
+                });
+                const batch = createBatchUpdate();
+                for (const property of properties) {
+                  batch.deleteProperty(property);
+                }
+                batch.publish();
+                return;
               }
-              batch.publish();
+              if (event.altKey) {
+                return;
+              }
+            }
+            if (readonly) {
               return;
             }
-            if (event.altKey) {
-              return;
-            }
+            handleOpenProperty(property);
+          }}
+          onHover={readonly ? () => undefined : handleHover}
+          onFocus={readonly ? undefined : keyboardNavigation.handleFocus}
+          onBlur={readonly ? undefined : keyboardNavigation.handleBlur}
+          activeProperties={activeProperties}
+          onKeyDown={readonly ? undefined : keyboardNavigation.handleKeyDown}
+          onMouseMove={
+            readonly ? undefined : keyboardNavigation.handleMouseMove
           }
-          if (readonly) {
-            return;
+          onMouseLeave={
+            readonly ? undefined : keyboardNavigation.handleMouseLeave
           }
-          handleOpenProperty(property);
-        }}
-        onHover={readonly ? () => undefined : handleHover}
-        onFocus={readonly ? undefined : keyboardNavigation.handleFocus}
-        onBlur={readonly ? undefined : keyboardNavigation.handleBlur}
-        activeProperties={activeProperties}
-        onKeyDown={readonly ? undefined : keyboardNavigation.handleKeyDown}
-        onMouseMove={readonly ? undefined : keyboardNavigation.handleMouseMove}
-        onMouseLeave={
-          readonly ? undefined : keyboardNavigation.handleMouseLeave
-        }
-        renderCell={({ property }) => (
-          <Cell
-            isPopoverOpen={openProperty === property}
-            onPopoverClose={() => {
-              if (openProperty === property) {
-                handleOpenProperty(undefined);
-                layoutRef.current?.focus();
+          renderCell={({ property }) => (
+            <Cell
+              isPopoverOpen={openProperty === property}
+              onPopoverClose={() => {
+                if (openProperty === property) {
+                  handleOpenProperty(undefined);
+                  layoutRef.current?.focus();
+                }
+              }}
+              onHover={handleHover}
+              property={property}
+              isAltPreviewed={
+                isAltPressed && hoverTarget?.property === property
               }
-            }}
-            onHover={handleHover}
-            property={property}
-            getActiveProperties={getActiveProperties}
-            scrubStatus={{
-              ...scrubStatus,
-              readonly,
-            }}
-          />
-        )}
-      />
+              getActiveProperties={getActiveProperties}
+              scrubStatus={{
+                ...scrubStatus,
+                readonly,
+              }}
+            />
+          )}
+        />
+      </Flex>
     </StyleSection>
   );
 };

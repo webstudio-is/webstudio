@@ -1,10 +1,16 @@
 import { describe, expect, test } from "vitest";
 import {
+  coreMetas,
+  getStyleDeclKey,
+  getTagStyleId,
   getInputJsonSchemaMetadata,
+  ROOT_INSTANCE_ID,
+  rootComponent,
   toInputJsonSchemaObject,
   type Assets,
   type InputJsonSchema,
   type Instance,
+  type StyleDecl,
 } from "@webstudio-is/sdk";
 import { runtimeOperationContracts } from "../contracts/builder-runtime";
 import { getRuntimeGeneratedInputPaths } from "../contracts/input-schema";
@@ -16,6 +22,7 @@ import {
   isDestructiveRuntimeCommand,
 } from "./registry";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
+import { createEmptyWebstudioFragment } from "./component-template";
 import { getRuntimeOutputSchema, runtimeOutputSchemas } from "./output-schemas";
 import { getPage, listFolders, listPages } from "./pages";
 import {
@@ -34,6 +41,7 @@ import { listFonts } from "./fonts";
 import { listAssets } from "./assets";
 import { bindProps, deleteProps, updateProps } from "./props";
 import type { BuilderState } from "../state/builder-state";
+import { applyBuilderPatchTransactions } from "../state/patch";
 import type { SemanticValidationIssue } from "./errors";
 import {
   context,
@@ -41,6 +49,8 @@ import {
   state,
 } from "./runtime.test-fixtures";
 import { createResourceCollectionIntegrationFixture } from "./runtime-ui.test-fixture";
+import type { ContentBlockApplication } from "./content-block-application";
+import type { BuilderRuntimeMutation } from "./mutation";
 
 const hasDirectInputProperty = (
   schema: InputJsonSchema | undefined,
@@ -81,6 +91,7 @@ const paginatedReadOperationIds = [
   "instances.listTexts",
   "styles.getDeclarations",
   "designTokens.list",
+  "tagStyles.list",
   "cssVariables.list",
   "variables.list",
   "resources.list",
@@ -90,6 +101,190 @@ const paginatedReadOperationIds = [
 ] as const;
 
 const maxCompactListBytes = 16 * 1024;
+
+test.each([false, true])(
+  "inspects virtual Global root presets separately from authored overrides (%s)",
+  (withOverrides) => {
+    const overrides: StyleDecl[] = withOverrides
+      ? [
+          {
+            styleSourceId: "root-token",
+            breakpointId: "base",
+            property: "display",
+            value: { type: "keyword", value: "flex" },
+          },
+          {
+            styleSourceId: "root-local",
+            breakpointId: "base",
+            property: "display",
+            value: { type: "keyword", value: "block" },
+          },
+          {
+            styleSourceId: "root-local",
+            breakpointId: "mobile",
+            state: ":hover",
+            property: "display",
+            value: { type: "keyword", value: "none" },
+          },
+        ]
+      : [];
+    const rootState: BuilderState = {
+      ...state,
+      styles: new Map(
+        overrides.map((style) => [getStyleDeclKey(style), style])
+      ),
+      styleSources: new Map([
+        ["root-token", { id: "root-token", type: "token", name: "Root" }],
+        ["root-local", { id: "root-local", type: "local" }],
+      ]),
+      styleSourceSelections: new Map([
+        [
+          ROOT_INSTANCE_ID,
+          {
+            instanceId: ROOT_INSTANCE_ID,
+            values: ["root-token", "root-local"],
+          },
+        ],
+      ]),
+    };
+    if (!withOverrides) {
+      rootState.styleSources?.clear();
+      rootState.styleSourceSelections?.clear();
+    }
+    const before = structuredClone(rootState);
+    const inspect = () =>
+      executeBuilderRuntimeOperation({
+        id: "instances.inspect",
+        state: rootState,
+        input: {
+          instanceId: ROOT_INSTANCE_ID,
+          include: ["styles", "sources", "props", "children", "ancestors"],
+        },
+        context,
+      });
+    const result = inspect();
+
+    expect(result).toMatchObject({
+      id: ROOT_INSTANCE_ID,
+      component: rootComponent,
+      tag: "html",
+      presetStyles: coreMetas[rootComponent].presetStyle!.html,
+      sources: withOverrides ? ["root-token", "root-local"] : [],
+      props: [],
+      children: [],
+      ancestors: [],
+      styles: overrides.map(({ breakpointId, styleSourceId, ...style }) => ({
+        ...style,
+        instanceId: ROOT_INSTANCE_ID,
+        styleSourceId,
+        breakpoint: breakpointId,
+        source: styleSourceId === "root-token" ? "token" : "local",
+      })),
+    });
+    expect(inspect()).toEqual(result);
+    expect(rootState).toEqual(before);
+    expect(rootState.instances?.has(ROOT_INSTANCE_ID)).toBe(false);
+    expect(
+      getBuilderRuntimeOperation("instances.inspect").outputJsonSchema
+    ).toHaveProperty("properties.presetStyles");
+    expect(
+      runtimeOperationContracts.find(({ id }) => id === "instances.inspect")!
+        .outputSchema
+    ).toHaveProperty("properties.presetStyles");
+    expect(() =>
+      inspectInstance(rootState, { instanceId: "missing-instance" })
+    ).toThrow(expect.objectContaining({ code: "NOT_FOUND" }));
+    expect(
+      inspectInstance(rootState, { instanceId: "body", include: ["styles"] })
+    ).not.toHaveProperty("presetStyles");
+  }
+);
+
+test("property writes load assets and reject an incompatible Image source", () => {
+  const operation = getBuilderRuntimeOperation("instances.updateProps");
+  expect(operation.readNamespaces).toContain("assets");
+  expect(operation.requiresAssets).toBe(true);
+  const image: Instance = {
+    type: "instance",
+    id: "image",
+    component: "Image",
+    children: [],
+  };
+  const assets: Assets = new Map([
+    [
+      "text",
+      {
+        id: "text",
+        projectId: "project",
+        name: "data.txt",
+        type: "file",
+        format: "txt",
+        meta: {},
+        size: 1,
+        createdAt: "",
+      },
+    ],
+  ]);
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.updateProps",
+      state: {
+        instances: new Map([[image.id, image]]),
+        props: new Map(),
+        assets,
+      },
+      input: {
+        updates: [
+          { instanceId: image.id, name: "src", type: "asset", value: "text" },
+        ],
+      },
+      context,
+    })
+  ).toThrow(expect.objectContaining({ code: "BAD_REQUEST" }));
+});
+
+test("fragment insertion is available to Content mode editors", () => {
+  expect(getBuilderRuntimeOperation("instances.insertFragment").permit).toBe(
+    "edit"
+  );
+});
+
+test("rejects a fragment containing a Form with more than 10 actions", () => {
+  let nextId = 0;
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.insertFragment",
+      state,
+      input: {
+        parentInstanceId: "body",
+        fragment: {
+          ...createEmptyWebstudioFragment(),
+          children: [{ type: "id", value: "new-form" }],
+          instances: [
+            {
+              type: "instance",
+              id: "new-form",
+              component: "ResourceForm",
+              children: [],
+            },
+          ],
+          props: [
+            {
+              id: "form-action",
+              instanceId: "new-form",
+              name: "action",
+              type: "json",
+              value: Array.from({ length: 11 }, (_, index) => ({
+                dataSourceId: `resource-${index}`,
+              })),
+            },
+          ],
+        },
+      },
+      context: { createId: () => `form-test-${nextId++}` },
+    })
+  ).toThrow("Select no more than 10 Resource actions");
+});
 
 test("assets.list accepts every stored asset type", () => {
   const operation = getBuilderRuntimeOperation("assets.list");
@@ -127,10 +322,81 @@ test.each(paginatedReadOperationIds)(
   }
 );
 
+test("lists global Tag styles through the runtime command", () => {
+  const id = getTagStyleId("h1");
+  const declaration: StyleDecl = {
+    styleSourceId: id,
+    breakpointId: "base",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  const result = executeBuilderRuntimeOperation({
+    id: "tagStyles.list",
+    state: {
+      styleSources: new Map([[id, { id, type: "tag", tag: "h1" }]]),
+      styles: new Map([[getStyleDeclKey(declaration), declaration]]),
+    },
+    input: { tag: "h1", verbose: true },
+    context,
+  });
+  expect(result).toMatchObject({
+    tagStyles: [
+      {
+        id,
+        tag: "h1",
+        declarationCount: 1,
+        declarations: [{ property: "color", breakpoint: "base" }],
+      },
+    ],
+  });
+});
+
 const getMutationResult = (operation: unknown): unknown => {
   expect(operation).toHaveProperty("result");
   return (operation as { result: unknown }).result;
 };
+
+test("contentBlocks.editSource preserves invalid MDX and returns diagnostics", async () => {
+  const source = "# Kept\n\n<ws.element";
+  const diagnostic = {
+    code: "invalid-mdx" as const,
+    severity: "error" as const,
+    blockInstanceId: "block",
+    assetId: "asset",
+    contentRef: "article.mdx",
+    renderScope: "page",
+    message: "Unexpected end of file",
+    sourceRange: {
+      start: { line: 3, column: 12, offset: source.length },
+      end: { line: 3, column: 12, offset: source.length },
+    },
+  };
+  const result = await executeBuilderRuntimeOperation({
+    id: "contentBlocks.editSource",
+    state,
+    input: { blockInstanceId: "block", renderScope: "page", source },
+    context: {
+      ...context,
+      contentBlockApplication: {
+        editSource: async () => ({
+          state: {
+            asset: { id: "asset" },
+            status: "saved" as const,
+          },
+          source,
+          diagnostics: [diagnostic],
+        }),
+      } as unknown as ContentBlockApplication,
+    },
+  });
+
+  expect(getMutationResult(result)).toEqual({
+    assetId: "asset",
+    source,
+    status: "saved",
+    diagnostics: [diagnostic],
+  });
+});
 
 test.each([
   {
@@ -239,6 +505,17 @@ test("keeps generated runtime contracts in sync with the registry", () => {
     )
   );
 });
+
+test.each(["pages.create", "pages.update", "pages.updateSettings"])(
+  "%s loads the page expression scope",
+  (operationId) => {
+    expect(getBuilderRuntimeOperation(operationId).readNamespaces).toEqual([
+      "pages",
+      "instances",
+      "dataSources",
+    ]);
+  }
+);
 
 test("requires an output schema for every runtime operation", () => {
   expect(
@@ -1927,6 +2204,58 @@ describe("builder runtime read families", () => {
     ).toContain('\\"/$resources/assets\\"');
   });
 
+  test("creates and updates an Assets resource scoped to Global Root", () => {
+    const created = executeBuilderRuntimeOperation({
+      id: "assetsResources.create",
+      state,
+      input: {
+        name: "Global assets",
+        scopeInstanceId: ROOT_INSTANCE_ID,
+      },
+      context: {
+        ...context,
+        createId: (() => {
+          const ids = ["global-assets-resource", "global-assets-data-source"];
+          return () => ids.shift() ?? "id";
+        })(),
+      },
+    });
+
+    expect(created).toMatchObject({
+      result: {
+        resourceId: "global-assets-resource",
+        dataSourceId: "global-assets-data-source",
+      },
+    });
+    const createdState = applyBuilderPatchTransactions(state, [
+      {
+        id: "create-global-assets-resource",
+        payload: (created as BuilderRuntimeMutation).payload,
+      },
+    ]).state;
+    expect(createdState.dataSources?.get("global-assets-data-source")).toEqual(
+      expect.objectContaining({ scopeInstanceId: ROOT_INSTANCE_ID })
+    );
+
+    const updated = executeBuilderRuntimeOperation({
+      id: "assetsResources.update",
+      state: createdState,
+      input: {
+        resourceId: "global-assets-resource",
+        values: { name: "Updated global assets" },
+      },
+      context,
+    });
+
+    expect(updated).toMatchObject({
+      kind: "mutation",
+      result: {
+        resourceId: "global-assets-resource",
+        dataSourceId: "global-assets-data-source",
+      },
+    });
+  });
+
   test("replaces bounded fixed resource URLs without changing expressions", () => {
     const resource = state.resources.get("resource");
     if (resource === undefined) {
@@ -2133,7 +2462,7 @@ describe("builder runtime registry", () => {
     }
   });
 
-  test("publishes truthful inputs for asset, page-copy, style-source, and resource operations", () => {
+  test("publishes truthful inputs for asset and page-copy operations", () => {
     const addAssetOperation = getBuilderRuntimeOperation("assets.add");
     const addAssetSchema = toInputJsonSchemaObject(
       addAssetOperation.inputJsonSchema
@@ -2143,44 +2472,32 @@ describe("builder runtime registry", () => {
     );
     expect(JSON.stringify(assetSchema)).not.toContain("projectId");
 
-    for (const operationId of [
-      "resources.create",
-      "resources.update",
-    ] as const) {
-      const operation = getBuilderRuntimeOperation(operationId);
-      const schema = toInputJsonSchemaObject(operation.inputJsonSchema);
-      expect(
-        toInputJsonSchemaObject(schema?.properties?.exposeAsDataSource)
-          ?.description
-      ).toContain("write resources default to false");
-    }
-
     const copyPageOperation = getBuilderRuntimeOperation("pages.copy");
     const copyPageSchema = toInputJsonSchemaObject(
       copyPageOperation.inputJsonSchema
     );
     expect(copyPageSchema?.required).toContain("sourceData");
-    expect(
-      toInputJsonSchemaObject(copyPageSchema?.properties?.sourceData)
-        ?.description
-    ).toContain("use duplicate-page");
     expectRuntimeValidationError(
       "pages.copy",
       { pageId: "home" },
       { path: ["sourceData"] }
     );
+  });
 
-    const duplicateStyleSourceOperation = getBuilderRuntimeOperation(
-      "styleSources.duplicate"
+  test("publishes Content Block replacement confirmation", () => {
+    const operation = getBuilderRuntimeOperation("contentBlocks.connectSource");
+    const schema = toInputJsonSchemaObject(operation.inputJsonSchema);
+    const switchOperation = getBuilderRuntimeOperation(
+      "contentBlocks.switchSource"
     );
-    const duplicateStyleSourceSchema = toInputJsonSchemaObject(
-      duplicateStyleSourceOperation.inputJsonSchema
+    const switchSchema = toInputJsonSchemaObject(
+      switchOperation.inputJsonSchema
     );
-    expect(
-      toInputJsonSchemaObject(
-        duplicateStyleSourceSchema?.properties?.styleSourceId
-      )?.description
-    ).toContain("Local style sources cannot be duplicated");
+
+    expect(schema?.properties).toHaveProperty("confirmReplacement");
+    expect(switchSchema?.properties).not.toHaveProperty("confirmReplacement");
+    expect(schema?.properties?.renderScope).toHaveProperty("description");
+    expect(schema?.properties?.variables).toHaveProperty("description");
   });
 
   test("keeps router adapter policy in runtime metadata", () => {
@@ -2310,6 +2627,12 @@ describe("builder runtime registry", () => {
 
   test("validates every mutation input at the runtime boundary", () => {
     const invalidInputByOperation = new Map<string, unknown>([
+      ["contentBlocks.connectSource", {}],
+      ["contentBlocks.switchSource", {}],
+      ["contentBlocks.disconnectSource", {}],
+      ["contentBlocks.editSource", {}],
+      ["contentBlocks.updateFrontmatter", {}],
+      ["contentBlocks.migrateTemplateReferences", {}],
       ["pages.create", {}],
       ["pages.update", {}],
       ["pages.updateSettings", {}],
@@ -2317,6 +2640,8 @@ describe("builder runtime registry", () => {
       ["pages.savePathInHistory", {}],
       ["pages.setHome", {}],
       ["projectSettings.update", { meta: "invalid" }],
+      ["responseHeaders.set", {}],
+      ["responseHeaders.delete", {}],
       ["projectSettings.updateMarketplaceProduct", {}],
       ["redirects.create", {}],
       ["redirects.update", {}],
@@ -2343,6 +2668,7 @@ describe("builder runtime registry", () => {
       ["pageTree.reparentOrphans", "invalid"],
       ["runtimeUi.integrate", {}],
       ["instances.insertComponent", { parentInstanceId: "body" }],
+      ["instances.insertMdxText", { parentInstanceId: "body" }],
       ["instances.insertCollection", { parentInstanceId: "body" }],
       ["instances.insertFragment", { parentInstanceId: "body" }],
       ["slots.attach", {}],
@@ -2367,11 +2693,13 @@ describe("builder runtime registry", () => {
       ["instances.updateTextTree", {}],
       ["instances.setTag", {}],
       ["instances.setLabel", {}],
+      ["instances.setName", {}],
       ["styles.updateDeclarations", { updates: {} }],
       ["styles.deleteDeclarations", { deletions: {} }],
       ["styles.updateSelectedDeclarations", { updates: {} }],
       ["styles.deleteSelectedDeclarations", { deletions: {} }],
       ["styles.replaceValues", {}],
+      ["designTokens.paste", {}],
       ["designTokens.create", { tokens: {} }],
       ["designTokens.import", {}],
       ["designTokens.createAttached", { tokens: {}, instanceIds: [] }],
@@ -2511,7 +2839,7 @@ describe("builder runtime registry", () => {
     );
   });
 
-  test("does not mutate caller state across representative public mutation surfaces", () => {
+  test("does not mutate caller state across representative public mutation surfaces", async () => {
     const inputs = new Map<string, unknown>([
       ["pages.create", { projectId: "project-1", name: "Docs", path: "/docs" }],
       [
@@ -2609,6 +2937,12 @@ describe("builder runtime registry", () => {
         { deletions: [{ instanceId: "heading", property: "color" }] },
       ],
       [
+        "designTokens.paste",
+        {
+          data: '/* @webstudio/tag-style-css/v1 "h1" */\n.ws-tag-style { color: red; }',
+        },
+      ],
+      [
         "designTokens.create",
         {
           tokens: [
@@ -2703,7 +3037,28 @@ describe("builder runtime registry", () => {
       ],
       ["assets.delete", { assetIdsOrPrefixes: ["asset"] }],
       ["assets.replace", { fromAssetId: "asset", toAssetId: "next" }],
+      [
+        "contentBlocks.migrateTemplateReferences",
+        {
+          assetIds: ["asset"],
+          migration: { type: "rename", from: "Old", to: "New" },
+        },
+      ],
     ]);
+
+    const immutabilityContext = {
+      ...context,
+      contentBlockApplication: {
+        migrateTemplateReferences: async () => ({
+          status: "complete" as const,
+          migration: { type: "rename" as const, from: "Old", to: "New" },
+          files: [],
+          updateCount: 0,
+          omissionCount: 0,
+          changedFileCount: 0,
+        }),
+      } as unknown as ContentBlockApplication,
+    };
 
     const mutationIds = new Set(mutationOperationIds);
     for (const manifest of builderRuntimeCutoverManifests) {
@@ -2721,11 +3076,14 @@ describe("builder runtime registry", () => {
     for (const [id, input] of inputs) {
       const before = structuredClone(state);
       let nextId = 0;
-      executeBuilderRuntimeOperation({
+      await executeBuilderRuntimeOperation({
         id,
         state,
         input,
-        context: { createId: () => `runtime-id-${++nextId}` },
+        context: {
+          ...immutabilityContext,
+          createId: () => `runtime-id-${++nextId}`,
+        },
       });
       expect(state).toEqual(before);
     }

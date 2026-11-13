@@ -16,8 +16,8 @@ export type CommandMeta<CommandName extends string> = {
   /** listen hotkeys only locally without sharing with other apps */
   disableHotkeyOutsideApp?: boolean;
   /**
-   * input, select and textarea, content editable and role=option used in Radix will not invoke command when hotkey is hit
-   * with the exception when default event behavior is prevented
+   * Inputs, text editors (including read-only ones), and Radix options
+   * will not invoke the command when its hotkey is pressed.
    **/
   disableOnInputLikeControls?: boolean;
   /**
@@ -176,6 +176,7 @@ export const createCommandsEmitter = <CommandName extends string>({
               element.tagName.toLowerCase()
             ) ||
               element.isContentEditable ||
+              element.closest('[role="textbox"]') !== null ||
               // Detect Radix select, dropdown and co.
               element.getAttribute("role") === "option");
 

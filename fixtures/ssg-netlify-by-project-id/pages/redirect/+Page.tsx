@@ -7,6 +7,7 @@ import {
 } from "@webstudio-is/react-sdk/runtime";
 import { LinkCurrentUrlContext } from "@webstudio-is/sdk-components-react";
 import { assetBaseUrl, imageLoader } from "../../app/constants.mjs";
+import { assetUrlsByPath } from "../../app/__generated__/$resources.assets";
 import {
   Page,
   breakpoints,
@@ -36,6 +37,7 @@ const PageComponent = ({ data }: { data: PageContext["data"] }) => {
     () => ({
       imageLoader,
       assetBaseUrl,
+      assetUrlsByPath,
       resources,
       breakpoints,
       onError: console.error,

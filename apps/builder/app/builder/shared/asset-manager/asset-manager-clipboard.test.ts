@@ -77,6 +77,20 @@ test("does not paste into a folder that no longer exists", () => {
   expect($assetManagerClipboard.get()).toBeDefined();
 });
 
+test("filters clipboard items before allowing a paste", () => {
+  const folder = createAssetFolderFixture({ id: "folder" });
+  $project.set({ id: "project" } as never);
+  $assetFolders.set(new Map([[folder.id, folder]]));
+  $assets.set(new Map([["asset", { folderId: undefined } as never]]));
+  copyAssetManagerItems([{ type: "asset", id: "asset", projectId: "project" }]);
+
+  const acceptsFolders = (items: readonly { type: string }[]) =>
+    items.every((item) => item.type === "folder");
+  expect(canPasteAssetManagerClipboard(folder.id, acceptsFolders)).toBe(false);
+  expect(pasteAssetManagerClipboard(folder.id, acceptsFolders)).toBeUndefined();
+  expect($assetManagerClipboard.get()).toBeDefined();
+});
+
 test("prevents cutting a folder into one of its descendants", () => {
   const parent = createAssetFolderFixture({ id: "parent" });
   const child = createAssetFolderFixture({ id: "child", parentId: parent.id });

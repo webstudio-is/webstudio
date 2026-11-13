@@ -1,4 +1,4 @@
-import { Flex, StorySection, Text, theme } from "@webstudio-is/design-system";
+import { Flex, StorySection, Text, cssVar } from "@webstudio-is/design-system";
 import { Loading as LoadingComponent, LoadingBackground } from "./loading";
 
 export default {
@@ -14,7 +14,7 @@ export const Loading = () => (
         css={{
           position: "relative",
           height: 200,
-          background: theme.colors.backgroundTopbar,
+          background: cssVar("--background-inverse"),
         }}
       >
         <LoadingComponent
@@ -35,7 +35,7 @@ export const Loading = () => (
         css={{
           position: "relative",
           height: 200,
-          background: theme.colors.backgroundTopbar,
+          background: cssVar("--background-inverse"),
         }}
       >
         <LoadingComponent

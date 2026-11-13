@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
 import {
+  blockComponent,
+  blockTemplateComponent,
+  contentBlockSourceProp,
+  encodeDataSourceVariable,
   encodeDataVariableId,
   type DataSource,
   elementComponent,
@@ -15,12 +19,10 @@ import {
   canUnwrapInstancePath,
   canWrapInstance,
   canConvertInstance,
-  cloneInstanceSubtree,
   cloneInstanceWithNewIds,
   convertInstance,
   createInstanceAppendPayload,
   createInstanceChild,
-  createInstanceClonePayload,
   createInstanceCleanupPayload,
   createInstanceDeletePayload,
   createInstanceMovePatches,
@@ -49,6 +51,7 @@ import {
   moveInstances,
   replaceTextInput,
   serializeTextNodes,
+  setInstanceName,
   setInstanceLabel,
   setInstanceTag,
   setTextContent,
@@ -63,6 +66,61 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 
 const runtimeContext = { createId: () => "generated" };
+
+test("keeps template names separate from labels and confirms source-backed changes", () => {
+  const block = createInstance("block", blockComponent, [
+    { type: "id", value: "templates" },
+  ]);
+  const templates = createInstance("templates", blockTemplateComponent, [
+    { type: "id", value: "hero" },
+    { type: "id", value: "card" },
+  ]);
+  const hero = {
+    ...createInstance("hero", "Box"),
+    name: "Hero",
+    label: "Featured hero",
+  };
+  const card = { ...createInstance("card", "Box"), name: "Card" };
+  const source: Prop = {
+    id: "src",
+    instanceId: block.id,
+    name: contentBlockSourceProp,
+    type: "asset",
+    value: "article",
+  };
+  const instances = new Map([
+    [block.id, block],
+    [templates.id, templates],
+    [hero.id, hero],
+    [card.id, card],
+  ]);
+
+  expect(() =>
+    setInstanceName(
+      { instances, props: new Map([[source.id, source]]) },
+      { instanceId: card.id, name: "Hero" }
+    )
+  ).toThrow("Template name must be unique");
+  expect(
+    setInstanceLabel(
+      { instances, props: new Map([[source.id, source]]) },
+      { instanceId: card.id, label: "Hero" }
+    ).result
+  ).toMatchObject({ label: "Hero" });
+  expect(() =>
+    deleteInstances(
+      {
+        instances,
+        props: new Map([[source.id, source]]),
+        dataSources: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+        styles: new Map(),
+      },
+      { instanceIds: [card.id] }
+    )
+  ).toThrow("Template name change requires confirmation");
+});
 
 test("rejects conflicting page selectors for text replacement", () => {
   expect(
@@ -275,6 +333,9 @@ const createStyleSource = (
       name: id,
     };
   }
+  if (type === "tag") {
+    return { type, id, tag: "div" };
+  }
   return {
     type,
     id,
@@ -358,146 +419,6 @@ test("collects shared descendants when all owners are requested", () => {
     new Set(["first-root", "shared-child", "shared-leaf", "second-root"])
   );
 });
-const createCloneInstance = (
-  id: Instance["id"],
-  children: Instance["children"] = []
-): Instance => ({
-  type: "instance",
-  id,
-  component: elementComponent,
-  children,
-});
-
-test("creates instance clone payload with child references and props", () => {
-  const targetParent = createCloneInstance("parent", []);
-  const props: Prop[] = [
-    {
-      id: "prop",
-      instanceId: "source",
-      name: "className",
-      type: "string",
-      value: "card",
-    },
-  ];
-  const ids = ["source-copy", "child-copy", "prop-copy"];
-
-  const result = createInstanceClonePayload({
-    instances: new Map([
-      [
-        "source",
-        createCloneInstance("source", [
-          { type: "id", value: "child" },
-          { type: "text", value: "Text" },
-        ]),
-      ],
-      ["child", createCloneInstance("child")],
-      [targetParent.id, targetParent],
-    ]),
-    sourceInstanceId: "source",
-    targetParent,
-    insertIndex: 0,
-    props,
-    styleSourceSelections: [],
-    styleSources: [],
-    styles: new Map(),
-    createId: () => ids.shift() ?? "missing",
-  });
-
-  expect(result).toEqual({
-    clonedRootId: "source-copy",
-    clonedInstanceIds: ["source-copy", "child-copy"],
-    payload: [
-      {
-        namespace: "instances",
-        patches: [
-          {
-            op: "add",
-            path: ["source-copy"],
-            value: createCloneInstance("source-copy", [
-              { type: "id", value: "child-copy" },
-              { type: "text", value: "Text" },
-            ]),
-          },
-          {
-            op: "add",
-            path: ["child-copy"],
-            value: createCloneInstance("child-copy"),
-          },
-          {
-            op: "add",
-            path: ["parent", "children", 0],
-            value: { type: "id", value: "source-copy" },
-          },
-        ],
-      },
-      {
-        namespace: "props",
-        patches: [
-          {
-            op: "add",
-            path: [expect.any(String)],
-            value: {
-              ...props[0],
-              id: expect.any(String),
-              instanceId: "source-copy",
-            },
-          },
-        ],
-      },
-    ],
-  });
-});
-
-test("preserves asset references when cloning instance props", () => {
-  const ids = ["source-copy", "asset-prop-copy"];
-  const result = createInstanceClonePayload({
-    instances: new Map([
-      ["source", createCloneInstance("source")],
-      ["parent", createCloneInstance("parent")],
-    ]),
-    sourceInstanceId: "source",
-    targetParent: createCloneInstance("parent"),
-    insertIndex: 0,
-    props: [
-      {
-        id: "image-src",
-        instanceId: "source",
-        name: "src",
-        type: "asset",
-        value: "hero-image",
-      },
-    ],
-    styleSourceSelections: [],
-    styleSources: [],
-    styles: new Map(),
-    createId: () => ids.shift() ?? "missing",
-  });
-
-  if (result === undefined) {
-    throw new Error(
-      "Expected valid source instance to produce a clone payload"
-    );
-  }
-  const propsPayload = result.payload.find(
-    (item) => item.namespace === "props"
-  );
-  expect(propsPayload).toEqual({
-    namespace: "props",
-    patches: [
-      {
-        op: "add",
-        path: [expect.any(String)],
-        value: {
-          id: expect.any(String),
-          instanceId: "source-copy",
-          name: "src",
-          type: "asset",
-          value: "hero-image",
-        },
-      },
-    ],
-  });
-});
 describe("text content utils", () => {
   test("creates text and expression children", () => {
     expect(createTextContentChild({ type: "text", value: "Hello" })).toEqual({
@@ -509,6 +430,7 @@ describe("text content utils", () => {
     ).toEqual({
       type: "expression",
       value: "title",
+      mode: "read",
     });
   });
 
@@ -600,7 +522,9 @@ describe("text content utils", () => {
 
     setTextContentMutable(instance, "expression", "value");
 
-    expect(instance.children).toEqual([{ type: "expression", value: "value" }]);
+    expect(instance.children).toEqual([
+      { type: "expression", value: "value", mode: "read" },
+    ]);
   });
 
   test("creates text content update payload", () => {
@@ -877,6 +801,96 @@ describe("text content utils", () => {
         child: { type: "text", value: "Hello" },
       })
     );
+  });
+
+  test("preserves explicit readwrite mode when setting expression content", () => {
+    const instance = createInstance("instance", []);
+    const block = createInstance("block", [{ type: "id", value: instance.id }]);
+    block.component = blockComponent;
+    const result = setTextContent(
+      {
+        instances: new Map([
+          [block.id, block],
+          [instance.id, instance],
+        ]),
+        props: new Map<string, Prop>([
+          [
+            "source",
+            {
+              id: "source",
+              instanceId: block.id,
+              name: "src",
+              type: "asset",
+              value: "article",
+            },
+          ],
+          [
+            "document",
+            {
+              id: "document",
+              instanceId: block.id,
+              name: "document",
+              type: "parameter",
+              value: "document",
+            },
+          ],
+        ]),
+      },
+      {
+        operation: "set",
+        instanceId: "instance",
+        text: `${encodeDataSourceVariable("document")}.frontmatter.title`,
+        mode: "expression",
+        expressionBindingMode: "readwrite",
+      }
+    );
+
+    expect(result.payload).toEqual(
+      createTextContentSetPayload({
+        instanceId: "instance",
+        child: {
+          type: "expression",
+          value: `${encodeDataSourceVariable("document")}.frontmatter.title`,
+          mode: "readwrite",
+        },
+      })
+    );
+  });
+
+  test("rejects readwrite expression content outside a connected Content Block document", () => {
+    expect(() =>
+      setTextContent(
+        {
+          instances: new Map([["instance", createInstance("instance", [])]]),
+        },
+        {
+          operation: "set",
+          instanceId: "instance",
+          text: "document.frontmatter.title",
+          mode: "expression",
+          expressionBindingMode: "readwrite",
+        }
+      )
+    ).toThrow(
+      "Read-write expressions require a connected Content Block document frontmatter path"
+    );
+  });
+
+  test("rejects readwrite mode for derived expression content", () => {
+    expect(() =>
+      setTextContent(
+        {
+          instances: new Map([["instance", createInstance("instance", [])]]),
+        },
+        {
+          operation: "set",
+          instanceId: "instance",
+          text: 'document.frontmatter.title + "!"',
+          mode: "expression",
+          expressionBindingMode: "readwrite",
+        }
+      )
+    ).toThrow("Read-write expressions must be a direct static path");
   });
 
   test("resets text content", () => {
@@ -1223,6 +1237,165 @@ describe("canConvertInstance", () => {
 });
 
 describe("convertInstance", () => {
+  test("converts composite media after semantically deleting obsolete provider parts", () => {
+    const instances = new Map([
+      [
+        "body",
+        createInstance("body", "Body", [{ type: "id", value: "wrapper" }]),
+      ],
+      [
+        "wrapper",
+        createInstance("wrapper", "Box", [
+          { type: "id", value: "player" },
+          { type: "id", value: "caption" },
+        ]),
+      ],
+      [
+        "player",
+        createInstance("player", "Vimeo", [{ type: "id", value: "play" }]),
+      ],
+      ["play", createInstance("play", "VimeoPlayButton", [])],
+      [
+        "caption",
+        createInstance("caption", "Text", [{ type: "text", value: "Caption" }]),
+      ],
+    ]);
+    const state = {
+      instances,
+      props: new Map<string, Prop>(),
+      dataSources: new Map<string, DataSource>(),
+      styleSources: new Map<string, StyleSource>(),
+      styleSourceSelections: new Map<string, StyleSourceSelection>(),
+      styles: new Map<string, StyleDecl>(),
+    };
+    const input = {
+      instanceSelector: ["player", "wrapper", "body"],
+      component: elementComponent,
+      tag: "video",
+    };
+    expect(() => convertInstance(state, input, runtimeContext)).toThrow(
+      "Converted tree violates content model"
+    );
+    const removal = deleteInstances(state, { instanceIds: ["play"] });
+    applyBuilderPatchPayloadMutable(
+      (namespace) => state[namespace as keyof typeof state],
+      removal.payload
+    );
+    const conversion = convertInstance(state, input, runtimeContext);
+    applyBuilderPatchPayloadMutable(
+      (namespace) => state[namespace as keyof typeof state],
+      conversion.payload
+    );
+    expect(instances.get("player")).toMatchObject({
+      id: "player",
+      component: elementComponent,
+      tag: "video",
+      children: [],
+    });
+    expect(instances.has("play")).toBe(false);
+    expect(instances.get("wrapper")?.children).toEqual([
+      { type: "id", value: "player" },
+      { type: "id", value: "caption" },
+    ]);
+    expect(instances.get("caption")?.children).toEqual([
+      { type: "text", value: "Caption" },
+    ]);
+  });
+
+  test("converts a Tabs tree leaf first without losing content or props", () => {
+    const radix = "@webstudio-is/sdk-components-react-radix:";
+    const instances = new Map([
+      ["body", createInstance("body", "Body", [{ type: "id", value: "tabs" }])],
+      [
+        "tabs",
+        createInstance("tabs", `${radix}Tabs`, [
+          { type: "id", value: "list" },
+          { type: "id", value: "content" },
+        ]),
+      ],
+      [
+        "list",
+        createInstance("list", `${radix}TabsList`, [
+          { type: "id", value: "trigger" },
+        ]),
+      ],
+      [
+        "trigger",
+        createInstance("trigger", `${radix}TabsTrigger`, [
+          { type: "text", value: "Overview" },
+        ]),
+      ],
+      [
+        "content",
+        createInstance("content", `${radix}TabsContent`, [
+          { type: "text", value: "Details" },
+        ]),
+      ],
+    ]);
+    const props: Map<string, Prop> = new Map([
+      [
+        "value",
+        {
+          id: "value",
+          instanceId: "trigger",
+          name: "value",
+          type: "string",
+          value: "overview",
+        },
+      ],
+    ]);
+    const state = { instances, props };
+
+    expect(() =>
+      convertInstance(
+        state,
+        {
+          instanceSelector: ["tabs", "body"],
+          component: elementComponent,
+          tag: "div",
+        },
+        runtimeContext
+      )
+    ).toThrow("Converted tree violates content model");
+
+    for (const [instanceSelector, tag] of [
+      [["trigger", "list", "tabs", "body"], "button"],
+      [["content", "tabs", "body"], "div"],
+      [["list", "tabs", "body"], "div"],
+      [["tabs", "body"], "div"],
+    ] as const) {
+      const result = convertInstance(
+        state,
+        {
+          instanceSelector: [...instanceSelector],
+          component: elementComponent,
+          tag,
+        },
+        runtimeContext
+      );
+      applyBuilderPatchPayloadMutable(
+        (namespace) => state[namespace as keyof typeof state],
+        result.payload
+      );
+    }
+
+    expect(
+      [...instances.values()].slice(1).map(({ component }) => component)
+    ).toEqual([
+      elementComponent,
+      elementComponent,
+      elementComponent,
+      elementComponent,
+    ]);
+    expect(instances.get("trigger")?.children).toEqual([
+      { type: "text", value: "Overview" },
+    ]);
+    expect(instances.get("content")?.children).toEqual([
+      { type: "text", value: "Details" },
+    ]);
+    expect(props.get("value")?.value).toBe("overview");
+  });
+
   test("converts component and adds element tag", () => {
     const result = convertInstance(
       {
@@ -1342,6 +1515,50 @@ describe("convertInstance", () => {
         ],
       },
     ]);
+  });
+
+  test("rejects prop aliases that collide when converting to an element", () => {
+    expect(() =>
+      convertInstance(
+        {
+          instances: new Map([
+            [
+              "body",
+              createInstance("body", "Body", [{ type: "id", value: "box" }]),
+            ],
+            ["box", createInstance("box", "Box")],
+          ]),
+          props: new Map([
+            [
+              "class",
+              {
+                id: "class",
+                instanceId: "box",
+                name: "class",
+                type: "string",
+                value: "one",
+              },
+            ],
+            [
+              "className",
+              {
+                id: "className",
+                instanceId: "box",
+                name: "className",
+                type: "string",
+                value: "two",
+              },
+            ],
+          ]),
+        },
+        {
+          instanceSelector: ["box", "body"],
+          component: elementComponent,
+          tag: "div",
+        },
+        runtimeContext
+      )
+    ).toThrow('Multiple properties map to "class"');
   });
 
   test("converts selected instance inside shared Slot content", () => {
@@ -1971,44 +2188,6 @@ test("clone instance with mapped id children", () => {
       { type: "id", value: "child-clone" },
       { type: "text", value: "Text" },
       { type: "expression", value: "value" },
-    ],
-  });
-});
-
-test("clones an instance subtree with new ids", () => {
-  const instances = new Map([
-    [
-      "root",
-      createInstance("root", elementComponent, [
-        { type: "id", value: "child" },
-        { type: "text", value: "Text" },
-      ]),
-    ],
-    ["child", createInstance("child", elementComponent)],
-  ]);
-  const ids = ["root-copy", "child-copy"];
-
-  expect(
-    cloneInstanceSubtree({
-      instances,
-      rootInstanceId: "root",
-      createId: () => ids.shift() ?? "missing",
-    })
-  ).toEqual({
-    instanceIds: ["root", "child"],
-    nextIdById: new Map([
-      ["root", "root-copy"],
-      ["child", "child-copy"],
-    ]),
-    clonedInstances: [
-      [
-        "root-copy",
-        createInstance("root-copy", elementComponent, [
-          { type: "id", value: "child-copy" },
-          { type: "text", value: "Text" },
-        ]),
-      ],
-      ["child-copy", createInstance("child-copy", elementComponent)],
     ],
   });
 });

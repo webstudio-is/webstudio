@@ -21,6 +21,21 @@ const getValidationIssues = (cause: unknown) => {
   return Array.isArray(issues) ? issues : undefined;
 };
 
+const getMissingAssetNames = (cause: unknown) => {
+  if (typeof cause !== "object" || cause === null) {
+    return;
+  }
+  const error = cause as {
+    webstudioCode?: unknown;
+    missingAssetNames?: unknown;
+  };
+  return error.webstudioCode === "MISSING_IMPORTED_ASSET_FILES" &&
+    Array.isArray(error.missingAssetNames) &&
+    error.missingAssetNames.every((name) => typeof name === "string")
+    ? error.missingAssetNames
+    : undefined;
+};
+
 export const {
   router,
   procedure,
@@ -42,6 +57,7 @@ export const {
           })
         : undefined);
     const issues = getValidationIssues(error.cause);
+    const missingAssetNames = getMissingAssetNames(error.cause);
 
     if (
       payload === undefined &&
@@ -58,6 +74,7 @@ export const {
         ...(payload === undefined ? {} : { apiCompatibility: payload }),
         ...(webstudioCode === undefined ? {} : { webstudioCode }),
         ...(issues === undefined ? {} : { issues }),
+        ...(missingAssetNames === undefined ? {} : { missingAssetNames }),
       },
     };
   },

@@ -3,6 +3,7 @@ import {
   assetQueryWhereExpression,
   assetType,
   compilerSettings,
+  customResponseHeader,
   dataSourceVariableValue,
   documentTypes,
   pageAuth,
@@ -11,6 +12,8 @@ import {
   projectMeta,
   prop,
   instance,
+  presetStyleDecl,
+  contentBlockDiagnostic,
 } from "@webstudio-is/sdk";
 import {
   assetQueryResultMode,
@@ -32,6 +35,7 @@ import {
 } from "./component-insert-contract";
 import { expressionWarningSchema } from "./expression-validation";
 import { designTokenImportPlanEntrySchema } from "./design-token-import";
+import { mdxPasteResult } from "./mdx-paste";
 
 const looseObject = <Shape extends z.ZodRawShape>(shape: Shape) =>
   z.looseObject(shape);
@@ -160,7 +164,7 @@ const declaration = looseObject({
   value: styleValue,
   breakpoint: id,
   state: z.string().optional(),
-  source: z.enum(["local", "token"]),
+  source: z.enum(["local", "token", "tag"]),
 });
 const declarationSummary = declaration.omit({ value: true }).extend({
   valueType: z.string(),
@@ -172,6 +176,21 @@ const token = looseObject({
   declarationCount: z.number().int(),
   styles: z.record(z.string(), styleValue).optional(),
   usageCount: z.number().int().optional(),
+});
+const tagStyle = looseObject({
+  id,
+  tag: z.string(),
+  declarationCount: z.number().int(),
+  declarations: z
+    .array(
+      looseObject({
+        property: z.string(),
+        value: styleValue,
+        breakpoint: id,
+        state: z.string().optional(),
+      })
+    )
+    .optional(),
 });
 const cssVariable = looseObject({
   name: z.string(),
@@ -323,7 +342,73 @@ const unsupportedRuntimeConversion = looseObject({
   reason: z.string(),
 });
 
+const assetContentSessionStatus = z.enum([
+  "saved",
+  "pending",
+  "saving",
+  "failed",
+  "conflicting",
+]);
+const assetContentSourceResult = looseObject({
+  assetId: id,
+  source: z.string(),
+  status: assetContentSessionStatus,
+  diagnostics: z.array(contentBlockDiagnostic),
+});
+const contentBlockSourceLifecycleResult = (
+  action: "connect" | "switch" | "disconnect"
+) =>
+  looseObject({
+    action: z.literal(action),
+    requiresConfirmation: z.boolean(),
+    diagnostics: z.array(contentBlockDiagnostic),
+  });
+
 export const runtimeOutputSchemas = {
+  "contentBlocks.inspectSource": looseObject({
+    source: z.string(),
+    sessionStatus: assetContentSessionStatus,
+    identity: looseObject({
+      blockInstanceId: id,
+      assetId: id,
+      revision: z.string(),
+      contentRef: z.string(),
+      format: z.literal("mdx"),
+      renderScope: z.string(),
+    }),
+    diagnostics: z.array(contentBlockDiagnostic),
+  }),
+  "contentBlocks.connectSource": contentBlockSourceLifecycleResult("connect"),
+  "contentBlocks.switchSource": contentBlockSourceLifecycleResult("switch"),
+  "contentBlocks.disconnectSource":
+    contentBlockSourceLifecycleResult("disconnect"),
+  "contentBlocks.editSource": assetContentSourceResult,
+  "contentBlocks.updateFrontmatter": assetContentSourceResult,
+  "contentBlocks.reloadSource": assetContentSourceResult,
+  "contentBlocks.migrateTemplateReferences": looseObject({
+    status: z.enum(["confirmation-required", "complete", "partial"]),
+    updateCount: z.number().int().nonnegative(),
+    omissionCount: z.number().int().nonnegative(),
+    changedFileCount: z.number().int().nonnegative(),
+    files: z.array(
+      looseObject({
+        assetId: id,
+        revision: z.string(),
+        contentRef: z.string(),
+        changed: z.boolean(),
+        status: z.enum(["updated", "unchanged", "failed"]).optional(),
+        updateCount: z.number().int().nonnegative(),
+        omissionCount: z.number().int().nonnegative(),
+        diagnostics: z.array(
+          looseObject({ code: z.string(), message: z.string() })
+        ),
+      })
+    ),
+    confirmation: looseObject({
+      token: z.string(),
+      expiresAt: z.string(),
+    }).optional(),
+  }),
   "assetFolders.list": looseObject({ folders: z.array(assetFolder) }),
   "assetFolders.create": folderIdResult,
   "assetFolders.update": folderIdResult,
@@ -358,6 +443,12 @@ export const runtimeOutputSchemas = {
     redirects: z.array(redirect).optional(),
   }),
   "projectSettings.update": looseObject({ updated: z.boolean() }),
+  "responseHeaders.list": looseObject({
+    headers: z.array(customResponseHeader),
+    ...outputPage,
+  }),
+  "responseHeaders.set": looseObject({ updated: z.boolean() }),
+  "responseHeaders.delete": looseObject({ updated: z.boolean() }),
   "projectSettings.getMarketplaceProduct": looseObject({
     marketplaceProduct: looseObject(marketplaceProduct.shape).nullable(),
   }),
@@ -419,15 +510,61 @@ export const runtimeOutputSchemas = {
     ancestors: z.array(instanceSummary).optional(),
     props: z.array(prop).optional(),
     styles: z.array(declaration).optional(),
+    presetStyles: z.array(presetStyleDecl).optional(),
     children: z.array(instanceSummary).optional(),
     bindings: z.array(prop).optional(),
     sources: stringArray.optional(),
   }),
   "project.search": looseObject({
     query: z.string(),
+    namespaces: stringArray,
     scopes: stringArray,
+    excludedSensitiveValueCount: z.number().int().nonnegative(),
     truncated: z.boolean(),
-    matches: z.array(looseObject({ kind: z.string() })),
+    matches: z.array(
+      z.union([
+        looseObject({
+          kind: z.literal("value"),
+          matchType: z.enum(["value", "key"]),
+          matchId: z.string(),
+          currentValue: z.union([
+            z.string(),
+            z.number(),
+            z.boolean(),
+            z.null(),
+          ]),
+          entity: z.object({ type: z.string(), id: z.string() }),
+          location: z.object({
+            namespace: z.enum(builderNamespaces),
+            path: z.array(z.union([z.string(), z.number()])),
+          }),
+          pageIds: stringArray,
+          pagePaths: stringArray,
+          reference: z
+            .object({
+              namespace: z.enum(builderNamespaces),
+              entityType: z.string(),
+              id: z.string(),
+              resolved: z.boolean(),
+            })
+            .optional(),
+        }),
+        looseObject({
+          kind: z.enum([
+            "instance",
+            "text",
+            "prop",
+            "resource",
+            "asset",
+            "design-token",
+            "style-source",
+            "css-variable",
+            "style",
+            "breakpoint",
+          ]),
+        }),
+      ])
+    ),
     ...outputPage,
   }),
   "project.audit": auditResult,
@@ -455,6 +592,7 @@ export const runtimeOutputSchemas = {
     warnings: expressionWarnings.optional(),
   }),
   "instances.insertFragment": fragmentInsertResult,
+  "instances.insertMdxText": mdxPasteResult,
   "slots.attach": looseObject({ slotId: id, fragmentId: id }),
   "slots.extract": looseObject({ slotId: id, fragmentId: id, instanceId: id }),
   "instances.move": instanceIdsResult,
@@ -525,6 +663,7 @@ export const runtimeOutputSchemas = {
     instanceIds: stringArray,
     label: z.string(),
   }),
+  "instances.setName": looseObject({ instanceId: id, name: z.string() }),
   "styles.getDeclarations": looseObject({
     declarations: z.array(declarationSummary),
     ...outputPage,
@@ -535,6 +674,15 @@ export const runtimeOutputSchemas = {
   "styles.deleteSelectedDeclarations": styleKeysResult,
   "styles.replaceValues": styleKeysResult,
   "designTokens.list": looseObject({ tokens: z.array(token), ...outputPage }),
+  "tagStyles.list": looseObject({
+    tagStyles: z.array(tagStyle),
+    ...outputPage,
+  }),
+  "designTokens.copy": looseObject({ data: z.string() }),
+  "designTokens.paste": z.union([
+    looseObject({ tokenId: id }),
+    looseObject({ styleSourceId: id }),
+  ]),
   "designTokens.create": looseObject({ tokenIds: stringArray }),
   "designTokens.import": looseObject({
     plan: z.array(designTokenImportPlanEntrySchema),

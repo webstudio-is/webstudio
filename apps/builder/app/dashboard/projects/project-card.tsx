@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import {
+  PanelContent,
   css,
   Flex,
   Text,
   truncate,
   theme,
   Tooltip,
-  rawTheme,
   Link,
   Box,
+  cssVar,
+  declareCssVar,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -17,6 +19,7 @@ import { ProjectDialogs, type DialogType } from "./project-dialogs";
 import {
   ThumbnailLinkWithAbbr,
   ThumbnailLinkWithImage,
+  thumbnailSurface,
 } from "../shared/thumbnail";
 import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
@@ -24,7 +27,13 @@ import type { User } from "~/shared/db/user.server";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 
-const infoIconStyle = css({ flexShrink: 0 });
+const infoIconStyle = css({
+  flexShrink: 0,
+  color: cssVar("--foreground-secondary"),
+});
+const prefetchImageBackground = declareCssVar(
+  "--project-card-prefetch-image-background"
+);
 
 const PublishedLink = ({
   domain,
@@ -116,16 +125,16 @@ export const ProjectCard = ({
     <Card hidden={isHidden} {...props}>
       <CardContent
         css={{
-          background: theme.colors.brandBackgroundProjectCardBack,
+          background: thumbnailSurface,
           [`&:hover`]: {
-            "--ws-project-card-prefetch-image-background": `url(${linkPath}cgi/empty.gif)`,
+            [prefetchImageBackground]: `url(${linkPath}cgi/empty.gif)`,
           },
         }}
       >
         {/* This div with backgorundImage on card hover is used to prefetch DNS of the project domain on hover. */}
         <Box
           css={{
-            backgroundImage: `var(--ws-project-card-prefetch-image-background, none)`,
+            backgroundImage: cssVar(prefetchImageBackground, "none"),
             visibility: "hidden",
             position: "absolute",
             width: 1,
@@ -135,12 +144,12 @@ export const ProjectCard = ({
             opacity: 0,
           }}
         />
-        <Flex
+        <PanelContent
+          as={Flex}
           wrap="wrap"
           gap={1}
           css={{
             position: "absolute",
-            padding: theme.panel.padding,
             bottom: 0,
             zIndex: 1,
           }}
@@ -150,10 +159,10 @@ export const ProjectCard = ({
             if (isApplied) {
               return (
                 <Text
-                  color="contrast"
                   key={tag.id}
                   css={{
                     background: "oklch(0 0 0 / 0.3)",
+                    color: "#fff",
                     borderRadius: theme.borderRadius[3],
                     paddingInline: theme.spacing[3],
                   }}
@@ -161,7 +170,7 @@ export const ProjectCard = ({
               );
             }
           })}
-        </Flex>
+        </PanelContent>
         {previewImageAsset ? (
           <ThumbnailLinkWithImage to={linkPath} name={previewImageAsset.name} />
         ) : (
@@ -200,11 +209,7 @@ export const ProjectCard = ({
                 </Text>
               }
             >
-              <InfoCircleIcon
-                color={rawTheme.colors.foregroundSubtle}
-                tabIndex={-1}
-                className={infoIconStyle()}
-              />
+              <InfoCircleIcon tabIndex={-1} className={infoIconStyle()} />
             </Tooltip>
           </Flex>
           {isPublished ? (

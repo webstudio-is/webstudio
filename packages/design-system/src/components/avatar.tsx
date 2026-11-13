@@ -4,9 +4,14 @@ import {
   type ReactNode,
   forwardRef,
 } from "react";
-import { theme, styled, type CSS } from "../stitches.config";
+import { styled, type CSS } from "../stitches.config";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 import { Box } from "./box";
+import { cssVar } from "../css-var";
+
+const fallbackBackground = `color-mix(in oklab, ${cssVar(
+  "--background-inverse"
+)} 60%, ${cssVar("--background-primary")})`;
 
 const StyledAvatar = styled(AvatarPrimitive.Root, {
   alignItems: "center",
@@ -28,7 +33,7 @@ const StyledAvatar = styled(AvatarPrimitive.Root, {
   fontWeight: "500",
   width: 24,
   height: 24,
-  backgroundColor: theme.colors.foregroundSubtle,
+  backgroundColor: fallbackBackground,
   borderRadius: "50%",
   '&[data-size="small"]': {
     width: 16,
@@ -49,7 +54,7 @@ const StyledAvatarImage = styled(AvatarPrimitive.Image, {
 const StyledAvatarFallback = styled(AvatarPrimitive.Fallback, {
   textTransform: "uppercase",
   borderRadius: "50%",
-  color: theme.colors.white,
+  color: cssVar("--foreground-on-inverse"),
 });
 
 type AvatarPrimitiveProps = ComponentProps<typeof AvatarPrimitive.Root>;

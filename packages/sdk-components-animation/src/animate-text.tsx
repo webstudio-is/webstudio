@@ -29,7 +29,7 @@ type AnimateChildrenProps = {
    */
   slidingWindow?: number;
   /**
-   * Easing function applied within the sliding window.
+   * Easing follows each item's progress from hidden to visible; reversing the animation reverses the timing.
    */
   easing?: keyof typeof easings;
   /**
@@ -41,6 +41,7 @@ type AnimateChildrenProps = {
    */
   splitBy?: keyof typeof split;
 } & {
+  /** Classes to which the element belongs */
   className?: string;
 };
 

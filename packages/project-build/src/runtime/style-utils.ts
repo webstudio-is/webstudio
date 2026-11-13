@@ -1,4 +1,11 @@
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import {
+  camelCaseProperty,
+  cssTryParseValue,
+  parseCssValue,
+  type ParsedStyleDecl,
+} from "@webstudio-is/css-data";
+import { generate, walk, type CssNode } from "css-tree";
 import type {
   Instance,
   Styles,
@@ -8,8 +15,6 @@ import type {
   StyleSourceSelection,
   StyleSourceSelections,
 } from "@webstudio-is/sdk";
-import { getStyleDeclKey } from "@webstudio-is/sdk";
-import type { BuilderPatchChange } from "../contracts/patch";
 
 export const getUniqueNameWithSuffix = (
   name: string,
@@ -36,6 +41,99 @@ export const getUniqueNameWithSuffix = (
   }
   return `${name}-${maxCounter + 1}`;
 };
+
+export const mapParsedCssStyles = (
+  declarations: Iterable<ParsedStyleDecl>,
+  getContext: (
+    declaration: ParsedStyleDecl
+  ) =>
+    | (Pick<StyleDecl, "styleSourceId" | "breakpointId"> &
+        Partial<Pick<StyleDecl, "value" | "state">>)
+    | undefined
+): StyleDecl[] => {
+  const styles: StyleDecl[] = [];
+  for (const declaration of declarations) {
+    const context = getContext(declaration);
+    if (context === undefined) {
+      continue;
+    }
+    styles.push({
+      property: camelCaseProperty(declaration.property),
+      value: declaration.value,
+      ...(declaration.state ? { state: declaration.state } : {}),
+      ...context,
+    });
+  }
+  return styles;
+};
+
+const mapCssValueNodes = (
+  value: string,
+  mapNode: (node: CssNode) => boolean
+) => {
+  const active = new Set<string>();
+  const map = (text: string): string => {
+    if (active.has(text)) {
+      return text;
+    }
+    active.add(text);
+    const parsed = cssTryParseValue(text);
+    if (parsed === undefined) {
+      active.delete(text);
+      return text;
+    }
+    let changed = false;
+    walk(parsed, (node) => {
+      changed = mapNode(node) || changed;
+      if (node.type === "Raw") {
+        const replacement = map(node.value);
+        if (replacement !== node.value) {
+          node.value = replacement;
+          changed = true;
+        }
+      }
+    });
+    active.delete(text);
+    return changed ? generate(parsed) : text;
+  };
+  return map(value);
+};
+
+export const mapCssValueUrls = (
+  value: string,
+  mapUrl: (url: string) => string | undefined
+) =>
+  mapCssValueNodes(value, (node) => {
+    if (node.type !== "Url") {
+      return false;
+    }
+    const replacement = mapUrl(node.value);
+    if (replacement === undefined || replacement === node.value) {
+      return false;
+    }
+    node.value = replacement;
+    return true;
+  });
+
+export const mapCssValueVariables = (
+  value: string,
+  mapName: (name: string) => string | undefined
+) =>
+  mapCssValueNodes(value, (node) => {
+    if (node.type !== "Function" || node.name !== "var") {
+      return false;
+    }
+    const name = node.children.first;
+    if (name?.type !== "Identifier" || !name.name.startsWith("--")) {
+      return false;
+    }
+    const replacement = mapName(name.name);
+    if (replacement === undefined || replacement === name.name) {
+      return false;
+    }
+    name.name = replacement;
+    return true;
+  });
 
 export const traverseStyleValue = (
   value: StyleValue,
@@ -101,15 +199,74 @@ export const collectFontFamiliesFromStyleValue = (value: StyleValue) => {
   return fontFamilies;
 };
 
-export const collectFontFamiliesFromStyleDecls = (
-  styles: Iterable<Pick<StyleDecl, "value">>
+export const collectFontFamiliesFromStyleDecls = <
+  Declaration extends Pick<StyleDecl, "value"> &
+    Partial<Pick<StyleDecl, "property">>,
+>(
+  styles: Iterable<Declaration>,
+  onFamily?: (
+    family: string,
+    styleDecl: Declaration,
+    fromVariable: boolean
+  ) => void,
+  onVariableDefinition?: (styleDecl: Declaration) => void
 ) => {
   const fontFamilies = new Set<string>();
-  for (const styleDecl of styles) {
-    for (const fontFamily of collectFontFamiliesFromStyleValue(
-      styleDecl.value
-    )) {
-      fontFamilies.add(fontFamily);
+  const customProperties = new Map<string, Declaration[]>();
+  const declarations = Array.from(styles);
+  for (const styleDecl of declarations) {
+    if (styleDecl.property?.startsWith("--")) {
+      const values = customProperties.get(styleDecl.property) ?? [];
+      values.push(styleDecl);
+      customProperties.set(styleDecl.property, values);
+    }
+  }
+
+  for (const styleDecl of declarations) {
+    const families = new Map<string, boolean>();
+    const addFamily = (family: string, fromVariable: boolean) => {
+      families.set(family, fromVariable || families.get(family) === true);
+    };
+    if (styleDecl.property === "fontFamily") {
+      const visitedVariables = new Set<string>();
+      const collectFromVariable = (
+        value: StyleValue,
+        fromVariable: boolean
+      ) => {
+        traverseStyleValue(value, (item) => {
+          if (item.type === "fontFamily") {
+            for (const family of item.value) {
+              addFamily(family, fromVariable);
+            }
+          }
+          if (item.type === "unparsed") {
+            const parsed = parseCssValue("font-family", item.value);
+            if (parsed.type !== "unparsed") {
+              collectFromVariable(parsed, fromVariable);
+            }
+          }
+          if (item.type === "var") {
+            const name = `--${item.value}`;
+            if (visitedVariables.has(name)) {
+              return;
+            }
+            visitedVariables.add(name);
+            for (const definition of customProperties.get(name) ?? []) {
+              onVariableDefinition?.(definition);
+              collectFromVariable(definition.value, true);
+            }
+          }
+        });
+      };
+      collectFromVariable(styleDecl.value, false);
+    } else {
+      for (const family of collectFontFamiliesFromStyleValue(styleDecl.value)) {
+        addFamily(family, false);
+      }
+    }
+    for (const [family, fromVariable] of families) {
+      fontFamilies.add(family);
+      onFamily?.(family, styleDecl, fromVariable);
     }
   }
   return fontFamilies;
@@ -267,136 +424,4 @@ export const serializeStyleDeclarations = ({
     }
   }
   return declarations;
-};
-
-export const cloneStyles = (
-  styles: Styles,
-  clonedStyleSourceIds: Map<StyleSource["id"], StyleSource["id"]>
-) => {
-  const clonedStyles: StyleDecl[] = [];
-  for (const styleDecl of styles.values()) {
-    const styleSourceId = clonedStyleSourceIds.get(styleDecl.styleSourceId);
-    if (styleSourceId === undefined) {
-      continue;
-    }
-    clonedStyles.push({
-      ...styleDecl,
-      styleSourceId,
-    });
-  }
-  return clonedStyles;
-};
-
-export const createLocalStyleSourceClonePlan = ({
-  styleSourceSelections,
-  styleSources,
-  newInstanceIds,
-  createId,
-}: {
-  styleSourceSelections: Iterable<StyleSourceSelection>;
-  styleSources: Iterable<StyleSource>;
-  newInstanceIds: Map<Instance["id"], Instance["id"]>;
-  createId: () => StyleSource["id"];
-}) => {
-  const styleSourceById = new Map(
-    Array.from(styleSources, (styleSource) => [styleSource.id, styleSource])
-  );
-  const newLocalStyleSourceIds = new Map<
-    StyleSource["id"],
-    StyleSource["id"]
-  >();
-  const getNextStyleSourceId = (styleSourceId: StyleSource["id"]) => {
-    const styleSource = styleSourceById.get(styleSourceId);
-    if (styleSource?.type !== "local") {
-      return styleSourceId;
-    }
-    let nextStyleSourceId = newLocalStyleSourceIds.get(styleSourceId);
-    if (nextStyleSourceId === undefined) {
-      nextStyleSourceId = createId();
-      newLocalStyleSourceIds.set(styleSourceId, nextStyleSourceId);
-    }
-    return nextStyleSourceId;
-  };
-
-  const selections: StyleSourceSelection[] = [];
-  for (const selection of styleSourceSelections) {
-    const nextInstanceId = newInstanceIds.get(selection.instanceId);
-    if (nextInstanceId === undefined) {
-      continue;
-    }
-    selections.push({
-      ...selection,
-      instanceId: nextInstanceId,
-      values: selection.values.map(getNextStyleSourceId),
-    });
-  }
-
-  const localStyleSources: StyleSource[] = [];
-  for (const [styleSourceId, nextStyleSourceId] of newLocalStyleSourceIds) {
-    const styleSource = styleSourceById.get(styleSourceId);
-    if (styleSource !== undefined) {
-      localStyleSources.push({
-        ...styleSource,
-        id: nextStyleSourceId,
-      });
-    }
-  }
-
-  return {
-    localStyleSources,
-    localStyleSourceIds: newLocalStyleSourceIds,
-    selections,
-  };
-};
-
-export const createStyleClonePayload = ({
-  styleSourceSelections,
-  styleSources,
-  styles,
-  nextIdById,
-  createId,
-}: {
-  styleSourceSelections: Iterable<StyleSourceSelection>;
-  styleSources: Iterable<StyleSource>;
-  styles: Styles;
-  nextIdById: Map<Instance["id"], Instance["id"]>;
-  createId: () => StyleSource["id"];
-}): BuilderPatchChange[] => {
-  const clonePlan = createLocalStyleSourceClonePlan({
-    styleSourceSelections,
-    styleSources,
-    newInstanceIds: nextIdById,
-    createId,
-  });
-  const changes: BuilderPatchChange[] = [
-    {
-      namespace: "styleSources",
-      patches: clonePlan.localStyleSources.map((styleSource) => ({
-        op: "add" as const,
-        path: [styleSource.id],
-        value: styleSource,
-      })),
-    },
-    {
-      namespace: "styleSourceSelections",
-      patches: clonePlan.selections.map((selection) => ({
-        op: "add" as const,
-        path: [selection.instanceId],
-        value: selection,
-      })),
-    },
-    {
-      namespace: "styles",
-      patches: cloneStyles(styles, clonePlan.localStyleSourceIds).map(
-        (styleDecl) => ({
-          op: "add" as const,
-          path: [getStyleDeclKey(styleDecl)],
-          value: styleDecl,
-        })
-      ),
-    },
-  ];
-  return changes.flatMap((change) =>
-    change.patches.length === 0 ? [] : [change]
-  );
 };

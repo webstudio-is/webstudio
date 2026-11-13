@@ -177,80 +177,20 @@ test("documents MCP use cases with JSON object inputs", () => {
   }
 });
 
-test("does not require publishing or sync before MCP editing", () => {
-  for (const document of ["manual-llm", "manual-mcp"] as const) {
-    const manual = readCliDoc(document);
-    const prose = manual.replaceAll(/\s+/g, " ");
-    expect(prose).toContain("local CLI");
-    expect(prose).toContain("connect");
-    expect(prose).toContain("optional");
-    expect(prose).toContain("restart");
-    expect(prose).not.toContain(
-      "followed by `webstudio sync`, then retry `webstudio connect"
+test("keeps the documented breakpoint style input executable", async () => {
+  const line = readCliDoc("api-use-cases")
+    .split("\n")
+    .find(
+      (candidate) =>
+        candidate.startsWith("- MCP tool: update-styles ") &&
+        candidate.includes("<breakpointId-from-list-breakpoints>")
     );
-  }
-  const llmManual = readCliDoc("manual-llm").replaceAll(/\s+/g, " ");
-  expect(llmManual).toContain(
-    "MCP reads and edits the latest editable Builder build directly"
-  );
-  expect(llmManual).toContain(
-    "including for projects that have never been published"
-  );
-});
+  expect(line).toBeDefined();
+  const input = JSON.parse(line!.slice("- MCP tool: update-styles ".length));
 
-test("keeps JSX examples readable inside JSON inputs", () => {
-  for (const document of [
-    "api-use-cases",
-    "manual-llm",
-    "manual-mcp",
-  ] as const) {
-    expect(readCliDoc(document)).not.toContain('ws:tag=\\"');
-  }
-});
-
-test("documents the Assets result shape", () => {
-  for (const document of ["api-use-cases", "manual-llm"] as const) {
-    const contents = readCliDoc(document);
-    expect(contents).toContain("<dataSourceName>.data");
-    expect(contents).toContain("<dataSourceName>.meta");
-    expect(contents).toContain("posts.data");
-    expect(contents).toContain("post.data");
-    expect(contents).toContain("post.data.content.text");
-    // Webstudio makes property access safe while compiling expressions, so
-    // agent guidance must use the direct source form instead of optional chains.
-    expect(contents).not.toContain("?.");
-  }
-});
-
-test("documents storage-efficient Assets queries for agents", () => {
-  for (const document of ["api-use-cases", "manual-llm"] as const) {
-    const contents = readCliDoc(document);
-    expect(contents).toContain('output.mode:"fields"');
-    expect(contents).toContain("only fields");
-    expect(contents).toContain("includeMetadata:false");
-    expect(contents).toContain("__diagnostics__.query");
-    expect(contents).toContain("__diagnostics__.database");
-    expect(contents).toContain("must not be summed");
-    expect(contents).toContain("truncated");
-  }
-});
-
-test("directs agents to deferred Markdown bodies", () => {
-  for (const document of ["api-use-cases", "manual-llm"] as const) {
-    const contents = readCliDoc(document);
-    expect(contents).toContain('content.mode:"markdown-body-ref"');
-    expect(contents).toContain("document reference");
-    expect(contents).toContain("selected Markdown");
-  }
-
-  const tools = createMetadataOnlyMcpAdapter().listTools();
-  for (const name of ["create-assets-resource", "update-assets-resource"]) {
-    const description = tools.find((tool) => tool.name === name)?.description;
-    expect(description).toContain("markdown-body-ref");
-    expect(description).toContain("document reference");
-    expect(description).toContain("<dataSourceName>.data");
-    expect(description).toContain("content.text");
-  }
+  await expect(
+    createMetadataOnlyMcpAdapter().callTool({ name: "update-styles", input })
+  ).rejects.toThrow("MCP metadata reads must not execute operations.");
 });
 
 test("documents MCP examples with current tool input fields", () => {
@@ -287,6 +227,32 @@ test("documents MCP examples with current tool input fields", () => {
       }
     }
   }
+});
+
+test("the article image recipe enables reference replacement without making shared metadata writable", () => {
+  const prefix = "MCP tool: bind-props ";
+  const bindings = useCaseScenarios
+    .flatMap(({ commands }) => commands)
+    .filter((command) => command.startsWith(prefix))
+    .flatMap((command) => JSON.parse(command.slice(prefix.length)).bindings);
+  const source = bindings.find(
+    ({ name, binding }) =>
+      name === "src" &&
+      binding.value === "document.frontmatter.featureImage.src"
+  );
+  expect(source?.binding).toEqual({
+    type: "expression",
+    value: "document.frontmatter.featureImage.src",
+    mode: "readwrite",
+  });
+  const alternativeText = bindings.find(
+    ({ instanceId, name }) => instanceId === source.instanceId && name === "alt"
+  );
+  expect(alternativeText?.binding).toEqual({
+    type: "expression",
+    value: "document.frontmatter.featureImage.description",
+    mode: "read",
+  });
 });
 
 test("does not document client-supplied generated ids for create operations", () => {

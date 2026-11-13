@@ -7,6 +7,42 @@ import { createAssetManagerTestRenderer } from "./test-utils";
 import { AssetDeleteDialog, AssetSettings } from "./asset-settings";
 
 const renderer = createAssetManagerTestRenderer();
+
+test.each([
+  { name: "collection.json", format: "json", isCollectionFile: true },
+  { name: "custom-template.mdx", format: "mdx", isCollectionFile: true },
+  { name: "entry.mdx", format: "mdx", isCollectionFile: false },
+])(
+  "protects collection files from deletion in settings: $name",
+  ({ name, format, isCollectionFile }) => {
+    const onDelete = vi.fn();
+    const onOpenChange = vi.fn();
+    $authPermit.set("build");
+    renderer.render(
+      <TooltipProvider>
+        <AssetSettings
+          open
+          asset={{ ...assetBase, name, format, type: "file", meta: {} }}
+          isCollectionFile={isCollectionFile}
+          onDelete={onDelete}
+          onOpenChange={onOpenChange}
+        >
+          <button>Anchor</button>
+        </AssetSettings>
+      </TooltipProvider>
+    );
+    // The accessible action name identifies the control, not incidental prose.
+    const button = Array.from(document.querySelectorAll("button")).find(
+      (button) => button.textContent === "Delete"
+    )!;
+    expect(button).toBeInstanceOf(HTMLButtonElement);
+    expect(button.disabled).toBe(isCollectionFile);
+    act(() => button.click());
+    expect(onDelete).toHaveBeenCalledTimes(isCollectionFile ? 0 : 1);
+    expect(onOpenChange).toHaveBeenCalledTimes(isCollectionFile ? 0 : 1);
+  }
+);
+
 type ImageAsset = Extract<Asset, { type: "image" }>;
 const assetBase = {
   id: "asset",
@@ -95,6 +131,23 @@ test("uses an auto-growing textarea for the asset description", () => {
   expect(
     Array.from(document.querySelectorAll("label"), (label) => label.textContent)
   ).toEqual(["Name", "Folder", "Description", "ID"]);
+});
+
+test("lets users edit the complete asset filename", () => {
+  renderer.render(
+    <TooltipProvider>
+      <AssetSettings open onOpenChange={vi.fn()} asset={createImageAsset()}>
+        <button>Anchor</button>
+      </AssetSettings>
+    </TooltipProvider>
+  );
+
+  expect(
+    document.querySelector<HTMLInputElement>("#asset-manager-filename")?.value
+  ).toBe("image.png");
+  expect(
+    document.querySelector("#asset-manager-filename-extension")
+  ).toBeNull();
 });
 
 test("closes asset settings before replacing an asset", () => {

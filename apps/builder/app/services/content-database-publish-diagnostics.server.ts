@@ -1,0 +1,197 @@
+import { DocumentGraphResolutionError } from "@webstudio-is/content-engine";
+import { throwApiError } from "./api-errors.server";
+import { loadProjectBundleByProjectId } from "~/shared/db";
+import {
+  formatMdxTemplatePublishDiagnostics,
+  getContentDatabasePublishDiagnostics,
+} from "./content-database.server";
+import {
+  getPublishedMdxAssetIds,
+  resolvePublishedMdxAssetCandidates,
+  type PublishedMdxDependencyReadFailure,
+  type PublishedMdxTemplateOmission,
+} from "@webstudio-is/project-build";
+import {
+  getUnsafeDynamicPublishedMdxDiagnostic,
+  materializePublishedMdx,
+} from "@webstudio-is/project-build/runtime";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { formatAssetName } from "@webstudio-is/sdk";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
+import { createPublishedMdxDependencySourceLoader } from "@webstudio-is/asset-uploader/server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
+import { createAssetClient } from "~/shared/asset-client";
+
+type Build = Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
+
+export const loadContentDatabasePublishDiagnostics = async (
+  projectId: string,
+  ctx: AppContext,
+  dependencies: {
+    loadProjectBundleByProjectId?: typeof loadProjectBundleByProjectId;
+    build?: Build;
+  } = {}
+) => {
+  let mdxTemplateOmissions: readonly PublishedMdxTemplateOmission[] = [];
+  let mdxDependencyReadFailures: readonly PublishedMdxDependencyReadFailure[] =
+    [];
+  const assetStore = createAssetClient();
+  const loadDocumentSource =
+    createPublishedMdxDependencySourceLoader(assetStore);
+  const mdxBlockInstanceIds = new Set<string>();
+  const bundle = await (
+    dependencies.loadProjectBundleByProjectId ?? loadProjectBundleByProjectId
+  )(projectId, ctx, {
+    ...(dependencies.build === undefined ? {} : { build: dependencies.build }),
+    onMdxTemplateOmissions: (issues) => {
+      mdxTemplateOmissions = issues;
+    },
+    onMdxDependencyReadFailures: (failures) => {
+      mdxDependencyReadFailures = failures;
+    },
+    loadMdxDependencySource: loadDocumentSource,
+    onMdxBlockInstanceId: (blockInstanceId) =>
+      mdxBlockInstanceIds.add(blockInstanceId),
+  }).catch((error: unknown): never => {
+    const visited = new Set<unknown>();
+    let current = error;
+    while (current instanceof Error && !visited.has(current)) {
+      visited.add(current);
+      if (
+        current instanceof DocumentGraphResolutionError &&
+        current.code === "DOCUMENT_LOAD_FAILED" &&
+        current.documentId !== undefined
+      ) {
+        throwApiError("BAD_REQUEST", current.message, {
+          webstudioCode: current.code,
+          issues: [
+            {
+              code: current.code,
+              path: ["assets", current.documentId],
+              assetId: current.documentId,
+              constraint: "readable_document",
+              message: current.message,
+            },
+          ],
+        });
+      }
+      current = current.cause;
+    }
+    throw error;
+  });
+  const mdxErrors: Array<{
+    filename: string;
+    diagnostic: Awaited<
+      ReturnType<typeof materializePublishedMdx>
+    >["warnings"][number]["diagnostic"];
+  }> = [];
+  const assets = new Map(bundle.assets.map((asset) => [asset.id, asset]));
+  const getFilename = (assetId: string, fallback: string) => {
+    const asset = assets.get(assetId);
+    return asset === undefined ? fallback : formatAssetName(asset);
+  };
+  const dependencyReadFailureKeys = new Set(
+    mdxDependencyReadFailures.map(({ blockInstanceId, assetId }) =>
+      JSON.stringify([blockInstanceId, assetId])
+    )
+  );
+  for (const failure of mdxDependencyReadFailures) {
+    mdxErrors.push({
+      filename: getFilename(failure.assetId, failure.contentRef),
+      diagnostic: {
+        code: "invalid-mdx",
+        severity: "error",
+        reason: "source-read-failed",
+        blockInstanceId: failure.blockInstanceId,
+        assetId: failure.assetId,
+        contentRef: failure.contentRef,
+        renderScope: `route:prepublish:block:${failure.blockInstanceId}`,
+        message: failure.message,
+      },
+    });
+  }
+  if (bundle.assetIndex !== undefined) {
+    const data = {
+      instances: new Map(bundle.build.instances),
+      props: new Map(bundle.build.props),
+      dataSources: new Map(bundle.build.dataSources),
+      resources: new Map(bundle.build.resources),
+      styleSources: new Map(bundle.build.styleSources),
+      styleSourceSelections: new Map(bundle.build.styleSourceSelections),
+      styles: new Map(bundle.build.styles),
+      breakpoints: new Map(bundle.build.breakpoints),
+      assets: new Map(bundle.assets.map((asset) => [asset.id, asset])),
+      ...(bundle.assetFolders === undefined
+        ? {}
+        : {
+            assetFolders: new Map(
+              bundle.assetFolders.map((folder) => [folder.id, folder])
+            ),
+          }),
+    };
+    const dynamicAssetIdsByBlock = resolvePublishedMdxAssetCandidates({
+      build: { ...bundle.build, pages: migratePages(bundle.build.pages) },
+      artifact: bundle.assetIndex,
+      blockInstanceIds: mdxBlockInstanceIds,
+      allAssetIds: new Set(bundle.assets.map(({ id }) => id)),
+      allMdxAssetIds: getPublishedMdxAssetIds(bundle.assets),
+    });
+    const materialized = await materializePublishedMdx({
+      route: "prepublish",
+      data,
+      artifact: bundle.assetIndex,
+      metas: componentMetas,
+      projectId: bundle.build.projectId,
+      blockInstanceIds: mdxBlockInstanceIds,
+      dynamicAssetIdsByBlock,
+      loadDocumentSource,
+    });
+    for (const root of materialized.roots) {
+      const diagnostic = getUnsafeDynamicPublishedMdxDiagnostic({
+        root,
+        route: "prepublish",
+        dataSources: data.dataSources,
+        props: data.props,
+      });
+      if (diagnostic !== undefined) {
+        mdxErrors.push({
+          filename: getFilename(
+            root.identity.assetId,
+            root.identity.contentRef
+          ),
+          diagnostic,
+        });
+      }
+    }
+    for (const { diagnostic } of materialized.warnings) {
+      if (diagnostic.severity !== "error") {
+        continue;
+      }
+      if (
+        diagnostic.code === "invalid-mdx" &&
+        diagnostic.blockInstanceId !== undefined &&
+        diagnostic.assetId !== undefined &&
+        diagnostic.reason === "source-read-failed" &&
+        dependencyReadFailureKeys.has(
+          JSON.stringify([diagnostic.blockInstanceId, diagnostic.assetId])
+        )
+      ) {
+        continue;
+      }
+      const assetId = diagnostic.assetId ?? "";
+      mdxErrors.push({
+        filename: getFilename(assetId, diagnostic.contentRef ?? "MDX content"),
+        diagnostic,
+      });
+    }
+  }
+  return {
+    ...getContentDatabasePublishDiagnostics(bundle),
+    mdxOmissions: formatMdxTemplatePublishDiagnostics(
+      bundle,
+      mdxTemplateOmissions
+    ),
+    mdxErrors,
+  };
+};

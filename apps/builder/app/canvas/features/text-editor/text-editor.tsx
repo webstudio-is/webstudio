@@ -49,10 +49,16 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+import { useStore } from "@nanostores/react";
 
-import { nanoid } from "nanoid";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
-import type { Instance, Instances, Props } from "@webstudio-is/sdk";
+import {
+  createId,
+  getHtmlTagFromInstance,
+  type Instance,
+  type Instances,
+  type Props,
+} from "@webstudio-is/sdk";
 import {
   inflatedAttribute,
   idAttribute,
@@ -64,7 +70,12 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
-import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
+import {
+  type Refs,
+  $convertToLexical,
+  $convertToPlainTextUpdate,
+  $convertToUpdates,
+} from "./interop";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { deleteInstanceBySelector } from "~/shared/instance-utils/mutation";
 import {
@@ -74,9 +85,11 @@ import {
   $registeredComponentMetas,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
+  $textEditorContextMenuCommand,
   execTextEditorContextMenuCommand,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+
+import { $instances, $props } from "~/shared/sync/data-stores";
 import {
   findBlockChildSelector,
   findBlockTemplates,
@@ -95,10 +108,19 @@ import {
 import { selectInstance } from "~/shared/nano-states";
 import { shallowEqual } from "shallow-equal";
 import {
+  filterInsertableContentBlockTemplates,
   insertListItemAt,
   insertTemplateAt,
 } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
 import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
+
+// These overlays render inside arbitrary authored pages where Builder theme
+// variables are unavailable. Neutral values remain visible across page colors.
+const textEditorOverlayColors = {
+  caretDark: "#666",
+  caretLight: "#999",
+  pendingCommand: "rgb(127 127 127 / 20%)",
+} as const;
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -113,6 +135,9 @@ const BindInstanceToNodePlugin = ({
     for (const [nodeKey, instanceId] of refs) {
       // extract key from stored key:style format
       const [key] = nodeKey.split(":");
+      if (nodeKey !== key && refs.has(key)) {
+        continue;
+      }
       const element = editor.getElementByKey(key);
       if (element) {
         element.setAttribute(idAttribute, instanceId);
@@ -134,7 +159,7 @@ const BindInstanceToNodePlugin = ({
  */
 const CaretColorPlugin = () => {
   const [editor] = useLexicalComposerContext();
-  const caretClassName = useState(() => `a${nanoid()}`)[0];
+  const caretClassName = useState(() => `a${createId("nano")}`)[0];
 
   useEffect(() => {
     const rootElement = editor.getRootElement();
@@ -162,8 +187,8 @@ const CaretColorPlugin = () => {
       sheet.addPlaintextRule(`
 
         @keyframes ${caretClassName}-keyframes {
-          from {caret-color: #666;}
-          to {caret-color: #999;}
+          from {caret-color: ${textEditorOverlayColors.caretDark};}
+          to {caret-color: ${textEditorOverlayColors.caretLight};}
         }
 
         .${caretClassName} {
@@ -195,7 +220,10 @@ const isChrome = () =>
 const OnChangeOnBlurPlugin = ({
   onChange,
 }: {
-  onChange: (editorState: EditorState, reason: "blur" | "unmount") => void;
+  onChange: (
+    editorState: EditorState,
+    reason: "blur" | "window-blur" | "unmount"
+  ) => void;
 }) => {
   const [editor] = useLexicalComposerContext();
   const handleChange = useEffectEvent(onChange);
@@ -232,6 +260,21 @@ const OnChangeOnBlurPlugin = ({
     },
     [editor]
   );
+
+  useEffect(() => {
+    // Leaving the canvas iframe does not blur its active editable element.
+    // Save without ending editing so toolbar actions can keep the selection.
+    const handleWindowBlur = () => {
+      if ($textEditorContextMenu.get() !== undefined) {
+        return;
+      }
+      editor.read(() => {
+        handleChange(editor.getEditorState(), "window-blur");
+      });
+    };
+    window.addEventListener("blur", handleWindowBlur);
+    return () => window.removeEventListener("blur", handleWindowBlur);
+  }, [editor]);
 
   useEffect(() => {
     const handleBlur = () => {
@@ -790,6 +833,9 @@ const InitCursorPlugin = () => {
         // We are controlling scroll ourself in instance-selected.ts see updateScroll.
         // Without skipping we are getting side effects of composition in scrollBy, scrollIntoView calls
         tag: "skip-scroll-into-view",
+        onUpdate: () => {
+          editor.focus();
+        },
       }
     );
   }, [editor]);
@@ -1007,10 +1053,12 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
 
 type ContextMenuParams = {
   cursorRect: DOMRect;
+  replaceAnchor: boolean;
 };
 
 type RichTextContentPluginProps = {
   rootInstanceSelector: InstanceSelector;
+  transientTextNodeKeys: Set<NodeKey>;
   onOpen: (
     editorState: EditorState,
     params: undefined | ContextMenuParams
@@ -1019,22 +1067,30 @@ type RichTextContentPluginProps = {
 };
 
 const RichTextContentPlugin = (props: RichTextContentPluginProps) => {
-  const [templates] = useState(() =>
-    findBlockTemplates({
-      anchor: props.rootInstanceSelector,
-      instances: $instances.get(),
-    })
-  );
+  const instances = useStore($instances);
+  const instanceProps = useStore($props);
+  const metas = useStore($registeredComponentMetas);
+  const templates = findBlockTemplates({
+    anchor: props.rootInstanceSelector,
+    instances,
+  });
 
   if (templates === undefined) {
     return;
   }
 
-  if (templates.length === 0) {
+  const insertableTemplates = filterInsertableContentBlockTemplates({
+    templates,
+    props: instanceProps,
+    metas,
+  });
+  if (insertableTemplates.length === 0) {
     return;
   }
 
-  return <RichTextContentPluginInternal {...props} templates={templates} />;
+  return (
+    <RichTextContentPluginInternal {...props} templates={insertableTemplates} />
+  );
 };
 
 const getTag = (instanceId: Instance["id"]) => {
@@ -1044,13 +1100,16 @@ const getTag = (instanceId: Instance["id"]) => {
   if (instance === undefined) {
     return;
   }
-  const meta = metas.get(instance.component);
-  const tags = Object.keys(meta?.presetStyle ?? {});
-  return instance.tag ?? tags[0];
+  return getHtmlTagFromInstance({
+    instance,
+    metas,
+    props: $props.get(),
+  });
 };
 
 const RichTextContentPluginInternal = ({
   rootInstanceSelector,
+  transientTextNodeKeys,
   onOpen,
   templates,
   onNext,
@@ -1061,6 +1120,7 @@ const RichTextContentPluginInternal = ({
   const [preservedSelection] = useState(rootInstanceSelector);
 
   const handleOpen = useEffectEvent(onOpen);
+  const getTemplates = useEffectEvent(() => templates);
 
   useEffect(() => {
     if (!editor.isEditable()) {
@@ -1070,25 +1130,30 @@ const RichTextContentPluginInternal = ({
     let menuState: "closed" | "opening" | "opened" = "closed";
 
     let slashNodeKey: NodeKey | undefined = undefined;
+    let replaceAnchor = false;
+    let removeSlashWhenSelectionChanges = false;
 
-    const closeMenu = () => {
-      if (menuState === "closed") {
+    const closeMenu = ({
+      deferSlashNormalization = false,
+    }: {
+      deferSlashNormalization?: boolean;
+    } = {}) => {
+      if (menuState === "closed" && removeSlashWhenSelectionChanges === false) {
         return;
       }
 
-      menuState = "closed";
+      if (menuState !== "closed") {
+        menuState = "closed";
 
-      handleOpen(editor.getEditorState(), undefined);
+        handleOpen(editor.getEditorState(), undefined);
+      }
 
       if (slashNodeKey === undefined) {
         return;
       }
 
       const node = $getNodeByKey(slashNodeKey);
-
-      if ($isTextNode(node)) {
-        node.setStyle("");
-      }
+      const currentSlashNodeKey = slashNodeKey;
 
       const selectedInstanceSelector = $selectedInstanceSelector.get();
 
@@ -1098,6 +1163,9 @@ const RichTextContentPluginInternal = ({
 
       if (!isSelectionInSameComponent) {
         node?.remove();
+        transientTextNodeKeys.delete(currentSlashNodeKey);
+        slashNodeKey = undefined;
+        removeSlashWhenSelectionChanges = false;
 
         // Delete current
         if ($getRoot().getTextContentSize() === 0) {
@@ -1110,6 +1178,27 @@ const RichTextContentPluginInternal = ({
             deleteInstanceBySelector(rootInstanceSelector);
           }
         }
+      } else if (deferSlashNormalization) {
+        queueMicrotask(() => {
+          editor.update(() => {
+            const currentNode = $getNodeByKey(currentSlashNodeKey);
+            if ($isTextNode(currentNode)) {
+              currentNode.setStyle("");
+            }
+            transientTextNodeKeys.delete(currentSlashNodeKey);
+            const currentSelection = $getSelection();
+            if ($isRangeSelection(currentSelection)) {
+              currentSelection.setStyle("");
+            }
+          });
+        });
+        return;
+      } else {
+        transientTextNodeKeys.delete(currentSlashNodeKey);
+      }
+
+      if ($isTextNode(node)) {
+        node.setStyle("");
       }
 
       // if selection changed, remove the slash node
@@ -1122,6 +1211,22 @@ const RichTextContentPluginInternal = ({
 
       selection.setStyle("");
     };
+
+    const unsubscribeContextMenuCommand = $textEditorContextMenuCommand.listen(
+      (command) => {
+        if (command?.type === "templateInsertionStarted") {
+          removeSlashWhenSelectionChanges = true;
+        }
+        if (command?.type === "templateInsertionCancelled") {
+          removeSlashWhenSelectionChanges = false;
+          editor.update(() => closeMenu());
+        }
+        if (command?.type === "close") {
+          removeSlashWhenSelectionChanges = false;
+          editor.update(() => closeMenu());
+        }
+      }
+    );
 
     const unsubscibeSelectionChange = editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
@@ -1205,7 +1310,7 @@ const RichTextContentPluginInternal = ({
             const allowedTags = ["p", "h1", "h2", "h3", "h4", "h5", "h6"];
 
             for (const tag of allowedTags) {
-              const templateSelector = templates.find(
+              const templateSelector = getTemplates().find(
                 ([instance]) => getTag(instance.id) === tag
               )?.[1];
 
@@ -1247,7 +1352,11 @@ const RichTextContentPluginInternal = ({
 
               */
 
-              insertTemplateAt(templateSelector, rootInstanceSelector, false);
+              insertTemplateAt({
+                templateSelector,
+                anchor: rootInstanceSelector,
+                insertBefore: false,
+              });
 
               if (tag === "li" && $getRoot().getTextContentSize() === 0) {
                 const parentInstanceSelector = rootInstanceSelector.slice(1);
@@ -1318,11 +1427,21 @@ const RichTextContentPluginInternal = ({
           }
 
           const slashNode = $createTextNode("/");
+          const rootText = $getRoot().getTextContent();
+          replaceAnchor =
+            rootText.length === 0 ||
+            (selection.isCollapsed() === false &&
+              selection.getTextContent() === rootText);
           slashNodeKey = slashNode.getKey();
+          transientTextNodeKeys.add(slashNodeKey);
           menuState = "opening";
 
-          slashNode.setStyle("background-color: rgba(127, 127, 127, 0.2);");
-          selection.setStyle("background-color: rgba(127, 127, 127, 0.2);");
+          slashNode.setStyle(
+            `background-color: ${textEditorOverlayColors.pendingCommand};`
+          );
+          selection.setStyle(
+            `background-color: ${textEditorOverlayColors.pendingCommand};`
+          );
           selection.insertNodes([slashNode]);
 
           event.preventDefault();
@@ -1334,13 +1453,13 @@ const RichTextContentPluginInternal = ({
       COMMAND_PRIORITY_EDITOR
     );
 
-    const closeMenuWithUpdate = () => {
-      if (menuState === "closed") {
+    const closeMenuWithUpdate = (deferSlashNormalization = false) => {
+      if (menuState === "closed" && removeSlashWhenSelectionChanges === false) {
         return;
       }
 
       editor.update(() => {
-        closeMenu();
+        closeMenu({ deferSlashNormalization });
       });
     };
 
@@ -1389,16 +1508,18 @@ const RichTextContentPluginInternal = ({
 
             handleOpen(editor.getEditorState(), {
               cursorRect: rect,
+              replaceAnchor,
             });
           });
         }
       }
     );
 
+    const handleBlur = () => closeMenuWithUpdate(true);
     const unsubscribeBlurListener = editor.registerRootListener(
       (rootElement, prevRootElement) => {
-        rootElement?.addEventListener("blur", closeMenuWithUpdate);
-        prevRootElement?.removeEventListener("blur", closeMenuWithUpdate);
+        rootElement?.addEventListener("blur", handleBlur);
+        prevRootElement?.removeEventListener("blur", handleBlur);
       }
     );
 
@@ -1407,10 +1528,17 @@ const RichTextContentPluginInternal = ({
       unsubscribeUpdateListener();
       unsubscibeSelectionChange();
       unsubscribeBlurListener();
+      unsubscribeContextMenuCommand();
       // Safari and FF support as no blur event is triggered in some cases
-      closeMenuWithUpdate();
+      closeMenuWithUpdate(true);
     };
-  }, [editor, onNext, preservedSelection, rootInstanceSelector, templates]);
+  }, [
+    editor,
+    onNext,
+    preservedSelection,
+    rootInstanceSelector,
+    transientTextNodeKeys,
+  ]);
 
   return null;
 };
@@ -1425,6 +1553,7 @@ type TextEditorProps = {
   props: Props;
   contentEditable: JSX.Element;
   editable?: boolean;
+  plainText?: boolean;
   onChange: (instancesList: Instance[]) => void | Record<string, string>;
   onSelectInstance: (instanceId: Instance["id"]) => void;
 };
@@ -1506,43 +1635,60 @@ export const TextEditor = ({
   props,
   contentEditable,
   editable,
+  plainText = false,
   onChange,
   onSelectInstance,
 }: TextEditorProps) => {
   const [rootInstanceSelector] = useState(() => rootInstanceSelectorUnstable);
   // class names must be started with letter so we add a prefix
-  const [paragraphClassName] = useState(() => `a${nanoid()}`);
-  const [italicClassName] = useState(() => `a${nanoid()}`);
+  const [paragraphClassName] = useState(() => `a${createId("nano")}`);
+  const [italicClassName] = useState(() => `a${createId("nano")}`);
   const lastSavedStateJsonRef = useRef<SerializedEditorState | null>(null);
   const [newLinkKeyToInstanceId] = useState(() => new Map());
 
   const handleChange = useEffectEvent(
-    (editorState: EditorState, reason: "blur" | "unmount" | "next") => {
-      editorState.read(() => {
-        const treeRootInstance = instances.get(rootInstanceSelector[0]);
-        if (treeRootInstance) {
-          const jsonState = editorState.toJSON();
-          if (deepEqual(jsonState, lastSavedStateJsonRef.current)) {
-            inflateInstance(rootInstanceSelector[0], false);
-            return;
-          }
+    (
+      editorState: EditorState,
+      reason: "blur" | "window-blur" | "unmount" | "next"
+    ) => {
+      const currentInstances = $instances.get();
+      const treeRootInstance = currentInstances.get(rootInstanceSelector[0]);
+      // Replacing a content block child unmounts its editor after the instance
+      // was deleted. Do not write the detached editor state back over the
+      // replacement.
+      if (treeRootInstance === undefined) {
+        return;
+      }
 
-          const idMap = onChange(
-            $convertToUpdates(
+      editorState.read(() => {
+        const jsonState = editorState.toJSON();
+        if (deepEqual(jsonState, lastSavedStateJsonRef.current)) {
+          inflateInstance(rootInstanceSelector[0], false);
+          return;
+        }
+
+        const updates = plainText
+          ? $convertToPlainTextUpdate(treeRootInstance)
+          : $convertToUpdates(
               treeRootInstance,
               refs,
               newLinkKeyToInstanceId,
-              builderRuntimeContext.createId
-            )
-          );
-          if (idMap !== undefined) {
-            for (const [key, instanceId] of refs) {
-              refs.set(key, idMap[instanceId] ?? instanceId);
-            }
+              builderRuntimeContext.createId,
+              transientTextNodeKeys
+            );
+        const idMap = onChange(
+          updates.map((instance) => ({
+            ...currentInstances.get(instance.id),
+            ...instance,
+          }))
+        );
+        if (idMap !== undefined) {
+          for (const [key, instanceId] of refs) {
+            refs.set(key, idMap[instanceId] ?? instanceId);
           }
-          newLinkKeyToInstanceId.clear();
-          lastSavedStateJsonRef.current = jsonState;
         }
+        newLinkKeyToInstanceId.clear();
+        lastSavedStateJsonRef.current = jsonState;
 
         inflateInstance(rootInstanceSelector[0], false);
       });
@@ -1587,6 +1733,7 @@ export const TextEditor = ({
   // cannot store custom data
   // Map<nodeKey, Instance>
   const [refs] = useState<Refs>(() => new Map());
+  const [transientTextNodeKeys] = useState(() => new Set<NodeKey>());
   const initialConfig = {
     namespace: "WsTextEditor",
     theme: {
@@ -1654,9 +1801,7 @@ export const TextEditor = ({
         if (instance === undefined) {
           continue;
         }
-        const meta = metas.get(instance.component);
-        const tags = Object.keys(meta?.presetStyle ?? {});
-        const tag = instance.tag ?? tags[0];
+        const tag = getHtmlTagFromInstance({ instance, metas, props });
 
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
         if (
@@ -1724,14 +1869,16 @@ export const TextEditor = ({
     <LexicalComposer initialConfig={initialConfig}>
       <RemoveParagaphsPlugin />
       <CaretColorPlugin />
-      <ToolbarConnectorPlugin
-        onSelectNode={(nodeKey) => {
-          const instanceId = refs.get(`${nodeKey}:span`);
-          if (instanceId !== undefined) {
-            onSelectInstance(instanceId);
-          }
-        }}
-      />
+      {plainText === false && (
+        <ToolbarConnectorPlugin
+          onSelectNode={(nodeKey) => {
+            const instanceId = refs.get(`${nodeKey}:span`);
+            if (instanceId !== undefined) {
+              onSelectInstance(instanceId);
+            }
+          }}
+        />
+      )}
       <BindInstanceToNodePlugin
         refs={refs}
         rootInstanceSelector={rootInstanceSelector}
@@ -1740,26 +1887,31 @@ export const TextEditor = ({
         ErrorBoundary={LexicalErrorBoundary}
         contentEditable={contentEditable}
       />
-      <LinkPlugin />
+      {plainText === false && <LinkPlugin />}
 
-      <LinkSanitizePlugin />
+      {plainText === false && <LinkSanitizePlugin />}
       <HistoryPlugin />
 
       {/* oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback */}
       <SwitchBlockPlugin onNext={handleNext} />
-      <RichTextContentPlugin
-        onOpen={handleContextMenuOpen}
-        rootInstanceSelector={rootInstanceSelector}
-        // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
-        onNext={handleNext}
-      />
+      {plainText === false && (
+        <RichTextContentPlugin
+          onOpen={handleContextMenuOpen}
+          rootInstanceSelector={rootInstanceSelector}
+          transientTextNodeKeys={transientTextNodeKeys}
+          // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+          onNext={handleNext}
+        />
+      )}
       {/* oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback */}
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />
-      <LinkSelectionPlugin
-        rootInstanceSelector={rootInstanceSelector}
-        registerNewLink={registerNewLink}
-      />
+      {plainText === false && (
+        <LinkSelectionPlugin
+          rootInstanceSelector={rootInstanceSelector}
+          registerNewLink={registerNewLink}
+        />
+      )}
       <AnyKeyDownPlugin onKeyDown={handleAnyKeydown} />
       <InitialJSONStatePlugin
         onInitialState={(json) => {

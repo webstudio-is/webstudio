@@ -4,6 +4,7 @@ import {
 } from "@webstudio-is/css-data";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import {
+  PanelContent,
   Flex,
   Grid,
   IconButton,
@@ -47,12 +48,12 @@ const ObjectPosition = () => {
   return (
     <Flex justify="end">
       <FloatingPanel
-        title="Object Position"
+        title="Object position"
         placement="bottom-within"
         content={
-          <Flex css={{ padding: theme.panel.padding }}>
+          <PanelContent as={Flex}>
             <PositionControl property="object-position" styleDecl={styleDecl} />
-          </Flex>
+          </PanelContent>
         }
       >
         <IconButton
@@ -94,67 +95,69 @@ const SectionLayout = styled(Grid, {
 
 export const Section = () => {
   return (
-    <StyleSection label="Size" properties={properties} fullWidth>
-      <SectionLayout columns={2}>
-        <SizeProperty property="width" />
-        <SizeProperty property="height" />
-        <SizeProperty property="min-width" />
-        <SizeProperty property="min-height" />
-        <SizeProperty property="max-width" />
-        <SizeProperty property="max-height" />
-        <PropertyLabel
-          label="Aspect Ratio"
-          description={propertyDescriptions.aspectRatio}
-          properties={["aspect-ratio"]}
-        />
-        <TextControl property="aspect-ratio" />
-      </SectionLayout>
-      <Separator />
-      <SectionLayout columns={2}>
-        <PropertyLabel
-          label="Overflow"
-          description={propertyDescriptions.overflow}
-          properties={["overflow-x", "overflow-y"]}
-        />
-        <ToggleGroupControl
-          label="Overflow"
-          properties={["overflow-x", "overflow-y"]}
-          items={[
-            {
-              child: <EyeOpenIcon />,
-              description: propertyDescriptions["overflowX:visible"],
-              value: "visible",
-            },
-            {
-              child: <CropIcon />,
-              description: propertyDescriptions["overflowX:clip"],
-              value: "clip",
-            },
-            {
-              child: <EyeClosedIcon />,
-              description: propertyDescriptions["overflowX:hidden"],
-              value: "hidden",
-            },
-            {
-              child: <AutoScrollIcon />,
-              description: propertyDescriptions["overflowX:auto"],
-              value: "auto",
-            },
-          ]}
-        />
-        <PropertyLabel
-          label="Object Fit"
-          description={propertyDescriptions.objectFit}
-          properties={["object-fit"]}
-        />
-        <SelectControl property="object-fit" />
-        <PropertyLabel
-          label="Object Position"
-          description={propertyDescriptions.objectPosition}
-          properties={["object-position"]}
-        />
-        <ObjectPosition />
-      </SectionLayout>
+    <StyleSection label="Size" properties={properties}>
+      <Flex direction="column" gap="2" css={{ paddingInline: 0 }}>
+        <SectionLayout columns={2}>
+          <SizeProperty property="width" />
+          <SizeProperty property="height" />
+          <SizeProperty property="min-width" />
+          <SizeProperty property="min-height" />
+          <SizeProperty property="max-width" />
+          <SizeProperty property="max-height" />
+          <PropertyLabel
+            label="Aspect ratio"
+            description={propertyDescriptions.aspectRatio}
+            properties={["aspect-ratio"]}
+          />
+          <TextControl property="aspect-ratio" />
+        </SectionLayout>
+        <Separator />
+        <SectionLayout columns={2}>
+          <PropertyLabel
+            label="Overflow"
+            description={propertyDescriptions.overflow}
+            properties={["overflow-x", "overflow-y"]}
+          />
+          <ToggleGroupControl
+            label="Overflow"
+            properties={["overflow-x", "overflow-y"]}
+            items={[
+              {
+                child: <EyeOpenIcon />,
+                description: propertyDescriptions["overflowX:visible"],
+                value: "visible",
+              },
+              {
+                child: <CropIcon />,
+                description: propertyDescriptions["overflowX:clip"],
+                value: "clip",
+              },
+              {
+                child: <EyeClosedIcon />,
+                description: propertyDescriptions["overflowX:hidden"],
+                value: "hidden",
+              },
+              {
+                child: <AutoScrollIcon />,
+                description: propertyDescriptions["overflowX:auto"],
+                value: "auto",
+              },
+            ]}
+          />
+          <PropertyLabel
+            label="Object fit"
+            description={propertyDescriptions.objectFit}
+            properties={["object-fit"]}
+          />
+          <SelectControl property="object-fit" />
+          <PropertyLabel
+            label="Object position"
+            description={propertyDescriptions.objectPosition}
+            properties={["object-position"]}
+          />
+          <ObjectPosition />
+        </SectionLayout>
+      </Flex>
     </StyleSection>
   );
 };

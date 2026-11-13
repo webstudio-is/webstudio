@@ -1,4 +1,5 @@
 {
   "extends": "@webstudio-is/tsconfig/base.json",
-  "include": ["**/*.ts", "**/*.tsx", "../../@types/**/*.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", "../../@types/**/*.d.ts"],
+  "exclude": ["vitest.config.ts"]
 }

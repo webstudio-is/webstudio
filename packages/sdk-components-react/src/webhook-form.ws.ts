@@ -3,8 +3,12 @@ import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { form } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/webhook-form.props";
 
+/** @deprecated Existing Webhook Forms remain supported through the next release. Use Form for new forms. */
 export const meta: WsComponentMeta = {
   label: "Webhook Form",
+  description:
+    "Deprecated. Existing Webhook Forms remain supported through the next release. Use the new Form component in the Forms section instead.",
+  deprecated: true,
   icon: WebhookFormIcon,
   presetStyle: {
     form,
@@ -22,6 +26,7 @@ export const meta: WsComponentMeta = {
       description:
         "The URI of a program that processes the information submitted via the form.",
       required: false,
+      generatedProps: ["method"],
     },
   },
 };

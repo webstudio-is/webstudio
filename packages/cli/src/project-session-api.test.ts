@@ -218,6 +218,76 @@ describe("project session api adapter", () => {
     expect(session.executeServerOperation).not.toHaveBeenCalled();
   });
 
+  test("checks the editing contract without requiring an operation id", async () => {
+    const session = {
+      initialize: vi.fn(async () => undefined),
+      mutate: vi.fn(async () => ({ diagnostics: [] })),
+      read: vi.fn(),
+      refresh: vi.fn(),
+      executeServerOperation: vi.fn(),
+    };
+    const createProjectSession = vi.fn(
+      () => session
+    ) as unknown as CreateProjectSession;
+    const getServerApiContract = vi.fn(async () => ({
+      clientVersion: "public-api:client",
+      serverVersion: "public-api:client",
+      supportedOperationIds: new Set<string>(),
+      missingServerOperationIds: [],
+      negotiated: true,
+    }));
+
+    await executeProjectSessionApiOperation({
+      command: "create-page",
+      input: { name: "Pricing", path: "/pricing" },
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+      createProjectSession,
+      getServerApiContract,
+    });
+
+    expect(getServerApiContract).toHaveBeenCalledOnce();
+    expect(session.initialize).toHaveBeenCalledOnce();
+    expect(session.mutate).toHaveBeenCalledOnce();
+  });
+
+  test("rejects an incompatible editing contract before initializing a session", async () => {
+    const session = {
+      initialize: vi.fn(async () => undefined),
+      mutate: vi.fn(),
+      read: vi.fn(),
+      refresh: vi.fn(),
+      executeServerOperation: vi.fn(),
+    };
+
+    await expect(
+      executeProjectSessionApiOperation({
+        command: "create-page",
+        input: { name: "Pricing", path: "/pricing" },
+        connection: {
+          projectId: "project-1",
+          origin: "https://example.com",
+          authToken: "token",
+        },
+        createProjectSession: vi.fn(
+          () => session
+        ) as unknown as CreateProjectSession,
+        getServerApiContract: async () => ({
+          clientVersion: "public-api:client",
+          serverVersion: "public-api:server",
+          supportedOperationIds: new Set<string>(),
+          missingServerOperationIds: [],
+          negotiated: true,
+        }),
+      })
+    ).rejects.toMatchObject({ code: "API_CONTRACT_MISMATCH" });
+    expect(session.initialize).not.toHaveBeenCalled();
+    expect(session.mutate).not.toHaveBeenCalled();
+  });
+
   test("refreshes local namespaces before local-capable commands when requested", async () => {
     const session = {
       initialize: vi.fn(async () => undefined),

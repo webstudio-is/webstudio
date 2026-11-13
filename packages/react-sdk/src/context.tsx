@@ -30,6 +30,8 @@ export type Params = {
    * https://assets.webstudio.is/
    */
   assetBaseUrl: string;
+  /** Runtime URLs keyed by their root-relative path in the Assets panel. */
+  assetUrlsByPath?: Readonly<Record<string, string>>;
 };
 
 export const ReactSdkContext = createContext<
@@ -67,5 +69,9 @@ export const useResource = (name: string) => {
 };
 
 export const renderText = (value: unknown) => {
-  return typeof value === "string" || typeof value === "number" ? value : "";
+  return typeof value === "string" || typeof value === "number"
+    ? value
+    : Array.isArray(value)
+      ? value.join(",")
+      : "";
 };

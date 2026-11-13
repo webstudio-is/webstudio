@@ -7,10 +7,12 @@ import {
   css,
   Slot,
   type SlotProps,
+  cssVar,
+  declareCssVar,
 } from "@webstudio-is/design-system";
 import { forwardRef, type ComponentProps } from "react";
 
-const borderColorVar = "--ws-dashboard-card-border-color";
+const borderColorVar = declareCssVar("--dashboard-card-border-color");
 
 const cardStyle = css({
   position: "relative",
@@ -23,7 +25,7 @@ const cardStyle = css({
   flexShrink: 0,
   outline: "none",
   "&:focus-within, &[aria-selected=true]": {
-    [borderColorVar]: theme.colors.borderFocus,
+    [borderColorVar]: cssVar("--border-focus"),
   },
 });
 
@@ -49,7 +51,7 @@ export const CardContent = styled(Grid, {
     content: '""',
     position: "absolute",
     inset: 0,
-    border: `1px solid var(${borderColorVar}, transparent)`,
+    border: `1px solid ${cssVar(borderColorVar, "transparent")}`,
     borderRadius: theme.borderRadius[5],
     pointerEvents: "none",
   },
@@ -60,7 +62,7 @@ export const CardFooter = styled(Flex, {
   flexShrink: 0,
   alignSelf: "stretch",
   flexGap: theme.spacing[3],
-  background: theme.colors.brandBackgroundProjectCardTextArea,
+  background: cssVar("--background-primary"),
   height: theme.spacing[17],
   paddingBlock: theme.panel.paddingBlock,
 });

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { nanoid } from "nanoid";
 import deepEqual from "fast-deep-equal";
 import {
   camelCaseProperty,
@@ -15,7 +14,9 @@ import {
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import {
+  createId,
   getStyleDeclKey,
+  getTagFromStyleId,
   ROOT_INSTANCE_ID,
   styleDecl as styleDeclSchema,
   type Breakpoint,
@@ -29,6 +30,7 @@ import {
   type StyleSources,
   type Styles,
 } from "@webstudio-is/sdk";
+
 import type { BuilderPatch, BuilderPatchChange } from "../contracts/patch";
 import {
   paginateOutput,
@@ -41,10 +43,15 @@ import { getInstanceDepths } from "./instances";
 import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
-import { serializeStyleDeclarations } from "./style-utils";
+import {
+  mapCssValueVariables,
+  serializeStyleDeclarations,
+} from "./style-utils";
 import { createPropValue } from "./props";
 import { getStyleSourceStylesSignature } from "./style-copy";
 import { isBaseWidthBreakpoint } from "./breakpoints";
+
+const createNanoId = () => createId("nano");
 
 export const serializeDesignTokens = ({
   styleSources,
@@ -120,6 +127,59 @@ export const serializeDesignTokens = ({
     invalidCursorMessage: "Invalid design token cursor",
   });
   return { tokens: items, ...pagination };
+};
+
+export const listTagStyles = (
+  state: Pick<BuilderState, "styles" | "styleSources">,
+  input: PaginatedOutputInput & { tag?: string } = {}
+) => {
+  if (state.styles === undefined || state.styleSources === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Style namespaces are missing"
+    );
+  }
+  const declarationsBySource = new Map<string, StyleDecl[]>();
+  for (const declaration of state.styles.values()) {
+    const declarations =
+      declarationsBySource.get(declaration.styleSourceId) ?? [];
+    declarations.push(declaration);
+    declarationsBySource.set(declaration.styleSourceId, declarations);
+  }
+  const tagStyles = Array.from(state.styleSources.values())
+    .filter((source) => source.type === "tag")
+    .filter((source) => input.tag === undefined || source.tag === input.tag)
+    .sort((left, right) => left.tag.localeCompare(right.tag))
+    .map((source) => {
+      const declarations = declarationsBySource.get(source.id) ?? [];
+      return projectOutput({
+        input,
+        compact: {
+          id: source.id,
+          tag: source.tag,
+          declarationCount: declarations.length,
+        },
+        expanded: () => ({
+          declarations: declarations.map(
+            ({ property, value, breakpointId, state }) => ({
+              property,
+              value,
+              breakpoint: breakpointId,
+              state,
+            })
+          ),
+        }),
+      });
+    });
+  const { items, ...pagination } = paginateOutput({
+    items: tagStyles,
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: { tag: input.tag },
+    verbose: input.verbose,
+    invalidCursorMessage: "Invalid Tag style cursor",
+  });
+  return { tagStyles: items, ...pagination };
 };
 
 const getRequiredStyleState = (
@@ -330,15 +390,20 @@ const typedStyleValueInput = z
   .transform((value) => value as StyleValue)
   .describe("Typed CSS StyleValue object.");
 
-export const styleUpdateInput = z.object({
-  instanceId: z.string(),
-  property: z.string(),
-  value: typedStyleValueInput,
-  breakpoint: z.string().optional(),
-  state: styleStateInput.optional(),
-  listed: z.boolean().optional(),
-  createLocalIfMissing: z.boolean().optional(),
-});
+export const styleUpdateInput = z
+  .object({
+    instanceId: z.string(),
+    property: z.string(),
+    value: typedStyleValueInput,
+    breakpoint: z
+      .string()
+      .optional()
+      .describe("Breakpoint id from list-breakpoints; omit for the base."),
+    state: styleStateInput.optional(),
+    listed: z.boolean().optional(),
+    createLocalIfMissing: z.boolean().optional(),
+  })
+  .strict();
 
 export const styleDeleteInput = z.object({
   instanceId: z.string(),
@@ -417,6 +482,10 @@ export const createCssVariableNamesRegex = (names: Set<string>) => {
 export const collectCssVariableReferences = (value: string, regex?: RegExp) => {
   const references = new Set<string>();
   if (regex === undefined) {
+    mapCssValueVariables(value, (name) => {
+      references.add(name);
+      return;
+    });
     return references;
   }
   regex.lastIndex = 0;
@@ -1701,7 +1770,7 @@ export const createLocalStyleSourcePlan = ({
   styleSourceSelection,
   styleSources,
   instanceId,
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   styleSourceSelection: StyleSourceSelection | undefined;
   styleSources: Pick<StyleSources, "get">;
@@ -1757,7 +1826,7 @@ export const createLocalStyleSourcePatchPlan = ({
   styleSources,
   styleSourceSelection,
   shouldCreate,
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   createdLocalSourceIds: Map<Instance["id"], StyleSource["id"]>;
   instanceId: Instance["id"];
@@ -1826,7 +1895,7 @@ export const getOrCreateLocalStyleSourceIdMutable = ({
   styleSourceSelections,
   styleSources,
   instanceId,
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   styleSourceSelections: StyleSourceSelections;
   styleSources: StyleSources;
@@ -2221,7 +2290,11 @@ export const deleteStyleSources = (
 ) => {
   const styleState = getRequiredStyleState(state);
   for (const styleSourceId of input.styleSourceIds) {
-    if (styleState.styleSources.has(styleSourceId) === false) {
+    const source = styleState.styleSources.get(styleSourceId);
+    if (source === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
+    }
+    if (source.type === "tag") {
       return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
     }
   }
@@ -2443,7 +2516,7 @@ export const duplicateStyleSource = (
   if (styleSource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
   }
-  if (styleSource.type === "local") {
+  if (styleSource.type !== "token") {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Local style sources cannot be duplicated. Convert the local style source to a design token first."
@@ -3123,33 +3196,36 @@ export const createSelectedStyleDeclarationUpdatePayload = ({
       nextStyleSourceIds.add(update.styleSource.id);
     }
 
-    const selection = styleSourceSelectionByInstanceId.get(update.instanceId);
-    const hasPendingSelection =
-      selection === undefined &&
-      nextSelectionValuesByInstanceId.has(update.instanceId);
-    const selectionValues =
-      nextSelectionValuesByInstanceId.get(update.instanceId) ?? [];
-    if (selectionValues.includes(update.styleSourceId) === false) {
-      styleSelectionPatches.push(
-        selection === undefined && hasPendingSelection === false
-          ? {
-              op: "add" as const,
-              path: [update.instanceId],
-              value: {
-                instanceId: update.instanceId,
-                values: [update.styleSourceId],
-              },
-            }
-          : {
-              op: "add" as const,
-              path: [update.instanceId, "values", selectionValues.length],
-              value: update.styleSourceId,
-            }
-      );
-      nextSelectionValuesByInstanceId.set(update.instanceId, [
-        ...selectionValues,
-        update.styleSourceId,
-      ]);
+    // Tag styles render globally and never enter instance selections.
+    if (update.styleSource.type !== "tag") {
+      const selection = styleSourceSelectionByInstanceId.get(update.instanceId);
+      const hasPendingSelection =
+        selection === undefined &&
+        nextSelectionValuesByInstanceId.has(update.instanceId);
+      const selectionValues =
+        nextSelectionValuesByInstanceId.get(update.instanceId) ?? [];
+      if (selectionValues.includes(update.styleSourceId) === false) {
+        styleSelectionPatches.push(
+          selection === undefined && hasPendingSelection === false
+            ? {
+                op: "add" as const,
+                path: [update.instanceId],
+                value: {
+                  instanceId: update.instanceId,
+                  values: [update.styleSourceId],
+                },
+              }
+            : {
+                op: "add" as const,
+                path: [update.instanceId, "values", selectionValues.length],
+                value: update.styleSourceId,
+              }
+        );
+        nextSelectionValuesByInstanceId.set(update.instanceId, [
+          ...selectionValues,
+          update.styleSourceId,
+        ]);
+      }
     }
 
     for (const styleDecl of createStyleDeclsFromInput({
@@ -3400,10 +3476,19 @@ export const updateSelectedStyleDeclarations = (
     input.updates.map((update) => update.instanceId)
   );
   const updates = input.updates.map((update) => {
-    const styleSource = styleState.styleSources.get(update.styleSourceId);
-    if (styleSource === undefined) {
+    const existingSource = styleState.styleSources.get(update.styleSourceId);
+    const tag = getTagFromStyleId(update.styleSourceId);
+    if (existingSource === undefined && tag === undefined) {
       return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
     }
+    if (existingSource && tag && existingSource.type !== "tag") {
+      return throwBuilderRuntimeError("CONFLICT", "Tag style id is in use");
+    }
+    const styleSource: StyleSource = existingSource ?? {
+      type: "tag",
+      id: update.styleSourceId,
+      tag: tag!,
+    };
     if (isStyleSourceLocked(styleSource)) {
       return throwBuilderRuntimeError("BAD_REQUEST", "Style source is locked");
     }

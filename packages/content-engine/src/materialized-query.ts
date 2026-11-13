@@ -23,6 +23,7 @@ import {
   assertAssetQueryResultSize,
   AssetQueryExecutionError,
   executeAssetQuery,
+  type AssetRuntimeData,
 } from "./structured-query";
 import {
   resolveAssetValueReferences,
@@ -260,12 +261,12 @@ export const getMaterializedAssetQueryResult = async ({
   queries,
   query,
   assetValueReferences,
-  assetUrls = {},
+  runtimeAssets = {},
 }: {
   queries: Readonly<Record<string, MaterializedAssetQuery>> | undefined;
   query: AssetQueryInput;
   assetValueReferences?: AssetValueReferences;
-  assetUrls?: Readonly<Record<string, string>>;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
 }): Promise<AssetQueryResult | undefined> => {
   if (queries === undefined) {
     return;
@@ -281,7 +282,7 @@ export const getMaterializedAssetQueryResult = async ({
       resolveAssetValueReferences({
         value: item,
         references: assetValueReferences?.[item.id],
-        assetUrls,
+        runtimeAssets,
       })
     ),
   };

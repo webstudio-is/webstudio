@@ -23,7 +23,14 @@ import {
 } from "./structured-query";
 import { contentEngineLimits } from "./limits";
 import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
-import type { CanonicalAssetFileEntry } from "./canonical";
+import {
+  fullCanonicalAssetMetadataRequirements,
+  getCanonicalAssetMetadataRequirements,
+  type CanonicalAssetFileEntry,
+  type CanonicalAssetMetadataRequirements,
+} from "./canonical";
+import { getDocumentFormatByContentType } from "./document-graph/document-format";
+import type { ContentCompilerInput } from "./asset-index";
 import {
   areJsonValuesEqual,
   compareStrings,
@@ -98,6 +105,29 @@ export const requiresStructuredProperties = (plan: ContentCompilationPlan) =>
   plan.structuredPropertyPaths === "all" ||
   plan.structuredPropertyPaths.length > 0;
 
+export const isContentCompilationWindowEmpty = ({
+  limit,
+}: Pick<ContentCompilationQuery, "limit">) =>
+  limit.type === "literal" &&
+  typeof limit.value === "number" &&
+  limit.value <= 0;
+
+export const getContentCompilationMetadataRequirements = (
+  plan?: ContentCompilationPlan
+): CanonicalAssetMetadataRequirements =>
+  plan === undefined
+    ? fullCanonicalAssetMetadataRequirements
+    : {
+        structuredProperties:
+          requiresStructuredProperties(plan) ||
+          plan.queries.some(
+            (query) =>
+              query.content.mode === "markdown-body-ref" &&
+              isContentCompilationWindowEmpty(query) === false
+          ),
+        excerpt: plan.excerpt,
+      };
+
 export const requiresHydratedContent = (plan: ContentCompilationPlan) =>
   plan.queries.some(({ content }) => content.mode !== "none");
 
@@ -115,13 +145,13 @@ const containsDocumentReference = (value: JsonValue): boolean => {
 };
 
 const isFieldAffectedByDocumentReference = (
-  document: AssetFileDocument,
+  document: ContentDatabaseDocument,
   field: AssetQueryFieldPath
 ) => {
   if (field[0] !== "properties") {
     return false;
   }
-  let value: JsonValue = document.properties;
+  let value: JsonValue = document.properties ?? {};
   for (const segment of field.slice(1)) {
     if (typeof getJsonReferenceMarkerValue(value) === "string") {
       return true;
@@ -151,7 +181,7 @@ const evaluateWhere = ({
   where,
   available,
 }: {
-  document: AssetFileDocument;
+  document: ContentDatabaseDocument;
   where: ContentCompilationWhere;
   available: "base" | "all";
 }): boolean | undefined => {
@@ -279,13 +309,20 @@ const usesRuntimeWhere = (where: ContentCompilationWhere) =>
 export const selectContentHydrationCandidates = ({
   documents,
   plan,
+  mode = "all",
 }: {
-  documents: readonly AssetFileDocument[];
+  documents: readonly ContentDatabaseDocument[];
   plan: ContentCompilationPlan;
+  mode?: "all" | "embedded" | "deferred";
 }) => {
   const selected = new Set<string>();
   for (const query of plan.queries) {
-    if (query.content.mode === "none") {
+    if (
+      query.content.mode === "none" ||
+      isContentCompilationWindowEmpty(query) ||
+      (mode === "embedded" && query.content.mode === "markdown-body-ref") ||
+      (mode === "deferred" && query.content.mode !== "markdown-body-ref")
+    ) {
       continue;
     }
     const matched = documents.filter(
@@ -328,7 +365,7 @@ export const prepareContentCompilerEntries = async ({
   plan?: ContentCompilationPlan;
   loadContent: (entry: CanonicalAssetFileEntry) => Promise<string | undefined>;
   maximumContentBytes?: number;
-}) => {
+}): Promise<readonly ContentCompilerInput[]> => {
   if (
     Number.isSafeInteger(maximumContentBytes) === false ||
     maximumContentBytes <= 0
@@ -338,10 +375,16 @@ export const prepareContentCompilerEntries = async ({
   if (plan === undefined) {
     return entries;
   }
-  const projected = entries.map((entry) => {
+  const projected: ContentCompilerInput[] = entries.map((entry) => {
     const { excerpt, ...document } = entry.document;
+    const format = getDocumentFormatByContentType(document.mimeType);
     return {
       ...entry,
+      ...((format === "markdown" || format === "mdx") &&
+      getCanonicalAssetMetadataRequirements(entry).structuredProperties &&
+      document.metadataError === undefined
+        ? { sourceFrontmatter: document.properties }
+        : {}),
       document: {
         ...document,
         properties:
@@ -358,6 +401,7 @@ export const prepareContentCompilerEntries = async ({
   const hydrationIds = selectContentHydrationCandidates({
     documents: projected.map(({ document }) => document),
     plan,
+    mode: "embedded",
   });
   const candidates = projected.filter(({ document }) =>
     isContentDocumentCandidate({ document, plan, available: "all" })
@@ -446,11 +490,13 @@ const includesField = (
 };
 
 export const requiresRuntimeDocumentData = (plan: ContentCompilationPlan) =>
-  plan.queries.some((query) =>
-    includesField(
-      query,
-      (field) => field.length === 1 && isAssetQueryRuntimeField(field[0])
-    )
+  plan.queries.some(
+    (query) =>
+      query.content.mode !== "none" ||
+      includesField(
+        query,
+        (field) => field.length === 1 && isAssetQueryRuntimeField(field[0])
+      )
   );
 
 const getStructuredPropertyPaths = (query: ContentCompilationQuery) => {
@@ -483,7 +529,7 @@ const getStandardFieldPaths = (query: ContentCompilationQuery) => {
     }
   }
   if (query.content.mode !== "none") {
-    for (const field of ["mimeType", "size", "revision"] as const) {
+    for (const field of ["mimeType", "path", "size", "revision"] as const) {
       addField(fields, [field]);
     }
   }
@@ -603,7 +649,8 @@ export const projectContentDatabaseDocument = ({
   if (plan === undefined) {
     return document;
   }
-  const includeContentIdentity = requiresHydratedContent(plan);
+  const includeContentIdentity =
+    requiresHydratedContent(plan) || document.extension.toLowerCase() === "mdx";
   const properties =
     plan.structuredPropertyPaths === "all"
       ? document.properties
@@ -615,7 +662,9 @@ export const projectContentDatabaseDocument = ({
     _id: document._id,
     ...selectAssetDocumentFields({
       document,
-      includes: (field) => hasField(plan.standardFields, field),
+      includes: (field) =>
+        hasField(plan.standardFields, field) ||
+        (includeContentIdentity && field === "revision"),
     }),
     ...(includeContentIdentity ? { contentRef: document.contentRef } : {}),
     ...(plan.structuredPropertyPaths === "all" ||

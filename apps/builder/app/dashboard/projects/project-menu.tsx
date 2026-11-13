@@ -36,14 +36,18 @@ export const ProjectMenu = ({ projectId, onOpenChange }: ProjectMenuProps) => {
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <IconButton
-          aria-label="Menu Button"
+          aria-label="Menu"
           tabIndex={-1}
           css={{ alignSelf: "center", position: "relative", zIndex: 1 }}
         >
           <EllipsesIcon width={15} height={15} />
         </IconButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" css={{ width: theme.spacing[24] }}>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={4}
+        css={{ width: theme.spacing[24] }}
+      >
         {permissions.canDuplicate && (
           <DropdownMenuItem onSelect={handleDuplicateProject}>
             Duplicate

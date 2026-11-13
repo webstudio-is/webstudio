@@ -6,19 +6,13 @@
   xmlns="http://www.w3.org/2000/svg"
 >
   <path
-    d="M13.987 6H9.32031"
+    d="M9.32031 6H1.93164"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M13.9316 6H1.93164"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M14 10.5L6.5 10.5L2 10.5"
+    d="M14 10.5H6.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
@@ -29,7 +23,7 @@
     width="4"
     height="4"
     rx="2"
-    fill="white"
+    fill="none"
     stroke="currentColor"
   />
   <rect
@@ -38,7 +32,7 @@
     width="4"
     height="4"
     rx="2"
-    fill="white"
+    fill="none"
     stroke="currentColor"
   />
 </svg>

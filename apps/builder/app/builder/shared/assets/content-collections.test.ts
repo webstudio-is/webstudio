@@ -1,0 +1,507 @@
+import { describe, expect, test, vi } from "vitest";
+import type { Asset } from "@webstudio-is/sdk";
+import {
+  ContentCollectionError,
+  contentEngineLimits,
+  createDefaultCollectionConfig,
+} from "@webstudio-is/content-engine";
+import {
+  createLoadingContentCollections,
+  discoverContentCollections,
+  getCollectionReservedAssetIds,
+  mergeLoadingContentCollections,
+  canAddAssetToContentCollection,
+} from "./content-collections";
+
+const asset = ({
+  id,
+  filename,
+  format,
+}: {
+  id: string;
+  filename: string;
+  format: string;
+}): Asset => ({
+  id,
+  projectId: "project",
+  name: `${filename}_${id}.${format}`,
+  filename,
+  description: null,
+  folderId: "folder",
+  size: 1,
+  createdAt: "2026-09-02T00:00:00.000Z",
+  type: "file",
+  format,
+  meta: {},
+});
+
+describe("discoverContentCollections", () => {
+  test("allows ordinary files but protects entry and setup filenames", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entries = ["*.mdx", "!draft-*.mdx"];
+    const collections = await discoverContentCollections({
+      assets: [config, template],
+      readSource: async (file) =>
+        file.id === config.id
+          ? JSON.stringify(schema)
+          : "---\ndraft: true\n---\n",
+    });
+    const collection = collections.get("folder");
+    expect(collection?.status).toBe("ready");
+    for (const name of ["notes.md", "cover.png", "draft-idea.mdx"]) {
+      expect(canAddAssetToContentCollection(collection, { name })).toBe(true);
+    }
+    for (const name of ["post.mdx", "collection.json", "template.mdx"]) {
+      expect(canAddAssetToContentCollection(collection, { name })).toBe(false);
+    }
+    expect(
+      canAddAssetToContentCollection(
+        createLoadingContentCollections([config]).get("folder"),
+        { name: "cover.png" }
+      )
+    ).toBe(false);
+    expect(
+      canAddAssetToContentCollection(undefined, { name: "post.mdx" })
+    ).toBe(true);
+    expect(canAddAssetToContentCollection(collection, undefined)).toBe(false);
+  });
+  test("keeps temporary collection read failures retryable", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const collections = await discoverContentCollections({
+      assets: [config, template],
+      readSource: async () => {
+        throw new Error("Network request failed");
+      },
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "unavailable",
+      message: "Collection files could not be loaded: Network request failed",
+    });
+    expect(
+      mergeLoadingContentCollections({
+        current: collections,
+        loading: createLoadingContentCollections([config, template]),
+      }).get("folder")
+    ).toBe(collections.get("folder"));
+    expect(
+      getCollectionReservedAssetIds(collections, { includeInvalid: true })
+    ).toEqual(new Set([config.id, template.id]));
+  });
+
+  test("reports permanent collection content errors as invalid", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const collections = await discoverContentCollections({
+      assets: [config],
+      readSource: async () => {
+        throw new ContentCollectionError("Collection file is not valid UTF-8");
+      },
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "invalid",
+      message: "Collection file is not valid UTF-8",
+    });
+  });
+
+  test("reports oversized collection sources as invalid without reading them", async () => {
+    const config = {
+      ...asset({
+        id: "config",
+        filename: "collection",
+        format: "json",
+      }),
+      size: contentEngineLimits.hydratedFileBytes + 1,
+    };
+    let read = false;
+    const collections = await discoverContentCollections({
+      assets: [config],
+      readSource: async () => {
+        read = true;
+        return createDefaultCollectionConfig();
+      },
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "invalid",
+      message: 'Collection file "collection.json" exceeds the editing limit',
+    });
+    expect(read).toBe(false);
+  });
+
+  test("does not read every entry while discovering a collection", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const entry = asset({ id: "entry", filename: "hello", format: "mdx" });
+    const readSource = vi.fn(async (currentAsset: Asset) =>
+      currentAsset.id === config.id
+        ? createDefaultCollectionConfig()
+        : "---\ndraft: false\n---\n"
+    );
+    const collections = await discoverContentCollections({
+      assets: [config, template, entry],
+      readSource,
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "ready",
+    });
+    expect(readSource).toHaveBeenCalledTimes(2);
+  });
+
+  test("reserves possible templates while collection settings load", () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const possibleTemplate = asset({
+      id: "possible-template",
+      filename: "article",
+      format: "mdx",
+    });
+    const loading = createLoadingContentCollections([config, possibleTemplate]);
+
+    expect(
+      getCollectionReservedAssetIds(loading, { includeInvalid: true })
+    ).toEqual(new Set([config.id, possibleTemplate.id]));
+  });
+
+  test("keeps a ready collection stable when an entry changes", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const discovered = await discoverContentCollections({
+      assets: [config, template],
+      readSource: async (currentAsset) =>
+        currentAsset.id === config.id
+          ? createDefaultCollectionConfig()
+          : "---\ndraft: false\n---\n",
+    });
+    const ready = discovered.get("folder");
+    const entry = asset({ id: "entry", filename: "hello", format: "mdx" });
+
+    const merged = mergeLoadingContentCollections({
+      current: discovered,
+      loading: createLoadingContentCollections([config, template, entry]),
+    });
+
+    expect(merged.get("folder")).toBe(ready);
+  });
+
+  test("recognizes collection.json and reserves its referenced template", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const collections = await discoverContentCollections({
+      assets: [config, template],
+      readSource: async (currentAsset) =>
+        currentAsset.id === config.id
+          ? createDefaultCollectionConfig()
+          : "---\ndraft: false\n---\n\nStart writing.\n",
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "ready",
+      configAsset: config,
+      templateAsset: template,
+      templateProperties: { draft: false },
+    });
+  });
+
+  test("keeps a folder special when collection.json is invalid", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const possibleTemplate = asset({
+      id: "possible-template",
+      filename: "article",
+      format: "mdx",
+    });
+    const collections = await discoverContentCollections({
+      assets: [config, possibleTemplate],
+      readSource: async () => "not json",
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "invalid",
+      message: "collection.json contains invalid JSON",
+    });
+    expect(
+      mergeLoadingContentCollections({
+        current: collections,
+        loading: createLoadingContentCollections([config, possibleTemplate]),
+      }).get("folder")
+    ).toBe(collections.get("folder"));
+    expect(
+      getCollectionReservedAssetIds(collections, { includeInvalid: true })
+    ).toEqual(new Set([config.id, possibleTemplate.id]));
+  });
+
+  test("returns an invalid collection to loading when a sibling changes", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const possibleTemplate = asset({
+      id: "possible-template",
+      filename: "article",
+      format: "mdx",
+    });
+    const collections = await discoverContentCollections({
+      assets: [config, possibleTemplate],
+      readSource: async () => "not json",
+    });
+    const changedTemplate = {
+      ...possibleTemplate,
+      name: "article-revision.mdx",
+    };
+
+    expect(
+      mergeLoadingContentCollections({
+        current: collections,
+        loading: createLoadingContentCollections([config, changedTemplate]),
+      }).get("folder")
+    ).toMatchObject({ status: "loading" });
+  });
+
+  test("keeps an identified invalid template reserved in content mode", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const collections = await discoverContentCollections({
+      assets: [config, template],
+      readSource: async (currentAsset) =>
+        currentAsset.id === config.id
+          ? createDefaultCollectionConfig()
+          : "---\ndraft: true\n---\n\n<Broken",
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "invalid",
+      configAsset: config,
+      templateAsset: template,
+      repairAsset: template,
+    });
+    expect(
+      getCollectionReservedAssetIds(collections, { includeInvalid: true })
+    ).toEqual(new Set([config.id, template.id]));
+  });
+
+  test("ignores direct non-entry files when discovering a collection", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const image = asset({ id: "image", filename: "cover", format: "png" });
+    const collections = await discoverContentCollections({
+      assets: [config, template, image],
+      readSource: async (file) => {
+        if (file.id === config.id) {
+          return createDefaultCollectionConfig();
+        }
+        if (file.id === template.id) {
+          return "---\ndraft: true\n---\nBody";
+        }
+        throw new Error("Non-entry files must not be read");
+      },
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "ready",
+      configAsset: config,
+      templateAsset: template,
+    });
+  });
+
+  test("keeps collection configuration usable while an entry is invalid", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const entry = asset({ id: "entry", filename: "hello", format: "mdx" });
+    const reads = new Map<string, number>();
+    const collections = await discoverContentCollections({
+      assets: [config, template, entry],
+      readSource: async (currentAsset) => {
+        reads.set(currentAsset.id, (reads.get(currentAsset.id) ?? 0) + 1);
+        if (currentAsset.id === config.id) {
+          return createDefaultCollectionConfig();
+        }
+        if (currentAsset.id === template.id) {
+          return "---\ndraft: true\n---\n";
+        }
+        return "---\ntitle: Hello\nslug: another-slug\ndraft: false\n---\n";
+      },
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "ready",
+    });
+    expect(
+      getCollectionReservedAssetIds(collections, { includeInvalid: true })
+    ).toEqual(new Set([config.id, template.id]));
+    expect(reads.get(template.id)).toBe(1);
+    expect(reads.get(entry.id)).toBeUndefined();
+  });
+
+  test("rejects duplicate logical filenames case-insensitively", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const firstEntry = asset({
+      id: "first-entry",
+      filename: "hello",
+      format: "mdx",
+    });
+    const duplicateEntry = asset({
+      id: "duplicate-entry",
+      filename: "HELLO",
+      format: "mdx",
+    });
+    const collections = await discoverContentCollections({
+      assets: [config, template, firstEntry, duplicateEntry],
+      readSource: async (currentAsset) =>
+        currentAsset.id === config.id
+          ? createDefaultCollectionConfig()
+          : "---\ntitle: Hello\nslug: hello\ndraft: false\n---\n",
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "invalid",
+      repairAsset: duplicateEntry,
+      repairAction: "move",
+      message: 'Collection folder contains duplicate filename "HELLO.mdx"',
+    });
+    expect(
+      getCollectionReservedAssetIds(collections, { includeInvalid: true })
+    ).toEqual(new Set([config.id, template.id]));
+  });
+
+  test("rejects ambiguous collection configuration and templates", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const duplicateConfig = asset({
+      id: "duplicate-config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const duplicateTemplate = asset({
+      id: "duplicate-template",
+      filename: "template",
+      format: "mdx",
+    });
+    const readSource = async (currentAsset: Asset) =>
+      currentAsset.format === "json"
+        ? createDefaultCollectionConfig()
+        : "---\ndraft: true\n---\n";
+
+    const duplicateConfigs = await discoverContentCollections({
+      assets: [config, duplicateConfig, template],
+      readSource,
+    });
+    expect(duplicateConfigs.get("folder")).toMatchObject({
+      status: "invalid",
+      message: "A collection folder must contain exactly one collection.json",
+    });
+    expect(
+      getCollectionReservedAssetIds(duplicateConfigs, { includeInvalid: true })
+    ).toEqual(new Set([config.id, duplicateConfig.id, template.id]));
+
+    const duplicateTemplates = await discoverContentCollections({
+      assets: [config, template, duplicateTemplate],
+      readSource,
+    });
+    expect(duplicateTemplates.get("folder")).toMatchObject({
+      status: "invalid",
+      message: 'Collection template "template.mdx" is ambiguous',
+    });
+    expect(
+      getCollectionReservedAssetIds(duplicateTemplates, {
+        includeInvalid: true,
+      })
+    ).toEqual(new Set([config.id, template.id, duplicateTemplate.id]));
+  });
+});

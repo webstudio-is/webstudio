@@ -2,22 +2,51 @@
 // transaction boundaries. Put generic store reads/writes and content-mode data
 // guards here, not tree-shape mutations.
 import { toast } from "@webstudio-is/design-system";
-import { type WebstudioData, isPageTemplate } from "@webstudio-is/sdk";
 import {
+  type WebstudioData,
+  isPageTemplate,
+  blockTemplateComponent,
+  contentBlockMdxTemplateDescriptors,
+  elementComponent,
+  findTreeInstanceIds,
+  getContentBlockTemplateName,
+} from "@webstudio-is/sdk";
+import {
+  BuilderRuntimeError,
+  blockTemplateNameConfirmationInput,
+  builderRuntimeContext,
   executeBuilderRuntimeOperation,
   createRuntimeMutationAccumulator,
+  findBlockTemplates,
+  type BuilderRuntimeContext,
+  type BuilderRuntimeMutation,
   type BuilderRuntimeOperationInput,
   type BuilderRuntimeMutationOperationId,
   type BuilderRuntimeOperationResult,
 } from "@webstudio-is/project-build/runtime";
+import { applyBuilderPatchTransactions } from "@webstudio-is/project-build/state";
+import { atom } from "nanostores";
 import {
-  builderRuntimeContext,
-  type BuilderRuntimeContext,
-} from "@webstudio-is/project-build/runtime";
-import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime";
-import { $canOpenPageTemplates, $selectedPage } from "../nano-states";
-import { createTransactionFromBuilderPatchPayload } from "../sync/builder-patch";
+  $authPermit,
+  $canOpenPageTemplates,
+  $selectedPage,
+} from "../nano-states";
+import {
+  createSyncChangesFromBuilderPatchPayload,
+  createTransactionFromBuilderPatchPayload,
+} from "../sync/builder-patch";
 import { $project, readBuilderStateStores } from "../sync/data-stores";
+import { externalContentSyncStore } from "../sync/sync-stores";
+import {
+  getAffectedExternalContentRootKeys,
+  getExternalContentRoots,
+  publishExternalContentMutation,
+} from "../external-content-mutations";
+import {
+  createExternalContentPersistencePlan,
+  getExternalContentOwnership,
+  getExternalContentOwnershipFromState,
+} from "../external-content-persistence";
 
 type RuntimeMutationResult<Id extends BuilderRuntimeMutationOperationId> =
   Extract<BuilderRuntimeOperationResult<Id>, BuilderRuntimeMutation>;
@@ -26,8 +55,66 @@ export type RuntimeMutationOperation = {
   [Id in BuilderRuntimeMutationOperationId]: {
     id: Id;
     input: BuilderRuntimeOperationInput<Id>;
+    context?: RuntimeMutationContext;
   };
 }[BuilderRuntimeMutationOperationId];
+
+type RuntimeMutationSequenceResults<
+  Operations extends readonly RuntimeMutationOperation[],
+> = {
+  [Index in keyof Operations]: Operations[Index] extends {
+    id: infer Id extends BuilderRuntimeMutationOperationId;
+  }
+    ? RuntimeMutationResult<Id>["result"]
+    : never;
+};
+
+type TemplateNameConfirmation = ReturnType<
+  typeof blockTemplateNameConfirmationInput.parse
+>;
+type PendingTemplateNameConfirmation =
+  | {
+      operation: RuntimeMutationOperation;
+      confirmation: TemplateNameConfirmation;
+      asynchronous?: boolean;
+    }
+  | {
+      operations: readonly RuntimeMutationOperation[];
+      operationIndex: number;
+      confirmation: TemplateNameConfirmation;
+    };
+
+export const $pendingTemplateNameConfirmation = atom<
+  PendingTemplateNameConfirmation | undefined
+>(undefined);
+
+const getTemplateNameConfirmation = (error: unknown) => {
+  if (error instanceof BuilderRuntimeError === false) {
+    return;
+  }
+  const issue = error.issues?.find(
+    ({ code }) => code === "template_name_change_requires_confirmation"
+  );
+  const parsed = blockTemplateNameConfirmationInput.safeParse(issue?.example);
+  return parsed.success ? parsed.data : undefined;
+};
+
+const addTemplateNameConfirmation = (
+  operation: RuntimeMutationOperation,
+  confirmation: TemplateNameConfirmation
+) =>
+  ({
+    ...operation,
+    input: { ...operation.input, templateNameConfirmation: confirmation },
+  }) as RuntimeMutationOperation;
+
+export const getDuplicateTemplateNameMessage = (error: unknown) => {
+  if (error instanceof BuilderRuntimeError === false) {
+    return;
+  }
+  return error.issues?.find(({ code }) => code === "duplicate_template_name")
+    ?.message;
+};
 
 export type WebstudioInstanceData = Pick<
   WebstudioData,
@@ -49,6 +136,11 @@ const canCommitWebstudioData = () => {
 };
 
 export const migrateLoadedWebstudioData = () => {
+  // Load migrations can change protected templates and other design data.
+  const authPermit = $authPermit.get();
+  if (authPermit === "edit" || authPermit === "view") {
+    return;
+  }
   const result = executeRuntimeMutation({
     id: "system.migrateLoadedData",
     input: {},
@@ -98,10 +190,139 @@ const createRuntimeMutationArgs = <
 const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
   result: Mutation
 ): Mutation => {
-  createTransactionFromBuilderPatchPayload({
-    data: getWebstudioData(),
-    payload: result.payload,
+  const data = getWebstudioData();
+  const roots = getExternalContentRoots();
+  const payload = result.payload;
+  const affectedRootKeys = new Set(
+    getAffectedExternalContentRootKeys({ state: data, roots, payload })
+  );
+  if (affectedRootKeys.size === 0) {
+    createTransactionFromBuilderPatchPayload({ data, payload });
+    return result;
+  }
+  const beforeOwnership = getExternalContentOwnership(roots);
+  const afterData = applyBuilderPatchTransactions(data, [
+    { id: "external-content-persistence-plan", payload },
+  ]).state as ReturnType<typeof getWebstudioData>;
+  for (const key of affectedRootKeys) {
+    const root = roots.get(key);
+    if (root === undefined) {
+      continue;
+    }
+    const templates =
+      findBlockTemplates({
+        anchor: [root.sourceBlockInstanceId ?? root.blockInstanceId],
+        instances: afterData.instances,
+      }) ?? [];
+    const templateInstanceIds = new Set<string>();
+    const matchTemplate = (instanceId: string, templateId: string) => {
+      const instance = afterData.instances.get(instanceId);
+      const template = afterData.instances.get(templateId);
+      if (
+        instance === undefined ||
+        template === undefined ||
+        instance.component !== template.component ||
+        instance.tag !== template.tag ||
+        templateInstanceIds.has(instanceId)
+      ) {
+        return;
+      }
+      templateInstanceIds.add(instanceId);
+      instance.children.forEach((child, index) => {
+        const templateChild = template.children[index];
+        if (child.type === "id" && templateChild?.type === "id") {
+          matchTemplate(child.value, templateChild.value);
+        }
+      });
+    };
+    const content = afterData.instances.get(
+      root.contentInstanceId ?? root.blockInstanceId
+    );
+    for (const child of content?.children ?? []) {
+      if (
+        child.type !== "id" ||
+        afterData.instances.get(child.value)?.component ===
+          blockTemplateComponent
+      ) {
+        continue;
+      }
+      for (const id of findTreeInstanceIds(afterData.instances, child.value)) {
+        const instance = afterData.instances.get(id);
+        if (instance !== undefined) {
+          const matching = templates.filter(
+            ([template]) =>
+              getContentBlockTemplateName(template) ===
+              getContentBlockTemplateName(instance)
+          );
+          if (matching.length === 1) {
+            matchTemplate(id, matching[0][0].id);
+          }
+        }
+        if (
+          instance === undefined ||
+          (root.instanceIds.has(id) &&
+            data.instances.get(id)?.component === instance.component) ||
+          instance.component === elementComponent ||
+          contentBlockMdxTemplateDescriptors.some(
+            (descriptor) =>
+              descriptor.kind === "component" &&
+              descriptor.component === instance.component
+          ) ||
+          templateInstanceIds.has(id)
+        ) {
+          continue;
+        }
+        const error = new BuilderRuntimeError(
+          "BAD_REQUEST",
+          "This component is not in this Content Block’s Templates and cannot be added to MDX content. Add it to Templates first, or keep it outside MDX content."
+        );
+        toast.error(error.message);
+        throw error;
+      }
+    }
+  }
+  const afterOwnership = getExternalContentOwnershipFromState({
+    state: afterData,
+    roots,
+    rootKeys: affectedRootKeys,
   });
+  const plan = createExternalContentPersistencePlan({
+    beforeData: data,
+    afterData,
+    beforeOwnership,
+    afterOwnership,
+    externalBlockInstanceIds: new Set(
+      Array.from(
+        roots.values(),
+        ({ blockInstanceId, contentInstanceId }) =>
+          contentInstanceId ?? blockInstanceId
+      )
+    ),
+    payload,
+  });
+  if (plan.preliminaryExternalPayload.length > 0) {
+    externalContentSyncStore.createTransactionFromChanges(
+      createSyncChangesFromBuilderPatchPayload({
+        data,
+        payload: plan.preliminaryExternalPayload,
+      })
+    );
+  }
+  if (plan.projectPayload.length > 0) {
+    createTransactionFromBuilderPatchPayload({
+      data: getWebstudioData(),
+      payload: plan.projectPayload,
+    });
+  }
+  if (plan.externalPayload.length > 0) {
+    externalContentSyncStore.createTransactionFromChanges(
+      createSyncChangesFromBuilderPatchPayload({
+        data: getWebstudioData(),
+        payload: plan.externalPayload,
+      })
+    );
+  }
+  publishExternalContentMutation(Array.from(affectedRootKeys));
   return result;
 };
 
@@ -119,37 +340,113 @@ export const executeRuntimeMutation = <
   if (canCommitWebstudioData() === false) {
     return;
   }
-  return commitRuntimeMutation(
-    requireSynchronousResult(
-      id,
-      executeBuilderRuntimeOperation<RuntimeMutationResult<Id>>(
-        createRuntimeMutationArgs({ id, input, context })
+  try {
+    return commitRuntimeMutation(
+      requireSynchronousResult(
+        id,
+        executeBuilderRuntimeOperation<RuntimeMutationResult<Id>>(
+          createRuntimeMutationArgs({ id, input, context })
+        )
       )
-    )
-  );
+    );
+  } catch (error) {
+    const confirmation = getTemplateNameConfirmation(error);
+    if (confirmation === undefined) {
+      throw error;
+    }
+    $pendingTemplateNameConfirmation.set({
+      operation: { id, input } as RuntimeMutationOperation,
+      confirmation,
+    });
+    return;
+  }
 };
 
-export const executeRuntimeMutationSequence = (
-  operations: readonly RuntimeMutationOperation[]
-): void => {
+export const abortPendingTemplateNameConfirmation = () => {
+  $pendingTemplateNameConfirmation.set(undefined);
+};
+
+export const confirmPendingTemplateNameChange = () => {
+  const pending = $pendingTemplateNameConfirmation.get();
+  if (pending === undefined) {
+    return;
+  }
+  $pendingTemplateNameConfirmation.set(undefined);
+  try {
+    if ("operations" in pending) {
+      executeRuntimeMutationSequence(
+        pending.operations.map((operation, index) =>
+          index === pending.operationIndex
+            ? addTemplateNameConfirmation(operation, pending.confirmation)
+            : operation
+        )
+      );
+      return;
+    }
+    const operation = addTemplateNameConfirmation(
+      pending.operation,
+      pending.confirmation
+    );
+    if (pending.asynchronous) {
+      void executeRuntimeMutationAsync(operation).catch((error) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "The template change could not be applied."
+        );
+      });
+    } else {
+      executeRuntimeMutation(operation);
+    }
+  } catch (error) {
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "The template change could not be applied."
+    );
+  }
+};
+
+export const executeRuntimeMutationSequence = <
+  const Operations extends readonly RuntimeMutationOperation[],
+>(
+  operations: Operations
+): RuntimeMutationSequenceResults<Operations> | undefined => {
   if (canCommitWebstudioData() === false) {
     return;
   }
   const accumulator = createRuntimeMutationAccumulator(getWebstudioData());
-  const results = operations.map(({ id, input }) => {
-    return accumulator.stage(
-      requireSynchronousResult(
-        id,
-        executeBuilderRuntimeOperation<BuilderRuntimeMutation>({
-          id,
-          state: accumulator.state,
-          input,
-          context: getRuntimeMutationContext(),
-        })
-      )
-    );
-  });
+  const results: Record<string, unknown>[] = [];
+  for (const [operationIndex, { id, input, context }] of operations.entries()) {
+    try {
+      results.push(
+        accumulator.stage(
+          requireSynchronousResult(
+            id,
+            executeBuilderRuntimeOperation<BuilderRuntimeMutation>({
+              id,
+              state: accumulator.state,
+              input,
+              context: { ...getRuntimeMutationContext(), ...context },
+            })
+          )
+        )
+      );
+    } catch (error) {
+      const confirmation = getTemplateNameConfirmation(error);
+      if (confirmation === undefined) {
+        throw error;
+      }
+      $pendingTemplateNameConfirmation.set({
+        operations,
+        operationIndex,
+        confirmation,
+      });
+      return;
+    }
+  }
   commitRuntimeMutation(accumulator.complete({ results }));
+  return results as RuntimeMutationSequenceResults<Operations>;
 };
 
 export const executeRuntimeMutationAsync = async <
@@ -166,10 +463,23 @@ export const executeRuntimeMutationAsync = async <
   if (canCommitWebstudioData() === false) {
     return;
   }
-  const result = await executeBuilderRuntimeOperation<
-    RuntimeMutationResult<Id>
-  >(createRuntimeMutationArgs({ id, input, context }));
-  return commitRuntimeMutation(result);
+  try {
+    const result = await executeBuilderRuntimeOperation<
+      RuntimeMutationResult<Id>
+    >(createRuntimeMutationArgs({ id, input, context }));
+    return commitRuntimeMutation(result);
+  } catch (error) {
+    const confirmation = getTemplateNameConfirmation(error);
+    if (confirmation === undefined) {
+      throw error;
+    }
+    $pendingTemplateNameConfirmation.set({
+      operation: { id, input } as RuntimeMutationOperation,
+      confirmation,
+      asynchronous: true,
+    });
+    return;
+  }
 };
 
 export const getWebstudioData = () => {

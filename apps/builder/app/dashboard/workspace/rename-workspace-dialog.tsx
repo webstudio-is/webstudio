@@ -83,6 +83,7 @@ export const RenameWorkspaceDialog = ({
           </Flex>
           <DialogActions>
             <Button
+              color="primary"
               type="submit"
               state={state === "idle" ? undefined : "pending"}
             >

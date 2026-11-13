@@ -1,12 +1,29 @@
+/** @jsxImportSource @webstudio-is/template */
 import type { ReactNode } from "react";
 import { ChevronDownIcon } from "@webstudio-is/icons/svg";
 import {
-  $,
   css,
   PlaceholderValue,
+  setInstanceMeta,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import {
+  Box,
+  Button,
+  HtmlEmbed,
+  Link,
+  Paragraph,
+  Text,
+} from "@webstudio-is/sdk-components-react/components";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  NavigationMenuViewport,
+} from "./components";
 import { getButtonStyle, iconEmbedStyle } from "./shared/styles";
 import {
   borderRadius,
@@ -76,8 +93,8 @@ const components = [
 ];
 
 const createMenuContentItem = (props: (typeof components)[number]) => (
-  <radix.NavigationMenuLink key={props.title}>
-    <$.Link
+  <NavigationMenuLink key={props.title}>
+    <Link
       href={`https://ui.shadcn.com${props.href}`}
       // block select-none space-y-1 rounded-md p-3 leading-none
       // no-underline outline-none transition-colors
@@ -101,7 +118,7 @@ const createMenuContentItem = (props: (typeof components)[number]) => (
         }
       `}
     >
-      <$.Text
+      <Text
         // text-sm font-medium leading-none
         ws:style={css`
           font-size: ${fontSize.sm};
@@ -110,8 +127,8 @@ const createMenuContentItem = (props: (typeof components)[number]) => (
         `}
       >
         {new PlaceholderValue(props.title)}
-      </$.Text>
-      <$.Paragraph
+      </Text>
+      <Paragraph
         // line-clamp-2 text-sm leading-snug text-muted-foreground
         ws:style={css`
           margin: 0;
@@ -125,37 +142,38 @@ const createMenuContentItem = (props: (typeof components)[number]) => (
         `}
       >
         {new PlaceholderValue(props.description)}
-      </$.Paragraph>
-    </$.Link>
-  </radix.NavigationMenuLink>
+      </Paragraph>
+    </Link>
+  </NavigationMenuLink>
 );
 
-const createMenuContentList = (props: { count: number; offset: number }) => (
-  <$.Box
-    ws:label="Flex Column"
-    ws:style={css`
-      width: ${width[64]};
-      display: flex;
-      gap: ${spacing[4]};
-      flex-direction: column;
-    `}
-  >
-    {components
-      .slice(props.offset, props.offset + props.count)
-      .map(createMenuContentItem)}
-  </$.Box>
-);
+const createMenuContentList = (props: { count: number; offset: number }) =>
+  setInstanceMeta(
+    { label: "Flex Column" },
+    <Box
+      ws:style={css`
+        width: ${width[64]};
+        display: flex;
+        gap: ${spacing[4]};
+        flex-direction: column;
+      `}
+    >
+      {components
+        .slice(props.offset, props.offset + props.count)
+        .map(createMenuContentItem)}
+    </Box>
+  );
 
-const aboutMenuContent = (
-  <$.Box
-    ws:label="Content"
+const aboutMenuContent = setInstanceMeta(
+  { label: "Content" },
+  <Box
     ws:style={css`
       display: flex;
       gap: ${spacing[4]};
       padding: ${spacing[2]};
     `}
   >
-    <$.Box
+    <Box
       ws:style={css`
         background-color: ${colors.border};
         padding: ${spacing[4]};
@@ -164,14 +182,14 @@ const aboutMenuContent = (
       `}
     >
       {new PlaceholderValue("")}
-    </$.Box>
+    </Box>
     {createMenuContentList({ count: 3, offset: 0 })}
-  </$.Box>
+  </Box>
 );
 
-const componentsMenuContent = (
-  <$.Box
-    ws:label="Content"
+const componentsMenuContent = setInstanceMeta(
+  { label: "Content" },
+  <Box
     ws:style={css`
       display: flex;
       gap: ${spacing[4]};
@@ -179,14 +197,14 @@ const componentsMenuContent = (
   >
     {createMenuContentList({ count: 3, offset: 3 })}
     {createMenuContentList({ count: 3, offset: 6 })}
-  </$.Box>
+  </Box>
 );
 
 const createMenuItem = (title: string, content: ReactNode) => {
   return (
-    <radix.NavigationMenuItem>
-      <radix.NavigationMenuTrigger>
-        <$.Button
+    <NavigationMenuItem>
+      <NavigationMenuTrigger>
+        <Button
           ws:style={[
             ...getButtonStyle("ghost", "sm"),
             ...css`
@@ -197,29 +215,30 @@ const createMenuItem = (title: string, content: ReactNode) => {
             `,
           ]}
         >
-          <$.Text>{new PlaceholderValue(title)}</$.Text>
-          <$.Box
-            ws:label="Icon Container"
-            // h-4 w-4 shrink-0 transition-transform duration-200
-            ws:style={css`
-              margin-left: ${spacing[1]};
-              rotate: var(--navigation-menu-trigger-icon-transform);
-              height: ${height[4]};
-              width: ${width[4]};
-              flex-shrink: 0;
-              transition: ${transition.all};
-              transition-duration: 200ms;
-            `}
-          >
-            <$.HtmlEmbed
-              ws:label="Chevron Icon"
-              ws:style={iconEmbedStyle}
-              code={ChevronDownIcon}
-            />
-          </$.Box>
-        </$.Button>
-      </radix.NavigationMenuTrigger>
-      <radix.NavigationMenuContent
+          <Text>{new PlaceholderValue(title)}</Text>
+          {setInstanceMeta(
+            { label: "Icon Container" },
+            <Box
+              // h-4 w-4 shrink-0 transition-transform duration-200
+              ws:style={css`
+                margin-left: ${spacing[1]};
+                rotate: var(--navigation-menu-trigger-icon-transform);
+                height: ${height[4]};
+                width: ${width[4]};
+                flex-shrink: 0;
+                transition: ${transition.all};
+                transition-duration: 200ms;
+              `}
+            >
+              {setInstanceMeta(
+                { label: "Chevron Icon" },
+                <HtmlEmbed ws:style={iconEmbedStyle} code={ChevronDownIcon} />
+              )}
+            </Box>
+          )}
+        </Button>
+      </NavigationMenuTrigger>
+      <NavigationMenuContent
         // left-0 top-0 absolute w-max
         ws:style={css`
           left: 0;
@@ -230,16 +249,16 @@ const createMenuItem = (title: string, content: ReactNode) => {
         `}
       >
         {content}
-      </radix.NavigationMenuContent>
-    </radix.NavigationMenuItem>
+      </NavigationMenuContent>
+    </NavigationMenuItem>
   );
 };
 
 const createMenuLink = (title: string) => {
   return (
-    <radix.NavigationMenuItem>
-      <radix.NavigationMenuLink>
-        <$.Link
+    <NavigationMenuItem>
+      <NavigationMenuLink>
+        <Link
           ws:style={[
             ...getButtonStyle("ghost", "sm"),
             ...css`
@@ -249,9 +268,9 @@ const createMenuLink = (title: string) => {
           ]}
         >
           {new PlaceholderValue(title)}
-        </$.Link>
-      </radix.NavigationMenuLink>
-    </radix.NavigationMenuItem>
+        </Link>
+      </NavigationMenuLink>
+    </NavigationMenuItem>
   );
 };
 
@@ -260,7 +279,7 @@ export const meta: TemplateMeta = {
   description: "A collection of links for navigating websites.",
   order: 2,
   template: (
-    <radix.NavigationMenu
+    <NavigationMenu
       // relative
       // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
       ws:style={css`
@@ -268,7 +287,7 @@ export const meta: TemplateMeta = {
         max-width: max-content;
       `}
     >
-      <radix.NavigationMenuList
+      <NavigationMenuList
         ws:style={css`
           /* ul defaults in tailwind */
           padding: 0;
@@ -285,20 +304,21 @@ export const meta: TemplateMeta = {
         {createMenuItem("About", aboutMenuContent)}
         {createMenuItem("Components", componentsMenuContent)}
         {createMenuLink("Standalone")}
-      </radix.NavigationMenuList>
-      <$.Box
-        ws:label="Viewport Container"
-        // absolute left-0 top-full flex justify-center
-        ws:style={css`
-          position: absolute;
-          left: 0;
-          top: 100%;
-          display: flex;
-          justify-content: center;
-        `}
-      >
-        <radix.NavigationMenuViewport
-          /*
+      </NavigationMenuList>
+      {setInstanceMeta(
+        { label: "Viewport Container" },
+        <Box
+          // absolute left-0 top-full flex justify-center
+          ws:style={css`
+            position: absolute;
+            left: 0;
+            top: 100%;
+            display: flex;
+            justify-content: center;
+          `}
+        >
+          <NavigationMenuViewport
+            /*
             origin-top-center relative mt-1.5 w-full
             overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg
             h-[var(--radix-navigation-menu-viewport-height)]
@@ -308,20 +328,21 @@ export const meta: TemplateMeta = {
             data-[state=open]:animate-in data-[state=closed]:animate-out
             data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90
           */
-          ws:style={css`
-            position: relative;
-            margin-top: ${spacing[1.5]};
-            overflow: hidden;
-            border-radius: ${borderRadius.md};
-            border: ${borderWidth.DEFAULT} solid ${colors.border};
-            background-color: ${colors.popover};
-            color: ${colors.popoverForeground};
-            box-shadow: ${boxShadow.lg};
-            height: var(--radix-navigation-menu-viewport-height);
-            width: var(--radix-navigation-menu-viewport-width);
-          `}
-        />
-      </$.Box>
-    </radix.NavigationMenu>
+            ws:style={css`
+              position: relative;
+              margin-top: ${spacing[1.5]};
+              overflow: hidden;
+              border-radius: ${borderRadius.md};
+              border: ${borderWidth.DEFAULT} solid ${colors.border};
+              background-color: ${colors.popover};
+              color: ${colors.popoverForeground};
+              box-shadow: ${boxShadow.lg};
+              height: var(--radix-navigation-menu-viewport-height);
+              width: var(--radix-navigation-menu-viewport-width);
+            `}
+          />
+        </Box>
+      )}
+    </NavigationMenu>
   ),
 };

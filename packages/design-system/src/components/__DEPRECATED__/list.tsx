@@ -8,6 +8,7 @@ import {
 import { Text } from "../text";
 import { Flex } from "../flex";
 import { styled, theme } from "../../stitches.config";
+import { cssVar } from "../../css-var";
 import { findNextListItemIndex } from "../primitives/list";
 
 const ListBase = styled("ul", {
@@ -34,7 +35,7 @@ const ListItemBase = styled("li", {
     pointerEvents: "none",
     inset: `0 ${theme.spacing[3]}`,
     borderRadius: theme.borderRadius[4],
-    border: `1px solid ${theme.colors.borderFocus}`,
+    border: `1px solid ${cssVar("--border-focus")}`,
   },
 });
 

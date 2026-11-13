@@ -6,7 +6,10 @@ description: Use the Navigator to view, select, and organize instances on your p
 
 The Navigator is a hierarchical panel on the left side of the builder that shows every instance on the current page as a tree. It reflects the exact nesting structure of your page and is the primary way to select, reorder, and organize instances — especially when they are stacked or overlapping on the canvas.
 
-<figure><img src="../../.gitbook/assets/navigator.png" alt="Navigator panel showing a tree of instances"><figcaption><p>The Navigator showing the page structure</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/navigator-panel-dark.png">
+  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator panel with Global root, Body, and expanded Form (Beta) showing Form content, Success message, and Error message" width="241">
+</picture>
 
 ## Selecting instances
 
@@ -34,11 +37,21 @@ keeps the remaining selection intact.
 
 ### Link to a selected instance
 
-The Builder URL tracks the selected page and instance. Copy the browser URL to
-share a link that opens the same page and selects the same instance. Webstudio
-also uses these links for actions such as **Show element** in pre-publish
+Right-click an instance and choose **Copy link to instance** to copy its full
+Builder URL to the clipboard. Share the link to open the same page and select
+the same instance, including its location inside a shared Slot. Select one
+instance at a time; this action is unavailable for Global Root.
+
+The recipient needs access to the project. If you opened the Builder through a
+share link, the copied URL keeps that share link’s access token.
+
+You can also copy the browser URL, which tracks the selected page and instance.
+Webstudio also uses these links for actions such as **Show element** in pre-publish
 findings. If the instance was removed before the link is opened, the Builder
 still opens the requested page.
+
+You can give this link to an AI assistant connected to the project through
+[MCP](../mcp.md) to identify the instance you want to change.
 
 ## Renaming instances
 
@@ -61,10 +74,6 @@ Right-click any item in the Navigator to toggle its visibility on the canvas. Hi
 ## Global Root
 
 At the top of the Navigator is the **Global Root** — the highest level in the instance tree. Styles set here apply to every page in the project. See [Anatomy of the builder](anatomy-of-the-webstudio-builder.md#global-root) for a full explanation.
-
-## CSS preview
-
-Below the instance tree, the Navigator shows a **CSS Preview** — a read-only view of the computed CSS styles applied to the currently selected instance. It is useful for quickly checking what styles are active without opening the Style Panel.
 
 ## Related
 

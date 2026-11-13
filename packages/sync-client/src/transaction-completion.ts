@@ -24,38 +24,73 @@ export const createTransactionCompletionStore = ({
     callbacks.set(transactionId, transactionCallbacks);
 
     scheduleTimeout(() => {
-      callbacks.delete(transactionId);
+      const currentCallbacks = callbacks.get(transactionId);
+      if (currentCallbacks === undefined) {
+        return;
+      }
+      const callbackIndex = currentCallbacks.indexOf(callback);
+      if (callbackIndex === -1) {
+        return;
+      }
+      const remainingCallbacks = [...currentCallbacks];
+      remainingCallbacks.splice(callbackIndex, 1);
+      if (remainingCallbacks.length === 0) {
+        callbacks.delete(transactionId);
+      } else {
+        callbacks.set(transactionId, remainingCallbacks);
+      }
     });
   };
 
   const onNextTransactionComplete = (callback: () => void) => {
-    let unsubscribe: (() => void) | undefined;
-    unsubscribe = $lastTransactionId.subscribe((transactionId) => {
-      if (transactionId === undefined) {
+    let settled = false;
+    let unsubscribe = () => {};
+    const settle = (success: boolean) => {
+      if (settled) {
         return;
       }
-      onTransactionComplete(transactionId, (success) => {
-        if (success) {
-          callback();
+      settled = true;
+      unsubscribe();
+      if (success) {
+        callback();
+      }
+    };
+    const register = (transactionId: string) => {
+      onTransactionComplete(transactionId, settle);
+    };
+    const currentTransactionId = $lastTransactionId.get();
+    if (currentTransactionId !== undefined) {
+      register(currentTransactionId);
+    } else {
+      unsubscribe = $lastTransactionId.listen((transactionId) => {
+        if (transactionId === undefined) {
+          return;
         }
+        register(transactionId);
+        unsubscribe();
       });
-      unsubscribe?.();
-    });
+    }
 
     scheduleTimeout(() => {
-      unsubscribe?.();
+      settle(false);
     });
+    return () => {
+      settled = true;
+      unsubscribe();
+    };
   };
 
   const completeTransaction = (transactionId: string, success: boolean) => {
     const transactionCallbacks = callbacks.get(transactionId);
-    if (transactionCallbacks === undefined) {
-      return;
-    }
-    for (const callback of transactionCallbacks) {
-      callback(success);
-    }
     callbacks.delete(transactionId);
+    if ($lastTransactionId.get() === transactionId) {
+      $lastTransactionId.set(undefined);
+    }
+    if (transactionCallbacks !== undefined) {
+      for (const callback of transactionCallbacks) {
+        callback(success);
+      }
+    }
   };
 
   const clear = () => {

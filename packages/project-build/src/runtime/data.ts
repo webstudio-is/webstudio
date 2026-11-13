@@ -9,8 +9,11 @@ import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
   getAllPages,
+  getParentInstanceById,
   getStyleDeclKey,
   isAssetsResource,
+  isFormSubmission,
+  isEmailBindingDataSourceAvailable,
   ROOT_INSTANCE_ID,
   resource,
   SYSTEM_VARIABLE_ID,
@@ -34,10 +37,17 @@ import {
   transpileExpression,
 } from "@webstudio-is/expression";
 import { z } from "zod";
+import {
+  validateContactEmail,
+  validateEmailSender,
+} from "../contracts/project-settings";
 import { produceWithPatches } from "immer";
 import {
+  browserInfoParameterName,
   createJsonStringifyProxy,
+  formDataParameterName,
   isPlainObject,
+  isStringifyProxy,
 } from "@webstudio-is/sdk/runtime";
 import type { CompactBuild } from "../types";
 import {
@@ -219,9 +229,18 @@ export const listDataVariables = (
 
 export const dataVariableValueInput = dataSourceVariableValue;
 
+const resourceScopeInstanceIdDescription = `Instance ID or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`;
+export const resourceScopeInstanceIdInput = z
+  .string()
+  .describe(resourceScopeInstanceIdDescription);
+export const optionalResourceScopeInstanceIdInput = z
+  .string()
+  .optional()
+  .describe(resourceScopeInstanceIdDescription);
+
 export const dataVariableCreateInput = z.object({
   dataSourceId: runtimeGeneratedIdInput,
-  scopeInstanceId: z.string(),
+  scopeInstanceId: resourceScopeInstanceIdInput,
   name: z.string().min(1),
   value: dataVariableValueInput,
 });
@@ -229,7 +248,7 @@ export const dataVariableCreateInput = z.object({
 export const dataVariableUpdateInput = z.object({
   dataSourceId: z.string(),
   values: z.object({
-    scopeInstanceId: z.string().optional(),
+    scopeInstanceId: optionalResourceScopeInstanceIdInput,
     name: z.string().min(1).optional(),
     value: dataVariableValueInput.optional(),
   }),
@@ -270,7 +289,9 @@ export const validateDataVariableNameWithSources = ({
 
   for (const dataSource of dataSources) {
     if (
-      dataSource.type === "variable" &&
+      (dataSource.type === "variable" ||
+        dataSource.type === "resource" ||
+        dataSource.type === "parameter") &&
       dataSource.scopeInstanceId === scopeInstanceId &&
       dataSource.name === name &&
       dataSource.id !== variableId
@@ -460,7 +481,6 @@ export const replaceDataSourcesInExpression = (
   try {
     return transpileExpression({
       expression,
-      executable: true,
       replaceVariable: (identifier) => {
         const dataSourceId = decodeDataSourceVariable(identifier);
         if (dataSourceId === undefined) {
@@ -478,9 +498,11 @@ export const replaceDataSourcesInExpression = (
   }
 };
 
-export const computeExpression = (
+/** Evaluate already-resolved values with the same compiler used by Builder bindings. */
+export const evaluateExpressionSync = (
   expression: string,
-  variables: Map<DataSource["name"], unknown>
+  variables: ReadonlyMap<DataSource["name"], unknown>,
+  { throwOnError = false }: { throwOnError?: boolean } = {}
 ) => {
   try {
     const proxiedVariables = new Map<DataSource["name"], unknown>();
@@ -489,52 +511,103 @@ export const computeExpression = (
         return proxiedVariables.get(key);
       }
       const value = variables.get(key);
-      const proxiedValue = isPlainObject(value)
-        ? createJsonStringifyProxy(
-            Object.isFrozen(value) ? structuredClone(value) : value
-          )
-        : value;
+      const proxiedValue =
+        isPlainObject(value) && !isStringifyProxy(value)
+          ? createJsonStringifyProxy(
+              Object.isFrozen(value) ? structuredClone(value) : value
+            )
+          : value;
       proxiedVariables.set(key, proxiedValue);
       return proxiedValue;
     };
 
     const result = getCompiledExpression(expression)({ get: getVariable });
     return result;
-  } catch {
+  } catch (error) {
+    if (throwOnError) {
+      throw error;
+    }
     return undefined;
   }
 };
 
-export const computeExpressionWithinScope = (
+export type ResolveExpressionDataSource = (
+  dataSourceId: DataSource["id"],
+  value: unknown
+) => unknown | PromiseLike<unknown>;
+
+const resolveExpressionVariables = async ({
+  expression,
+  variables,
+  resolveDataSource,
+}: {
+  expression: string;
+  variables: ReadonlyMap<DataSource["id"], unknown>;
+  resolveDataSource: ResolveExpressionDataSource;
+}) => {
+  const dataSourceIds = new Set<DataSource["id"]>();
+  for (const identifier of getExpressionIdentifiers(expression)) {
+    const dataSourceId = decodeDataVariableId(identifier);
+    if (dataSourceId !== undefined) {
+      dataSourceIds.add(dataSourceId);
+    }
+  }
+  const resolved = new Map(variables);
+  await Promise.all(
+    [...dataSourceIds].map(async (dataSourceId) => {
+      resolved.set(
+        dataSourceId,
+        await resolveDataSource(dataSourceId, variables.get(dataSourceId))
+      );
+    })
+  );
+  return resolved;
+};
+
+export const computeExpression = async (
   expression: string,
-  scope: Record<string, unknown>
+  variables: ReadonlyMap<DataSource["id"], unknown>,
+  resolveDataSource: ResolveExpressionDataSource = (_dataSourceId, value) =>
+    value
+) =>
+  evaluateExpressionSync(
+    expression,
+    await resolveExpressionVariables({
+      expression,
+      variables,
+      resolveDataSource,
+    })
+  );
+
+export const computeStringExpression = async (
+  expression: string,
+  variables: ReadonlyMap<DataSource["id"], unknown>,
+  resolveDataSource?: ResolveExpressionDataSource
+) => {
+  const value = await computeExpression(
+    expression,
+    variables,
+    resolveDataSource
+  );
+  return typeof value === "string" && value !== "" ? value : undefined;
+};
+
+export const computeExpressionWithinScope = async (
+  expression: string,
+  scope: Record<string, unknown>,
+  resolveDataSource?: ResolveExpressionDataSource
 ) => {
   if (expression.trim() === "") {
     return;
   }
-  const variables = new Map<DataSource["name"], unknown>();
+  const variables = new Map<DataSource["id"], unknown>();
   for (const [name, value] of Object.entries(scope)) {
-    const decodedName = decodeDataSourceVariable(name);
-    if (decodedName !== undefined) {
-      variables.set(decodedName, value);
+    const dataSourceId = decodeDataVariableId(name);
+    if (dataSourceId !== undefined) {
+      variables.set(dataSourceId, value);
     }
   }
-  return computeExpression(expression, variables);
-};
-
-const getParentInstanceById = (instances: Instances) => {
-  const parentInstanceById = new Map<Instance["id"], Instance["id"]>();
-  for (const instance of instances.values()) {
-    if (instance.component === "Slot") {
-      continue;
-    }
-    for (const child of instance.children ?? []) {
-      if (child.type === "id") {
-        parentInstanceById.set(child.value, instance.id);
-      }
-    }
-  }
-  return parentInstanceById;
+  return computeExpression(expression, variables, resolveDataSource);
 };
 
 const getDataSourcesByScopeInstanceId = (dataSources: DataSources) => {
@@ -552,7 +625,7 @@ const getDataSourcesByScopeInstanceId = (dataSources: DataSources) => {
   return dataSourcesByScopeInstanceId;
 };
 
-const findMaskedVariablesByInstanceId = ({
+const findVariablesByInstanceId = ({
   startingInstanceId,
   parentInstanceById,
   instances,
@@ -572,8 +645,11 @@ const findMaskedVariablesByInstanceId = ({
     currentId = parentInstanceById.get(currentId);
   }
   instanceIdsPath.push(ROOT_INSTANCE_ID);
-  const maskedVariables = new Map<DataSource["name"], DataSource["id"]>();
-  maskedVariables.set("system", SYSTEM_VARIABLE_ID);
+  const maskedIdByName = new Map<DataSource["name"], DataSource["id"]>();
+  const availableDataSourceIds = new Set<DataSource["id"]>([
+    SYSTEM_VARIABLE_ID,
+  ]);
+  maskedIdByName.set("system", SYSTEM_VARIABLE_ID);
   for (const instanceId of instanceIdsPath.reverse()) {
     const instance = instances.get(instanceId);
     const scopedDataSources = dataSourcesByScopeInstanceId.get(instanceId);
@@ -588,10 +664,46 @@ const findMaskedVariablesByInstanceId = ({
       ) {
         continue;
       }
-      maskedVariables.set(dataSource.name, dataSource.id);
+      maskedIdByName.set(dataSource.name, dataSource.id);
+      availableDataSourceIds.add(dataSource.id);
     }
   }
-  return maskedVariables;
+  return { maskedIdByName, availableDataSourceIds };
+};
+
+export const createFindAvailableVariables = ({
+  instances,
+  dataSources,
+}: {
+  instances: Instances;
+  dataSources: DataSources;
+}) => {
+  // These indexes depend only on the project data, not on the starting
+  // instance. Reuse them when resolving variables for many template roots.
+  const parentInstanceById = getParentInstanceById(instances);
+  const dataSourcesByScopeInstanceId =
+    getDataSourcesByScopeInstanceId(dataSources);
+
+  return (startingInstanceId: Instance["id"]) => {
+    const { maskedIdByName } = findVariablesByInstanceId({
+      startingInstanceId,
+      parentInstanceById,
+      instances,
+      dataSources,
+      dataSourcesByScopeInstanceId,
+    });
+    const availableVariables: DataSource[] = [];
+    for (const dataSourceId of maskedIdByName.values()) {
+      const dataSource = dataSources.get(dataSourceId);
+      if (dataSource) {
+        availableVariables.push(dataSource);
+      }
+      if (dataSourceId === SYSTEM_VARIABLE_ID) {
+        availableVariables.push(systemParameter);
+      }
+    }
+    return availableVariables;
+  };
 };
 
 export const findAvailableVariables = ({
@@ -603,24 +715,9 @@ export const findAvailableVariables = ({
   instances: Instances;
   dataSources: DataSources;
 }) => {
-  const maskedVariables = findMaskedVariablesByInstanceId({
-    startingInstanceId,
-    parentInstanceById: getParentInstanceById(instances),
-    instances,
-    dataSources,
-    dataSourcesByScopeInstanceId: getDataSourcesByScopeInstanceId(dataSources),
-  });
-  const availableVariables: DataSource[] = [];
-  for (const dataSourceId of maskedVariables.values()) {
-    const dataSource = dataSources.get(dataSourceId);
-    if (dataSource) {
-      availableVariables.push(dataSource);
-    }
-    if (dataSourceId === SYSTEM_VARIABLE_ID) {
-      availableVariables.push(systemParameter);
-    }
-  }
-  return availableVariables;
+  return createFindAvailableVariables({ instances, dataSources })(
+    startingInstanceId
+  );
 };
 
 export const bindExpressionToInstanceScope = ({
@@ -628,23 +725,27 @@ export const bindExpressionToInstanceScope = ({
   instanceId,
   instances,
   dataSources,
+  excludeVariableNames = [],
 }: {
   expression: string;
   instanceId: Instance["id"];
   instances: Instances;
   dataSources: DataSources;
+  excludeVariableNames?: Iterable<string>;
 }) => {
-  const maskedIdByName = findMaskedVariablesByInstanceId({
+  const { maskedIdByName, availableDataSourceIds } = findVariablesByInstanceId({
     startingInstanceId: instanceId,
     parentInstanceById: getParentInstanceById(instances),
     instances,
     dataSources,
   });
+  for (const name of excludeVariableNames) {
+    maskedIdByName.delete(name);
+  }
   const boundExpression = restoreExpressionVariables({
     expression,
     maskedIdByName,
   });
-  const availableDataSourceIds = new Set(maskedIdByName.values());
   for (const identifier of getExpressionIdentifiers(boundExpression)) {
     const dataSourceId = decodeDataVariableId(identifier);
     if (
@@ -658,6 +759,39 @@ export const bindExpressionToInstanceScope = ({
     }
   }
   return boundExpression;
+};
+
+/** Apply expression rebinding consistently to every Resource expression field. */
+export const mapResourceExpressionsMutable = (
+  resource: Resource,
+  map: (expression: string) => void | string
+) => {
+  const update = (expression: string, set: (value: string) => void) => {
+    const next = map(expression);
+    if (next !== undefined) {
+      set(next);
+    }
+  };
+  update(resource.url, (value) => (resource.url = value));
+  for (const entry of [...resource.headers, ...(resource.searchParams ?? [])]) {
+    update(entry.value, (value) => (entry.value = value));
+  }
+  if (resource.body !== undefined) {
+    update(resource.body, (value) => (resource.body = value));
+  }
+  if (resource.email) {
+    for (const key of [
+      "senderExpression",
+      "recipientsExpression",
+      "subject",
+      "body",
+    ] as const) {
+      const expression = resource.email[key];
+      if (expression !== undefined) {
+        update(expression, (value) => (resource.email![key] = value));
+      }
+    }
+  }
 };
 
 const traverseExpressions = ({
@@ -835,34 +969,9 @@ const traverseExpressions = ({
     if (instanceId === undefined) {
       continue;
     }
-    updateExpression({
-      expression: resource.url,
-      instanceId,
-      set: (expression) => (resource.url = expression),
-    });
-    for (const header of resource.headers) {
-      updateExpression({
-        expression: header.value,
-        instanceId,
-        set: (expression) => (header.value = expression),
-      });
-    }
-    if (resource.searchParams) {
-      for (const searchParam of resource.searchParams) {
-        updateExpression({
-          expression: searchParam.value,
-          instanceId,
-          set: (expression) => (searchParam.value = expression),
-        });
-      }
-    }
-    if (resource.body) {
-      updateExpression({
-        expression: resource.body,
-        instanceId,
-        set: (expression) => (resource.body = expression),
-      });
-    }
+    mapResourceExpressionsMutable(resource, (expression) =>
+      update(expression, instanceId)
+    );
   }
 };
 
@@ -1007,7 +1116,7 @@ export const rebindTreeVariablesMutable = ({
     dataSources,
     resources,
     update: (expression, instanceId, args) => {
-      const maskedVariables = findMaskedVariablesByInstanceId({
+      const { maskedIdByName: maskedVariables } = findVariablesByInstanceId({
         startingInstanceId: instanceId,
         parentInstanceById,
         instances,
@@ -1033,6 +1142,11 @@ export const rebindTreeVariablesMutable = ({
   });
 };
 
+const removeFormActionsForResources = <T extends { dataSourceId: string }>(
+  actions: T[],
+  removedIds: ReadonlySet<string>
+): T[] => actions.filter((action) => !removedIds.has(action.dataSourceId));
+
 export const deleteVariableMutable = (
   data: Pick<
     BuilderState,
@@ -1055,6 +1169,19 @@ export const deleteVariableMutable = (
     return;
   }
   data.dataSources.delete(variableId);
+  const removedIds = new Set([variableId]);
+  for (const prop of data.props.values()) {
+    if (
+      prop.type !== "json" ||
+      prop.name !== "action" ||
+      data.instances.get(prop.instanceId)?.component !== "ResourceForm" ||
+      !isFormSubmission(prop.value) ||
+      !prop.value.some((action) => action.dataSourceId === variableId)
+    ) {
+      continue;
+    }
+    prop.value = removeFormActionsForResources(prop.value, removedIds);
+  }
   if (dataSource.type === "resource") {
     data.resources.delete(dataSource.resourceId);
   }
@@ -1073,7 +1200,7 @@ export const deleteVariableMutable = (
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
   unsetNameById.set(dataSource.id, dataSource.name);
   const startingInstanceId = dataSource.scopeInstanceId ?? ROOT_INSTANCE_ID;
-  const maskedIdByName = findMaskedVariablesByInstanceId({
+  const { maskedIdByName } = findVariablesByInstanceId({
     startingInstanceId,
     parentInstanceById: getParentInstanceById(data.instances),
     instances: data.instances,
@@ -1460,6 +1587,49 @@ export const createDataVariable = (
   });
 };
 
+export const isManagedFormParameter = (
+  dataSource: DataSource | undefined,
+  instances: BuilderState["instances"]
+) =>
+  dataSource?.type === "parameter" &&
+  (dataSource.name === formDataParameterName ||
+    dataSource.name === browserInfoParameterName) &&
+  instances?.get(dataSource.scopeInstanceId ?? "")?.component ===
+    "ResourceForm";
+
+export const isRequiredManagedFormVariable = (
+  dataSource: DataSource | undefined,
+  state: Pick<BuilderState, "instances" | "props">
+) => {
+  const dataSourceId = dataSource?.id;
+  const scopeInstanceId = dataSource?.scopeInstanceId;
+  if (
+    dataSourceId === undefined ||
+    scopeInstanceId === undefined ||
+    state.instances?.get(scopeInstanceId)?.component !== "ResourceForm"
+  ) {
+    return false;
+  }
+  const requiredPropNames = new Set([
+    "state",
+    "onStateChange",
+    "onProgressChange",
+    "onResultChange",
+  ]);
+  const dataSourceReferences = /\$ws\$dataSource\$[\w$]+/g;
+  return [...(state.props?.values() ?? [])].some((prop) => {
+    if (
+      prop.instanceId !== scopeInstanceId ||
+      !requiredPropNames.has(prop.name)
+    ) {
+      return false;
+    }
+    return [...JSON.stringify(prop.value).matchAll(dataSourceReferences)].some(
+      ([reference]) => decodeDataSourceVariable(reference) === dataSourceId
+    );
+  });
+};
+
 export const updateDataVariable = (
   state: Pick<
     BuilderState,
@@ -1471,6 +1641,12 @@ export const updateDataVariable = (
   const dataSource = dataSources.get(input.dataSourceId);
   if (dataSource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Variable not found");
+  }
+  if (isManagedFormParameter(dataSource, state.instances)) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Form submission variables cannot be edited"
+    );
   }
   const scopeInstanceId =
     input.values.scopeInstanceId ?? dataSource.scopeInstanceId;
@@ -1540,6 +1716,16 @@ export const deleteDataVariable = (
   >,
   input: z.infer<typeof dataVariableDeleteInput>
 ) => {
+  const dataSource = state.dataSources?.get(input.dataSourceId);
+  if (
+    isManagedFormParameter(dataSource, state.instances) ||
+    isRequiredManagedFormVariable(dataSource, state)
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Form submission variables cannot be deleted"
+    );
+  }
   const { payload, deletedVariable } = createDataVariableDeletePayload({
     variableId: input.dataSourceId,
     pages: state.pages,
@@ -1645,20 +1831,75 @@ const resourceExpressionEntryInput = z.object({
   value: resourceExpressionInput,
 });
 
-const resourceFieldsInputBase = resource.omit({ id: true }).extend({
-  control: z.enum(["system", "graphql"]).optional(),
-  url: z.preprocess(
-    (value) =>
-      typeof value === "string" ? normalizeResourceUrlInput(value) : value,
-    z.string()
-  ),
-  searchParams: z.array(resourceExpressionEntryInput).optional(),
-  headers: z.array(resourceExpressionEntryInput),
-  body: resourceExpressionInput.optional(),
-});
+const resourceFieldsInputBase = resource
+  .omit({ id: true })
+  .extend({
+    control: z.enum(["system", "graphql", "email"]).optional(),
+    url: z.preprocess(
+      (value) =>
+        typeof value === "string" ? normalizeResourceUrlInput(value) : value,
+      z.string()
+    ),
+    searchParams: z.array(resourceExpressionEntryInput).optional(),
+    headers: z.array(resourceExpressionEntryInput),
+    body: resourceExpressionInput.optional(),
+  })
+  .strict();
+
+const addEmailResourceIssues = (
+  fields: { control?: Resource["control"]; email?: Resource["email"] },
+  context: z.RefinementCtx,
+  allowPartial = false
+) => {
+  if (fields.control !== "email") {
+    if (
+      fields.email !== undefined &&
+      (!allowPartial || fields.control !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["email"],
+        message: "Email settings require an Email Resource.",
+      });
+    }
+    if (fields.email === undefined) {
+      return;
+    }
+  }
+  const settings = fields.email;
+  if (
+    !allowPartial &&
+    settings?.recipientMode === "custom" &&
+    settings.recipientsExpression === undefined &&
+    (!settings.recipients || validateContactEmail(settings.recipients))
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["email", "recipients"],
+      message: "Enter a valid recipient list.",
+    });
+  }
+  if (
+    !allowPartial &&
+    settings?.sender !== undefined &&
+    settings.senderExpression === undefined &&
+    (settings.sender === "" || validateEmailSender(settings.sender))
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["email", "sender"],
+      message: "Reply to must contain exactly one valid email address.",
+    });
+  }
+};
+
+const emailSettingsInput = resourceFieldsInputBase
+  .pick({ control: true, email: true })
+  .superRefine(addEmailResourceIssues);
 
 export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
   (fields, context) => {
+    addEmailResourceIssues(fields, context);
     const normalizedFields = normalizeResourceFieldsInput(fields);
     addExpressionIssues(
       context,
@@ -1666,7 +1907,9 @@ export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
     );
     addExpressionIssues(
       context,
-      getResourceLiteralUrlValidationIssues(normalizedFields)
+      getResourceLiteralUrlValidationIssues(
+        fields.control === "email" ? {} : normalizedFields
+      )
     );
   }
 );
@@ -1674,6 +1917,7 @@ export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
 export const resourceFieldsUpdateInput = resourceFieldsInputBase
   .partial()
   .superRefine((fields, context) => {
+    addEmailResourceIssues(fields, context, true);
     const normalizedFields = normalizeResourceFieldsUpdateInput(fields);
     addExpressionIssues(
       context,
@@ -1681,7 +1925,9 @@ export const resourceFieldsUpdateInput = resourceFieldsInputBase
     );
     addExpressionIssues(
       context,
-      getResourceLiteralUrlValidationIssues(normalizedFields)
+      getResourceLiteralUrlValidationIssues(
+        fields.control === "email" ? {} : normalizedFields
+      )
     );
   });
 
@@ -1738,7 +1984,7 @@ export const resourceCreateInput = z
     resourceId: runtimeGeneratedIdInput,
     resource: resourceFieldsInput,
     dataSourceId: runtimeGeneratedIdInput,
-    scopeInstanceId: z.string().optional(),
+    scopeInstanceId: optionalResourceScopeInstanceIdInput,
     dataSourceName: z.string().optional(),
     exposeAsDataSource: exposeAsDataSourceInput,
   })
@@ -1761,7 +2007,7 @@ export const resourceUpdateInput = z.object({
   resourceId: z.string(),
   values: resourceFieldsUpdateInput,
   dataSourceName: z.string().optional(),
-  scopeInstanceId: z.string().optional(),
+  scopeInstanceId: optionalResourceScopeInstanceIdInput,
   exposeAsDataSource: exposeAsDataSourceInput,
 });
 
@@ -1845,6 +2091,12 @@ export const createResourceFieldsFromFormData = ({
       .map((name, index) => ({ name, value: headerValues[index] }))
       .filter((item) => String(item.name).trim()),
     body: formData.get("body") || undefined,
+    ...(formData.get("body-format")
+      ? { bodyFormat: formData.get("body-format") }
+      : {}),
+    ...(control === "email"
+      ? { email: JSON.parse(String(formData.get("email-settings") ?? "{}")) }
+      : {}),
   });
 };
 
@@ -1875,6 +2127,8 @@ export const createResourceValue = ({
   method,
   headers,
   body,
+  bodyFormat,
+  email,
 }: {
   id: Resource["id"];
   control?: unknown;
@@ -1884,6 +2138,8 @@ export const createResourceValue = ({
   method: unknown;
   headers: unknown;
   body?: unknown;
+  bodyFormat?: unknown;
+  email?: unknown;
 }): Resource =>
   resource.parse({
     id,
@@ -1894,6 +2150,8 @@ export const createResourceValue = ({
     method,
     headers,
     body: body || undefined,
+    ...(bodyFormat === undefined ? {} : { bodyFormat }),
+    ...(email === undefined ? {} : { email }),
   });
 
 export const createResourceFieldsFromResource = (
@@ -1906,13 +2164,17 @@ export const createResourceFieldsFromResource = (
   method: resource.method,
   headers: resource.headers,
   body: resource.body,
+  ...(resource.bodyFormat === undefined
+    ? {}
+    : { bodyFormat: resource.bodyFormat }),
+  ...(resource.email === undefined ? {} : { email: resource.email }),
 });
 
-export const validateResourceUrlExpression = (
+export const validateResourceUrlExpression = async (
   expression: string,
   scope: Record<string, unknown>
 ) => {
-  const value = computeExpressionWithinScope(expression, scope);
+  const value = await computeExpressionWithinScope(expression, scope);
   if (typeof value !== "string") {
     return "URL expects a string";
   }
@@ -1929,7 +2191,7 @@ export const validateResourceUrlExpression = (
 
 export type ResourceBodyInputType = undefined | "text" | "json";
 
-export const validateResourceBodyExpression = (
+export const validateResourceBodyExpression = async (
   expression: string,
   bodyType: ResourceBodyInputType,
   scope: Record<string, unknown>
@@ -1937,7 +2199,7 @@ export const validateResourceBodyExpression = (
   if (expression === "") {
     return "";
   }
-  const value = computeExpressionWithinScope(expression, scope);
+  const value = await computeExpressionWithinScope(expression, scope);
   if (bodyType === "json") {
     return typeof value === "object" && value !== null
       ? ""
@@ -1947,7 +2209,7 @@ export const validateResourceBodyExpression = (
 };
 
 type ResourceExpressionFields = Partial<
-  Pick<Resource, "url" | "body" | "headers" | "searchParams">
+  Pick<Resource, "url" | "body" | "headers" | "searchParams" | "email">
 >;
 
 export const listResourceExpressions = (
@@ -1960,6 +2222,38 @@ export const listResourceExpressions = (
   ...(fields.body === undefined
     ? []
     : [{ path: [...pathPrefix, "body"], expression: fields.body }]),
+  ...(fields.email?.subject === undefined
+    ? []
+    : [
+        {
+          path: [...pathPrefix, "email", "subject"],
+          expression: fields.email.subject,
+        },
+      ]),
+  ...(fields.email?.senderExpression === undefined
+    ? []
+    : [
+        {
+          path: [...pathPrefix, "email", "senderExpression"],
+          expression: fields.email.senderExpression,
+        },
+      ]),
+  ...(fields.email?.recipientsExpression === undefined
+    ? []
+    : [
+        {
+          path: [...pathPrefix, "email", "recipientsExpression"],
+          expression: fields.email.recipientsExpression,
+        },
+      ]),
+  ...(fields.email?.body === undefined
+    ? []
+    : [
+        {
+          path: [...pathPrefix, "email", "body"],
+          expression: fields.email.body,
+        },
+      ]),
   ...(fields.headers ?? []).map((header, index) => ({
     path: [...pathPrefix, "headers", String(index), "value"],
     expression: header.value,
@@ -1988,7 +2282,7 @@ const getResourceWarnings = ({
 }: {
   fields: Pick<
     Resource,
-    "control" | "method" | "url" | "body" | "headers" | "searchParams"
+    "control" | "method" | "url" | "body" | "headers" | "searchParams" | "email"
   >;
   state: Pick<BuilderState, "instances" | "dataSources">;
   scopeInstanceId?: string;
@@ -2034,7 +2328,9 @@ const getResourceWarnings = ({
 };
 
 export const getResourceExpressionErrors = (
-  fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>
+  fields: Partial<
+    Pick<Resource, "url" | "body" | "headers" | "searchParams" | "email">
+  >
 ) =>
   formatValidationIssueMessages(getResourceExpressionValidationIssues(fields))
     .split("\n")
@@ -2104,18 +2400,139 @@ const getResourceLiteralUrlValidationIssues = (
 };
 
 const validateResourceFields = (
-  fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>,
+  fields: Partial<
+    Pick<
+      Resource,
+      "control" | "url" | "body" | "headers" | "searchParams" | "email"
+    >
+  >,
   pathPrefix: readonly string[] = []
 ) => {
   const issues = [
     ...getResourceExpressionValidationIssues(fields),
-    ...getResourceLiteralUrlValidationIssues(fields),
+    ...getResourceLiteralUrlValidationIssues(
+      fields.control === "email" ? {} : fields
+    ),
   ];
   if (issues.length > 0) {
     return throwBuilderValidationError(
       formatValidationIssueMessages(issues),
       prefixValidationIssuePaths(issues, pathPrefix)
     );
+  }
+};
+
+const validateEmailExpressionBindings = ({
+  email,
+  scopeInstanceId,
+  instances,
+  dataSources,
+}: {
+  email: Resource["email"];
+  scopeInstanceId: Instance["id"];
+  instances: Instance[];
+  dataSources: DataSource[];
+}) => {
+  if (
+    email?.senderExpression === undefined &&
+    email?.recipientsExpression === undefined &&
+    email?.subject === undefined &&
+    email?.body === undefined
+  ) {
+    return;
+  }
+  const instancesById = new Map(
+    instances.map((instance) => [instance.id, instance])
+  );
+  const dataSourcesById = new Map(
+    dataSources.map((dataSource) => [dataSource.id, dataSource])
+  );
+  const { maskedIdByName, availableDataSourceIds } = findVariablesByInstanceId({
+    startingInstanceId: scopeInstanceId,
+    parentInstanceById: getParentInstanceById(instancesById),
+    instances: instancesById,
+    dataSources: dataSourcesById,
+  });
+  const availableNames = new Set<string>();
+  for (const id of availableDataSourceIds) {
+    const dataSource = dataSourcesById.get(id);
+    if (isEmailBindingDataSourceAvailable(dataSource)) {
+      availableNames.add(encodeDataVariableId(id));
+    }
+  }
+  for (const [name, id] of maskedIdByName) {
+    if (isEmailBindingDataSourceAvailable(dataSourcesById.get(id))) {
+      availableNames.add(encodeDataVariableName(name));
+    }
+  }
+  const issues = listResourceExpressions({ email }, ["resource"]).flatMap(
+    ({ path, expression }) =>
+      getExpressionWarnings({
+        expression,
+        availableVariables: availableNames,
+        path,
+      }).map(({ message }) => ({
+        code: "unavailable_email_resource_binding",
+        path,
+        message,
+        constraint: "available_variable_at_resource_scope",
+      }))
+  );
+  if (issues.length > 0) {
+    return throwBuilderValidationError(
+      formatValidationIssueMessages(issues),
+      issues
+    );
+  }
+};
+
+const validateEmailResourceConsumerBindings = ({
+  email,
+  resourceId,
+  build,
+  propInstanceId,
+  removedAliasId,
+  upsertedAlias,
+}: {
+  email: Resource["email"];
+  resourceId: Resource["id"];
+  build: Pick<CompactBuild, "instances" | "props" | "dataSources">;
+  propInstanceId?: Instance["id"];
+  removedAliasId?: DataSource["id"];
+  upsertedAlias?: { id: DataSource["id"]; scopeInstanceId: Instance["id"] };
+}) => {
+  const scopes = new Set<Instance["id"]>();
+  if (propInstanceId !== undefined) {
+    scopes.add(propInstanceId);
+  }
+  for (const prop of build.props) {
+    if (prop.type === "resource" && prop.value === resourceId) {
+      scopes.add(prop.instanceId);
+    }
+  }
+  for (const dataSource of build.dataSources) {
+    if (
+      dataSource.type === "resource" &&
+      dataSource.resourceId === resourceId &&
+      dataSource.id !== removedAliasId &&
+      dataSource.id !== upsertedAlias?.id
+    ) {
+      scopes.add(dataSource.scopeInstanceId ?? ROOT_INSTANCE_ID);
+    }
+  }
+  if (upsertedAlias !== undefined) {
+    scopes.add(upsertedAlias.scopeInstanceId);
+  }
+  if (scopes.size === 0) {
+    scopes.add(ROOT_INSTANCE_ID);
+  }
+  for (const scopeInstanceId of scopes) {
+    validateEmailExpressionBindings({
+      email,
+      scopeInstanceId,
+      instances: build.instances,
+      dataSources: build.dataSources,
+    });
   }
 };
 
@@ -2364,6 +2781,8 @@ export const createResourceCreatePayload = ({
             searchParams: resourceInput.searchParams,
             headers: resourceInput.headers,
             body: resourceInput.body,
+            bodyFormat: resourceInput.bodyFormat,
+            email: resourceInput.email,
           }),
         },
       ],
@@ -2438,11 +2857,13 @@ export const createResourceUpdatePayload = ({
 
 export const createResourceDeletePayload = ({
   resource,
+  instances,
   dataSources,
   props,
   force,
 }: {
   resource: Resource;
+  instances: ReadonlyMap<string, Pick<Instance, "component">>;
   dataSources: Iterable<DataSource>;
   props: Iterable<Prop>;
   force?: boolean;
@@ -2452,16 +2873,37 @@ export const createResourceDeletePayload = ({
   propIds: Prop["id"][];
   isUsed: boolean;
 } => {
-  const resourceProps = Array.from(props).filter(
+  const propList = Array.from(props);
+  const resourceProps = propList.filter(
     (prop) => prop.type === "resource" && prop.value === resource.id
   );
-  if (resourceProps.length > 0 && force !== true) {
-    return { payload: [], dataSourceIds: [], propIds: [], isUsed: true };
-  }
   const resourceDataSources = Array.from(dataSources).filter(
     (dataSource) =>
       dataSource.type === "resource" && dataSource.resourceId === resource.id
   );
+  const resourceDataSourceIds = new Set(
+    resourceDataSources.map(({ id }) => id)
+  );
+  const formSubmissionProps = propList.flatMap((prop) => {
+    if (
+      prop.type !== "json" ||
+      prop.name !== "action" ||
+      instances.get(prop.instanceId)?.component !== "ResourceForm" ||
+      !isFormSubmission(prop.value) ||
+      !prop.value.some((action) =>
+        resourceDataSourceIds.has(action.dataSourceId)
+      )
+    ) {
+      return [];
+    }
+    return [{ id: prop.id, value: prop.value }];
+  });
+  if (
+    (resourceProps.length > 0 || formSubmissionProps.length > 0) &&
+    force !== true
+  ) {
+    return { payload: [], dataSourceIds: [], propIds: [], isUsed: true };
+  }
   const payload: BuilderPatchChange[] = [
     {
       namespace: "resources",
@@ -2477,13 +2919,23 @@ export const createResourceDeletePayload = ({
       })),
     });
   }
-  if (resourceProps.length > 0) {
+  if (resourceProps.length > 0 || formSubmissionProps.length > 0) {
     payload.push({
       namespace: "props",
-      patches: resourceProps.map((prop) => ({
-        op: "remove" as const,
-        path: [prop.id],
-      })),
+      patches: [
+        ...resourceProps.map((prop) => ({
+          op: "remove" as const,
+          path: [prop.id],
+        })),
+        ...formSubmissionProps.map((prop) => ({
+          op: "replace" as const,
+          path: [prop.id, "value"],
+          value: removeFormActionsForResources(
+            prop.value,
+            resourceDataSourceIds
+          ),
+        })),
+      ],
     });
   }
 
@@ -2582,12 +3034,19 @@ export const createResource = (
   const resourceInput = normalizeResourceFieldsInput(input.resource);
   validateResourceFields(resourceInput, ["resource"]);
   const build = getRequiredBuildData(state);
+  validateEmailExpressionBindings({
+    email: resourceInput.email,
+    scopeInstanceId: input.scopeInstanceId ?? ROOT_INSTANCE_ID,
+    instances: build.instances,
+    dataSources: build.dataSources,
+  });
   const resourceId = context.createId();
   const exposeAsDataSource =
     input.exposeAsDataSource ??
     (resourceInput.method === "get" && input.scopeInstanceId !== undefined);
   if (
     exposeAsDataSource &&
+    input.scopeInstanceId !== ROOT_INSTANCE_ID &&
     build.instances.some(
       (instance) => instance.id === input.scopeInstanceId
     ) === false
@@ -2623,6 +3082,8 @@ export const createResource = (
     searchParams: resourceInput.searchParams,
     headers: resourceInput.headers,
     body: resourceInput.body,
+    bodyFormat: resourceInput.bodyFormat,
+    email: resourceInput.email,
   });
   const warnings = getResourceWarnings({
     fields: resource,
@@ -2698,11 +3159,31 @@ export const updateResource = (
       invalidatesNamespaces: [],
     });
   }
+  const updatedEmail =
+    values.email === undefined
+      ? resource.email
+      : { ...resource.email, ...values.email };
+  if (values.email?.body !== undefined && updatedEmail !== undefined) {
+    delete updatedEmail.confirmationBody;
+  }
   const nextResource = createResourceValue({
     ...resource,
     ...values,
+    email: updatedEmail,
     ...(clearBody ? { body: undefined } : {}),
   });
+  if (nextResource.control !== "email" && nextResource.email !== undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Email settings require an Email Resource."
+    );
+  }
+  if (values.email !== undefined) {
+    emailSettingsInput.parse({
+      control: nextResource.control,
+      email: nextResource.email,
+    });
+  }
   const dataSource = build.dataSources.find(
     (dataSource) =>
       dataSource.type === "resource" && dataSource.resourceId === resource.id
@@ -2710,7 +3191,7 @@ export const updateResource = (
   const scopeInstanceId = input.scopeInstanceId ?? dataSource?.scopeInstanceId;
   const exposeAsDataSource =
     input.exposeAsDataSource ??
-    (values.method !== undefined && nextResource.method !== "get"
+    (resource.method !== nextResource.method && nextResource.method !== "get"
       ? false
       : dataSource !== undefined ||
         (nextResource.method === "get" && scopeInstanceId !== undefined));
@@ -2722,6 +3203,7 @@ export const updateResource = (
   }
   if (
     exposeAsDataSource &&
+    scopeInstanceId !== ROOT_INSTANCE_ID &&
     build.instances.some((instance) => instance.id === scopeInstanceId) ===
       false
   ) {
@@ -2730,6 +3212,18 @@ export const updateResource = (
   const dataSourceId = exposeAsDataSource
     ? (dataSource?.id ?? context.createId())
     : dataSource?.id;
+  validateEmailResourceConsumerBindings({
+    email: nextResource.email,
+    resourceId: resource.id,
+    build,
+    removedAliasId: exposeAsDataSource ? undefined : dataSource?.id,
+    upsertedAlias:
+      exposeAsDataSource &&
+      dataSourceId !== undefined &&
+      scopeInstanceId !== undefined
+        ? { id: dataSourceId, scopeInstanceId }
+        : undefined,
+  });
   const warnings = getResourceWarnings({
     fields: nextResource,
     state,
@@ -2879,6 +3373,12 @@ export const upsertResource = (
 
   const resourceId = input.resourceId ?? context.createId();
   const dataSourceId = input.dataSourceId ?? context.createId();
+  validateEmailResourceConsumerBindings({
+    email: resourceInput.email,
+    resourceId,
+    build,
+    upsertedAlias: { id: dataSourceId, scopeInstanceId: input.scopeInstanceId },
+  });
   const resource = createResourceValue({
     id: resourceId,
     name: resourceInput.name,
@@ -2888,6 +3388,8 @@ export const upsertResource = (
     searchParams: resourceInput.searchParams,
     headers: resourceInput.headers,
     body: resourceInput.body,
+    bodyFormat: resourceInput.bodyFormat,
+    email: resourceInput.email,
   });
 
   return createRuntimeMutation({
@@ -2946,6 +3448,19 @@ export const upsertResourceProp = (
   }
 
   const resourceId = input.resourceId ?? context.createId();
+  // upsertResourceMutable removes the first Resource data source when the
+  // prop Resource is saved without exposing it as render-time data.
+  const removedAlias = build.dataSources.find(
+    (dataSource) =>
+      dataSource.type === "resource" && dataSource.resourceId === resourceId
+  );
+  validateEmailResourceConsumerBindings({
+    email: resourceInput.email,
+    resourceId,
+    build,
+    propInstanceId: input.instanceId,
+    removedAliasId: removedAlias?.id,
+  });
   const resource = createResourceValue({
     id: resourceId,
     name: resourceInput.name,
@@ -2955,6 +3470,8 @@ export const upsertResourceProp = (
     searchParams: resourceInput.searchParams,
     headers: resourceInput.headers,
     body: resourceInput.body,
+    bodyFormat: resourceInput.bodyFormat,
+    email: resourceInput.email,
   });
   const existingProp = findProp(build.props, input.instanceId, input.propName);
   const nextProp = createValidatedPropValueFromInput(
@@ -3047,6 +3564,7 @@ export const deleteResource = (
   }
   const resultPayload = createResourceDeletePayload({
     resource,
+    instances: state.instances,
     dataSources: dataSources.values(),
     props: getRequiredProps(state).values(),
     force: input.force,

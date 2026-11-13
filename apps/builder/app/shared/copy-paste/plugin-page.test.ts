@@ -1,10 +1,14 @@
-import { afterEach, expect, test, vi } from "vitest";
+import { afterAll, afterEach, expect, test, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import type { PageTransferItem } from "@webstudio-is/project-build/transfer";
 import {
+  blockComponent,
+  blockTemplateComponent,
   encodeDataSourceVariable,
   ROOT_FOLDER_ID,
   ROOT_INSTANCE_ID,
+  type Asset,
   type DataSource,
   type Instance,
 } from "@webstudio-is/sdk";
@@ -35,13 +39,15 @@ import {
   copyTemplateData,
   handlePastePage,
   pageText,
+  __testing__,
 } from "./plugin-page";
 import { pasteHandled, pasteIgnored } from "./copy-paste";
-import { initBuilderApi } from "../builder-api";
+import { __testing__ as builderApiTesting } from "../builder-api";
 
 enableMapSet();
 registerContainers();
-initBuilderApi();
+afterAll(builderApiTesting.useLocalApi());
+const { preparePageTransferItem } = __testing__;
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -62,6 +68,50 @@ const resetBuildStores = () => {
   selectInstance(undefined);
   $selectedPageId.set(undefined);
 };
+
+test("rejects historical Form page clipboard before importing or inserting", async () => {
+  const importAssets = vi.spyOn(builderApiTesting.api, "importAssets");
+  const before = structuredClone($pages.get());
+  const fragment = {
+    children: [],
+    instances: [],
+    assets: [],
+    dataSources: [],
+    resources: [],
+    props: [],
+    breakpoints: [],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+  };
+  const clipboardData = JSON.stringify({
+    "@webstudio/page/v0.1": {
+      type: "page",
+      page: {
+        id: "old-page",
+        name: "Old page",
+        path: "/old-page",
+        title: '"Old page"',
+        meta: {},
+        rootInstanceId: "form",
+      },
+      rootFragment: fragment,
+      bodyFragment: {
+        ...fragment,
+        instances: [
+          { type: "instance", id: "form", component: "Form", children: [] },
+        ],
+      },
+    },
+  });
+
+  expect(await handlePastePage(clipboardData, ROOT_FOLDER_ID)).toMatchObject({
+    success: false,
+    error: expect.stringMatching(/Copy it again/),
+  });
+  expect(importAssets).not.toHaveBeenCalled();
+  expect($pages.get()).toEqual(before);
+});
 
 const setRootLocalStyle = ({
   styleSourceId,
@@ -195,7 +245,7 @@ const setupProjectWithRootStyle = ({
   return pages;
 };
 
-test("copies the selected page root from the copy plugin", () => {
+test("copies the selected page root from the copy plugin", async () => {
   $project.set({ id: "source-project" } as Project);
   resetBuildStores();
 
@@ -225,11 +275,11 @@ test("copies the selected page root from the copy plugin", () => {
     ])
   );
 
-  expect(pageText.onCopy?.()).toContain('"type":"page"');
-  expect(pageText.onCopy?.()).toContain('"name":"Selected Page"');
+  expect(await pageText.onCopy?.()).toContain('"type":"page"');
+  expect(await pageText.onCopy?.()).toContain('"name":"Selected Page"');
 });
 
-test("copies the edited folder from the copy plugin", () => {
+test("copies the edited folder from the copy plugin", async () => {
   $project.set({ id: "source-project" } as Project);
   resetBuildStores();
 
@@ -259,8 +309,8 @@ test("copies the edited folder from the copy plugin", () => {
     ])
   );
 
-  expect(pageText.onCopy?.()).toContain('"type":"folder"');
-  expect(pageText.onCopy?.()).toContain('"name":"Edited Folder"');
+  expect(await pageText.onCopy?.()).toContain('"type":"folder"');
+  expect(await pageText.onCopy?.()).toContain('"name":"Edited Folder"');
 });
 
 test("copies page data across projects", async () => {
@@ -305,7 +355,7 @@ test("copies page data across projects", async () => {
   );
   $dataSources.set(new Map([[variable.id, variable]]));
 
-  const clipboardData = copyPageData("source-page");
+  const clipboardData = await copyPageData("source-page");
   expect(clipboardData).toBeDefined();
 
   $project.set({ id: "target-project" } as Project);
@@ -349,6 +399,208 @@ test("copies page data across projects", async () => {
   expect($dataSources.get().has("source-variable")).toBe(false);
 });
 
+test("transfers assets copied from another deployment before inserting the page", async () => {
+  $project.set({ id: "source-project" } as Project);
+  resetBuildStores();
+
+  const sourcePages = createDefaultPages({
+    homePageId: "source-page",
+    rootInstanceId: "source-root",
+  });
+  const sourceAsset = {
+    id: "source-asset",
+    projectId: "source-project",
+    name: "hero.png",
+    type: "image",
+    size: 128,
+    format: "png",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    description: null,
+    meta: { width: 1200, height: 800 },
+  } satisfies Asset;
+  const importedAsset = {
+    ...sourceAsset,
+    id: "imported-asset",
+    projectId: "target-project",
+  } satisfies Asset;
+  const sourcePage = sourcePages.pages.get("source-page");
+  if (sourcePage === undefined) {
+    throw new Error("Expected source page");
+  }
+  sourcePage.meta.socialImageAssetId = sourceAsset.id;
+  sourcePage.marketplace = { thumbnailAssetId: sourceAsset.id };
+  $pages.set(sourcePages);
+  $selectedPageId.set(sourcePages.homePageId);
+  $instances.set(
+    new Map([
+      [
+        "source-root",
+        {
+          type: "instance",
+          id: "source-root",
+          component: "Body",
+          children: [],
+        } satisfies Instance,
+      ],
+    ])
+  );
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  const clipboardData = JSON.parse((await copyPageData("source-page")) ?? "");
+  expect(clipboardData["@webstudio/page/v0.1"].sourceOrigin).toBe(
+    window.location.origin
+  );
+  expect(clipboardData["@webstudio/page/v0.1"].assetPaths).toEqual({
+    "source-asset": "hero.png",
+  });
+  clipboardData["@webstudio/page/v0.1"].sourceOrigin =
+    "https://source.example.com";
+
+  $project.set({ id: "target-project" } as Project);
+  resetBuildStores();
+  const targetPages = createDefaultPages({
+    homePageId: "target-page",
+    rootInstanceId: "target-root",
+  });
+  $pages.set(targetPages);
+  $selectedPageId.set(targetPages.homePageId);
+  $instances.set(
+    new Map([
+      [
+        "target-root",
+        {
+          type: "instance",
+          id: "target-root",
+          component: "Body",
+          children: [],
+        } satisfies Instance,
+      ],
+    ])
+  );
+  const importAssets = vi
+    .spyOn(builderApiTesting.api, "importAssets")
+    .mockImplementation(async (projectId, sources) => {
+      expect(projectId).toBe("target-project");
+      expect(sources).toEqual([
+        {
+          asset: sourceAsset,
+          url: "https://source.example.com/cgi/image/hero.png?format=raw",
+        },
+      ]);
+      $assets.set(new Map([[importedAsset.id, importedAsset]]));
+      return new Map([[sourceAsset.id, importedAsset]]);
+    });
+
+  const incompleteClipboardData = structuredClone(clipboardData);
+  incompleteClipboardData["@webstudio/page/v0.1"].bodyFragment.assets = [];
+  expect(
+    await handlePastePage(
+      JSON.stringify(incompleteClipboardData),
+      ROOT_FOLDER_ID
+    )
+  ).toEqual({
+    success: false,
+    error:
+      "Could not paste Webstudio page data. The clipboard data appears to be incomplete or invalid.",
+  });
+  expect(importAssets).not.toHaveBeenCalled();
+
+  expect(
+    await handlePastePage(JSON.stringify(clipboardData), ROOT_FOLDER_ID)
+  ).toEqual(pasteHandled);
+  const pastedPage = Array.from($pages.get()?.pages.values() ?? []).find(
+    (page) => page.id !== "target-page"
+  );
+  expect(pastedPage?.meta.socialImageAssetId).toBe(importedAsset.id);
+  expect(pastedPage?.marketplace?.thumbnailAssetId).toBe(importedAsset.id);
+  expect(importAssets).toHaveBeenCalledOnce();
+  expect($assets.get().has(sourceAsset.id)).toBe(false);
+});
+
+test("preserves legacy page metadata assets that exist in the destination", async () => {
+  $project.set({ id: "source-project" } as Project);
+  resetBuildStores();
+  const sourcePages = createDefaultPages({
+    homePageId: "source-page",
+    rootInstanceId: "source-root",
+  });
+  const sourcePage = sourcePages.pages.get("source-page");
+  if (sourcePage === undefined) {
+    throw new Error("Expected source page");
+  }
+  const sourceAsset = {
+    id: "legacy-meta-asset",
+    projectId: "source-project",
+    name: "social.png",
+    type: "image",
+    size: 128,
+    format: "png",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    meta: { width: 1200, height: 630 },
+  } satisfies Asset;
+  sourcePage.meta.socialImageAssetId = sourceAsset.id;
+  sourcePage.marketplace = { thumbnailAssetId: sourceAsset.id };
+  $pages.set(sourcePages);
+  $selectedPageId.set(sourcePages.homePageId);
+  $instances.set(
+    new Map([
+      [
+        "source-root",
+        {
+          type: "instance",
+          id: "source-root",
+          component: "Body",
+          children: [],
+        } satisfies Instance,
+      ],
+    ])
+  );
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  const currentData = JSON.parse((await copyPageData("source-page")) ?? "")[
+    "@webstudio/page/v0.1"
+  ];
+  delete currentData.sourceOrigin;
+  currentData.bodyFragment.assets = [];
+  const clipboardData = JSON.stringify({
+    "@webstudio/page/v0.1": currentData,
+  });
+
+  $project.set({ id: "target-project" } as Project);
+  resetBuildStores();
+  const targetPages = createDefaultPages({
+    homePageId: "target-page",
+    rootInstanceId: "target-root",
+  });
+  $pages.set(targetPages);
+  $selectedPageId.set(targetPages.homePageId);
+  $instances.set(
+    new Map([
+      [
+        "target-root",
+        {
+          type: "instance",
+          id: "target-root",
+          component: "Body",
+          children: [],
+        } satisfies Instance,
+      ],
+    ])
+  );
+  $assets.set(
+    new Map([[sourceAsset.id, { ...sourceAsset, projectId: "target-project" }]])
+  );
+  const importAssets = vi.spyOn(builderApiTesting.api, "importAssets");
+
+  expect(await handlePastePage(clipboardData, ROOT_FOLDER_ID)).toEqual(
+    pasteHandled
+  );
+  const pastedPage = Array.from($pages.get()?.pages.values() ?? []).find(
+    (page) => page.id !== "target-page"
+  );
+  expect(pastedPage?.meta.socialImageAssetId).toBe(sourceAsset.id);
+  expect(pastedPage?.marketplace?.thumbnailAssetId).toBe(sourceAsset.id);
+  expect(importAssets).not.toHaveBeenCalled();
+});
+
 test.each([
   ["ours", "blue"],
   ["theirs", "red"],
@@ -368,7 +620,7 @@ test.each([
       property: "fontSize",
       value: { type: "keyword", value: "medium" },
     });
-    const clipboardData = copyPageData("source-page");
+    const clipboardData = await copyPageData("source-page");
 
     setupProjectWithRootStyle({
       projectId: "target-project",
@@ -378,7 +630,7 @@ test.each([
       color: "blue",
     });
     const conflictDialog = vi
-      .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+      .spyOn(builderApiTesting.api, "showRootStyleConflictDialog")
       .mockResolvedValue(resolution);
 
     await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
@@ -410,7 +662,24 @@ test("cancels page paste when global root style resolution is cancelled", async 
     styleSourceId: "source-local",
     color: "red",
   });
-  const clipboardData = copyPageData("source-page");
+  const sourceAsset = {
+    id: "source-asset",
+    projectId: "source-project",
+    name: "hero.png",
+    type: "image",
+    size: 128,
+    format: "png",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    description: null,
+    meta: { width: 1200, height: 800 },
+  } satisfies Asset;
+  const sourcePage = $pages.get()?.pages.get("source-page");
+  if (sourcePage === undefined) {
+    throw new Error("Expected source page");
+  }
+  sourcePage.meta.socialImageAssetId = sourceAsset.id;
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  const clipboardData = await copyPageData("source-page");
 
   const targetPages = setupProjectWithRootStyle({
     projectId: "target-project",
@@ -421,13 +690,15 @@ test("cancels page paste when global root style resolution is cancelled", async 
   });
   const initialPageCount = targetPages.pages.size;
   vi.spyOn(
-    window.__webstudio__$__builderApi,
+    builderApiTesting.api,
     "showRootStyleConflictDialog"
   ).mockResolvedValue("cancel");
+  const importAssets = vi.spyOn(builderApiTesting.api, "importAssets");
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
 
   expect($pages.get()?.pages.size).toBe(initialPageCount);
+  expect(importAssets).not.toHaveBeenCalled();
   expect($styles.get().get("target-local:base:color:")?.value).toEqual({
     type: "keyword",
     value: "blue",
@@ -443,7 +714,7 @@ test("checks current root styles after resolving token conflicts", async () => {
     color: "red",
   });
   addRootTokenStyle({ styleSourceId: "source-token", value: "red" });
-  const clipboardData = copyPageData("source-page");
+  const clipboardData = await copyPageData("source-page");
 
   setupProjectWithRootStyle({
     projectId: "target-project",
@@ -453,15 +724,14 @@ test("checks current root styles after resolving token conflicts", async () => {
     color: "red",
   });
   addRootTokenStyle({ styleSourceId: "target-token", value: "blue" });
-  vi.spyOn(
-    window.__webstudio__$__builderApi,
-    "showTokenConflictDialog"
-  ).mockImplementation(async () => {
-    updateRootLocalStyle("blue");
-    return "ours";
-  });
+  vi.spyOn(builderApiTesting.api, "showTokenConflictDialog").mockImplementation(
+    async () => {
+      updateRootLocalStyle("blue");
+      return "ours";
+    }
+  );
   const rootConflictDialog = vi
-    .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+    .spyOn(builderApiTesting.api, "showRootStyleConflictDialog")
     .mockResolvedValue("ours");
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
@@ -497,7 +767,7 @@ test("handles page paste data without falling through when insertion cannot comp
     ])
   );
 
-  const clipboardData = copyPageData("source-page");
+  const clipboardData = await copyPageData("source-page");
   expect(clipboardData).toBeDefined();
 
   resetBuildStores();
@@ -594,7 +864,7 @@ test("copies folder data with nested pages across projects", async () => {
   );
   setRootLocalStyle({ styleSourceId: "source-local", value: "red" });
 
-  const clipboardData = copyFolderData("source-folder");
+  const clipboardData = await copyFolderData("source-folder");
   expect(clipboardData).toBeDefined();
 
   $project.set({ id: "target-project" } as Project);
@@ -620,7 +890,7 @@ test("copies folder data with nested pages across projects", async () => {
   );
   setRootLocalStyle({ styleSourceId: "target-local", value: "blue" });
   const conflictDialog = vi
-    .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+    .spyOn(builderApiTesting.api, "showRootStyleConflictDialog")
     .mockResolvedValue("ours");
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
@@ -681,7 +951,7 @@ test("preserves empty folder slugs when pasting folder data", async () => {
     ])
   );
 
-  const clipboardData = copyFolderData("source-folder");
+  const clipboardData = await copyFolderData("source-folder");
   expect(clipboardData).toBeDefined();
 
   $project.set({ id: "target-project" } as Project);
@@ -760,7 +1030,7 @@ test("copies template data as a template", async () => {
   );
   setRootLocalStyle({ styleSourceId: "source-local", value: "red" });
 
-  const clipboardData = copyTemplateData("template-id");
+  const clipboardData = await copyTemplateData("template-id");
   expect(clipboardData).toBeDefined();
 
   $project.set({ id: "target-project" } as Project);
@@ -786,7 +1056,7 @@ test("copies template data as a template", async () => {
   );
   setRootLocalStyle({ styleSourceId: "target-local", value: "blue" });
   const conflictDialog = vi
-    .spyOn(window.__webstudio__$__builderApi, "showRootStyleConflictDialog")
+    .spyOn(builderApiTesting.api, "showRootStyleConflictDialog")
     .mockResolvedValue("theirs");
 
   await handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID);
@@ -813,3 +1083,152 @@ test("copies template data as a template", async () => {
   );
   expect(pastedPage).toBeUndefined();
 });
+
+test.each(["page", "template", "folder"] as const)(
+  "prepares connected MDX dependencies when copying a %s",
+  async (type) => {
+    const sourceAsset = {
+      id: "article",
+      projectId: "source-project",
+      name: "article.mdx",
+      type: "file",
+      format: "mdx",
+      size: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      meta: {},
+    } satisfies Asset;
+    const dependency = {
+      ...sourceAsset,
+      id: "hero",
+      name: "hero.png",
+      format: "png",
+    } satisfies Asset;
+    $assets.set(
+      new Map([
+        [sourceAsset.id, sourceAsset],
+        [dependency.id, dependency],
+      ])
+    );
+    const emptyFragment = {
+      children: [],
+      instances: [],
+      props: [],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSources: [],
+      styleSourceSelections: [],
+      styles: [],
+    };
+    const bodyFragment = {
+      ...emptyFragment,
+      children: [{ type: "id" as const, value: "body" }],
+      instances: [
+        {
+          type: "instance" as const,
+          id: "body",
+          component: "Body",
+          children: [{ type: "id" as const, value: "block" }],
+        },
+        {
+          type: "instance" as const,
+          id: "block",
+          component: blockComponent,
+          children: [
+            { type: "id" as const, value: "templates" },
+            { type: "id" as const, value: "authored" },
+          ],
+        },
+        {
+          type: "instance" as const,
+          id: "templates",
+          component: blockTemplateComponent,
+          children: [],
+        },
+        {
+          type: "instance" as const,
+          id: "authored",
+          component: "Paragraph",
+          children: [{ type: "text" as const, value: "Loaded" }],
+        },
+      ],
+      props: [
+        {
+          id: "source",
+          instanceId: "block",
+          name: "src",
+          type: "asset" as const,
+          value: sourceAsset.id,
+        },
+      ],
+      assets: [sourceAsset],
+    };
+    const page = {
+      type: "page" as const,
+      page: {
+        id: "page",
+        name: "Page",
+        path: "/page",
+        title: "Page",
+        rootInstanceId: "body",
+        meta: {},
+      },
+      rootFragment: emptyFragment,
+      bodyFragment,
+    };
+    const template = {
+      type: "template" as const,
+      template: {
+        id: "template",
+        name: "Template",
+        title: "Template",
+        rootInstanceId: "body",
+        meta: {},
+      },
+      rootFragment: emptyFragment,
+      bodyFragment,
+    };
+    const item: PageTransferItem =
+      type === "page"
+        ? page
+        : type === "template"
+          ? template
+          : {
+              type: "folder",
+              folder: {
+                id: "folder",
+                name: "Folder",
+                slug: "folder",
+                children: ["page"],
+              },
+              children: [page],
+            };
+    const includeDependencies = vi.fn(async ({ fragment }) => ({
+      fragment:
+        fragment.assets.length === 0
+          ? fragment
+          : { ...fragment, assets: [...fragment.assets, dependency] },
+      skippedAssetIds: [],
+    }));
+
+    const prepared = await preparePageTransferItem({
+      item,
+      projectId: "source-project",
+      assets: $assets.get(),
+      assetFolders: new Map(),
+      includeDependencies,
+    });
+    const preparedItem =
+      prepared.type === "folder" ? prepared.children[0] : prepared;
+    if (preparedItem === undefined || preparedItem.type === "folder") {
+      throw new Error("Expected a prepared page-like item");
+    }
+
+    expect(preparedItem.bodyFragment.assets).toEqual([sourceAsset, dependency]);
+    expect(preparedItem.bodyFragment.instances).not.toContainEqual(
+      expect.objectContaining({ id: "authored" })
+    );
+  }
+);

@@ -4,6 +4,7 @@ import {
   Radio,
   RadioGroup,
   Text,
+  cssVar,
   theme,
 } from "@webstudio-is/design-system";
 
@@ -36,7 +37,7 @@ export const DialogRadioOptions = <Value extends string>({
               cursor: "pointer",
               borderRadius: theme.borderRadius[4],
               "&:hover": {
-                backgroundColor: theme.colors.backgroundHover,
+                backgroundColor: cssVar("--overlay-interaction-hover"),
               },
             }}
           >

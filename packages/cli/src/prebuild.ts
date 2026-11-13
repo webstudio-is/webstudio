@@ -7,42 +7,51 @@ import {
   relative,
   sep,
 } from "node:path";
-import { existsSync } from "node:fs";
+import { createReadStream, existsSync } from "node:fs";
 import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
 import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
+import { transform as transformCss } from "esbuild";
+import { transform as transformLightningCss } from "lightningcss";
 import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
+import deepEqual from "fast-deep-equal";
 import {
-  generateWebstudioComponent,
+  generateManagedFormComponent,
+  type PublishedContentBlock,
   type Params,
   normalizeProps,
   generateRemixRoute,
   generateRemixParams,
+  findTreeInstanceIdsExcludingStaticHidden,
 } from "@webstudio-is/react-sdk";
 import {
   createScope,
-  findTreeInstanceIds,
   getAllPages,
   isAssetsResource,
   getPagePath,
   getPublishablePages,
-  generateResources,
+  managedFormEndpointPrefix,
+  managedFormRequestParamName,
+  generatePageResources,
+  generateManagedFormResources,
   generatePageMeta,
   getStaticSiteMapXml,
-  isPageEligibleForSitemap,
   replaceFormActionsWithResources,
   isCoreComponent,
   coreMetas,
   decodeDataSourceVariable,
+  findTreeInstanceIdsExcludingBlockTemplates,
   SYSTEM_VARIABLE_ID,
   generateCss,
   ROOT_INSTANCE_ID,
   elementComponent,
-  toRuntimeAsset,
+  toAssetReferenceRuntimeData,
   matchPathnameParams,
-  createReachableAssetContentCompilationPlan,
+  blockComponent,
+  getContentBlockSources,
+  findContentBlockBodyContainers,
   parseStructuredAssetQueryResourceBody,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryWhereBinding,
@@ -56,12 +65,37 @@ import {
   type WsComponentMeta,
   type Pages,
   type ComponentBuildContribution,
+  isPublishedDeployment,
+  isFormSubmission,
+  getFormActions,
 } from "@webstudio-is/sdk";
-import { migratePages } from "@webstudio-is/project-migrations/pages";
-import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
+import {
+  migratePages,
+  migrateResourceFormInstancesMutable,
+} from "@webstudio-is/project-migrations";
+import { hasHistoricalFormComponentIdentityVersion } from "@webstudio-is/project-migrations/pages";
+import {
+  collectFontFamiliesFromStyleDecls,
+  createWebstudioDataFromFragment,
+  createPublishedMdxMaterializationCache,
+  getUnsafeDynamicPublishedMdxDiagnostic,
+  materializePublishedMdx,
+  getZodValidationIssues,
+  createAssetUrlsByPath,
+} from "@webstudio-is/project-build/runtime";
+import { parseGeneratedStyleDeclaration } from "@webstudio-is/project-build/persistence";
+import {
+  createPublishedBuildContentCompilationPlan,
+  getDynamicPublishedMdxSourceBlockIds,
+  getPublishedMdxAssetIds,
+  hasDynamicPublishedMdxSources,
+  resolvePublishedMdxAssetCandidates,
+} from "@webstudio-is/project-build";
 import {
   assetQueryFilter,
+  type AssetRuntimeData,
   type AssetQueryFilter,
+  type ContentArtifactV1,
   type ContentRuntimeArtifact,
   type ContentDatabaseDocument,
   createContentRuntimeArtifact,
@@ -73,6 +107,11 @@ import {
   serializeContentRuntimeArtifact,
   verifyContentArtifact,
 } from "@webstudio-is/content-engine";
+import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
+import {
+  decodeUtf8,
+  readBoundedBytes,
+} from "@webstudio-is/content-engine/compiler";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import {
   parseJsonExpression,
@@ -83,10 +122,12 @@ import {
   getQueryConditions,
 } from "@webstudio-is/query-builder/runtime";
 import {
-  publishedProjectBundle,
+  bundleVersion,
+  historicalPublishedProjectBundle,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
 import { createAuthConfigResources, LOCAL_AUTH_FILE } from "./auth-config";
+import { generateResponseHeadersModule } from "./response-headers";
 import { LOCAL_DATA_FILE } from "./config";
 import {
   createFileIfNotExists,
@@ -96,7 +137,11 @@ import {
 } from "./fs-utils";
 import { htmlToJsx } from "./html-to-jsx";
 import { compareMedia } from "@webstudio-is/css-engine";
-import { LOCAL_ASSETS_DIR, materializeAssetFiles } from "./asset-files";
+import {
+  getLocalAssetPath,
+  LOCAL_ASSETS_DIR,
+  materializeAssetFiles,
+} from "./asset-files";
 import { formatZodIssues } from "./zod-utils";
 import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
@@ -115,8 +160,14 @@ const contentRuntimeBundleUrl = new URL(
 const contentRuntimeFile = "$resources.asset-query-vendor.js";
 const appRoot = "app";
 const generatedDir = join(appRoot, "__generated__");
+const generatedCssDir = join("public", "__webstudio", "css");
+const sitemapModule = join(generatedDir, "$resources.sitemap.xml");
 const routesDir = join(appRoot, "routes");
-const generatedOutputDirectories = [generatedDir, routesDir] as const;
+const generatedOutputDirectories = [
+  generatedDir,
+  routesDir,
+  generatedCssDir,
+] as const;
 
 type SiteDataByPage = {
   [id: Page["id"]]: {
@@ -131,7 +182,59 @@ type SiteDataByPage = {
     assets: Array<Asset>;
     params?: Params;
     pages: Array<Page>;
+    publishedContentBlocks?: ReadonlyMap<string, PublishedContentBlock>;
   };
+};
+
+const hydrateLocalMarkdownContents = async ({
+  artifact,
+  assets,
+  assetsDirectory,
+  includeMarkdown,
+}: {
+  artifact: ContentArtifactV1;
+  assets: readonly Asset[];
+  assetsDirectory: string;
+  includeMarkdown: boolean;
+}): Promise<ContentArtifactV1> => {
+  const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
+  const missingContents = await Promise.all(
+    artifact.documents
+      .filter(
+        (document) =>
+          (document.extension === "mdx" ||
+            (includeMarkdown && document.extension === "md")) &&
+          document.contentRef !== undefined &&
+          artifact.contents?.[document.contentRef] === undefined
+      )
+      .map(async (document) => {
+        const asset = assetsById.get(document._id);
+        if (asset === undefined) {
+          return;
+        }
+        const content = await readFile(
+          getLocalAssetPath(asset.name, assetsDirectory),
+          "utf8"
+        ).catch(() => undefined);
+        return content === undefined
+          ? undefined
+          : ([document.contentRef, content] as const);
+      })
+  );
+  const contents = Object.fromEntries(
+    missingContents.filter(
+      (entry): entry is readonly [string, string] => entry !== undefined
+    )
+  );
+  return Object.keys(contents).length === 0
+    ? artifact
+    : {
+        ...artifact,
+        contents: {
+          ...artifact.contents,
+          ...contents,
+        },
+      };
 };
 
 const getBoundSystemRouteParameter = (expression: string) => {
@@ -375,7 +478,9 @@ export const getAssetResourcePrerenderPaths = ({
       enumerableConfigurations.length === 0
     ) {
       throw new Error(
-        `Dynamic SSG route parameter ${JSON.stringify(firstUnenumerableParameter)} cannot be completely enumerated from every Assets query branch`
+        `Dynamic SSG route parameter ${JSON.stringify(
+          firstUnenumerableParameter
+        )} cannot be completely enumerated from every Assets query branch`
       );
     }
   }
@@ -430,7 +535,9 @@ export const getAssetResourcePrerenderPaths = ({
         for (const match of [...pathParameters].reverse()) {
           const name = match.groups?.name as string;
           const value = values.get(name) as string;
-          path = `${path.slice(0, match.index)}${encodeURIComponent(value)}${path.slice((match.index ?? 0) + match[0].length)}`;
+          path = `${path.slice(0, match.index)}${encodeURIComponent(
+            value
+          )}${path.slice((match.index ?? 0) + match[0].length)}`;
         }
         paths.add(path);
         if (paths.size > assetResourceLimits.candidateDocuments) {
@@ -520,7 +627,7 @@ const generateAssetQueryRuntimeModule = ({
 }: {
   deploymentId: string;
   index: ContentRuntimeArtifact | undefined;
-  runtimeAssets: Readonly<Record<string, ContentRuntimeAsset>>;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
 }) => {
   const inputType = `{
     request: Request;
@@ -541,34 +648,30 @@ const createRuntimeFetch = createGeneratedAssetResourceRuntime({
   runtimeAssets,
 });
 
-export const createGeneratedAssetResourceFetch = ({ request, fallback }: ${inputType}) =>
-  createRuntimeFetch({ request, fallback });
+export const createGeneratedAssetResourceFetch = ({ request, context, fallback }: ${inputType}) =>
+  createRuntimeFetch({ request, context, fallback });
 `;
 };
 
-type ContentRuntimeAsset = ReturnType<typeof toRuntimeAsset> & {
-  contentRef?: string;
-};
-
-export const materializeAssetIndex = async ({
+const materializeVerifiedAssetIndex = async ({
   index,
   runtimeAssets,
   includeDocumentRuntimeAssets,
+  includeContents,
   generatedDirectory,
   deploymentId,
 }: {
-  index: PublishedProjectBundle["assetIndex"];
-  runtimeAssets: Readonly<Record<string, ContentRuntimeAsset>>;
+  index: ContentArtifactV1 | undefined;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   includeDocumentRuntimeAssets: boolean;
+  includeContents?: boolean;
   generatedDirectory: string;
   deploymentId: string;
 }) => {
-  const verifiedIndex =
-    index === undefined ? undefined : await verifyContentArtifact(index);
   const runtimeIndex =
-    verifiedIndex === undefined
+    index === undefined
       ? undefined
-      : createContentRuntimeArtifact(verifiedIndex);
+      : createContentRuntimeArtifact(index, { includeContents });
   const serializedIndex =
     runtimeIndex === undefined
       ? undefined
@@ -581,9 +684,7 @@ export const materializeAssetIndex = async ({
           includeDocuments: includeDocumentRuntimeAssets,
         });
   const referencedAssetIds = new Set(
-    verifiedIndex === undefined
-      ? []
-      : getContentArtifactReferencedAssetIds(verifiedIndex)
+    index === undefined ? [] : getContentArtifactReferencedAssetIds(index)
   );
   const documentIds = new Set(
     runtimeIndex?.documentGraph?.nodes.map(({ id }) => id) ?? []
@@ -606,7 +707,7 @@ export const materializeAssetIndex = async ({
     })
   );
   const runtimePath = join(generatedDirectory, contentRuntimeFile);
-  if (index === undefined) {
+  if (runtimeIndex === undefined) {
     await rm(runtimePath, { force: true });
   } else {
     await cp(contentRuntimeBundleUrl, runtimePath);
@@ -632,6 +733,22 @@ export const assetQueryDatabase = ${serializedIndex};
     "utf8"
   );
 };
+
+export const materializeAssetIndex = async ({
+  index,
+  ...options
+}: {
+  index: PublishedProjectBundle["assetIndex"];
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+  includeDocumentRuntimeAssets: boolean;
+  includeContents?: boolean;
+  generatedDirectory: string;
+  deploymentId: string;
+}) =>
+  materializeVerifiedAssetIndex({
+    ...options,
+    index: index === undefined ? undefined : await verifyContentArtifact(index),
+  });
 
 const writeWsAuthResources = async (
   generatedDir: string,
@@ -856,6 +973,52 @@ export const prebuild = async (options: {
     }
   }
 
+  const loadedSiteData = await loadJSONFile<unknown>(LOCAL_DATA_FILE);
+
+  if (loadedSiteData === null) {
+    throw new Error(
+      `Project bundle is missing, please make sure the project is synced.`
+    );
+  }
+  const parsedSiteData =
+    historicalPublishedProjectBundle.safeParse(loadedSiteData);
+  if (parsedSiteData.success === false) {
+    throw Object.assign(
+      new Error(
+        `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(
+          parsedSiteData.error.issues,
+          loadedSiteData
+        )}`
+      ),
+      {
+        code: "PROJECT_BUNDLE_INVALID",
+        bundleVersion,
+        issues: getZodValidationIssues(parsedSiteData.error),
+      }
+    );
+  }
+  const siteData = parsedSiteData.data;
+  const pages = migratePages(siteData.build.pages);
+  const migratedInstances = new Map(siteData.build.instances);
+  // Saved Form identities may still need the deprecated Webhook Form migration.
+  migrateResourceFormInstancesMutable(
+    migratedInstances.values(),
+    hasHistoricalFormComponentIdentityVersion(siteData.build.pages)
+  );
+  const publicationBuild = { ...siteData.build, pages };
+  const allAssetIds = new Set(siteData.assets.map(({ id }) => id));
+  const allMdxAssetIds = getPublishedMdxAssetIds(siteData.assets);
+  if (
+    siteData.assetIndex === undefined &&
+    (createPublishedBuildContentCompilationPlan(publicationBuild) !==
+      undefined ||
+      hasDynamicPublishedMdxSources(publicationBuild))
+  ) {
+    throw new Error(
+      "Assets queries require a content database. Sync the project again before building."
+    );
+  }
+
   feedback.step("Scaffolding the project files");
 
   if (options.incremental !== true) {
@@ -864,6 +1027,9 @@ export const prebuild = async (options: {
 
   if (options.incremental !== true) {
     await rm(routesDir, { recursive: true, force: true });
+  }
+  if (options.incremental !== true) {
+    await rm(generatedCssDir, { recursive: true, force: true });
   }
 
   const generatedFiles = new Set<string>();
@@ -880,6 +1046,103 @@ export const prebuild = async (options: {
     return true;
   };
 
+  const managedFormResourceFetchFile = join(
+    generatedDir,
+    "$resources.managed-form-fetch.server.ts"
+  );
+  const isCloudflareTemplate = options.template.some((template) =>
+    ["cloudflare", "cloudflare-new", "react-router-cloudflare"].includes(
+      template
+    )
+  );
+  const evaluationReceiverPort =
+    process.env.WEBSTUDIO_FORM_EVALUATION_RECEIVER_PORT;
+  const evaluationTransport =
+    evaluationReceiverPort !== undefined &&
+    /^(?:[1-9][0-9]{0,4})$/.test(evaluationReceiverPort) &&
+    Number(evaluationReceiverPort) <= 65535 &&
+    isCloudflareTemplate === false
+      ? `const protectedFetch = createNodeProtectedResourceFetch({ deniedHostnames: getDeniedResourceHostnames([new URL(request.url).hostname, projectDomain]) });
+  const testFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const outgoing = new Request(input, init);
+    const url = new URL(outgoing.url);
+    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || [...url.searchParams.keys()].some((key) => key !== "slug" && key !== "tag") || url.hash !== "" || outgoing.method !== "POST") {
+      throw new Error("Unexpected evaluation Form destination");
+    }
+    protectedFetch.validateDestination(url);
+    return fetch(new Request("http://127.0.0.1:${evaluationReceiverPort}" + url.pathname + url.search, outgoing));
+  };
+  return Object.assign(testFetch, { validateDestination: (url: URL) => {
+    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || [...url.searchParams.keys()].some((key) => key !== "slug" && key !== "tag") || url.hash !== "") {
+      throw new Error("Unexpected evaluation Form destination");
+    }
+    protectedFetch.validateDestination(url);
+  } });`
+      : undefined;
+  await writeGeneratedFile(
+    managedFormResourceFetchFile,
+    isCloudflareTemplate
+      ? `import {
+  createCloudflareProtectedResourceFetch,
+} from "@webstudio-is/sdk/protected-resource-fetch";
+import { createCloudflareManagedFormEmailSender, createCloudflareManagedFormEmailSenderWithUrl, validateCloudflareManagedFormEmail } from "@webstudio-is/sdk/form/server";
+export const validateManagedFormEmail = validateCloudflareManagedFormEmail;
+export const createManagedFormEmailSender = ({ context, formData, projectId }: { context: unknown; formData: FormData; projectId: string }) => {
+  const env = (context as { cloudflare?: { env?: { EMAIL_SERVICE?: unknown; EMAIL_SERVICE_URL?: string; TRPC_SERVER_API_TOKEN?: string } } } | null)?.cloudflare?.env;
+  if (env?.EMAIL_SERVICE_URL !== undefined) {
+    return createCloudflareManagedFormEmailSenderWithUrl(env.EMAIL_SERVICE_URL, env.TRPC_SERVER_API_TOKEN, formData, projectId);
+  }
+  const binding = env?.EMAIL_SERVICE;
+  const service = binding !== null && typeof binding === "object" && "sendEmail" in binding && typeof binding.sendEmail === "function"
+    ? binding as Parameters<typeof createCloudflareManagedFormEmailSender>[0]
+    : undefined;
+  return createCloudflareManagedFormEmailSender(service, formData, projectId);
+};
+export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
+  void context;
+  return createCloudflareProtectedResourceFetch({
+    projectId: ${JSON.stringify(siteData.build.projectId)},
+    // The generated Cloudflare templates and hosted Worker use public fetch routing.
+    publicRouting: true,
+    ownZoneHostnames: [
+      new URL(request.url).hostname,
+      projectDomain,
+      ...${JSON.stringify(
+        siteData.build.deployment !== undefined &&
+          "domains" in siteData.build.deployment
+          ? siteData.build.deployment.domains
+          : []
+      )},
+    ].filter((hostname): hostname is string => hostname !== undefined) as [string, ...string[]],
+  });
+};
+`
+      : `${evaluationTransport === undefined ? "" : 'import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";\n'}import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
+export const createManagedFormEmailSender = (_input: { context: unknown; formData: FormData; projectId: string }) => undefined;
+export const validateManagedFormEmail = (_request: unknown, _formData: FormData) => undefined;
+export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
+  void context;
+  ${
+    evaluationTransport ??
+    `return createNodeProtectedResourceFetch({
+    projectId: ${JSON.stringify(siteData.build.projectId)},
+    matchSubdomains: false,
+    deniedHostnames: [
+      new URL(request.url).hostname,
+      projectDomain,
+      ...${JSON.stringify(
+        siteData.build.deployment !== undefined &&
+          "domains" in siteData.build.deployment
+          ? siteData.build.deployment.domains
+          : []
+      )},
+    ].filter((hostname): hostname is string => hostname !== undefined),
+  });`
+  }
+};
+`
+  );
+
   // force npm to install with not matching peer dependencies
   await writeFile(join(cwd(), ".npmrc"), npmrc);
 
@@ -895,8 +1158,9 @@ export const prebuild = async (options: {
     preserveTemplates: preserveRouteTemplates,
     templatesDirectory: join(buildRoot, routeTemplatesDirectory),
   };
+  const isStaticBuild = options.template.includes("ssg");
   let framework;
-  if (options.template.includes("ssg")) {
+  if (isStaticBuild) {
     framework = await createVikeSsgFramework(frameworkOptions);
   } else if (options.template.includes("react-router")) {
     framework = await createReactRouterFramework(frameworkOptions);
@@ -906,23 +1170,57 @@ export const prebuild = async (options: {
 
   const assetBaseUrl = await readAssetBaseUrl(join(cwd(), "app/constants.mjs"));
 
-  const loadedSiteData = await loadJSONFile<unknown>(LOCAL_DATA_FILE);
-
-  if (loadedSiteData === null) {
-    throw new Error(
-      `Project bundle is missing, please make sure the project is synced.`
-    );
+  let verifiedAssetIndex =
+    siteData.assetIndex === undefined
+      ? undefined
+      : await verifyContentArtifact(siteData.assetIndex);
+  if (
+    verifiedAssetIndex !== undefined &&
+    (options.previewIdentity === true || options.assets === true)
+  ) {
+    verifiedAssetIndex = await hydrateLocalMarkdownContents({
+      artifact: verifiedAssetIndex,
+      assets: siteData.assets,
+      assetsDirectory:
+        options.sourceAssetsDirectory ?? join(buildRoot, LOCAL_ASSETS_DIR),
+      // SSR only needs local MDX sources during component compilation. Its
+      // runtime reads article contents over HTTP, just like hosted sites.
+      includeMarkdown: isStaticBuild,
+    });
   }
-  const parsedSiteData = publishedProjectBundle.safeParse(loadedSiteData);
-  if (parsedSiteData.success === false) {
-    throw new Error(
-      `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(
-        parsedSiteData.error.issues,
-        loadedSiteData
-      )}`
-    );
+  let dynamicMdxCandidates: ReadonlyMap<string, readonly string[]> | undefined;
+  if (hasDynamicPublishedMdxSources(publicationBuild)) {
+    dynamicMdxCandidates = resolvePublishedMdxAssetCandidates({
+      build: publicationBuild,
+      artifact: verifiedAssetIndex,
+      allowUnresolved: true,
+      allAssetIds,
+      allMdxAssetIds,
+    });
+    for (const blockInstanceId of getDynamicPublishedMdxSourceBlockIds(
+      publicationBuild
+    )) {
+      if (dynamicMdxCandidates.has(blockInstanceId)) {
+        continue;
+      }
+      console.warn(
+        JSON.stringify({
+          type: "webstudio-build-warning",
+          feature: "content-block-mdx",
+          code: "invalid-mdx",
+          severity: "error",
+          blockInstanceId,
+          renderScope: `publication:block:${blockInstanceId}`,
+          message:
+            "The dynamic MDX source has no finite, discoverable Asset candidate set and was skipped.",
+        })
+      );
+    }
   }
-  const siteData = parsedSiteData.data;
+  const assetCompilationPlan = createPublishedBuildContentCompilationPlan(
+    publicationBuild,
+    dynamicMdxCandidates
+  );
   await configureSsgAssetResourceFetch({
     enabled: siteData.assetIndex !== undefined,
   });
@@ -930,18 +1228,19 @@ export const prebuild = async (options: {
   const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
   );
-  const pages = migratePages(siteData.build.pages);
   const publishablePages = getPublishablePages(pages);
   const generatedPages = options.includeDraftPages
     ? getAllPages(pages)
     : publishablePages;
-  const publishablePageIds = new Set(publishablePages.map((page) => page.id));
-  const assetSitemapPaths = new Set<string>();
   await writeWsAuthResources(
     generatedDir,
     pages,
     siteData.build.projectSettings,
     writeGeneratedFile
+  );
+  await writeGeneratedFile(
+    join(generatedDir, "$resources.headers.server.ts"),
+    generateResponseHeadersModule(siteData.build.projectSettings)
   );
   const siteDataByPage: SiteDataByPage = {};
   const fontAssetsByPage: Record<Page["id"], string[]> = {};
@@ -956,18 +1255,21 @@ export const prebuild = async (options: {
     pages,
     source: "prebuild",
   });
+  const normalizedPropsMap = new Map(
+    normalizedProps.map((prop) => [prop.id, prop])
+  );
 
   for (const page of generatedPages) {
-    const instanceMap = new Map(siteData.build.instances);
-    const pageInstanceSet = findTreeInstanceIds(
-      instanceMap,
-      page.rootInstanceId
-    );
+    const pageInstanceSet = findTreeInstanceIdsExcludingStaticHidden({
+      instances: migratedInstances,
+      props: normalizedPropsMap,
+      rootInstanceId: page.rootInstanceId,
+    });
     // support global data variables
     pageInstanceSet.add(ROOT_INSTANCE_ID);
     // collect used instances and metas
     const instances: [Instance["id"], Instance][] = [];
-    for (const [_instanceId, instance] of siteData.build.instances) {
+    for (const instance of migratedInstances.values()) {
       if (pageInstanceSet.has(instance.id)) {
         instances.push([instance.id, instance]);
         const meta = framework.metas[instance.component];
@@ -1017,59 +1319,371 @@ export const prebuild = async (options: {
       page,
       assets: siteData.assets,
     };
+  }
 
-    // Extract background SVGs and Font assets
-    const styleSourceSelections = siteData.build?.styleSourceSelections ?? [];
-    const pageStyleSourceIds = new Set(
-      styleSourceSelections
-        .filter(([, { instanceId }]) => pageInstanceSet.has(instanceId))
-        .map(([, { values }]) => values)
-        .flat()
+  const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
+  const getPublishedAssetUrl = (asset: Asset) => {
+    const runtimeAsset = toAssetReferenceRuntimeData(
+      asset,
+      "https://placeholder.local"
     );
+    return isPublishedDeployment(siteData.build.deployment) &&
+      options.assets === false
+      ? runtimeAsset.url
+      : `${assetBaseUrl}${asset.name}`;
+  };
+  const runtimeAssetsById = Object.fromEntries(
+    siteData.assets.map((asset) => {
+      const runtimeAsset = toAssetReferenceRuntimeData(
+        asset,
+        "https://placeholder.local"
+      );
+      return [
+        asset.id,
+        {
+          ...runtimeAsset,
+          contentRef: asset.name,
+          // Hosted deployments serve project assets through storage-backed
+          // proxies. Generated projects with downloaded assets serve them
+          // locally.
+          url: getPublishedAssetUrl(asset),
+        },
+      ];
+    })
+  );
+  const assetUrlsByPath = createAssetUrlsByPath({
+    assets: siteData.assets,
+    assetFolders: new Map(
+      (siteData.assetFolders ?? []).map((folder) => [folder.id, folder])
+    ),
+    getUrl: getPublishedAssetUrl,
+  });
+  const publishedInstances = new Map(siteData.build.instances);
+  const publishedProps = new Map(siteData.build.props);
+  const publishedStyleSources = new Map(siteData.build.styleSources);
+  const publishedStyleSourceSelections = new Map(
+    siteData.build.styleSourceSelections
+  );
+  const publishedStyles = new Map(siteData.build.styles);
+  const publishedBreakpoints = new Map(siteData.build.breakpoints);
+  if (verifiedAssetIndex !== undefined) {
+    const cache = createPublishedMdxMaterializationCache();
+    const mergeRecords = <Value>(
+      target: Map<string, Value>,
+      records: Iterable<readonly [string, Value]>,
+      namespace: string
+    ) => {
+      for (const [key, value] of records) {
+        const existing = target.get(key);
+        if (existing !== undefined && deepEqual(existing, value)) {
+          continue;
+        }
+        if (existing !== undefined) {
+          throw new Error(
+            `Published MDX ${namespace} collision for ${JSON.stringify(key)}`
+          );
+        }
+        target.set(key, value);
+      }
+    };
 
-    const pageStyles =
-      siteData.build?.styles
-        ?.filter(([, { styleSourceId }]) =>
-          pageStyleSourceIds.has(styleSourceId)
+    for (const page of generatedPages) {
+      const pageData = siteDataByPage[page.id];
+      const route = getPagePath(page.id, pages);
+      const pageInstances = new Map(pageData.build.instances);
+      const pageProps = new Map(pageData.build.props);
+      const materializationProps = new Map(
+        siteData.build.props.filter(([, prop]) =>
+          pageInstances.has(prop.instanceId)
         )
-        .map(([, style]) => style) ?? [];
+      );
+      const pageDataSources = new Map(pageData.build.dataSources);
+      const pageResources = new Map(pageData.build.resources);
+      const candidatesByBlock = new Map<string, PublishedContentBlock>();
+      const processedBlockIds = new Set<string>();
+      const queuedTreeRootIds = [page.rootInstanceId];
+      const discoveredTreeRootIds = new Set(queuedTreeRootIds);
 
-    // Extract fonts
-    const pageFontFamilies = collectFontFamiliesFromStyleDecls(pageStyles);
-
-    const pageFontAssets = siteData.assets
-      .filter((asset) => asset.type === "font")
-      .filter((fontAsset) => pageFontFamilies.has(fontAsset.meta.family))
-      .map((asset) => asset.name);
-
-    fontAssetsByPage[page.id] = pageFontAssets;
-
-    // Extract background images
-    // backgroundImage => "value.type=="layers" => value.type == "image" => .value (assetId)
-    const backgroundImageAssetIdSet = new Set(
-      pageStyles
-        .filter(({ property }) => property === "backgroundImage")
-        .map(({ value }) =>
-          value.type === "layers"
-            ? value.value.map((layer) =>
-                layer.type === "image"
-                  ? layer.value.type === "asset"
-                    ? layer.value.value
-                    : undefined
-                  : undefined
+      for (;;) {
+        const sourcesByBlockId = getContentBlockSources({
+          instances: pageInstances.values(),
+          props: materializationProps.values(),
+        });
+        const pendingBlockIds = new Set<string>();
+        for (const rootInstanceId of queuedTreeRootIds.splice(0)) {
+          for (const instanceId of findTreeInstanceIdsExcludingBlockTemplates(
+            pageInstances,
+            rootInstanceId
+          )) {
+            if (
+              processedBlockIds.has(instanceId) === false &&
+              pageInstances.get(instanceId)?.component === blockComponent &&
+              sourcesByBlockId.has(instanceId)
+            ) {
+              pendingBlockIds.add(instanceId);
+            }
+          }
+        }
+        if (pendingBlockIds.size === 0) {
+          break;
+        }
+        if (
+          processedBlockIds.size + pendingBlockIds.size >
+          contentEngineLimits.candidateDocuments
+        ) {
+          console.warn(
+            JSON.stringify({
+              type: "webstudio-build-warning",
+              feature: "content-block-mdx",
+              route,
+              code: "invalid-mdx",
+              severity: "error",
+              blockInstanceId: pendingBlockIds.values().next().value,
+              message:
+                "Published MDX Content Block count exceeds the safe limit",
+            })
+          );
+          break;
+        }
+        for (const blockId of pendingBlockIds) {
+          processedBlockIds.add(blockId);
+        }
+        const pageBuild = {
+          instances: Array.from(pageInstances.values()),
+          props: Array.from(materializationProps.values()),
+          dataSources: Array.from(pageDataSources.values()),
+          resources: Array.from(pageResources.values()),
+        };
+        const pageDynamicCandidates = hasDynamicPublishedMdxSources(
+          pageBuild,
+          pendingBlockIds
+        )
+          ? resolvePublishedMdxAssetCandidates({
+              build: pageBuild,
+              artifact: verifiedAssetIndex,
+              blockInstanceIds: pendingBlockIds,
+              allAssetIds,
+              allMdxAssetIds,
+            })
+          : undefined;
+        const materialized = await materializePublishedMdx({
+          route,
+          data: {
+            instances: pageInstances,
+            props: materializationProps,
+            dataSources: pageDataSources,
+            resources: pageResources,
+            styleSources: publishedStyleSources,
+            styleSourceSelections: publishedStyleSourceSelections,
+            styles: publishedStyles,
+            breakpoints: publishedBreakpoints,
+            assets,
+          },
+          artifact: verifiedAssetIndex,
+          metas: usedMetas,
+          projectId: siteData.build.projectId,
+          cache,
+          dynamicAssetIdsByBlock: pageDynamicCandidates,
+          blockInstanceIds: pendingBlockIds,
+          runtimeAssets: runtimeAssetsById,
+          loadDocumentSource: async ({ contentRef }) => {
+            const source = createReadStream(
+              getLocalAssetPath(
+                contentRef,
+                options.sourceAssetsDirectory ??
+                  join(buildRoot, LOCAL_ASSETS_DIR)
               )
-            : undefined
-        )
-        .flat()
-        .filter(<T>(value: T): value is NonNullable<T> => value !== undefined)
+            );
+            return decodeUtf8(
+              await readBoundedBytes(
+                source,
+                contentEngineLimits.hydratedFileBytes
+              )
+            );
+          },
+        });
+        for (const root of materialized.roots) {
+          const diagnostic = getUnsafeDynamicPublishedMdxDiagnostic({
+            root,
+            route,
+            dataSources: pageDataSources,
+            props: materializationProps,
+          });
+          if (diagnostic !== undefined) {
+            console.warn(
+              JSON.stringify({
+                type: "webstudio-build-warning",
+                feature: "content-block-mdx",
+                route,
+                ...diagnostic,
+              })
+            );
+            continue;
+          }
+          const fragmentData = createWebstudioDataFromFragment(root.fragment);
+          mergeRecords(pageInstances, fragmentData.instances, "instance");
+          mergeRecords(publishedInstances, fragmentData.instances, "instance");
+          for (const child of root.fragment.children) {
+            if (
+              child.type === "id" &&
+              discoveredTreeRootIds.has(child.value) === false
+            ) {
+              discoveredTreeRootIds.add(child.value);
+              queuedTreeRootIds.push(child.value);
+            }
+          }
+          mergeRecords(
+            materializationProps,
+            fragmentData.props,
+            "authored prop"
+          );
+          const normalizedFragmentProps = normalizeProps({
+            props: root.fragment.props,
+            assetBaseUrl,
+            assets,
+            uploadingImageAssets: [],
+            pages,
+            source: "prebuild",
+          });
+          const normalizedProps = normalizedFragmentProps.map(
+            (prop) => [prop.id, prop] as const
+          );
+          mergeRecords(pageProps, normalizedProps, "prop");
+          mergeRecords(publishedProps, normalizedProps, "prop");
+          mergeRecords(
+            pageDataSources,
+            fragmentData.dataSources,
+            "data source"
+          );
+          mergeRecords(pageResources, fragmentData.resources, "resource");
+          mergeRecords(
+            publishedStyleSources,
+            fragmentData.styleSources,
+            "style source"
+          );
+          mergeRecords(
+            publishedStyleSourceSelections,
+            fragmentData.styleSourceSelections,
+            "style source selection"
+          );
+          mergeRecords(
+            publishedStyles,
+            fragmentData.styles,
+            "style declaration"
+          );
+          mergeRecords(
+            publishedBreakpoints,
+            fragmentData.breakpoints,
+            "breakpoint"
+          );
+          const previous = candidatesByBlock.get(root.identity.blockInstanceId);
+          const blockInstance = pageInstances.get(
+            root.identity.blockInstanceId
+          );
+          const bodyInstanceId =
+            blockInstance === undefined
+              ? undefined
+              : findContentBlockBodyContainers({
+                  blockInstance,
+                  instances: pageInstances,
+                })[0]?.id;
+          candidatesByBlock.set(root.identity.blockInstanceId, {
+            ...(bodyInstanceId === undefined ? {} : { bodyInstanceId }),
+            ...(root.source.type === "expression"
+              ? { sourceExpression: root.source.value }
+              : {}),
+            candidates: [
+              ...(previous?.candidates ?? []),
+              {
+                assetId: root.identity.assetId,
+                dependencyRevision: root.dependencyRevision,
+                children: root.fragment.children,
+                frontmatter: root.resolvedFrontmatter,
+                resourceIds: root.fragment.resources.map(({ id }) => id),
+              },
+            ],
+          });
+        }
+        for (const warning of materialized.warnings) {
+          console.warn(
+            JSON.stringify({
+              type: "webstudio-build-warning",
+              feature: "content-block-mdx",
+              route: warning.route,
+              ...warning.diagnostic,
+            })
+          );
+          if (warning.diagnostic.severity === "error") {
+            throw new Error(warning.diagnostic.message);
+          }
+        }
+      }
+      pageData.build.instances = Array.from(pageInstances);
+      pageData.build.props = Array.from(pageProps);
+      pageData.build.dataSources = Array.from(pageDataSources);
+      pageData.build.resources = Array.from(pageResources);
+      pageData.publishedContentBlocks = candidatesByBlock;
+    }
+  }
+
+  for (const page of generatedPages) {
+    const pageInstances = new Map(siteDataByPage[page.id].build.instances);
+    const renderedIds = findTreeInstanceIdsExcludingBlockTemplates(
+      pageInstances,
+      page.rootInstanceId
     );
-
-    const backgroundImageAssets = siteData.assets
-      .filter((asset) => asset.type === "image")
-      .filter((imageAsset) => backgroundImageAssetIdSet.has(imageAsset.id))
+    for (const block of siteDataByPage[
+      page.id
+    ].publishedContentBlocks?.values() ?? []) {
+      if (block.sourceExpression !== undefined) {
+        continue;
+      }
+      for (const candidate of block.candidates) {
+        for (const child of candidate.children) {
+          if (child.type === "id") {
+            for (const instanceId of findTreeInstanceIdsExcludingBlockTemplates(
+              pageInstances,
+              child.value
+            )) {
+              renderedIds.add(instanceId);
+            }
+          }
+        }
+      }
+    }
+    const styleSourceIds = new Set(
+      Array.from(publishedStyleSourceSelections.values())
+        .filter(({ instanceId }) => renderedIds.has(instanceId))
+        .flatMap(({ values }) => values)
+    );
+    for (const source of publishedStyleSources.values()) {
+      if (source.type === "tag") {
+        styleSourceIds.add(source.id);
+      }
+    }
+    const pageStyles = Array.from(publishedStyles.values()).filter(
+      ({ styleSourceId }) => styleSourceIds.has(styleSourceId)
+    );
+    const fontFamilies = collectFontFamiliesFromStyleDecls(pageStyles);
+    fontAssetsByPage[page.id] = siteData.assets
+      .filter((asset) => asset.type === "font")
+      .filter((asset) => fontFamilies.has(asset.meta.family))
       .map((asset) => asset.name);
-
-    backgroundImageAssetsByPage[page.id] = backgroundImageAssets;
+    const backgroundImageAssetIds = new Set(
+      pageStyles.flatMap(({ property, value }) =>
+        property === "backgroundImage" && value.type === "layers"
+          ? value.value.flatMap((layer) =>
+              layer.type === "image" && layer.value.type === "asset"
+                ? [layer.value.value]
+                : []
+            )
+          : []
+      )
+    );
+    backgroundImageAssetsByPage[page.id] = siteData.assets
+      .filter((asset) => asset.type === "image")
+      .filter((asset) => backgroundImageAssetIds.has(asset.id))
+      .map((asset) => asset.name);
   }
 
   if (options.assets === true) {
@@ -1080,15 +1694,31 @@ export const prebuild = async (options: {
     }
   }
 
-  const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
-
-  const { cssText, classes } = generateCss({
-    instances: new Map(siteData.build.instances),
-    props: new Map(siteData.build.props),
+  const publishableStyles = new Map(publishedStyles);
+  for (const [key, style] of publishedStyles) {
+    if (parseGeneratedStyleDeclaration(style).errors.length === 0) {
+      continue;
+    }
+    publishableStyles.delete(key);
+    console.warn(
+      JSON.stringify({
+        type: "webstudio-build-warning",
+        code: "invalid-css-declaration",
+        severity: "warning",
+        styleSourceId: style.styleSourceId,
+        breakpointId: style.breakpointId,
+        property: style.property,
+      })
+    );
+  }
+  const cssConfig = {
+    instances: publishedInstances,
+    props: publishedProps,
     assets,
-    breakpoints: new Map(siteData.build?.breakpoints),
-    styles: new Map(siteData.build?.styles),
-    styleSourceSelections: new Map(siteData.build?.styleSourceSelections),
+    breakpoints: publishedBreakpoints,
+    styles: publishableStyles,
+    styleSources: publishedStyleSources,
+    styleSourceSelections: publishedStyleSourceSelections,
     // pass only used metas to not generate unused preset styles
     componentMetas: usedMetas,
     assetBaseUrl,
@@ -1096,9 +1726,34 @@ export const prebuild = async (options: {
       siteData.build.projectSettings?.compiler.atomicStyles ??
       pages.compiler?.atomicStyles ??
       true,
-  });
-
-  await writeGeneratedFile(join(generatedDir, "index.css"), cssText);
+  };
+  const { cssText, classes } = generateCss(cssConfig);
+  const canBuildCss = async (css: string) => {
+    try {
+      transformLightningCss({ filename: "index.css", code: Buffer.from(css) });
+      await transformCss(css, { loader: "css", minify: true });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  let generatedCss = cssText;
+  if ((await canBuildCss(cssText)) === false) {
+    const fallbackCss = generateCss({
+      ...cssConfig,
+      styles: new Map(),
+    }).cssText;
+    generatedCss = (await canBuildCss(fallbackCss)) ? fallbackCss : "";
+    console.warn(
+      JSON.stringify({
+        type: "webstudio-build-warning",
+        code: "invalid-generated-css",
+        severity: "warning",
+        fallback: generatedCss === "" ? "empty" : "presets-and-fonts",
+      })
+    );
+  }
+  await writeGeneratedFile(join(generatedDir, "index.css"), generatedCss);
 
   for (const page of generatedPages) {
     const scope = createScope([
@@ -1107,6 +1762,7 @@ export const prebuild = async (options: {
       "Fragment",
       "useResource",
       "useVariableState",
+      "formatManagedFormErrors",
       "Page",
       "_props",
     ]);
@@ -1193,9 +1849,13 @@ export const prebuild = async (options: {
     for (const contribution of componentBuildContributions.values()) {
       for (const buildImport of contribution.imports) {
         if (buildImport.imported === undefined) {
-          importsString += `import ${buildImport.local} from ${JSON.stringify(buildImport.source)};\n`;
+          importsString += `import ${buildImport.local} from ${JSON.stringify(
+            buildImport.source
+          )};\n`;
         } else {
-          importsString += `import { ${buildImport.imported} as ${buildImport.local} } from ${JSON.stringify(buildImport.source)};\n`;
+          importsString += `import { ${buildImport.imported} as ${
+            buildImport.local
+          } } from ${JSON.stringify(buildImport.source)};\n`;
         }
       }
       componentBuildDeclarations.push(...contribution.declarations);
@@ -1207,12 +1867,47 @@ export const prebuild = async (options: {
 
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
+    // Deprecated Webhook Form-only conversion of saved action props.
     replaceFormActionsWithResources({
       instances,
       resources,
       props,
     });
-    const pageComponent = generateWebstudioComponent({
+    const formInstances = Array.from(instances.values());
+    const managedFormSubmissions = formInstances
+      .filter((instance) => instance.component === "ResourceForm")
+      .map((instance) => {
+        const actionProp = Array.from(props.values())
+          .filter(
+            (prop) => prop.instanceId === instance.id && prop.name === "action"
+          )
+          .at(-1);
+        const action =
+          actionProp?.type === "json" ? actionProp.value : undefined;
+        const resourceIds = isFormSubmission(action)
+          ? getFormActions(action).map((id) => {
+              const dataSource = dataSources.get(id);
+              return dataSource?.type === "resource" &&
+                resources.has(dataSource.resourceId)
+                ? dataSource.resourceId
+                : null;
+            })
+          : [];
+        return [instance.id, { action, resourceIds }] as const;
+      });
+    const managedFormResourceSelections = managedFormSubmissions.map(
+      ([formId, { action }]) => ({
+        formId,
+        destinationDataSourceIds: isFormSubmission(action)
+          ? getFormActions(action)
+          : [],
+      })
+    );
+    const usedRuntimeHelpers = new Set<
+      "renderText" | "formatManagedFormErrors"
+    >();
+    const pageComponent = generateManagedFormComponent({
+      usedRuntimeHelpers,
       scope,
       name: "Page",
       rootInstanceId,
@@ -1234,13 +1929,17 @@ export const prebuild = async (options: {
       ],
       instances,
       props,
+      resources,
       dataSources,
       classesMap: classes,
       metas: usedMetas,
       tagsOverrides: framework.tags,
+      publishedContentBlocks: pageData.publishedContentBlocks,
     });
 
     const projectMeta = siteData.build.projectSettings?.meta ?? pages.meta;
+    // The generated contactEmail export serves only saved Webhook Forms.
+    // projectMeta.contactEmail itself also serves managed Email Resources.
     const contactEmail: undefined | string =
       // fallback to user email when contact email is empty string
       projectMeta?.contactEmail || siteData.user?.email || undefined;
@@ -1262,11 +1961,19 @@ export const prebuild = async (options: {
 
       import { Fragment, useState } from "react";
       import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-      ${importsString}${componentBuildSetupString}
+      ${
+        usedRuntimeHelpers.has("formatManagedFormErrors")
+          ? 'import { formatManagedFormErrors } from "@webstudio-is/sdk";\n'
+          : ""
+      }${importsString}${componentBuildSetupString}
 
       export const projectId = "${siteData.build.projectId}";
 
-      ${pagePath === "/" ? `export const projectVersion = ${siteData.build.version};` : ""}
+      ${
+        pagePath === "/"
+          ? `export const projectVersion = ${siteData.build.version};`
+          : ""
+      }
 
       export const projectDomain = ${JSON.stringify(siteData.projectDomain)};
 
@@ -1330,12 +2037,44 @@ export const prebuild = async (options: {
       /* This is a auto generated file for building the project */ \n
 
       import type { PageMeta } from "@webstudio-is/sdk";
-      ${generateResources({
+      import { toWebstudioParams } from "@webstudio-is/react-sdk";
+      ${generatePageResources({
         scope,
-        page,
+        // XML generation removes the body wrapper from the instance map.
+        page: { ...page, rootInstanceId },
         dataSources,
         props,
         resources,
+        instances,
+        contentBlockResourceSelections: Array.from(
+          pageData.publishedContentBlocks?.values() ?? []
+        ).flatMap((block) =>
+          block.sourceExpression === undefined
+            ? []
+            : [
+                {
+                  sourceExpression: block.sourceExpression,
+                  candidates: block.candidates.map(
+                    ({ assetId, resourceIds = [] }) => ({
+                      assetId,
+                      resourceIds,
+                    })
+                  ),
+                },
+              ]
+        ),
+      })}
+
+      ${generateManagedFormResources({
+        scope,
+        systemDataSourceId: page.systemDataSourceId,
+        instances,
+        dataSources,
+        resources,
+        forms: managedFormResourceSelections,
+        projectMeta,
+        props,
+        ownerEmail: siteData.user?.email ?? undefined,
       })}
 
       ${generatePageMeta({
@@ -1347,6 +2086,12 @@ export const prebuild = async (options: {
 
       ${generateRemixParams(page.path)}
 
+      export const getManagedFormSubmissions = () =>
+        new Map<string, { action: unknown; resourceIds: (string | null)[] }>(
+          ${JSON.stringify(managedFormSubmissions)}
+        );
+
+      /** @deprecated Generated only for saved Webhook Forms. */
       export const contactEmail = ${JSON.stringify(contactEmail)};
     `;
 
@@ -1365,21 +2110,13 @@ export const prebuild = async (options: {
       index: siteData.assetIndex,
       requireCompleteEnumeration: options.template.includes("ssg"),
     });
-    if (publishablePageIds.has(page.id) && isPageEligibleForSitemap(page)) {
-      for (const path of prerenderPaths) {
-        assetSitemapPaths.add(path);
-      }
-    }
     for (const { file, template } of getTemplates({
       pagePath,
       prerenderPaths,
     })) {
       const content = template
         .replaceAll("__CONSTANTS__", importFrom("./app/constants.mjs", file))
-        .replaceAll(
-          "__SITEMAP__",
-          importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
-        )
+        .replaceAll("__SITEMAP__", importFrom(sitemapModule, file))
         .replaceAll(
           "__ASSETS__",
           importFrom(`./app/__generated__/$resources.assets`, file)
@@ -1394,6 +2131,13 @@ export const prebuild = async (options: {
         .replaceAll(
           "__ASSET_QUERY_RUNTIME__",
           importFrom(`./app/__generated__/$resources.asset-query-runtime`, file)
+        )
+        .replaceAll(
+          "__MANAGED_FORM_FETCH__",
+          importFrom(
+            "./app/__generated__/$resources.managed-form-fetch.server",
+            file
+          )
         )
         .replaceAll(
           "__ASSET_RESOURCE_FETCH__",
@@ -1417,70 +2161,84 @@ export const prebuild = async (options: {
         );
       await writeGeneratedFile(file, content);
     }
+    if (
+      isStaticBuild === false &&
+      documentType === "html" &&
+      managedFormSubmissions.length > 0
+    ) {
+      for (const authoredPage of generatedPages) {
+        const path = getPagePath(authoredPage.id, pages);
+        const lowerPath = path.toLowerCase();
+        if (
+          lowerPath === managedFormEndpointPrefix ||
+          lowerPath.startsWith(`${managedFormEndpointPrefix}/`)
+        ) {
+          throw new Error(
+            `Page path ${path} uses the reserved Form endpoint ${managedFormEndpointPrefix}`
+          );
+        }
+      }
+      const endpointRoute = generateRemixRoute(
+        pagePath === "/"
+          ? managedFormEndpointPrefix
+          : `${managedFormEndpointPrefix}${pagePath}`
+      );
+      const endpointFile = join(routesDir, `${endpointRoute}.tsx`);
+      await writeGeneratedFile(
+        endpointFile,
+        `import { action as pageAction } from "./${generatedBasename}";
+
+export const action = async (args: Parameters<typeof pageAction>[0]) => {
+  const url = new URL(args.request.url);
+  url.pathname = url.pathname.slice(${managedFormEndpointPrefix.length}) || "/";
+  url.searchParams.set(${JSON.stringify(managedFormRequestParamName)}, "1");
+  const request = new Request(url, args.request);
+  const result = await pageAction({ ...args, request });
+  return Response.json(result, { status: "status" in result ? result.status : 200 });
+};
+`
+      );
+    }
   }
 
   // MARK: - Default sitemap.xml
-  for (const { file, template } of framework.defaultSitemap()) {
-    const content = template.replaceAll(
-      "__SITEMAP__",
-      importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
-    );
-    await writeGeneratedFile(file, content);
+  if (
+    generatedPages.some(
+      (page) => getPagePath(page.id, pages) === "/sitemap.xml"
+    ) === false
+  ) {
+    for (const { file, template } of framework.defaultSitemap()) {
+      const content = template.replaceAll(
+        "__SITEMAP__",
+        importFrom(sitemapModule, file)
+      );
+      await writeGeneratedFile(file, content);
+    }
   }
 
   const sitemap = getStaticSiteMapXml(pages, siteData.build.updatedAt);
-  const sitemapPaths = new Set(sitemap.map(({ path }) => path));
-  for (const path of [...assetSitemapPaths].sort()) {
-    if (sitemapPaths.has(path)) {
-      continue;
-    }
-    sitemapPaths.add(path);
-    sitemap.push({
-      path,
-      lastModified: siteData.build.updatedAt.split("T")[0],
-    });
-  }
   await writeGeneratedFile(
-    join(generatedDir, "$resources.sitemap.xml.ts"),
+    `${sitemapModule}.ts`,
     `
-      export const sitemap = ${JSON.stringify(sitemap, null, 2)};
+      export const sitemap: Array<{ path: string; lastModified: string }> = ${JSON.stringify(
+        sitemap,
+        null,
+        2
+      )};
     `
   );
 
-  // Generate assets resource file.
-  // Use a placeholder origin to preserve runtime metadata before overriding the
-  // builder-only URL with the generated project's local asset URL.
-  const assetsById = Object.fromEntries(
-    siteData.assets.map((asset) => {
-      const runtimeAsset = toRuntimeAsset(asset, "https://placeholder.local");
-      return [
-        asset.id,
-        {
-          ...runtimeAsset,
-          contentRef: asset.name,
-          // SaaS serves project assets through its storage-backed proxy.
-          // Generated projects with downloaded assets serve them locally.
-          url:
-            siteData.build.deployment?.destination === "saas" &&
-            options.assets === false
-              ? new URL(runtimeAsset.url, siteData.origin).href
-              : `${assetBaseUrl}${asset.name}`,
-        },
-      ];
-    })
-  );
-  const assetCompilationPlan = createReachableAssetContentCompilationPlan({
-    props: siteData.build.props.map(([, prop]) => prop),
-    dataSources: siteData.build.dataSources.map(([, dataSource]) => dataSource),
-    resources: siteData.build.resources.map(([, resource]) => resource),
-  });
-
-  await materializeAssetIndex({
-    index: siteData.assetIndex,
-    runtimeAssets: assetsById,
+  // Generate assets resource file. The same deployment URLs are used above
+  // when resolving MDX frontmatter into generated component bindings.
+  await materializeVerifiedAssetIndex({
+    index: verifiedAssetIndex,
+    runtimeAssets: runtimeAssetsById,
     includeDocumentRuntimeAssets:
       assetCompilationPlan !== undefined &&
       requiresRuntimeDocumentData(assetCompilationPlan),
+    // Only static prerendering consumes embedded source files. Both local
+    // and hosted SSR use the same HTTP content loader and serve assets.
+    includeContents: isStaticBuild,
     generatedDirectory: generatedDir,
     deploymentId: siteData.build.id,
   });
@@ -1501,13 +2259,18 @@ export const prebuild = async (options: {
   await writeGeneratedFile(
     join(generatedDir, "$resources.assets.ts"),
     `
-    export const assets = ${JSON.stringify(assetsById, null, 2)};
+    export const assets = ${JSON.stringify(runtimeAssetsById, null, 2)};
+    export const assetUrlsByPath = ${JSON.stringify(assetUrlsByPath, null, 2)};
     `
   );
 
   await writeGeneratedFile(
     join(generatedDir, "$resources.redirects.ts"),
     generateRedirectsModule(pages.redirects)
+  );
+  await writeGeneratedFile(
+    join(generatedDir, "$resources.has-redirects.ts"),
+    `export const hasRedirects = ${Boolean(pages.redirects?.length)};`
   );
 
   const redirectFallbackPath = join(routesDir, "$.tsx");

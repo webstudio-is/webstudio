@@ -1,4 +1,4 @@
-import type { Locator, Page } from "playwright";
+import type { Locator, Page } from "@playwright/test";
 
 export const expectLocatorHidden = async ({
   locator,

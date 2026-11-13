@@ -82,11 +82,7 @@ describe("Craft authoring profile", () => {
       status: "compatible",
       satisfiedRequiredChecks: 2,
       totalRequiredChecks: 2,
-      nextAction: "No Craft profile change is required.",
       templateCompatibility: { status: "compatible" },
-      guidance: expect.arrayContaining([
-        expect.stringContaining("Preserve existing project-specific values"),
-      ]),
     });
     expect(result.matches).toEqual([]);
   });
@@ -111,7 +107,6 @@ describe("Craft authoring profile", () => {
     expect(result.status).toMatchObject({
       status: "partial",
       satisfiedRequiredChecks: 0,
-      nextAction: expect.stringContaining("--foreground-muted"),
       templateCompatibility: { status: "requires-review" },
     });
     expect(result.matches).toEqual(

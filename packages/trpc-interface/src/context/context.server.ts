@@ -79,10 +79,12 @@ type ApiClientContext =
   | {
       type: ApiClient;
       version: string | undefined;
+      contractVersion?: string;
     }
   | {
       type: "unknown";
       version: undefined;
+      contractVersion?: undefined;
     };
 
 /**

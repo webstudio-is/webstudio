@@ -44,7 +44,7 @@ Similar to a static page, the path includes dynamic parameters, like a post slug
 
 Adding parameters to a page path will automatically turn the page into a Dynamic Page.
 
-The path can include dynamic parameters like `:name`, which could be made optional using `:name?`, or have a wildcard such as `/*` or `/:name*` to store the whole remaining part at the end of the URL.
+Use a [path pattern](path-patterns.md) to define which URLs use the Dynamic Page. For example, `/post/:slug` provides the value of `slug` from the URL.
 
 The value of the parameter comes from whatever is in the URL. If the path is `/post/:slug` and somebody views `/post/hello-world` then `hello-world` is the value used in your Resource.
 
@@ -52,9 +52,10 @@ The value of the parameter comes from whatever is in the URL. If the path is `/p
 
 The Address Bar enables previewing Dynamic Pages in the editor by entering parameter value(s).
 
-For the Dynamic Path `/post/:slug`, you would enter a slug value that exists in the CMS, such as `hello-world`.
+For the Dynamic Path `/post/:slug`, you would enter a slug value that exists in the CMS, such as `hello-world`. The screenshot uses a separate demo path and the same slug value.
 
-<figure><img src="../../.gitbook/assets/address-bar.png" alt="Address Bar with hello-world"><figcaption><p>Entering "hello-world" as a test value</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/address-bar-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/address-bar-light.png" alt="Address bar previewing the dynamic hello-world slug on a demo page" width="550"></picture><figcaption><p>Entering hello-world as a test value on a demo page</p></figcaption></figure>
+
 
 {% hint style="danger" %}
 The static part of the URL (in this case, `/post/`) is already in the Address Bar and should not be included when adding the test value.
@@ -120,9 +121,7 @@ While we do our best to verify the supported features, we may make mistakes in o
 
 While most CMS field types seamlessly map to Webstudio components (e.g., Plain Text → Heading), rich text may not, depending on how the CMS stores/delivers it.
 
-**Currently, Webstudio supports rich text if it's delivered in HTML or Markdown format.** In the future, we will support rich text regardless of the format delivered by adding conversion libraries for each CMS's flavor of rich text. For example, we'll automatically convert AST to HTML. Refer to [this issue](https://github.com/webstudio-is/webstudio/issues/3398) for more information.
-
-In the meantime, advanced users can set up a proxy on Cloudflare Workers to convert rich text to HTML. However, this is outside the scope of Webstudio's support.
+Webstudio renders rich text delivered as HTML or Markdown. If a CMS returns a proprietary AST or another structured rich-text format, convert it to HTML or Markdown before binding it in Webstudio. This conversion can happen in the CMS, its API layer, or a proxy.
 
 Rich text in the form of HTML can be bound to the [Content Embed Component](../core-components/content-embed.md), and Markdown can be bound to the [Markdown Embed Component](../core-components/markdown-embed.md).
 
@@ -142,7 +141,8 @@ cmsData.data[0].id ? 200 : 404;
 
 This example looks for the ID of a record. If it's there, output `200` (found!) otherwise `404` (not found).
 
-<figure><img src="../../.gitbook/assets/cms-dynamic-404-status-code.png" alt="Status Code field in Page Settings with expression bound"><figcaption><p>Binding an expression to the Status Code field in Page Settings</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/cms-dynamic-404-status-code-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/cms-dynamic-404-status-code-light.png" alt="Page status code bound to the demo post ID: 200 when found, 404 otherwise" width="690"></picture><figcaption><p>Binding an expression to the status code</p></figcaption></figure>
+
 
 {% hint style="info" %}
 The exact key to look for will depend on your CMS, but think of something that will always be there if the post/record is found (slug, ID, title).
@@ -158,7 +158,8 @@ Add a component (e.g. a Box) to the page that contains your 404 message. Set its
 
 When this evaluates to `true`, the 404 content is shown.
 
-<figure><img src="../../.gitbook/assets/cms-dynamic-404-show-404-content.png" alt="Box component with Show condition set to !cmsData.data[0].id"><figcaption><p>Setting the Show condition on the 404 content Box</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/cms-dynamic-404-show-404-content-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/cms-dynamic-404-show-404-content-light.png" alt="404 content Show condition bound to the absence of the demo post ID" width="295"></picture><figcaption><p>Setting the Show condition on the 404 content</p></figcaption></figure>
+
 
 {% hint style="info" %}
 To reuse an existing custom 404 page design without rebuilding it, [add a Slot](../core-components/slot.md) and select your 404 page's content as the slot source. This keeps the 404 UI in one place and lets you reuse it across any dynamic page.
@@ -174,7 +175,8 @@ cmsData.data[0].id;
 
 This hides the regular content when there is no data, avoiding an empty-looking page.
 
-<figure><img src="../../.gitbook/assets/cms-dynamic-404-show-regular-content.png" alt="Box component with Show condition set to cmsData.data[0].id"><figcaption><p>Setting the Show condition on the regular content Box</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/cms-dynamic-404-show-regular-content-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/cms-dynamic-404-show-regular-content-light.png" alt="Regular content Show condition bound to the demo post ID" width="295"></picture><figcaption><p>Setting the Show condition on regular content</p></figcaption></figure>
+
 
 ## Alternative: redirect instead of showing 404 content
 
@@ -192,7 +194,7 @@ This approach is simpler — no need to conditionally show/hide content — but 
 
 - [Webstudio CMS](https://webstudio.is/cms) – Learn more about CMS capabilities in Webstudio
 - [Headless CMS Finder](https://webstudio.is/tools/headless-cms-finder) – Compare and find the right headless CMS
-- [Data variables](variables.md) – Define Resources to fetch CMS data
+- [Variables](variables.md) – Define Resources to fetch CMS data
 - [Expression editor](expression-editor.md) – Bind CMS data to components
 - [Collection](../core-components/collection.md) – Iterate over CMS data to create lists
 - [Content Embed](../core-components/content-embed.md) – Display rich text HTML from your CMS

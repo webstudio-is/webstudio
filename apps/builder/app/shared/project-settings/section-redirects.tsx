@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
   Combobox,
@@ -11,10 +12,10 @@ import {
   Flex,
   Grid,
   InputErrorsTooltip,
+  InfoTooltip,
   Link,
   List,
   ListItem,
-  rawTheme,
   ScrollArea,
   SearchField,
   Select,
@@ -22,11 +23,11 @@ import {
   Text,
   theme,
   Tooltip,
+  cssVar,
 } from "@webstudio-is/design-system";
 import {
   AlertIcon,
   ArrowRightIcon,
-  InfoCircleIcon,
   TrashIcon,
   UploadIcon,
 } from "@webstudio-is/icons";
@@ -46,6 +47,7 @@ import {
   validateRedirectSource,
   validateRedirectTarget,
 } from "@webstudio-is/project-build/runtime";
+import { ProjectSettingsDataRow } from "./data-row";
 
 const statusCodeOptions = ["301", "302"] as const;
 
@@ -68,9 +70,8 @@ export const __testing__ = {
 
 export const SectionRedirects = () => {
   const publishedOrigin = useStore($publishedOrigin);
-  const [redirects, setRedirects] = useState(
-    () => $pages.get()?.redirects ?? []
-  );
+  const pages = useStore($pages);
+  const redirects = pages?.redirects ?? [];
 
   const [fromPath, setFromPath] = useState<string>("");
   const [toPath, setToPath] = useState<string>("");
@@ -82,7 +83,6 @@ export const SectionRedirects = () => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
   const fromPathRef = useRef<HTMLInputElement>(null);
 
@@ -125,7 +125,6 @@ export const SectionRedirects = () => {
   };
 
   const handleSave = (redirects: Array<PageRedirect>) => {
-    setRedirects(redirects);
     executeRuntimeMutation({
       id: "redirects.setAll",
       input: {
@@ -212,8 +211,8 @@ export const SectionRedirects = () => {
       <Grid gap={3} css={sectionSpacing}>
         <Flex gap={1} align="center">
           <Text variant="titles">Redirects</Text>
-          <Tooltip
-            variant="wrapped"
+          <InfoTooltip
+            label="About redirects"
             content={
               <Flex direction="column" gap="2">
                 <Text>
@@ -229,12 +228,7 @@ export const SectionRedirects = () => {
                 </Flex>
               </Flex>
             }
-          >
-            <InfoCircleIcon
-              color={rawTheme.colors.foregroundSubtle}
-              tabIndex={0}
-            />
-          </Tooltip>
+          />
         </Flex>
 
         <Flex gap="2" justify="between">
@@ -270,13 +264,13 @@ export const SectionRedirects = () => {
         >
           <DialogContent>
             <DialogTitle>Delete all redirects</DialogTitle>
-            <Flex css={{ padding: theme.panel.padding }}>
+            <PanelContent as={Flex}>
               <Text>
                 Are you sure you want to delete all {redirects.length} redirect
                 {redirects.length !== 1 ? "s" : ""}? This action cannot be
                 undone.
               </Text>
-            </Flex>
+            </PanelContent>
             <DialogActions>
               <Button color="destructive" onClick={handleDeleteAll}>
                 Delete all
@@ -348,6 +342,7 @@ export const SectionRedirects = () => {
           </InputErrorsTooltip>
 
           <Button
+            color="primary"
             disabled={isValidRedirects === false || fromPath === toPath}
             onClick={handleAddRedirect}
             css={{ flexShrink: 0 }}
@@ -358,7 +353,7 @@ export const SectionRedirects = () => {
         {fromPathWarnings.length > 0 && (
           <Flex gap="1" align="center">
             <AlertIcon
-              color={rawTheme.colors.backgroundAlertMain}
+              color={cssVar("--foreground-warning")}
               style={{ flexShrink: 0 }}
             />
             <Text color="subtle">{fromPathWarnings.join(". ")}</Text>
@@ -373,27 +368,11 @@ export const SectionRedirects = () => {
                 {filteredRedirects.map((redirect) => {
                   return (
                     <ListItem asChild key={redirect.old}>
-                      <Grid
+                      <ProjectSettingsDataRow
                         align="center"
                         gap="2"
                         css={{
-                          p: theme.spacing[3],
-                          overflow: "hidden",
                           gridTemplateColumns: `1fr auto auto 1fr`,
-                          position: "relative",
-                          "& > button": {
-                            opacity: 0,
-                            position: "absolute",
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                            height: "auto",
-                            borderRadius: 0,
-                            background: theme.colors.backgroundPanel,
-                          },
-                          "&:hover > button, &:focus-within > button": {
-                            opacity: 1,
-                          },
                         }}
                       >
                         <Tooltip content={redirect.old}>
@@ -438,7 +417,7 @@ export const SectionRedirects = () => {
                           aria-label={`Delete redirect from ${redirect.old}`}
                           onClick={() => handleDeleteRedirect(redirect)}
                         />
-                      </Grid>
+                      </ProjectSettingsDataRow>
                     </ListItem>
                   );
                 })}

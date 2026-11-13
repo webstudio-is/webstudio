@@ -5,7 +5,7 @@ import {
   useRef,
   useLayoutEffect,
 } from "react";
-import { css, theme } from "../stitches.config";
+import { theme } from "../stitches.config";
 import {
   Dialog,
   DialogTitleActions,
@@ -111,7 +111,7 @@ const contentFitsAtPosition = (
 type FloatingPanelProps = {
   title?: ReactNode;
   content: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   titleSuffix?: ReactNode;
   maximizable?: boolean;
   resize?: ComponentProps<typeof Dialog>["resize"];
@@ -125,15 +125,12 @@ type FloatingPanelProps = {
   anchor?: "container" | "trigger";
   offset?: OffsetOptions;
   open?: boolean;
+  modal?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
   /** When false, the panel won't close when clicking outside it. */
   closeOnInteractOutside?: boolean;
+  onInteractOutside?: ComponentProps<typeof DialogContent>["onInteractOutside"];
 };
-
-const contentStyle = css({
-  width: theme.sizes.sidebarWidth,
-  overflow: "auto",
-});
 
 const defaultOffset: OffsetOptions = { mainAxis: 0, crossAxis: 0 };
 
@@ -150,8 +147,10 @@ export const FloatingPanel = ({
   anchor = "container",
   offset: offsetProp = defaultOffset,
   open: openProp,
+  modal = false,
   onOpenChange,
   closeOnInteractOutside = true,
+  onInteractOutside,
 }: FloatingPanelProps) => {
   // Support both controlled and uncontrolled modes
   const [internalOpen, setInternalOpen] = useState(false);
@@ -166,14 +165,8 @@ export const FloatingPanel = ({
   const maxHeightRef = useRef<number | undefined>();
   const containerRef = useRef<HTMLElement | null>(null);
 
-  // Wrap onOpenChange to reset position when panel closes
+  // Controlled dialogs may reject a close request while validation is pending.
   const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen === false) {
-      currentPositionRef.current = undefined;
-      setPosition(undefined);
-      maxHeightRef.current = undefined;
-      containerRef.current = null;
-    }
     // Update internal state if uncontrolled
     if (openProp === undefined) {
       setInternalOpen(isOpen);
@@ -192,16 +185,19 @@ export const FloatingPanel = ({
   }, [open]);
 
   useLayoutEffect(() => {
+    const reference = triggerRef.current;
     // Find container when trigger is available and panel is opening
-    if (triggerRef.current && open && !containerRef.current) {
-      const container = triggerRef.current.closest(
-        "[data-floating-panel-container]"
+    if (reference && open && !containerRef.current) {
+      // Nested panels are portalled outside the original container. Anchor them
+      // to the parent dialog instead of leaving them screen-centered.
+      const container = reference.closest(
+        '[data-floating-panel-container], [role="dialog"]'
       ) as HTMLElement | null;
       containerRef.current = container;
     }
 
     if (
-      triggerRef.current === null ||
+      reference === null ||
       containerRef.current === null ||
       contentElement === null ||
       // When centering the dialog, we don't need to calculate the position
@@ -219,7 +215,7 @@ export const FloatingPanel = ({
 
     const updatePosition = () => {
       if (
-        triggerRef.current === null ||
+        reference === null ||
         containerRef.current === null ||
         contentElement === null
       ) {
@@ -229,7 +225,7 @@ export const FloatingPanel = ({
       // Set initial position once when panel opens
       if (!currentPositionRef.current) {
         const { x, y } = computeFloatingPosition(
-          triggerRef.current,
+          reference,
           contentElement,
           containerRef.current,
           placement,
@@ -260,7 +256,7 @@ export const FloatingPanel = ({
         return;
       }
       const { x, y } = computeFloatingPosition(
-        triggerRef.current,
+        reference,
         contentElement,
         containerRef.current,
         placement,
@@ -306,14 +302,17 @@ export const FloatingPanel = ({
       draggable
       resize={resize}
       open={open}
-      modal={false}
+      modal={modal}
       onOpenChange={handleOpenChange}
     >
-      <DialogTrigger asChild ref={triggerRef}>
-        {children}
-      </DialogTrigger>
+      {children !== undefined && (
+        <DialogTrigger asChild ref={triggerRef}>
+          {children}
+        </DialogTrigger>
+      )}
       <DialogContent
-        className={contentStyle()}
+        data-floating-panel
+        css={{ width: theme.sizes.sidebarWidth, overflow: "auto" }}
         width={width}
         height={height}
         {...position}
@@ -323,6 +322,7 @@ export const FloatingPanel = ({
         aria-describedby={undefined}
         ref={setContentElement}
         onInteractOutside={(event) => {
+          onInteractOutside?.(event);
           // When a dialog is centered, we don't want to close it when clicking outside
           // This allows having inline and left positioned dialogs open at the same time as a centered dialog,
           // while not allowing having multiple non-center positioned dialogs open at the same time.

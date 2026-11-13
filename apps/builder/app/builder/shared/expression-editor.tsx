@@ -1,4 +1,10 @@
-import { useEffect, useMemo, type RefObject } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  type RefObject,
+} from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
 import { Facet, RangeSetBuilder } from "@codemirror/state";
@@ -9,7 +15,6 @@ import {
   WidgetType,
   ViewPlugin,
   keymap,
-  lineNumbers,
   EditorView,
   tooltips,
 } from "@codemirror/view";
@@ -19,6 +24,7 @@ import {
   type Completion,
   type CompletionSource,
   autocompletion,
+  acceptCompletion,
   closeBrackets,
   closeBracketsKeymap,
   completionKeymap,
@@ -27,7 +33,7 @@ import {
   pickedCompletion,
 } from "@codemirror/autocomplete";
 import { javascript } from "@codemirror/lang-javascript";
-import { textVariants, css, rawTheme } from "@webstudio-is/design-system";
+import { css, cssVar } from "@webstudio-is/design-system";
 import {
   lintExpression,
   allowedStringMethods,
@@ -43,6 +49,7 @@ import {
   type EditorApi,
   foldGutterExtension,
   getCodeEditorCssVars,
+  linterTooltipTheme,
   normalizeEditorValue,
 } from "~/shared/code-editor-base";
 import {
@@ -99,10 +106,16 @@ export const formatValuePreview = (value: unknown) => {
 
 type Scope = Record<string, unknown>;
 
+/** Allows an editor owner to supply examples without changing actual values. */
+export const ExpressionCompletionScopeContext = createContext<
+  ((scope: Scope) => Scope | undefined) | undefined
+>(undefined);
+
 type Aliases = Map<string, string>;
 
 const VariablesData = Facet.define<{
   scope: Scope;
+  completionScope: Scope;
   aliases: Aliases;
 }>();
 
@@ -378,12 +391,12 @@ export const getCompletionReplacement = ({
 // object (for example `globalThis`). Will enter properties
 // of the object when completing properties on a directly-named path.
 const scopeCompletionSource: CompletionSource = (context) => {
-  const [{ scope }] = context.state.facet(VariablesData);
+  const [{ completionScope }] = context.state.facet(VariablesData);
   const path = completionPath(context);
   if (path === undefined) {
     return null;
   }
-  const target = getCompletionTarget({ ...path, scope });
+  const target = getCompletionTarget({ ...path, scope: completionScope });
   if (target === undefined) {
     return null;
   }
@@ -466,7 +479,9 @@ class VariableWidget extends WidgetType {
   }
   toDOM(): HTMLElement {
     const span = document.createElement("span");
-    span.style.backgroundColor = "rgba(24, 119, 232, 0.2)";
+    span.style.backgroundColor = `color-mix(in oklab, ${cssVar(
+      "--foreground-accent"
+    )} 20%, transparent)`;
     span.textContent = this.text;
     return span;
   }
@@ -526,7 +541,7 @@ const wrapperStyle = css({
     size: {
       default: {
         // 1 line is 16px; show at most 20 lines.
-        "--ws-code-editor-max-height": "320px",
+        ...getCodeEditorCssVars({ minHeight: "auto", maxHeight: "320px" }),
       },
       full: {
         ...getCodeEditorCssVars({ minHeight: "100%", maxHeight: "100%" }),
@@ -538,28 +553,6 @@ const wrapperStyle = css({
     },
   },
   defaultVariants: { size: "default" },
-});
-
-const linterTooltipTheme = EditorView.theme({
-  ".cm-tooltip:has(.cm-tooltip-lint)": {
-    backgroundColor: "transparent",
-    borderWidth: 0,
-    paddingTop: rawTheme.spacing[5],
-    paddingBottom: rawTheme.spacing[5],
-    pointerEvents: "none",
-  },
-  ".cm-tooltip-lint": {
-    backgroundColor: rawTheme.colors.backgroundTooltipMain,
-    color: rawTheme.colors.foregroundContrastMain,
-    borderRadius: rawTheme.borderRadius[7],
-    padding: rawTheme.spacing[5],
-  },
-  ".cm-tooltip-lint .cm-diagnostic": {
-    borderWidth: 0,
-    padding: 0,
-    margin: 0,
-    ...textVariants.regular,
-  },
 });
 
 const fullSizeEditorTheme = EditorView.theme({
@@ -586,6 +579,7 @@ export const ExpressionEditor = ({
   color,
   size,
   chromeless = false,
+  showLineNumbers = size === "full",
   autoFocus = false,
   readOnly = false,
   value,
@@ -605,12 +599,18 @@ export const ExpressionEditor = ({
   color?: "error";
   size?: "default" | "full";
   chromeless?: boolean;
+  showLineNumbers?: boolean;
   autoFocus?: boolean;
   readOnly?: boolean;
   value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
 }) => {
+  const resolveCompletionScope = useContext(ExpressionCompletionScopeContext);
+  const completionScope = useMemo(
+    () => resolveCompletionScope?.(scope),
+    [resolveCompletionScope, scope]
+  );
   const normalizedValue = normalizeEditorValue(value);
   const { nameById, idByName } = useMemo(() => {
     const nameById = new Map();
@@ -640,6 +640,19 @@ export const ExpressionEditor = ({
     }
     return newScope;
   }, [scope, aliases]);
+  const completionScopeWithUnsetVariables = useMemo(() => {
+    if (completionScope === undefined) {
+      return scopeWithUnsetVariables;
+    }
+    const newScope: Scope = {};
+    for (const [identifier, value] of Object.entries(completionScope)) {
+      const name = aliases.get(identifier);
+      if (name) {
+        newScope[encodeDataVariableName(name)] = value;
+      }
+    }
+    return newScope;
+  }, [completionScope, scopeWithUnsetVariables, aliases]);
   const aliasesWithUnsetVariables = useMemo(() => {
     const newAliases: typeof aliases = new Map();
     for (const [_identifier, name] of aliases) {
@@ -655,6 +668,7 @@ export const ExpressionEditor = ({
       javascript({}),
       VariablesData.of({
         scope: scopeWithUnsetVariables,
+        completionScope: completionScopeWithUnsetVariables,
         aliases: aliasesWithUnsetVariables,
       }),
       // render autocomplete in body
@@ -665,15 +679,24 @@ export const ExpressionEditor = ({
         icons: false,
       }),
       variablesPlugin,
-      keymap.of([...closeBracketsKeymap, ...completionKeymap]),
+      keymap.of([
+        ...closeBracketsKeymap,
+        ...completionKeymap,
+        { key: "Tab", run: acceptCompletion },
+      ]),
       expressionLinter,
       linterTooltipTheme,
       ...(size === "full" ? [fullSizeEditorTheme] : []),
     ],
-    [scopeWithUnsetVariables, aliasesWithUnsetVariables, size]
+    [
+      scopeWithUnsetVariables,
+      completionScopeWithUnsetVariables,
+      aliasesWithUnsetVariables,
+      size,
+    ]
   );
   const dialogExtensions = useMemo(
-    () => [...extensions, lineNumbers(), foldGutterExtension],
+    () => [...extensions, foldGutterExtension],
     [extensions]
   );
 
@@ -716,6 +739,7 @@ export const ExpressionEditor = ({
       extensions={extensions}
       invalid={color === "error"}
       chromeless={chromeless}
+      showLineNumbers={showLineNumbers}
       readOnly={readOnly}
       autoFocus={autoFocus}
       value={expressionWithUnsetVariables}
@@ -734,7 +758,6 @@ export const ExpressionEditor = ({
         {content}
         <EditorDialog
           title="Expression editor"
-          contentPadding={false}
           content={
             <EditorContent
               aria-label={ariaLabel}
@@ -742,6 +765,7 @@ export const ExpressionEditor = ({
               extensions={dialogExtensions}
               invalid={color === "error"}
               chromeless
+              showLineNumbers
               readOnly={readOnly}
               autoFocus={autoFocus}
               value={expressionWithUnsetVariables}

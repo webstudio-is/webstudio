@@ -19,7 +19,11 @@ import {
   DropdownMenuSeparator,
   menuItemCss,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/sdk";
+import {
+  blockTemplateComponent,
+  type Instance,
+  type Instances,
+} from "@webstudio-is/sdk";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   $blockChildOutline,
@@ -27,25 +31,53 @@ import {
   $hoveredInstanceSelector,
   $isContentMode,
   $modifierKeys,
+  $registeredComponentMetas,
   type BlockChildOutline,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import {
   canDeleteInstanceInContentMode,
+  findBlockContentSelector,
   findBlockSelector,
   findBlockTemplates,
 } from "@webstudio-is/project-build/runtime";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { insertTemplateAt } from "./block-utils";
+import {
+  filterInsertableContentBlockTemplates,
+  insertTemplateAt,
+} from "./block-utils";
 import { Outline } from "./outline";
 import { applyScale } from "../apply-scale";
+import { canvasToolColors } from "../color-recipes";
 import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
+import { useOutlineControlPosition } from "./use-outline-control-position";
+
+const hasBlockContent = ({
+  anchor,
+  instances,
+}: {
+  anchor: InstanceSelector;
+  instances: Instances;
+}) => {
+  const contentSelector = findBlockContentSelector({ anchor, instances });
+  const content =
+    contentSelector === undefined
+      ? undefined
+      : instances.get(contentSelector[0]);
+  return (
+    content?.children.some(
+      (child) =>
+        child.type !== "id" ||
+        instances.get(child.value)?.component !== blockTemplateComponent
+    ) ?? false
+  );
+};
 
 export const TemplatesMenu = ({
   onOpenChange,
@@ -76,10 +108,12 @@ export const TemplatesMenu = ({
 }) => {
   const instances = useStore($instances);
   const modifierKeys = useStore($modifierKeys);
+  const preventCloseAutoFocusRef = useRef(false);
 
   const blockInstanceSelector = findBlockSelector({ anchor, instances });
 
   const handleValueChangeComplete = useEffectEvent((value: string) => {
+    preventCloseAutoFocusRef.current = true;
     const templateSelector = JSON.parse(value) as InstanceSelector;
     onValueChangeComplete(templateSelector);
   });
@@ -100,10 +134,9 @@ export const TemplatesMenu = ({
     return;
   }
 
-  // 1 child is Templates instance
-  const hasChildren = blockInstance.children.length > 1;
+  const hasChildren = hasBlockContent({ anchor, instances });
 
-  const menuItems = templates?.map(([template, templateSelector]) => ({
+  const menuItems = templates.map(([template, templateSelector]) => ({
     id: template.id,
     icon: <InstanceIcon instance={{ component: template.component }} />,
     title: getInstanceLabel(template),
@@ -125,6 +158,13 @@ export const TemplatesMenu = ({
         collisionPadding={16}
         side="bottom"
         loop
+        onCloseAutoFocus={(event) => {
+          if (preventCloseAutoFocusRef.current === false) {
+            return;
+          }
+          preventCloseAutoFocusRef.current = false;
+          event.preventDefault();
+        }}
         // @todo remove inert after creation
         {...(inert ? { inert: "" } : {})}
       >
@@ -135,48 +175,124 @@ export const TemplatesMenu = ({
               // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
               onValueChange={handleValueChangeComplete}
             >
-              {menuItems?.map((item) => (
-                <DropdownMenuRadioItem
-                  aria-selected={
-                    JSON.stringify(item.value) === JSON.stringify(value)
-                  }
-                  onPointerEnter={() => {
-                    // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
-                    handleValueChange(value);
-                  }}
-                  onPointerMove={
-                    preventFocusOnHover
-                      ? (e) => {
-                          e.preventDefault();
-                        }
-                      : undefined
-                  }
-                  onPointerLeave={
-                    preventFocusOnHover
-                      ? (e) => {
-                          // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
-                          handleValueChange(undefined);
-                          e.preventDefault();
-                        }
-                      : undefined
-                  }
-                  onPointerDown={
-                    preventFocusOnHover
-                      ? (event) => {
-                          event.preventDefault();
-                        }
-                      : undefined
-                  }
-                  key={item.id}
-                  value={JSON.stringify(item.value)}
-                  {...{ [skipInertHandlersAttribute]: true }}
-                >
-                  <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
-                    {item.icon}
-                    <Box css={{ textTransform: "none" }}>{item.title}</Box>
-                  </Flex>
-                </DropdownMenuRadioItem>
-              ))}
+              {menuItems?.map((item) => {
+                const isSelected = shallowEqual(item.value, value);
+                return (
+                  <DropdownMenuRadioItem
+                    aria-selected={isSelected}
+                    {...(preventFocusOnHover && isSelected
+                      ? { "data-highlighted": "" }
+                      : {})}
+                    onPointerEnter={() => {
+                      // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+                      handleValueChange(item.value);
+                    }}
+                    onPointerMove={
+                      preventFocusOnHover
+                        ? (e) => {
+                            e.preventDefault();
+                          }
+                        : undefined
+                    }
+                    onPointerLeave={
+                      preventFocusOnHover
+                        ? (e) => {
+                            // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+                            handleValueChange(undefined);
+                            e.preventDefault();
+                          }
+                        : undefined
+                    }
+                    onPointerDown={
+                      preventFocusOnHover
+                        ? (event) => {
+                            if (event.button !== 0) {
+                              return;
+                            }
+                            event.preventDefault();
+                            event.stopPropagation();
+                            const pointerId = event.pointerId;
+                            const ownerDocument =
+                              event.currentTarget.ownerDocument;
+                            const captureTarget = ownerDocument.body;
+                            const preventClick = (clickEvent: MouseEvent) => {
+                              clickEvent.preventDefault();
+                              clickEvent.stopImmediatePropagation();
+                            };
+                            const releasePointer = (
+                              pointerEvent: PointerEvent
+                            ) => {
+                              pointerEvent.preventDefault();
+                              pointerEvent.stopImmediatePropagation();
+                              ownerDocument.removeEventListener(
+                                "pointerup",
+                                releasePointer,
+                                true
+                              );
+                              ownerDocument.removeEventListener(
+                                "pointercancel",
+                                releasePointer,
+                                true
+                              );
+                              if (pointerEvent.type === "pointercancel") {
+                                ownerDocument.removeEventListener(
+                                  "click",
+                                  preventClick,
+                                  true
+                                );
+                              } else {
+                                ownerDocument.defaultView?.setTimeout(() => {
+                                  ownerDocument.removeEventListener(
+                                    "click",
+                                    preventClick,
+                                    true
+                                  );
+                                }, 100);
+                              }
+                              if (captureTarget.hasPointerCapture(pointerId)) {
+                                captureTarget.releasePointerCapture(pointerId);
+                              }
+                              onOpenChange(false);
+                            };
+                            // Inserting replaces the canvas editor and unmounts
+                            // this menu before a normal click can fire. Activate
+                            // on pointer down and keep the remaining pointer
+                            // events in the Builder document so they do not
+                            // click the canvas underneath.
+                            ownerDocument.addEventListener(
+                              "click",
+                              preventClick,
+                              { capture: true, once: true }
+                            );
+                            captureTarget.setPointerCapture(pointerId);
+                            ownerDocument.addEventListener(
+                              "pointerup",
+                              releasePointer,
+                              { capture: true, once: true }
+                            );
+                            ownerDocument.addEventListener(
+                              "pointercancel",
+                              releasePointer,
+                              { capture: true, once: true }
+                            );
+                            // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+                            handleValueChangeComplete(
+                              JSON.stringify(item.value)
+                            );
+                          }
+                        : undefined
+                    }
+                    key={item.id}
+                    value={JSON.stringify(item.value)}
+                    {...{ [skipInertHandlersAttribute]: true }}
+                  >
+                    <Flex css={{ px: theme.spacing[3] }} gap={2}>
+                      {item.icon}
+                      <Box css={{ textTransform: "none" }}>{item.title}</Box>
+                    </Flex>
+                  </DropdownMenuRadioItem>
+                );
+              })}
             </DropdownMenuRadioGroup>
             <DropdownMenuSeparator />
             <div className={menuItemCss({ hint: true })}>
@@ -214,7 +330,7 @@ export const TemplatesMenu = ({
         ) : (
           <div className={menuItemCss({ hint: true })}>
             <Grid css={{ width: theme.spacing[25] }}>
-              <Text>No Results</Text>
+              <Text>No results</Text>
             </Grid>
           </div>
         )}
@@ -229,6 +345,8 @@ export const BlockChildHoveredInstanceOutline = () => {
   const isContentMode = useStore($isContentMode);
   const modifierKeys = useStore($modifierKeys);
   const instances = useStore($instances);
+  const props = useStore($props);
+  const metas = useStore($registeredComponentMetas);
   const clampingRect = useStore($clampingRect);
 
   const timeoutRef = useRef<undefined | ReturnType<typeof setTimeout>>(
@@ -239,6 +357,9 @@ export const BlockChildHoveredInstanceOutline = () => {
   >(undefined);
 
   const outline = blockChildOutline ?? buttonOutline;
+  const rect =
+    outline === undefined ? undefined : applyScale(outline.rect, scale);
+  const [controlRef, controlPosition] = useOutlineControlPosition(rect);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -247,6 +368,10 @@ export const BlockChildHoveredInstanceOutline = () => {
   }
 
   if (outline === undefined) {
+    return;
+  }
+
+  if (rect === undefined) {
     return;
   }
 
@@ -275,17 +400,20 @@ export const BlockChildHoveredInstanceOutline = () => {
     return;
   }
 
-  if (templates.length === 0) {
+  const insertableTemplates = filterInsertableContentBlockTemplates({
+    templates,
+    props,
+    metas,
+  });
+
+  if (insertableTemplates.length === 0) {
     return;
   }
 
-  // 1 child is Templates instance
-  const hasChildren = blockInstance.children.length > 1;
-
-  const rect = applyScale(outline.rect, scale);
-
-  // Check if the top edge of the component is hidden (clipped by viewport/clamping)
-  const isTopEdgeHidden = rect.top < clampingRect.top;
+  const hasChildren = hasBlockContent({
+    anchor: outline.selector,
+    instances,
+  });
 
   const canDeleteHoveredInstance =
     shallowEqual(outline.selector, outline.hoveredSelector) &&
@@ -318,18 +446,21 @@ export const BlockChildHoveredInstanceOutline = () => {
   return (
     <Outline rect={rect} clampingRect={clampingRect}>
       <Flex
+        ref={controlRef}
         css={{
           position: "absolute",
           left: 0,
           paddingRight: theme.sizes.controlHeight,
-          ...(isTopEdgeHidden
+          ...(controlPosition === "top"
             ? {
-                bottom: `calc(-${theme.sizes.controlHeight} )`,
-                clipPath: `polygon(0% 0%, 100% 0%, ${theme.sizes.controlHeight} 100%, 0% 100%)`,
-              }
-            : {
                 top: `calc(-${theme.sizes.controlHeight})`,
                 clipPath: `polygon(0% 0%, ${theme.sizes.controlHeight} 0%, 100% 100%, 0% 100%)`,
+              }
+            : {
+                ...(controlPosition === "bottom"
+                  ? { bottom: `calc(-${theme.sizes.controlHeight})` }
+                  : { top: 0 }),
+                clipPath: `polygon(0% 0%, 100% 0%, ${theme.sizes.controlHeight} 100%, 0% 100%)`,
               }),
           // Define grace area for the button
           pointerEvents: isMenuOpen ? "none" : "all",
@@ -365,10 +496,14 @@ export const BlockChildHoveredInstanceOutline = () => {
           }}
           anchor={outline.selector}
           triggerTooltipContent={tooltipContent}
-          templates={templates}
+          templates={insertableTemplates}
           onValueChangeComplete={(templateSelector) => {
             const insertBefore = modifierKeys.altKey;
-            insertTemplateAt(templateSelector, outline.selector, insertBefore);
+            insertTemplateAt({
+              templateSelector,
+              anchor: outline.selector,
+              insertBefore,
+            });
           }}
           value={undefined}
           modal={true}
@@ -396,17 +531,17 @@ export const BlockChildHoveredInstanceOutline = () => {
               },
               borderStyle: "solid",
               borderColor: isAddMode
-                ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`
+                ? canvasToolColors.selectionTranslucent
                 : undefined,
               borderRadius: theme.borderRadius[4],
-              ...(isTopEdgeHidden
+              ...(controlPosition === "top"
                 ? {
-                    borderTopLeftRadius: 0,
-                    borderTopRightRadius: 0,
-                  }
-                : {
                     borderBottomLeftRadius: 0,
                     borderBottomRightRadius: 0,
+                  }
+                : {
+                    borderTopLeftRadius: 0,
+                    borderTopRightRadius: 0,
                   }),
               // Define grace area for the button
               pointerEvents: isMenuOpen ? "none" : "all",

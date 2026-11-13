@@ -1,7 +1,17 @@
 import { describe, expect, expectTypeOf, test } from "vitest";
-import type { Asset, Instance, PageTemplate } from "@webstudio-is/sdk";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  elementComponent,
+  type Asset,
+  type Instance,
+  type PageTemplate,
+} from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { findCycles } from "@webstudio-is/project-build/runtime";
+import {
+  findCycles,
+  extractWebstudioFragment,
+} from "@webstudio-is/project-build/runtime";
 import type { BuilderRuntimeOperationInput } from "@webstudio-is/project-build/runtime";
 import {
   executeRuntimeMutation,
@@ -11,7 +21,11 @@ import {
   migrateLoadedWebstudioData,
   type RuntimeMutationOperation,
 } from "./data";
-import { registerContainers, serverSyncStore } from "../sync/sync-stores";
+import {
+  externalContentSyncStore,
+  registerContainers,
+  serverSyncStore,
+} from "../sync/sync-stores";
 import {
   $assets,
   $breakpoints,
@@ -27,6 +41,8 @@ import {
 } from "../sync/data-stores";
 import { $selectedPageId } from "../nano-states/pages";
 import { $authPermit, $builderMode } from "../nano-states/misc";
+import { selectInstance } from "../nano-states";
+import { $externalContentRoots } from "../external-content-mutations";
 
 const createInstance = (
   id: Instance["id"],
@@ -51,6 +67,11 @@ const setBaseStores = () => {
   serverSyncStore.transactionManager.currentStack = [];
   serverSyncStore.transactionManager.undoneStack = [];
   serverSyncStore.popAll();
+  externalContentSyncStore.transactionManager.currentStack = [];
+  externalContentSyncStore.transactionManager.undoneStack = [];
+  externalContentSyncStore.popAll();
+  $externalContentRoots.set(new Map());
+  selectInstance(undefined);
   const pages = createDefaultPages({ rootInstanceId: "body" });
   $pages.set(pages);
   $selectedPageId.set(pages.homePageId);
@@ -90,6 +111,471 @@ const createImageAsset = (id: string): Asset => ({
 });
 
 describe("data store helpers", () => {
+  test.each([
+    "move",
+    "reparent",
+    "paste",
+    "nested paste",
+    "aliased template paste",
+    "duplicate",
+    "sequence",
+  ])(
+    "rejects %s of an unsupported component into MDX before committing",
+    (operation) => {
+      setBaseStores();
+      const accordion = "@webstudio-is/sdk-components-react-radix:Accordion";
+      $instances.set(
+        new Map([
+          [
+            "body",
+            createInstance("body", "Body", [
+              { type: "id", value: "block" },
+              { type: "id", value: "accordion" },
+            ]),
+          ],
+          [
+            "block",
+            createInstance("block", blockComponent, [
+              { type: "id", value: "templates" },
+            ]),
+          ],
+          [
+            "templates",
+            createInstance("templates", blockTemplateComponent, []),
+          ],
+          ["accordion", createInstance("accordion", accordion, [])],
+        ])
+      );
+      $externalContentRoots.set(
+        new Map([
+          [
+            "root",
+            {
+              blockInstanceId: "block",
+              instanceIds: new Set(),
+              mutationRevision: 0,
+            },
+          ],
+        ])
+      );
+      if (operation === "aliased template paste") {
+        $instances.get().set("accordion-template", {
+          ...createInstance("accordion-template", accordion, []),
+          name: "FAQ",
+        });
+        $instances.get().get("templates")!.children = [
+          { type: "id", value: "accordion-template" },
+        ];
+      }
+      if (operation === "duplicate") {
+        $instances.get().get("body")!.children = [
+          { type: "id", value: "block" },
+        ];
+        $instances
+          .get()
+          .get("block")!
+          .children.push({ type: "id", value: "accordion" });
+        $externalContentRoots.get().get("root")!.instanceIds = new Set([
+          "accordion",
+        ]);
+      }
+      const before = structuredClone(getWebstudioData());
+      const move = {
+        id: "instances.move",
+        input: {
+          moves: [{ instanceId: "accordion", parentInstanceId: "block" }],
+        },
+      } satisfies RuntimeMutationOperation;
+      expect(() => {
+        if (operation === "move") {
+          executeRuntimeMutation(move);
+        } else if (operation === "reparent") {
+          executeRuntimeMutation({
+            id: "instances.reparent",
+            input: {
+              sourceInstanceSelector: ["accordion", "body"],
+              dropTarget: {
+                parentSelector: ["block", "body"],
+                position: "end",
+              },
+            },
+          });
+        } else if (
+          operation === "paste" ||
+          operation === "nested paste" ||
+          operation === "aliased template paste"
+        ) {
+          const fragment = extractWebstudioFragment(before, "accordion");
+          if (operation === "nested paste") {
+            fragment.instances.push({
+              ...createInstance("wrapper", elementComponent, fragment.children),
+              tag: "div",
+            });
+            fragment.children = [{ type: "id", value: "wrapper" }];
+          }
+          executeRuntimeMutation({
+            id: "instances.insertFragment",
+            input: {
+              parentInstanceId: "block",
+              fragment,
+            },
+          });
+        } else if (operation === "duplicate") {
+          executeRuntimeMutation({
+            id: "instances.duplicateAfterItself",
+            input: { sourceInstanceId: "accordion", parentInstanceId: "block" },
+          });
+        } else {
+          executeRuntimeMutationSequence([move]);
+        }
+      }).toThrow("MDX");
+      expect(getWebstudioData()).toEqual(before);
+      expect(serverSyncStore.popAll()).toEqual([]);
+      expect(externalContentSyncStore.popAll()).toEqual([]);
+      expect($externalContentRoots.get().get("root")?.mutationRevision).toBe(0);
+    }
+  );
+  test("publishes external children only after their instances exist", () => {
+    setBaseStores();
+    $instances.set(
+      new Map([
+        [
+          "body",
+          createInstance("body", "Body", [{ type: "id", value: "block" }]),
+        ],
+        [
+          "block",
+          createInstance("block", blockComponent, [
+            { type: "id", value: "templates" },
+          ]),
+        ],
+        ["templates", createInstance("templates", blockTemplateComponent, [])],
+      ])
+    );
+    $externalContentRoots.set(
+      new Map([
+        [
+          "root",
+          {
+            blockInstanceId: "block",
+            renderScope: JSON.stringify(["block", "body"]),
+            instanceIds: new Set<string>(),
+            mutationRevision: 0,
+          },
+        ],
+      ])
+    );
+    selectInstance(["block", "body"]);
+    const missingInstanceIds: string[] = [];
+    const unsubscribe = $instances.listen((instances) => {
+      for (const child of instances.get("block")?.children ?? []) {
+        if (child.type === "id" && instances.has(child.value) === false) {
+          missingInstanceIds.push(child.value);
+        }
+      }
+    });
+
+    executeRuntimeMutation({
+      id: "instances.insertFragment",
+      input: {
+        parentInstanceId: "block",
+        fragment: {
+          children: [{ type: "id", value: "paragraph-template" }],
+          instances: [
+            {
+              ...createInstance("paragraph-template", elementComponent, []),
+              tag: "p",
+            },
+          ],
+          styleSourceSelections: [],
+          styleSources: [],
+          breakpoints: [],
+          styles: [],
+          dataSources: [],
+          resources: [],
+          props: [],
+          assets: [],
+        },
+      },
+    });
+    unsubscribe();
+
+    expect($instances.get().get("block")?.children).toHaveLength(2);
+    expect(missingInstanceIds).toEqual([]);
+  });
+
+  test("deletes only the selected external child and preserves the normal focus target", () => {
+    setBaseStores();
+    $instances.set(
+      new Map([
+        [
+          "body",
+          createInstance("body", "Body", [{ type: "id", value: "block" }]),
+        ],
+        [
+          "block",
+          createInstance("block", blockComponent, [
+            { type: "id", value: "templates" },
+            { type: "id", value: "previous-paragraph" },
+            { type: "id", value: "paragraph" },
+            { type: "id", value: "next-paragraph" },
+          ]),
+        ],
+        ["templates", createInstance("templates", blockTemplateComponent, [])],
+        [
+          "previous-paragraph",
+          {
+            ...createInstance("previous-paragraph", elementComponent, []),
+            tag: "p",
+          },
+        ],
+        [
+          "paragraph",
+          {
+            ...createInstance("paragraph", elementComponent, []),
+            tag: "p",
+          },
+        ],
+        [
+          "next-paragraph",
+          {
+            ...createInstance("next-paragraph", elementComponent, []),
+            tag: "p",
+          },
+        ],
+      ])
+    );
+    $externalContentRoots.set(
+      new Map([
+        [
+          "root",
+          {
+            blockInstanceId: "block",
+            renderScope: JSON.stringify(["block", "body"]),
+            instanceIds: new Set([
+              "previous-paragraph",
+              "paragraph",
+              "next-paragraph",
+            ]),
+            mutationRevision: 0,
+          },
+        ],
+      ])
+    );
+    selectInstance(["paragraph", "block", "body"]);
+    const missingInstanceIds: string[] = [];
+    const unsubscribeInstances = $instances.subscribe((instances) => {
+      for (const child of instances.get("block")?.children ?? []) {
+        if (child.type === "id" && instances.has(child.value) === false) {
+          missingInstanceIds.push(child.value);
+        }
+      }
+    });
+
+    const result = executeRuntimeMutation({
+      id: "instances.deleteBySelector",
+      input: { instanceSelector: ["paragraph", "block", "body"] },
+    });
+    unsubscribeInstances();
+
+    expect(result?.result.instanceSelector).toEqual([
+      "next-paragraph",
+      "block",
+      "body",
+    ]);
+    expect($instances.get().get("block")?.children).toEqual([
+      { type: "id", value: "templates" },
+      { type: "id", value: "previous-paragraph" },
+      { type: "id", value: "next-paragraph" },
+    ]);
+    expect($instances.get().has("previous-paragraph")).toBe(true);
+    expect($instances.get().has("paragraph")).toBe(false);
+    expect($instances.get().has("next-paragraph")).toBe(true);
+    expect(missingInstanceIds).toEqual([]);
+  });
+
+  test("mutates only the selected scoped Content Block occurrence", () => {
+    setBaseStores();
+    $instances.set(
+      new Map([
+        [
+          "body",
+          createInstance("body", "Body", [{ type: "id", value: "collection" }]),
+        ],
+        [
+          "collection",
+          createInstance("collection", "Collection", [
+            { type: "id", value: "block" },
+          ]),
+        ],
+        [
+          "block",
+          createInstance("block", blockComponent, [
+            { type: "id", value: "templates" },
+          ]),
+        ],
+        ["templates", createInstance("templates", blockTemplateComponent, [])],
+        [
+          "scoped-block",
+          createInstance("scoped-block", blockComponent, [
+            { type: "id", value: "templates" },
+            { type: "id", value: "previous-paragraph" },
+            { type: "id", value: "paragraph" },
+          ]),
+        ],
+        [
+          "previous-paragraph",
+          {
+            ...createInstance("previous-paragraph", elementComponent, []),
+            tag: "p",
+          },
+        ],
+        [
+          "paragraph",
+          {
+            ...createInstance("paragraph", elementComponent, []),
+            tag: "p",
+          },
+        ],
+      ])
+    );
+    const scopedSelector = [
+      "scoped-block",
+      "collection[first]",
+      "collection",
+      "body",
+    ];
+    $externalContentRoots.set(
+      new Map([
+        [
+          "root",
+          {
+            sourceBlockInstanceId: "block",
+            sourceRenderScope: JSON.stringify([
+              "block",
+              "collection[first]",
+              "collection",
+              "body",
+            ]),
+            blockInstanceId: "scoped-block",
+            renderScope: JSON.stringify(scopedSelector),
+            instanceIds: new Set(["previous-paragraph", "paragraph"]),
+            mutationRevision: 0,
+          },
+        ],
+      ])
+    );
+    selectInstance(["paragraph", ...scopedSelector]);
+    serverSyncStore.popAll();
+
+    const result = executeRuntimeMutation({
+      id: "instances.deleteBySelector",
+      input: { instanceSelector: ["paragraph", ...scopedSelector] },
+    });
+
+    expect(result?.result.instanceSelector).toEqual([
+      "previous-paragraph",
+      ...scopedSelector,
+    ]);
+    expect($instances.get().get("scoped-block")?.children).toEqual([
+      { type: "id", value: "templates" },
+      { type: "id", value: "previous-paragraph" },
+    ]);
+    expect($instances.get().get("block")?.children).toEqual([
+      { type: "id", value: "templates" },
+    ]);
+    expect(serverSyncStore.popAll()).toEqual([]);
+    expect($externalContentRoots.get().get("root")?.mutationRevision).toBe(1);
+  });
+
+  test("persists both external roots when content moves between them", () => {
+    setBaseStores();
+    $instances.set(
+      new Map([
+        [
+          "body",
+          createInstance("body", "Body", [
+            { type: "id", value: "source-block" },
+            { type: "id", value: "target-block" },
+          ]),
+        ],
+        [
+          "source-block",
+          createInstance("source-block", blockComponent, [
+            { type: "id", value: "source-templates" },
+            { type: "id", value: "paragraph" },
+          ]),
+        ],
+        [
+          "target-block",
+          createInstance("target-block", blockComponent, [
+            { type: "id", value: "target-templates" },
+          ]),
+        ],
+        [
+          "source-templates",
+          createInstance("source-templates", blockTemplateComponent, []),
+        ],
+        [
+          "target-templates",
+          createInstance("target-templates", blockTemplateComponent, []),
+        ],
+        [
+          "paragraph",
+          {
+            ...createInstance("paragraph", elementComponent, []),
+            tag: "p",
+          },
+        ],
+      ])
+    );
+    $externalContentRoots.set(
+      new Map([
+        [
+          "source-root",
+          {
+            blockInstanceId: "source-block",
+            renderScope: JSON.stringify(["source-block", "body"]),
+            instanceIds: new Set(["paragraph"]),
+            mutationRevision: 0,
+          },
+        ],
+        [
+          "target-root",
+          {
+            blockInstanceId: "target-block",
+            renderScope: JSON.stringify(["target-block", "body"]),
+            instanceIds: new Set<string>(),
+            mutationRevision: 0,
+          },
+        ],
+      ])
+    );
+    serverSyncStore.popAll();
+
+    executeRuntimeMutation({
+      id: "instances.move",
+      input: {
+        moves: [{ instanceId: "paragraph", parentInstanceId: "target-block" }],
+      },
+    });
+
+    expect($instances.get().get("source-block")?.children).toEqual([
+      { type: "id", value: "source-templates" },
+    ]);
+    expect($instances.get().get("target-block")?.children).toEqual([
+      { type: "id", value: "target-templates" },
+      { type: "id", value: "paragraph" },
+    ]);
+    expect(serverSyncStore.popAll()).toEqual([]);
+    expect(
+      Array.from(
+        $externalContentRoots.get().values(),
+        ({ mutationRevision }) => mutationRevision
+      )
+    ).toEqual([1, 1]);
+  });
+
   test("getWebstudioData reads all instance-related stores", () => {
     const pages = createDefaultPages({ rootInstanceId: "body" });
     const instances = new Map([["body", createInstance("body", "Body", [])]]);
@@ -1069,4 +1555,57 @@ describe("data store helpers", () => {
 
     expect(findCycles($instances.get().values())).toEqual([]);
   });
+
+  test.each(["edit", "view"] as const)(
+    "does not submit project-wide loaded data migrations with %s permission",
+    (authPermit) => {
+      setBaseStores();
+      $authPermit.set(authPermit);
+      $builderMode.set("content");
+      $instances
+        .get()
+        .set("legacy-code", createInstance("legacy-code", "CodeText", []));
+      $props.get().set("legacy-code-prop", {
+        id: "legacy-code-prop",
+        instanceId: "legacy-code",
+        type: "string",
+        name: "code",
+        value: "const answer = 42;",
+      });
+      const before = structuredClone(getWebstudioData());
+
+      migrateLoadedWebstudioData();
+
+      expect(serverSyncStore.popAll()).toEqual([]);
+      expect(externalContentSyncStore.popAll()).toEqual([]);
+      expect(getWebstudioData()).toEqual(before);
+    }
+  );
+
+  test.each(["own", "admin", "build"] as const)(
+    "still migrates loaded legacy content in Content mode with %s permission",
+    (authPermit) => {
+      setBaseStores();
+      $authPermit.set(authPermit);
+      $builderMode.set("content");
+      $instances
+        .get()
+        .set("legacy-code", createInstance("legacy-code", "CodeText", []));
+      $props.get().set("legacy-code-prop", {
+        id: "legacy-code-prop",
+        instanceId: "legacy-code",
+        type: "string",
+        name: "code",
+        value: "const answer = 42;",
+      });
+
+      migrateLoadedWebstudioData();
+
+      expect($instances.get().get("legacy-code")?.children).toEqual([
+        { type: "text", value: "const answer = 42;" },
+      ]);
+      expect($props.get().has("legacy-code-prop")).toBe(false);
+      expect(serverSyncStore.popAll()).toHaveLength(1);
+    }
+  );
 });

@@ -1,10 +1,12 @@
 import { forwardRef } from "react";
 import {
+  PanelContent,
   Flex,
   Text,
   theme,
   focusRingStyle,
   css,
+  cssVar,
   rawTheme,
 } from "@webstudio-is/design-system";
 import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
@@ -25,7 +27,7 @@ const spinnerStyle = css({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  backgroundColor: "rgba(255, 255, 255, 0.5)",
+  backgroundColor: `color-mix(in oklab, ${cssVar("--background-primary")} 50%, transparent)`,
   backdropFilter: "blur(8px)",
 });
 
@@ -44,7 +46,7 @@ const imageStyle = css({
         objectFit: "cover",
       },
       false: {
-        background: theme.colors.white,
+        background: cssVar("--background-primary"),
         padding: rawTheme.spacing[5],
       },
     },
@@ -105,13 +107,13 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     ref
   ) => {
     return (
-      <Flex
+      <PanelContent
+        as={Flex}
         {...props}
         ref={ref}
         direction="column"
         data-state={state}
         css={{
-          padding: theme.panel.padding,
           position: "relative",
           overflow: "hidden",
           outline: "none",
@@ -130,7 +132,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           </Text>
           {suffix}
         </Flex>
-      </Flex>
+      </PanelContent>
     );
   }
 );

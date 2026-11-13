@@ -10,13 +10,16 @@ description: >-
 
 {% embed url="https://www.youtube.com/watch?v=LeE52a_EWFw" %}
 
-<figure><img src="../../.gitbook/assets/headslot.png" alt="Head Slot" width="375"><figcaption></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/components-panel-dark.png">
+  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Head Slot in the expanded General group" width="224">
+</picture>
 
 The Head Slot provides a visual interface for controlling your website's `<head>` section. Instead of writing code, you can manage meta tags, canonical URLs, and other head elements directly in the builder.
 
 ## Key information
 
-- Even though the Head Slot is visually in the Body instance, the contents of Head Slot are added to the `<head>`. This hierarchy enables [Data variables](../foundations/variables.md) defined on the Body to be used in the head.
+- Even though the Head Slot is visually in the Body instance, the contents of Head Slot are added to the `<head>`. This hierarchy enables [data variables](../foundations/variables.md) defined on the Body to be used in the head.
 - If Head Slot and Page Settings define the same data, such as meta title, Head Slot will take priority. Similarly, a default canonical is output on every page and references the current path. By specifying a canonical in Head Slot, the default canonical will not be displayed on the page.
 - Head Slot comes with an instance for Title, Link, and Meta. These can be duplicated. If you remove them and later need to add them back, you can copy them from a new Head Slot instance.
 

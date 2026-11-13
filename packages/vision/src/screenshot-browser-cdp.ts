@@ -23,7 +23,9 @@ const withTimeout = async <Result>(
   }
 };
 
-type BrowserProcess = Pick<ChildProcess, "kill" | "once">;
+type BrowserProcess = Pick<ChildProcess, "kill" | "once"> & {
+  stderr?: Pick<NodeJS.ReadableStream, "on"> | null;
+};
 
 export type BrowserScreenshotPageMetadata = {
   rootMarkerPresent: boolean;
@@ -55,12 +57,43 @@ export type BrowserScreenshotOptions = {
   prepareExpression?: string;
   waitForSelector?: string;
   failForSelector?: string;
+  waitForFonts?: boolean;
   waitForTimeout: number;
   finalizeExpression?: string;
   timeout: number;
+  startupTimeout?: number;
   format?: "png" | "jpeg" | "webp";
   quality?: number;
   scale?: number;
+};
+
+export type BrowserFormValue = {
+  name: string;
+  value?: string;
+  file?: { name: string; base64: string; type?: string };
+};
+
+export type BrowserFormSubmitOptions = {
+  url: string;
+  selector: string;
+  values: readonly BrowserFormValue[];
+  submitter?: string;
+  timeout: number;
+};
+
+export type BrowserFormSubmitResult = {
+  status: "validation_failed" | "submitted" | "unknown";
+  formState?: string;
+  results: readonly {
+    status: number;
+    resourceId?: string;
+    resourceName?: string;
+  }[];
+  errors: readonly { status?: number; name?: string; message: string }[];
+  exchanges: readonly { status: number; url: string }[];
+  pageUrl: string;
+  redirect?: string;
+  correlationId: string;
 };
 
 const getNavigationUrl = (options: BrowserScreenshotOptions) => {
@@ -100,6 +133,7 @@ export type BrowserScreenshotTimings = {
 };
 
 export type BrowserScreenshotDependencies = {
+  platform: NodeJS.Platform;
   spawnBrowser: (file: string, args: readonly string[]) => BrowserProcess;
   readFile: typeof readFile;
   writeFile: typeof writeFile;
@@ -111,8 +145,9 @@ export type BrowserScreenshotDependencies = {
 
 export const defaultBrowserScreenshotDependencies: BrowserScreenshotDependencies =
   {
+    platform: process.platform,
     spawnBrowser(file, args) {
-      return spawn(file, [...args], { stdio: "ignore" });
+      return spawn(file, [...args], { stdio: ["ignore", "ignore", "pipe"] });
     },
     readFile,
     writeFile,
@@ -162,6 +197,46 @@ type CdpMessage = {
   error?: { message?: string };
 };
 
+export type BrowserStartupDiagnostic = {
+  stage: "browser-startup";
+  reason: "browser_ipc_permission_denied";
+  message: string;
+};
+
+type BrowserProcessExit = { code?: number; signal?: string };
+type BrowserDiagnosticIssue = {
+  code: string;
+  path: string[];
+  message: string;
+  constraint: string;
+};
+
+export class BrowserSessionClosedError extends Error {
+  readonly code = "BROWSER_SESSION_CLOSED";
+  readonly diagnostic?: BrowserStartupDiagnostic;
+  processExit?: BrowserProcessExit;
+  readonly issues?: BrowserDiagnosticIssue[];
+
+  constructor(
+    message: string,
+    diagnostic?: BrowserStartupDiagnostic,
+    processExit?: BrowserProcessExit,
+    issues?: BrowserSessionClosedError["issues"]
+  ) {
+    super(message);
+    this.diagnostic = diagnostic;
+    this.processExit = processExit;
+    this.issues = issues;
+  }
+}
+
+export const isBrowserSessionClosedError = (
+  error: unknown
+): error is BrowserSessionClosedError =>
+  error instanceof Error &&
+  "code" in error &&
+  error.code === "BROWSER_SESSION_CLOSED";
+
 class CdpSession {
   #nextId = 1;
   #callbacks = new Map<
@@ -179,7 +254,21 @@ class CdpSession {
   constructor(socket: WebSocket) {
     this.#socket = socket;
     this.#socket.addEventListener("close", () => {
-      this.#rejectPending(new Error("Browser DevTools connection closed."));
+      this.#rejectPending(
+        new BrowserSessionClosedError(
+          "Browser DevTools connection closed.",
+          undefined,
+          undefined,
+          [
+            {
+              code: "browser_devtools_connection_closed",
+              path: [],
+              message: "The browser DevTools connection closed during capture.",
+              constraint: "devtools_connection_available",
+            },
+          ]
+        )
+      );
     });
     this.#socket.addEventListener("message", (event) => {
       const message = JSON.parse(String(event.data)) as CdpMessage;
@@ -345,6 +434,14 @@ type NavigationResult = {
   loaderId?: string;
 };
 
+const getExecutionContextId = (params: unknown) =>
+  typeof params === "object" &&
+  params !== null &&
+  "executionContextId" in params &&
+  typeof params.executionContextId === "number"
+    ? params.executionContextId
+    : undefined;
+
 const navigateAndWaitForLifecycle = async (
   cdp: CdpSession,
   waitUntil: ScreenshotWaitUntil,
@@ -386,7 +483,11 @@ const navigateAndWaitForLifecycle = async (
   });
   try {
     navigation = await navigate();
-    if (navigation.errorText !== undefined || waitUntil === "commit") {
+    if (
+      navigation.errorText !== undefined ||
+      navigation.loaderId === undefined ||
+      waitUntil === "commit"
+    ) {
       return navigation;
     }
     if (pendingEvents.some(matchesNavigation)) {
@@ -408,7 +509,9 @@ const waitForSelector = async (
   while (Date.now() < deadline) {
     const result = await withDeadline(
       cdp.send<{ result?: { value?: boolean } }>("Runtime.evaluate", {
-        expression: `document.querySelector(${JSON.stringify(selector)}) !== null`,
+        expression: `document.querySelector(${JSON.stringify(
+          selector
+        )}) !== null`,
         returnByValue: true,
       }),
       `Selector ${selector} was not found`,
@@ -426,7 +529,9 @@ const getSelectorText = async (cdp: CdpSession, selector: string) => {
   const result = await cdp.send<{ result?: { value?: unknown } }>(
     "Runtime.evaluate",
     {
-      expression: `document.querySelector(${JSON.stringify(selector)})?.textContent`,
+      expression: `document.querySelector(${JSON.stringify(
+        selector
+      )})?.textContent`,
       returnByValue: true,
     }
   );
@@ -444,12 +549,19 @@ type BrowserReadiness = {
 const waitForFontsAndFrames = async (
   cdp: CdpSession,
   timeout: number,
-  pageMetadata: BrowserScreenshotOptions["pageMetadata"]
+  {
+    pageMetadata,
+    waitForFonts = true,
+  }: Pick<BrowserScreenshotOptions, "pageMetadata" | "waitForFonts">
 ): Promise<BrowserReadiness> => {
   const measure = async () => {
-    const response = await withDeadline(
-      cdp.send<{ result?: { value?: unknown } }>("Runtime.evaluate", {
-        expression: `Promise.resolve(document.fonts?.ready).then(() => {
+    let response: { result?: { value?: unknown } };
+    try {
+      response = await withDeadline(
+        cdp.send<{ result?: { value?: unknown } }>("Runtime.evaluate", {
+          expression: `Promise.resolve(${
+            waitForFonts ? "document.fonts?.ready" : "undefined"
+          }).then(() => {
           const metadata = ${JSON.stringify(pageMetadata)};
           const root = document.documentElement;
           const id = metadata?.idAttribute === undefined
@@ -474,12 +586,51 @@ const waitForFontsAndFrames = async (
             height: root.scrollHeight,
           };
         })`,
-        awaitPromise: true,
-        returnByValue: true,
-      }),
-      "Page fonts and layout sample were not ready",
-      timeout
-    );
+          awaitPromise: true,
+          returnByValue: true,
+        }),
+        waitForFonts
+          ? "Page fonts and layout sample were not ready"
+          : "Page layout sample was not ready",
+        timeout
+      );
+    } catch (error) {
+      if (
+        !waitForFonts ||
+        typeof error !== "object" ||
+        error === null ||
+        !("code" in error) ||
+        error.code !== "SCREENSHOT_TIMEOUT"
+      ) {
+        throw error;
+      }
+      let loadingFonts: unknown;
+      try {
+        const diagnostic = await withDeadline(
+          cdp.send<{ result?: { value?: unknown } }>("Runtime.evaluate", {
+            expression:
+              'Array.from(document.fonts).filter((font) => font.status === "loading").map((font) => font.family).slice(0, 5)',
+            returnByValue: true,
+          }),
+          "Font diagnostic was not ready",
+          Math.min(timeout, 500)
+        );
+        loadingFonts = diagnostic.result?.value;
+      } catch {
+        // Preserve the original timeout when diagnostics are unavailable.
+      }
+      const names = Array.isArray(loadingFonts)
+        ? loadingFonts.filter(
+            (name): name is string => typeof name === "string"
+          )
+        : [];
+      throw createTimeoutError(
+        `Page fonts and layout sample were not ready${
+          names.length > 0 ? `; loading fonts: ${names.join(", ")}` : ""
+        }`,
+        timeout
+      );
+    }
     return response.result?.value;
   };
   const isLayoutSample = (
@@ -550,12 +701,14 @@ const createBrowserLaunchArgs = ({
   height,
   uid,
   disableSandbox,
+  disableDevShmUsage,
 }: {
   userDataDir: string;
   width: number;
   height: number;
   uid?: number;
   disableSandbox?: boolean;
+  disableDevShmUsage?: boolean;
 }) => [
   "--headless=new",
   "--disable-gpu",
@@ -568,6 +721,7 @@ const createBrowserLaunchArgs = ({
   `--window-size=${width},${height}`,
   "--no-first-run",
   "--no-default-browser-check",
+  ...(disableDevShmUsage === true ? ["--disable-dev-shm-usage"] : []),
   ...(uid === 0 || disableSandbox === true ? ["--no-sandbox"] : []),
   "about:blank",
 ];
@@ -636,6 +790,7 @@ export type BrowserScreenshotNavigation = {
   mimeType?: string;
   redirects: string[];
   documentReadyState: string;
+  javascriptErrorPresent?: boolean;
   pageMetadata?: BrowserScreenshotPageMetadata;
   layoutStable: boolean;
 };
@@ -1239,10 +1394,62 @@ const getScreenshotCaptureParams = async ({
   };
 };
 
-class BrowserSessionClosedError extends Error {}
+export class BrowserStartupError extends Error {
+  readonly code = "BROWSER_STARTUP_FAILED";
+  readonly diagnostic?: BrowserStartupDiagnostic;
+  readonly processExit?: BrowserProcessExit;
+  readonly issues?: BrowserDiagnosticIssue[];
 
-const getBrowserExitMessage = (message: string, reason?: string) =>
-  `${message}${reason === undefined ? "" : ` (${reason})`}. Check the browser installation or provide a supported Chromium executable.`;
+  constructor(
+    message: string,
+    options?: {
+      cause?: unknown;
+      diagnostic?: BrowserStartupDiagnostic;
+      processExit?: BrowserProcessExit;
+    }
+  ) {
+    super(message, options);
+    this.name = "BrowserStartupError";
+    this.diagnostic = options?.diagnostic;
+    this.processExit = options?.processExit;
+    this.issues =
+      options?.diagnostic === undefined
+        ? undefined
+        : [
+            {
+              code: options.diagnostic.reason,
+              path: [],
+              message: options.diagnostic.message,
+              constraint: `stage:${options.diagnostic.stage}`,
+            },
+          ];
+  }
+}
+
+const getBrowserStartupDiagnostic = (
+  output: string
+): BrowserStartupDiagnostic | undefined => {
+  if (
+    /(?:socket\(\)|ipc|mach port|bootstrap_check_in).*?(?:operation not permitted|permission denied)|(?:operation not permitted|permission denied).*?(?:socket|ipc|mach port)/i.test(
+      output
+    )
+  ) {
+    return {
+      stage: "browser-startup",
+      reason: "browser_ipc_permission_denied",
+      message: "The operating system denied browser IPC or socket access.",
+    };
+  }
+};
+
+const getBrowserExitMessage = (
+  message: string,
+  reason?: string,
+  diagnostic?: BrowserStartupDiagnostic
+) =>
+  `${message}${reason === undefined ? "" : ` (${reason})`}.${
+    diagnostic === undefined ? "" : ` ${diagnostic.message}`
+  } Check the browser installation or provide a supported Chromium executable.`;
 
 type BrowserRuntime = {
   userDataDir: string;
@@ -1250,6 +1457,7 @@ type BrowserRuntime = {
   browserClosed: Promise<string | undefined>;
   port: string;
   running: boolean;
+  processExit?: BrowserProcessExit;
   close: () => Promise<void>;
 };
 
@@ -1285,10 +1493,30 @@ const stopBrowserProcess = async ({
   ).catch(() => undefined);
 };
 
+const removeBrowserProfile = async (
+  userDataDir: string,
+  dependencies: Pick<BrowserScreenshotDependencies, "rm">
+) => {
+  try {
+    await dependencies.rm(userDataDir, { recursive: true, force: true });
+  } catch {
+    await dependencies
+      .rm(userDataDir, {
+        recursive: true,
+        force: true,
+        maxRetries: 3,
+        retryDelay: 50,
+      })
+      .catch(() => undefined);
+  }
+};
+
 const startBrowserRuntimeOnce = async (
   options: BrowserScreenshotOptions,
-  dependencies: BrowserScreenshotDependencies
+  dependencies: BrowserScreenshotDependencies,
+  disableDevShmUsage = false
 ): Promise<BrowserRuntime> => {
+  const startupTimeout = options.startupTimeout ?? options.timeout;
   const userDataDir = await dependencies.mkdtemp(
     join(tmpdir(), "vision-browser-")
   );
@@ -1302,29 +1530,40 @@ const startBrowserRuntimeOnce = async (
         height: options.height,
         uid: options.uid,
         disableSandbox: options.disableSandbox,
+        disableDevShmUsage,
       })
     );
   } catch (error) {
-    await dependencies
-      .rm(userDataDir, { recursive: true, force: true })
-      .catch(() => undefined);
+    await removeBrowserProfile(userDataDir, dependencies);
     throw error;
   }
+  let startupOutput = "";
+  let collectStartupOutput = true;
+  browserProcess.stderr?.on("data", (chunk) => {
+    if (collectStartupOutput) {
+      startupOutput = `${startupOutput}${String(chunk)}`.slice(-4000);
+    }
+  });
   let running = true;
+  let processExit: BrowserProcessExit | undefined;
   const browserClosed = new Promise<string | undefined>((resolveClosed) => {
     const close = (reason?: string) => {
       running = false;
       resolveClosed(reason);
     };
-    browserProcess.once("exit", (code, signal) =>
+    browserProcess.once("exit", (code, signal) => {
+      processExit = {
+        ...(typeof code === "number" ? { code } : {}),
+        ...(typeof signal === "string" ? { signal } : {}),
+      };
       close(
         typeof code === "number"
           ? `exit code ${code}`
           : typeof signal === "string"
             ? `signal ${signal}`
             : undefined
-      )
-    );
+      );
+    });
     browserProcess.once("error", (error) => {
       const code = "code" in error ? error.code : undefined;
       close(code === undefined ? undefined : `spawn error ${code}`);
@@ -1332,16 +1571,22 @@ const startBrowserRuntimeOnce = async (
   });
   try {
     const { port } = await Promise.race([
-      waitForDevToolsPort(userDataDir, dependencies, options.timeout),
+      waitForDevToolsPort(userDataDir, dependencies, startupTimeout),
       browserClosed.then((reason) => {
+        const diagnostic = getBrowserStartupDiagnostic(startupOutput);
         throw new BrowserSessionClosedError(
           getBrowserExitMessage(
             "Browser exited before its DevTools endpoint became ready",
-            reason
-          )
+            reason,
+            diagnostic
+          ),
+          diagnostic,
+          processExit
         );
       }),
     ]);
+    collectStartupOutput = false;
+    startupOutput = "";
     let closePromise: Promise<void> | undefined;
     const runtime: BrowserRuntime = {
       userDataDir,
@@ -1351,6 +1596,9 @@ const startBrowserRuntimeOnce = async (
       get running() {
         return running;
       },
+      get processExit() {
+        return processExit;
+      },
       close: async () => {
         closePromise ??= (async () => {
           await stopBrowserProcess({
@@ -1359,10 +1607,7 @@ const startBrowserRuntimeOnce = async (
             running,
             gracePeriodMs: 2000,
           });
-          await dependencies.rm(userDataDir, {
-            recursive: true,
-            force: true,
-          });
+          await removeBrowserProfile(userDataDir, dependencies);
         })();
         await closePromise;
       },
@@ -1373,11 +1618,9 @@ const startBrowserRuntimeOnce = async (
       browserProcess,
       browserClosed,
       running,
-      gracePeriodMs: Math.min(options.timeout, 2000),
+      gracePeriodMs: Math.min(startupTimeout, 2000),
     });
-    await dependencies
-      .rm(userDataDir, { recursive: true, force: true })
-      .catch(() => undefined);
+    await removeBrowserProfile(userDataDir, dependencies);
     throw error;
   }
 };
@@ -1390,10 +1633,34 @@ const startBrowserRuntime = async (
     return await startBrowserRuntimeOnce(options, dependencies);
   } catch (error) {
     if (error instanceof BrowserSessionClosedError === false) {
-      throw error;
+      throw new BrowserStartupError(
+        error instanceof Error ? error.message : String(error),
+        { cause: error }
+      );
     }
   }
-  return await startBrowserRuntimeOnce(options, dependencies);
+  try {
+    return await startBrowserRuntimeOnce(
+      options,
+      dependencies,
+      dependencies.platform === "linux"
+    );
+  } catch (error) {
+    throw new BrowserStartupError(
+      error instanceof Error ? error.message : String(error),
+      {
+        cause: error,
+        diagnostic:
+          error instanceof BrowserSessionClosedError
+            ? error.diagnostic
+            : undefined,
+        processExit:
+          error instanceof BrowserSessionClosedError
+            ? error.processExit
+            : undefined,
+      }
+    );
+  }
 };
 
 const capturePageWithBrowserRuntime = async (
@@ -1452,6 +1719,64 @@ const capturePageWithBrowserRuntime = async (
             mimeType?: string;
           }
         >();
+        let javascriptErrorPresent = false;
+        let navigationFrameId: string | undefined;
+        let navigationExecutionContextFrames: Map<number, string> | undefined;
+        const navigationErrorsByContextId = new Set<number>();
+        let activeExecutionContextIds = new Set<number>();
+        const recordJavascriptError = (params: unknown) => {
+          const executionContextId = getExecutionContextId(params);
+          if (executionContextId === undefined) {
+            return;
+          }
+          if (navigationExecutionContextFrames !== undefined) {
+            navigationErrorsByContextId.add(executionContextId);
+          } else if (activeExecutionContextIds.has(executionContextId)) {
+            javascriptErrorPresent = true;
+          }
+        };
+        cdp.on("Runtime.executionContextCreated", (params) => {
+          const context = (
+            params as {
+              context?: {
+                id: number;
+                auxData?: { frameId?: string; isDefault?: boolean };
+              };
+            } | null
+          )?.context;
+          if (context?.auxData?.isDefault !== true) {
+            return;
+          }
+          const { id, auxData } = context;
+          const { frameId } = auxData;
+          if (typeof frameId !== "string") {
+            return;
+          }
+          if (navigationExecutionContextFrames !== undefined) {
+            navigationExecutionContextFrames.set(id, frameId);
+          } else if (frameId === navigationFrameId) {
+            activeExecutionContextIds.add(id);
+          }
+        });
+        cdp.on("Runtime.exceptionThrown", (params) => {
+          if (
+            typeof params === "object" &&
+            params !== null &&
+            "exceptionDetails" in params
+          ) {
+            recordJavascriptError(params.exceptionDetails);
+          }
+        });
+        cdp.on("Runtime.consoleAPICalled", (params) => {
+          if (
+            typeof params === "object" &&
+            params !== null &&
+            "type" in params &&
+            params.type === "error"
+          ) {
+            recordJavascriptError(params);
+          }
+        });
         cdp.on("Network.requestWillBeSent", (params) => {
           if (
             typeof params !== "object" ||
@@ -1512,7 +1837,6 @@ const capturePageWithBrowserRuntime = async (
           send("Page.setLifecycleEventsEnabled", { enabled: true }),
         ]);
         const targetSetupMs = Date.now() - setupStartedAt;
-        let navigationFrameId: string | undefined;
         let previousUrl: string | undefined;
         for (const [index, options] of optionsList.entries()) {
           const viewportStartedAt = Date.now();
@@ -1528,6 +1852,14 @@ const capturePageWithBrowserRuntime = async (
           );
           let navigationMs = 0;
           if (options.url !== previousUrl) {
+            const previousNavigationFrameId = navigationFrameId;
+            const previousExecutionContextIds = new Set(
+              activeExecutionContextIds
+            );
+            javascriptErrorPresent = false;
+            navigationExecutionContextFrames = new Map();
+            navigationErrorsByContextId.clear();
+            activeExecutionContextIds = new Set();
             redirectsByFrame.clear();
             documentResponsesByFrame.clear();
             const navigationStartedAt = Date.now();
@@ -1547,7 +1879,31 @@ const capturePageWithBrowserRuntime = async (
                 `Browser navigation failed: ${navigation.errorText}`
               );
             }
+            const sameDocumentNavigation =
+              navigation.loaderId === undefined &&
+              navigation.frameId !== undefined &&
+              navigation.frameId === previousNavigationFrameId;
             navigationFrameId = navigation.frameId;
+            if (sameDocumentNavigation) {
+              for (const executionContextId of previousExecutionContextIds) {
+                activeExecutionContextIds.add(executionContextId);
+              }
+            }
+            for (const [
+              executionContextId,
+              frameId,
+            ] of navigationExecutionContextFrames ?? []) {
+              if (frameId === navigationFrameId) {
+                activeExecutionContextIds.add(executionContextId);
+              }
+            }
+            for (const executionContextId of activeExecutionContextIds) {
+              if (navigationErrorsByContextId.has(executionContextId)) {
+                javascriptErrorPresent = true;
+              }
+            }
+            navigationExecutionContextFrames = undefined;
+            navigationErrorsByContextId.clear();
             navigationMs = Date.now() - navigationStartedAt;
             previousUrl = options.url;
           } else {
@@ -1604,7 +1960,7 @@ const capturePageWithBrowserRuntime = async (
           const readiness = await waitForFontsAndFrames(
             cdp,
             options.timeout,
-            options.pageMetadata
+            options
           );
           if (options.waitForTimeout > 0) {
             await delay(options.waitForTimeout);
@@ -1766,6 +2122,7 @@ const capturePageWithBrowserRuntime = async (
                 }),
             redirects,
             ...readiness,
+            ...(javascriptErrorPresent ? { javascriptErrorPresent: true } : {}),
           };
           if (images === undefined) {
             delete layout.images;
@@ -1833,7 +2190,585 @@ const captureWithBrowserRuntime = async (
   return layout;
 };
 
+export const isRenderedFormReady = (selector: string) => {
+  const form = document.querySelector(selector);
+  return (
+    form instanceof HTMLFormElement &&
+    form.querySelector(":scope > fieldset[disabled]") === null &&
+    // Generated pages are server rendered. Native requestSubmit before React
+    // attaches its props can silently bypass the managed Form handler.
+    Object.getOwnPropertyNames(form).some((key) =>
+      key.startsWith("__reactProps$")
+    )
+  );
+};
+
+export const submitRenderedForm = (input: BrowserFormSubmitOptions) => {
+  // A generated page can redirect during navigation. Check in the same browser
+  // evaluation that fills the controls so supplied values stay on this Preview.
+  if (window.location.origin !== new URL(input.url).origin) {
+    return { status: "off_origin" };
+  }
+  if (document.querySelector("[data-ws-project]") === null) {
+    throw new Error("This route did not render a generated Webstudio site.");
+  }
+  const form = document.querySelector(input.selector);
+  if (!(form instanceof HTMLFormElement)) {
+    throw new Error("Generated Preview Form was not found.");
+  }
+  const byName = new Map<string, BrowserFormValue[]>();
+  for (const item of input.values) {
+    const items = byName.get(item.name) ?? [];
+    items.push(item);
+    byName.set(item.name, items);
+  }
+  for (const [name, items] of byName) {
+    const controls = Array.from(form.elements).filter(
+      (element) =>
+        (element instanceof HTMLInputElement ||
+          element instanceof HTMLTextAreaElement ||
+          element instanceof HTMLSelectElement) &&
+        element.name === name
+    ) as Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+    if (controls.length === 0) {
+      throw new Error("Form field " + name + " was not found.");
+    }
+    const files = items.filter((item) => item.file !== undefined);
+    if (files.length > 0) {
+      const control = controls.find(
+        (item) => item instanceof HTMLInputElement && item.type === "file"
+      );
+      if (!(control instanceof HTMLInputElement)) {
+        throw new Error("File field " + name + " was not found.");
+      }
+      const transfer = new DataTransfer();
+      for (const item of files) {
+        const file = item.file;
+        if (file === undefined) {
+          continue;
+        }
+        const bytes = Uint8Array.from(atob(file.base64), (char) =>
+          char.charCodeAt(0)
+        );
+        transfer.items.add(new File([bytes], file.name, { type: file.type }));
+      }
+      control.files = transfer.files;
+      control.dispatchEvent(new Event("change", { bubbles: true }));
+      continue;
+    }
+    if (
+      controls[0] instanceof HTMLInputElement &&
+      (controls[0].type === "checkbox" || controls[0].type === "radio")
+    ) {
+      const selected = new Set(items.map((item) => item.value));
+      for (const control of controls) {
+        if (control instanceof HTMLInputElement) {
+          const shouldCheck = selected.has(control.value);
+          if (
+            (control.type === "radio" && shouldCheck && !control.checked) ||
+            (control.type === "checkbox" && control.checked !== shouldCheck)
+          ) {
+            // A real click updates checked and fires React's checkbox/radio
+            // change handler through its delegated click listener.
+            control.click();
+          }
+        }
+      }
+      continue;
+    }
+    if (controls[0] instanceof HTMLSelectElement && controls[0].multiple) {
+      const selected = new Set(items.map((item) => item.value));
+      for (const option of controls[0].options) {
+        option.selected = selected.has(option.value);
+      }
+      controls[0].dispatchEvent(new Event("change", { bubbles: true }));
+      continue;
+    }
+    items.forEach((item, index) => {
+      const control = controls[index];
+      if (control === undefined) {
+        throw new Error("Not enough controls for " + name + ".");
+      }
+      if (control instanceof HTMLSelectElement) {
+        control.value = item.value ?? "";
+        control.dispatchEvent(new Event("change", { bubbles: true }));
+      } else {
+        // React tracks value on the element itself. The native setter lets its
+        // delegated input handler observe the change when the event bubbles.
+        const prototype =
+          control instanceof HTMLTextAreaElement
+            ? HTMLTextAreaElement.prototype
+            : HTMLInputElement.prototype;
+        const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+        if (setter === undefined) {
+          throw new Error("Form field cannot accept a value.");
+        }
+        setter.call(control, item.value ?? "");
+        control.dispatchEvent(new Event("input", { bubbles: true }));
+        control.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+  }
+  const submitter =
+    input.submitter === undefined
+      ? undefined
+      : form.querySelector(input.submitter);
+  if (
+    input.submitter !== undefined &&
+    !(
+      submitter instanceof HTMLButtonElement ||
+      (submitter instanceof HTMLInputElement && submitter.type === "submit")
+    )
+  ) {
+    throw new Error("Form submitter was not found.");
+  }
+  if (
+    !form.noValidate &&
+    !(
+      submitter instanceof HTMLElement &&
+      "formNoValidate" in submitter &&
+      submitter.formNoValidate
+    ) &&
+    !form.checkValidity()
+  ) {
+    return {
+      status: "validation_failed",
+      errors: (
+        Array.from(form.elements).filter(
+          (element) =>
+            (element instanceof HTMLInputElement ||
+              element instanceof HTMLTextAreaElement ||
+              element instanceof HTMLSelectElement) &&
+            !element.validity.valid
+        ) as Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+      ).map((element) => {
+        const validity = element.validity;
+        return {
+          name: element.name,
+          message: validity.valueMissing
+            ? "A value is required."
+            : validity.typeMismatch
+              ? "Enter a valid value for this field."
+              : validity.patternMismatch
+                ? "Value does not match the required pattern."
+                : validity.tooLong
+                  ? "Value is too long."
+                  : validity.tooShort
+                    ? "Value is too short."
+                    : validity.rangeUnderflow
+                      ? "Value is below the allowed range."
+                      : validity.rangeOverflow
+                        ? "Value is above the allowed range."
+                        : validity.stepMismatch
+                          ? "Value does not match the required step."
+                          : validity.badInput
+                            ? "Enter a valid value for this field."
+                            : "This field is invalid.",
+        };
+      }),
+    };
+  }
+  const preSubmitFormState = form.getAttribute("data-state");
+  form.requestSubmit(
+    submitter as HTMLButtonElement | HTMLInputElement | undefined
+  );
+  return { status: "dispatched", errors: [], preSubmitFormState };
+};
+
+const submitFormWithBrowserRuntime = async (
+  runtime: BrowserRuntime,
+  options: BrowserFormSubmitOptions,
+  dependencies: BrowserScreenshotDependencies
+): Promise<BrowserFormSubmitResult> => {
+  const correlationId = crypto.randomUUID();
+  const deadline = Date.now() + options.timeout;
+  const remaining = () => {
+    const duration = deadline - Date.now();
+    if (duration <= 0) {
+      throw createTimeoutError(
+        "Preview Form submission did not finish",
+        options.timeout
+      );
+    }
+    return duration;
+  };
+  let cdp: CdpSession | undefined;
+  let targetId: string | undefined;
+  let initialPageUrl = options.url;
+  const exchanges: { status: number; url: string }[] = [];
+  let managedResponseId: string | undefined;
+  let managedResponseBody:
+    | Promise<{ body?: string; base64Encoded?: boolean } | undefined>
+    | undefined;
+  const submissionRequestIds = new Set<string>();
+  const completedRequestIds = new Set<string>();
+  let navigationObserved = false;
+  let mainFrameId: string | undefined;
+  let sawPending = false;
+  const redactUrl = (value: string) => {
+    const url = new URL(value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return "[non-http URL]";
+    }
+    return `${url.origin}${url.pathname}`;
+  };
+  const unknown = (): BrowserFormSubmitResult => ({
+    status: "unknown",
+    formState: "unknown",
+    results: [],
+    errors: [],
+    exchanges,
+    pageUrl: redactUrl(initialPageUrl),
+    correlationId,
+  });
+  let dispatchStarted = false;
+  try {
+    const target = await getPageWebSocketUrl({
+      port: runtime.port,
+      dependencies,
+      timeout: remaining(),
+    });
+    targetId = target.id;
+    cdp = await CdpSession.connect(
+      target.webSocketDebuggerUrl,
+      dependencies,
+      remaining()
+    );
+    const send = async <Result = unknown>(
+      method: string,
+      params: Record<string, unknown> = {}
+    ) => {
+      const timeout = remaining();
+      return await withDeadline(
+        cdp?.send<Result>(method, params) ??
+          Promise.reject(new Error("Browser DevTools session is closed.")),
+        `Browser command ${method} did not finish`,
+        timeout
+      );
+    };
+    cdp.on("Network.requestWillBeSent", (params) => {
+      if (
+        dispatchStarted &&
+        typeof params === "object" &&
+        params !== null &&
+        "requestId" in params &&
+        typeof params.requestId === "string" &&
+        "request" in params &&
+        typeof params.request === "object" &&
+        params.request !== null &&
+        "method" in params.request &&
+        params.request.method === "POST"
+      ) {
+        submissionRequestIds.add(params.requestId);
+      }
+    });
+    for (const event of [
+      "Page.navigatedWithinDocument",
+      "Page.frameNavigated",
+    ]) {
+      cdp.on(event, (params) => {
+        if (
+          !dispatchStarted ||
+          mainFrameId === undefined ||
+          typeof params !== "object" ||
+          params === null
+        ) {
+          return;
+        }
+        const frameId =
+          event === "Page.navigatedWithinDocument"
+            ? "frameId" in params
+              ? params.frameId
+              : undefined
+            : "frame" in params &&
+                typeof params.frame === "object" &&
+                params.frame !== null &&
+                "id" in params.frame
+              ? params.frame.id
+              : undefined;
+        if (frameId === mainFrameId) {
+          navigationObserved = true;
+        }
+      });
+    }
+    cdp.on("Network.loadingFinished", (params) => {
+      if (
+        typeof params === "object" &&
+        params !== null &&
+        "requestId" in params &&
+        typeof params.requestId === "string" &&
+        submissionRequestIds.has(params.requestId)
+      ) {
+        completedRequestIds.add(params.requestId);
+        if (params.requestId === managedResponseId) {
+          // Navigation can discard Chrome's body before the next DOM poll.
+          managedResponseBody = send<{
+            body?: string;
+            base64Encoded?: boolean;
+          }>("Network.getResponseBody", { requestId: params.requestId }).catch(
+            () => undefined
+          );
+        }
+      }
+    });
+    cdp.on("Network.responseReceived", (params) => {
+      if (
+        dispatchStarted &&
+        typeof params === "object" &&
+        params !== null &&
+        "type" in params &&
+        ["XHR", "Fetch", "Document"].includes(String(params.type)) &&
+        "response" in params &&
+        typeof params.response === "object" &&
+        params.response !== null &&
+        "status" in params.response &&
+        typeof params.response.status === "number" &&
+        "url" in params.response &&
+        typeof params.response.url === "string"
+      ) {
+        exchanges.push({
+          status: params.response.status,
+          url: redactUrl(params.response.url),
+        });
+        const responseUrl = new URL(params.response.url);
+        const initialUrl = new URL(initialPageUrl);
+        if (
+          managedResponseId === undefined &&
+          "requestId" in params &&
+          typeof params.requestId === "string" &&
+          submissionRequestIds.has(params.requestId) &&
+          "frameId" in params &&
+          params.frameId === mainFrameId &&
+          responseUrl.origin === initialUrl.origin &&
+          responseUrl.pathname ===
+            `/__ws-form${initialUrl.pathname === "/" ? "" : initialUrl.pathname}`
+        ) {
+          managedResponseId = params.requestId;
+        }
+      }
+    });
+    await Promise.all([
+      send("Page.enable"),
+      send("Runtime.enable"),
+      send("Network.enable", {
+        enableDurableMessages: true,
+        maxTotalBufferSize: 4_000_000,
+        maxResourceBufferSize: 1_000_000,
+      }),
+      send("Page.setLifecycleEventsEnabled", { enabled: true }),
+    ]);
+    const navigation = await navigateAndWaitForLifecycle(
+      cdp,
+      "load",
+      remaining(),
+      () => send<NavigationResult>("Page.navigate", { url: options.url })
+    );
+    if (navigation.errorText !== undefined) {
+      throw new Error(`Browser navigation failed: ${navigation.errorText}`);
+    }
+    mainFrameId = navigation.frameId;
+    // The generated route may canonicalize during initial navigation.
+    // Capture that location before the only requestSubmit call.
+    while (true) {
+      const readiness = await send<{
+        result?: { value?: { ready?: boolean; pageUrl?: string } };
+      }>("Runtime.evaluate", {
+        expression: `({ready: (${isRenderedFormReady})(${JSON.stringify(
+          options.selector
+        )}), pageUrl: window.location.href})`,
+        returnByValue: true,
+      });
+      initialPageUrl = readiness.result?.value?.pageUrl ?? initialPageUrl;
+      if (readiness.result?.value?.ready === true) {
+        break;
+      }
+      await delay(Math.min(50, remaining()));
+    }
+    const expression = `(${submitRenderedForm})(${JSON.stringify(options)})`;
+    // There is deliberately one requestSubmit call and no browser reconnect or retry here.
+    dispatchStarted = true;
+    const evaluated = await send<{
+      result?: {
+        value?: {
+          status?: string;
+          errors?: { name: string; message: string }[];
+          preSubmitFormState?: string | null;
+        };
+      };
+      exceptionDetails?: unknown;
+    }>("Runtime.evaluate", {
+      expression,
+      awaitPromise: true,
+      returnByValue: true,
+    });
+    if (evaluated.exceptionDetails !== undefined) {
+      throw new Error("Browser could not prepare the generated Preview Form.");
+    }
+    const value = evaluated.result?.value;
+    if (value?.status === "off_origin") {
+      dispatchStarted = false;
+      throw new Error("Generated Preview navigated to another origin.");
+    }
+    if (value?.status === "validation_failed") {
+      return {
+        status: "validation_failed",
+        formState: "invalid",
+        results: [],
+        errors: value.errors ?? [],
+        exchanges: [],
+        pageUrl: redactUrl(initialPageUrl),
+        correlationId,
+      };
+    }
+    if (value?.status !== "dispatched") {
+      return unknown();
+    }
+    let pageUrl = redactUrl(initialPageUrl);
+    let formState = "unknown";
+    let didNavigate = false;
+    let lastBusy = true;
+    let terminalTransition = false;
+    while (Date.now() < deadline) {
+      await delay(Math.min(100, remaining()));
+      const observed = await send<{
+        result?: {
+          value?: {
+            pageUrl?: string;
+            formState?: string | null;
+            busy?: boolean;
+          };
+        };
+      }>("Runtime.evaluate", {
+        expression: `({pageUrl: window.location.href, formState: document.querySelector(${JSON.stringify(
+          options.selector
+        )})?.getAttribute("data-state"), busy: document.querySelector(${JSON.stringify(
+          options.selector
+        )})?.getAttribute("aria-busy") === "true"})`,
+        returnByValue: true,
+      }).catch((error) => {
+        if (!navigationObserved || isBrowserSessionClosedError(error)) {
+          throw error;
+        }
+      });
+      if (observed === undefined) {
+        continue;
+      }
+      const current = observed.result?.value;
+      pageUrl = redactUrl(current?.pageUrl ?? initialPageUrl);
+      didNavigate =
+        current?.pageUrl !== undefined && current.pageUrl !== initialPageUrl;
+      formState = current?.formState ?? "unknown";
+      terminalTransition =
+        (formState === "success" || formState === "error") &&
+        formState !== value.preSubmitFormState;
+      lastBusy = current?.busy === true;
+      sawPending ||= current?.busy === true;
+      const requestCompleted = completedRequestIds.size > 0;
+      const pendingFinished = sawPending && current?.busy === false;
+      if (
+        ((didNavigate || navigationObserved) && !lastBusy) ||
+        ((requestCompleted || pendingFinished || terminalTransition) &&
+          current?.busy === false &&
+          (formState === "success" || formState === "error"))
+      ) {
+        break;
+      }
+    }
+    const results: {
+      status: number;
+      resourceId?: string;
+      resourceName?: string;
+    }[] = [];
+    const errors: { status?: number; name?: string; message: string }[] = [];
+    if (managedResponseBody !== undefined) {
+      const body = await managedResponseBody;
+      if (body?.body !== undefined && body.body.length < 1_000_000) {
+        try {
+          const parsed: unknown = JSON.parse(
+            body.base64Encoded
+              ? Buffer.from(body.body, "base64").toString("utf8")
+              : body.body
+          );
+          if (typeof parsed === "object" && parsed !== null) {
+            const response = parsed as Record<string, unknown>;
+            if (Array.isArray(response.results)) {
+              for (const item of response.results.slice(0, 100)) {
+                if (
+                  typeof item === "object" &&
+                  item !== null &&
+                  typeof item.status === "number"
+                ) {
+                  results.push({
+                    status: item.status,
+                    ...(typeof item.resourceId === "string"
+                      ? { resourceId: item.resourceId }
+                      : {}),
+                    ...(typeof item.resourceName === "string"
+                      ? { resourceName: item.resourceName }
+                      : {}),
+                  });
+                }
+              }
+            }
+            if (Array.isArray(response.errors)) {
+              for (const item of response.errors.slice(0, 100)) {
+                if (typeof item === "object" && item !== null) {
+                  errors.push({
+                    ...(typeof item.status === "number"
+                      ? { status: item.status }
+                      : {}),
+                    ...(typeof item.resourceName === "string"
+                      ? { name: item.resourceName }
+                      : {}),
+                    message:
+                      typeof item.status === "number"
+                        ? `Form resource returned HTTP ${item.status}`
+                        : "Form resource failed",
+                  });
+                }
+              }
+            }
+          }
+        } catch {
+          // An unreadable response leaves the outcome based on rendered state.
+        }
+      }
+    }
+    return {
+      status:
+        ((didNavigate || navigationObserved) && !lastBusy) ||
+        ((completedRequestIds.size > 0 || sawPending || terminalTransition) &&
+          !lastBusy &&
+          (formState === "success" || formState === "error"))
+          ? "submitted"
+          : "unknown",
+      formState,
+      results,
+      errors,
+      exchanges,
+      pageUrl,
+      ...(didNavigate ? { redirect: pageUrl } : {}),
+      correlationId,
+    };
+  } catch (error) {
+    if (dispatchStarted) {
+      return unknown();
+    }
+    throw error;
+  } finally {
+    cdp?.close();
+    if (targetId !== undefined && runtime.running) {
+      await dependencies
+        .fetch(`http://127.0.0.1:${runtime.port}/json/close/${targetId}`)
+        .catch(() => undefined);
+    }
+  }
+};
+
 export type BrowserScreenshotSession = {
+  submitForm?: (
+    options: BrowserFormSubmitOptions
+  ) => Promise<BrowserFormSubmitResult>;
   capture: (
     options: BrowserScreenshotOptions
   ) => Promise<BrowserScreenshotLayout>;
@@ -1900,6 +2835,9 @@ export const createBrowserScreenshotSession = async (
       try {
         return await capture(activeRuntime);
       } catch (error) {
+        if (error instanceof BrowserSessionClosedError) {
+          error.processExit ??= activeRuntime.processExit;
+        }
         if (
           closed ||
           attempt === 1 ||
@@ -1914,6 +2852,19 @@ export const createBrowserScreenshotSession = async (
     throw new Error("Browser screenshot retry was exhausted.");
   };
   return {
+    async submitForm(submitOptions) {
+      if (closed) {
+        throw new BrowserSessionClosedError(
+          "Browser screenshot session was closed."
+        );
+      }
+      // A form submission can have external effects. Never use captureWithRestart.
+      return await submitFormWithBrowserRuntime(
+        runtime,
+        submitOptions,
+        dependencies
+      );
+    },
     async capture(captureOptions) {
       return await captureWithRestart(
         async (activeRuntime) =>

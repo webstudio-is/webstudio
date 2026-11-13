@@ -3,6 +3,4262 @@
 
 export const runtimeOperationContractData = [
   {
+    id: "contentBlocks.inspectSource",
+    command: "inspect-content-block-source",
+    client: "inspectContentBlockSource",
+    permit: "view",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
+        },
+        variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+      },
+      required: ["blockInstanceId", "renderScope"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        source: {
+          type: "string",
+        },
+        sessionStatus: {
+          type: "string",
+          enum: ["saved", "pending", "saving", "failed", "conflicting"],
+        },
+        identity: {
+          type: "object",
+          properties: {
+            blockInstanceId: {
+              type: "string",
+            },
+            assetId: {
+              type: "string",
+            },
+            revision: {
+              type: "string",
+            },
+            contentRef: {
+              type: "string",
+            },
+            format: {
+              type: "string",
+              const: "mdx",
+            },
+            renderScope: {
+              type: "string",
+            },
+          },
+          required: [
+            "blockInstanceId",
+            "assetId",
+            "revision",
+            "contentRef",
+            "format",
+            "renderScope",
+          ],
+          additionalProperties: {},
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: [
+                      "source-read-failed",
+                      "missing-source",
+                      "missing-asset",
+                      "linked-document-unavailable",
+                      "html-content-model",
+                      "dynamic-resource",
+                      "dynamic-source-unbounded",
+                    ],
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ambiguous-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  semanticKey: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  templateNames: {
+                    minItems: 2,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "semanticKey",
+                  "templateNames",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["source", "sessionStatus", "identity", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.connectSource",
+    command: "connect-content-block-source",
+    client: "connectContentBlockSource",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
+        },
+        variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+        source: {
+          oneOf: [
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "asset",
+                },
+                assetId: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "assetId"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "expression",
+                },
+                value: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "value"],
+              additionalProperties: false,
+            },
+          ],
+        },
+        confirmReplacement: {
+          type: "boolean",
+        },
+      },
+      required: ["blockInstanceId", "renderScope", "source"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          const: "connect",
+        },
+        requiresConfirmation: {
+          type: "boolean",
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: [
+                      "source-read-failed",
+                      "missing-source",
+                      "missing-asset",
+                      "linked-document-unavailable",
+                      "html-content-model",
+                      "dynamic-resource",
+                      "dynamic-source-unbounded",
+                    ],
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ambiguous-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  semanticKey: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  templateNames: {
+                    minItems: 2,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "semanticKey",
+                  "templateNames",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["action", "requiresConfirmation", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.switchSource",
+    command: "switch-content-block-source",
+    client: "switchContentBlockSource",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
+        },
+        variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+        source: {
+          oneOf: [
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "asset",
+                },
+                assetId: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "assetId"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "expression",
+                },
+                value: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "value"],
+              additionalProperties: false,
+            },
+          ],
+        },
+      },
+      required: ["blockInstanceId", "renderScope", "source"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          const: "switch",
+        },
+        requiresConfirmation: {
+          type: "boolean",
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: [
+                      "source-read-failed",
+                      "missing-source",
+                      "missing-asset",
+                      "linked-document-unavailable",
+                      "html-content-model",
+                      "dynamic-resource",
+                      "dynamic-source-unbounded",
+                    ],
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ambiguous-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  semanticKey: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  templateNames: {
+                    minItems: 2,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "semanticKey",
+                  "templateNames",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["action", "requiresConfirmation", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.disconnectSource",
+    command: "disconnect-content-block-source",
+    client: "disconnectContentBlockSource",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
+        },
+        variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+      },
+      required: ["blockInstanceId", "renderScope"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          const: "disconnect",
+        },
+        requiresConfirmation: {
+          type: "boolean",
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: [
+                      "source-read-failed",
+                      "missing-source",
+                      "missing-asset",
+                      "linked-document-unavailable",
+                      "html-content-model",
+                      "dynamic-resource",
+                      "dynamic-source-unbounded",
+                    ],
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ambiguous-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  semanticKey: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  templateNames: {
+                    minItems: 2,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "semanticKey",
+                  "templateNames",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["action", "requiresConfirmation", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.editSource",
+    command: "edit-content-block-source",
+    client: "editContentBlockSource",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
+        },
+        variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+        source: {
+          type: "string",
+        },
+      },
+      required: ["blockInstanceId", "renderScope", "source"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+        },
+        source: {
+          type: "string",
+        },
+        status: {
+          type: "string",
+          enum: ["saved", "pending", "saving", "failed", "conflicting"],
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: [
+                      "source-read-failed",
+                      "missing-source",
+                      "missing-asset",
+                      "linked-document-unavailable",
+                      "html-content-model",
+                      "dynamic-resource",
+                      "dynamic-source-unbounded",
+                    ],
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ambiguous-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  semanticKey: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  templateNames: {
+                    minItems: 2,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "semanticKey",
+                  "templateNames",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["assetId", "source", "status", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: ["assets"],
+    invalidatesNamespaces: ["assets"],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.updateFrontmatter",
+    command: "update-content-block-frontmatter",
+    client: "updateContentBlockFrontmatter",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
+        },
+        variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+        properties: {
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+      },
+      required: ["blockInstanceId", "renderScope", "properties"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+        },
+        source: {
+          type: "string",
+        },
+        status: {
+          type: "string",
+          enum: ["saved", "pending", "saving", "failed", "conflicting"],
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: [
+                      "source-read-failed",
+                      "missing-source",
+                      "missing-asset",
+                      "linked-document-unavailable",
+                      "html-content-model",
+                      "dynamic-resource",
+                      "dynamic-source-unbounded",
+                    ],
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ambiguous-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  semanticKey: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  templateNames: {
+                    minItems: 2,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "semanticKey",
+                  "templateNames",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["assetId", "source", "status", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: ["assets"],
+    invalidatesNamespaces: ["assets"],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.reloadSource",
+    command: "reload-content-block-source",
+    client: "reloadContentBlockSource",
+    permit: "view",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        renderScope: {
+          type: "string",
+          minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
+        },
+        variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {},
+        },
+      },
+      required: ["blockInstanceId", "renderScope"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+        },
+        source: {
+          type: "string",
+        },
+        status: {
+          type: "string",
+          enum: ["saved", "pending", "saving", "failed", "conflicting"],
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: [
+                      "source-read-failed",
+                      "missing-source",
+                      "missing-asset",
+                      "linked-document-unavailable",
+                      "html-content-model",
+                      "dynamic-resource",
+                      "dynamic-source-unbounded",
+                    ],
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ambiguous-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  semanticKey: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  templateNames: {
+                    minItems: 2,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "semanticKey",
+                  "templateNames",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: ["assetId", "source", "status", "diagnostics"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "contentBlocks.migrateTemplateReferences",
+    command: "migrate-content-block-template-references",
+    client: "migrateContentBlockTemplateReferences",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        assetIds: {
+          minItems: 1,
+          maxItems: 100,
+          type: "array",
+          items: {
+            type: "string",
+            minLength: 1,
+          },
+        },
+        migration: {
+          anyOf: [
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "rename",
+                },
+                from: {
+                  type: "string",
+                  minLength: 1,
+                },
+                to: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "from", "to"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "remove",
+                },
+                name: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["type", "name"],
+            },
+          ],
+        },
+        confirmationToken: {
+          type: "string",
+        },
+      },
+      required: ["assetIds", "migration"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        status: {
+          type: "string",
+          enum: ["confirmation-required", "complete", "partial"],
+        },
+        updateCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        omissionCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        changedFileCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        files: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              assetId: {
+                type: "string",
+              },
+              revision: {
+                type: "string",
+              },
+              contentRef: {
+                type: "string",
+              },
+              changed: {
+                type: "boolean",
+              },
+              status: {
+                type: "string",
+                enum: ["updated", "unchanged", "failed"],
+              },
+              updateCount: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9007199254740991,
+              },
+              omissionCount: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9007199254740991,
+              },
+              diagnostics: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    code: {
+                      type: "string",
+                    },
+                    message: {
+                      type: "string",
+                    },
+                  },
+                  required: ["code", "message"],
+                  additionalProperties: {},
+                },
+              },
+            },
+            required: [
+              "assetId",
+              "revision",
+              "contentRef",
+              "changed",
+              "updateCount",
+              "omissionCount",
+              "diagnostics",
+            ],
+            additionalProperties: {},
+          },
+        },
+        confirmation: {
+          type: "object",
+          properties: {
+            token: {
+              type: "string",
+            },
+            expiresAt: {
+              type: "string",
+            },
+          },
+          required: ["token", "expiresAt"],
+          additionalProperties: {},
+        },
+      },
+      required: [
+        "status",
+        "updateCount",
+        "omissionCount",
+        "changedFileCount",
+        "files",
+      ],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: ["assets"],
+    invalidatesNamespaces: ["assets"],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
     id: "pages.list",
     command: "list-pages",
     client: "listPages",
@@ -631,9 +4887,9 @@ export const runtimeOperationContractData = [
             'Plain page path. For a new non-home page, start with "/", for example "/pricing". Use colon-prefixed dynamic segments such as "/blog/:slug" when one page definition must render many concrete routes; do not create a separate page for every route value. The home page path is the empty string ""; do not use an empty path when creating a new page.',
         },
         title: {
-          description:
-            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
           type: "string",
+          description:
+            'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
         },
         parentFolderId: {
           type: "string",
@@ -642,24 +4898,24 @@ export const runtimeOperationContractData = [
           type: "object",
           properties: {
             description: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             language: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             redirect: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageUrl: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageAssetId: {
               type: "string",
@@ -670,9 +4926,9 @@ export const runtimeOperationContractData = [
                   type: "boolean",
                 },
                 {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
               ],
             },
@@ -681,9 +4937,9 @@ export const runtimeOperationContractData = [
               enum: ["html", "xml", "text"],
             },
             content: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             status: {
               anyOf: [
@@ -742,9 +4998,9 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   content: {
-                    description:
-                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                     type: "string",
+                    description:
+                      'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   },
                 },
                 required: ["property", "content"],
@@ -769,7 +5025,7 @@ export const runtimeOperationContractData = [
       required: ["pageId", "rootInstanceId"],
       additionalProperties: {},
     },
-    readNamespaces: ["pages"],
+    readNamespaces: ["pages", "instances", "dataSources"],
     writeNamespaces: ["pages", "instances"],
     invalidatesNamespaces: ["pages", "instances"],
     retryOnConflict: false,
@@ -805,9 +5061,9 @@ export const runtimeOperationContractData = [
                 'Plain page path. For a new non-home page, start with "/", for example "/pricing". Use colon-prefixed dynamic segments such as "/blog/:slug" when one page definition must render many concrete routes; do not create a separate page for every route value. The home page path is the empty string ""; do not use an empty path when creating a new page.',
             },
             title: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             isDraft: {
               type: "boolean",
@@ -821,24 +5077,24 @@ export const runtimeOperationContractData = [
               type: "object",
               properties: {
                 description: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 language: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 redirect: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageUrl: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageAssetId: {
                   type: "string",
@@ -849,9 +5105,9 @@ export const runtimeOperationContractData = [
                       type: "boolean",
                     },
                     {
-                      description:
-                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                       type: "string",
+                      description:
+                        'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                     },
                   ],
                 },
@@ -860,9 +5116,9 @@ export const runtimeOperationContractData = [
                   enum: ["html", "xml", "text"],
                 },
                 content: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 status: {
                   anyOf: [
@@ -921,9 +5177,9 @@ export const runtimeOperationContractData = [
                         type: "string",
                       },
                       content: {
-                        description:
-                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                         type: "string",
+                        description:
+                          'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                       },
                     },
                     required: ["property", "content"],
@@ -948,7 +5204,7 @@ export const runtimeOperationContractData = [
       required: ["pageId"],
       additionalProperties: {},
     },
-    readNamespaces: ["pages"],
+    readNamespaces: ["pages", "instances", "dataSources"],
     writeNamespaces: ["pages"],
     invalidatesNamespaces: ["pages"],
     retryOnConflict: true,
@@ -957,6 +5213,7 @@ export const runtimeOperationContractData = [
     id: "pages.updateSettings",
     command: "update-page-settings",
     client: "updatePageSettings",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",
@@ -1053,6 +5310,7 @@ export const runtimeOperationContractData = [
               required: ["include", "category", "thumbnailAssetId"],
             },
           },
+          additionalProperties: false,
           required: [],
         },
       },
@@ -1068,7 +5326,7 @@ export const runtimeOperationContractData = [
       required: ["pageId"],
       additionalProperties: {},
     },
-    readNamespaces: ["pages"],
+    readNamespaces: ["pages", "instances", "dataSources"],
     writeNamespaces: ["pages"],
     invalidatesNamespaces: ["pages"],
     retryOnConflict: true,
@@ -1218,6 +5476,9 @@ export const runtimeOperationContractData = [
             contactEmail: {
               type: "string",
             },
+            emailSender: {
+              type: "string",
+            },
             faviconAssetId: {
               type: "string",
             },
@@ -1229,6 +5490,33 @@ export const runtimeOperationContractData = [
             },
             auth: {
               type: "string",
+            },
+            customHeaders: {
+              description:
+                "Response header rules. Optional route patterns use Authentication syntax; '/*' applies site-wide. Missing CSP, X-Frame-Options, and Referrer-Policy receive dispatcher defaults. X-Powered-By, X-Content-Type-Options, and Strict-Transport-Security are managed by Webstudio Cloud.",
+              maxItems: 100,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  route: {
+                    type: "string",
+                    maxLength: 2048,
+                  },
+                  name: {
+                    type: "string",
+                    maxLength: 256,
+                    pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+                  },
+                  value: {
+                    type: "string",
+                    minLength: 1,
+                    maxLength: 8192,
+                    pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+                  },
+                },
+                required: ["name", "value"],
+              },
             },
           },
           additionalProperties: {},
@@ -1305,6 +5593,16 @@ export const runtimeOperationContractData = [
                 },
               ],
             },
+            emailSender: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
             faviconAssetId: {
               anyOf: [
                 {
@@ -1339,6 +5637,40 @@ export const runtimeOperationContractData = [
               anyOf: [
                 {
                   type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            customHeaders: {
+              anyOf: [
+                {
+                  description:
+                    "Response header rules. Optional route patterns use Authentication syntax; '/*' applies site-wide. Missing CSP, X-Frame-Options, and Referrer-Policy receive dispatcher defaults. X-Powered-By, X-Content-Type-Options, and Strict-Transport-Security are managed by Webstudio Cloud.",
+                  maxItems: 100,
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      route: {
+                        type: "string",
+                        maxLength: 2048,
+                      },
+                      name: {
+                        type: "string",
+                        maxLength: 256,
+                        pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+                      },
+                      value: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 8192,
+                        pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+                      },
+                    },
+                    required: ["name", "value"],
+                  },
                 },
                 {
                   type: "null",
@@ -1386,6 +5718,180 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["projectSettings"],
     invalidatesNamespaces: ["projectSettings"],
     retryOnConflict: true,
+  },
+  {
+    id: "responseHeaders.list",
+    command: "list-response-headers",
+    client: "listResponseHeaders",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        headers: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              route: {
+                type: "string",
+                maxLength: 2048,
+              },
+              name: {
+                type: "string",
+                maxLength: 256,
+                pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+              },
+              value: {
+                type: "string",
+                minLength: 1,
+                maxLength: 8192,
+                pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+              },
+            },
+            required: ["name", "value"],
+          },
+        },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
+      },
+      required: [
+        "headers",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
+      additionalProperties: {},
+    },
+    readNamespaces: ["projectSettings"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+  {
+    id: "responseHeaders.set",
+    command: "set-response-header",
+    client: "setResponseHeader",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        route: {
+          type: "string",
+          maxLength: 2048,
+        },
+        name: {
+          type: "string",
+          maxLength: 256,
+          pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+        },
+        value: {
+          type: "string",
+          minLength: 1,
+          maxLength: 8192,
+          pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+        },
+      },
+      required: ["name", "value"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        updated: {
+          type: "boolean",
+        },
+      },
+      required: ["updated"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["projectSettings"],
+    writeNamespaces: ["projectSettings"],
+    invalidatesNamespaces: ["projectSettings"],
+    retryOnConflict: true,
+  },
+  {
+    id: "responseHeaders.delete",
+    command: "delete-response-header",
+    client: "deleteResponseHeader",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        route: {
+          type: "string",
+          maxLength: 2048,
+        },
+        name: {
+          type: "string",
+          maxLength: 256,
+          pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+        },
+      },
+      required: ["name"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        updated: {
+          type: "boolean",
+        },
+      },
+      required: ["updated"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["projectSettings"],
+    writeNamespaces: ["projectSettings"],
+    invalidatesNamespaces: ["projectSettings"],
+    retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "projectSettings.getMarketplaceProduct",
@@ -2589,32 +7095,32 @@ export const runtimeOperationContractData = [
           minLength: 1,
         },
         title: {
-          description:
-            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
           type: "string",
+          description:
+            'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
         },
         meta: {
           type: "object",
           properties: {
             description: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             language: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             redirect: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageUrl: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageAssetId: {
               type: "string",
@@ -2625,9 +7131,9 @@ export const runtimeOperationContractData = [
                   type: "boolean",
                 },
                 {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
               ],
             },
@@ -2636,9 +7142,9 @@ export const runtimeOperationContractData = [
               enum: ["html", "xml", "text"],
             },
             content: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             status: {
               anyOf: [
@@ -2697,9 +7203,9 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   content: {
-                    description:
-                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                     type: "string",
+                    description:
+                      'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   },
                 },
                 required: ["property", "content"],
@@ -2782,32 +7288,32 @@ export const runtimeOperationContractData = [
               minLength: 1,
             },
             title: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             meta: {
               type: "object",
               properties: {
                 description: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 language: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 redirect: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageUrl: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageAssetId: {
                   type: "string",
@@ -2818,9 +7324,9 @@ export const runtimeOperationContractData = [
                       type: "boolean",
                     },
                     {
-                      description:
-                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                       type: "string",
+                      description:
+                        'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                     },
                   ],
                 },
@@ -2829,9 +7335,9 @@ export const runtimeOperationContractData = [
                   enum: ["html", "xml", "text"],
                 },
                 content: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 status: {
                   anyOf: [
@@ -2890,9 +7396,9 @@ export const runtimeOperationContractData = [
                         type: "string",
                       },
                       content: {
-                        description:
-                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                         type: "string",
+                        description:
+                          'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                       },
                     },
                     required: ["property", "content"],
@@ -3123,6 +7629,7 @@ export const runtimeOperationContractData = [
     id: "pageTemplates.createPage",
     command: "create-page-from-template",
     client: "createPageFromTemplate",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",
@@ -3577,6 +8084,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -3604,6 +8117,10 @@ export const runtimeOperationContractData = [
                             minLength: 1,
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                          },
+                          name: {
+                            type: "string",
+                            minLength: 1,
                           },
                           label: {
                             type: "string",
@@ -3650,6 +8167,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -3741,26 +8264,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -3860,6 +8375,72 @@ export const runtimeOperationContractData = [
                               type: {
                                 type: "string",
                                 const: "image",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
                               },
                             },
                             required: [
@@ -4077,7 +8658,53 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -4134,6 +8761,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -4454,6 +9085,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -6602,6 +11239,22 @@ export const runtimeOperationContractData = [
                             properties: {
                               type: {
                                 type: "string",
+                                const: "tag",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
                                 const: "local",
                               },
                               id: {
@@ -6645,6 +11298,12 @@ export const runtimeOperationContractData = [
                           "property",
                           "value",
                         ],
+                      },
+                    },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
                       },
                     },
                   },
@@ -6707,6 +11366,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -6734,6 +11399,10 @@ export const runtimeOperationContractData = [
                             minLength: 1,
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                          },
+                          name: {
+                            type: "string",
+                            minLength: 1,
                           },
                           label: {
                             type: "string",
@@ -6780,6 +11449,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -6871,26 +11546,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -6990,6 +11657,72 @@ export const runtimeOperationContractData = [
                               type: {
                                 type: "string",
                                 const: "image",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
                               },
                             },
                             required: [
@@ -7207,7 +11940,53 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -7264,6 +12043,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -7584,6 +12367,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -9732,6 +14521,22 @@ export const runtimeOperationContractData = [
                             properties: {
                               type: {
                                 type: "string",
+                                const: "tag",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
                                 const: "local",
                               },
                               id: {
@@ -9775,6 +14580,12 @@ export const runtimeOperationContractData = [
                           "property",
                           "value",
                         ],
+                      },
+                    },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
                       },
                     },
                   },
@@ -9848,6 +14659,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -9875,6 +14692,10 @@ export const runtimeOperationContractData = [
                             minLength: 1,
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                          },
+                          name: {
+                            type: "string",
+                            minLength: 1,
                           },
                           label: {
                             type: "string",
@@ -9921,6 +14742,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -10012,26 +14839,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -10131,6 +14950,72 @@ export const runtimeOperationContractData = [
                               type: {
                                 type: "string",
                                 const: "image",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
                               },
                             },
                             required: [
@@ -10348,7 +15233,53 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -10405,6 +15336,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -10725,6 +15660,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -12873,6 +17814,22 @@ export const runtimeOperationContractData = [
                             properties: {
                               type: {
                                 type: "string",
+                                const: "tag",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
                                 const: "local",
                               },
                               id: {
@@ -12916,6 +17873,12 @@ export const runtimeOperationContractData = [
                           "property",
                           "value",
                         ],
+                      },
+                    },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
                       },
                     },
                   },
@@ -12978,6 +17941,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -13005,6 +17974,10 @@ export const runtimeOperationContractData = [
                             minLength: 1,
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                          },
+                          name: {
+                            type: "string",
+                            minLength: 1,
                           },
                           label: {
                             type: "string",
@@ -13051,6 +18024,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -13142,26 +18121,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -13261,6 +18232,72 @@ export const runtimeOperationContractData = [
                               type: {
                                 type: "string",
                                 const: "image",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
                               },
                             },
                             required: [
@@ -13478,7 +18515,53 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -13535,6 +18618,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -13855,6 +18942,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -16003,6 +21096,22 @@ export const runtimeOperationContractData = [
                             properties: {
                               type: {
                                 type: "string",
+                                const: "tag",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
                                 const: "local",
                               },
                               id: {
@@ -16046,6 +21155,12 @@ export const runtimeOperationContractData = [
                           "property",
                           "value",
                         ],
+                      },
+                    },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
                       },
                     },
                   },
@@ -18809,6 +23924,12 @@ export const runtimeOperationContractData = [
                                     value: {
                                       type: "string",
                                     },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                                    },
                                   },
                                   required: ["type", "value"],
                                 },
@@ -18836,6 +23957,10 @@ export const runtimeOperationContractData = [
                                   minLength: 1,
                                   description:
                                     "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                                },
+                                name: {
+                                  type: "string",
+                                  minLength: 1,
                                 },
                                 label: {
                                   type: "string",
@@ -18882,6 +24007,12 @@ export const runtimeOperationContractData = [
                                           },
                                           value: {
                                             type: "string",
+                                          },
+                                          mode: {
+                                            type: "string",
+                                            enum: ["read", "readwrite"],
+                                            description:
+                                              'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                           },
                                         },
                                         required: ["type", "value"],
@@ -18981,26 +24112,23 @@ export const runtimeOperationContractData = [
                                             family: {
                                               type: "string",
                                             },
+                                            style: {
+                                              default: "normal",
+                                              type: "string",
+                                              enum: [
+                                                "normal",
+                                                "italic",
+                                                "oblique",
+                                              ],
+                                            },
                                             variationAxes: {
                                               type: "object",
                                               propertyNames: {
                                                 type: "string",
-                                                enum: [
-                                                  "wght",
-                                                  "wdth",
-                                                  "slnt",
-                                                  "opsz",
-                                                  "ital",
-                                                  "GRAD",
-                                                  "XTRA",
-                                                  "XOPQ",
-                                                  "YOPQ",
-                                                  "YTLC",
-                                                  "YTUC",
-                                                  "YTAS",
-                                                  "YTDE",
-                                                  "YTFI",
-                                                ],
+                                                minLength: 4,
+                                                maxLength: 4,
+                                                pattern:
+                                                  "^[A-Za-z][A-Za-z0-9]* *$",
                                               },
                                               additionalProperties: {
                                                 type: "object",
@@ -19100,6 +24228,72 @@ export const runtimeOperationContractData = [
                                     type: {
                                       type: "string",
                                       const: "image",
+                                    },
+                                  },
+                                  required: [
+                                    "id",
+                                    "size",
+                                    "name",
+                                    "createdAt",
+                                    "format",
+                                    "meta",
+                                    "type",
+                                  ],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    id: {
+                                      type: "string",
+                                    },
+                                    size: {
+                                      type: "number",
+                                    },
+                                    name: {
+                                      type: "string",
+                                    },
+                                    filename: {
+                                      type: "string",
+                                    },
+                                    description: {
+                                      anyOf: [
+                                        {
+                                          type: "string",
+                                        },
+                                        {
+                                          type: "null",
+                                        },
+                                      ],
+                                    },
+                                    folderId: {
+                                      type: "string",
+                                      minLength: 1,
+                                      maxLength: 256,
+                                    },
+                                    createdAt: {
+                                      type: "string",
+                                    },
+                                    updatedAt: {
+                                      type: "string",
+                                    },
+                                    format: {
+                                      type: "string",
+                                    },
+                                    meta: {
+                                      type: "object",
+                                      properties: {
+                                        width: {
+                                          type: "number",
+                                        },
+                                        height: {
+                                          type: "number",
+                                        },
+                                      },
+                                      required: ["width", "height"],
+                                    },
+                                    type: {
+                                      type: "string",
+                                      const: "video",
                                     },
                                   },
                                   required: [
@@ -19321,7 +24515,53 @@ export const runtimeOperationContractData = [
                                       type: "string",
                                       const: "graphql",
                                     },
+                                    {
+                                      type: "string",
+                                      const: "email",
+                                    },
                                   ],
+                                },
+                                email: {
+                                  type: "object",
+                                  properties: {
+                                    recipientMode: {
+                                      type: "string",
+                                      enum: ["project", "custom", "visitor"],
+                                    },
+                                    recipients: {
+                                      type: "string",
+                                    },
+                                    visitorEmailField: {
+                                      type: "string",
+                                    },
+                                    sender: {
+                                      type: "string",
+                                    },
+                                    senderExpression: {
+                                      type: "string",
+                                    },
+                                    recipientsExpression: {
+                                      type: "string",
+                                    },
+                                    subject: {
+                                      type: "string",
+                                    },
+                                    body: {
+                                      type: "string",
+                                    },
+                                    confirmationSubject: {
+                                      type: "string",
+                                      enum: ["formSubject", "default"],
+                                    },
+                                    confirmationBody: {
+                                      type: "string",
+                                      const: "default",
+                                    },
+                                    includeAttachments: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: [],
                                 },
                                 method: {
                                   anyOf: [
@@ -19378,6 +24618,10 @@ export const runtimeOperationContractData = [
                                 },
                                 body: {
                                   type: "string",
+                                },
+                                bodyFormat: {
+                                  type: "string",
+                                  enum: ["auto", "json", "multipart"],
                                 },
                               },
                               required: [
@@ -19709,6 +24953,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: [
@@ -22037,6 +27287,22 @@ export const runtimeOperationContractData = [
                                   properties: {
                                     type: {
                                       type: "string",
+                                      const: "tag",
+                                    },
+                                    id: {
+                                      type: "string",
+                                    },
+                                    tag: {
+                                      type: "string",
+                                    },
+                                  },
+                                  required: ["type", "id", "tag"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
                                       const: "local",
                                     },
                                     id: {
@@ -22080,6 +27346,12 @@ export const runtimeOperationContractData = [
                                 "property",
                                 "value",
                               ],
+                            },
+                          },
+                          referenceTokenIds: {
+                            type: "array",
+                            items: {
+                              type: "string",
                             },
                           },
                         },
@@ -22142,6 +27414,12 @@ export const runtimeOperationContractData = [
                                     value: {
                                       type: "string",
                                     },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                                    },
                                   },
                                   required: ["type", "value"],
                                 },
@@ -22169,6 +27447,10 @@ export const runtimeOperationContractData = [
                                   minLength: 1,
                                   description:
                                     "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                                },
+                                name: {
+                                  type: "string",
+                                  minLength: 1,
                                 },
                                 label: {
                                   type: "string",
@@ -22215,6 +27497,12 @@ export const runtimeOperationContractData = [
                                           },
                                           value: {
                                             type: "string",
+                                          },
+                                          mode: {
+                                            type: "string",
+                                            enum: ["read", "readwrite"],
+                                            description:
+                                              'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                           },
                                         },
                                         required: ["type", "value"],
@@ -22314,26 +27602,23 @@ export const runtimeOperationContractData = [
                                             family: {
                                               type: "string",
                                             },
+                                            style: {
+                                              default: "normal",
+                                              type: "string",
+                                              enum: [
+                                                "normal",
+                                                "italic",
+                                                "oblique",
+                                              ],
+                                            },
                                             variationAxes: {
                                               type: "object",
                                               propertyNames: {
                                                 type: "string",
-                                                enum: [
-                                                  "wght",
-                                                  "wdth",
-                                                  "slnt",
-                                                  "opsz",
-                                                  "ital",
-                                                  "GRAD",
-                                                  "XTRA",
-                                                  "XOPQ",
-                                                  "YOPQ",
-                                                  "YTLC",
-                                                  "YTUC",
-                                                  "YTAS",
-                                                  "YTDE",
-                                                  "YTFI",
-                                                ],
+                                                minLength: 4,
+                                                maxLength: 4,
+                                                pattern:
+                                                  "^[A-Za-z][A-Za-z0-9]* *$",
                                               },
                                               additionalProperties: {
                                                 type: "object",
@@ -22433,6 +27718,72 @@ export const runtimeOperationContractData = [
                                     type: {
                                       type: "string",
                                       const: "image",
+                                    },
+                                  },
+                                  required: [
+                                    "id",
+                                    "size",
+                                    "name",
+                                    "createdAt",
+                                    "format",
+                                    "meta",
+                                    "type",
+                                  ],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    id: {
+                                      type: "string",
+                                    },
+                                    size: {
+                                      type: "number",
+                                    },
+                                    name: {
+                                      type: "string",
+                                    },
+                                    filename: {
+                                      type: "string",
+                                    },
+                                    description: {
+                                      anyOf: [
+                                        {
+                                          type: "string",
+                                        },
+                                        {
+                                          type: "null",
+                                        },
+                                      ],
+                                    },
+                                    folderId: {
+                                      type: "string",
+                                      minLength: 1,
+                                      maxLength: 256,
+                                    },
+                                    createdAt: {
+                                      type: "string",
+                                    },
+                                    updatedAt: {
+                                      type: "string",
+                                    },
+                                    format: {
+                                      type: "string",
+                                    },
+                                    meta: {
+                                      type: "object",
+                                      properties: {
+                                        width: {
+                                          type: "number",
+                                        },
+                                        height: {
+                                          type: "number",
+                                        },
+                                      },
+                                      required: ["width", "height"],
+                                    },
+                                    type: {
+                                      type: "string",
+                                      const: "video",
                                     },
                                   },
                                   required: [
@@ -22654,7 +28005,53 @@ export const runtimeOperationContractData = [
                                       type: "string",
                                       const: "graphql",
                                     },
+                                    {
+                                      type: "string",
+                                      const: "email",
+                                    },
                                   ],
+                                },
+                                email: {
+                                  type: "object",
+                                  properties: {
+                                    recipientMode: {
+                                      type: "string",
+                                      enum: ["project", "custom", "visitor"],
+                                    },
+                                    recipients: {
+                                      type: "string",
+                                    },
+                                    visitorEmailField: {
+                                      type: "string",
+                                    },
+                                    sender: {
+                                      type: "string",
+                                    },
+                                    senderExpression: {
+                                      type: "string",
+                                    },
+                                    recipientsExpression: {
+                                      type: "string",
+                                    },
+                                    subject: {
+                                      type: "string",
+                                    },
+                                    body: {
+                                      type: "string",
+                                    },
+                                    confirmationSubject: {
+                                      type: "string",
+                                      enum: ["formSubject", "default"],
+                                    },
+                                    confirmationBody: {
+                                      type: "string",
+                                      const: "default",
+                                    },
+                                    includeAttachments: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: [],
                                 },
                                 method: {
                                   anyOf: [
@@ -22711,6 +28108,10 @@ export const runtimeOperationContractData = [
                                 },
                                 body: {
                                   type: "string",
+                                },
+                                bodyFormat: {
+                                  type: "string",
+                                  enum: ["auto", "json", "multipart"],
                                 },
                               },
                               required: [
@@ -23042,6 +28443,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: [
@@ -25370,6 +30777,22 @@ export const runtimeOperationContractData = [
                                   properties: {
                                     type: {
                                       type: "string",
+                                      const: "tag",
+                                    },
+                                    id: {
+                                      type: "string",
+                                    },
+                                    tag: {
+                                      type: "string",
+                                    },
+                                  },
+                                  required: ["type", "id", "tag"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
                                       const: "local",
                                     },
                                     id: {
@@ -25413,6 +30836,12 @@ export const runtimeOperationContractData = [
                                 "property",
                                 "value",
                               ],
+                            },
+                          },
+                          referenceTokenIds: {
+                            type: "array",
+                            items: {
+                              type: "string",
                             },
                           },
                         },
@@ -25670,6 +31099,10 @@ export const runtimeOperationContractData = [
                     description:
                       "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
                   },
+                  name: {
+                    type: "string",
+                    minLength: 1,
+                  },
                   label: {
                     type: "string",
                   },
@@ -25715,6 +31148,12 @@ export const runtimeOperationContractData = [
                             },
                             value: {
                               type: "string",
+                            },
+                            mode: {
+                              type: "string",
+                              enum: ["read", "readwrite"],
+                              description:
+                                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                             },
                           },
                           required: ["type", "value"],
@@ -26149,6 +31588,12 @@ export const runtimeOperationContractData = [
                   },
                   value: {
                     type: "string",
+                  },
+                  mode: {
+                    type: "string",
+                    enum: ["read", "readwrite"],
+                    description:
+                      'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                   },
                 },
                 required: ["id", "instanceId", "name", "type", "value"],
@@ -28157,7 +33602,7 @@ export const runtimeOperationContractData = [
               },
               source: {
                 type: "string",
-                enum: ["local", "token"],
+                enum: ["local", "token", "tag"],
               },
             },
             required: [
@@ -28169,6 +33614,24 @@ export const runtimeOperationContractData = [
               "source",
             ],
             additionalProperties: {},
+          },
+        },
+        presetStyles: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              state: {
+                type: "string",
+              },
+              property: {
+                type: "string",
+              },
+              value: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            required: ["property", "value"],
           },
         },
         children: {
@@ -28478,6 +33941,12 @@ export const runtimeOperationContractData = [
                   },
                   value: {
                     type: "string",
+                  },
+                  mode: {
+                    type: "string",
+                    enum: ["read", "readwrite"],
+                    description:
+                      'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                   },
                 },
                 required: ["id", "instanceId", "name", "type", "value"],
@@ -33145,7 +38614,32 @@ export const runtimeOperationContractData = [
           type: "string",
           minLength: 1,
         },
+        namespaces: {
+          description:
+            "Namespaces to match. Omit for all; synchronization is unchanged.",
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+            enum: [
+              "pages",
+              "instances",
+              "props",
+              "styles",
+              "styleSources",
+              "styleSourceSelections",
+              "dataSources",
+              "resources",
+              "assets",
+              "assetFolders",
+              "breakpoints",
+              "projectSettings",
+              "marketplaceProduct",
+            ],
+          },
+        },
         scopes: {
+          description: "Deprecated; use namespaces.",
           minItems: 1,
           type: "array",
           items: {
@@ -33189,11 +38683,22 @@ export const runtimeOperationContractData = [
         query: {
           type: "string",
         },
+        namespaces: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
         scopes: {
           type: "array",
           items: {
             type: "string",
           },
+        },
+        excludedSensitiveValueCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
         },
         truncated: {
           type: "boolean",
@@ -33201,14 +38706,167 @@ export const runtimeOperationContractData = [
         matches: {
           type: "array",
           items: {
-            type: "object",
-            properties: {
-              kind: {
-                type: "string",
+            anyOf: [
+              {
+                type: "object",
+                properties: {
+                  kind: {
+                    type: "string",
+                    const: "value",
+                  },
+                  matchType: {
+                    type: "string",
+                    enum: ["value", "key"],
+                  },
+                  matchId: {
+                    type: "string",
+                  },
+                  currentValue: {
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "number",
+                      },
+                      {
+                        type: "boolean",
+                      },
+                      {
+                        type: "null",
+                      },
+                    ],
+                  },
+                  entity: {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                      },
+                      id: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "id"],
+                  },
+                  location: {
+                    type: "object",
+                    properties: {
+                      namespace: {
+                        type: "string",
+                        enum: [
+                          "pages",
+                          "instances",
+                          "props",
+                          "styles",
+                          "styleSources",
+                          "styleSourceSelections",
+                          "dataSources",
+                          "resources",
+                          "assets",
+                          "assetFolders",
+                          "breakpoints",
+                          "projectSettings",
+                          "marketplaceProduct",
+                        ],
+                      },
+                      path: {
+                        type: "array",
+                        items: {
+                          anyOf: [
+                            {
+                              type: "string",
+                            },
+                            {
+                              type: "number",
+                            },
+                          ],
+                        },
+                      },
+                    },
+                    required: ["namespace", "path"],
+                  },
+                  pageIds: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                  },
+                  pagePaths: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                  },
+                  reference: {
+                    type: "object",
+                    properties: {
+                      namespace: {
+                        type: "string",
+                        enum: [
+                          "pages",
+                          "instances",
+                          "props",
+                          "styles",
+                          "styleSources",
+                          "styleSourceSelections",
+                          "dataSources",
+                          "resources",
+                          "assets",
+                          "assetFolders",
+                          "breakpoints",
+                          "projectSettings",
+                          "marketplaceProduct",
+                        ],
+                      },
+                      entityType: {
+                        type: "string",
+                      },
+                      id: {
+                        type: "string",
+                      },
+                      resolved: {
+                        type: "boolean",
+                      },
+                    },
+                    required: ["namespace", "entityType", "id", "resolved"],
+                  },
+                },
+                required: [
+                  "kind",
+                  "matchType",
+                  "matchId",
+                  "currentValue",
+                  "entity",
+                  "location",
+                  "pageIds",
+                  "pagePaths",
+                ],
+                additionalProperties: {},
               },
-            },
-            required: ["kind"],
-            additionalProperties: {},
+              {
+                type: "object",
+                properties: {
+                  kind: {
+                    type: "string",
+                    enum: [
+                      "instance",
+                      "text",
+                      "prop",
+                      "resource",
+                      "asset",
+                      "design-token",
+                      "style-source",
+                      "css-variable",
+                      "style",
+                      "breakpoint",
+                    ],
+                  },
+                },
+                required: ["kind"],
+                additionalProperties: {},
+              },
+            ],
           },
         },
         detail: {
@@ -33244,7 +38902,9 @@ export const runtimeOperationContractData = [
       },
       required: [
         "query",
+        "namespaces",
         "scopes",
+        "excludedSensitiveValueCount",
         "truncated",
         "matches",
         "detail",
@@ -33266,7 +38926,9 @@ export const runtimeOperationContractData = [
       "resources",
       "dataSources",
       "assets",
+      "assetFolders",
       "breakpoints",
+      "marketplaceProduct",
     ],
     writeNamespaces: [],
     invalidatesNamespaces: [],
@@ -33283,7 +38945,7 @@ export const runtimeOperationContractData = [
       properties: {
         scopes: {
           description:
-            "Audit scopes. Omit to run all standard scopes; Craft remains opt-in. accessibility errors: missing-alt, missing-image-input-alt, missing-iframe-title, missing-accessible-name, missing-form-label, invalid-aria-role, missing-required-aria-role-property, role-interactive-not-focusable, aria-hidden-focusable, invalid-aria-state, invalid-aria-number, autoplay-media-with-sound, invalid-label-reference, duplicate-id, and missing-aria-reference; warnings: missing-image-description, unsupported-aria-role-property, positive-tabindex, missing-page-heading, skipped-heading-level, missing-main-landmark, and multiple-main-landmarks. Documentation: https://www.w3.org/WAI/WCAG22/understanding/. security errors: non-get-resource-exposed-as-data-source; warning: target-blank-without-noopener. Documentation: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/noopener. seo errors: empty-page-title, invalid-json-ld, and json-ld-in-custom-metadata; warnings: missing-page-description, empty-page-description, invalid-page-language, missing-social-image-asset, duplicate-page-title, duplicate-page-description, missing-json-ld-context, unknown-schema-org-type, deprecated-schema-org-type, unknown-schema-org-property, deprecated-schema-org-property, unsupported-schema-org-property, and incompatible-schema-org-value. Documentation: https://developers.google.com/search/docs/fundamentals/seo-starter-guide. assets info: unused-asset. Documentation: https://docs.webstudio.is/university/foundations/anatomy-of-the-webstudio-builder. styles warnings: style-on-dom-transparent-component, invalid-style-state-selector, and orphan-style-breakpoint; info: unused-design-token, unused-css-variable, unused-local-style-source, unused-breakpoint, and duplicate-design-token-declarations. Documentation: https://docs.webstudio.is/university/foundations/design-tokens. performance info: atomic-css-disabled. Rendered checks add image loading/sizing, render-blocking resource, and legacy font-format evidence. Documentation: https://docs.webstudio.is/university/foundations/project-settings#atomic-css. craft is an opt-in, read-only compatibility check and is excluded when scopes are omitted. Documentation: https://docs.webstudio.is/university/craft.",
+            "Audit scopes. Omit to run all standard scopes; Craft remains opt-in. accessibility errors: missing-alt, missing-image-input-alt, missing-iframe-title, missing-accessible-name, missing-form-label, invalid-aria-role, missing-required-aria-role-property, role-interactive-not-focusable, aria-hidden-focusable, invalid-aria-state, invalid-aria-number, autoplay-media-with-sound, invalid-label-reference, duplicate-id, and missing-aria-reference; warnings: missing-image-description, unsupported-aria-role-property, positive-tabindex, missing-page-heading, skipped-heading-level, missing-main-landmark, and multiple-main-landmarks. Documentation: https://www.w3.org/WAI/WCAG22/understanding/. security errors: non-get-resource-exposed-as-data-source; warning: target-blank-without-noopener. Documentation: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/noopener. seo errors: empty-page-title, invalid-json-ld, and json-ld-in-custom-metadata; warnings: missing-page-description, empty-page-description, invalid-page-language, missing-social-image-asset, duplicate-page-title, duplicate-page-description, missing-json-ld-context, unknown-schema-org-type, deprecated-schema-org-type, unknown-schema-org-property, deprecated-schema-org-property, unsupported-schema-org-property, and incompatible-schema-org-value. Documentation: https://developers.google.com/search/docs/fundamentals/seo-starter-guide. assets info: unused-asset. When connected Content Blocks may hide MDX and nested Asset dependencies, unused-asset is skipped instead of returning unsafe false positives. Documentation: https://docs.webstudio.is/university/foundations/anatomy-of-the-webstudio-builder. styles warnings: style-on-dom-transparent-component, invalid-style-state-selector, and orphan-style-breakpoint; info: unused-design-token, unused-css-variable, unused-local-style-source, unused-breakpoint, and duplicate-design-token-declarations. Documentation: https://docs.webstudio.is/university/foundations/design-tokens. performance info: atomic-css-disabled. Rendered checks add image loading/sizing, render-blocking resource, and legacy font-format evidence. Documentation: https://docs.webstudio.is/university/foundations/project-settings#atomic-css. craft is an opt-in, read-only compatibility check and is excluded when scopes are omitted. Documentation: https://docs.webstudio.is/university/craft.",
           minItems: 1,
           type: "array",
           items: {
@@ -36342,7 +42004,49 @@ export const runtimeOperationContractData = [
                   },
                   control: {
                     type: "string",
-                    enum: ["system", "graphql"],
+                    enum: ["system", "graphql", "email"],
+                  },
+                  email: {
+                    type: "object",
+                    properties: {
+                      recipientMode: {
+                        type: "string",
+                        enum: ["project", "custom", "visitor"],
+                      },
+                      recipients: {
+                        type: "string",
+                      },
+                      visitorEmailField: {
+                        type: "string",
+                      },
+                      sender: {
+                        type: "string",
+                      },
+                      senderExpression: {
+                        type: "string",
+                      },
+                      recipientsExpression: {
+                        type: "string",
+                      },
+                      subject: {
+                        type: "string",
+                      },
+                      body: {
+                        type: "string",
+                      },
+                      confirmationSubject: {
+                        type: "string",
+                        enum: ["formSubject", "default"],
+                      },
+                      confirmationBody: {
+                        type: "string",
+                        const: "default",
+                      },
+                      includeAttachments: {
+                        type: "boolean",
+                      },
+                    },
+                    required: [],
                   },
                   method: {
                     anyOf: [
@@ -36457,8 +42161,13 @@ export const runtimeOperationContractData = [
                     description:
                       'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
                   },
+                  bodyFormat: {
+                    type: "string",
+                    enum: ["auto", "json", "multipart"],
+                  },
                 },
                 required: ["name", "method", "url", "headers"],
+                additionalProperties: false,
               },
               dataSourceName: {
                 type: "string",
@@ -36527,6 +42236,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -36554,6 +42269,10 @@ export const runtimeOperationContractData = [
                             minLength: 1,
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                          },
+                          name: {
+                            type: "string",
+                            minLength: 1,
                           },
                           label: {
                             type: "string",
@@ -36600,6 +42319,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -36691,26 +42416,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -36810,6 +42527,72 @@ export const runtimeOperationContractData = [
                               type: {
                                 type: "string",
                                 const: "image",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
                               },
                             },
                             required: [
@@ -37027,7 +42810,53 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -37084,6 +42913,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -37404,6 +43237,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -39552,6 +45391,22 @@ export const runtimeOperationContractData = [
                             properties: {
                               type: {
                                 type: "string",
+                                const: "tag",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
                                 const: "local",
                               },
                               id: {
@@ -39597,6 +45452,12 @@ export const runtimeOperationContractData = [
                         ],
                       },
                     },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                      },
+                    },
                   },
                   required: [
                     "children",
@@ -39616,8 +45477,12 @@ export const runtimeOperationContractData = [
                 conflictResolution: {
                   type: "string",
                   enum: ["ours", "theirs", "merge"],
+                  description:
+                    'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.',
                 },
                 contentMode: {
+                  description:
+                    "Apply content-mode copy restrictions to props and styles while reusing existing tokens and breakpoints.",
                   type: "boolean",
                 },
                 mode: {
@@ -39732,6 +45597,12 @@ export const runtimeOperationContractData = [
                               value: {
                                 type: "string",
                               },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                              },
                             },
                             required: ["type", "value"],
                           },
@@ -39759,6 +45630,10 @@ export const runtimeOperationContractData = [
                             minLength: 1,
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                          },
+                          name: {
+                            type: "string",
+                            minLength: 1,
                           },
                           label: {
                             type: "string",
@@ -39805,6 +45680,12 @@ export const runtimeOperationContractData = [
                                     },
                                     value: {
                                       type: "string",
+                                    },
+                                    mode: {
+                                      type: "string",
+                                      enum: ["read", "readwrite"],
+                                      description:
+                                        'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                                     },
                                   },
                                   required: ["type", "value"],
@@ -39896,26 +45777,18 @@ export const runtimeOperationContractData = [
                                       family: {
                                         type: "string",
                                       },
+                                      style: {
+                                        default: "normal",
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
                                       variationAxes: {
                                         type: "object",
                                         propertyNames: {
                                           type: "string",
-                                          enum: [
-                                            "wght",
-                                            "wdth",
-                                            "slnt",
-                                            "opsz",
-                                            "ital",
-                                            "GRAD",
-                                            "XTRA",
-                                            "XOPQ",
-                                            "YOPQ",
-                                            "YTLC",
-                                            "YTUC",
-                                            "YTAS",
-                                            "YTDE",
-                                            "YTFI",
-                                          ],
+                                          minLength: 4,
+                                          maxLength: 4,
+                                          pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                         },
                                         additionalProperties: {
                                           type: "object",
@@ -40015,6 +45888,72 @@ export const runtimeOperationContractData = [
                               type: {
                                 type: "string",
                                 const: "image",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 256,
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "video",
                               },
                             },
                             required: [
@@ -40232,7 +46171,53 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -40289,6 +46274,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -40609,6 +46598,12 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "string",
+                              },
+                              mode: {
+                                type: "string",
+                                enum: ["read", "readwrite"],
+                                description:
+                                  'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                               },
                             },
                             required: [
@@ -42757,6 +48752,22 @@ export const runtimeOperationContractData = [
                             properties: {
                               type: {
                                 type: "string",
+                                const: "tag",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
                                 const: "local",
                               },
                               id: {
@@ -42800,6 +48811,12 @@ export const runtimeOperationContractData = [
                           "property",
                           "value",
                         ],
+                      },
+                    },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
                       },
                     },
                   },
@@ -42887,6 +48904,12 @@ export const runtimeOperationContractData = [
                         type: "string",
                         description:
                           "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax.",
+                      },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                       },
                     },
                     required: ["type", "value"],
@@ -45873,6 +51896,36 @@ export const runtimeOperationContractData = [
           minimum: 0,
           maximum: 9007199254740991,
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["parentInstanceId", "component"],
     },
@@ -45910,6 +51963,631 @@ export const runtimeOperationContractData = [
         "rootInstanceIds",
         "removedInstanceIds",
         "parentInstanceId",
+      ],
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    invalidatesNamespaces: [
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "instances.insertMdxText",
+    command: "insert-mdx-text",
+    client: "insertMdxText",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        parentInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        source: {
+          type: "string",
+          minLength: 1,
+        },
+        mode: {
+          type: "string",
+          enum: ["append", "prepend", "replace"],
+        },
+        insertIndex: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
+      },
+      required: ["parentInstanceId", "source"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        instanceIds: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        rootInstanceIds: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        removedInstanceIds: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        parentInstanceId: {
+          type: "string",
+        },
+        didMergeBreakpointsDueToLimit: {
+          type: "boolean",
+          const: true,
+        },
+        diagnostics: {
+          type: "array",
+          items: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "invalid-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "error",
+                  },
+                  message: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: [
+                      "source-read-failed",
+                      "missing-source",
+                      "missing-asset",
+                      "linked-document-unavailable",
+                      "html-content-model",
+                      "dynamic-resource",
+                      "dynamic-source-unbounded",
+                    ],
+                  },
+                },
+                required: ["blockInstanceId", "code", "severity", "message"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unsafe-mdx",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  nodeType: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "nodeType",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "unresolved-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ambiguous-template",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  semanticKey: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  templateNames: {
+                    minItems: 2,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "semanticKey",
+                  "templateNames",
+                ],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  blockInstanceId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  assetId: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  contentRef: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  renderScope: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  sourceRange: {
+                    type: "object",
+                    properties: {
+                      start: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                      end: {
+                        type: "object",
+                        properties: {
+                          line: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          column: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                        },
+                        required: ["line", "column"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["start", "end"],
+                    additionalProperties: false,
+                  },
+                  code: {
+                    type: "string",
+                    const: "ignored-template-prop",
+                  },
+                  severity: {
+                    type: "string",
+                    const: "warning",
+                  },
+                  templateName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  propName: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  reason: {
+                    type: "string",
+                    enum: ["unknown", "incompatible", "design-only", "stale"],
+                  },
+                },
+                required: [
+                  "blockInstanceId",
+                  "code",
+                  "severity",
+                  "templateName",
+                  "propName",
+                  "reason",
+                ],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+      },
+      required: [
+        "instanceIds",
+        "rootInstanceIds",
+        "removedInstanceIds",
+        "parentInstanceId",
+        "diagnostics",
       ],
     },
     readNamespaces: [
@@ -46053,6 +52731,12 @@ export const runtimeOperationContractData = [
                       value: {
                         type: "string",
                       },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                      },
                     },
                     required: ["type", "value"],
                   },
@@ -46080,6 +52764,10 @@ export const runtimeOperationContractData = [
                     minLength: 1,
                     description:
                       "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                  },
+                  name: {
+                    type: "string",
+                    minLength: 1,
                   },
                   label: {
                     type: "string",
@@ -46126,6 +52814,12 @@ export const runtimeOperationContractData = [
                             },
                             value: {
                               type: "string",
+                            },
+                            mode: {
+                              type: "string",
+                              enum: ["read", "readwrite"],
+                              description:
+                                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                             },
                           },
                           required: ["type", "value"],
@@ -46217,26 +52911,18 @@ export const runtimeOperationContractData = [
                               family: {
                                 type: "string",
                               },
+                              style: {
+                                default: "normal",
+                                type: "string",
+                                enum: ["normal", "italic", "oblique"],
+                              },
                               variationAxes: {
                                 type: "object",
                                 propertyNames: {
                                   type: "string",
-                                  enum: [
-                                    "wght",
-                                    "wdth",
-                                    "slnt",
-                                    "opsz",
-                                    "ital",
-                                    "GRAD",
-                                    "XTRA",
-                                    "XOPQ",
-                                    "YOPQ",
-                                    "YTLC",
-                                    "YTUC",
-                                    "YTAS",
-                                    "YTDE",
-                                    "YTFI",
-                                  ],
+                                  minLength: 4,
+                                  maxLength: 4,
+                                  pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                 },
                                 additionalProperties: {
                                   type: "object",
@@ -46331,6 +53017,72 @@ export const runtimeOperationContractData = [
                       type: {
                         type: "string",
                         const: "image",
+                      },
+                    },
+                    required: [
+                      "id",
+                      "size",
+                      "name",
+                      "createdAt",
+                      "format",
+                      "meta",
+                      "type",
+                    ],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      id: {
+                        type: "string",
+                      },
+                      size: {
+                        type: "number",
+                      },
+                      name: {
+                        type: "string",
+                      },
+                      filename: {
+                        type: "string",
+                      },
+                      description: {
+                        anyOf: [
+                          {
+                            type: "string",
+                          },
+                          {
+                            type: "null",
+                          },
+                        ],
+                      },
+                      folderId: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 256,
+                      },
+                      createdAt: {
+                        type: "string",
+                      },
+                      updatedAt: {
+                        type: "string",
+                      },
+                      format: {
+                        type: "string",
+                      },
+                      meta: {
+                        type: "object",
+                        properties: {
+                          width: {
+                            type: "number",
+                          },
+                          height: {
+                            type: "number",
+                          },
+                        },
+                        required: ["width", "height"],
+                      },
+                      type: {
+                        type: "string",
+                        const: "video",
                       },
                     },
                     required: [
@@ -46548,7 +53300,53 @@ export const runtimeOperationContractData = [
                         type: "string",
                         const: "graphql",
                       },
+                      {
+                        type: "string",
+                        const: "email",
+                      },
                     ],
+                  },
+                  email: {
+                    type: "object",
+                    properties: {
+                      recipientMode: {
+                        type: "string",
+                        enum: ["project", "custom", "visitor"],
+                      },
+                      recipients: {
+                        type: "string",
+                      },
+                      visitorEmailField: {
+                        type: "string",
+                      },
+                      sender: {
+                        type: "string",
+                      },
+                      senderExpression: {
+                        type: "string",
+                      },
+                      recipientsExpression: {
+                        type: "string",
+                      },
+                      subject: {
+                        type: "string",
+                      },
+                      body: {
+                        type: "string",
+                      },
+                      confirmationSubject: {
+                        type: "string",
+                        enum: ["formSubject", "default"],
+                      },
+                      confirmationBody: {
+                        type: "string",
+                        const: "default",
+                      },
+                      includeAttachments: {
+                        type: "boolean",
+                      },
+                    },
+                    required: [],
                   },
                   method: {
                     anyOf: [
@@ -46605,6 +53403,10 @@ export const runtimeOperationContractData = [
                   },
                   body: {
                     type: "string",
+                  },
+                  bodyFormat: {
+                    type: "string",
+                    enum: ["auto", "json", "multipart"],
                   },
                 },
                 required: ["id", "name", "method", "url", "headers"],
@@ -46877,6 +53679,12 @@ export const runtimeOperationContractData = [
                       },
                       value: {
                         type: "string",
+                      },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                       },
                     },
                     required: ["id", "instanceId", "name", "type", "value"],
@@ -48935,6 +55743,22 @@ export const runtimeOperationContractData = [
                     properties: {
                       type: {
                         type: "string",
+                        const: "tag",
+                      },
+                      id: {
+                        type: "string",
+                      },
+                      tag: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "id", "tag"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
                         const: "local",
                       },
                       id: {
@@ -48979,6 +55803,12 @@ export const runtimeOperationContractData = [
                 ],
               },
             },
+            referenceTokenIds: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
           },
           required: [
             "children",
@@ -48994,6 +55824,12 @@ export const runtimeOperationContractData = [
           ],
           description:
             "One structured repeated-item fragment. Descendant expressions may reference collectionItem and collectionItemKey.",
+        },
+        conflictResolution: {
+          type: "string",
+          enum: ["ours", "theirs", "merge"],
+          description:
+            'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.',
         },
         mode: {
           type: "string",
@@ -51819,6 +58655,7 @@ export const runtimeOperationContractData = [
     id: "instances.insertFragment",
     command: "insert-fragment",
     client: "insertFragment",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",
@@ -51872,6 +58709,12 @@ export const runtimeOperationContractData = [
                       value: {
                         type: "string",
                       },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+                      },
                     },
                     required: ["type", "value"],
                   },
@@ -51899,6 +58742,10 @@ export const runtimeOperationContractData = [
                     minLength: 1,
                     description:
                       "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                  },
+                  name: {
+                    type: "string",
+                    minLength: 1,
                   },
                   label: {
                     type: "string",
@@ -51945,6 +58792,12 @@ export const runtimeOperationContractData = [
                             },
                             value: {
                               type: "string",
+                            },
+                            mode: {
+                              type: "string",
+                              enum: ["read", "readwrite"],
+                              description:
+                                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                             },
                           },
                           required: ["type", "value"],
@@ -52036,26 +58889,18 @@ export const runtimeOperationContractData = [
                               family: {
                                 type: "string",
                               },
+                              style: {
+                                default: "normal",
+                                type: "string",
+                                enum: ["normal", "italic", "oblique"],
+                              },
                               variationAxes: {
                                 type: "object",
                                 propertyNames: {
                                   type: "string",
-                                  enum: [
-                                    "wght",
-                                    "wdth",
-                                    "slnt",
-                                    "opsz",
-                                    "ital",
-                                    "GRAD",
-                                    "XTRA",
-                                    "XOPQ",
-                                    "YOPQ",
-                                    "YTLC",
-                                    "YTUC",
-                                    "YTAS",
-                                    "YTDE",
-                                    "YTFI",
-                                  ],
+                                  minLength: 4,
+                                  maxLength: 4,
+                                  pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                                 },
                                 additionalProperties: {
                                   type: "object",
@@ -52150,6 +58995,72 @@ export const runtimeOperationContractData = [
                       type: {
                         type: "string",
                         const: "image",
+                      },
+                    },
+                    required: [
+                      "id",
+                      "size",
+                      "name",
+                      "createdAt",
+                      "format",
+                      "meta",
+                      "type",
+                    ],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      id: {
+                        type: "string",
+                      },
+                      size: {
+                        type: "number",
+                      },
+                      name: {
+                        type: "string",
+                      },
+                      filename: {
+                        type: "string",
+                      },
+                      description: {
+                        anyOf: [
+                          {
+                            type: "string",
+                          },
+                          {
+                            type: "null",
+                          },
+                        ],
+                      },
+                      folderId: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 256,
+                      },
+                      createdAt: {
+                        type: "string",
+                      },
+                      updatedAt: {
+                        type: "string",
+                      },
+                      format: {
+                        type: "string",
+                      },
+                      meta: {
+                        type: "object",
+                        properties: {
+                          width: {
+                            type: "number",
+                          },
+                          height: {
+                            type: "number",
+                          },
+                        },
+                        required: ["width", "height"],
+                      },
+                      type: {
+                        type: "string",
+                        const: "video",
                       },
                     },
                     required: [
@@ -52367,7 +59278,53 @@ export const runtimeOperationContractData = [
                         type: "string",
                         const: "graphql",
                       },
+                      {
+                        type: "string",
+                        const: "email",
+                      },
                     ],
+                  },
+                  email: {
+                    type: "object",
+                    properties: {
+                      recipientMode: {
+                        type: "string",
+                        enum: ["project", "custom", "visitor"],
+                      },
+                      recipients: {
+                        type: "string",
+                      },
+                      visitorEmailField: {
+                        type: "string",
+                      },
+                      sender: {
+                        type: "string",
+                      },
+                      senderExpression: {
+                        type: "string",
+                      },
+                      recipientsExpression: {
+                        type: "string",
+                      },
+                      subject: {
+                        type: "string",
+                      },
+                      body: {
+                        type: "string",
+                      },
+                      confirmationSubject: {
+                        type: "string",
+                        enum: ["formSubject", "default"],
+                      },
+                      confirmationBody: {
+                        type: "string",
+                        const: "default",
+                      },
+                      includeAttachments: {
+                        type: "boolean",
+                      },
+                    },
+                    required: [],
                   },
                   method: {
                     anyOf: [
@@ -52424,6 +59381,10 @@ export const runtimeOperationContractData = [
                   },
                   body: {
                     type: "string",
+                  },
+                  bodyFormat: {
+                    type: "string",
+                    enum: ["auto", "json", "multipart"],
                   },
                 },
                 required: ["id", "name", "method", "url", "headers"],
@@ -52696,6 +59657,12 @@ export const runtimeOperationContractData = [
                       },
                       value: {
                         type: "string",
+                      },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                       },
                     },
                     required: ["id", "instanceId", "name", "type", "value"],
@@ -54754,6 +61721,22 @@ export const runtimeOperationContractData = [
                     properties: {
                       type: {
                         type: "string",
+                        const: "tag",
+                      },
+                      id: {
+                        type: "string",
+                      },
+                      tag: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "id", "tag"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
                         const: "local",
                       },
                       id: {
@@ -54798,6 +61781,12 @@ export const runtimeOperationContractData = [
                 ],
               },
             },
+            referenceTokenIds: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
           },
           required: [
             "children",
@@ -54817,8 +61806,12 @@ export const runtimeOperationContractData = [
         conflictResolution: {
           type: "string",
           enum: ["ours", "theirs", "merge"],
+          description:
+            'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.',
         },
         contentMode: {
+          description:
+            "Apply content-mode copy restrictions to props and styles while reusing existing tokens and breakpoints.",
           type: "boolean",
         },
         mode: {
@@ -54829,6 +61822,36 @@ export const runtimeOperationContractData = [
           type: "integer",
           minimum: 0,
           maximum: 9007199254740991,
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
         },
       },
       required: ["fragment"],
@@ -57730,6 +64753,7 @@ export const runtimeOperationContractData = [
     id: "instances.reparent",
     command: "reparent-instance",
     client: "reparentInstance",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",
@@ -57962,6 +64986,36 @@ export const runtimeOperationContractData = [
           type: "string",
           minLength: 1,
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["instanceSelector", "component"],
     },
@@ -58094,9 +65148,11 @@ export const runtimeOperationContractData = [
       "props",
       "dataSources",
       "resources",
-      "styles",
       "styleSources",
       "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
     ],
     writeNamespaces: [
       "pages",
@@ -58104,9 +65160,11 @@ export const runtimeOperationContractData = [
       "props",
       "dataSources",
       "resources",
-      "styles",
       "styleSources",
       "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
     ],
     invalidatesNamespaces: [
       "pages",
@@ -58114,11 +65172,14 @@ export const runtimeOperationContractData = [
       "props",
       "dataSources",
       "resources",
-      "styles",
       "styleSources",
       "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
     ],
     retryOnConflict: false,
+    requiresAssets: true,
   },
   {
     id: "instances.duplicateAfterItself",
@@ -58193,6 +65254,7 @@ export const runtimeOperationContractData = [
     id: "instances.delete",
     command: "delete-instance",
     client: "deleteInstance",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",
@@ -58203,6 +65265,36 @@ export const runtimeOperationContractData = [
           items: {
             type: "string",
           },
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
         },
       },
       required: ["instanceIds"],
@@ -58257,6 +65349,7 @@ export const runtimeOperationContractData = [
     id: "instances.deleteBySelector",
     command: "delete-instance-by-selector",
     client: "deleteInstanceBySelector",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",
@@ -58267,6 +65360,36 @@ export const runtimeOperationContractData = [
           items: {
             type: "string",
           },
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
         },
       },
       required: ["instanceSelector"],
@@ -58603,6 +65726,12 @@ export const runtimeOperationContractData = [
                     type: "string",
                     description:
                       "One Webstudio JavaScript expression, not a statement or function. Read webstudio://project/expressions for syntax and scope rules.",
+                  },
+                  mode: {
+                    type: "string",
+                    enum: ["read", "readwrite"],
+                    description:
+                      'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                   },
                 },
                 required: ["instanceId", "name", "type", "value"],
@@ -60686,10 +67815,11 @@ export const runtimeOperationContractData = [
       required: ["propIds"],
       additionalProperties: {},
     },
-    readNamespaces: ["instances", "props", "dataSources"],
+    readNamespaces: ["instances", "props", "dataSources", "assets"],
     writeNamespaces: ["props"],
     invalidatesNamespaces: ["props"],
     retryOnConflict: false,
+    requiresAssets: true,
   },
   {
     id: "instances.replacePropText",
@@ -60860,6 +67990,8 @@ export const runtimeOperationContractData = [
               },
               name: {
                 type: "string",
+                description:
+                  'Prop name. A bound "style" prop must evaluate to an object such as { color: themeColor }, never a CSS declaration string.',
               },
               binding: {
                 oneOf: [
@@ -60874,6 +68006,12 @@ export const runtimeOperationContractData = [
                         type: "string",
                         description:
                           "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax.",
+                      },
+                      mode: {
+                        type: "string",
+                        enum: ["read", "readwrite"],
+                        description:
+                          'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                       },
                     },
                     required: ["type", "value"],
@@ -61190,6 +68328,12 @@ export const runtimeOperationContractData = [
           type: "string",
           enum: ["text", "expression"],
         },
+        expressionBindingMode: {
+          type: "string",
+          enum: ["read", "readwrite"],
+          description:
+            'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
+        },
       },
       required: ["instanceId", "childIndex", "text"],
     },
@@ -61269,7 +68413,7 @@ export const runtimeOperationContractData = [
       required: ["instanceId", "childIndex", "mode"],
       additionalProperties: {},
     },
-    readNamespaces: ["instances", "dataSources"],
+    readNamespaces: ["instances", "props", "dataSources"],
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,
@@ -61395,6 +68539,12 @@ export const runtimeOperationContractData = [
                 'Use "text" for plain visible text and "expression" for JavaScript expression children.',
               type: "string",
               enum: ["text", "expression"],
+            },
+            expressionBindingMode: {
+              type: "string",
+              enum: ["read", "readwrite"],
+              description:
+                'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
             },
           },
           required: ["operation", "instanceId", "text"],
@@ -61528,7 +68678,7 @@ export const runtimeOperationContractData = [
       required: ["instanceId", "operation"],
       additionalProperties: {},
     },
-    readNamespaces: ["instances", "dataSources"],
+    readNamespaces: ["instances", "props", "dataSources"],
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,
@@ -61567,6 +68717,10 @@ export const runtimeOperationContractData = [
                 minLength: 1,
                 description:
                   "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+              },
+              name: {
+                type: "string",
+                minLength: 1,
               },
               label: {
                 type: "string",
@@ -61613,6 +68767,12 @@ export const runtimeOperationContractData = [
                         },
                         value: {
                           type: "string",
+                        },
+                        mode: {
+                          type: "string",
+                          enum: ["read", "readwrite"],
+                          description:
+                            'Use "readwrite" only for a direct path into a source that supports writes; use "read" for every other expression.',
                         },
                       },
                       required: ["type", "value"],
@@ -61700,6 +68860,36 @@ export const runtimeOperationContractData = [
         legacyPropName: {
           type: "string",
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["instanceId", "tag"],
     },
@@ -61736,6 +68926,36 @@ export const runtimeOperationContractData = [
         label: {
           type: "string",
         },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
       },
       required: ["instanceId", "label"],
     },
@@ -61756,6 +68976,72 @@ export const runtimeOperationContractData = [
       additionalProperties: {},
     },
     readNamespaces: ["instances"],
+    writeNamespaces: ["instances"],
+    invalidatesNamespaces: ["instances"],
+    retryOnConflict: true,
+  },
+  {
+    id: "instances.setName",
+    command: "set-instance-name",
+    client: "setInstanceName",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        instanceId: {
+          type: "string",
+        },
+        name: {
+          type: "string",
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
+      },
+      required: ["instanceId", "name"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        instanceId: {
+          type: "string",
+        },
+        name: {
+          type: "string",
+        },
+      },
+      required: ["instanceId", "name"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["instances", "props"],
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,
@@ -61836,7 +69122,7 @@ export const runtimeOperationContractData = [
               },
               source: {
                 type: "string",
-                enum: ["local", "token"],
+                enum: ["local", "token", "tag"],
               },
               valueType: {
                 type: "string",
@@ -61957,6 +69243,8 @@ export const runtimeOperationContractData = [
                 ],
               },
               breakpoint: {
+                description:
+                  "Breakpoint id from list-breakpoints; omit for the base.",
                 type: "string",
               },
               state: {
@@ -61970,6 +69258,7 @@ export const runtimeOperationContractData = [
               },
             },
             required: ["instanceId", "property", "value"],
+            additionalProperties: false,
           },
         },
       },
@@ -62057,7 +69346,7 @@ export const runtimeOperationContractData = [
     ],
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
-    retryOnConflict: false,
+    retryOnConflict: true,
     requiresConfirm: true,
   },
   {
@@ -62098,6 +69387,8 @@ export const runtimeOperationContractData = [
                 ],
               },
               breakpoint: {
+                description:
+                  "Breakpoint id from list-breakpoints; omit for the base.",
                 type: "string",
               },
               state: {
@@ -62111,6 +69402,7 @@ export const runtimeOperationContractData = [
               },
             },
             required: ["instanceId", "property", "value", "styleSourceId"],
+            additionalProperties: false,
           },
         },
       },
@@ -62380,6 +69672,277 @@ export const runtimeOperationContractData = [
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,
+  },
+  {
+    id: "tagStyles.list",
+    command: "list-tag-styles",
+    client: "listTagStyles",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        tag: {
+          type: "string",
+        },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        tagStyles: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: {
+                type: "string",
+              },
+              tag: {
+                type: "string",
+              },
+              declarationCount: {
+                type: "integer",
+                minimum: -9007199254740991,
+                maximum: 9007199254740991,
+              },
+              declarations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    property: {
+                      type: "string",
+                    },
+                    value: {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          description: "CSS value kind",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type"],
+                      additionalProperties: {},
+                    },
+                    breakpoint: {
+                      type: "string",
+                    },
+                    state: {
+                      type: "string",
+                    },
+                  },
+                  required: ["property", "value", "breakpoint"],
+                  additionalProperties: {},
+                },
+              },
+            },
+            required: ["id", "tag", "declarationCount"],
+            additionalProperties: {},
+          },
+        },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
+      },
+      required: [
+        "tagStyles",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
+      additionalProperties: {},
+    },
+    readNamespaces: ["styleSources", "styles"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+  {
+    id: "designTokens.copy",
+    command: "copy-design-token",
+    client: "copyDesignToken",
+    kind: "read",
+    inputSchema: {
+      anyOf: [
+        {
+          type: "object",
+          properties: {
+            tokenId: {
+              type: "string",
+            },
+            sourceOrigin: {
+              type: "string",
+              format: "uri",
+            },
+          },
+          required: ["tokenId"],
+        },
+        {
+          type: "object",
+          properties: {
+            styleSourceId: {
+              type: "string",
+            },
+            sourceType: {
+              type: "string",
+              enum: ["token", "tag", "local"],
+            },
+            sourceOrigin: {
+              type: "string",
+              format: "uri",
+            },
+          },
+          required: ["styleSourceId", "sourceType"],
+        },
+      ],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        data: {
+          type: "string",
+        },
+      },
+      required: ["data"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "assets",
+      "breakpoints",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+    ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "designTokens.paste",
+    command: "paste-design-token",
+    client: "pasteDesignToken",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        data: {
+          type: "string",
+        },
+        instanceId: {
+          type: "string",
+        },
+        assetIds: {
+          type: "array",
+          items: {
+            type: "array",
+            prefixItems: [
+              {
+                type: "string",
+              },
+              {
+                type: "string",
+              },
+            ],
+            minItems: 2,
+            maxItems: 2,
+          },
+        },
+      },
+      required: ["data"],
+    },
+    outputSchema: {
+      anyOf: [
+        {
+          type: "object",
+          properties: {
+            tokenId: {
+              type: "string",
+            },
+          },
+          required: ["tokenId"],
+          additionalProperties: {},
+        },
+        {
+          type: "object",
+          properties: {
+            styleSourceId: {
+              type: "string",
+            },
+          },
+          required: ["styleSourceId"],
+          additionalProperties: {},
+        },
+      ],
+    },
+    readNamespaces: [
+      "assets",
+      "breakpoints",
+      "instances",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+    ],
+    writeNamespaces: [
+      "breakpoints",
+      "styleSources",
+      "styles",
+      "styleSourceSelections",
+    ],
+    invalidatesNamespaces: [
+      "breakpoints",
+      "styleSources",
+      "styles",
+      "styleSourceSelections",
+    ],
+    retryOnConflict: false,
+    requiresAssets: true,
   },
   {
     id: "designTokens.create",
@@ -66574,6 +74137,7 @@ export const runtimeOperationContractData = [
       properties: {
         scopeInstanceId: {
           type: "string",
+          description: 'Instance ID or ":root" for Global Root.',
         },
         name: {
           type: "string",
@@ -66678,6 +74242,7 @@ export const runtimeOperationContractData = [
           type: "object",
           properties: {
             scopeInstanceId: {
+              description: 'Instance ID or ":root" for Global Root.',
               type: "string",
             },
             name: {
@@ -67139,6 +74704,7 @@ export const runtimeOperationContractData = [
                           },
                         },
                         required: ["mode"],
+                        additionalProperties: false,
                       },
                       {
                         type: "object",
@@ -67154,6 +74720,7 @@ export const runtimeOperationContractData = [
                           },
                         },
                         required: ["mode"],
+                        additionalProperties: false,
                       },
                       {
                         type: "object",
@@ -67174,6 +74741,7 @@ export const runtimeOperationContractData = [
                           },
                         },
                         required: ["mode", "offset", "length"],
+                        additionalProperties: false,
                       },
                       {
                         type: "object",
@@ -67189,6 +74757,7 @@ export const runtimeOperationContractData = [
                           },
                         },
                         required: ["mode"],
+                        additionalProperties: false,
                       },
                     ],
                   },
@@ -67536,6 +75105,7 @@ export const runtimeOperationContractData = [
                         },
                       },
                       required: ["mode"],
+                      additionalProperties: false,
                     },
                     {
                       type: "object",
@@ -67551,6 +75121,7 @@ export const runtimeOperationContractData = [
                         },
                       },
                       required: ["mode"],
+                      additionalProperties: false,
                     },
                     {
                       type: "object",
@@ -67571,6 +75142,7 @@ export const runtimeOperationContractData = [
                         },
                       },
                       required: ["mode", "offset", "length"],
+                      additionalProperties: false,
                     },
                     {
                       type: "object",
@@ -67586,6 +75158,7 @@ export const runtimeOperationContractData = [
                         },
                       },
                       required: ["mode"],
+                      additionalProperties: false,
                     },
                   ],
                 },
@@ -68013,6 +75586,7 @@ export const runtimeOperationContractData = [
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -68028,6 +75602,7 @@ export const runtimeOperationContractData = [
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -68048,6 +75623,7 @@ export const runtimeOperationContractData = [
                     },
                   },
                   required: ["mode", "offset", "length"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -68063,6 +75639,7 @@ export const runtimeOperationContractData = [
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
               ],
             },
@@ -68072,6 +75649,7 @@ export const runtimeOperationContractData = [
         },
         scopeInstanceId: {
           type: "string",
+          description: 'Instance ID or ":root" for Global Root.',
         },
         dataSourceName: {
           type: "string",
@@ -68574,6 +76152,7 @@ export const runtimeOperationContractData = [
                             },
                           },
                           required: ["mode"],
+                          additionalProperties: false,
                         },
                         {
                           type: "object",
@@ -68589,6 +76168,7 @@ export const runtimeOperationContractData = [
                             },
                           },
                           required: ["mode"],
+                          additionalProperties: false,
                         },
                         {
                           type: "object",
@@ -68609,6 +76189,7 @@ export const runtimeOperationContractData = [
                             },
                           },
                           required: ["mode", "offset", "length"],
+                          additionalProperties: false,
                         },
                         {
                           type: "object",
@@ -68624,6 +76205,7 @@ export const runtimeOperationContractData = [
                             },
                           },
                           required: ["mode"],
+                          additionalProperties: false,
                         },
                       ],
                     },
@@ -68640,6 +76222,7 @@ export const runtimeOperationContractData = [
           required: [],
         },
         scopeInstanceId: {
+          description: 'Instance ID or ":root" for Global Root.',
           type: "string",
         },
         dataSourceName: {
@@ -68892,7 +76475,49 @@ export const runtimeOperationContractData = [
             },
             control: {
               type: "string",
-              enum: ["system", "graphql"],
+              enum: ["system", "graphql", "email"],
+            },
+            email: {
+              type: "object",
+              properties: {
+                recipientMode: {
+                  type: "string",
+                  enum: ["project", "custom", "visitor"],
+                },
+                recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
+                  type: "string",
+                },
+                sender: {
+                  type: "string",
+                },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
+                  type: "string",
+                },
+                subject: {
+                  type: "string",
+                },
+                body: {
+                  type: "string",
+                },
+                confirmationSubject: {
+                  type: "string",
+                  enum: ["formSubject", "default"],
+                },
+                confirmationBody: {
+                  type: "string",
+                  const: "default",
+                },
+                includeAttachments: {
+                  type: "boolean",
+                },
+              },
+              required: [],
             },
             method: {
               anyOf: [
@@ -69007,10 +76632,16 @@ export const runtimeOperationContractData = [
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
             },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
+            },
           },
           required: ["name", "method", "url", "headers"],
+          additionalProperties: false,
         },
         scopeInstanceId: {
+          description: 'Instance ID or ":root" for Global Root.',
           type: "string",
         },
         dataSourceName: {
@@ -69148,7 +76779,49 @@ export const runtimeOperationContractData = [
             },
             control: {
               type: "string",
-              enum: ["system", "graphql"],
+              enum: ["system", "graphql", "email"],
+            },
+            email: {
+              type: "object",
+              properties: {
+                recipientMode: {
+                  type: "string",
+                  enum: ["project", "custom", "visitor"],
+                },
+                recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
+                  type: "string",
+                },
+                sender: {
+                  type: "string",
+                },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
+                  type: "string",
+                },
+                subject: {
+                  type: "string",
+                },
+                body: {
+                  type: "string",
+                },
+                confirmationSubject: {
+                  type: "string",
+                  enum: ["formSubject", "default"],
+                },
+                confirmationBody: {
+                  type: "string",
+                  const: "default",
+                },
+                includeAttachments: {
+                  type: "boolean",
+                },
+              },
+              required: [],
             },
             method: {
               anyOf: [
@@ -69263,13 +76936,19 @@ export const runtimeOperationContractData = [
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
             },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
+            },
           },
+          additionalProperties: false,
           required: [],
         },
         dataSourceName: {
           type: "string",
         },
         scopeInstanceId: {
+          description: 'Instance ID or ":root" for Global Root.',
           type: "string",
         },
         exposeAsDataSource: {
@@ -69505,7 +77184,49 @@ export const runtimeOperationContractData = [
             },
             control: {
               type: "string",
-              enum: ["system", "graphql"],
+              enum: ["system", "graphql", "email"],
+            },
+            email: {
+              type: "object",
+              properties: {
+                recipientMode: {
+                  type: "string",
+                  enum: ["project", "custom", "visitor"],
+                },
+                recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
+                  type: "string",
+                },
+                sender: {
+                  type: "string",
+                },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
+                  type: "string",
+                },
+                subject: {
+                  type: "string",
+                },
+                body: {
+                  type: "string",
+                },
+                confirmationSubject: {
+                  type: "string",
+                  enum: ["formSubject", "default"],
+                },
+                confirmationBody: {
+                  type: "string",
+                  const: "default",
+                },
+                includeAttachments: {
+                  type: "boolean",
+                },
+              },
+              required: [],
             },
             method: {
               anyOf: [
@@ -69620,8 +77341,13 @@ export const runtimeOperationContractData = [
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
             },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
+            },
           },
           required: ["name", "method", "url", "headers"],
+          additionalProperties: false,
         },
         dataSourceId: {
           type: "string",
@@ -69708,7 +77434,49 @@ export const runtimeOperationContractData = [
             },
             control: {
               type: "string",
-              enum: ["system", "graphql"],
+              enum: ["system", "graphql", "email"],
+            },
+            email: {
+              type: "object",
+              properties: {
+                recipientMode: {
+                  type: "string",
+                  enum: ["project", "custom", "visitor"],
+                },
+                recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
+                  type: "string",
+                },
+                sender: {
+                  type: "string",
+                },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
+                  type: "string",
+                },
+                subject: {
+                  type: "string",
+                },
+                body: {
+                  type: "string",
+                },
+                confirmationSubject: {
+                  type: "string",
+                  enum: ["formSubject", "default"],
+                },
+                confirmationBody: {
+                  type: "string",
+                  const: "default",
+                },
+                includeAttachments: {
+                  type: "boolean",
+                },
+              },
+              required: [],
             },
             method: {
               anyOf: [
@@ -69823,8 +77591,13 @@ export const runtimeOperationContractData = [
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
             },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
+            },
           },
           required: ["name", "method", "url", "headers"],
+          additionalProperties: false,
         },
         scopeInstanceId: {
           type: "string",
@@ -69987,6 +77760,7 @@ export const runtimeOperationContractData = [
     id: "assetFolders.create",
     command: "create-asset-folder",
     client: "createAssetFolder",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",
@@ -70156,7 +77930,7 @@ export const runtimeOperationContractData = [
       properties: {
         type: {
           type: "string",
-          enum: ["font", "image", "file"],
+          enum: ["font", "image", "video", "file"],
         },
         sort: {
           type: "string",
@@ -70203,7 +77977,7 @@ export const runtimeOperationContractData = [
               },
               type: {
                 type: "string",
-                enum: ["font", "image", "file"],
+                enum: ["font", "image", "video", "file"],
               },
               size: {
                 type: "number",
@@ -70246,7 +78020,7 @@ export const runtimeOperationContractData = [
                   },
                   type: {
                     type: "string",
-                    enum: ["font", "image", "file"],
+                    enum: ["font", "image", "video", "file"],
                   },
                   size: {
                     type: "number",
@@ -70384,7 +78158,7 @@ export const runtimeOperationContractData = [
             },
             type: {
               type: "string",
-              enum: ["font", "image", "file"],
+              enum: ["font", "image", "video", "file"],
             },
             size: {
               type: "number",
@@ -70776,26 +78550,17 @@ export const runtimeOperationContractData = [
                         family: {
                           type: "string",
                         },
+                        style: {
+                          type: "string",
+                          enum: ["normal", "italic", "oblique"],
+                        },
                         variationAxes: {
                           type: "object",
                           propertyNames: {
                             type: "string",
-                            enum: [
-                              "wght",
-                              "wdth",
-                              "slnt",
-                              "opsz",
-                              "ital",
-                              "GRAD",
-                              "XTRA",
-                              "XOPQ",
-                              "YOPQ",
-                              "YTLC",
-                              "YTUC",
-                              "YTAS",
-                              "YTDE",
-                              "YTFI",
-                            ],
+                            minLength: 4,
+                            maxLength: 4,
+                            pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                           },
                           additionalProperties: {
                             type: "object",
@@ -70843,7 +78608,7 @@ export const runtimeOperationContractData = [
                 },
               ],
               description:
-                "Type-specific metadata: family/style/weight or variationAxes for fonts, width/height for images, and no fields for generic files.",
+                "Type-specific metadata: family and style plus weight for static fonts or variationAxes for variable fonts, width/height for images and videos, and no fields for generic files.",
             },
           },
           required: [],
@@ -71039,26 +78804,18 @@ export const runtimeOperationContractData = [
                         family: {
                           type: "string",
                         },
+                        style: {
+                          default: "normal",
+                          type: "string",
+                          enum: ["normal", "italic", "oblique"],
+                        },
                         variationAxes: {
                           type: "object",
                           propertyNames: {
                             type: "string",
-                            enum: [
-                              "wght",
-                              "wdth",
-                              "slnt",
-                              "opsz",
-                              "ital",
-                              "GRAD",
-                              "XTRA",
-                              "XOPQ",
-                              "YOPQ",
-                              "YTLC",
-                              "YTUC",
-                              "YTAS",
-                              "YTDE",
-                              "YTFI",
-                            ],
+                            minLength: 4,
+                            maxLength: 4,
+                            pattern: "^[A-Za-z][A-Za-z0-9]* *$",
                           },
                           additionalProperties: {
                             type: "object",
@@ -71153,6 +78910,72 @@ export const runtimeOperationContractData = [
                 type: {
                   type: "string",
                   const: "image",
+                },
+              },
+              required: [
+                "id",
+                "size",
+                "name",
+                "createdAt",
+                "format",
+                "meta",
+                "type",
+              ],
+            },
+            {
+              type: "object",
+              properties: {
+                id: {
+                  type: "string",
+                },
+                size: {
+                  type: "number",
+                },
+                name: {
+                  type: "string",
+                },
+                filename: {
+                  type: "string",
+                },
+                description: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "null",
+                    },
+                  ],
+                },
+                folderId: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 256,
+                },
+                createdAt: {
+                  type: "string",
+                },
+                updatedAt: {
+                  type: "string",
+                },
+                format: {
+                  type: "string",
+                },
+                meta: {
+                  type: "object",
+                  properties: {
+                    width: {
+                      type: "number",
+                    },
+                    height: {
+                      type: "number",
+                    },
+                  },
+                  required: ["width", "height"],
+                },
+                type: {
+                  type: "string",
+                  const: "video",
                 },
               },
               required: [

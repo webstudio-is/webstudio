@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
+  cssVar,
   Flex,
   Grid,
   theme,
@@ -59,21 +61,23 @@ const getAxisTrackCount = (
   return parsedCount;
 };
 
+const gridLineColor = `color-mix(in oklab, ${cssVar("--foreground-secondary")} 60%, ${cssVar("--background-floating")})`;
+
 const selectorCellStyle = css({
   width: 16,
   height: 16,
   borderRadius: theme.borderRadius[3],
-  backgroundColor: theme.colors.backgroundControls,
-  border: `1px solid ${theme.colors.borderMain}`,
+  backgroundColor: cssVar("--background-secondary"),
+  border: `1px solid ${gridLineColor}`,
   transition: "all 0.1s ease",
   "&:hover": {
-    borderColor: theme.colors.borderFocus,
+    borderColor: cssVar("--border-focus"),
   },
   variants: {
     highlighted: {
       true: {
-        backgroundColor: theme.colors.backgroundHover,
-        borderColor: theme.colors.borderFocus,
+        backgroundColor: cssVar("--overlay-interaction-hover"),
+        borderColor: cssVar("--border-focus"),
       },
     },
   },
@@ -214,10 +218,10 @@ const presetButtonStyle = css({
   padding: theme.spacing[3],
   boxSizing: "border-box",
   "&:hover": {
-    backgroundColor: theme.colors.backgroundHover,
+    backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   "&:focus-visible": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
+    outline: `2px solid ${cssVar("--border-focus")}`,
   },
 });
 
@@ -225,7 +229,7 @@ const presetPreviewStyle = css({
   width: "100%",
   aspectRatio: "3 / 2",
   borderRadius: theme.borderRadius[2],
-  border: `1px solid ${theme.colors.borderMain}`,
+  border: `1px solid ${gridLineColor}`,
   overflow: "hidden",
 });
 
@@ -264,9 +268,9 @@ const GridPresetsPicker = ({ onSelect }: GridPresetsPickerProps) => {
                 <Box
                   key={i}
                   css={{
-                    backgroundColor: theme.colors.backgroundControls,
+                    backgroundColor: cssVar("--background-secondary"),
                     borderRadius: theme.borderRadius[1],
-                    border: `1px solid ${theme.colors.borderMain}`,
+                    border: `1px solid ${gridLineColor}`,
                   }}
                 />
               ))}
@@ -303,15 +307,15 @@ const gridGeneratorButtonStyle = css({
   display: "grid",
   width: "100%",
   height: 60,
-  outline: `1px solid ${theme.colors.borderMain}`,
+  outline: `1px solid ${gridLineColor}`,
   borderRadius: theme.borderRadius[3],
   overflow: "hidden",
   cursor: "pointer",
-  "&:focus-within, &[data-state=open]": {
-    outline: `1px solid ${theme.colors.borderLocalFlexUi}`,
+  "&:focus-visible": {
+    outline: `1px solid ${cssVar("--border-focus")}`,
   },
   "&:hover": {
-    backgroundColor: theme.colors.backgroundHover,
+    backgroundColor: cssVar("--overlay-interaction-hover"),
   },
 });
 
@@ -471,11 +475,11 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
               height: "100%",
               borderRight:
                 col < displayColumnCount - 1 && !mergedRight
-                  ? `1px solid ${theme.colors.borderMain}`
+                  ? `1px solid ${gridLineColor}`
                   : undefined,
               borderBottom:
                 row < displayRowCount - 1 && !mergedBottom
-                  ? `1px solid ${theme.colors.borderMain}`
+                  ? `1px solid ${gridLineColor}`
                   : undefined,
             }}
           />
@@ -490,35 +494,23 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
       placement="left-start"
       content={
         <Flex direction="column">
-          <Flex
-            direction="column"
-            gap="3"
-            css={{ padding: theme.panel.padding }}
-          >
+          <PanelContent as={Flex} direction="column" gap="3">
             <GridGeneratorSelector
               onSelect={handleSelectorSelect}
               initialColumns={columnCount}
               initialRows={rowCount}
             />
-          </Flex>
+          </PanelContent>
           <Separator />
-          <Flex
-            direction="column"
-            gap="3"
-            css={{ padding: theme.panel.padding }}
-          >
+          <PanelContent as={Flex} direction="column" gap="3">
             <GridPresetsPicker onSelect={handlePresetSelect} />
-          </Flex>
+          </PanelContent>
           <Separator />
-          <Flex css={{ padding: theme.panel.padding }}>
-            <Button
-              color="neutral"
-              css={{ width: "100%" }}
-              onClick={handleFillGrid}
-            >
+          <PanelContent as={Flex}>
+            <Button css={{ width: "100%" }} onClick={handleFillGrid}>
               Fill grid
             </Button>
-          </Flex>
+          </PanelContent>
         </Flex>
       }
       open={open}
@@ -561,3 +553,5 @@ export const __testing__ = {
   gridPresets,
   computeFillGridItemsCount,
 };
+
+undefined;

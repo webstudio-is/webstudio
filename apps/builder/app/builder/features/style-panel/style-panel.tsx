@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   theme,
   Box,
   Card,
   Text,
   Separator,
-  ScrollArea,
+  ScrollAreaNative,
   DropdownMenu,
   DropdownMenuTrigger,
   IconButton,
@@ -18,8 +18,6 @@ import {
   rawTheme,
   Kbd,
   Flex,
-  DropdownMenuSeparator,
-  DropdownMenuItem,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { EllipsesIcon } from "@webstudio-is/icons";
@@ -33,7 +31,6 @@ import { $selectedInstance } from "~/shared/nano-states";
 import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
 import {
   $settings,
-  getSetting,
   setSetting,
   type Settings,
 } from "~/builder/shared/client-settings";
@@ -52,8 +49,7 @@ const $selectedInstanceTag = computed(
 );
 
 export const ModeMenu = () => {
-  const value = getSetting("stylePanelMode");
-  const [focusedValue, setFocusedValue] = useState<string>(value);
+  const { stylePanelMode } = useStore($settings);
 
   return (
     <DropdownMenu>
@@ -67,54 +63,27 @@ export const ModeMenu = () => {
         css={{ width: theme.spacing[26] }}
       >
         <DropdownMenuRadioGroup
-          value={value}
+          value={stylePanelMode}
           onValueChange={(value) => {
             setSetting("stylePanelMode", value as Settings["stylePanelMode"]);
           }}
         >
-          <DropdownMenuRadioItem
-            value="default"
-            icon={<MenuCheckedIcon />}
-            onFocus={() => setFocusedValue("default")}
-          >
-            Default
+          <DropdownMenuRadioItem value="default" icon={<MenuCheckedIcon />}>
+            Default mode
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem
-            value="focus"
-            icon={<MenuCheckedIcon />}
-            onFocus={() => setFocusedValue("focus")}
-          >
+          <DropdownMenuRadioItem value="focus" icon={<MenuCheckedIcon />}>
             <Flex justify="between" grow>
               <Text variant="labels">Focus mode</Text>
               <Kbd value={["alt", "shift", "s"]} />
             </Flex>
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem
-            value="advanced"
-            icon={<MenuCheckedIcon />}
-            onFocus={() => setFocusedValue("advanced")}
-          >
+          <DropdownMenuRadioItem value="advanced" icon={<MenuCheckedIcon />}>
             <Flex justify="between" grow>
               <Text variant="labels">Advanced mode</Text>
               <Kbd value={["alt", "shift", "a"]} />
             </Flex>
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
-        <DropdownMenuSeparator />
-
-        {focusedValue === "default" && (
-          <DropdownMenuItem hint>
-            All sections are open by default.
-          </DropdownMenuItem>
-        )}
-        {focusedValue === "focus" && (
-          <DropdownMenuItem hint>
-            Only one section is open at a time.
-          </DropdownMenuItem>
-        )}
-        {focusedValue === "advanced" && (
-          <DropdownMenuItem hint>Advanced section only.</DropdownMenuItem>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -171,21 +140,23 @@ export const StylePanel = () => {
 
   return (
     <ReadonlyProvider value={readonly}>
-      <Box css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Box}>
         <Text variant="titles" css={{ paddingBlock: theme.panel.paddingBlock }}>
           Style sources
         </Text>
         <StyleSourcesSection />
-      </Box>
+      </PanelContent>
       <Separator />
-      <ScrollArea>
+      <ScrollAreaNative css={{ flex: 1, minHeight: 0 }}>
         <CollapsibleProvider
           accordion={stylePanelMode === "focus"}
           initialOpen={stylePanelMode === "focus" ? "Layout" : "*"}
+          sectionBackground
+          stickyHeaders
         >
           {all}
         </CollapsibleProvider>
-      </ScrollArea>
+      </ScrollAreaNative>
     </ReadonlyProvider>
   );
 };

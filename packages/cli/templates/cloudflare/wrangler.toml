@@ -2,6 +2,7 @@
 # https://developers.cloudflare.com/pages/functions/wrangler-configuration/
 name = "webstudio-remix-app"
 compatibility_date = "2024-04-05"
+compatibility_flags = ["global_fetch_strictly_public"]
 pages_build_output_dir="./build"
 
 # Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)

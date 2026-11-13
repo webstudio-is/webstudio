@@ -1,7 +1,18 @@
 import { describe, expect, test } from "vitest";
+import type { Patch } from "immer";
+import type { BuilderPatch } from "../contracts/patch";
+import {
+  applyBuilderNamespacePatches,
+  applyBuilderPatchTransactions,
+} from "../state/patch";
 import {
   blockComponent,
+  blockBodyComponent,
   blockTemplateComponent,
+  contentBlockDocumentProp,
+  contentBlockSourceProp,
+  encodeDataSourceVariable,
+  elementComponent,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import type {
@@ -13,22 +24,582 @@ import type {
 import {
   contentModePermissionsTesting,
   applyContentModeTransaction,
-  getContentModeCapabilities,
-  getContentModeEditableInstanceIds,
-  getContentModePropNamesByTag,
-  isContentModeCopyableProp,
   isContentModePagePath,
+  isContentModeTemplateDefaultPropType,
   validateContentModeTransaction,
   type ContentModePatchTransaction,
 } from "./content-mode-permissions";
+import {
+  getContentModeCapabilities,
+  getContentModeEditableInstanceIds,
+  getContentModePropEligibility,
+  getContentModePropNamesByTag,
+  isContentModeCopyableProp,
+} from "./content-mode-capabilities";
 
 const {
   hasOnlyAddedInstancesInSubtree,
   hasOnlyContentModePageMeta,
   isContentModePageMetaValue,
-  isContentModePropPatchValue,
+  isContentModePropTransition,
   validateEditableInstanceReferences,
 } = contentModePermissionsTesting;
+
+test.each([false, true])(
+  "authorization preserves append-then-edit patches (split: %s)",
+  (split) => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      props,
+      metas,
+      styleSources,
+    });
+    const patches: BuilderPatch[] = [
+      {
+        op: "add",
+        path: ["link", "children", 0],
+        value: { type: "text", value: "New" },
+      },
+      {
+        op: "replace",
+        path: ["link", "children", 0],
+        value: { type: "text", value: "Edited" },
+      },
+    ];
+    const change = {
+      id: "append-edit",
+      payload: (split ? patches.map((patch) => [patch]) : [patches]).map(
+        (patches) => ({
+          namespace: "instances" as const,
+          patches,
+        })
+      ),
+    };
+    const result = applyContentModeTransaction({
+      capabilities,
+      transaction: change,
+      scope: "text-and-props",
+    });
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const persisted = applyBuilderPatchTransactions({ instances, props }, [
+      change,
+    ]);
+    expect(result.capabilities.instances).toEqual(persisted.state.instances);
+    expect(result.capabilities.instances.get("link")?.children).toEqual([
+      { type: "text", value: "Edited" },
+    ]);
+    expect(instances.get("link")?.children).toEqual([]);
+  }
+);
+
+test.each(["width", "height", "className", "unknown"])(
+  "asset additions respect metadata for %s",
+  (name) => {
+    const instance: Instance = {
+      id: "image",
+      type: "instance",
+      component: "Image",
+      children: [],
+    };
+    for (const source of [undefined, "other", "matching"]) {
+      const sourceProp: Prop = {
+        id: "src",
+        instanceId: instance.id,
+        name: "src",
+        type: "asset",
+        value: source ?? "unused",
+      };
+      const capabilities = getContentModeCapabilities({
+        instances: new Map([[instance.id, instance]]),
+        contentRootIds: new Set([instance.id]),
+        props: new Map(
+          source === undefined ? [] : [[sourceProp.id, sourceProp]]
+        ),
+        styleSources: new Map(),
+        metas: new Map([
+          [
+            "Image",
+            {
+              props: {
+                src: {
+                  type: "string",
+                  control: "file",
+                  required: false,
+                  contentMode: true,
+                },
+                width: {
+                  type: "number",
+                  control: "number",
+                  required: false,
+                  contentMode: false,
+                },
+                height: {
+                  type: "number",
+                  control: "number",
+                  required: false,
+                  contentMode: false,
+                },
+                className: {
+                  type: "string",
+                  control: "text",
+                  required: false,
+                  contentMode: false,
+                },
+              },
+            },
+          ],
+        ]),
+      });
+      expect(
+        applyContentModeTransaction({
+          capabilities,
+          scope: "text-and-props",
+          transaction: transaction("props", [
+            {
+              op: "add",
+              path: ["new"],
+              value: {
+                id: "new",
+                instanceId: instance.id,
+                name,
+                type: "asset",
+                value: "matching",
+              },
+            },
+          ]),
+        }).success
+      ).toBe(source === "matching" && (name === "width" || name === "height"));
+    }
+  }
+);
+
+test("authorization rejects a child replacement that persistence cannot apply", () => {
+  const capabilities = getContentModeCapabilities({
+    instances,
+    props,
+    metas,
+    styleSources,
+  });
+  const change = transaction("instances", [
+    {
+      op: "replace",
+      path: ["link", "children", 0],
+      value: { type: "text", value: "Updated" },
+    },
+  ]);
+  expect(() =>
+    applyBuilderNamespacePatches(
+      capabilities.instances,
+      change.payload[0].patches
+    )
+  ).toThrow();
+  expect(
+    applyContentModeTransaction({ capabilities, transaction: change }).success
+  ).toBe(false);
+  expect(capabilities.instances.get("link")?.children).toEqual([]);
+});
+
+test("authorization rejects replacing a prop that persistence cannot apply", () => {
+  const capabilities = getContentModeCapabilities({
+    instances,
+    props,
+    metas,
+    styleSources,
+  });
+  const change = transaction("props", [
+    {
+      op: "replace",
+      path: ["missing"],
+      value: {
+        id: "missing",
+        instanceId: "link",
+        name: "href",
+        type: "string",
+        value: "/new",
+      },
+    },
+  ]);
+  expect(() =>
+    applyBuilderNamespacePatches(capabilities.props, change.payload[0].patches)
+  ).toThrow();
+  expect(
+    applyContentModeTransaction({ capabilities, transaction: change }).success
+  ).toBe(false);
+  expect(capabilities.props.has("missing")).toBe(false);
+});
+
+test("rejects overwriting an instance added earlier in the same change", () => {
+  const capabilities = getContentModeCapabilities({
+    instances,
+    props,
+    metas,
+    styleSources,
+  });
+  const value: Instance = {
+    id: "new",
+    type: "instance",
+    component: "Link",
+    children: [],
+  };
+  expect(
+    applyContentModeTransaction({
+      capabilities,
+      transaction: transaction("instances", [
+        { op: "add", path: ["new"], value },
+        {
+          op: "add",
+          path: ["block", "children", 0],
+          value: { type: "id", value: "new" },
+        },
+        {
+          op: "add",
+          path: ["new"],
+          value: { ...value, component: "HtmlEmbed" },
+        },
+      ]),
+    }).success
+  ).toBe(false);
+  expect(capabilities.instances.has("new")).toBe(false);
+});
+
+test("text-and-props scope allows text edits but not structure or assets", () => {
+  const capabilities = getContentModeCapabilities({
+    instances,
+    props,
+    metas,
+    styleSources,
+  });
+  const cases: Array<[string, Patch[], boolean]> = [
+    [
+      "instances",
+      [
+        {
+          op: "replace",
+          path: ["link", "children"],
+          value: [
+            { type: "text", value: "Hello" },
+            { type: "text", value: "world" },
+          ],
+        },
+      ],
+      true,
+    ],
+    [
+      "instances",
+      [
+        {
+          op: "replace",
+          path: ["block", "children"],
+          value: [
+            { type: "text", value: "prefix" },
+            { type: "id", value: "link" },
+          ],
+        },
+      ],
+      false,
+    ],
+    ["assets", [], false],
+  ];
+  for (const [namespace, patches, allowed] of cases) {
+    const change: ContentModePatchTransaction = {
+      payload: [{ namespace, patches }],
+    };
+    expect(
+      applyContentModeTransaction({ capabilities, transaction: change }).success
+    ).toBe(true);
+    expect(
+      applyContentModeTransaction({
+        capabilities,
+        transaction: change,
+        scope: "text-and-props",
+      }).success
+    ).toBe(allowed);
+  }
+  expect(capabilities.instances).toEqual(instances);
+});
+
+test.each([false, true])(
+  "text-and-props preserves inline child positions (move child: %s)",
+  (moveChild) => {
+    const children: Instance["children"] = [
+      { type: "text", value: "Before" },
+      { type: "id", value: "link" },
+      { type: "text", value: "After" },
+    ];
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([
+        ...instances,
+        ["block", { ...instances.get("block")!, children }],
+      ]),
+      props,
+      metas,
+      styleSources,
+    });
+    const nextChildren: Instance["children"] = moveChild
+      ? [children[1], children[0], children[2]]
+      : [{ type: "text", value: "Changed" }, children[1], children[2]];
+    const result = applyContentModeTransaction({
+      capabilities,
+      scope: "text-and-props",
+      transaction: transaction("instances", [
+        { op: "replace", path: ["block", "children"], value: nextChildren },
+      ]),
+    });
+    expect(result.success).toBe(!moveChild);
+    if (result.success) {
+      expect(result.capabilities.instances.get("block")?.children).toEqual(
+        nextChildren
+      );
+    }
+    expect(capabilities.instances.get("block")?.children).toEqual(children);
+  }
+);
+
+test("empty Editor transactions do not revalidate unrelated content", () => {
+  const capabilities = getContentModeCapabilities({
+    instances: new Map([
+      ...instances,
+      [
+        "block",
+        {
+          ...instances.get("block")!,
+          children: [
+            { type: "id", value: "link" },
+            { type: "id", value: "link" },
+          ],
+        },
+      ],
+    ]),
+    props,
+    metas,
+    styleSources,
+  });
+  expect(
+    applyContentModeTransaction({
+      capabilities,
+      transaction: transaction("props", []),
+      scope: "text-and-props",
+    })
+  ).toEqual({ success: true, capabilities });
+});
+
+test("a rejected later prop edit leaves all capabilities unchanged and reusable", () => {
+  const capabilities = getContentModeCapabilities({
+    instances,
+    props,
+    metas,
+    styleSources,
+  });
+  const original = structuredClone(capabilities);
+  const allowed = transaction("props", [
+    { op: "replace", path: ["href-prop", "value"], value: "/updated" },
+  ]);
+  const rejected = {
+    payload: [
+      ...allowed.payload,
+      ...transaction("props", [
+        { op: "replace", path: ["target-prop", "value"], value: "_blank" },
+      ]).payload,
+    ],
+  };
+  expect(
+    applyContentModeTransaction({
+      capabilities,
+      transaction: rejected,
+      scope: "text-and-props",
+    }).success
+  ).toBe(false);
+  expect(capabilities).toEqual(original);
+  const retry = applyContentModeTransaction({
+    capabilities,
+    transaction: allowed,
+    scope: "text-and-props",
+  });
+  expect(retry.success).toBe(true);
+  if (retry.success) {
+    expect(retry.capabilities.props.get("href-prop")?.value).toBe("/updated");
+    expect(retry.capabilities.props.get("target-prop")?.value).toBe("_self");
+  }
+  expect(capabilities).toEqual(original);
+});
+
+test("does not reuse an editable prop id for a different name", () => {
+  const capabilities = getContentModeCapabilities({
+    instances,
+    props,
+    metas,
+    styleSources,
+  });
+  expect(
+    applyContentModeTransaction({
+      capabilities,
+      transaction: transaction("props", [
+        {
+          op: "replace",
+          path: ["href-prop"],
+          value: {
+            ...props.get("href-prop")!,
+            name: "target",
+            type: "asset",
+            value: "asset",
+          },
+        },
+      ]),
+    }).success
+  ).toBe(false);
+});
+
+test.each(["expression", "string"] as const)(
+  "rejects a new prop ID shadowing an existing %s prop",
+  (type) => {
+    const existing: Prop = {
+      id: "href-prop",
+      instanceId: "link",
+      name: "href",
+      type,
+      value: type === "expression" ? "post.url" : "/original",
+    };
+    const capabilities = getContentModeCapabilities({
+      instances,
+      props: new Map([[existing.id, existing]]),
+      metas,
+      styleSources,
+    });
+    const original = structuredClone(capabilities);
+    for (const split of [false, true]) {
+      const patches: Patch[] = [
+        {
+          op: "add",
+          path: ["shadow"],
+          value: {
+            ...existing,
+            id: "shadow",
+            type: "string",
+            value: "/override",
+          },
+        },
+      ];
+      if (split) {
+        patches.push({
+          op: "replace",
+          path: ["shadow", "value"],
+          value: "/again",
+        });
+      }
+      expect(
+        applyContentModeTransaction({
+          capabilities,
+          scope: "text-and-props",
+          transaction: {
+            payload: patches.map((patch) => ({
+              namespace: "props",
+              patches: [patch],
+            })),
+          },
+        }).success
+      ).toBe(false);
+    }
+    expect(
+      applyContentModeTransaction({
+        capabilities,
+        scope: "text-and-props",
+        transaction: transaction("props", [
+          {
+            op: "replace",
+            path: [existing.id],
+            value: { ...existing, type: "string", value: "/updated" },
+          },
+        ]),
+      }).success
+    ).toBe(type === "string");
+    expect(capabilities).toEqual(original);
+  }
+);
+
+test.each([false, true])(
+  "rejects duplicate fresh props (split: %s)",
+  (split) => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      props: new Map(),
+      metas,
+      styleSources,
+    });
+    const patches: Patch[] = ["first", "second"].map((id) => ({
+      op: "add",
+      path: [id],
+      value: {
+        id,
+        instanceId: "link",
+        name: "href",
+        type: "string",
+        value: `/${id}`,
+      },
+    }));
+    expect(
+      applyContentModeTransaction({
+        capabilities,
+        transaction: {
+          payload: (split ? patches.map((patch) => [patch]) : [patches]).map(
+            (patches) => ({ namespace: "props", patches })
+          ),
+        },
+      }).success
+    ).toBe(false);
+    expect(capabilities.props.size).toBe(0);
+  }
+);
+
+test("rejects fresh linked Image dimensions shadowing a binding", () => {
+  const image: Instance = {
+    id: "image",
+    type: "instance",
+    component: "Image",
+    children: [],
+  };
+  const source: Prop = {
+    id: "src",
+    instanceId: image.id,
+    name: "src",
+    type: "asset",
+    value: "asset",
+  };
+  const width: Prop = {
+    id: "width",
+    instanceId: image.id,
+    name: "width",
+    type: "expression",
+    value: "post.width",
+  };
+  const capabilities = getContentModeCapabilities({
+    instances: new Map([[image.id, image]]),
+    contentRootIds: new Set([image.id]),
+    props: new Map<string, Prop>([
+      [source.id, source],
+      [width.id, width],
+    ]),
+    metas: new Map(),
+    styleSources,
+  });
+  expect(
+    applyContentModeTransaction({
+      capabilities,
+      scope: "text-and-props",
+      transaction: transaction("props", [
+        {
+          op: "add",
+          path: ["shadow"],
+          value: { ...width, id: "shadow", type: "asset", value: source.value },
+        },
+      ]),
+    }).success
+  ).toBe(false);
+  expect(capabilities.props.get(width.id)).toEqual(width);
+  expect(capabilities.props.has("shadow")).toBe(false);
+});
 
 const metas = new Map<string, WsComponentMeta>([
   [
@@ -45,6 +616,19 @@ const metas = new Map<string, WsComponentMeta>([
           type: "string",
           control: "text",
           required: false,
+        },
+      },
+    },
+  ],
+  [
+    "Heading",
+    {
+      props: {
+        description: {
+          type: "string",
+          control: "text",
+          required: false,
+          contentMode: true,
         },
       },
     },
@@ -99,6 +683,319 @@ const styleSources = new Map([
   ["local", { type: "local" as const, id: "local" }],
 ]);
 
+test("limits an explicit Content Block to its Body and frontmatter bindings", () => {
+  const document = encodeDataSourceVariable("document-data-source");
+  const explicitInstances = new Map<string, Instance>([
+    [
+      "block",
+      {
+        type: "instance",
+        id: "block",
+        component: blockComponent,
+        children: [
+          { type: "id", value: "shell" },
+          { type: "id", value: "title" },
+          { type: "id", value: "content" },
+        ],
+      },
+    ],
+    [
+      "shell",
+      {
+        type: "instance",
+        id: "shell",
+        component: "Box",
+        children: [],
+      },
+    ],
+    [
+      "title",
+      {
+        type: "instance",
+        id: "title",
+        component: "Heading",
+        children: [
+          {
+            type: "expression",
+            value: `${document}.frontmatter.title`,
+            mode: "readwrite",
+          },
+        ],
+      },
+    ],
+    [
+      "content",
+      {
+        type: "instance",
+        id: "content",
+        component: blockBodyComponent,
+        children: [{ type: "id", value: "paragraph" }],
+      },
+    ],
+    [
+      "paragraph",
+      {
+        type: "instance",
+        id: "paragraph",
+        component: "Paragraph",
+        children: [],
+      },
+    ],
+  ]);
+  const explicitProps = new Map<string, Prop>([
+    [
+      "source-prop",
+      {
+        id: "source-prop",
+        instanceId: "block",
+        name: contentBlockSourceProp,
+        type: "asset",
+        value: "article",
+      },
+    ],
+    [
+      "document-prop",
+      {
+        id: "document-prop",
+        instanceId: "block",
+        name: contentBlockDocumentProp,
+        type: "parameter",
+        value: "document-data-source",
+      },
+    ],
+    [
+      "designed-description",
+      {
+        id: "designed-description",
+        instanceId: "title",
+        name: "description",
+        type: "string",
+        value: "Designed description",
+      },
+    ],
+  ]);
+
+  const capabilities = getContentModeCapabilities({
+    instances: explicitInstances,
+    metas,
+    props: explicitProps,
+    styleSources,
+  });
+
+  expect(capabilities.contentRootIds).toEqual(new Set(["content"]));
+  expect(capabilities.editableInstanceIds.has("paragraph")).toBe(true);
+  expect(capabilities.editableInstanceIds.has("title")).toBe(false);
+  expect(capabilities.editablePropIds.has("designed-description")).toBe(false);
+  expect(capabilities.editableInstanceIds.has("shell")).toBe(false);
+  expect(capabilities.editableInstanceIds.has("block")).toBe(false);
+  expect(capabilities.frontmatterBoundTextInstanceIds).toEqual(
+    new Set(["title"])
+  );
+
+  const result = applyContentModeTransaction({
+    capabilities,
+    transaction: {
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: ["paragraph", "children"],
+              value: [{ type: "text", value: "Updated" }],
+            },
+          ],
+        },
+      ],
+    },
+  });
+  expect(result.success).toBe(true);
+  if (result.success) {
+    expect(result.capabilities.editableInstanceIds.has("title")).toBe(false);
+  }
+  expect(
+    validateContentModeTransaction({
+      capabilities,
+      transaction: {
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                op: "replace",
+                path: ["title", "children"],
+                value: [{ type: "text", value: "Bypassed frontmatter" }],
+              },
+            ],
+          },
+        ],
+      },
+    }).success
+  ).toBe(false);
+  expect(
+    validateContentModeTransaction({
+      capabilities,
+      transaction: {
+        payload: [
+          {
+            namespace: "instances",
+            patches: [{ op: "remove", path: ["title"] }],
+          },
+        ],
+      },
+    }).success
+  ).toBe(false);
+
+  expect(
+    validateContentModeTransaction({
+      capabilities,
+      transaction: {
+        payload: [
+          {
+            namespace: "props",
+            patches: [
+              {
+                op: "add",
+                path: ["shell-content-prop"],
+                value: {
+                  id: "shell-content-prop",
+                  instanceId: "title",
+                  name: "description",
+                  type: "string",
+                  value: "Changed in content mode",
+                },
+              },
+            ],
+          },
+        ],
+      },
+    }).success
+  ).toBe(false);
+
+  explicitProps.delete("source-prop");
+  const disconnected = getContentModeCapabilities({
+    instances: explicitInstances,
+    metas,
+    props: explicitProps,
+    styleSources,
+  });
+  expect(disconnected.editableInstanceIds.has("title")).toBe(false);
+});
+
+test("keeps direct frontmatter expressions read-only without readwrite mode", () => {
+  const document = encodeDataSourceVariable("document-data-source");
+  const directInstances = new Map<string, Instance>([
+    [
+      "block",
+      {
+        type: "instance",
+        id: "block",
+        component: blockComponent,
+        children: [{ type: "id", value: "title" }],
+      },
+    ],
+    [
+      "title",
+      {
+        type: "instance",
+        id: "title",
+        component: "Heading",
+        children: [
+          { type: "expression", value: `${document}.frontmatter.title` },
+        ],
+      },
+    ],
+  ]);
+  const directProps = new Map<string, Prop>([
+    [
+      "source",
+      {
+        id: "source",
+        instanceId: "block",
+        name: contentBlockSourceProp,
+        type: "asset",
+        value: "article",
+      },
+    ],
+    [
+      "document",
+      {
+        id: "document",
+        instanceId: "block",
+        name: contentBlockDocumentProp,
+        type: "parameter",
+        value: "document-data-source",
+      },
+    ],
+  ]);
+
+  const capabilities = getContentModeCapabilities({
+    instances: directInstances,
+    metas,
+    props: directProps,
+    styleSources,
+  });
+  expect(capabilities.frontmatterBoundTextInstanceIds).toEqual(new Set());
+});
+
+test("does not loop while finding frontmatter bindings in recursive instances", () => {
+  const document = encodeDataSourceVariable("document-data-source");
+  const recursiveInstances = new Map<string, Instance>([
+    [
+      "block",
+      {
+        type: "instance",
+        id: "block",
+        component: blockComponent,
+        children: [{ type: "id", value: "recursive" }],
+      },
+    ],
+    [
+      "recursive",
+      {
+        type: "instance",
+        id: "recursive",
+        component: "Box",
+        children: [
+          { type: "expression", value: `${document}.frontmatter.title` },
+          { type: "id", value: "recursive" },
+        ],
+      },
+    ],
+  ]);
+  const recursiveProps = new Map<string, Prop>([
+    [
+      "source",
+      {
+        id: "source",
+        instanceId: "block",
+        name: contentBlockSourceProp,
+        type: "asset",
+        value: "article",
+      },
+    ],
+    [
+      "document",
+      {
+        id: "document",
+        instanceId: "block",
+        name: contentBlockDocumentProp,
+        type: "parameter",
+        value: "document-data-source",
+      },
+    ],
+  ]);
+
+  expect(() =>
+    getContentModeCapabilities({
+      instances: recursiveInstances,
+      metas,
+      props: recursiveProps,
+      styleSources,
+    })
+  ).not.toThrow();
+});
+
 const transaction = (
   namespace: string,
   patches: ContentModePatchTransaction["payload"][number]["patches"]
@@ -108,6 +1005,27 @@ const transaction = (
 });
 
 describe("content mode permissions", () => {
+  test("only retains self-contained template default prop types", () => {
+    expect(
+      (["string", "number", "boolean", "json", "string[]"] as const).every(
+        isContentModeTemplateDefaultPropType
+      )
+    ).toBe(true);
+    expect(
+      (
+        [
+          "asset",
+          "page",
+          "parameter",
+          "resource",
+          "expression",
+          "action",
+          "animationAction",
+        ] as const
+      ).some(isContentModeTemplateDefaultPropType)
+    ).toBe(false);
+  });
+
   test("allows only static page paths in content mode", () => {
     expect(isContentModePagePath("/about")).toBe(true);
     expect(isContentModePagePath("")).toBe(true);
@@ -421,12 +1339,12 @@ describe("content mode permissions", () => {
     });
 
     expect(
-      isContentModePropPatchValue({
+      isContentModePropTransition({
         capabilities,
         editableInstanceIds: new Set(["link"]),
-        expectedPropId: "new-href-prop",
+        expectedPropId: "href-prop",
         value: {
-          id: "new-href-prop",
+          id: "href-prop",
           instanceId: "link",
           name: "href",
           type: "string",
@@ -435,7 +1353,7 @@ describe("content mode permissions", () => {
       })
     ).toBe(true);
     expect(
-      isContentModePropPatchValue({
+      isContentModePropTransition({
         capabilities,
         editableInstanceIds: new Set(["link"]),
         expectedPropId: "new-href-prop",
@@ -500,6 +1418,7 @@ describe("content mode permissions", () => {
       selectedLocalStyleSourceIds: new Set<string>(),
       styledLocalStyleSourceIds: new Set<string>(),
       editableInstanceIds: new Set<string>(),
+      copiedTemplateProps: new Map(),
     };
 
     expect(hasOnlyAddedInstancesInSubtree(context, "new-root")).toBe(true);
@@ -543,21 +1462,25 @@ describe("content mode permissions", () => {
     });
 
     expect(
-      validateEditableInstanceReferences({
-        capabilities,
-        initialContentRootIds: new Set(["block"]),
-        initialEditableInstanceIds: new Set(["block", "item"]),
-        initialEditableInstanceRootIds: new Map([["item", "block"]]),
-        initialBlockTemplateChildIdsByInstanceId: new Map(),
-        addedInstanceIds: new Set(),
-        removedEditableInstanceIds: new Set(),
-        addedPageIds: new Set<string>(),
-        addedLocalStyleSourceIds: new Set(),
-        removedLocalStyleSourceIds: new Set(),
-        selectedLocalStyleSourceIds: new Set(),
-        styledLocalStyleSourceIds: new Set(),
-        editableInstanceIds: new Set(["block", "item"]),
-      })
+      validateEditableInstanceReferences(
+        {
+          capabilities,
+          initialContentRootIds: new Set(["block"]),
+          initialEditableInstanceIds: new Set(["block", "item"]),
+          initialEditableInstanceRootIds: new Map([["item", "block"]]),
+          initialBlockTemplateChildIdsByInstanceId: new Map(),
+          addedInstanceIds: new Set(),
+          removedEditableInstanceIds: new Set(),
+          addedPageIds: new Set<string>(),
+          addedLocalStyleSourceIds: new Set(),
+          removedLocalStyleSourceIds: new Set(),
+          selectedLocalStyleSourceIds: new Set(),
+          styledLocalStyleSourceIds: new Set(),
+          editableInstanceIds: new Set(["block", "item"]),
+          copiedTemplateProps: new Map(),
+        },
+        new Map()
+      )
     ).toEqual({
       success: false,
       error: "Content instances must not be referenced multiple times.",
@@ -808,6 +1731,171 @@ describe("content mode permissions", () => {
     });
   });
 
+  test("does not overwrite non-editable props with an editable value", () => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      metas,
+      props,
+      styleSources,
+    });
+
+    expect(capabilities.editablePropIds.has("target-prop")).toBe(false);
+    for (const op of ["add", "replace"] as const) {
+      expect(
+        validateContentModeTransaction({
+          capabilities,
+          transaction: transaction("props", [
+            {
+              op,
+              path: ["target-prop"],
+              value: {
+                id: "target-prop",
+                instanceId: "link",
+                name: "href",
+                type: "string",
+                value: "/about",
+              },
+            },
+          ]),
+        })
+      ).toEqual({
+        success: false,
+        error: 'Prop "target-prop" is not editable in content mode.',
+      });
+    }
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("props", [
+          {
+            op: "replace",
+            path: ["target-prop"],
+            value: {
+              id: "target-prop",
+              instanceId: "link",
+              name: "target",
+              type: "asset",
+              value: "asset-1",
+            },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: 'Prop "target-prop" is not editable in content mode.',
+    });
+    expect(capabilities.props.get("target-prop")?.name).toBe("target");
+  });
+
+  test.each(["Image", "Video"])(
+    "replaces a %s source string with an asset on the same prop",
+    (component) => {
+      const image: Instance = {
+        type: "instance",
+        id: "image",
+        component,
+        children: [],
+      };
+      const capabilities = getContentModeCapabilities({
+        instances: new Map([
+          [
+            "block",
+            {
+              ...instances.get("block")!,
+              children: [{ type: "id", value: image.id }],
+            },
+          ],
+          [image.id, image],
+        ]),
+        metas: new Map([
+          [
+            component,
+            {
+              props: {
+                src: {
+                  type: "string",
+                  control: "file",
+                  required: false,
+                  contentMode: true,
+                },
+                width: {
+                  type: "number",
+                  control: "number",
+                  required: false,
+                  contentMode: false,
+                },
+              },
+            },
+          ],
+        ]),
+        props: new Map([
+          [
+            "image-src",
+            {
+              id: "image-src",
+              instanceId: image.id,
+              name: "src",
+              type: "string",
+              value: "/placeholder.svg",
+            },
+          ],
+          [
+            "image-width",
+            {
+              id: "image-width",
+              instanceId: image.id,
+              name: "width",
+              type: "number",
+              value: 120,
+            },
+          ],
+        ]),
+        styleSources,
+      });
+
+      capabilities.editablePropIds.delete("image-src");
+      expect(capabilities.editablePropIds.has("image-src")).toBe(false);
+      const result = applyContentModeTransaction({
+        capabilities,
+        transaction: transaction("props", [
+          {
+            op: "replace",
+            path: ["image-src"],
+            value: {
+              id: "image-src",
+              instanceId: image.id,
+              name: "src",
+              type: "asset",
+              value: "uploaded-asset",
+            },
+          },
+        ]),
+      });
+      expect(result.success).toBe(true);
+      if (result.success === false) {
+        return;
+      }
+      expect(
+        validateContentModeTransaction({
+          capabilities: result.capabilities,
+          transaction: transaction("props", [
+            {
+              op: "replace",
+              path: ["image-width"],
+              value: {
+                id: "image-width",
+                instanceId: image.id,
+                name: "width",
+                type: "asset",
+                value: "uploaded-asset",
+              },
+            },
+          ]),
+        }).success
+      ).toBe(component === "Image");
+    }
+  );
+
   test("returns advanced capabilities after applying a content mode transaction", () => {
     const capabilities = getContentModeCapabilities({
       instances,
@@ -976,7 +2064,7 @@ describe("content mode permissions", () => {
     expect(capabilities.props.has("new-href-prop")).toBe(false);
   });
 
-  test("treats asset props as content props inside content roots", () => {
+  test("rejects asset props without content-editable metadata", () => {
     const capabilities = getContentModeCapabilities({
       instances,
       metas,
@@ -995,7 +2083,7 @@ describe("content mode permissions", () => {
       styleSources,
     });
 
-    expect(capabilities.editablePropIds.has("asset-prop")).toBe(true);
+    expect(capabilities.editablePropIds.has("asset-prop")).toBe(false);
     expect(
       validateContentModeTransaction({
         capabilities,
@@ -1006,8 +2094,8 @@ describe("content mode permissions", () => {
             value: "asset-2",
           },
         ]),
-      })
-    ).toEqual({ success: true });
+      }).success
+    ).toBe(false);
     expect(
       validateContentModeTransaction({
         capabilities,
@@ -1024,8 +2112,8 @@ describe("content mode permissions", () => {
             },
           },
         ]),
-      })
-    ).toEqual({ success: true });
+      }).success
+    ).toBe(false);
   });
 
   test("identifies editable and copyable content mode props", () => {
@@ -1058,13 +2146,13 @@ describe("content mode permissions", () => {
       styleSources,
     });
 
-    expect(capabilities.editablePropIds.has("asset-prop")).toBe(true);
+    expect(capabilities.editablePropIds.has("asset-prop")).toBe(false);
     expect(
       isContentModeCopyableProp({
         capabilities,
         prop: contentProps.get("asset-prop")!,
       })
-    ).toBe(true);
+    ).toBe(false);
     expect(capabilities.editablePropIds.has("expression-prop")).toBe(false);
     expect(
       isContentModeCopyableProp({
@@ -1072,6 +2160,69 @@ describe("content mode permissions", () => {
         prop: contentProps.get("expression-prop")!,
       })
     ).toBe(false);
+  });
+
+  test("explains why a prop is not editable in content mode", () => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      metas,
+      props,
+      styleSources,
+    });
+    const instance = instances.get("link")!;
+    const getEligibility = (prop: Prop) =>
+      getContentModePropEligibility({ capabilities, instance, prop });
+
+    expect(getEligibility(props.get("href-prop")!)).toEqual({
+      editable: true,
+    });
+    expect(
+      getEligibility({
+        id: "boolean-href",
+        instanceId: "link",
+        name: "href",
+        type: "boolean",
+        value: true,
+      })
+    ).toEqual({ editable: false, reason: "incompatible" });
+    expect(getEligibility(props.get("target-prop")!)).toEqual({
+      editable: false,
+      reason: "design-only",
+    });
+    expect(
+      getEligibility({
+        id: "unknown-prop",
+        instanceId: "link",
+        name: "unknown",
+        type: "string",
+        value: "value",
+      })
+    ).toEqual({ editable: false, reason: "unknown" });
+  });
+
+  test("does not grant content-mode access to standard HTML attributes", () => {
+    const instance: Instance = {
+      type: "instance",
+      id: "element",
+      component: elementComponent,
+      tag: "div",
+      children: [],
+    };
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([[instance.id, instance]]),
+      metas: new Map(),
+      props: new Map(),
+      styleSources: new Map(),
+      contentRootIds: new Set([instance.id]),
+    });
+
+    expect(
+      getContentModePropEligibility({
+        capabilities,
+        instance,
+        prop: { name: "class", type: "string" },
+      })
+    ).toEqual({ editable: false, reason: "unknown" });
   });
 
   test("supports content mode props derived from ws:element tag", () => {
@@ -1143,6 +2294,7 @@ describe("content mode permissions", () => {
       validateContentModeTransaction({
         capabilities,
         transaction: transaction("props", [
+          { op: "remove", path: ["alt-prop"] },
           {
             op: "add",
             path: ["new-alt-prop"],
@@ -1157,6 +2309,72 @@ describe("content mode permissions", () => {
         ]),
       })
     ).toEqual({ success: true });
+  });
+
+  test("keeps unresolved tag metadata while applying a transaction", () => {
+    const instance: Instance = {
+      type: "instance",
+      id: "dynamic-image",
+      component: "LegacyImage",
+      children: [],
+    };
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([[instance.id, instance]]),
+      metas: new Map([
+        ["LegacyImage", { presetStyle: { img: [] } }],
+        [
+          "Image",
+          {
+            presetStyle: { img: [] },
+            props: {
+              alt: {
+                type: "string",
+                control: "text",
+                required: false,
+                contentMode: true,
+              },
+            },
+          },
+        ],
+      ]),
+      props: new Map([
+        [
+          "dynamic-tag",
+          {
+            id: "dynamic-tag",
+            instanceId: instance.id,
+            name: "tag",
+            type: "expression",
+            value: '"section"',
+            mode: "read",
+          },
+        ],
+      ]),
+      styleSources,
+      contentRootIds: new Set([instance.id]),
+    });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("props", [
+          {
+            op: "add",
+            path: ["alt-prop"],
+            value: {
+              id: "alt-prop",
+              instanceId: instance.id,
+              name: "alt",
+              type: "string",
+              value: "Alternative text",
+            },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: 'Prop "alt-prop" is not editable in content mode.',
+    });
   });
 
   test("validates new props against instances added in the same transaction", () => {
@@ -1313,7 +2531,7 @@ describe("content mode permissions", () => {
             type: "instance",
             id: "instance-1",
             component: "Box",
-            children: [],
+            children: [{ type: "text", value: "original" }],
           },
         ],
         [
@@ -1749,6 +2967,193 @@ describe("content mode permissions", () => {
     });
   });
 
+  test("allows exact fixed template props only on a newly copied subtree", () => {
+    const sourceImage: Instance = {
+      type: "instance",
+      id: "source-image",
+      component: "Image",
+      children: [],
+    };
+    const sourceWidth: Prop = {
+      id: "source-width",
+      instanceId: sourceImage.id,
+      name: "width",
+      type: "number",
+      value: 120,
+    };
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([
+        [
+          "block",
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [{ type: "id", value: "templates" }],
+          },
+        ],
+        [
+          "templates",
+          {
+            type: "instance",
+            id: "templates",
+            component: blockTemplateComponent,
+            children: [{ type: "id", value: sourceImage.id }],
+          },
+        ],
+        [sourceImage.id, sourceImage],
+      ]),
+      metas: new Map([
+        [
+          "Image",
+          {
+            props: {
+              width: { type: "number", control: "number", required: false },
+            },
+          },
+        ],
+      ]),
+      props: new Map([[sourceWidth.id, sourceWidth]]),
+      styleSources,
+    });
+    const copiedWidth: Prop = {
+      ...sourceWidth,
+      id: "copied-width",
+      instanceId: "copied-image",
+    };
+    const insert = (width: Prop): ContentModePatchTransaction => ({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "add",
+              path: ["block", "children", 0],
+              value: { type: "id", value: "copied-image" },
+            },
+            {
+              op: "add",
+              path: ["copied-image"],
+              value: { ...sourceImage, id: "copied-image" },
+            },
+          ],
+        },
+        {
+          namespace: "props",
+          patches: [{ op: "add", path: [width.id], value: width }],
+        },
+      ],
+    });
+
+    const inserted = applyContentModeTransaction({
+      capabilities,
+      transaction: insert(copiedWidth),
+    });
+    expect(inserted.success).toBe(true);
+    expect(
+      validateContentModeTransaction({
+        capabilities: {
+          ...capabilities,
+          reservedPropIds: new Set([copiedWidth.id]),
+        },
+        transaction: insert(copiedWidth),
+      }).success
+    ).toBe(false);
+    if (inserted.success) {
+      expect(inserted.capabilities.props.get(copiedWidth.id)).toEqual(
+        copiedWidth
+      );
+      expect(
+        validateContentModeTransaction({
+          capabilities: inserted.capabilities,
+          transaction: transaction("props", [
+            {
+              op: "replace",
+              path: [copiedWidth.id, "value"],
+              value: 240,
+            },
+          ]),
+        }).success
+      ).toBe(false);
+    }
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: insert({ ...copiedWidth, value: 240 }),
+      }).success
+    ).toBe(false);
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: insert({
+          ...copiedWidth,
+          name: "class",
+          type: "string",
+          value: "arbitrary-class",
+        }),
+      }).success
+    ).toBe(false);
+    const changedTree = insert(copiedWidth);
+    changedTree.payload[0].patches[1] = {
+      op: "add",
+      path: ["copied-image"],
+      value: { ...sourceImage, id: "copied-image", label: "Changed" },
+    };
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: changedTree,
+      }).success
+    ).toBe(false);
+    const mismatchedKey = insert(copiedWidth);
+    mismatchedKey.payload[1].patches[0].path = [sourceWidth.id];
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: mismatchedKey,
+      }).success
+    ).toBe(false);
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: insert({ ...copiedWidth, id: sourceWidth.id }),
+      }).success
+    ).toBe(false);
+    const duplicateKey = insert(copiedWidth);
+    duplicateKey.payload[1].patches.push(duplicateKey.payload[1].patches[0]);
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: duplicateKey,
+      }).success
+    ).toBe(false);
+    const otherBlockCapabilities = getContentModeCapabilities({
+      instances: new Map([
+        ...capabilities.instances,
+        [
+          "other-block",
+          {
+            type: "instance" as const,
+            id: "other-block",
+            component: blockComponent,
+            children: [],
+          },
+        ],
+      ]),
+      metas: capabilities.metas,
+      props: capabilities.props,
+      styleSources,
+    });
+    const crossBlockCopy = insert(copiedWidth);
+    crossBlockCopy.payload[0].patches[0].path = ["other-block", "children", 0];
+    expect(
+      validateContentModeTransaction({
+        capabilities: otherBlockCapabilities,
+        transaction: crossBlockCopy,
+      }).success
+    ).toBe(false);
+  });
+
   test("allows cleaning up any props from removed editable instances", () => {
     const capabilities = getContentModeCapabilities({
       instances,
@@ -2145,6 +3550,156 @@ describe("content mode permissions", () => {
     });
   });
 
+  test.each(["content", "text-and-props"] as const)(
+    "allows unrelated text edits when a shared instance was already referenced twice (%s)",
+    (scope) => {
+      const capabilities = getContentModeCapabilities({
+        instances: new Map<string, Instance>([
+          ...instances,
+          [
+            "block",
+            {
+              type: "instance",
+              id: "block",
+              component: blockComponent,
+              children: [
+                { type: "id", value: "link" },
+                { type: "id", value: "link" },
+              ],
+            },
+          ],
+          [
+            "other-block",
+            {
+              type: "instance",
+              id: "other-block",
+              component: blockComponent,
+              children: [{ type: "id", value: "paragraph" }],
+            },
+          ],
+          [
+            "paragraph",
+            {
+              type: "instance",
+              id: "paragraph",
+              component: "Box",
+              children: [{ type: "text", value: "Before" }],
+            },
+          ],
+        ]),
+        metas,
+        props,
+        styleSources,
+      });
+      const edit = transaction("instances", [
+        {
+          op: "replace",
+          path: ["paragraph", "children", 0],
+          value: { type: "text", value: "After" },
+        },
+      ]);
+
+      const first = applyContentModeTransaction({
+        capabilities,
+        transaction: edit,
+        scope,
+      });
+      expect(first.success).toBe(true);
+      if (first.success) {
+        expect(first.capabilities.instances.get("paragraph")?.children).toEqual(
+          [{ type: "text", value: "After" }]
+        );
+        expect(
+          applyContentModeTransaction({
+            capabilities: first.capabilities,
+            scope,
+            transaction: transaction("props", [
+              {
+                op: "replace",
+                path: ["href-prop"],
+                value: {
+                  id: "href-prop",
+                  instanceId: "link",
+                  name: "href",
+                  type: "string",
+                  value: "/after",
+                },
+              },
+            ]),
+          }).success
+        ).toBe(true);
+        expect(
+          applyContentModeTransaction({
+            capabilities: first.capabilities,
+            scope,
+            transaction: transaction("instances", [
+              {
+                op: "replace",
+                path: ["paragraph", "children", 0],
+                value: { type: "text", value: "Again" },
+              },
+            ]),
+          }).success
+        ).toBe(true);
+        expect(
+          validateContentModeTransaction({
+            capabilities: first.capabilities,
+            transaction: transaction("instances", [
+              {
+                op: "add",
+                path: ["block", "children", 2],
+                value: { type: "id", value: "link" },
+              },
+            ]),
+          })
+        ).toEqual({
+          success: false,
+          error: "Content instances must not be referenced multiple times.",
+        });
+      }
+    }
+  );
+
+  test("rejects a cycle created without increasing reference counts", () => {
+    const capabilities = getContentModeCapabilities({
+      instances: new Map<string, Instance>([
+        ...instances,
+        [
+          "block",
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [
+              { type: "id", value: "link" },
+              { type: "id", value: "link" },
+            ],
+          },
+        ],
+      ]),
+      metas,
+      props,
+      styleSources,
+    });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("instances", [
+          { op: "remove", path: ["block", "children", 1] },
+          {
+            op: "add",
+            path: ["link", "children", 0],
+            value: { type: "id", value: "link" },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: "Content instances must not contain cycles.",
+    });
+  });
+
   test("rejects referencing one new content instance multiple times", () => {
     const capabilities = getContentModeCapabilities({
       instances: new Map([
@@ -2223,6 +3778,103 @@ describe("content mode permissions", () => {
         ]),
       })
     ).toEqual({ success: true });
+  });
+
+  test("allows asset folder changes only in full Content mode", () => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      metas,
+      props,
+      styleSources,
+    });
+    const existingFolder = {
+      id: "existing-folder",
+      projectId: "project-1",
+      name: "Original",
+      parentId: undefined,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    capabilities.assetFolders = new Map([[existingFolder.id, existingFolder]]);
+    const folderChange = transaction("assetFolders", [
+      {
+        op: "add",
+        path: ["folder-1"],
+        value: { id: "folder-1" },
+      },
+    ]);
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: folderChange,
+      })
+    ).toEqual({ success: true });
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("assetFolders", [
+          {
+            op: "add",
+            path: ["existing-folder"],
+            value: JSON.parse(
+              JSON.stringify({
+                ...existingFolder,
+                createdAt: "2026-01-01T00:00:00Z",
+              })
+            ),
+          },
+        ]),
+      }).success
+    ).toBe(true);
+    expect(
+      applyContentModeTransaction({
+        capabilities,
+        transaction: folderChange,
+        scope: "text-and-props",
+      }).success
+    ).toBe(false);
+
+    for (const patch of [
+      {
+        op: "add" as const,
+        path: ["existing-folder"],
+        value: { id: "existing-folder" },
+      },
+      {
+        op: "add" as const,
+        path: ["existing-folder"],
+        value: { ...existingFolder, createdAt: "2026-01-02T00:00:00Z" },
+      },
+      {
+        op: "add" as const,
+        path: ["existing-folder"],
+        value: { ...existingFolder, name: "Changed" },
+      },
+      {
+        op: "replace" as const,
+        path: ["existing-folder", "name"],
+        value: "Renamed",
+      },
+      { op: "remove" as const, path: ["existing-folder"] },
+    ]) {
+      expect(
+        validateContentModeTransaction({
+          capabilities,
+          transaction: transaction("assetFolders", [patch]),
+        }).success
+      ).toBe(false);
+    }
+    expect(capabilities.assetFolders).toEqual(
+      new Map([[existingFolder.id, existingFolder]])
+    );
+
+    capabilities.assetFolders = undefined;
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: folderChange,
+      }).success
+    ).toBe(false);
   });
 
   test("allows removing content page meta fields", () => {
@@ -2437,6 +4089,30 @@ describe("content mode permissions", () => {
               id: "list-item",
               component: "ws:element",
               tag: "div",
+              label: "List Item",
+              children: [{ type: "text", value: "New text" }],
+            },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: "Instance patch is not editable in content mode.",
+    });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("instances", [
+          {
+            op: "replace",
+            path: ["list-item"],
+            value: {
+              type: "instance",
+              id: "list-item",
+              component: "ws:element",
+              tag: "li",
+              name: "new-stable-name",
               label: "List Item",
               children: [{ type: "text", value: "New text" }],
             },
@@ -3127,7 +4803,8 @@ describe("content mode permissions", () => {
       value: { type: "keyword", value: "red" },
     };
 
-    const result = validateContentModeTransaction({
+    const original = structuredClone(capabilities);
+    const result = applyContentModeTransaction({
       capabilities,
       transaction: {
         id: "tx-1",
@@ -3186,8 +4863,20 @@ describe("content mode permissions", () => {
       },
     });
 
-    expect(result).toEqual({ success: true });
-    expect(capabilities.styleSources.has("new-local")).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.capabilities.styleSources.get("new-local")).toEqual({
+        type: "local",
+        id: "new-local",
+      });
+      expect(result.capabilities.styleSourceSelections.get("new-link")).toEqual(
+        { instanceId: "new-link", values: ["new-local"] }
+      );
+      expect(
+        result.capabilities.styles.get(getStyleDeclKey(styleDecl))
+      ).toEqual(styleDecl);
+    }
+    expect(capabilities).toEqual(original);
 
     expect(
       validateContentModeTransaction({
@@ -3220,12 +4909,8 @@ describe("content mode permissions", () => {
             value: { ...styleDecl, styleSourceId: "local" },
           },
         ]),
-      })
-    ).toEqual({
-      success: false,
-      error:
-        "Only styles for new local style sources are editable in content mode.",
-    });
+      }).success
+    ).toBe(false);
 
     expect(
       validateContentModeTransaction({

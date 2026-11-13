@@ -18,7 +18,6 @@ import {
   theme,
   textVariants,
   InputErrorsTooltip,
-  ToolbarButton,
   Popover,
   PopoverTrigger,
   PopoverContent,
@@ -30,9 +29,10 @@ import { CheckMarkIcon, CopyIcon, DynamicPageIcon } from "@webstudio-is/icons";
 import {
   compilePathnamePattern,
   isPathnamePattern,
-  matchPathnamePattern,
   tokenizePathnamePattern,
 } from "@webstudio-is/project-build/runtime";
+import { matchPathnamePattern } from "@webstudio-is/wsauth";
+import { toWebstudioParams } from "@webstudio-is/react-sdk";
 import {
   $selectedPage,
   $selectedPagePath,
@@ -145,6 +145,9 @@ const Suggestions = ({
       return;
     }
     const handleInput = () => {
+      menuRef.current
+        ?.querySelector("[role=option][aria-selected=true]")
+        ?.removeAttribute("aria-selected");
       setIsListOpen(true);
     };
     let frameId: undefined | number;
@@ -309,7 +312,9 @@ const AddressBar = forwardRef<
         options={history}
         onSelect={(option) => {
           flushSync(() => {
-            setPathParams(matchPathnamePattern(path, option) ?? {});
+            setPathParams(
+              toWebstudioParams(path, matchPathnamePattern(path, option) ?? {})
+            );
           });
           containerRef.current?.requestSubmit();
         }}
@@ -369,11 +374,7 @@ export const AddressBarPopover = () => {
   if (isPathnamePattern(path) === false) {
     return (
       <Tooltip {...tooltipProps}>
-        <ToolbarButton
-          {...buttonProps}
-          aria-label="Copy page URL"
-          tabIndex={0}
-        />
+        <IconButton {...buttonProps} type="button" aria-label="Copy page URL" />
       </Tooltip>
     );
   }
@@ -387,11 +388,11 @@ export const AddressBarPopover = () => {
       }}
     >
       <PopoverTrigger asChild>
-        <ToolbarButton aria-label="Toggle dynamic page address" tabIndex={0}>
+        <IconButton type="button" aria-label="Toggle dynamic page address">
           <DynamicPageIcon />
-        </ToolbarButton>
+        </IconButton>
       </PopoverTrigger>
-      <PopoverContent sideOffset={0} collisionPadding={4} align="start">
+      <PopoverContent collisionPadding={4} align="start">
         <AddressBar ref={formRef} onSubmit={() => setIsOpen(false)} />
       </PopoverContent>
     </Popover>

@@ -7,8 +7,7 @@ import {
   getValidationIssues,
 } from "@webstudio-is/project-build/runtime";
 
-const missingProjectOwnerForTokenPattern =
-  /^Project owner can't be found for token\b/;
+const stableErrorCodePattern = /^[A-Z][A-Z0-9_]{0,159}$/;
 
 const getErrorMessage = (error: unknown) =>
   typeof error === "object" &&
@@ -20,22 +19,60 @@ const getErrorMessage = (error: unknown) =>
       ? error.message
       : String(error);
 
+const genericTransportErrorCodes = new Set([
+  "BAD_REQUEST",
+  "CONFLICT",
+  "FORBIDDEN",
+  "INTERNAL_ERROR",
+  "INTERNAL_SERVER_ERROR",
+  "MCP_RESOURCE_FAILED",
+  "MCP_TOOL_FAILED",
+  "NOT_FOUND",
+  "UNAUTHORIZED",
+  "UNKNOWN",
+]);
+
+const getStableCode = (value: unknown) =>
+  typeof value === "string" && stableErrorCodePattern.test(value)
+    ? value
+    : undefined;
+
 export const getStableErrorCode = (error: unknown) => {
-  const apiErrorCode = getApiErrorCode(error);
-  if (apiErrorCode !== undefined) {
-    return apiErrorCode;
-  }
-  if (typeof error === "object" && error !== null && "code" in error) {
-    const code = (error as { code?: unknown }).code;
-    if (typeof code === "string") {
-      return code;
+  const visited = new Set<unknown>();
+  const visit = (value: unknown): string | undefined => {
+    if (typeof value !== "object" || value === null || visited.has(value)) {
+      return;
     }
-  }
+    visited.add(value);
+    const record = value as Record<string, unknown>;
+    const data =
+      typeof record.data === "object" && record.data !== null
+        ? (record.data as Record<string, unknown>)
+        : undefined;
+    const webstudioCode =
+      getStableCode(record.webstudioCode) ?? getStableCode(data?.webstudioCode);
+    if (webstudioCode !== undefined) {
+      return webstudioCode;
+    }
+    const directCode = getStableCode(record.code);
+    if (
+      directCode !== undefined &&
+      genericTransportErrorCodes.has(directCode) === false
+    ) {
+      return directCode;
+    }
+    const nestedCode = visit(record.cause) ?? visit(data?.cause);
+    if (nestedCode !== undefined) {
+      return nestedCode;
+    }
+    return directCode ?? getApiErrorCode(value);
+  };
+  return visit(error);
 };
 
 export const isMissingApiAccessError = (error: unknown) => {
-  const message = getErrorMessage(error);
-  return missingProjectOwnerForTokenPattern.test(message);
+  const code = getStableErrorCode(error);
+  return code === "INVALID_AUTH_TOKEN" || code === "API_ACCESS_DISABLED";
 };
 
 export const getCliErrorSummary = (error: unknown, command = "mcp") => {
@@ -47,7 +84,7 @@ export const getCliErrorSummary = (error: unknown, command = "mcp") => {
     return compatibilityMessage;
   }
   const message = getErrorMessage(error);
-  if (missingProjectOwnerForTokenPattern.test(message)) {
+  if (isMissingApiAccessError(error)) {
     return "This project cannot be accessed through the Builder API with the current share link/token. Enable API access in the share-link settings, then relink the project with `webstudio init --link <share-link> --json`.";
   }
   return message;

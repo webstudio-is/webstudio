@@ -9,7 +9,6 @@ import type { Extension } from "@codemirror/state";
 import { styleTags, tags } from "@lezer/highlight";
 import {
   keymap,
-  lineNumbers,
   tooltips,
   highlightSpecialChars,
   highlightActiveLine,
@@ -30,7 +29,7 @@ import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
 import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
-import { css } from "@webstudio-is/design-system";
+import { css, cssVar } from "@webstudio-is/design-system";
 import {
   EditorContent,
   EditorDialog,
@@ -38,12 +37,14 @@ import {
   EditorDialogControl,
   foldGutterExtension,
   getCodeEditorCssVars,
+  linterTooltipTheme,
 } from "~/shared/code-editor-base";
 
 const wrapperStyle = css({
   position: "relative",
 
   variants: {
+    color: { error: { outline: `1px solid ${cssVar("--border-negative")}` } },
     size: {
       default: getCodeEditorCssVars({ minHeight: "160px", maxHeight: "320px" }),
       small: getCodeEditorCssVars({ minHeight: "16px", maxHeight: "120px" }),
@@ -166,6 +167,7 @@ export const CodeEditor = forwardRef<
     title?: ReactNode;
     size?: "default" | "small" | "full";
     expandable?: boolean;
+    color?: "error";
   }
 >((props, ref) => {
   const {
@@ -175,6 +177,7 @@ export const CodeEditor = forwardRef<
     title,
     size,
     expandable = true,
+    color,
     ...editorContentProps
   } = props;
   const builtInExtensions = useMemo(() => {
@@ -216,14 +219,20 @@ export const CodeEditor = forwardRef<
       ...builtInExtensions,
       ...dynamicLanguageExtensions,
       ...languageExtensions,
+      linterTooltipTheme,
     ],
     [builtInExtensions, dynamicLanguageExtensions, languageExtensions]
   );
 
   const dialogExtensions = useMemo(
-    () => [...extensions, lineNumbers(), foldGutterExtension],
+    () => [...extensions, foldGutterExtension],
     [extensions]
   );
+  const isCode =
+    (lang !== undefined && lang !== "markdown") ||
+    (languageSupport !== undefined &&
+      (!(languageSupport instanceof LanguageSupport) ||
+        languageSupport.language.name !== "markdown"));
 
   // prevent clicking on autocomplete options propagating to body
   // and closing dialogs and popovers
@@ -242,20 +251,33 @@ export const CodeEditor = forwardRef<
       document.removeEventListener("pointerdown", handlePointerDown, options);
     };
   }, []);
+  const inlineContent = (
+    <EditorContent
+      {...editorContentProps}
+      showLineNumbers={
+        editorContentProps.showLineNumbers ?? (isCode && size === "full")
+      }
+      extensions={extensions}
+    />
+  );
   return (
-    <div className={wrapperStyle({ size })} ref={ref}>
+    <div
+      className={wrapperStyle({ size, color })}
+      ref={ref}
+      aria-invalid={color === "error" || undefined}
+    >
       {expandable === false ? (
-        <EditorContent {...editorContentProps} extensions={extensions} />
+        inlineContent
       ) : (
         <EditorDialogControl>
-          <EditorContent {...editorContentProps} extensions={extensions} />
+          {inlineContent}
           <EditorDialog
             title={title}
-            contentPadding={false}
             content={
               <EditorContent
                 {...editorContentProps}
                 chromeless
+                showLineNumbers={editorContentProps.showLineNumbers ?? isCode}
                 extensions={dialogExtensions}
               />
             }

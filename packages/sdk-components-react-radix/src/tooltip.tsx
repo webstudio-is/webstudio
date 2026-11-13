@@ -1,5 +1,4 @@
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk/runtime";
 
 import {
   forwardRef,
@@ -58,41 +57,3 @@ export const TooltipContent = forwardRef<
     />
   </TooltipPrimitive.Portal>
 ));
-
-/* BUILDER HOOKS */
-
-const namespace = "@webstudio-is/sdk-components-react-radix";
-
-// For each TooltipContent component within the selection,
-// we identify its closest parent Tooltip component
-// and update its open prop bound to variable.
-export const hooksTooltip: Hook = {
-  onNavigatorUnselect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:TooltipContent`) {
-        const tooltip = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:Tooltip`
-        );
-        if (tooltip) {
-          context.setMemoryProp(tooltip, "open", undefined);
-        }
-      }
-    }
-  },
-  onNavigatorSelect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:TooltipContent`) {
-        const tooltip = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:Tooltip`
-        );
-        if (tooltip) {
-          context.setMemoryProp(tooltip, "open", true);
-        }
-      }
-    }
-  },
-};

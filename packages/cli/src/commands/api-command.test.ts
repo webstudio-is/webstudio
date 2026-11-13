@@ -6,7 +6,14 @@ import {
   publicApiOperations,
 } from "@webstudio-is/protocol";
 import { apiCompatibilityHeaders } from "./api";
-import { apiCommand, auditCommandOptions } from "./api-command";
+import {
+  apiCommand,
+  auditCommandOptions,
+  createPageCommandOptions,
+  createPageTemplateCommandOptions,
+  publishCommandOptions,
+  unpublishCommandOptions,
+} from "./api-command";
 import type { CommonYargsArgv } from "./yargs-types";
 import { apiCommandMetadata } from "./api-command-metadata";
 
@@ -524,6 +531,35 @@ test("routes server-only commands through project session transport", async () =
   );
 });
 
+test("reads Form simulation input from a file and runs it on the server", async () => {
+  mockConfig();
+  const input = {
+    formId: "form-1",
+    path: "/contact",
+    values: { email: "testing@webstudio.is" },
+  };
+  readFile.mockResolvedValueOnce(JSON.stringify(input));
+
+  await apiCommand(
+    { command: "simulate-form-submission", input: "form.json", json: true },
+    dependencies
+  );
+
+  expect(readFile).toHaveBeenCalledWith("form.json", "utf-8");
+  const session = createCliProjectSession.mock.results[0]?.value;
+  expect(session.executeServerOperation).toHaveBeenCalledWith(
+    {
+      id: "forms.simulateSubmission",
+      method: "mutation",
+      invalidatesNamespaces: [],
+      refetchInvalidatedNamespaces: false,
+    },
+    input
+  );
+  expect(session.read).not.toHaveBeenCalled();
+  expect(session.mutate).not.toHaveBeenCalled();
+});
+
 test("passes refresh to local-capable command session", async () => {
   mockConfig();
 
@@ -796,10 +832,9 @@ test("explains missing Builder API access instead of leaking token ownership err
   mockConfig();
   createCliProjectSession.mockImplementationOnce(() => ({
     initialize: vi.fn(async () => {
-      throw Object.assign(
-        new Error("Project owner can't be found for token token-1"),
-        { data: { code: "INTERNAL_SERVER_ERROR" } }
-      );
+      throw Object.assign(new Error("The credential has been revoked"), {
+        data: { code: "UNAUTHORIZED", webstudioCode: "INVALID_AUTH_TOKEN" },
+      });
     }),
     refresh: vi.fn(),
     executeServerOperation: vi.fn(),
@@ -891,7 +926,7 @@ test("creates page with settings", async () => {
       command: "create-page",
       name: "Pricing",
       path: "/pricing",
-      title: "Pricing",
+      title: "Pricing + Plans",
       parentFolder: "folder-1",
       description: "Plans",
     },
@@ -899,10 +934,58 @@ test("creates page with settings", async () => {
     connection: {
       name: "Pricing",
       path: "/pricing",
-      title: "Pricing",
+      title: `"Pricing + Plans"`,
       parentFolderId: "folder-1",
       meta: {
-        description: "Plans",
+        description: `"Plans"`,
+        language: undefined,
+        redirect: undefined,
+        socialImageUrl: undefined,
+        socialImageAssetId: undefined,
+        excludePageFromSearch: undefined,
+        documentType: undefined,
+        content: undefined,
+        status: undefined,
+        auth: undefined,
+      },
+    },
+  });
+});
+
+test("preserves page expressions from explicit CLI expression mode", async () => {
+  const parsed = await createPageCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).parseAsync([
+    "--name",
+    "Pricing",
+    "--path",
+    "/pricing",
+    "--title",
+    'pageTitle ?? "Pricing"',
+    "--expressions",
+  ]);
+  expect(parsed).toMatchObject({
+    title: 'pageTitle ?? "Pricing"',
+    expressions: true,
+  });
+
+  await expectCommandCall({
+    options: {
+      command: "create-page",
+      name: "Pricing",
+      path: "/pricing",
+      expressions: true,
+      title: 'pageTitle ?? "Pricing"',
+      description: '"Plans for teams"',
+    },
+    call: apiCalls.createPage,
+    connection: {
+      name: "Pricing",
+      path: "/pricing",
+      title: 'pageTitle ?? "Pricing"',
+      parentFolderId: undefined,
+      meta: {
+        description: '"Plans for teams"',
         language: undefined,
         redirect: undefined,
         socialImageUrl: undefined,
@@ -934,7 +1017,7 @@ test("updates page metadata", async () => {
       values: {
         name: undefined,
         path: undefined,
-        title: "Pricing",
+        title: `"Pricing"`,
         parentFolderId: undefined,
         meta: {
           description: undefined,
@@ -1070,7 +1153,7 @@ test("rejects redirect status and clear-status together", async () => {
 
   expectJsonErrorOutput({
     command: "update-redirect",
-    code: "API_COMMAND_FAILED",
+    code: "INVALID_ARGUMENT",
     message: "--clear-status cannot be used with --status.",
   });
   expect(apiCalls.updateRedirect).not.toHaveBeenCalled();
@@ -1186,7 +1269,7 @@ test("rejects breakpoint clear and value options together", async () => {
 
   expectJsonErrorOutput({
     command: "update-breakpoint",
-    code: "API_COMMAND_FAILED",
+    code: "INVALID_ARGUMENT",
     message: "--clear-min-width cannot be used with --min-width.",
   });
   expect(apiCalls.updateBreakpoint).not.toHaveBeenCalled();
@@ -1257,14 +1340,44 @@ test("creates page template", async () => {
     options: {
       command: "create-page-template",
       name: "Landing Template",
-      title: '"Landing"',
-      description: '"Reusable landing layout"',
+      title: "Landing",
+      description: "Reusable landing layout",
     },
     call: apiCalls.createPageTemplate,
     connection: {
       name: "Landing Template",
-      title: '"Landing"',
-      meta: { description: '"Reusable landing layout"' },
+      title: `"Landing"`,
+      meta: {
+        description: `"Reusable landing layout"`,
+      },
+    },
+  });
+});
+
+test("preserves template expressions from explicit CLI expression mode", async () => {
+  const parsed = await createPageTemplateCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).parseAsync([
+    "--name",
+    "Landing",
+    "--title",
+    'templateTitle ?? "Landing"',
+    "--expressions",
+  ]);
+  expect(parsed).toMatchObject({ expressions: true });
+
+  await expectCommandCall({
+    options: {
+      command: "create-page-template",
+      name: "Landing",
+      title: 'templateTitle ?? "Landing"',
+      expressions: true,
+    },
+    call: apiCalls.createPageTemplate,
+    connection: {
+      name: "Landing",
+      title: 'templateTitle ?? "Landing"',
+      meta: undefined,
     },
   });
 });
@@ -1275,7 +1388,7 @@ test("updates page template", async () => {
       command: "update-page-template",
       template: "template-1",
       name: "Article Template",
-      description: '"Reusable article layout"',
+      description: "Reusable article layout",
     },
     call: apiCalls.updatePageTemplate,
     connection: {
@@ -1283,7 +1396,9 @@ test("updates page template", async () => {
       values: {
         name: "Article Template",
         title: undefined,
-        meta: { description: '"Reusable article layout"' },
+        meta: {
+          description: `"Reusable article layout"`,
+        },
       },
     },
   });
@@ -1765,6 +1880,394 @@ test("publishes project", async () => {
       idempotencyKey: "publish-key",
     },
   });
+  expect(apiCalls.getPublishReport).not.toHaveBeenCalled();
+  expect(apiCalls.getPublishJob).not.toHaveBeenCalled();
+});
+
+test("parses publish wait without changing the immediate default", async () => {
+  const command = publishCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).strictOptions();
+  expect(
+    (await command.parse(["--target", "production", "--json"])).wait
+  ).toBeUndefined();
+  expect(
+    (await command.parse(["--target", "production", "--json", "--wait"])).wait
+  ).toBe(true);
+});
+
+test("waits for the signed execution and joins every log page across UTF-8 boundaries", async () => {
+  mockConfig();
+  apiCalls.publish.mockResolvedValue({
+    status: "pending",
+    jobId: "build-2",
+    buildId: "build-2",
+    attemptId: "attempt-2",
+    executionHandle: "signed-handle",
+    findings: [],
+  });
+  apiCalls.getPublishReport
+    .mockResolvedValueOnce({ availability: "pending" })
+    .mockResolvedValueOnce({
+      availability: "available",
+      outcome: "succeeded",
+      logAvailability: "available",
+      log: {
+        encoding: "base64url",
+        chunk: Buffer.from([0xe2]).toString("base64url"),
+        complete: false,
+        nextCursor: 1,
+      },
+    })
+    .mockResolvedValueOnce({
+      availability: "available",
+      outcome: "succeeded",
+      logAvailability: "available",
+      log: {
+        encoding: "base64url",
+        chunk: Buffer.from([0x82, 0xac]).toString("base64url"),
+        complete: true,
+      },
+    });
+  apiCalls.getPublishJob.mockResolvedValue({ status: "pending" });
+
+  await apiCommand(
+    { command: "publish", target: "production", json: true, wait: true },
+    dependencies
+  );
+
+  expect(apiCalls.publish).toHaveBeenCalledOnce();
+  expect(apiCalls.getPublishReport).toHaveBeenNthCalledWith(
+    3,
+    expectConnection({
+      buildId: "build-2",
+      attemptId: "attempt-2",
+      executionHandle: "signed-handle",
+      cursor: 1,
+    })
+  );
+  expect(getLastJsonOutput()).toMatchObject({
+    ok: true,
+    data: {
+      status: "success",
+      jobId: "build-2",
+      execution: {
+        availability: "available",
+        outcome: "succeeded",
+        logText: "€",
+      },
+    },
+  });
+  expect(vi.mocked(console.info)).toHaveBeenCalledOnce();
+  expect(vi.mocked(console.error)).toHaveBeenCalledWith(
+    expect.stringContaining('"event":"publish.wait"')
+  );
+});
+
+test("returns nonzero with the publish result and available failure diagnostics", async () => {
+  mockConfig();
+  apiCalls.publish.mockResolvedValue({
+    status: "pending",
+    jobId: "build-2",
+    buildId: "build-2",
+    attemptId: "attempt-2",
+    executionHandle: "signed-handle",
+  });
+  apiCalls.getPublishReport.mockResolvedValue({
+    availability: "available",
+    outcome: "failed",
+    failureReason: "cancelled",
+    failedStage: "build",
+    logAvailability: "unavailable",
+    log: {
+      complete: true,
+      issues: [{ severity: "error", message: "Build failed" }],
+    },
+  });
+
+  await expect(
+    apiCommand(
+      { command: "publish", target: "production", json: true, wait: true },
+      dependencies
+    )
+  ).rejects.toBeInstanceOf(Error);
+  expect(getLastJsonOutput()).toMatchObject({
+    ok: false,
+    data: {
+      jobId: "build-2",
+      execution: {
+        availability: "available",
+        outcome: "failed",
+        failureReason: "cancelled",
+        failedStage: "build",
+        log: { issues: [{ severity: "error", message: "Build failed" }] },
+      },
+    },
+    error: { code: "PUBLISH_FAILED" },
+  });
+});
+
+test("keeps Free issues but clears paid bytes if access changes during pagination", async () => {
+  mockConfig();
+  apiCalls.publish.mockResolvedValue({
+    status: "pending",
+    jobId: "build-2",
+    buildId: "build-2",
+    attemptId: "attempt-2",
+    executionHandle: "signed-handle",
+  });
+  apiCalls.getPublishReport
+    .mockResolvedValueOnce({
+      availability: "available",
+      outcome: "succeeded",
+      logAvailability: "available",
+      log: {
+        encoding: "base64url",
+        chunk: "c2VjcmV0",
+        complete: false,
+        nextCursor: 6,
+      },
+    })
+    .mockResolvedValueOnce({
+      availability: "available",
+      outcome: "succeeded",
+      logAvailability: "unavailable",
+      log: {
+        complete: true,
+        issues: [{ severity: "warning", message: "Check output" }],
+      },
+    });
+
+  await apiCommand(
+    { command: "publish", target: "production", json: true, wait: true },
+    dependencies
+  );
+
+  const output = getLastJsonOutput();
+  expect(output.data.execution.log).toMatchObject({
+    issues: [{ severity: "warning", message: "Check output" }],
+  });
+  expect(output.data.execution.logText).toBeUndefined();
+  expect(JSON.stringify(output)).not.toContain("secret");
+});
+
+test("uses durable job status when the signed execution cannot be read", async () => {
+  mockConfig();
+  apiCalls.publish.mockResolvedValue({
+    status: "pending",
+    jobId: "build-2",
+    buildId: "build-2",
+    attemptId: "attempt-2",
+  });
+  apiCalls.getPublishJob.mockResolvedValue({
+    id: "build-2",
+    status: "success",
+  });
+
+  await apiCommand(
+    { command: "publish", target: "production", json: true, wait: true },
+    dependencies
+  );
+
+  expect(apiCalls.getPublishReport).not.toHaveBeenCalled();
+  expect(getLastJsonOutput()).toMatchObject({
+    ok: true,
+    data: {
+      status: "success",
+      job: { status: "success" },
+      execution: { availability: "unavailable" },
+    },
+  });
+});
+
+test("returns nonzero for a blocked submission without polling", async () => {
+  mockConfig();
+  apiCalls.publish.mockResolvedValue({
+    status: "blocked",
+    findings: [{ severity: "error", code: "INVALID" }],
+  });
+
+  await expect(
+    apiCommand(
+      { command: "publish", target: "production", json: true, wait: true },
+      dependencies
+    )
+  ).rejects.toBeInstanceOf(Error);
+
+  expect(apiCalls.getPublishReport).not.toHaveBeenCalled();
+  expect(apiCalls.getPublishJob).not.toHaveBeenCalled();
+  expect(getLastJsonOutput()).toMatchObject({
+    ok: false,
+    data: { status: "blocked" },
+    error: { code: "PUBLISH_BLOCKED" },
+  });
+});
+
+test("returns nonzero for a failed durable job when logs are unavailable", async () => {
+  mockConfig();
+  apiCalls.publish.mockResolvedValue({
+    status: "pending",
+    jobId: "build-2",
+    buildId: "build-2",
+    attemptId: "attempt-2",
+  });
+  apiCalls.getPublishJob.mockResolvedValue({ id: "build-2", status: "failed" });
+
+  await expect(
+    apiCommand(
+      { command: "publish", target: "production", json: true, wait: true },
+      dependencies
+    )
+  ).rejects.toBeInstanceOf(Error);
+
+  expect(getLastJsonOutput()).toMatchObject({
+    ok: false,
+    data: {
+      status: "failed",
+      job: { status: "failed" },
+      execution: { availability: "unavailable" },
+    },
+    error: { code: "PUBLISH_FAILED" },
+  });
+});
+
+test("does not report success when the publish job was removed", async () => {
+  mockConfig();
+  apiCalls.publish.mockResolvedValue({
+    status: "pending",
+    jobId: "build-2",
+    buildId: "build-2",
+    attemptId: "attempt-2",
+  });
+  apiCalls.getPublishJob.mockResolvedValue({
+    id: "build-2",
+    status: "removed",
+  });
+
+  await expect(
+    apiCommand(
+      { command: "publish", target: "production", json: true, wait: true },
+      dependencies
+    )
+  ).rejects.toBeInstanceOf(Error);
+
+  expect(getLastJsonOutput()).toMatchObject({
+    ok: false,
+    data: { waitStatus: "unavailable", job: { status: "removed" } },
+    error: { code: "PUBLISH_WAIT_UNAVAILABLE" },
+  });
+});
+
+test("preserves a successful execution if a later log page fails", async () => {
+  mockConfig();
+  apiCalls.publish.mockResolvedValue({
+    status: "pending",
+    jobId: "build-2",
+    buildId: "build-2",
+    attemptId: "attempt-2",
+    executionHandle: "signed-handle",
+  });
+  apiCalls.getPublishReport
+    .mockResolvedValueOnce({
+      availability: "available",
+      outcome: "succeeded",
+      logAvailability: "available",
+      log: {
+        encoding: "base64url",
+        chunk: "c2VjcmV0",
+        complete: false,
+        nextCursor: 6,
+      },
+    })
+    .mockRejectedValueOnce(
+      Object.assign(new Error("Forbidden"), { code: "FORBIDDEN" })
+    );
+
+  await apiCommand(
+    { command: "publish", target: "production", json: true, wait: true },
+    dependencies
+  );
+
+  const output = getLastJsonOutput();
+  expect(output).toMatchObject({
+    ok: true,
+    data: {
+      status: "success",
+      execution: {
+        outcome: "succeeded",
+        logAvailability: "unavailable",
+        log: { complete: false },
+      },
+    },
+  });
+  expect(output.data.execution.logText).toBeUndefined();
+  expect(JSON.stringify(output)).not.toContain("secret");
+});
+
+test("returns a structured timeout without canceling a pending publish", async () => {
+  mockConfig();
+  apiCalls.publish.mockResolvedValue({
+    status: "pending",
+    jobId: "build-2",
+    buildId: "build-2",
+    attemptId: "attempt-2",
+    executionHandle: "signed-handle",
+  });
+  apiCalls.getPublishReport.mockResolvedValue({ availability: "pending" });
+  apiCalls.getPublishJob.mockResolvedValue({
+    id: "build-2",
+    status: "pending",
+  });
+
+  await expect(
+    apiCommand(
+      { command: "publish", target: "production", json: true, wait: true },
+      dependencies
+    )
+  ).rejects.toBeInstanceOf(Error);
+
+  expect(apiCalls.publish).toHaveBeenCalledOnce();
+  expect(apiCalls.getPublishReport).toHaveBeenCalledTimes(360);
+  expect(getLastJsonOutput()).toMatchObject({
+    ok: false,
+    data: {
+      jobId: "build-2",
+      waitStatus: "timeout",
+      job: { status: "pending" },
+    },
+    error: {
+      code: "PUBLISH_WAIT_TIMEOUT",
+      message: "Publishing is still running. Stopped waiting.",
+    },
+  });
+});
+
+test("returns a structured unknown outcome when job lookup fails", async () => {
+  mockConfig();
+  apiCalls.publish.mockResolvedValue({
+    status: "pending",
+    jobId: "build-2",
+    buildId: "build-2",
+    attemptId: "attempt-2",
+    executionHandle: "signed-handle",
+  });
+  apiCalls.getPublishReport.mockRejectedValueOnce(
+    new Error("Report unavailable")
+  );
+  apiCalls.getPublishJob.mockRejectedValueOnce(new Error("Status unavailable"));
+
+  await expect(
+    apiCommand(
+      { command: "publish", target: "production", json: true, wait: true },
+      dependencies
+    )
+  ).rejects.toBeInstanceOf(Error);
+
+  expect(getLastJsonOutput()).toMatchObject({
+    ok: false,
+    data: { jobId: "build-2", waitStatus: "unavailable" },
+    error: { code: "PUBLISH_WAIT_UNAVAILABLE" },
+  });
 });
 
 test("publishes static export", async () => {
@@ -1780,6 +2283,21 @@ test("publishes static export", async () => {
       target: "static",
       templates: ["ssg", "vercel"],
       idempotencyKey: "publish-key",
+    },
+  });
+});
+
+test("validates publishing without publishing", async () => {
+  await expectCommandCall({
+    options: {
+      command: "validate-publish",
+      target: "production",
+      domain: ["example.com,www.example.com"],
+    },
+    call: apiCalls.validatePublish,
+    connection: {
+      target: "production",
+      domains: ["example.com", "www.example.com"],
     },
   });
 });
@@ -1803,10 +2321,16 @@ test("gets publish report", async () => {
   await expectCommandCall({
     options: {
       command: "get-publish-report",
+      buildId: "build-id",
       attemptId: "attempt-id",
+      executionHandle: "signed-handle",
     },
     call: apiCalls.getPublishReport,
-    connection: { attemptId: "attempt-id" },
+    connection: {
+      buildId: "build-id",
+      attemptId: "attempt-id",
+      executionHandle: "signed-handle",
+    },
   });
 });
 
@@ -1822,10 +2346,26 @@ test("unpublishes project with confirmation", async () => {
     connection: {
       target: "production",
       domains: ["example.com"],
-      message: undefined,
-      idempotencyKey: undefined,
     },
   });
+  expect(apiCalls.unpublish.mock.calls.at(-1)?.[0]).not.toHaveProperty(
+    "message"
+  );
+  expect(apiCalls.unpublish.mock.calls.at(-1)?.[0]).not.toHaveProperty(
+    "idempotencyKey"
+  );
+});
+
+test("unpublish help advertises only deployment options", async () => {
+  const help = await unpublishCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).getHelp();
+  expect(help).toContain("--target");
+  expect(help).toContain("--domain");
+  expect(help).toContain("--message");
+  expect(help).toContain("--idempotency-key");
+  expect(help).not.toContain("static");
+  expect(help).not.toContain("--wait");
 });
 
 test("lists domains", async () => {
@@ -2353,5 +2893,25 @@ test("requires global config for configured project", async () => {
     message:
       "Project config is not found. Run webstudio init --link <api-share-link>.",
     projectId: false,
+  });
+});
+
+test.each([
+  "version details are unavailable",
+  "CONFLICT in a log message",
+  "A token is required by a remote dependency",
+])("does not infer error codes from prose: %s", async (message) => {
+  mockConfig();
+  apiCalls.getPage.mockRejectedValueOnce(new Error(message));
+  await expect(
+    apiCommand(
+      { command: "get-page", page: "page-1", json: true },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+  expectJsonErrorOutput({
+    command: "get-page",
+    code: "API_COMMAND_FAILED",
+    message,
   });
 });

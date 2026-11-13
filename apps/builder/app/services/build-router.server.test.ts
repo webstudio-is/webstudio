@@ -1,13 +1,20 @@
+import { DocumentGraphResolutionError } from "@webstudio-is/content-engine";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { bundleVersion } from "@webstudio-is/protocol";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import { buildRouter, __testing__ } from "./build-router.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { getApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-compatibility";
+import {
+  createAssetIndex,
+  createCanonicalAssetFileEntry,
+} from "@webstudio-is/content-engine/compiler";
 
 const {
   assertCliBundleVersion,
   createImportProjectBundleHandler,
+  createLoadProjectBundleByBuildIdHandler,
+  loadContentDatabasePublishDiagnostics,
   prepareProjectBundleForClient,
 } = __testing__;
 
@@ -16,6 +23,32 @@ afterEach(() => {
 });
 
 describe("build router project bundle compatibility", () => {
+  test("passes client content preparation to the build bundle loader", async () => {
+    const bundle = createPublishedProjectBundleFixture();
+    const loadProjectBundleByBuildId = vi.fn().mockResolvedValue(bundle);
+    const prepareProjectBundleForClient = vi.fn((_, value) => value);
+    const handler = createLoadProjectBundleByBuildIdHandler({
+      loadProjectBundleByBuildId: loadProjectBundleByBuildId as never,
+      prepareProjectBundleForClient: prepareProjectBundleForClient as never,
+    });
+    const context = { apiClient: { type: "cli" } } as never;
+
+    await expect(
+      handler(context, {
+        buildId: bundle.build.id,
+        bundleVersion,
+        contentIndex: "client",
+      })
+    ).resolves.toBe(bundle);
+
+    expect(loadProjectBundleByBuildId).toHaveBeenCalledWith(
+      bundle.build.id,
+      context,
+      { contentIndex: "client" }
+    );
+    expect(prepareProjectBundleForClient).toHaveBeenCalledWith(context, bundle);
+  });
+
   test("requires the current bundle contract from CLI clients", () => {
     const ctx = { apiClient: { type: "cli" } } as never;
     let error: unknown;
@@ -27,9 +60,24 @@ describe("build router project bundle compatibility", () => {
     expect(getApiCompatibilityPayload(error)).toMatchObject({
       reason: "clientVersionUnsupported",
       target: "cli",
+      message: `This version of the Webstudio CLI is incompatible with the current API. Expected bundle version ${bundleVersion}, received missing.`,
       action: { type: "updateCli" },
     });
     expect(() => assertCliBundleVersion(ctx, bundleVersion)).not.toThrow();
+  });
+
+  test("reports expected and received bundle contract versions", () => {
+    const ctx = { apiClient: { type: "cli" } } as never;
+    const message = `This version of the Webstudio CLI is incompatible with the current API. Expected bundle version ${bundleVersion}, received bundle-client.`;
+    let error: unknown;
+    try {
+      assertCliBundleVersion(ctx, "bundle-client");
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error).toMatchObject({ message });
+    expect(getApiCompatibilityPayload(error)?.message).toBe(message);
   });
 
   test("removes agent instructions from non-CLI bundles", async () => {
@@ -76,6 +124,148 @@ describe("build router project bundle compatibility", () => {
 });
 
 describe("content database publish diagnostics", () => {
+  test("uses MDX omissions collected while preparing the publication artifact", async () => {
+    const bundle = createPublishedProjectBundleFixture();
+    bundle.assets = [
+      {
+        id: "article",
+        projectId: bundle.build.projectId,
+        name: "article-storage.mdx",
+        filename: "article",
+        type: "file",
+        format: "mdx",
+        size: 1,
+        meta: {},
+        createdAt: "2026-09-17T00:00:00.000Z",
+      },
+    ];
+    const loadProjectBundle = vi.fn(async (_projectId, _ctx, options) => {
+      options.onMdxTemplateOmissions([
+        {
+          assetId: "article",
+          blockInstanceId: "content-block",
+          templateName: "Missing",
+        },
+      ]);
+      return bundle;
+    });
+
+    await expect(
+      loadContentDatabasePublishDiagnostics("project-id", {} as never, {
+        loadProjectBundleByProjectId: loadProjectBundle as never,
+      })
+    ).resolves.toMatchObject({
+      mdxOmissions: [
+        {
+          assetId: "article",
+          blockInstanceId: "content-block",
+          filename: "article.mdx",
+          templateName: "Missing",
+        },
+      ],
+    });
+    expect(loadProjectBundle).toHaveBeenCalledOnce();
+  });
+
+  test("reports publish-time MDX errors with the user-facing asset filename", async () => {
+    const bundle = createPublishedProjectBundleFixture();
+    const blockId = bundle.build.pages.pages[0].rootInstanceId;
+    const source = `1. item\n\n   <ws.element ws:tag="li">nested item</ws.element>`;
+    bundle.build.instances = [
+      [
+        blockId,
+        {
+          id: blockId,
+          type: "instance",
+          component: "ws:block",
+          children: [{ type: "id", value: "templates" }],
+        },
+      ],
+      [
+        "templates",
+        {
+          id: "templates",
+          type: "instance",
+          component: "ws:block-template",
+          children: [],
+        },
+      ],
+    ];
+    bundle.build.props = [
+      [
+        "content-source",
+        {
+          id: "content-source",
+          instanceId: blockId,
+          name: "src",
+          type: "asset",
+          value: "article",
+        },
+      ],
+    ];
+    bundle.assets = [
+      {
+        id: "article",
+        projectId: bundle.build.projectId,
+        name: "article-storage.mdx",
+        filename: "article",
+        type: "file",
+        format: "mdx",
+        size: new TextEncoder().encode(source).byteLength,
+        meta: {},
+        createdAt: "2026-09-17T00:00:00.000Z",
+      },
+    ];
+    bundle.assetIndex = {
+      ...(await createAssetIndex({
+        projectId: bundle.build.projectId,
+        entries: [
+          createCanonicalAssetFileEntry({
+            projectId: bundle.build.projectId,
+            document: {
+              _id: "article",
+              _type: "asset.file",
+              name: "article.mdx",
+              path: "blog/article.mdx",
+              key: "article",
+              extension: "mdx",
+              mimeType: "text/mdx",
+              size: new TextEncoder().encode(source).byteLength,
+              revision: "revision",
+              contentRef: "article-storage.mdx",
+              properties: {},
+            },
+          }),
+        ],
+        maxBytes: 5000,
+      })),
+      contents: { "article-storage.mdx": source },
+    };
+    const loadProjectBundle = vi.fn(async (_projectId, _ctx, options) => {
+      options.onMdxBlockInstanceId(blockId);
+      return bundle;
+    });
+
+    const result = await loadContentDatabasePublishDiagnostics(
+      "project-id",
+      {} as never,
+      { loadProjectBundleByProjectId: loadProjectBundle as never }
+    );
+
+    expect(result.mdxErrors).toEqual([
+      expect.objectContaining({
+        filename: "article.mdx",
+        diagnostic: expect.objectContaining({
+          code: "invalid-mdx",
+          severity: "error",
+          blockInstanceId: blockId,
+          assetId: "article",
+          message: "Placing <li> element inside a <li> violates HTML spec.",
+        }),
+      }),
+    ]);
+  });
+
   test("uses the same edit permit as publishing", async () => {
     const hasProjectPermit = vi
       .spyOn(authorizeProject, "hasProjectPermit")
@@ -100,7 +290,7 @@ describe("build router jsx fragment conversion", () => {
     await expect(
       caller.createJsxFragment({
         projectId: "project-id",
-        source: `<$.Box><$.Heading>Title</$.Heading></$.Box>`,
+        source: `<Box><Heading>Title</Heading></Box>`,
       })
     ).resolves.toEqual(
       expect.objectContaining({
@@ -119,7 +309,7 @@ describe("build router jsx fragment conversion", () => {
     await expect(
       caller.createJsxFragment({
         projectId: "project-id",
-        source: `<$.Box {...{"ws:id": "0"}} />`,
+        source: `<Box {...{"ws:id": "0"}} />`,
       })
     ).rejects.toThrow("Do not set ws:id in JSX fragments");
   });
@@ -131,7 +321,7 @@ describe("build router jsx fragment conversion", () => {
     await expect(
       caller.createJsxFragment({
         projectId: "project-id",
-        source: `<$.Box />`,
+        source: `<Box />`,
       })
     ).rejects.toThrow("You don't have access to this project");
   });
@@ -236,3 +426,48 @@ describe("build router project bundle import", () => {
     expect(removeStagedUpload).not.toHaveBeenCalled();
   });
 });
+
+test("preserves document load failure ids for publish validation", async () => {
+  const error = new DocumentGraphResolutionError({
+    code: "DOCUMENT_LOAD_FAILED",
+    documentId: "asset-id",
+    message: "Storage is temporarily unavailable",
+  });
+  await expect(
+    loadContentDatabasePublishDiagnostics("project-id", {} as never, {
+      loadProjectBundleByProjectId: vi
+        .fn()
+        .mockRejectedValue(
+          new Error("Compilation failed", { cause: error })
+        ) as never,
+    })
+  ).rejects.toMatchObject({
+    code: "BAD_REQUEST",
+    cause: {
+      webstudioCode: "DOCUMENT_LOAD_FAILED",
+      issues: [
+        expect.objectContaining({
+          code: "DOCUMENT_LOAD_FAILED",
+          assetId: "asset-id",
+        }),
+      ],
+    },
+  });
+});
+
+test.each([true, false])(
+  "only advertises import capabilities to an authorized caller: %s",
+  async (allowed) => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(allowed);
+    const result = buildRouter
+      .createCaller({} as never)
+      .checkProjectBuildPermission({ projectId: "project-id" });
+    if (allowed) {
+      await expect(result).resolves.toEqual({
+        supportsStructuredImportErrors: true,
+      });
+    } else {
+      await expect(result).rejects.toThrow();
+    }
+  }
+);

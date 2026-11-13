@@ -1,5 +1,8 @@
-import { type TemplateMeta, $, ws } from "@webstudio-is/template";
+/** @jsxImportSource @webstudio-is/template */
+import { type TemplateMeta, ws } from "@webstudio-is/template";
 import { imagePlaceholderDataUrl } from "@webstudio-is/image";
+import { MarkdownEmbed } from "./markdown-embed";
+import { markdownAlertStyle } from "./shared/markdown-alert-style";
 
 const markdownSample = `
 # Styling Markdown with Markdown Embed
@@ -36,6 +39,9 @@ Any elements that were not used above are used below.
 
 > Capture attention with a powerful quote.
 
+> [!NOTE]
+> Add helpful context without interrupting the main content.
+
 Using \`console.log("Hello World");\` will log to the console.
 
 | Header 1   | Header 2   | Header 3   |
@@ -50,7 +56,7 @@ export const meta: TemplateMeta = {
   description: "Used to add markdown code to the page",
   order: 4,
   template: (
-    <$.MarkdownEmbed code={markdownSample}>
+    <MarkdownEmbed code={markdownSample}>
       <ws.descendant ws:label="Paragraph" selector=" p" />
       <ws.descendant ws:label="Heading 1" selector=" h1" />
       <ws.descendant ws:label="Heading 2" selector=" h2" />
@@ -63,6 +69,11 @@ export const meta: TemplateMeta = {
       <ws.descendant ws:label="Link" selector=" a" />
       <ws.descendant ws:label="Image" selector=" img" />
       <ws.descendant ws:label="Blockquote" selector=" blockquote" />
+      <ws.descendant
+        ws:label="Alert"
+        selector=" [data-state]"
+        ws:style={markdownAlertStyle}
+      />
       <ws.descendant ws:label="Code Text" selector=" code" />
       <ws.descendant ws:label="List" selector=" :where(ul, ol)" />
       <ws.descendant ws:label="List Item" selector=" li" />
@@ -71,6 +82,6 @@ export const meta: TemplateMeta = {
       <ws.descendant ws:label="Table Row" selector=" tr" />
       <ws.descendant ws:label="Table Header Cell" selector=" th" />
       <ws.descendant ws:label="Table Cell" selector=" td" />
-    </$.MarkdownEmbed>
+    </MarkdownEmbed>
   ),
 };

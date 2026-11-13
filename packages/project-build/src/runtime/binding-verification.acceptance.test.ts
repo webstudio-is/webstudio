@@ -39,6 +39,86 @@ const applyMutation = (
 };
 
 describe("dynamic binding verification acceptance", () => {
+  test("binds data source assignments in actions", () => {
+    const state = createBindingVerificationFixture();
+    const context = createContext();
+
+    const nextState = applyMutation(
+      state,
+      "instances.bindProps",
+      {
+        bindings: [
+          {
+            instanceId: "checkout",
+            name: "onSubmit",
+            binding: {
+              type: "action",
+              value: [
+                {
+                  type: "execute",
+                  args: ["nextValue"],
+                  code: "featuredProduct = nextValue",
+                },
+              ],
+            },
+          },
+        ],
+      },
+      context
+    );
+
+    expect(
+      [...nextState.props!.values()].find(
+        (prop) => prop.instanceId === "checkout" && prop.name === "onSubmit"
+      )
+    ).toMatchObject({
+      type: "action",
+      value: [
+        {
+          code: `${encodeDataVariableId("featured-product")} = nextValue`,
+        },
+      ],
+    });
+  });
+
+  test("warns about unresolved action assignment targets", () => {
+    const result = executeBuilderRuntimeOperation({
+      id: "instances.bindProps",
+      state: createBindingVerificationFixture(),
+      input: {
+        bindings: [
+          {
+            instanceId: "checkout",
+            name: "onSubmit",
+            binding: {
+              type: "action",
+              value: [
+                {
+                  type: "execute",
+                  args: ["nextValue"],
+                  code: "featuerdProduct = nextValue",
+                },
+              ],
+            },
+          },
+        ],
+      },
+      context: createContext(),
+    });
+
+    expect(result).toMatchObject({
+      kind: "mutation",
+      result: {
+        warnings: [
+          expect.objectContaining({
+            path: ["bindings", "0", "binding", "value", "0", "code"],
+            message: '"featuerdProduct" is not defined in the scope',
+          }),
+        ],
+      },
+    });
+  });
+
   test("checks realistic text, prop, action, parameter, resource, and metadata bindings", () => {
     const state = createBindingVerificationFixture();
     const result = verifyBindings(state, { limit: 200 });

@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "@playwright/test";
 
 type SyncStatusDotStatus = "idle" | "pending" | "saved" | "error";
 

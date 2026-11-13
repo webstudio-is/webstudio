@@ -39,6 +39,8 @@ export type Diagnostic = {
   to: number;
   severity: "error" | "hint" | "info" | "warning";
   message: string;
+  code?: "unknown-identifier";
+  identifier?: string;
 };
 
 type ExpressionVisitor = {
@@ -235,6 +237,16 @@ const getExpressionNodeValueKind = (
   if (node.type === "TemplateLiteral") {
     return "string";
   }
+  if (node.type === "BinaryExpression" && node.operator === "+") {
+    const leftKind =
+      node.left.type === "PrivateIdentifier"
+        ? "unknown"
+        : getExpressionNodeValueKind(node.left, variableValues);
+    const rightKind = getExpressionNodeValueKind(node.right, variableValues);
+    if (leftKind === "string" || rightKind === "string") {
+      return "string";
+    }
+  }
   if (
     node.type === "ChainExpression" ||
     node.type === "ParenthesizedExpression"
@@ -288,7 +300,8 @@ export const lintExpression = ({
   const diagnostics: Diagnostic[] = [];
   const addMessage = (
     message: string,
-    severity: "error" | "warning" = "error"
+    severity: "error" | "warning" = "error",
+    metadata: Pick<Diagnostic, "code" | "identifier"> = {}
   ) => {
     return (node: { start: number; end: number }) => {
       diagnostics.push({
@@ -297,6 +310,7 @@ export const lintExpression = ({
         to: node.end - 1,
         severity,
         message: message,
+        ...metadata,
       });
     };
   };
@@ -322,10 +336,10 @@ export const lintExpression = ({
     simple(root, {
       Identifier(node) {
         if (availableVariables.has(node.name) === false) {
-          addMessage(
-            `"${node.name}" is not defined in the scope`,
-            "warning"
-          )(node);
+          addMessage(`"${node.name}" is not defined in the scope`, "warning", {
+            code: "unknown-identifier",
+            identifier: node.name,
+          })(node);
         }
       },
       Literal() {},
@@ -352,7 +366,8 @@ export const lintExpression = ({
             if (availableVariables.has(node.name) === false) {
               addMessage(
                 `"${node.name}" is not defined in the scope`,
-                "warning"
+                "warning",
+                { code: "unknown-identifier", identifier: node.name }
               )(node);
             }
           },
@@ -482,11 +497,32 @@ export const parseStringLiteralExpression = (expression: string) => {
   }
 };
 
+/**
+ * Parse a JavaScript string literal, including single-quoted and static
+ * template literals.
+ */
+export const parseStaticStringExpression = (expression: string) => {
+  try {
+    const node = parseCompleteExpression(expression);
+    if (node.type === "Literal" && typeof node.value === "string") {
+      return node.value;
+    }
+    if (node.type === "TemplateLiteral" && node.expressions.length === 0) {
+      return node.quasis[0]?.value.cooked ?? undefined;
+    }
+  } catch {
+    // Invalid or non-static expressions are not string literals.
+  }
+};
+
 const getStaticMemberPath = (node: Expression): string[] | undefined => {
   if (node.type === "Identifier") {
     return [node.name];
   }
-  if (node.type === "ChainExpression") {
+  if (
+    node.type === "ChainExpression" ||
+    node.type === "ParenthesizedExpression"
+  ) {
     return getStaticMemberPath(node.expression);
   }
   if (node.type !== "MemberExpression" || node.object.type === "Super") {
@@ -508,11 +544,42 @@ const getStaticMemberPath = (node: Expression): string[] | undefined => {
   return propertyName === undefined ? undefined : [...objectPath, propertyName];
 };
 
+/**
+ * An expression containing only an identifier and statically known member
+ * access. Unlike an arbitrary expression, it identifies one data location.
+ * The owner of that location must still explicitly support write-back before
+ * callers may treat it as writable.
+ */
+export type DirectPathExpression = Readonly<{
+  type: "direct-path";
+  expression: string;
+  path: readonly [root: string, ...segments: string[]];
+}>;
+
+export const parseDirectPathExpression = (
+  expression: string
+): DirectPathExpression | undefined => {
+  try {
+    const node = parseCompleteExpression(expression);
+    const path = getStaticMemberPath(node);
+    if (path === undefined || path.length === 0) {
+      return;
+    }
+    return {
+      type: "direct-path",
+      expression,
+      path: path as [string, ...string[]],
+    };
+  } catch {
+    return;
+  }
+};
+
 /** Parse an identifier/member expression whose complete property path is static. */
 export const parseStaticMemberPath = (expression: string) => {
   try {
-    const node = parseCompleteExpression(expression);
-    return getStaticMemberPath(node);
+    const path = getStaticMemberPath(parseCompleteExpression(expression));
+    return path === undefined || path.length === 0 ? undefined : path;
   } catch {
     return;
   }
@@ -536,11 +603,55 @@ export const getExpressionIdentifiers = (expression: string) => {
   return identifiers;
 };
 
+/** Find a direct assignment of an identifier from another identifier's property. */
+export const hasPropertyAssignment = ({
+  code,
+  target,
+  source,
+  property,
+}: {
+  code: string;
+  target: string;
+  source: string;
+  property: string;
+}): boolean => {
+  try {
+    const root = parse(code, { ecmaVersion: "latest" });
+    let found = false;
+    simple(root, {
+      AssignmentExpression(node) {
+        if (node.operator !== "=" || node.left.type !== "Identifier") {
+          return;
+        }
+        const value = node.right;
+        if (
+          node.left.name === target &&
+          value.type === "MemberExpression" &&
+          value.object.type === "Identifier" &&
+          value.object.name === source &&
+          ((value.computed === false &&
+            value.property.type === "Identifier" &&
+            value.property.name === property) ||
+            (value.computed === true &&
+              value.property.type === "Literal" &&
+              value.property.value === property))
+        ) {
+          found = true;
+        }
+      },
+    });
+    return found;
+  } catch {
+    return false;
+  }
+};
+
 /**
  * transpile expression into executable one
  *
- * add optional chaining operator to every member expression
- * to access any field without runtime errors
+ * add optional chaining to member access in executable output so missing
+ * fields do not cause runtime errors. Authored expressions should use direct
+ * access such as formData.subject and add ?? only when a fallback is needed.
  *
  * replace variable names if necessary
  */

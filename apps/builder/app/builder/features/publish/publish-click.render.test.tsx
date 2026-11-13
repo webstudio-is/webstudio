@@ -22,7 +22,6 @@ const originalScrollIntoView = Object.getOwnPropertyDescriptor(
 let root: Root | undefined;
 let resetStores: (() => void) | undefined;
 let publishModule: typeof import("./publish");
-let detailsModule: typeof import("./publish-details-dialog");
 let stores: typeof import("~/shared/sync/data-stores");
 let nanoStates: typeof import("~/shared/nano-states");
 let builderStates: typeof import("~/builder/shared/nano-states");
@@ -45,9 +44,6 @@ beforeAll(async () => {
       requests.push({ path: url.pathname, input });
       let data: unknown;
       switch (url.pathname) {
-        case "/trpc/domain.publishActivity":
-          data = { success: true, publishes: [] };
-          break;
         case "/trpc/domain.publish":
           data = { success: false, error: "Publish blocked" };
           break;
@@ -60,7 +56,6 @@ beforeAll(async () => {
     }
   );
   publishModule = await import("./publish");
-  detailsModule = await import("./publish-details-dialog");
   stores = await import("~/shared/sync/data-stores");
   nanoStates = await import("~/shared/nano-states");
   builderStates = await import("~/builder/shared/nano-states");
@@ -97,7 +92,7 @@ afterAll(() => {
   reactEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment;
 });
 
-test("static export reaches the server even with a local audit error", async () => {
+test("static export reaches the server without waiting for diagnostics", async () => {
   requests.length = 0;
   stores.$project.set({
     id: "project-1",
@@ -131,7 +126,6 @@ test("static export reaches the server even with a local audit error", async () 
     );
   });
 
-  expect(detailsModule.getCurrentPrePublishAudit()[0]?.severity).toBe("error");
   const destination = document.body.querySelector<HTMLButtonElement>(
     'button[role="combobox"]'
   );
@@ -173,11 +167,6 @@ test("static export reaches the server even with a local audit error", async () 
       },
     },
   });
-  expect(
-    requests.some(
-      ({ path }) => path === "/trpc/build.contentDatabasePublishDiagnostics"
-    )
-  ).toBe(false);
   expect(
     Array.from(document.body.querySelectorAll("a, button")).some(
       (element) => element.textContent?.trim() === "Show element"

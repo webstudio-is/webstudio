@@ -27,9 +27,11 @@ import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "../config";
 import { HandledCliError } from "../errors";
 import {
   getPreviewUrl,
-  getNpmInvocation,
+  getNodeRuntimeEnv,
   previewBuildCacheMarker,
+  previewProcessOwnerFile,
   runPreviewBuild,
+  resolvePreviewPackageManager,
   startPreviewServer,
   waitForPreviewExit,
 } from "../preview-server";
@@ -104,7 +106,10 @@ export const previewOptions = (yargs: CommonYargsArgv) =>
         "Preview builds the generated app and starts its production server.",
         "Preview dependencies are isolated under .webstudio/preview and reused across regenerations.",
         "Do not add generated-preview dependencies to the repository root package.json or pnpm-lock.yaml.",
-        "If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.",
+        "When launcher metadata is available, Preview reuses a supported npm or pnpm launcher. Without launcher metadata, it uses npm when available and otherwise falls back to pnpm.",
+        "Unless npm_config_cache is already configured, npm uses a writable cache inside .webstudio/preview.",
+        "For npm cache permission errors, unset npm_config_cache to use the preview-local cache, then retry.",
+        "If dependency installation fails, check the reported package-manager path and network configuration, then reinstall or update the Webstudio CLI if the problem persists.",
       ].join("\n")
     );
 
@@ -172,6 +177,9 @@ type PreviewDependencyOperations = {
   ) => Promise<unknown>;
   lstat: (path: string) => Promise<{ isSymbolicLink: () => boolean }>;
   readFile: (path: string, encoding: "utf8") => Promise<string>;
+  readPackageFile?: (path: string) => string;
+  resolveLauncherPath?: (path: string) => string;
+  which?: (command: "npm" | "pnpm") => string | undefined;
   rm: (
     path: string,
     options: { recursive: true; force: true }
@@ -201,15 +209,65 @@ const getPreviewInstallFailureDiagnostics = (error: unknown) => {
   )
     .trim()
     .slice(-2000);
-  const code =
-    typeof record.code === "string" || typeof record.code === "number"
-      ? String(record.code)
-      : undefined;
-  return `${code === undefined ? "" : `npm exit code ${code}. `}${diagnostics}`;
+  const codeDiagnostics =
+    typeof record.code === "number"
+      ? `package-manager exit code ${record.code}. `
+      : typeof record.code === "string"
+        ? `package-manager process error ${record.code}. `
+        : "";
+  return `${codeDiagnostics}${diagnostics}`;
 };
+
+class PreviewDependencyInstallError extends Error {
+  readonly code = "PREVIEW_DEPENDENCY_INSTALL_FAILED";
+}
 
 export const getPreviewProjectDir = (projectDir = cwd()) =>
   join(projectDir, ".webstudio", "preview");
+
+type PreviewProcessOwner = {
+  supervisorPid?: unknown;
+  previewPid?: unknown;
+};
+
+export class PreviewCleanupError extends Error {
+  readonly code = "PREVIEW_CLEANUP_FAILED";
+}
+
+export const createPreviewCleanupError = async ({
+  previewProjectDir,
+  lockedPath,
+  cause,
+  readOwnerFile = readFile,
+}: {
+  previewProjectDir: string;
+  lockedPath: string;
+  cause: unknown;
+  readOwnerFile?: (path: string, encoding: "utf8") => Promise<string>;
+}) => {
+  const owner = await readOwnerFile(
+    join(previewProjectDir, "..", previewProcessOwnerFile),
+    "utf8"
+  )
+    .then((value) => JSON.parse(value) as PreviewProcessOwner)
+    .catch(() => undefined);
+  const pids = [owner?.supervisorPid, owner?.previewPid].filter(
+    (value): value is number =>
+      typeof value === "number" && Number.isInteger(value) && value > 0
+  );
+  const ownerHint =
+    pids.length === 0
+      ? "No owned preview PID was recorded."
+      : `Recorded owned preview PIDs: ${pids.join(", ")}.`;
+  const recovery =
+    pids.length === 0
+      ? "Stop the CLI/MCP process that started preview. On WSL/Windows, use PowerShell Get-CimInstance Win32_Process to find a command whose path is inside the locked preview directory, verify it belongs to this project, and stop only that PID."
+      : `Stop preview from its owning CLI/MCP session. If that owner is gone, verify the recorded PID belongs to this project, then terminate only its tree (WSL/Windows: taskkill.exe /pid ${pids.at(-1)} /t /f; Linux/macOS: kill -- -${pids.at(-1)}).`;
+  return new PreviewCleanupError(
+    `PREVIEW_CLEANUP_FAILED: Could not remove generated preview path ${lockedPath}. A preview process may still have it open. ${ownerHint} ${recovery}`,
+    { cause }
+  );
+};
 
 export const ensurePreviewDependencies = async (
   previewProjectDir: string,
@@ -240,6 +298,9 @@ export const ensurePreviewDependencies = async (
     ...packageJson.dependencies,
     ...packageJson.devDependencies,
   };
+  const usesDevelopmentDependencies = Object.values(
+    requiredDependencies
+  ).includes(developmentCliVersion);
   const manifestHash = createHash("sha256")
     .update(JSON.stringify(requiredDependencies))
     .digest("hex");
@@ -260,6 +321,7 @@ export const ensurePreviewDependencies = async (
     const previewNodeModulesStat = await operations.lstat(previewNodeModules);
     if (
       previewNodeModulesStat.isSymbolicLink() &&
+      usesDevelopmentDependencies &&
       (await hasRequiredDependencies(previewNodeModules))
     ) {
       return;
@@ -275,47 +337,91 @@ export const ensurePreviewDependencies = async (
         return;
       }
     }
-    await operations.rm(previewNodeModules, { recursive: true, force: true });
-  } catch {
+    try {
+      await operations.rm(previewNodeModules, { recursive: true, force: true });
+    } catch (error) {
+      throw await createPreviewCleanupError({
+        previewProjectDir,
+        lockedPath: previewNodeModules,
+        cause: error,
+        readOwnerFile: operations.readFile,
+      });
+    }
+  } catch (error) {
+    if (error instanceof PreviewCleanupError) {
+      throw error;
+    }
     // Continue with the CLI dependency tree or an isolated install.
   }
 
-  for (const cliNodeModules of cliNodeModulesCandidates) {
-    if (await hasRequiredDependencies(cliNodeModules)) {
-      await operations.symlink(
-        cliNodeModules,
-        previewNodeModules,
-        operations.platform === "win32" ? "junction" : "dir"
-      );
-      return;
+  if (usesDevelopmentDependencies) {
+    for (const cliNodeModules of cliNodeModulesCandidates) {
+      if (await hasRequiredDependencies(cliNodeModules)) {
+        // React Router scripts invoke package binaries through Node: pnpm's .bin
+        // wrappers use paths relative to the original installation and cannot
+        // be relocated through this directory link.
+        await operations.symlink(
+          cliNodeModules,
+          previewNodeModules,
+          operations.platform === "win32" ? "junction" : "dir"
+        );
+        return;
+      }
     }
   }
 
-  const installArgs = [
-    "install",
-    "--legacy-peer-deps",
-    "--no-audit",
-    "--no-fund",
-    "--package-lock=false",
-    "--loglevel=error",
-  ];
-  const invocation = getNpmInvocation(installArgs, operations);
+  const packageManager = resolvePreviewPackageManager(operations);
+  const installArgs =
+    packageManager.name === "pnpm"
+      ? ["install", "--no-lockfile", "--loglevel=error", "--ignore-workspace"]
+      : [
+          "install",
+          "--legacy-peer-deps",
+          "--no-audit",
+          "--no-fund",
+          "--package-lock=false",
+          "--loglevel=error",
+          "--workspaces=false",
+        ];
+  const invocation = {
+    command: packageManager.command,
+    args: [...packageManager.argsPrefix, ...installArgs],
+  };
+  const packageManagerPath =
+    invocation.command === operations.nodeExecPath
+      ? invocation.args[0]
+      : invocation.command;
+  const runtimeEnv = getNodeRuntimeEnv(
+    operations.nodeExecPath,
+    operations.env,
+    operations.platform
+  );
+  const installEnv =
+    packageManager.name === "npm" &&
+    Object.keys(runtimeEnv).every(
+      (name) => name.toLowerCase() !== "npm_config_cache"
+    )
+      ? {
+          ...runtimeEnv,
+          npm_config_cache: join(previewProjectDir, ".npm-cache"),
+        }
+      : runtimeEnv;
 
   try {
     await operations.execFile(invocation.command, invocation.args, {
       cwd: previewProjectDir,
-      env: operations.env,
+      env: installEnv,
       timeout: previewDependencyInstallTimeout,
     });
   } catch (error) {
-    throw new Error(
-      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies. Check the npm/network configuration, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
+    throw new PreviewDependencyInstallError(
+      `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies with ${packageManager.name} at ${packageManagerPath}. For npm cache permission errors, unset npm_config_cache to use the preview-local cache, then retry. Check the package-manager/network configuration, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
       { cause: error }
     );
   }
   if ((await hasRequiredDependencies(previewNodeModules)) === false) {
     throw new Error(
-      "PREVIEW_DEPENDENCIES_MISSING: npm completed without installing every dependency declared by the generated preview. Reinstall or update webstudio, then retry."
+      `PREVIEW_DEPENDENCIES_MISSING: ${packageManager.name} completed without installing every dependency declared by the generated preview. Reinstall or update webstudio, then retry.`
     );
   }
   await operations.writeFile(
@@ -381,9 +487,18 @@ const preparePreviewDirectory = async (
     await Promise.all(
       entries
         .filter((entry) => entry !== "node_modules")
-        .map((entry) =>
-          rm(join(previewProjectDir, entry), { recursive: true, force: true })
-        )
+        .map(async (entry) => {
+          const entryPath = join(previewProjectDir, entry);
+          try {
+            await rm(entryPath, { recursive: true, force: true });
+          } catch (error) {
+            throw await createPreviewCleanupError({
+              previewProjectDir,
+              lockedPath: entryPath,
+              cause: error,
+            });
+          }
+        })
     );
   }
   await copyPreviewProjectFiles(projectDir, previewProjectDir);
@@ -534,7 +649,7 @@ export const preparePreviewProject = async ({
 
   const previewProjectDir = getPreviewProjectDir(projectDir);
   if (generate === false) {
-    return { cwd: projectDir };
+    return { cwd: previewProjectDir };
   }
   const prepareDependencies = async () => {
     reportProgress?.(

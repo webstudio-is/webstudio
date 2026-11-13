@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  getCliErrorIssues,
   getCliErrorMessage,
   getStableErrorCode,
   isMissingApiAccessError,
@@ -19,6 +20,91 @@ describe("getStableErrorCode", () => {
         Object.assign(new Error("Not found"), { data: { code: "NOT_FOUND" } })
       )
     ).toBe("NOT_FOUND");
+  });
+
+  test("prefers a specific nested Webstudio error code", () => {
+    expect(
+      getStableErrorCode({
+        code: "BAD_REQUEST",
+        data: { code: "BAD_REQUEST", webstudioCode: "STALE_INDEX" },
+      })
+    ).toBe("STALE_INDEX");
+  });
+
+  test("reads a stable Webstudio error code from an error cause", () => {
+    expect(
+      getStableErrorCode(
+        Object.assign(new Error("Asset query failed"), {
+          cause: { webstudioCode: "CONTENT_DECODING_FAILED" },
+        })
+      )
+    ).toBe("CONTENT_DECODING_FAILED");
+  });
+
+  test("looks through generic MCP and internal error wrappers", () => {
+    expect(
+      getStableErrorCode({
+        code: "MCP_TOOL_FAILED",
+        cause: {
+          code: "INTERNAL_ERROR",
+          cause: { webstudioCode: "INVALID_REQUEST" },
+        },
+      })
+    ).toBe("INVALID_REQUEST");
+  });
+
+  test("rejects dynamic values as stable error codes", () => {
+    expect(getStableErrorCode({ code: "customer-specific-code" })).toBe(
+      undefined
+    );
+  });
+});
+
+describe("getCliErrorIssues", () => {
+  test("preserves complete asset diagnostic fields", () => {
+    expect(
+      getCliErrorIssues({
+        data: {
+          issues: [
+            {
+              code: "invalid-mdx",
+              path: ["posts/broken.mdx"],
+              message: "Unexpected end of file",
+              constraint: "invalid-mdx",
+              severity: "error",
+              scope: "query",
+              phase: "source",
+              assetId: "asset-1",
+              line: 4,
+              column: 9,
+              nodeType: "mdxJsxFlowElement",
+              reason: "Closing tag is missing",
+              sourceRange: {
+                start: { line: 4, column: 1, offset: 30 },
+                end: { line: 4, column: 9, offset: 38 },
+              },
+            },
+          ],
+        },
+      })
+    ).toEqual([
+      expect.objectContaining({
+        code: "invalid-mdx",
+        path: ["posts/broken.mdx"],
+        severity: "error",
+        scope: "query",
+        phase: "source",
+        assetId: "asset-1",
+        line: 4,
+        column: 9,
+        nodeType: "mdxJsxFlowElement",
+        reason: "Closing tag is missing",
+        sourceRange: {
+          start: { line: 4, column: 1, offset: 30 },
+          end: { line: 4, column: 9, offset: 38 },
+        },
+      }),
+    ]);
   });
 });
 
@@ -68,15 +154,34 @@ describe("getCliErrorMessage", () => {
     );
   });
 
-  test("explains missing Builder API access for opaque project owner token errors", () => {
-    const error = Object.assign(
-      new Error("Project owner can't be found for token token-1"),
-      { data: { code: "INTERNAL_SERVER_ERROR" } }
-    );
+  test("explains missing Builder API access from structured codes", () => {
+    const error = Object.assign(new Error("The credential has been revoked"), {
+      data: { code: "UNAUTHORIZED", webstudioCode: "INVALID_AUTH_TOKEN" },
+    });
 
     expect(isMissingApiAccessError(error)).toBe(true);
     expect(getCliErrorMessage(error)).toBe(
       "This project cannot be accessed through the Builder API with the current share link/token. Enable API access in the share-link settings, then relink the project with `webstudio init --link <share-link> --json`."
     );
   });
+});
+
+test("does not classify authorization failures by message text", () => {
+  expect(
+    isMissingApiAccessError(
+      new Error("Project owner can't be found for token token-1")
+    )
+  ).toBe(false);
+  expect(
+    isMissingApiAccessError({
+      data: { webstudioCode: "API_ACCESS_DISABLED" },
+      message: "Any wording",
+    })
+  ).toBe(true);
+  expect(
+    isMissingApiAccessError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "The credential has been revoked",
+    })
+  ).toBe(false);
 });

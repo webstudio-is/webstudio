@@ -1,11 +1,16 @@
-import { nanoid } from "nanoid";
 import { useState } from "react";
+import { parseError } from "~/shared/error/error-parse";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
 import {
+  createId,
   type Instance,
+  type Prop,
   type Props,
+  blockComponent,
+  contentBlockSourceProp,
+  toAssetReferenceRuntimeData,
   descendantComponent,
   rootComponent,
 } from "@webstudio-is/sdk";
@@ -16,6 +21,7 @@ import {
   Flex,
   Box,
   Grid,
+  toast,
 } from "@webstudio-is/design-system";
 import {
   isAttributeNameSafe,
@@ -31,14 +37,21 @@ import {
   $memoryProps,
   $selectedBreakpoint,
 } from "~/shared/nano-states";
-import { $props } from "~/shared/sync/data-stores";
+import {
+  $assetFolders,
+  $assets,
+  $instances,
+  $props,
+} from "~/shared/sync/data-stores";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
   $selectedInstance,
   $selectedInstanceKey,
+  $selectedInstanceSelector,
   getInstanceKey,
 } from "~/shared/nano-states";
 import { renderControl } from "../controls/combined";
+import { FormActionControl } from "../controls/form-action";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { AnimationSection } from "./animation/animation-section";
 import { $matchingBreakpoints } from "../../style-panel/shared/model";
@@ -48,6 +61,23 @@ import {
   $selectedInstancePropsMetas,
 } from "../shared";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { ContentBlockSourceSection } from "../controls/content-block-source-section";
+import {
+  $externalContentRoots,
+  findExternalContentRootEntryBySelector,
+} from "~/shared/external-content-mutations";
+import { updateExternalContentFrontmatter } from "~/shared/external-content-roots";
+import {
+  getSelectedContentBlockDocumentBindingPath,
+  getSelectedContentBlockExpressionMode,
+  getFrontmatterWriteTarget,
+} from "~/shared/content-block-document";
+import {
+  createMdxAssetReferenceValues,
+  findProp,
+} from "@webstudio-is/project-build/runtime";
+import { resolveAssetValueReferences } from "@webstudio-is/content-engine";
+import type { PropValue } from "../shared";
 
 type Item = {
   name: string;
@@ -97,30 +127,68 @@ const shouldRenderPropsSectionContainer = ({
   propsMetasSize,
   hasVisibleProps,
   isContentMode,
+  isDesignMode,
 }: {
   component: Instance["component"];
   propsMetasSize: number;
   hasVisibleProps: boolean;
   isContentMode: boolean;
+  isDesignMode: boolean;
 }) => {
   if (component === rootComponent) {
     return false;
   }
+  if (component === blockComponent) {
+    return isDesignMode || (isContentMode && hasVisibleProps);
+  }
   return propsMetasSize > 0 || (isContentMode && hasVisibleProps);
 };
 
-const shouldSyncMediaAssetProps = ({
-  component,
+const findExpressionPropByStandardName = ({
+  props,
+  instanceId,
   propName,
-  propValue,
+}: {
+  props: readonly Prop[];
+  instanceId: Instance["id"];
+  propName: Prop["name"];
+}) => {
+  const findExpression = (name: string) => {
+    const prop = findProp(props, instanceId, name);
+    return prop?.type === "expression" ? prop : undefined;
+  };
+  const reactPropName = standardAttributesToReactProps[propName];
+  return (
+    findExpression(propName) ??
+    (reactPropName === undefined ? undefined : findExpression(reactPropName))
+  );
+};
+
+const shouldWriteBoundValue = (
+  isContentMode: boolean,
+  update: PropValue
+): update is Exclude<PropValue, { type: "expression" }> =>
+  isContentMode && update.type !== "expression";
+
+const getStandaloneInitialProps = ({
+  component,
+  addedProps,
+  initialProps,
 }: {
   component: Instance["component"];
-  propName: string;
-  propValue: { type: string };
-}) =>
-  (component === "Image" || component === "Video") &&
-  propName === "src" &&
-  propValue.type === "asset";
+  addedProps: PropAndMeta[];
+  initialProps: PropAndMeta[];
+}) => {
+  const hasVisibleFormActionControl =
+    component === "ResourceForm" &&
+    [...addedProps, ...initialProps].some(
+      (item) => item.meta.control === "form-action"
+    );
+  return initialProps.filter(
+    (item) =>
+      item.propName !== "successRedirect" || !hasVisibleFormActionControl
+  );
+};
 
 const renderProperty = (
   {
@@ -129,10 +197,21 @@ const renderProperty = (
     propValuesByInstanceSelector,
     component,
     instanceId,
+    selectedInstanceKey,
   }: PropsSectionProps,
   item: PropAndMeta
 ) => {
   const { prop, propName, meta } = item;
+  if (component === blockComponent && propName === contentBlockSourceProp) {
+    return (
+      <Box key={propName} css={{ paddingInline: theme.panel.paddingInline }}>
+        <ContentBlockSourceSection
+          blockInstanceId={instanceId}
+          renderScope={selectedInstanceKey}
+        />
+      </Box>
+    );
+  }
   const targetInstanceId = item.instanceId ?? instanceId;
   const targetPropValues =
     item.instanceSelector === undefined
@@ -141,7 +220,39 @@ const renderProperty = (
           getInstanceKey(item.instanceSelector)
         ) ?? propValues);
 
-  return renderControl({
+  if (component === "ResourceForm" && meta.control === "form-action") {
+    const redirect = logic.initialProps.find(
+      (item) => item.propName === "successRedirect"
+    );
+    return (
+      <FormActionControl
+        key={propName}
+        instanceId={targetInstanceId}
+        meta={meta}
+        prop={prop}
+        propName={propName}
+        computedValue={targetPropValues.get(propName) ?? meta.defaultValue}
+        onChange={(value) => logic.handleChange({ prop, propName }, value)}
+        successRedirect={
+          redirect?.meta.control === "url"
+            ? {
+                instanceId: targetInstanceId,
+                meta: redirect.meta,
+                prop: redirect.prop,
+                propName: redirect.propName,
+                computedValue:
+                  targetPropValues.get(redirect.propName) ??
+                  redirect.meta.defaultValue,
+                onChange: (value) =>
+                  logic.handleChangeByPropName(redirect.propName, value),
+              }
+            : undefined
+        }
+      />
+    );
+  }
+
+  const control = renderControl({
     key: propName,
     instanceId: targetInstanceId,
     meta,
@@ -155,20 +266,13 @@ const renderProperty = (
     propName,
     onChange: (propValue) => {
       logic.handleChange({ prop, propName }, propValue);
-
-      if (
-        shouldSyncMediaAssetProps({
-          component,
-          propName,
-          propValue,
-        })
-      ) {
-        logic.handleChangeByPropName("width", propValue);
-        logic.handleChangeByPropName("height", propValue);
-        logic.handleChangeByPropName("alt", propValue);
-      }
     },
   });
+  return control === undefined ? undefined : (
+    <Box key={propName} css={{ paddingInline: theme.panel.paddingInline }}>
+      {control}
+    </Box>
+  );
 };
 
 const forbiddenProperties = new Set(["style"]);
@@ -274,8 +378,9 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   const matchMediaValue = matchMediaBreakpoints(matchingBreakpoints);
 
-  const hasProperties =
-    logic.addedProps.length > 0 || logic.initialProps.length > 0;
+  const addedProps = logic.addedProps;
+  const initialProps = logic.initialProps;
+  const hasProperties = addedProps.length > 0 || initialProps.length > 0;
   const hasItems = hasProperties || (isDesignMode && addingProp);
 
   const animationAction = logic.initialProps.find(
@@ -304,7 +409,7 @@ export const PropsSection = (props: PropsSectionProps) => {
 
           if (isEphemeral && value !== undefined) {
             memoryInstanceProp.set(animationAction.propName, {
-              id: nanoid(),
+              id: createId("nano"),
               instanceId: props.instanceId,
               type: "animationAction",
               name: animationAction.propName,
@@ -342,34 +447,34 @@ export const PropsSection = (props: PropsSectionProps) => {
           paddingBottom: theme.panel.paddingBlock,
         }}
       >
-        {logic.systemProps.map((item) => (
-          <Box
-            key={item.propName}
-            css={{ paddingInline: theme.panel.paddingInline }}
-          >
-            {renderProperty(props, item)}
-          </Box>
-        ))}
+        {logic.systemProps.map((item) => renderProperty(props, item))}
       </Grid>
 
       <Separator />
       {showPropertiesSection && (
         <CollapsibleSectionWithAddButton
           label="Properties & attributes"
+          fullWidth
           onAdd={isDesignMode ? () => setAddingProp(true) : undefined}
           hasItems={hasItems}
         >
           <Flex gap="1" direction="column">
             {isDesignMode && addingProp && (
-              <AddPropertyOrAttribute
-                onPropSelected={(propName) => {
-                  setAddingProp(false);
-                  logic.handleAdd(propName);
-                }}
-              />
+              <Box css={{ paddingInline: theme.panel.paddingInline }}>
+                <AddPropertyOrAttribute
+                  onPropSelected={(propName) => {
+                    setAddingProp(false);
+                    logic.handleAdd(propName);
+                  }}
+                />
+              </Box>
             )}
-            {logic.addedProps.map((item) => renderProperty(props, item))}
-            {logic.initialProps.map((item) => renderProperty(props, item))}
+            {addedProps.map((item) => renderProperty(props, item))}
+            {getStandaloneInitialProps({
+              component: props.component,
+              addedProps,
+              initialProps,
+            }).map((item) => renderProperty(props, item))}
           </Flex>
         </CollapsibleSectionWithAddButton>
       )}
@@ -380,7 +485,9 @@ export const PropsSection = (props: PropsSectionProps) => {
 export const __testing__ = {
   shouldShowPropertiesSection,
   shouldRenderPropsSectionContainer,
-  shouldSyncMediaAssetProps,
+  findExpressionPropByStandardName,
+  shouldWriteBoundValue,
+  getStandaloneInitialProps,
 };
 
 const $propValues = computed(
@@ -399,16 +506,147 @@ export const PropsSectionContainer = ({
   const { propsByInstanceId } = useStore($propsIndex);
   const propValues = useStore($propValues);
   const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  const externalContentRoots = useStore($externalContentRoots);
+  const assets = useStore($assets);
+  const assetFolders = useStore($assetFolders);
 
   const logic = usePropsLogic({
     instance,
     props: propsByInstanceId.get(instance.id) ?? [],
 
     updateProp: (update) => {
+      const originalProp = findExpressionPropByStandardName({
+        props: propsByInstanceId.get(instance.id) ?? [],
+        instanceId: instance.id,
+        propName: update.name,
+      });
+      const externalEntry =
+        selectedInstanceSelector === undefined
+          ? undefined
+          : findExternalContentRootEntryBySelector(
+              externalContentRoots,
+              selectedInstanceSelector
+            );
+      const candidateRoot = externalEntry?.[1];
+      const persistedUpdate =
+        update.type === "expression"
+          ? {
+              ...update,
+              mode:
+                selectedInstanceSelector === undefined
+                  ? "read"
+                  : getSelectedContentBlockExpressionMode({
+                      expression: update.value,
+                      instanceSelector: selectedInstanceSelector,
+                      instances: $instances.get(),
+                      props: $props.get(),
+                      sourceBlockInstanceId:
+                        candidateRoot?.sourceBlockInstanceId,
+                      renderedBlockInstanceId: candidateRoot?.blockInstanceId,
+                    }),
+            }
+          : update;
+      if (
+        originalProp?.type === "expression" &&
+        shouldWriteBoundValue($isContentMode.get(), persistedUpdate)
+      ) {
+        const path =
+          selectedInstanceSelector === undefined
+            ? undefined
+            : getSelectedContentBlockDocumentBindingPath({
+                binding: originalProp,
+                instanceSelector: selectedInstanceSelector,
+                instances: $instances.get(),
+                props: $props.get(),
+                sourceBlockInstanceId: candidateRoot?.sourceBlockInstanceId,
+                renderedBlockInstanceId: candidateRoot?.blockInstanceId,
+              });
+        if (path !== undefined && externalEntry === undefined) {
+          toast.error("The MDX content source is not ready for editing.");
+          return;
+        }
+        if (path === undefined || externalEntry === undefined) {
+          executeRuntimeMutation({
+            id: "instances.updateProps",
+            input: { updates: [persistedUpdate] },
+          });
+          return;
+        }
+        const [rootKey, externalRoot] = externalEntry;
+        let targetPath: readonly string[] = path;
+        let nextValue: unknown = update.value;
+        let nextResolvedValue: unknown = update.value;
+        if (update.type === "asset" && externalRoot.identity !== undefined) {
+          const sourceAsset = assets.get(externalRoot.identity.assetId);
+          const targetAsset = assets.get(update.value);
+          const reference =
+            sourceAsset === undefined || targetAsset === undefined
+              ? undefined
+              : createMdxAssetReferenceValues({
+                  source: sourceAsset,
+                  assets: assets.values(),
+                  assetFolders,
+                }).get(targetAsset.id);
+          if (reference !== undefined && targetAsset !== undefined) {
+            targetPath =
+              path.length > 1 && path.at(-1) === "src"
+                ? path.slice(0, -1)
+                : path;
+            nextValue = { $ref: reference };
+            nextResolvedValue = resolveAssetValueReferences({
+              value: nextValue,
+              references: [
+                {
+                  path: [],
+                  assetId: targetAsset.id,
+                  structured: true,
+                },
+              ],
+              runtimeAssets: {
+                [targetAsset.id]: toAssetReferenceRuntimeData(
+                  targetAsset,
+                  window.location.origin
+                ),
+              },
+            });
+          }
+        }
+        if (externalRoot.document === undefined) {
+          toast.error("The MDX content source is not ready for editing.");
+          return;
+        }
+        if (
+          getFrontmatterWriteTarget({
+            assetId: externalRoot.assetId ?? "",
+            sources: externalRoot.frontmatterSources,
+            value: externalRoot.document.frontmatter.properties,
+            path: targetPath,
+          }) === undefined
+        ) {
+          toast.error("Open the referenced file to edit this value.");
+          return;
+        }
+        if (update.type === "asset" && typeof nextValue !== "object") {
+          toast.error(
+            "The selected Asset cannot be referenced from this file."
+          );
+          return;
+        }
+        void updateExternalContentFrontmatter({
+          rootKey,
+          path: targetPath,
+          value: nextValue,
+          resolvedValue: nextResolvedValue,
+        }).catch((error) => {
+          toast.error(parseError(error).message);
+        });
+        return;
+      }
       executeRuntimeMutation({
         id: "instances.updateProps",
         input: {
-          updates: [update],
+          updates: [persistedUpdate],
         },
       });
     },
@@ -416,6 +654,7 @@ export const PropsSectionContainer = ({
 
   const propsMetas = useStore($selectedInstancePropsMetas);
   const isContentMode = useStore($isContentMode);
+  const isDesignMode = useStore($isDesignMode);
   const hasVisibleProps =
     logic.systemProps.length > 0 ||
     logic.initialProps.length > 0 ||
@@ -426,6 +665,7 @@ export const PropsSectionContainer = ({
       propsMetasSize: propsMetas.size,
       hasVisibleProps,
       isContentMode,
+      isDesignMode,
     }) === false
   ) {
     return;

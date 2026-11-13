@@ -26,5 +26,13 @@ export const meta: WsComponentMeta = {
       required: false,
       contentMode: true,
     },
+    target: {
+      ...props.target!,
+      contentMode: true,
+    },
+    download: {
+      ...props.download!,
+      contentMode: true,
+    },
   },
 };

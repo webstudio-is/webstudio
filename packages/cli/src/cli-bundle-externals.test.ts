@@ -9,6 +9,12 @@ describe("CLI bundle externals", () => {
     expect(isExternal("node:fs")).toBe(true);
   });
 
+  test("bundles project contract dependencies to prevent post-release version drift", () => {
+    expect(isExternal("zod")).toBe(false);
+    expect(isExternal("zod/v4")).toBe(false);
+    expect(isExternal("@emotion/hash")).toBe(false);
+  });
+
   test("bundles the component registry without publishing its React dependency tree", () => {
     expect(isExternal("@webstudio-is/sdk-components-registry/framework")).toBe(
       false

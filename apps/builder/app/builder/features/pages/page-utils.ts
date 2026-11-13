@@ -35,11 +35,23 @@ export const $pageRootScope = computed(
       variableValuesByInstanceSelector.get(
         getInstanceKey([page.rootInstanceId, ROOT_INSTANCE_ID])
       ) ?? new Map<string, unknown>();
-    for (const [dataSourceId, value] of values) {
+    const visibleDataSourceIdByName = new Map<string, string>();
+    for (const dataSourceId of values.keys()) {
       let dataSource = dataSources.get(dataSourceId);
       if (dataSourceId === SYSTEM_VARIABLE_ID) {
         dataSource = systemParameter;
       }
+      if (dataSource === undefined) {
+        continue;
+      }
+      visibleDataSourceIdByName.set(dataSource.name, dataSourceId);
+    }
+    for (const dataSourceId of visibleDataSourceIdByName.values()) {
+      const value = values.get(dataSourceId);
+      const dataSource =
+        dataSourceId === SYSTEM_VARIABLE_ID
+          ? systemParameter
+          : dataSources.get(dataSourceId);
       if (dataSource === undefined) {
         continue;
       }

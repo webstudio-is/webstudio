@@ -1,9 +1,9 @@
-import { theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { useComputedStyles } from "../../../shared/model";
 import { getPriorityStyleValueSource } from "../../../property-label";
 import { createBatchUpdate } from "../../../shared/use-style-data";
 import { AlignmentUi } from "./alignment-ui";
+import { getStyleSourceForeground } from "../../../style-source/color-recipes";
 
 export const GridAlignment = () => {
   const styles = useComputedStyles([
@@ -29,16 +29,7 @@ export const GridAlignment = () => {
   const itemStretchHeight =
     isColumnDirection && justifyItemsValue === "stretch";
 
-  let color = theme.colors.foregroundFlexUiMain;
-  if (styleValueSourceColor === "local") {
-    color = theme.colors.foregroundLocalFlexUi;
-  }
-  if (styleValueSourceColor === "overwritten") {
-    color = theme.colors.foregroundOverwrittenFlexUi;
-  }
-  if (styleValueSourceColor === "remote") {
-    color = theme.colors.foregroundRemoteFlexUi;
-  }
+  const color = getStyleSourceForeground(styleValueSourceColor);
 
   const alignment = ["start", "center", "end"];
 

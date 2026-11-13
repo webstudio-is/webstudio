@@ -6,7 +6,10 @@ description: Configure per-page settings such as path, SEO, authentication, redi
 
 Page settings control how an individual page behaves — its URL, SEO metadata, authentication, status code, redirect, and more. Open Page Settings by clicking the gear icon next to any page in the Pages panel.
 
-<figure><img src="../../.gitbook/assets/page-settings-general.png" alt="Page settings panel showing Page name, Path, Status code, Redirect, and Language fields"><figcaption><p>General page settings</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-dialog-dark.png">
+  <img src="../../.gitbook/assets/page-settings-dialog-light.png" alt="Page settings for the Home page showing general and authentication fields above the search result preview" width="447">
+</picture>
 
 ## Page name
 
@@ -43,23 +46,14 @@ The URL path for this page, e.g. `/about` or `/blog/:slug`.
 
 ### Path syntax
 
-Webstudio paths can be static or dynamic. Dynamic segments use a `:` prefix, making the page a [Dynamic Page](cms.md#dynamic-pages).
+See [Path patterns](path-patterns.md#pattern-syntax) for static paths, dynamic segments, optional segments, wildcards, and matching examples. A dynamic segment such as `:slug` makes the page a [Dynamic Page](cms.md#dynamic-pages).
 
-| Pattern | Matches |
-| --- | --- |
-| `/about` | One static route |
-| `/blog/:slug` | One dynamic segment |
-| `/blog/:slug?` | Optional dynamic segment |
-| `/docs/*` | Everything under `/docs/` |
-| `/docs/:path*` | Named wildcard under `/docs/` |
+In Page settings, the home page has an empty path. Other page paths start with `/`.
 
-Path rules:
-
-- Paths must start with `/`, except the home page path, which is empty
-- Paths cannot contain repeating `/`
-- Paths cannot end with `/`, except the home route `/`
-- Wildcards such as `*` and `:path*` must be the final segment
-- Parameter names can contain letters, numbers, and underscores
+Webstudio Cloud sites and exported JavaScript applications permanently redirect
+a trailing-slash URL such as `/about/` to the page path `/about` and preserve
+its query string. For static exports, the hosting platform controls
+[trailing-slash behavior](../self-hosting/#static-site-url-behavior).
 
 ## Status code
 
@@ -114,7 +108,13 @@ To create a plain text page:
 5. Enter the plain text, or bind the field to an expression
 6. Publish the site
 
-<figure><img src="../../.gitbook/assets/page-settings-plain-text-page.png" alt="Page Settings showing Document type set to TEXT and the Content section with a plain text field"><figcaption><p>Plain text page settings</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-plain-text-page-dark.png">
+    <img src="../../.gitbook/assets/page-settings-plain-text-page-light.png" alt="Page settings with TEXT selected as the document type and a plain text Content field" width="448">
+  </picture>
+  <figcaption><p>Plain text page settings</p></figcaption>
+</figure>
 
 Plain text pages can still use Page Settings fields such as Status code, Redirect, Authentication, and Dynamic data. SEO, social image, and custom metadata fields apply only to HTML pages, so they are hidden when the document type is TEXT.
 
@@ -132,10 +132,16 @@ Use Authentication to require HTTP Basic Auth credentials before visitors can lo
 
 Page authentication is useful for private previews, client-only pages, internal pages, or temporary gated content.
 
-<figure><img src="../../.gitbook/assets/page-settings-authentication-enabled.png" alt="Page Settings Authentication section enabled with Login and Password fields"><figcaption><p>Page authentication</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-authentication-enabled-dark.png">
+    <img src="../../.gitbook/assets/page-settings-authentication-enabled-light.png" alt="Authentication enabled with empty Login and Password fields" width="448">
+  </picture>
+  <figcaption><p>Page authentication</p></figcaption>
+</figure>
 
 {% hint style="info" %}
-Authentication applies to protected pages on custom domains. Staging domains have their own built-in password protection, described in [Publishing & custom domains](publishing-and-custom-domains.md#staging-domain-password-protection).
+Authentication applies to protected pages on custom domains. Staging domains have their own built-in password protection, described in [Publishing & custom domains](publishing-and-custom-domains.md#staging-password-protection).
 {% endhint %}
 
 {% hint style="warning" %}
@@ -156,7 +162,10 @@ To protect multiple routes, dynamic paths, or wildcard sections of the site, use
 
 SEO settings that control how the page appears in search engine results.
 
-<figure><img src="../../.gitbook/assets/page-settings-seo.png" alt="SEO section showing Title, Description, Exclude from search, and search result preview"><figcaption><p>SEO settings with search result preview</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-seo-dark.png">
+  <img src="../../.gitbook/assets/page-settings-seo-light.png" alt="Page settings Search section with the Home result preview, Title, empty Description, search exclusion selected, and en-US Language" width="447">
+</picture>
 
 ### Title
 
@@ -174,13 +183,19 @@ Adds a `noindex` directive to the page, preventing search engines from indexing 
 
 The Open Graph image displayed when the page is shared on social media (Facebook, X, LinkedIn, etc.). You can either upload an image or bind a URL expression to a dynamic image from your CMS.
 
-<figure><img src="../../.gitbook/assets/page-settings-social.png" alt="Social image section with social preview card"><figcaption><p>Social image with preview</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-social-dark.png">
+  <img src="../../.gitbook/assets/page-settings-social-light.png" alt="Page settings Social image section with an empty image field and default social sharing preview" width="447">
+</picture>
 
 ## Custom metadata
 
 Add arbitrary `<meta>` tags to the page's `<head>`. Each entry has a **property** (the meta tag's `name` or `property` attribute) and a **content** value, both of which support expressions.
 
-<figure><img src="../../.gitbook/assets/page-settings-custom-metadata.png" alt="Custom metadata section with a property and content row filled in"><figcaption><p>Adding a custom meta tag</p></figcaption></figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-custom-metadata-dark.png">
+  <img src="../../.gitbook/assets/page-settings-custom-metadata-light.png" alt="Page settings Custom metadata section with empty Property and Content fields and Add another metadata pair button" width="447">
+</picture>
 
 Use this for meta tags not covered by the fields above, such as `og:type`, `twitter:card`, or any custom meta needed by third-party integrations.
 
@@ -209,7 +224,7 @@ Content editors cannot create dynamic paths such as `/blog/:slug`, wildcard path
 - [Project settings](project-settings.md) – Site-wide settings such as favicon, custom code, redirects, and route authentication
 - [Page templates](page-templates.md) – Create reusable blueprints for new pages
 - [Publishing & custom domains](publishing-and-custom-domains.md) – Publish protected pages to custom domains
-- [Data variables](variables.md) – Define and use variables on pages
+- [Variables](variables.md) – Define and use variables on pages
 - [Expression editor](expression-editor.md) – Bind expressions to Page Settings fields
 - [XML Node](../core-components/xml-node.md) – Build XML pages such as sitemaps
 - [Custom 404 page](../how-tos/how-to-make-a-custom-404-page.md) – Create a custom 404 page

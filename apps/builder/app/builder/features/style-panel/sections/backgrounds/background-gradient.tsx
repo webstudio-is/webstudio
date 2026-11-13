@@ -13,6 +13,7 @@ import {
   keywordValues,
 } from "@webstudio-is/css-data";
 import {
+  PanelContent,
   Flex,
   theme,
   Tooltip,
@@ -265,13 +266,13 @@ export const BackgroundGradient = ({
   return (
     <Flex direction="column" justify="center" gap="2" shrink={false}>
       {isSolidVariant ? (
-        <Box css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Box}>
           <SolidColorControls
             disabled={readonly}
             gradient={gradient}
             applyGradient={applyGradient}
           />
-        </Box>
+        </PanelContent>
       ) : (
         <>
           <GradientPickerSection
@@ -378,12 +379,7 @@ const GradientPickerSection = ({
   }, [computedGradientForPicker]);
 
   return (
-    <Flex
-      direction="column"
-      shrink={false}
-      gap="2"
-      css={{ padding: theme.panel.padding }}
-    >
+    <PanelContent as={Flex} direction="column" shrink={false} gap="2">
       <GradientPicker
         disabled={disabled}
         gradient={computedGradientForPicker}
@@ -404,7 +400,7 @@ const GradientPickerSection = ({
         setHintOverrides={setHintOverrides}
         applyGradient={applyGradient}
       />
-    </Flex>
+    </PanelContent>
   );
 };
 

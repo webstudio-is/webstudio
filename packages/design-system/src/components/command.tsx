@@ -34,17 +34,21 @@ import { useDebounceEffect } from "../utilities";
 import { Flex } from "./flex";
 import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
+import { cssVar, declareCssVar } from "../css-var";
+import { getSelectedItemBackground } from "./component-state-color";
 
 const panelWidth = "500px";
 const itemHeight = "32px";
-const inputBorderBottomSize = "--command-input-border-bottom-width";
+const inputBorderBottomSize = declareCssVar(
+  "--command-input-border-bottom-width"
+);
 
 const StyledCommand = styled(CommandPrimitive, {
   boxSizing: "border-box",
   width: panelWidth,
   boxShadow: theme.shadows.menuDropShadow,
-  backgroundColor: theme.colors.backgroundControls,
-  border: `1px solid ${theme.colors.borderMain}`,
+  backgroundColor: cssVar("--background-floating-raised"),
+  border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[7],
   // clip selected item background
   overflow: "clip",
@@ -162,24 +166,27 @@ export const CommandDialog = ({
 };
 
 const CommandInputContainer = styled("div", {
-  borderBottom: `var(${inputBorderBottomSize}) solid ${theme.colors.borderMain}`,
+  borderBottom: `${cssVar(inputBorderBottomSize)} solid ${cssVar(
+    "--border-default"
+  )}`,
 });
 
 export const CommandSearchIcon = styled(SearchIcon, {
   display: "flex",
   width: theme.spacing[11],
-  color: theme.colors.foregroundSubtle,
+  color: cssVar("--foreground-secondary"),
 });
 
 export const CommandBackIcon = styled(ChevronLeftIcon, {
   display: "flex",
   width: theme.spacing[11],
-  color: theme.colors.foregroundSubtle,
+  color: cssVar("--foreground-secondary"),
 });
 
 const CommandInputField = styled(InputField, {
   "--sizes-controlHeight": theme.spacing[15],
   border: "none",
+  backgroundColor: cssVar("--background-floating-raised"),
   paddingInline: theme.spacing[4],
 });
 
@@ -209,10 +216,10 @@ export const CommandInput = (
         suffix={
           action && (
             <Text
-              color="moreSubtle"
+              color="subtle"
               css={{ alignSelf: "center", paddingInline: theme.spacing[5] }}
             >
-              {action.label} <Kbd value={["enter"]} color="moreSubtle" />
+              {action.label} <Kbd value={["enter"]} color="subtle" />
             </Text>
           )
         }
@@ -480,9 +487,9 @@ export const CommandItem = ({
 
 export const CommandGroupHeading = styled("div", {
   ...textVariants.labels,
-  color: theme.colors.foregroundMoreSubtle,
+  color: cssVar("--foreground-secondary"),
   display: "flex",
-  backgroundColor: theme.colors.backgroundControls,
+  backgroundColor: cssVar("--background-floating-raised"),
   gap: theme.spacing[5],
   alignItems: "center",
   paddingInline: theme.spacing[5],
@@ -491,14 +498,14 @@ export const CommandGroupHeading = styled("div", {
 
 export const CommandGroupFooter = styled("div", {
   ...textVariants.labels,
-  color: theme.colors.foregroundMoreSubtle,
+  color: cssVar("--foreground-secondary"),
   display: "flex",
   gap: theme.spacing[5],
   alignItems: "center",
   paddingInline: theme.spacing[5],
   height: itemHeight,
   justifyContent: "end",
-  borderTop: `1px solid ${theme.colors.borderMain}`,
+  borderTop: `1px solid ${cssVar("--border-default")}`,
 });
 
 export const CommandBackButton = ({ onClick }: { onClick?: () => void }) => {
@@ -520,10 +527,12 @@ const CommandItemStyled = styled(CommandPrimitive.Item, {
   minHeight: itemHeight,
   paddingInline: theme.spacing[9],
   "&:hover": {
-    backgroundColor: theme.colors.backgroundItemMenuItemHover,
+    backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   "&[aria-selected=true]": {
-    backgroundColor: theme.colors.backgroundItemCurrent,
+    backgroundColor: getSelectedItemBackground(
+      cssVar("--background-floating-raised")
+    ),
   },
 });
 

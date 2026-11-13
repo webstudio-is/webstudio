@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { toast } from "@webstudio-is/design-system";
+import { PanelContent, toast } from "@webstudio-is/design-system";
 import {
   Dialog,
   DialogActions,
@@ -13,6 +13,7 @@ import {
   Button,
   theme,
   InputField,
+  cssVar,
 } from "@webstudio-is/design-system";
 import type { DataSource, Instance } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/sync/data-stores";
@@ -64,14 +65,14 @@ export const DeleteDataVariableDialog = ({
         }}
       >
         <DialogTitle>Delete confirmation</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Text>
             {variable &&
               (variable.usages > 0
                 ? `Delete "${variable.name}" variable from the project? It is used in ${variable.usages} ${variable.usages === 1 ? "expression" : "expressions"}.`
                 : `Delete "${variable.name}" variable from the project?`)}
           </Text>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button
             autoFocus
@@ -117,10 +118,7 @@ export const validateDataVariableName = (
   const dataSources = $dataSources.get();
   const currentVariable = variableId ? dataSources.get(variableId) : undefined;
   const actualScopeInstanceId =
-    scopeInstanceId ??
-    (currentVariable?.type === "variable"
-      ? currentVariable.scopeInstanceId
-      : undefined);
+    scopeInstanceId ?? currentVariable?.scopeInstanceId;
   return validateDataVariableNameWithSources({
     dataSources: dataSources.values(),
     name,
@@ -200,7 +198,7 @@ export const RenameDataVariableDialog = ({
         }}
       >
         <DialogTitle>Rename variable</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Flex direction="column" gap="1">
             <InputField
               value={name}
@@ -216,7 +214,7 @@ export const RenameDataVariableDialog = ({
               </Text>
             )}
           </Flex>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button color="primary" onClick={handleConfirm}>
             Rename
@@ -268,14 +266,14 @@ export const DeleteUnusedDataVariablesDialog = () => {
           event.stopPropagation();
         }}
       >
-        <DialogTitle>Delete unused data variables</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <DialogTitle>Delete unused variables</DialogTitle>
+        <PanelContent as={Flex} gap="3" direction="column">
           {unusedVariables.length === 0 ? (
-            <Text>There are no unused data variables to delete.</Text>
+            <Text>There are no unused variables to delete.</Text>
           ) : (
             <>
               <Text>
-                Delete {unusedVariables.length} unused data{" "}
+                Delete {unusedVariables.length} unused{" "}
                 {unusedVariables.length === 1 ? "variable" : "variables"} from
                 the project?
               </Text>
@@ -284,7 +282,7 @@ export const DeleteUnusedDataVariablesDialog = () => {
                 css={{
                   maxHeight: 200,
                   overflowY: "auto",
-                  backgroundColor: theme.colors.backgroundPanel,
+                  backgroundColor: cssVar("--background-primary"),
                   borderRadius: theme.borderRadius[4],
                   wordBreak: "break-word",
                 }}
@@ -293,7 +291,7 @@ export const DeleteUnusedDataVariablesDialog = () => {
               </Text>
             </>
           )}
-        </Flex>
+        </PanelContent>
         <DialogActions>
           {unusedVariables.length > 0 && (
             <Button
@@ -303,10 +301,10 @@ export const DeleteUnusedDataVariablesDialog = () => {
                 const deletedCount = deleteUnusedDataVariables();
                 handleClose();
                 if (deletedCount === 0) {
-                  toast.info("No unused data variables to delete");
+                  toast.info("No unused variables to delete");
                 } else {
                   toast.success(
-                    `Deleted ${deletedCount} unused data ${deletedCount === 1 ? "variable" : "variables"}`
+                    `Deleted ${deletedCount} unused ${deletedCount === 1 ? "variable" : "variables"}`
                   );
                 }
               }}

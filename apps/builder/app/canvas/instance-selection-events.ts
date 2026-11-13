@@ -92,7 +92,10 @@ const handleSelect = (
       isRange: event.shiftKey,
     });
     selectInstances(nextSelection.selectedSelectors);
-    if (nextSelection.selectedSelectors.length !== 1) {
+    if (
+      nextSelection.selectedSelectors.length !== 1 &&
+      $ephemeralStyles.get().length > 0
+    ) {
       $ephemeralStyles.set([]);
     }
     rangeAnchorSelector.current = nextSelection.anchorSelector;
@@ -142,6 +145,7 @@ const handleEdit = (
         isContentMode: true,
         instanceSelector: editableInstanceSelector,
         instances,
+        props: $props.get(),
       }) === false
     ) {
       editableInstanceSelector = undefined;

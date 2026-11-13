@@ -16,7 +16,7 @@ run_step() {
     set -m
     restore_monitor_mode=true
   fi
-  "$@" &
+  "$@" </dev/null &
   local pid="$!"
   if [ "$restore_monitor_mode" = "true" ]; then
     set +m

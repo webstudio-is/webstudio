@@ -5,7 +5,7 @@ import {
 } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
-import { radix } from "./shared/meta";
+import { getRadixComponentId } from "./shared/component-id";
 import {
   propsCollapsible,
   propsCollapsibleContent,
@@ -17,7 +17,10 @@ export const metaCollapsible: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: ["instance"],
-    descendants: [radix.CollapsibleTrigger, radix.CollapsibleContent],
+    descendants: [
+      getRadixComponentId("CollapsibleTrigger"),
+      getRadixComponentId("CollapsibleContent"),
+    ],
   },
   states: [
     { label: "Open", selector: '[data-state="open"]' },
@@ -44,6 +47,12 @@ export const metaCollapsibleTrigger: WsComponentMeta = {
 };
 
 export const metaCollapsibleContent: WsComponentMeta = {
+  selectionReveal: {
+    type: "fixed",
+    ancestor: getRadixComponentId("Collapsible"),
+    prop: "open",
+    value: true,
+  },
   icon: ContentIcon,
   contentModel: {
     category: "none",

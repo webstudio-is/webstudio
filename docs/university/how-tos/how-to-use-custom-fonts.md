@@ -55,8 +55,6 @@ Each font stack contains fonts for:
 
 The browser reads the list and uses the first font it finds installed. Webstudio automatically outputs all the font variations for cross-platform compatibility.
 
-📝 Learn more in the [Webstudio December Update](https://docs.webstudio.is/news/december-update#id-6.-modern-font-stacks).
-
 ---
 
 ## Supported Font Formats
@@ -72,11 +70,15 @@ When uploading custom fonts, these formats are supported:
 
 - **Use WOFF2 format** when possible for smallest file size
 - **Limit font variations** — only upload weights you actually use
-- **Consider variable fonts** — one file contains multiple weights
+- **Upload upright and italic files together** when a family provides separate files. Webstudio reads each file's style metadata so the browser can select the correct face.
+- **Consider variable fonts** — one file can contain multiple weights and may also contain italic or slant variations
 
 ---
 
-![upload-font](../../.gitbook/assets/upload-font.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/upload-font-dark.png">
+  <img src="../../.gitbook/assets/upload-font-light.png" alt="Fonts picker beside the Typography Family control, with the Upload button in its header" width="480">
+</picture>
 
 ## Related
 

@@ -1,7 +1,7 @@
 import { CheckboxCheckedIcon, TriggerIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, span } from "@webstudio-is/sdk/normalize.css";
-import { radix } from "./shared/meta";
+import { getRadixComponentId } from "./shared/component-id";
 import { buttonReset } from "./shared/preset-styles";
 import {
   propsCheckbox,
@@ -13,7 +13,7 @@ export const metaCheckbox: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: ["instance"],
-    descendants: [radix.CheckboxIndicator],
+    descendants: [getRadixComponentId("CheckboxIndicator")],
   },
   states: [
     { label: "Checked", selector: '[data-state="checked"]' },

@@ -10,13 +10,14 @@ import {
 const createResult = (
   values: Partial<AgentEvaluationResult> = {}
 ): AgentEvaluationResult => ({
-  schemaVersion: 2,
+  schemaVersion: 3,
   kind: "high-impact-minimal-context-agent-evaluation-result",
   fixtureId: "authenticated-page-v1",
   outcome: "passed",
   cli: "source",
   provider: "openai",
   model: "test-model",
+  reasoningEffort: "low",
   commandSha256: "a".repeat(64),
   exitCode: 0,
   metrics: {
@@ -75,7 +76,14 @@ describe("evaluation regression comparison", () => {
       metrics: {
         ...baseline.metrics,
         durationMs: 1_100,
-        tokens: { ...baselineTokens, total: 1_600 },
+        tokens: {
+          ...baselineTokens,
+          input: 1_400,
+          cachedInput: 400,
+          uncachedInput: 1_000,
+          output: 600,
+          total: 2_000,
+        },
       },
     });
     const comparison = compareEvaluationResult(current, baseline);
@@ -88,20 +96,22 @@ describe("evaluation regression comparison", () => {
           current: 1_100,
         }),
         expect.objectContaining({
-          metric: "metrics.tokens.total",
-          baseline: 1_000,
-          current: 1_600,
+          metric: "metrics.tokens.output",
+          baseline: 200,
+          current: 600,
         }),
       ])
     );
     expect(comparison.regressions).toEqual([
       expect.objectContaining({
-        metric: "metrics.tokens.total",
-        allowed: 1_500,
+        metric: "metrics.tokens.output",
+        allowed: 300,
       }),
     ]);
 
     const noisyCurrent = structuredClone(baseline);
+    noisyCurrent.metrics.tokens!.input = 1_200;
+    noisyCurrent.metrics.tokens!.cachedInput = 800;
     noisyCurrent.metrics.tokens!.total = 1_400;
     expect(compareEvaluationResult(noisyCurrent, baseline)).toMatchObject({
       status: "passed",
@@ -126,6 +136,12 @@ describe("evaluation regression comparison", () => {
     expect(
       compareEvaluationResult(
         createResult({ model: "different-model" }),
+        baseline
+      )
+    ).toMatchObject({ status: "incompatible", deltas: [], regressions: [] });
+    expect(
+      compareEvaluationResult(
+        createResult({ reasoningEffort: "medium" }),
         baseline
       )
     ).toMatchObject({ status: "incompatible", deltas: [], regressions: [] });
@@ -277,6 +293,10 @@ describe("evaluation regression comparison", () => {
     if (regressionCurrent.metrics.tokens === undefined) {
       throw new Error("Expected token metrics");
     }
+    regressionCurrent.metrics.tokens.input = 1_800;
+    regressionCurrent.metrics.tokens.cachedInput = 400;
+    regressionCurrent.metrics.tokens.uncachedInput = 1_400;
+    regressionCurrent.metrics.tokens.output = 1_000;
     regressionCurrent.metrics.tokens.total = 2_000;
     const regressed = compareEvaluationResult(
       regressionCurrent,
@@ -357,7 +377,14 @@ describe("evaluation regression comparison", () => {
         ...result,
         metrics: {
           ...result.metrics,
-          tokens: { ...result.metrics.tokens!, total },
+          tokens: {
+            ...result.metrics.tokens!,
+            input: total,
+            cachedInput: 0,
+            uncachedInput: total,
+            output: total,
+            total,
+          },
         },
       };
     };
@@ -388,6 +415,28 @@ describe("evaluation regression comparison", () => {
       isAggregateTokenBaselineNonRegressed(
         [withTokens("authenticated-page-v1", 1_000)],
         []
+      )
+    ).toBe(true);
+    expect(
+      isAggregateTokenBaselineNonRegressed(
+        [withTokens("authenticated-page-v1", 1_000)],
+        [
+          {
+            ...withTokens("authenticated-page-v1", 1),
+            reasoningEffort: "medium",
+          },
+        ]
+      )
+    ).toBe(true);
+    expect(
+      isAggregateTokenBaselineNonRegressed(
+        [withTokens("authenticated-page-v1", 1_000)],
+        [
+          {
+            ...withTokens("authenticated-page-v1", 1),
+            schemaVersion: 2,
+          } as unknown as AgentEvaluationResult,
+        ]
       )
     ).toBe(true);
   });

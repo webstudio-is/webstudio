@@ -1,6 +1,6 @@
-import { nanoid } from "nanoid";
 import { toValue } from "@webstudio-is/css-engine";
 import {
+  createId,
   getStyleDeclKey,
   ROOT_INSTANCE_ID,
   type Breakpoint,
@@ -13,6 +13,8 @@ import {
   type Styles,
 } from "@webstudio-is/sdk";
 import { getUniqueNameWithSuffix } from "./style-utils";
+
+const createNanoId = () => createId("nano");
 
 export type ConflictResolution = "ours" | "theirs" | "merge";
 export type RootStyleConflictResolution = "ours" | "theirs";
@@ -154,7 +156,8 @@ export const findTokenWithMatchingStyles = ({
   | { hasConflict: false; matchingToken: undefined } => {
   // Find tokens with the same name
   const tokensWithSameName = existingTokens.filter(
-    (token) => token.type === "token" && token.name === tokenName
+    (token): token is Extract<StyleSource, { type: "token" }> =>
+      token.type === "token" && token.name === tokenName
   );
 
   if (tokensWithSameName.length === 0) {
@@ -173,9 +176,6 @@ export const findTokenWithMatchingStyles = ({
 
   // Check if any existing token with the same name has matching styles
   for (const existing of tokensWithSameName) {
-    if (existing.type !== "token") {
-      continue;
-    }
     const existingSignature = getStyleSourceStylesSignature(
       existing.id,
       existingStyles,
@@ -205,6 +205,7 @@ export type TokenConflict = {
 export const detectTokenConflicts = ({
   fragmentStyleSources,
   fragmentStyles,
+  referenceTokenIds,
   existingStyleSources,
   existingStyles,
   breakpoints,
@@ -212,6 +213,7 @@ export const detectTokenConflicts = ({
 }: {
   fragmentStyleSources: StyleSource[];
   fragmentStyles: StyleDecl[];
+  referenceTokenIds?: Set<string>;
   existingStyleSources: StyleSources;
   existingStyles: Styles;
   breakpoints: Map<Breakpoint["id"], Breakpoint>;
@@ -222,7 +224,10 @@ export const detectTokenConflicts = ({
   const comparedStyles = Array.from(existingStyles.values());
 
   for (const styleSource of fragmentStyleSources) {
-    if (styleSource.type !== "token") {
+    if (
+      styleSource.type !== "token" ||
+      referenceTokenIds?.has(styleSource.id)
+    ) {
       continue;
     }
 
@@ -286,15 +291,17 @@ export const detectTokenConflicts = ({
 export const insertStyleSources = ({
   fragmentStyleSources,
   fragmentStyles,
+  referencedTokenIds,
   existingStyleSources,
   existingStyles,
   breakpoints,
   mergedBreakpointIds,
   conflictResolution = "theirs",
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   fragmentStyleSources: StyleSource[];
   fragmentStyles: StyleDecl[];
+  referencedTokenIds?: Map<string, string>;
   existingStyleSources: StyleSources;
   existingStyles: Styles;
   breakpoints: Map<Breakpoint["id"], Breakpoint>;
@@ -341,12 +348,16 @@ export const insertStyleSources = ({
   };
 
   for (const styleSource of fragmentStyleSources) {
-    if (styleSource.type === "local") {
+    if (styleSource.type !== "token") {
       continue;
     }
-    styleSource.type satisfies "token";
 
     const originalFragmentTokenId = styleSource.id;
+    const referencedTokenId = referencedTokenIds?.get(originalFragmentTokenId);
+    if (referencedTokenId !== undefined) {
+      styleSourceIdMap.set(originalFragmentTokenId, referencedTokenId);
+      continue;
+    }
     const newTokenId = createId();
 
     // Check if there's an existing token with the same name
@@ -446,6 +457,7 @@ export const insertStyleSources = ({
 export const insertTokenStyleSources = ({
   fragmentStyleSources,
   fragmentStyles,
+  referencedTokenIds,
   styleSources,
   styles,
   breakpoints,
@@ -455,6 +467,7 @@ export const insertTokenStyleSources = ({
 }: {
   fragmentStyleSources: StyleSource[];
   fragmentStyles: StyleDecl[];
+  referencedTokenIds?: Map<string, string>;
   styleSources: StyleSources;
   styles: Styles;
   breakpoints: Map<Breakpoint["id"], Breakpoint>;
@@ -466,6 +479,7 @@ export const insertTokenStyleSources = ({
     insertStyleSources({
       fragmentStyleSources,
       fragmentStyles,
+      referencedTokenIds,
       existingStyleSources: styleSources,
       existingStyles: styles,
       breakpoints,
@@ -598,7 +612,7 @@ export const insertLocalStyleSourcesWithNewIds = ({
   styleSources,
   styleSourceSelections,
   styles,
-  createId = nanoid,
+  createId = createNanoId,
   contentMode = false,
   breakpoints,
   styleSourceIdMap = new Map(),
@@ -698,7 +712,14 @@ export const insertLocalStyleSourcesWithNewIds = ({
     }
     styleSourceSelections.set(targetInstanceId, {
       instanceId: targetInstanceId,
-      values: newStyleSourceIds,
+      // Global root is shared by every page, so importing a fragment must
+      // preserve its existing tokens and their cascade order.
+      values:
+        contentMode === false && instanceId === ROOT_INSTANCE_ID
+          ? Array.from(
+              new Set([...existingStyleSourceIds, ...newStyleSourceIds])
+            )
+          : newStyleSourceIds,
     });
   }
 

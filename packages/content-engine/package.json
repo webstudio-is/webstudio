@@ -10,7 +10,7 @@
   "scripts": {
     "benchmark:index": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-index.mjs",
     "benchmark:scale": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-scale.mjs",
-    "build": "rm -rf lib && esbuild src/index.ts src/compiler.ts src/limits.ts src/markdown-assets.ts src/markdown-references.ts src/published-runtime.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/byte-stream.ts src/asset-content-repository.ts src/asset-content-session.ts src/compiler.ts src/jsx-attributes.ts src/limits.ts src/markdown-assets.ts src/markdown-references.ts src/mdx.ts src/published-runtime.ts src/remark-github-alerts.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -19,16 +19,32 @@
     "@hyperjump/json-pointer": "1.1.2",
     "@webstudio-is/expression": "workspace:*",
     "@webstudio-is/query-builder": "workspace:*",
+    "ajv": "8.20.0",
     "canonicalize": "3.0.0",
+    "estree-util-is-identifier-name": "3.0.0",
+    "hast-util-to-mdast": "9.0.0",
+    "html-tags": "^4.0.0",
     "lru-cache": "10.4.3",
+    "mdast-util-gfm": "2.0.2",
+    "mdast-util-mdx-expression": "1.3.2",
+    "mdast-util-mdx-jsx": "2.1.4",
+    "mdast-util-to-hast": "12.3.0",
+    "mdast-util-to-markdown": "1.5.0",
     "micromark": "4.0.2",
+    "micromark-extension-mdxjs": "3.0.0",
     "micromark-util-decode-string": "2.0.1",
+    "remark-frontmatter": "4.0.1",
+    "remark-gfm": "3.0.1",
+    "remark-mdx": "2.3.0",
     "remark-parse": "10.0.2",
+    "svg-tags": "1.0.0",
     "unified": "10.1.2",
+    "urlpattern-polyfill": "^10.1.0",
     "yaml": "2.9.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/svg-tags": "1.0.2",
     "@webstudio-is/tsconfig": "workspace:*",
     "esbuild": "^0.25.3",
     "vitest": "^3.1.2"
@@ -40,11 +56,29 @@
       "import": "./lib/index.js",
       "default": "./src/index.ts"
     },
+    "./byte-stream": {
+      "webstudio": "./src/byte-stream.ts",
+      "types": "./lib/types/byte-stream.d.ts",
+      "import": "./lib/byte-stream.js",
+      "default": "./src/byte-stream.ts"
+    },
     "./compiler": {
       "webstudio": "./src/compiler.ts",
       "types": "./lib/types/compiler.d.ts",
       "import": "./lib/compiler.js",
       "default": "./src/compiler.ts"
+    },
+    "./asset-content-repository": {
+      "webstudio": "./src/asset-content-repository.ts",
+      "types": "./lib/types/asset-content-repository.d.ts",
+      "import": "./lib/asset-content-repository.js",
+      "default": "./src/asset-content-repository.ts"
+    },
+    "./asset-content-session": {
+      "webstudio": "./src/asset-content-session.ts",
+      "types": "./lib/types/asset-content-session.d.ts",
+      "import": "./lib/asset-content-session.js",
+      "default": "./src/asset-content-session.ts"
     },
     "./runtime": {
       "webstudio": "./src/published-runtime.ts",
@@ -58,17 +92,35 @@
       "import": "./lib/limits.js",
       "default": "./src/limits.ts"
     },
+    "./jsx-attributes": {
+      "webstudio": "./src/jsx-attributes.ts",
+      "types": "./lib/types/jsx-attributes.d.ts",
+      "import": "./lib/jsx-attributes.js",
+      "default": "./src/jsx-attributes.ts"
+    },
     "./markdown-assets": {
       "webstudio": "./src/markdown-assets.ts",
       "types": "./lib/types/markdown-assets.d.ts",
       "import": "./lib/markdown-assets.js",
       "default": "./src/markdown-assets.ts"
     },
+    "./remark-github-alerts": {
+      "webstudio": "./src/remark-github-alerts.ts",
+      "types": "./lib/types/remark-github-alerts.d.ts",
+      "import": "./lib/remark-github-alerts.js",
+      "default": "./src/remark-github-alerts.ts"
+    },
     "./markdown-references": {
       "webstudio": "./src/markdown-references.ts",
       "types": "./lib/types/markdown-references.d.ts",
       "import": "./lib/markdown-references.js",
       "default": "./src/markdown-references.ts"
+    },
+    "./mdx": {
+      "webstudio": "./src/mdx.ts",
+      "types": "./lib/types/mdx.d.ts",
+      "import": "./lib/mdx.js",
+      "default": "./src/mdx.ts"
     }
   },
   "files": [

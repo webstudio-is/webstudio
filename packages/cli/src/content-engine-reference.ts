@@ -13,6 +13,20 @@ type ReferenceRow = Readonly<{
   description: string;
 }>;
 
+export const structuredAssetImageRecipe = {
+  frontmatter: {
+    featureImage: { $ref: "./assets/hero.png" },
+  },
+  outputFields: [
+    ["properties", "featureImage", "src"],
+    ["properties", "featureImage", "description"],
+  ],
+  bindings: {
+    src: "post.properties.featureImage.src",
+    alt: "post.properties.featureImage.description ?? post.properties.title",
+  },
+} as const;
+
 const formatBytes = (bytes: number) => {
   if (bytes % (1024 * 1024) === 0) {
     return `${bytes / (1024 * 1024)} MiB`;
@@ -72,15 +86,21 @@ const contentRows = [
   },
   {
     value: "full",
-    description: `Embeds the complete UTF-8 file content in the content database. \`maxBytes\` defaults to ${formatBytes(contentEngineLimits.hydratedFileBytes)} and cannot be set higher. The query fails if a selected file is larger.`,
+    description: `Embeds the complete UTF-8 file content in the content database. \`maxBytes\` defaults to ${formatBytes(
+      contentEngineLimits.hydratedFileBytes
+    )} and cannot be set higher. The query fails if a selected file is larger.`,
   },
   {
     value: "range",
-    description: `Embeds a byte range selected by \`offset\` and \`length\` in the content database. \`length\` cannot exceed ${formatBytes(contentEngineLimits.hydratedRangeBytes)}.`,
+    description: `Embeds a byte range selected by \`offset\` and \`length\` in the content database. \`length\` cannot exceed ${formatBytes(
+      contentEngineLimits.hydratedRangeBytes
+    )}.`,
   },
   {
     value: "markdown-body-ref",
-    description: `Stores a reference to a Markdown body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. \`maxBytes\` defaults to ${formatBytes(contentEngineLimits.hydratedFileBytes)} and cannot be set higher. The query fails if a selected source file is larger.`,
+    description: `Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. \`maxBytes\` defaults to ${formatBytes(
+      contentEngineLimits.hydratedFileBytes
+    )} and cannot be set higher. The query fails if a selected source file is larger.`,
   },
 ] as const satisfies readonly ReferenceRow[];
 
@@ -95,6 +115,20 @@ const diagnosticRows = [
 ] as const;
 
 const optionalDiagnosticRows = [
+  [
+    "`queryIssues`",
+    "Structured nonfatal query warnings with a stable code and exact query path.",
+  ],
+  [
+    "`queryWarnings`",
+    "Deprecated plain-text query warnings retained for compatibility.",
+  ],
+  [
+    "`issues`",
+    "All content errors and warnings found in files matched by the current query. Each diagnostic identifies its phase, code, message, asset, path, and source location when available.",
+  ],
+  ["`issueCount`", "Total errors and warnings in `issues`."],
+  ["`issuesTruncated`", "Always `false`; retained for response compatibility."],
   [
     "`artifacts`",
     "Optional query and merged compiled artifacts used by detailed Builder diagnostics.",
@@ -116,6 +150,7 @@ const documentedLimitKeys = [
   "resultCount",
   "resultBytes",
   "candidateDocuments",
+  "documentGraphDocuments",
   "databaseBytes",
   "frontmatterBytes",
   "frontmatterDepth",
@@ -127,6 +162,9 @@ const documentedLimitKeys = [
   "jsonStringBytes",
   "indexedPropertiesBytes",
   "excerptBytes",
+  "mdxDepth",
+  "mdxNodes",
+  "mdxProps",
   "hydratedFileBytes",
   "hydratedTotalBytes",
   "hydratedFileCount",
@@ -153,7 +191,9 @@ const assertSameValues = ({
   const implementedValues = [...implemented].sort();
   if (JSON.stringify(documentedValues) !== JSON.stringify(implementedValues)) {
     throw new Error(
-      `${label} documentation is out of sync: documented ${documentedValues.join(", ")}; implemented ${implementedValues.join(", ")}`
+      `${label} documentation is out of sync: documented ${documentedValues.join(
+        ", "
+      )}; implemented ${implementedValues.join(", ")}`
     );
   }
 };
@@ -241,6 +281,10 @@ const queryLimitsTable = table({
     ["Default result count", String(contentEngineLimits.defaultResultCount)],
     ["Maximum result count", String(contentEngineLimits.resultCount)],
     ["Candidate documents", String(contentEngineLimits.candidateDocuments)],
+    [
+      "Documents in a reference graph",
+      String(contentEngineLimits.documentGraphDocuments),
+    ],
     ["Serialized query result", formatBytes(contentEngineLimits.resultBytes)],
     [
       "Published content database",
@@ -252,7 +296,10 @@ const queryLimitsTable = table({
 const contentLimitsTable = table({
   headings: ["Limit", "Value"],
   rows: [
-    ["Markdown frontmatter", formatBytes(contentEngineLimits.frontmatterBytes)],
+    [
+      "Markdown/MDX frontmatter",
+      formatBytes(contentEngineLimits.frontmatterBytes),
+    ],
     ["Frontmatter nesting depth", String(contentEngineLimits.frontmatterDepth)],
     ["Frontmatter fields", String(contentEngineLimits.frontmatterFields)],
     [
@@ -268,6 +315,9 @@ const contentLimitsTable = table({
       formatBytes(contentEngineLimits.indexedPropertiesBytes),
     ],
     ["Generated excerpt", formatBytes(contentEngineLimits.excerptBytes)],
+    ["MDX nesting depth", String(contentEngineLimits.mdxDepth)],
+    ["MDX nodes", String(contentEngineLimits.mdxNodes)],
+    ["MDX properties", String(contentEngineLimits.mdxProps)],
     ["Loaded file", formatBytes(contentEngineLimits.hydratedFileBytes)],
     [
       "Loaded content per query",
@@ -294,13 +344,13 @@ export const renderContentEngineReferenceMarkdown = ({
   return [
     `${"#".repeat(headingLevel)} Content Engine reference`,
     "",
-    "Assets resources query Markdown and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.",
+    "Assets resources query Markdown, MDX, and JSON files stored in the Assets panel. The Builder and Webstudio MCP use the same structured query contract.",
     "",
     heading(1, "MCP workflow"),
     "",
     "Use these tools in order when creating or changing an Assets resource:",
     "",
-    "1. Call `get-asset-field-catalog` to inspect standard fields and the fields currently observed in Markdown frontmatter and JSON files.",
+    "1. Call `get-asset-field-catalog` to inspect standard fields and the fields currently observed in Markdown or MDX frontmatter and JSON files.",
     "2. Call `validate-asset-query` to check the query structure, field paths, operators, and bounded operation counts.",
     "3. Call `preview-asset-query` with concrete values and inspect its results and diagnostics.",
     "4. Save the query with `create-assets-resource` or `update-assets-resource`.",
@@ -310,7 +360,7 @@ export const renderContentEngineReferenceMarkdown = ({
     "",
     heading(1, "Fields"),
     "",
-    "Every asset has the standard fields below. Markdown frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.",
+    "Every asset has the standard fields below. Markdown or MDX frontmatter and JSON root fields appear under `properties`, for example `properties.slug` or `properties.author.name`. The field catalog reports their observed types, occurrence counts, optionality, and mixed-type state. A JSON content file must contain an object at its root.",
     "",
     standardFieldsTable,
     "",
@@ -321,6 +371,7 @@ export const renderContentEngineReferenceMarkdown = ({
     operatorsTable,
     "",
     "The field catalog determines which operators fit a schemaless `properties` field. `exists` and `isEmpty` take a boolean. `in` takes an array. Other operators take one JSON value.",
+    "When filtering `path`, enter the visible folder and file names, such as `Tutorial posts/article.mdx`; Webstudio handles canonical URL encoding. Existing encoded path filters remain supported.",
     "",
     heading(1, "Saved values and preview values"),
     "",
@@ -360,11 +411,40 @@ export const renderContentEngineReferenceMarkdown = ({
       .map((field) => `\`${field}\``)
       .join(", ")}. Every result includes \`id\`.`,
     "",
+    heading(1, "Asset reference metadata"),
+    "",
+    "A plain local asset path in Markdown or MDX frontmatter, or in JSON properties, keeps the backward-compatible URL string result. Wrap the path in an exact `$ref` object only when consumers need structured Asset Manager metadata:",
+    "",
+    "```yaml",
+    "featureImage:",
+    `  $ref: ${structuredAssetImageRecipe.frontmatter.featureImage.$ref}`,
+    "```",
+    "",
+    "The reference declares only the relationship. The query decides which metadata enters its result and published database. A complete `properties.featureImage` selection returns the Asset Manager asset metadata together with its resolved `src`. This includes fields such as `id`, `name`, `description`, `mimeType`, `width`, and `height`; new asset metadata becomes available to references without changing the document. Select only the nested fields the page uses:",
+    "",
+    "```json",
+    "{",
+    '  "output": {',
+    '    "mode": "fields",',
+    '    "includeMetadata": false,',
+    '    "fields": [',
+    '      ["properties", "title"],',
+    `      [${structuredAssetImageRecipe.outputFields[0].map((part) => JSON.stringify(part)).join(", ")}],`,
+    `      [${structuredAssetImageRecipe.outputFields[1].map((part) => JSON.stringify(part)).join(", ")}]`,
+    "    ]",
+    "  }",
+    "}",
+    "```",
+    "",
+    `The selected value becomes an object. Bind an Image source to \`${structuredAssetImageRecipe.bindings.src}\` and its alternative text to \`${structuredAssetImageRecipe.bindings.alt}\`. A missing description therefore falls back to the article title without duplicating text in frontmatter.`,
+    "",
+    "External URLs remain ordinary strings. Existing local path strings also keep their URL string shape, so adopting structured references does not change existing queries or bindings.",
+    "",
     heading(1, "Content modes"),
     "",
     renderRows(contentRows),
     "",
-    "Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for article pages. It keeps article bodies out of the published content database and resolves relative Markdown links when the selected body is loaded.",
+    "Returned content has `encoding` and `text`. A range also reports its `offset`, returned `length`, and total file size. Use `markdown-body-ref` for Markdown or MDX article pages. It keeps article bodies out of the published content database and resolves relative links when the selected body is loaded.",
     "",
     heading(1, "Preview diagnostics"),
     "",
@@ -380,7 +460,7 @@ export const renderContentEngineReferenceMarkdown = ({
       rows: [...diagnosticRows, ...optionalDiagnosticRows],
     }),
     "",
-    "If the merged database approaches its limit, remove duplicate reachable resources first. Then remove unused output fields or narrow the candidate documents. Prefer `markdown-body-ref` over embedded `full` content for Markdown articles.",
+    "If the merged database approaches its limit, remove duplicate reachable resources first. Then remove unused output fields or narrow the candidate documents. Prefer `markdown-body-ref` over embedded `full` content for Markdown or MDX articles.",
     "",
     heading(1, "Document references"),
     "",
@@ -390,7 +470,7 @@ export const renderContentEngineReferenceMarkdown = ({
     '{ "$ref": "<relative-path>[#<fragment>]" }',
     "```",
     "",
-    "Markdown references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Either format can reference Markdown or JSON. References do not run inside a Markdown body.",
+    "Markdown and MDX references can appear in YAML frontmatter. JSON references can appear anywhere in the document. Any format can reference Markdown, MDX, or JSON. References do not run inside a Markdown or MDX body.",
     "",
     table({
       headings: ["Reference", "Inserted value"],

@@ -16,6 +16,9 @@ import { markdownFrontmatterEnvelopeBytes } from "./markdown-scanner";
 const isMarkdown = (entry: CanonicalAssetFileEntry) =>
   entry.document.extension.toLowerCase() === "md";
 
+const hasMarkdownFrontmatter = (entry: CanonicalAssetFileEntry) =>
+  isMarkdown(entry) || entry.document.extension.toLowerCase() === "mdx";
+
 const isJson = (entry: CanonicalAssetFileEntry) =>
   entry.document.extension.toLowerCase() === "json";
 
@@ -108,14 +111,23 @@ export const prepareCanonicalContentMetadata = async ({
   const needsExcerpt =
     requirements.excerpt && cachedRequirements.excerpt === false;
 
-  if (isMarkdown(base) && (needsProperties || needsExcerpt)) {
-    // Frontmatter discovery needs only the bounded opening block. Excerpt
-    // generation still receives the larger Markdown body budget.
-    const maximumBytes = needsExcerpt
-      ? contentEngineLimits.hydratedFileBytes
-      : contentEngineLimits.frontmatterBytes + markdownFrontmatterEnvelopeBytes;
+  if (
+    (hasMarkdownFrontmatter(base) && needsProperties) ||
+    (isMarkdown(base) && needsExcerpt)
+  ) {
+    // Frontmatter discovery needs only the bounded opening block. Markdown
+    // excerpt generation still receives the larger body budget.
+    const maximumBytes =
+      isMarkdown(base) && needsExcerpt
+        ? contentEngineLimits.hydratedFileBytes
+        : contentEngineLimits.frontmatterBytes +
+          markdownFrontmatterEnvelopeBytes;
     let bytes = await readBytes(Math.min(base.document.size, maximumBytes));
-    if (needsExcerpt && base.document.size > bytes.byteLength) {
+    if (
+      isMarkdown(base) &&
+      needsExcerpt &&
+      base.document.size > bytes.byteLength
+    ) {
       bytes = trimIncompleteUtf8Suffix(bytes);
     }
     if (needsProperties) {
@@ -125,17 +137,30 @@ export const prepareCanonicalContentMetadata = async ({
         if (error instanceof MarkdownMetadataError === false) {
           throw error;
         }
-        metadataError = { code: error.code, message: error.message };
+        const reason =
+          error.cause instanceof Error ? error.cause.message : undefined;
+        metadataError = {
+          code: error.code,
+          message: reason ?? error.message,
+          ...(reason === undefined ? {} : { reason }),
+          ...(error.line === undefined ? {} : { line: error.line }),
+          ...(error.column === undefined ? {} : { column: error.column }),
+        };
       }
     }
-    if (needsExcerpt) {
+    if (isMarkdown(base) && needsExcerpt) {
       try {
         excerpt = (await extractMarkdownBodyAndExcerpt(bytes)).excerpt;
       } catch (error) {
         if (error instanceof MarkdownMetadataError === false) {
           throw error;
         }
-        metadataError ??= { code: error.code, message: error.message };
+        metadataError ??= {
+          code: error.code,
+          message: error.message,
+          ...(error.line === undefined ? {} : { line: error.line }),
+          ...(error.column === undefined ? {} : { column: error.column }),
+        };
       }
     }
   } else if (isJson(base) && needsProperties) {

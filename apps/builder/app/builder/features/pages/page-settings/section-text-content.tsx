@@ -3,13 +3,13 @@ import { useStore } from "@nanostores/react";
 import { Grid, Label, Text, TextArea } from "@webstudio-is/design-system";
 import { isLiteralExpression } from "@webstudio-is/expression";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
-import { computeExpression } from "@webstudio-is/project-build/runtime";
 import type {
   PageSettingsErrors,
   PageSettingsValues,
 } from "@webstudio-is/project-build/runtime";
 import { $pageRootScope } from "../page-utils";
 import type { OnChange } from "./shared";
+import { usePageSettingsText } from "./shared";
 
 export const TextContentSection = ({
   values,
@@ -30,9 +30,7 @@ export const TextContentSection = ({
         <Label htmlFor={contentId}>Text</Label>
         <BindableExpressionControl
           expression={values.content}
-          value={String(
-            computeExpression(values.content, variableValues) ?? ""
-          )}
+          value={usePageSettingsText(values.content, variableValues)}
           bound={isLiteralExpression(values.content) === false}
           scope={scope}
           aliases={aliases}

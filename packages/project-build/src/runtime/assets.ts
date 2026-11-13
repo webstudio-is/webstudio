@@ -25,12 +25,14 @@ import {
   fileAsset,
   fontAsset,
   imageAsset,
+  videoAsset,
 } from "@webstudio-is/sdk";
 import {
   appendOptionalPropertyPatch,
   type BuilderPatchChange,
 } from "../contracts/patch";
 import {
+  InvalidCursorError,
   paginateOutput,
   projectOutput,
   type PaginatedOutputInput,
@@ -47,7 +49,7 @@ import { createRuntimeMutation } from "./mutation";
 import { createCopyName } from "./copy-name";
 import type { BuilderRuntimeContext } from "./context";
 import {
-  collectFontFamiliesFromStyleValue,
+  collectFontFamiliesFromStyleDecls,
   traverseStyleValue,
 } from "./style-utils";
 
@@ -105,7 +107,7 @@ export const assetUpdateInput = z.object({
       folderId: z.union([z.string().min(1), z.null()]).optional(),
       meta: assetMetaUpdate
         .describe(
-          "Type-specific metadata: family/style/weight or variationAxes for fonts, width/height for images, and no fields for generic files."
+          "Type-specific metadata: family and style plus weight for static fonts or variationAxes for variable fonts, width/height for images and videos, and no fields for generic files."
         )
         .optional(),
     })
@@ -174,6 +176,7 @@ export const imageDescriptionsSetInput = z
 const addableAsset = z.union([
   fontAsset.omit({ projectId: true }),
   imageAsset.omit({ projectId: true }),
+  videoAsset.omit({ projectId: true }),
   fileAsset.omit({ projectId: true }),
 ]);
 
@@ -278,6 +281,12 @@ export const replaceAssetMutable = ({
   styles: Iterable<StyleDecl>;
   replacement: AssetStyleValueReplacement;
 }) => {
+  if (
+    replacement.fromAssetId === replacement.toAssetId &&
+    replacement.fromFontFamily === replacement.toFontFamily
+  ) {
+    return;
+  }
   if (projectSettings?.meta.faviconAssetId === replacement.fromAssetId) {
     projectSettings.meta.faviconAssetId = replacement.toAssetId;
   }
@@ -321,10 +330,12 @@ export const calculateUsagesByAssetId = ({
     usagesByAsset.set(assetId, usages);
   };
 
-  const fontFamilyToAssetId = new Map<string, Asset["id"]>();
+  const fontFamilyToAssetIds = new Map<string, Asset["id"][]>();
   for (const asset of assets.values()) {
     if (asset.type === "font") {
-      fontFamilyToAssetId.set(asset.meta.family, asset.id);
+      const assetIds = fontFamilyToAssetIds.get(asset.meta.family) ?? [];
+      assetIds.push(asset.id);
+      fontFamilyToAssetIds.set(asset.meta.family, assetIds);
     }
   }
 
@@ -366,18 +377,22 @@ export const calculateUsagesByAssetId = ({
         });
       }
     });
-    for (const fontFamily of collectFontFamiliesFromStyleValue(
-      styleDecl.value
-    )) {
-      const assetId = fontFamilyToAssetId.get(fontFamily);
-      if (assetId !== undefined) {
-        addUsage(assetId, {
-          type: "style",
-          styleDeclKey,
-        });
+  }
+  const styleDeclKeys = new Map(
+    Array.from(styles, ([styleDeclKey, styleDecl]) => [styleDecl, styleDeclKey])
+  );
+  collectFontFamiliesFromStyleDecls(
+    styles.values(),
+    (fontFamily, styleDecl) => {
+      const styleDeclKey = styleDeclKeys.get(styleDecl);
+      if (styleDeclKey === undefined) {
+        return;
+      }
+      for (const assetId of fontFamilyToAssetIds.get(fontFamily) ?? []) {
+        addUsage(assetId, { type: "style", styleDeclKey });
       }
     }
-  }
+  );
   return usagesByAsset;
 };
 
@@ -599,6 +614,9 @@ const assertAssetFolderExists = (
   }
 };
 
+// Asset metadata alone cannot identify collection entries. Persistence validates
+// the resulting files against collection.json; the UI uses its loaded patterns.
+
 export const addAsset = (
   state: Pick<BuilderState, "assets" | "assetFolders">,
   input: z.infer<typeof assetAddInput>,
@@ -644,14 +662,16 @@ export const duplicateAsset = (
       : (input.folderId ?? undefined);
   assertAssetFolderExists(state.assetFolders, folderId);
 
-  const displayFilenames = new Set(
-    Array.from(assets.values(), getAssetDisplayFilename)
+  const logicalFilenames = new Set(
+    Array.from(assets.values())
+      .filter((candidate) => candidate.folderId === folderId)
+      .map(formatAssetName)
   );
   const duplicatedAsset: Asset = {
     ...asset,
     id: context.createId(),
     filename: createCopyName(getAssetDisplayFilename(asset), (candidate) =>
-      displayFilenames.has(candidate)
+      logicalFilenames.has(formatAssetName({ ...asset, filename: candidate }))
     ),
     folderId,
   };
@@ -700,14 +720,6 @@ export const updateAsset = (
     if (isValidFilename(input.values.filename) === false) {
       return throwBuilderRuntimeError("BAD_REQUEST", "Invalid filename");
     }
-    for (const currentAsset of assets.values()) {
-      if (
-        currentAsset.id !== asset.id &&
-        getAssetDisplayFilename(currentAsset) === input.values.filename
-      ) {
-        return throwBuilderRuntimeError("CONFLICT", "Filename already used");
-      }
-    }
     if (asset.filename !== input.values.filename) {
       appendOptionalPropertyPatch(patches, {
         path: [asset.id, "filename"],
@@ -734,6 +746,27 @@ export const updateAsset = (
       previous: asset.folderId,
       next: folderId,
     });
+  }
+
+  const nextFolderId =
+    input.values.folderId === null
+      ? undefined
+      : (input.values.folderId ?? asset.folderId);
+  const nextLogicalFilename = formatAssetName({
+    ...asset,
+    filename: input.values.filename ?? asset.filename,
+  });
+  if (
+    (nextFolderId !== asset.folderId ||
+      nextLogicalFilename !== formatAssetName(asset)) &&
+    Array.from(assets.values()).some(
+      (candidate) =>
+        candidate.id !== asset.id &&
+        candidate.folderId === nextFolderId &&
+        formatAssetName(candidate) === nextLogicalFilename
+    )
+  ) {
+    return throwBuilderRuntimeError("CONFLICT", "Filename already used");
   }
 
   return createRuntimeMutation({
@@ -817,7 +850,7 @@ const countResourceAssetReferences = (resource: Resource, assetId: string) =>
     assetId
   );
 
-const countDataSourceAssetReferences = (
+export const countDataSourceAssetReferences = (
   dataSource: DataSource,
   assetId: string
 ) =>
@@ -1044,7 +1077,7 @@ export const listAssets = (
       input,
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "Invalid asset cursor") {
+    if (error instanceof InvalidCursorError) {
       return throwBuilderRuntimeError("BAD_REQUEST", error.message);
     }
     throw error;
@@ -1091,6 +1124,17 @@ export const replaceAsset = (
     return throwBuilderRuntimeError("NOT_FOUND", "Asset not found");
   }
   const build = getRequiredAssetReferenceBuild(state);
+  let hasFontVariableUsage = false;
+  if (fromAsset.type === "font") {
+    collectFontFamiliesFromStyleDecls(
+      build.styles,
+      (family, _styleDecl, fromVariable) => {
+        if (fromVariable && family === fromAsset.meta.family) {
+          hasFontVariableUsage = true;
+        }
+      }
+    );
+  }
   const unrewritableUsages = createAssetUsageList({
     asset: fromAsset,
     assets,
@@ -1099,7 +1143,7 @@ export const replaceAsset = (
     (usage) =>
       usage.namespace === "resources" || usage.namespace === "dataSources"
   );
-  if (unrewritableUsages.length > 0) {
+  if (unrewritableUsages.length > 0 || hasFontVariableUsage) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Asset is referenced in resources or variables. Update those references before replacing the asset."

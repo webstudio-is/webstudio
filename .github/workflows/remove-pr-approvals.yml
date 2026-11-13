@@ -1,0 +1,37 @@
+name: Remove PR approvals
+
+# Keep synchronization-only housekeeping out of label-triggered workflows.
+on:
+  pull_request_target:
+    types: [synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  remove-approvals:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove revision-specific approval labels
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const labels = new Set(
+              context.payload.pull_request.labels.map(({ name }) => name)
+            );
+            for (const name of ['safe-to-deploy', 'visual-change-approved']) {
+              if (labels.has(name) === false) {
+                continue;
+              }
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name,
+              });
+            }

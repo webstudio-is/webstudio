@@ -12,14 +12,12 @@ export default {
 
 const colors: ReadonlyArray<ComponentProps<typeof ButtonComponent>["color"]> = [
   "primary",
+  "positive",
   "neutral",
   "destructive",
   "neutral-destructive",
-  "positive",
   "ghost",
-  "dark",
-  "gradient",
-  "dark-ghost",
+  "ghost-destructive",
 ];
 
 const states: ReadonlyArray<ComponentProps<typeof ButtonComponent>["state"]> = [
@@ -35,15 +33,7 @@ export const Button = () => (
     <StorySection title="Colors & States">
       <StoryGrid>
         {colors.map((color) => (
-          <StoryGrid
-            horizontal
-            key={color}
-            css={
-              color === "dark-ghost"
-                ? { backgroundColor: "#1E1E1E", padding: 8 }
-                : undefined
-            }
-          >
+          <StoryGrid horizontal key={color}>
             {states.map((state) => (
               <ButtonComponent
                 prefix={<TrashIcon />}
@@ -69,9 +59,13 @@ export const Button = () => (
 
     <StorySection title="Icon">
       <StoryGrid horizontal>
-        <ButtonComponent prefix={<TrashIcon />}>Button</ButtonComponent>
-        <ButtonComponent suffix={<TrashIcon />}>Button</ButtonComponent>
-        <ButtonComponent prefix={<TrashIcon />} />
+        <ButtonComponent color="primary" prefix={<TrashIcon />}>
+          Button
+        </ButtonComponent>
+        <ButtonComponent color="primary" suffix={<TrashIcon />}>
+          Button
+        </ButtonComponent>
+        <ButtonComponent color="primary" prefix={<TrashIcon />} />
       </StoryGrid>
     </StorySection>
 
@@ -81,8 +75,10 @@ export const Button = () => (
           alignItems: "flex-start",
         }}
       >
-        <ButtonComponent>Any content to preserve size</ButtonComponent>
-        <ButtonComponent state="pending">
+        <ButtonComponent color="primary">
+          Any content to preserve size
+        </ButtonComponent>
+        <ButtonComponent color="primary" state="pending">
           Any content to preserve size
         </ButtonComponent>
       </StoryGrid>
@@ -91,7 +87,9 @@ export const Button = () => (
     <StorySection title="Used as a Trigger for something that opens">
       <Popover defaultOpen>
         <PopoverTrigger asChild>
-          <ButtonComponent prefix={<TrashIcon />}>Open</ButtonComponent>
+          <ButtonComponent color="primary" prefix={<TrashIcon />}>
+            Open
+          </ButtonComponent>
         </PopoverTrigger>
         <PopoverContent css={{ padding: theme.panel.padding }}>
           <Text>Some content</Text>

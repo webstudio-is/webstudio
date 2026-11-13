@@ -37,19 +37,19 @@ export const SecretLogin = ({ devPlanNames }: SecretLoginProps) => {
               </option>
             ))}
           </select>
-          <Button type="submit">Login</Button>
+          <Button color="primary" type="submit">
+            Login
+          </Button>
         </Flex>
       </form>
     );
   }
 
   return (
-    <Button
-      onClick={() => setShow(true)}
-      color="neutral"
-      css={{ height: theme.spacing[15] }}
-    >
+    <Button onClick={() => setShow(true)} css={{ height: theme.spacing[15] }}>
       Login with Secret
     </Button>
   );
 };
+
+undefined;

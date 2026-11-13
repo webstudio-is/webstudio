@@ -4,28 +4,47 @@
  */
 
 import { forwardRef, type ComponentProps } from "react";
-import type { CSS } from "../stitches.config";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import { IconButton } from "./icon-button";
+import { Button, type ButtonProps } from "./button";
 
-type Props = {
-  variant?:
-    | "default"
-    | "preset"
-    | "local"
-    | "overwritten"
-    | "remote"
-    | undefined;
-  css?: CSS;
-} & ComponentProps<typeof TogglePrimitive.Root>;
+type ToggleRootProps = Omit<
+  ComponentProps<typeof TogglePrimitive.Root>,
+  "asChild" | "color"
+>;
 
-export const ToggleButton = forwardRef<HTMLButtonElement, Props>(
-  ({ children, ...restProps }, ref) => {
+type ToggleButtonProps = ToggleRootProps &
+  Pick<ButtonProps, "color" | "css" | "prefix" | "suffix">;
+
+export const ToggleButton = forwardRef<HTMLButtonElement, ToggleButtonProps>(
+  ({ children, color, css, prefix, suffix, ...toggleProps }, ref) => {
     return (
-      <TogglePrimitive.Root asChild ref={ref} {...restProps}>
-        <IconButton>{children}</IconButton>
+      <TogglePrimitive.Root asChild ref={ref} {...toggleProps}>
+        <Button color={color} css={css} prefix={prefix} suffix={suffix}>
+          {children}
+        </Button>
       </TogglePrimitive.Root>
     );
   }
 );
 ToggleButton.displayName = "ToggleButton";
+
+type IconToggleButtonProps = ToggleRootProps &
+  Pick<
+    ComponentProps<typeof IconButton>,
+    "variant" | "size" | "css" | "aria-label"
+  > & { "aria-label": string };
+
+export const IconToggleButton = forwardRef<
+  HTMLButtonElement,
+  IconToggleButtonProps
+>(({ children, variant, size, css, ...toggleProps }, ref) => {
+  return (
+    <TogglePrimitive.Root asChild ref={ref} {...toggleProps}>
+      <IconButton variant={variant} size={size} css={css}>
+        {children}
+      </IconButton>
+    </TogglePrimitive.Root>
+  );
+});
+IconToggleButton.displayName = "IconToggleButton";

@@ -1,10 +1,21 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
-  $,
   css,
   PlaceholderValue,
+  setInstanceMeta,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import { HtmlEmbed } from "@webstudio-is/sdk-components-react/components";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectItemIndicator,
+  SelectItemText,
+  SelectTrigger,
+  SelectValue,
+  SelectViewport,
+} from "./components";
 import {
   borderRadius,
   borderWidth,
@@ -23,7 +34,7 @@ import { iconEmbedStyle } from "./shared/styles";
 
 const createSelectItem = (value: string, label: string) => {
   return (
-    <radix.SelectItem
+    <SelectItem
       value={value}
       // relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none
       // focus:bg-accent focus:text-accent-foreground
@@ -50,7 +61,7 @@ const createSelectItem = (value: string, label: string) => {
         }
       `}
     >
-      <radix.SelectItemIndicator
+      <SelectItemIndicator
         // absolute left-2 flex h-3.5 w-3.5 items-center justify-center
         ws:style={css`
           position: absolute;
@@ -62,14 +73,13 @@ const createSelectItem = (value: string, label: string) => {
           justify-content: center;
         `}
       >
-        <$.HtmlEmbed
-          ws:label="Indicator Icon"
-          ws:style={iconEmbedStyle}
-          code={CheckMarkIcon}
-        />
-      </radix.SelectItemIndicator>
-      <radix.SelectItemText>{new PlaceholderValue(label)}</radix.SelectItemText>
-    </radix.SelectItem>
+        {setInstanceMeta(
+          { label: "Indicator Icon" },
+          <HtmlEmbed ws:style={iconEmbedStyle} code={CheckMarkIcon} />
+        )}
+      </SelectItemIndicator>
+      <SelectItemText>{new PlaceholderValue(label)}</SelectItemText>
+    </SelectItem>
   );
 };
 
@@ -79,8 +89,8 @@ export const meta: TemplateMeta = {
     "Use within a form to give your users a list of options to choose from.",
   order: 10,
   template: (
-    <radix.Select>
-      <radix.SelectTrigger
+    <Select>
+      <SelectTrigger
         // flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background
         // placeholder:text-muted-foreground
         // focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
@@ -110,9 +120,9 @@ export const meta: TemplateMeta = {
           }
         `}
       >
-        <radix.SelectValue placeholder="Theme" />
-      </radix.SelectTrigger>
-      <radix.SelectContent
+        <SelectValue placeholder="Theme" />
+      </SelectTrigger>
+      <SelectContent
         // relative z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md
         // data-[state=open]:animate-in
         // data-[state=closed]:animate-out data-[state=closed]:fade-out-0
@@ -140,7 +150,7 @@ export const meta: TemplateMeta = {
           box-shadow: ${boxShadow.md};
         `}
       >
-        <radix.SelectViewport
+        <SelectViewport
           // p-1
           // position=popper
           // h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]
@@ -154,8 +164,8 @@ export const meta: TemplateMeta = {
           {createSelectItem("light", "Light")}
           {createSelectItem("dark", "Dark")}
           {createSelectItem("system", "System")}
-        </radix.SelectViewport>
-      </radix.SelectContent>
-    </radix.Select>
+        </SelectViewport>
+      </SelectContent>
+    </Select>
   ),
 };

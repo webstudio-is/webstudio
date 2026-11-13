@@ -1,5 +1,6 @@
 import {
   createContentCompilationPlan,
+  isContentCompilationWindowEmpty,
   requiresStructuredProperties,
   selectContentHydrationCandidates,
   type ContentCompilationPlan,
@@ -9,7 +10,7 @@ import {
   type ContentCompilerDiagnostics,
   type ContentCompilerInput,
 } from "./asset-index";
-import type { ContentArtifactV1 } from "./schema";
+import type { AssetQueryDiagnosticIssue, ContentArtifactV1 } from "./schema";
 import { discoverMarkdownAssetReferenceRanges } from "./markdown-assets";
 import { createUniqueAssetIdsByPath } from "./asset-path-resolution";
 import type { MarkdownAssetReferences } from "./markdown-references";
@@ -17,13 +18,26 @@ import {
   discoverAssetValueReferences,
   type AssetValueReferences,
 } from "./asset-value-references";
-import { compareStrings } from "./canonical-json";
-import { encodeUtf8, type ByteSource } from "./byte-stream";
+import { areJsonValuesEqual, compareStrings } from "./canonical-json";
+import {
+  decodeUtf8,
+  encodeUtf8,
+  readBoundedBytes,
+  type ByteSource,
+} from "./byte-stream";
 import { extractMarkdownBody } from "./markdown-body";
 import { contentEngineLimits } from "./limits";
 import {
+  discoverMdxBodyAssetReferences,
+  validateTextAssetSource,
+  type MdxDocument,
+} from "./mdx";
+import {
   compileDocumentSourceGraph,
+  createDocumentSourceUrl,
   getDocumentFormatByContentType,
+  getDocumentGraphClosure,
+  type SourceReferenceOccurrence,
   type DocumentGraph,
 } from "./document-graph";
 
@@ -53,6 +67,9 @@ export type ContentSourceDocument = Readonly<{
   source: ByteSource;
 }>;
 
+const isDocumentFile = ({ contentType }: ContentSourceFile) =>
+  getDocumentFormatByContentType(contentType) !== undefined;
+
 export interface ContentSource {
   openSnapshot(): Promise<ContentSourceSnapshot>;
 }
@@ -67,6 +84,40 @@ export type ContentSourcePerformanceObserver = (event: {
   phase: ContentSourcePerformancePhase;
   durationMs: number;
 }) => void;
+
+const maxContentCompilationPlanUpdates = 20;
+
+export const compileContentUntilPlanIsStable = async <Artifact>({
+  plan: initialPlan,
+  compile,
+  resolvePlan,
+}: {
+  plan: ContentCompilationPlan;
+  compile: (plan: ContentCompilationPlan) => Promise<Artifact>;
+  resolvePlan: (
+    artifact: Artifact
+  ) =>
+    | ContentCompilationPlan
+    | undefined
+    | Promise<ContentCompilationPlan | undefined>;
+}) => {
+  let plan = initialPlan;
+  let artifact = await compile(plan);
+
+  for (let depth = 0; ; depth += 1) {
+    const nextPlan = await resolvePlan(artifact);
+    if (nextPlan === undefined || areJsonValuesEqual(plan, nextPlan)) {
+      return artifact;
+    }
+    if (depth === maxContentCompilationPlanUpdates) {
+      throw new Error(
+        "Dynamic MDX dependency closure exceeds the safe publication depth"
+      );
+    }
+    plan = nextPlan;
+    artifact = await compile(plan);
+  }
+};
 
 const measureContentSourcePerformance = async <Value>({
   phase,
@@ -113,6 +164,34 @@ export class ContentSourceChangedError extends Error {
   constructor() {
     super("Content source changed while the database was being compiled");
     this.name = "ContentSourceChangedError";
+  }
+}
+
+type SourceIssue = NonNullable<
+  ContentCompilerDiagnostics["sourceIssues"]
+>[number];
+type DocumentSourceDiagnostic = SourceIssue &
+  Partial<Pick<AssetQueryDiagnosticIssue, "scope" | "phase" | "reference">>;
+
+export class DocumentSourceDiagnosticsError extends Error {
+  readonly diagnostics: readonly DocumentSourceDiagnostic[];
+  readonly scope: "query" | "database";
+
+  constructor(
+    diagnostics: readonly DocumentSourceDiagnostic[],
+    scope: "query" | "database" = "query"
+  ) {
+    const errorCount = diagnostics.filter(
+      ({ severity }) => severity === "error"
+    ).length;
+    super(
+      `${errorCount} document source ${
+        errorCount === 1 ? "error" : "errors"
+      } found`
+    );
+    this.name = "DocumentSourceDiagnosticsError";
+    this.diagnostics = diagnostics;
+    this.scope = scope;
   }
 }
 
@@ -173,19 +252,15 @@ const discoverSnapshotAssetReferences = async ({
   snapshot: ContentSourceSnapshot;
   entries: readonly ContentCompilerInput[];
   plan?: ContentCompilationPlan;
-}): Promise<MarkdownAssetReferences> => {
+}) => {
   const assetIdsByPath = createUniqueAssetIdsByPath(snapshot.files);
   const selectedAssetIds =
     plan === undefined
       ? undefined
       : selectContentHydrationCandidates({
           documents: entries.map(({ document }) => document),
-          plan: {
-            ...plan,
-            queries: plan.queries.filter(
-              ({ content }) => content.mode === "markdown-body-ref"
-            ),
-          },
+          plan,
+          mode: "deferred",
         });
   const references: Record<string, MarkdownAssetReferences[string]> = {};
   for (const entry of [...entries].sort((left, right) =>
@@ -212,47 +287,171 @@ const discoverSnapshotAssetReferences = async ({
       references[entry.document.contentRef] = discovered;
     }
   }
-  return references;
+  return {
+    assetReferences: references,
+    assetPaths:
+      selectedAssetIds !== undefined && selectedAssetIds.size > 0
+        ? Object.fromEntries(snapshot.files.map(({ id, path }) => [id, path]))
+        : undefined,
+  };
 };
 
-const discoverSnapshotAssetValueReferences = ({
+const validateSnapshotDocumentSources = async (
+  entries: readonly ContentCompilerInput[],
+  validateSource: typeof validateTextAssetSource
+): Promise<{
+  sourceIssues: readonly SourceIssue[];
+  mdxDocuments: ReadonlyMap<string, MdxDocument>;
+}> => {
+  const sourceIssues: SourceIssue[] = [];
+  const mdxDocuments = new Map<string, MdxDocument>();
+  for (const entry of entries) {
+    const format = getDocumentFormatByContentType(entry.document.mimeType);
+    if (
+      entry.contentRequired &&
+      entry.content === undefined &&
+      (format === "markdown" || format === "mdx")
+    ) {
+      sourceIssues.push({
+        severity: "warning",
+        code: "SOURCE_VALIDATION_UNAVAILABLE",
+        message: "File content could not be validated within the query limits",
+        assetId: entry.assetId,
+        path: entry.document.path,
+      });
+    }
+    if (
+      entry.content === undefined ||
+      (format !== "markdown" && format !== "mdx")
+    ) {
+      continue;
+    }
+    const validation = await validateSource({
+      source: entry.content,
+      format: format === "markdown" ? "md" : "mdx",
+    });
+    sourceIssues.push(
+      ...validation.diagnostics.map((diagnostic) => ({
+        severity: diagnostic.severity,
+        code: diagnostic.code,
+        message: diagnostic.message,
+        assetId: entry.assetId,
+        path: entry.document.path,
+        ...("nodeType" in diagnostic && diagnostic.nodeType !== undefined
+          ? { nodeType: diagnostic.nodeType }
+          : {}),
+        ...("reason" in diagnostic && diagnostic.reason !== undefined
+          ? { reason: diagnostic.reason }
+          : {}),
+        ...("sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
+          ? {
+              line: diagnostic.sourceRange.start.line,
+              column: diagnostic.sourceRange.start.column,
+              sourceRange: diagnostic.sourceRange,
+            }
+          : "line" in diagnostic && diagnostic.line !== undefined
+            ? {
+                line: diagnostic.line,
+                ...(diagnostic.column === undefined
+                  ? {}
+                  : { column: diagnostic.column }),
+              }
+            : {}),
+      }))
+    );
+    if (
+      validation.format === "mdx" &&
+      validation.recovery.status === "parsed"
+    ) {
+      mdxDocuments.set(entry.assetId, validation.recovery.document);
+    }
+  }
+  if (sourceIssues.some(({ severity }) => severity === "error")) {
+    throw new DocumentSourceDiagnosticsError(sourceIssues);
+  }
+  return { sourceIssues, mdxDocuments };
+};
+
+const discoverSnapshotAssetValueReferences = async ({
   snapshot,
   entries,
+  analyzedProperties,
+  validation,
 }: {
   snapshot: ContentSourceSnapshot;
   entries: readonly ContentCompilerInput[];
-}): AssetValueReferences => {
+  analyzedProperties: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
+  validation: Awaited<ReturnType<typeof validateSnapshotDocumentSources>>;
+}): Promise<{
+  references: AssetValueReferences;
+  sourceIssues: readonly SourceIssue[];
+}> => {
   const assetIdsByPath = createUniqueAssetIdsByPath(snapshot.files);
+  const structuredAssetIds = new Set(
+    snapshot.files
+      .filter((file) => isDocumentFile(file) === false)
+      .map(({ id }) => id)
+  );
   const references: AssetValueReferences = {};
+  const discoverProperties = ({
+    path,
+    properties,
+  }: {
+    path: string;
+    properties: Readonly<Record<string, unknown>>;
+  }) => {
+    return discoverAssetValueReferences({
+      properties,
+      sourcePath: path,
+      assetIdsByPath,
+      structuredAssetIds,
+    });
+  };
   for (const entry of [...entries].sort((left, right) =>
     compareStrings(left.assetId, right.assetId)
   )) {
-    const discovered = discoverAssetValueReferences({
+    const discovered = discoverProperties({
+      path: entry.document.path,
       properties: entry.document.properties ?? {},
-      sourcePath: entry.document.path,
-      assetIdsByPath,
     });
+    const mdxDocument = validation.mdxDocuments.get(entry.assetId);
+    if (mdxDocument !== undefined) {
+      discovered.push(
+        ...discoverMdxBodyAssetReferences({
+          document: mdxDocument,
+          sourcePath: entry.document.path,
+          assetIdsByPath,
+        })
+      );
+    }
     if (discovered.length > 0) {
       references[entry.assetId] = discovered;
     }
   }
-  return references;
+  const entryIds = new Set(entries.map(({ assetId }) => assetId));
+  const filesById = new Map(snapshot.files.map((file) => [file.id, file]));
+  for (const [id, properties] of analyzedProperties) {
+    if (entryIds.has(id)) {
+      continue;
+    }
+    const file = filesById.get(id);
+    if (file !== undefined) {
+      const discovered = discoverProperties({
+        path: file.path,
+        properties,
+      });
+      if (discovered.length > 0) {
+        references[id] = discovered;
+      }
+    }
+  }
+  return { references, sourceIssues: validation.sourceIssues };
 };
-
-const documentUrlBase = "https://content.webstudio.local/";
-
-const getDocumentUrl = (path: string) =>
-  new URL(path.split("/").map(encodeURIComponent).join("/"), documentUrlBase)
-    .href;
 
 const queryNeedsDocumentGraph = (
   query: ContentCompilationPlan["queries"][number]
 ) => {
-  if (
-    query.limit.type === "literal" &&
-    typeof query.limit.value === "number" &&
-    query.limit.value <= 0
-  ) {
+  if (isContentCompilationWindowEmpty(query)) {
     return false;
   }
   if (query.content.mode === "markdown-body-ref") {
@@ -266,11 +465,49 @@ const planReferencesMarkdownBodies = (plan?: ContentCompilationPlan) =>
   plan?.queries.some(({ content }) => content.mode === "markdown-body-ref") ===
   true;
 
+type AssetReferenceIssue = NonNullable<
+  ContentCompilerDiagnostics["assetReferenceIssues"]
+>[number];
+
+const documentPathExtensions = new Set(["json", "md", "markdown", "mdx"]);
+
+const isMissingLocalAssetReference = ({
+  occurrence,
+  documentUrls,
+}: {
+  occurrence: SourceReferenceOccurrence;
+  documentUrls: ReadonlySet<string>;
+}) => {
+  const url = new URL(occurrence.reference.documentUrl);
+  if (
+    url.origin !== new URL(createDocumentSourceUrl("")).origin ||
+    documentUrls.has(url.href)
+  ) {
+    return false;
+  }
+  const filename = url.pathname.slice(url.pathname.lastIndexOf("/") + 1);
+  const dotIndex = filename.lastIndexOf(".");
+  if (dotIndex === -1 || dotIndex === filename.length - 1) {
+    return false;
+  }
+  return documentPathExtensions.has(filename.slice(dotIndex + 1).toLowerCase())
+    ? false
+    : true;
+};
+
 const discoverSnapshotDocumentGraph = async (
   snapshot: ContentSourceSnapshot,
   entries: readonly ContentCompilerInput[],
+  analyzedProperties: Map<string, Readonly<Record<string, unknown>>>,
   plan?: ContentCompilationPlan
-): Promise<DocumentGraph | undefined> => {
+): Promise<
+  | Readonly<{
+      graph?: DocumentGraph;
+      contents?: Readonly<Record<string, string>>;
+      assetReferenceIssues: readonly AssetReferenceIssue[];
+    }>
+  | undefined
+> => {
   if (
     snapshot.loadDocumentSources === undefined ||
     (plan !== undefined && plan.queries.some(queryNeedsDocumentGraph) === false)
@@ -279,6 +516,7 @@ const discoverSnapshotDocumentGraph = async (
   }
   const sourceDocuments = await snapshot.loadDocumentSources();
   const filesById = new Map(snapshot.files.map((file) => [file.id, file]));
+  const entriesById = new Map(entries.map((entry) => [entry.assetId, entry]));
   const sourcesById = new Map<string, ByteSource>();
   for (const document of sourceDocuments) {
     if (sourcesById.has(document.id)) {
@@ -293,8 +531,28 @@ const discoverSnapshotDocumentGraph = async (
     }
     sourcesById.set(document.id, document.source);
   }
-  const supportedFiles = snapshot.files.filter(
-    (file) => getDocumentFormatByContentType(file.contentType) !== undefined
+  const bytesById = new Map<string, Promise<Uint8Array>>();
+  const getBytes = (id: string) => {
+    let bytes = bytesById.get(id);
+    if (bytes === undefined) {
+      const source = sourcesById.get(id);
+      if (source === undefined) {
+        throw new Error("Content source document catalog is incomplete");
+      }
+      bytes = readBoundedBytes(source, contentEngineLimits.hydratedFileBytes);
+      bytesById.set(id, bytes);
+    }
+    return bytes;
+  };
+  const supportedFiles = snapshot.files.filter(isDocumentFile);
+  const documentUrls = new Set(
+    supportedFiles.map((file) => createDocumentSourceUrl(file.path))
+  );
+  const assetReferenceIssues: AssetReferenceIssue[] = [];
+  const ignoredReferenceUrls = new Set(
+    snapshot.files
+      .filter((file) => isDocumentFile(file) === false)
+      .map((file) => createDocumentSourceUrl(file.path))
   );
   if (supportedFiles.some((file) => sourcesById.has(file.id) === false)) {
     throw new Error("Content source omitted a supported document source");
@@ -308,13 +566,37 @@ const discoverSnapshotDocumentGraph = async (
       }
       return {
         id: file.id,
-        documentUrl: getDocumentUrl(file.path),
+        documentUrl: createDocumentSourceUrl(file.path),
+        documentPath: file.path,
         revision: file.revision,
         contentRef: file.contentRef,
         format,
-        source,
+        frontmatter: entriesById.get(file.id)?.sourceFrontmatter,
+        source: {
+          async *[Symbol.asyncIterator]() {
+            yield await getBytes(file.id);
+          },
+        },
       };
     }),
+    ignoredReferenceUrls,
+    ignoreReference: (occurrence) => {
+      if (
+        isMissingLocalAssetReference({ occurrence, documentUrls }) === false
+      ) {
+        return false;
+      }
+      assetReferenceIssues.push({
+        code: "ASSET_NOT_FOUND",
+        sourceDocumentId: occurrence.sourceDocumentId,
+        referenceId: occurrence.referenceId,
+        assetUrl: occurrence.reference.documentUrl,
+      });
+      return true;
+    },
+    onDocumentProperties: ({ id, properties }) => {
+      analyzedProperties.set(id, properties);
+    },
     ...(plan === undefined
       ? {}
       : {
@@ -323,10 +605,34 @@ const discoverSnapshotDocumentGraph = async (
           ),
         }),
   });
-  return graph.edges.length === 0 &&
+  if (
+    graph.edges.length === 0 &&
     planReferencesMarkdownBodies(plan) === false
-    ? undefined
-    : graph;
+  ) {
+    return assetReferenceIssues.length === 0
+      ? undefined
+      : { assetReferenceIssues };
+  }
+  const embeddedNodes = getDocumentGraphClosure({
+    graph,
+    rootIds: entries
+      .filter(({ content }) => content !== undefined)
+      .map(({ assetId }) => assetId)
+      .filter((id) => sourcesById.has(id)),
+  });
+  const contents = Object.fromEntries(
+    await Promise.all(
+      embeddedNodes.map(async (node) => [
+        node.contentRef,
+        decodeUtf8(await getBytes(node.id)),
+      ])
+    )
+  );
+  return {
+    graph,
+    contents: embeddedNodes.length === 0 ? undefined : contents,
+    assetReferenceIssues,
+  };
 };
 
 export const materializeContentSnapshot = async ({
@@ -335,34 +641,55 @@ export const materializeContentSnapshot = async ({
   maximumContentBytes = contentEngineLimits.databaseBytes,
   onPerformanceEvent,
   performanceNow = () => performance.now(),
+  validateSource = validateTextAssetSource,
 }: {
   snapshot: ContentSourceSnapshot;
   plan?: ContentCompilationPlan;
   maximumContentBytes?: number;
   onPerformanceEvent?: ContentSourcePerformanceObserver;
   performanceNow?: () => number;
+  validateSource?: typeof validateTextAssetSource;
 }) => {
   validateSnapshot(snapshot);
   try {
     const entries = await snapshot.loadEntries(plan, { maximumContentBytes });
     validateEntries({ snapshot, entries });
-    const documentGraph = await measureContentSourcePerformance({
+    const analyzedProperties = new Map<
+      string,
+      Readonly<Record<string, unknown>>
+    >();
+    const validation = await validateSnapshotDocumentSources(
+      entries,
+      validateSource
+    );
+    const documentGraphResult = await measureContentSourcePerformance({
       phase: "document-graph",
       observer: onPerformanceEvent,
       now: performanceNow,
-      operation: () => discoverSnapshotDocumentGraph(snapshot, entries, plan),
-    });
-    const assetReferences = await measureContentSourcePerformance({
-      phase: "asset-references",
-      observer: onPerformanceEvent,
-      now: performanceNow,
       operation: () =>
-        discoverSnapshotAssetReferences({ snapshot, entries, plan }),
+        discoverSnapshotDocumentGraph(
+          snapshot,
+          entries,
+          analyzedProperties,
+          plan
+        ),
     });
-    const assetValueReferences = discoverSnapshotAssetValueReferences({
-      snapshot,
-      entries,
-    });
+    const documentGraph = documentGraphResult?.graph;
+    const { assetReferences, assetPaths } =
+      await measureContentSourcePerformance({
+        phase: "asset-references",
+        observer: onPerformanceEvent,
+        now: performanceNow,
+        operation: () =>
+          discoverSnapshotAssetReferences({ snapshot, entries, plan }),
+      });
+    const assetValueReferenceResult =
+      await discoverSnapshotAssetValueReferences({
+        snapshot,
+        entries,
+        analyzedProperties,
+        validation,
+      });
     if (
       await measureContentSourcePerformance({
         phase: "source-validation",
@@ -375,8 +702,12 @@ export const materializeContentSnapshot = async ({
         sourceRevision: snapshot.revision,
         entries,
         assetReferences,
-        assetValueReferences,
+        assetPaths,
+        assetValueReferences: assetValueReferenceResult.references,
+        sourceIssues: assetValueReferenceResult.sourceIssues,
         documentGraph,
+        documentContents: documentGraphResult?.contents,
+        assetReferenceIssues: documentGraphResult?.assetReferenceIssues ?? [],
       };
     }
   } catch (error) {
@@ -418,8 +749,12 @@ export const compileContentSource = async ({
     sourceRevision,
     entries,
     assetReferences,
+    assetPaths,
     assetValueReferences,
+    sourceIssues,
     documentGraph,
+    documentContents,
+    assetReferenceIssues,
   } = await materializeContentSource({
     source,
     plan,
@@ -431,12 +766,23 @@ export const compileContentSource = async ({
     projectId,
     entries,
     assetReferences,
+    assetPaths,
     assetValueReferences,
     documentGraph,
+    documentContents,
     ...(plan === undefined ? {} : { plan }),
     ...(maxBytes === undefined ? {} : { maxBytes }),
   });
-  return { sourceRevision, documentGraph, ...compiled };
+  return {
+    sourceRevision,
+    documentGraph,
+    ...compiled,
+    diagnostics: {
+      ...compiled.diagnostics,
+      ...(assetReferenceIssues.length === 0 ? {} : { assetReferenceIssues }),
+      ...(sourceIssues.length === 0 ? {} : { sourceIssues }),
+    },
+  };
 };
 
 export const materializeContentSource = async ({
@@ -445,18 +791,24 @@ export const materializeContentSource = async ({
   maximumContentBytes,
   onPerformanceEvent,
   performanceNow,
+  validateSource,
 }: {
   source: ContentSource;
   plan?: ContentCompilationPlan;
   maximumContentBytes?: number;
   onPerformanceEvent?: ContentSourcePerformanceObserver;
   performanceNow?: () => number;
+  validateSource?: typeof validateTextAssetSource;
 }): Promise<{
   sourceRevision: string;
   entries: readonly ContentCompilerInput[];
   assetReferences: MarkdownAssetReferences;
+  assetPaths?: Readonly<Record<string, string>>;
   assetValueReferences: AssetValueReferences;
   documentGraph?: DocumentGraph;
+  documentContents?: Readonly<Record<string, string>>;
+  assetReferenceIssues: readonly AssetReferenceIssue[];
+  sourceIssues: readonly SourceIssue[];
 }> => {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const snapshot = await source.openSnapshot();
@@ -467,6 +819,7 @@ export const materializeContentSource = async ({
         maximumContentBytes,
         onPerformanceEvent,
         performanceNow,
+        validateSource,
       });
     } catch (error) {
       if (error instanceof ContentSourceChangedError === false) {

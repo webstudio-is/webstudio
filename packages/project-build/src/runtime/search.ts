@@ -1,6 +1,15 @@
 import { z } from "zod";
-import { isLiteralExpression } from "@webstudio-is/expression";
-import { isAssetsResource, type StyleDecl } from "@webstudio-is/sdk";
+import {
+  isLiteralExpression,
+  parseStringLiteralExpression,
+} from "@webstudio-is/expression";
+import {
+  getContentBlockSources,
+  getPageSubmissionResourceIds,
+  findTreeInstanceIds,
+  isAssetsResource,
+  type StyleDecl,
+} from "@webstudio-is/sdk";
 import { hasTopLevelJsonLdContext } from "@webstudio-is/sdk/runtime";
 import { validateJsonLdWithSchemaOrg } from "@webstudio-is/sdk/schema-org";
 import { ariaAttributes, ariaRoles } from "@webstudio-is/html-data";
@@ -8,16 +17,12 @@ import { validateSelector } from "@webstudio-is/css-data";
 import * as bcp47 from "bcp-47";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
-import { computeExpression } from "./data";
 import { listAssets } from "./assets";
 import { listCssVariables, listDesignTokens } from "./styles";
 import { getInstanceDepths } from "./instances";
 import { isBaseWidthBreakpoint } from "./breakpoints";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
-import { validatePageSelector } from "./page-selector";
 import { hasAccessibleName, isDynamicPropType } from "./accessibility-analysis";
-import { paginateOutput, paginatedOutputInputSchema } from "./output";
-
 const projectLookupScope = z.enum([
   "instances",
   "text",
@@ -34,17 +39,6 @@ const projectAnalysisScope = z.enum([
   "seo",
   "performance",
 ]);
-
-export const projectSearchInput = z
-  .object({
-    query: z.string().min(1),
-    scopes: z.array(projectLookupScope).min(1).optional(),
-    pageId: z.string().optional(),
-    pagePath: z.string().optional(),
-    ...paginatedOutputInputSchema.shape,
-  })
-  .strict()
-  .superRefine(validatePageSelector);
 
 type ProjectAnalysisInput = {
   query?: string;
@@ -184,9 +178,11 @@ const isLabelableFormControl = ({
     component !== "Input" &&
     component !== "Select" &&
     component !== "Textarea" &&
+    component !== "Button" &&
     tag !== "input" &&
     tag !== "select" &&
-    tag !== "textarea"
+    tag !== "textarea" &&
+    tag !== "button"
   ) {
     return false;
   }
@@ -197,8 +193,30 @@ const isLabelableFormControl = ({
   if (typeof type !== "string") {
     return true;
   }
+  return type.toLocaleLowerCase() !== "hidden";
+};
+
+const requiresFormLabel = ({
+  component,
+  tag,
+  props,
+}: {
+  component: string;
+  tag?: string;
+  props: ReadonlyMap<string, unknown> | undefined;
+}) => {
+  if (
+    component === "Button" ||
+    tag === "button" ||
+    isLabelableFormControl({ component, tag, props }) === false
+  ) {
+    return false;
+  }
+  const type = props?.get("type");
   return (
-    ["hidden", "button", "submit", "reset", "image"].includes(
+    (component !== "Input" && tag !== "input") ||
+    typeof type !== "string" ||
+    ["button", "submit", "reset", "image"].includes(
       type.toLocaleLowerCase()
     ) === false
   );
@@ -289,7 +307,7 @@ const getHeadingLevel = (tag: string | undefined) => {
   return Number(tag.slice(1));
 };
 
-const getPagesToAudit = (
+const getPagesInScope = (
   state: Pick<BuilderState, "pages">,
   input: Pick<ProjectAnalysisInput, "pageId" | "pagePath">
 ) => {
@@ -300,11 +318,17 @@ const getPagesToAudit = (
       : [findSerializedPageByInput(pages, input)].filter(
           (page): page is (typeof pages.pages)[number] => page !== undefined
         );
-  return selectedPages.filter(
+  return selectedPages;
+};
+
+const getPagesToAudit = (
+  state: Pick<BuilderState, "pages">,
+  input: Pick<ProjectAnalysisInput, "pageId" | "pagePath">
+) =>
+  getPagesInScope(state, input).filter(
     (page) =>
       page.meta.documentType !== "xml" && page.meta.documentType !== "text"
   );
-};
 
 const getRelatedPageInstanceIds = (
   instanceId: string,
@@ -325,8 +349,7 @@ const getStaticString = (expression: string) => {
   if (isLiteralExpression(expression) === false) {
     return;
   }
-  const value = computeExpression(expression, new Map());
-  return typeof value === "string" ? value : undefined;
+  return parseStringLiteralExpression(expression);
 };
 
 export const analyzeProject = (
@@ -850,7 +873,7 @@ export const analyzeProject = (
         });
       }
       if (
-        isLabelableFormControl({
+        requiresFormLabel({
           component: instance.component,
           tag: instance.tag,
           props,
@@ -1210,6 +1233,51 @@ export const analyzeProject = (
   }
 
   if (scopes.has("security")) {
+    const actionOnlyResourceIds = new Set<string>();
+    const connectedContentBlockIds = getContentBlockSources({
+      instances: state.instances.values(),
+      props: state.props.values(),
+    });
+    // A connected block inside a Form can read its scoped Resource from MDX.
+    const possiblyRenderedFormInstanceIds = new Set<string>();
+    for (const instance of instances.values()) {
+      if (instance.component !== "ResourceForm") {
+        continue;
+      }
+      const formInstanceIds = findTreeInstanceIds(instances, instance.id);
+      if ([...formInstanceIds].some((id) => connectedContentBlockIds.has(id))) {
+        for (const id of formInstanceIds) {
+          possiblyRenderedFormInstanceIds.add(id);
+        }
+      }
+    }
+    const pages = getPagesInScope(state, input);
+    for (const [index, page] of pages.entries()) {
+      const { submissionResourceIds, independentlyUsedResourceIds } =
+        getPageSubmissionResourceIds({
+          page,
+          instances: state.instances,
+          props: state.props,
+          dataSources: state.dataSources,
+          resources: state.resources,
+        });
+      if (index === 0) {
+        for (const id of submissionResourceIds) {
+          if (!independentlyUsedResourceIds.has(id)) {
+            actionOnlyResourceIds.add(id);
+          }
+        }
+      } else {
+        for (const id of actionOnlyResourceIds) {
+          if (
+            !submissionResourceIds.has(id) ||
+            independentlyUsedResourceIds.has(id)
+          ) {
+            actionOnlyResourceIds.delete(id);
+          }
+        }
+      }
+    }
     for (const dataSource of state.dataSources.values()) {
       if (
         dataSource.type !== "resource" ||
@@ -1223,7 +1291,11 @@ export const analyzeProject = (
       if (
         resource === undefined ||
         resource.method === "get" ||
-        isAssetsResource(resource)
+        isAssetsResource(resource) ||
+        (actionOnlyResourceIds.has(resource.id) &&
+          !possiblyRenderedFormInstanceIds.has(
+            dataSource.scopeInstanceId ?? ""
+          ))
       ) {
         continue;
       }
@@ -1506,34 +1578,5 @@ export const analyzeProject = (
     total: matches.length,
     truncated: matches.length > limit,
     matches: matches.slice(0, limit),
-  };
-};
-
-export const searchProject = (
-  state: Parameters<typeof analyzeProject>[0],
-  input: z.infer<typeof projectSearchInput>
-) => {
-  const result = analyzeProject(state, {
-    ...input,
-    limit: Number.MAX_SAFE_INTEGER,
-  });
-  const { items, ...pagination } = paginateOutput({
-    items: result.matches,
-    cursor: input.cursor,
-    limit: input.limit,
-    filters: {
-      query: input.query,
-      scopes: input.scopes,
-      pageId: input.pageId,
-      pagePath: input.pagePath,
-    },
-    verbose: input.verbose,
-  });
-  return {
-    query: input.query,
-    scopes: result.scopes,
-    matches: items,
-    truncated: pagination.nextCursor !== null,
-    ...pagination,
   };
 };

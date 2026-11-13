@@ -1,6 +1,7 @@
-import { useLayoutEffect, useState, type KeyboardEvent } from "react";
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import isValidFilename from "valid-filename";
 import {
+  PanelContent,
   Button,
   Dialog,
   DialogContent,
@@ -10,56 +11,80 @@ import {
   InputField,
   Label,
   Text,
-  theme,
 } from "@webstudio-is/design-system";
 import {
-  formatAssetName,
   getFileExtension,
   getMimeTypeByExtension,
   isTextFileAsset,
   type Asset,
 } from "@webstudio-is/sdk";
+import { collectionConfigFilename } from "@webstudio-is/content-engine";
 import { $assets } from "~/shared/sync/data-stores";
 import { uploadSingleAsset } from "~/builder/shared/assets/upload-assets";
+import { isAssetFilenameUsed } from "~/builder/shared/assets/asset-utils";
 
 export const getTextFileNameError = ({
   name,
   assets,
+  folderId,
+  canCreateCollectionConfig = false,
+  allowedExtensions,
 }: {
   name: string;
   assets: Iterable<Asset>;
+  folderId?: string;
+  canCreateCollectionConfig?: boolean;
+  allowedExtensions?: readonly string[];
 }) => {
   if (isValidFilename(name) === false) {
     return "Enter a valid file name.";
   }
+  const extension = getFileExtension(name)?.toLowerCase() ?? "";
   if (
-    isTextFileAsset({ format: getFileExtension(name)?.toLowerCase() ?? "" }) ===
-    false
+    isTextFileAsset({ format: extension }) === false ||
+    (allowedExtensions !== undefined &&
+      allowedExtensions.some(
+        (allowedExtension) => allowedExtension.toLowerCase() === extension
+      ) === false)
   ) {
     return "Use a supported editable text extension.";
   }
-  for (const asset of assets) {
-    if (formatAssetName(asset) === name) {
-      return "A file with this name already exists.";
-    }
+  if (
+    folderId !== undefined &&
+    canCreateCollectionConfig === false &&
+    name === collectionConfigFilename
+  ) {
+    return "You don't have permission to create a content collection.";
+  }
+  if (isAssetFilenameUsed({ assets, filename: name, folderId })) {
+    return "A file with this name already exists.";
   }
 };
 
-const createTextFile = async ({
-  name,
-  folderId,
-}: {
-  name: string;
-  folderId?: string;
-}): Promise<Asset | undefined> => {
+export const createTextFileData = (name: string): File | undefined => {
   const format = getFileExtension(name)?.toLowerCase() ?? "";
   if (isTextFileAsset({ format }) === false) {
     return;
   }
-  const file = new File([""], name, {
+  return new File([format === "json" ? "{}\n" : ""], name, {
     type: getMimeTypeByExtension(format),
   });
-  return uploadSingleAsset("file", file, { folderId });
+};
+
+export const createTextFile = async ({
+  name,
+  folderId,
+  upload = uploadSingleAsset,
+}: {
+  name: string;
+  folderId?: string;
+  upload?: typeof uploadSingleAsset;
+}): Promise<Asset | undefined> => {
+  const file = createTextFileData(name);
+  if (file === undefined) {
+    return;
+  }
+  return upload("file", file, { folderId, deduplicate: false });
 };
 
 const stopEscapePropagation = (event: KeyboardEvent) => {
@@ -71,34 +96,49 @@ const stopEscapePropagation = (event: KeyboardEvent) => {
 export const CreateTextFileDialog = ({
   open,
   folderId,
+  defaultName = "untitled.md",
+  allowedExtensions,
+  title = "New text file",
+  disabled = false,
+  canCreateCollectionConfig = false,
   onOpenChange,
   onCreated,
 }: {
   open: boolean;
   folderId?: string;
+  defaultName?: string;
+  allowedExtensions?: readonly string[];
+  title?: string;
+  disabled?: boolean;
+  canCreateCollectionConfig?: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: (assetId: string) => void;
 }) => {
-  const [name, setName] = useState("untitled.md");
+  const [name, setName] = useState(defaultName);
   const [error, setError] = useState<string>();
   const [creating, setCreating] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const dialogContentRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (open) {
-      setName("untitled.md");
+      setName(defaultName);
       setError(undefined);
       setCreating(false);
     }
-  }, [open]);
+  }, [defaultName, open]);
 
   const normalizedName = name.trim();
   const submit = async () => {
-    if (creating) {
+    if (creating || disabled) {
       return;
     }
     const validationError = getTextFileNameError({
       name: normalizedName,
       assets: $assets.get().values(),
+      folderId,
+      canCreateCollectionConfig,
+      allowedExtensions,
     });
     setError(validationError);
     if (validationError !== undefined) {
@@ -127,18 +167,29 @@ export const CreateTextFileDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        ref={dialogContentRef}
         minWidth={360}
         aria-describedby={undefined}
         onKeyDown={stopEscapePropagation}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          if (disabled) {
+            dialogContentRef.current?.focus();
+            return;
+          }
+          const focusName = () => nameInputRef.current?.focus();
+          focusName();
+          requestAnimationFrame(focusName);
+        }}
       >
-        <DialogTitle>New text file</DialogTitle>
-        <Grid gap={3} css={{ padding: theme.panel.padding }}>
+        <DialogTitle>{title}</DialogTitle>
+        <PanelContent as={Grid} gap={3}>
           <Grid gap={1}>
             <Label htmlFor="asset-text-file-name">File name</Label>
             <InputField
               id="asset-text-file-name"
-              autoFocus
-              disabled={creating}
+              inputRef={nameInputRef}
+              disabled={creating || disabled}
               value={name}
               color={error === undefined ? undefined : "error"}
               onChange={(event) => {
@@ -158,11 +209,15 @@ export const CreateTextFileDialog = ({
             )}
           </Grid>
           <Flex justify="end">
-            <Button disabled={creating} onClick={() => void submit()}>
+            <Button
+              color="primary"
+              disabled={creating || disabled}
+              onClick={() => void submit()}
+            >
               {creating ? "Creating…" : "Create file"}
             </Button>
           </Flex>
-        </Grid>
+        </PanelContent>
       </DialogContent>
     </Dialog>
   );

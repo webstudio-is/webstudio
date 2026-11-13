@@ -1,5 +1,5 @@
-import { styled } from "../stitches.config";
-import { theme } from "../stitches.config";
+import { cssVar } from "../css-var";
+import { styled, theme } from "../stitches.config";
 
 export const Card = styled("div", {
   appearance: "none",
@@ -10,8 +10,8 @@ export const Card = styled("div", {
   outline: "none",
   textAlign: "inherit",
   verticalAlign: "middle",
-  WebkitTapHighlightColor: "rgba(0, 0, 0, 0)",
-  backgroundColor: "white",
+  WebkitTapHighlightColor: "transparent",
+  backgroundColor: cssVar("--background-primary"),
   display: "block",
   textDecoration: "none",
   color: "inherit",
@@ -27,7 +27,7 @@ export const Card = styled("div", {
     right: 0,
     bottom: 0,
     left: 0,
-    boxShadow: "inset 0 0 0 1px rgba(0,0,0,.1)",
+    boxShadow: `inset 0 0 0 1px ${cssVar("--border-default")}`,
     borderRadius: theme.borderRadius[7],
     pointerEvents: "none",
   },

@@ -28,12 +28,12 @@ import {
   importProjectBundleInput,
   bundleVersion,
   publishedProjectBundle,
+  historicalPublishedProjectBundle,
 } from "@webstudio-is/protocol";
 import { removeAgentInstructionsFromProjectSettings } from "@webstudio-is/project-build";
 import { hydrateRestorePointTransaction } from "@webstudio-is/project-build/project-session";
 import {
   loadProjectBundleByBuildId,
-  loadProjectBundleByProjectId,
   loadPublishedProjectBundleByProjectId,
 } from "~/shared/db";
 import {
@@ -50,7 +50,7 @@ import {
   commitBuildTransactions,
 } from "./api-build.server";
 import { assertApiProjectPermit } from "./api-permits.server";
-import { getContentDatabasePublishDiagnostics } from "./content-database.server";
+import { loadContentDatabasePublishDiagnostics } from "./content-database-publish-diagnostics.server";
 
 const projectBundleInput = z.object({
   projectId: z.string(),
@@ -60,6 +60,7 @@ const projectBundleInput = z.object({
 const buildBundleInput = z.object({
   buildId: z.string(),
   bundleVersion: z.union([z.string(), z.number()]).optional(),
+  contentIndex: z.literal("client").optional(),
 });
 
 const assertCliBundleVersion = (
@@ -67,7 +68,11 @@ const assertCliBundleVersion = (
   clientBundleVersion: string | number | undefined
 ) => {
   if (ctx.apiClient?.type === "cli" && clientBundleVersion !== bundleVersion) {
-    throwApiClientUpdateRequired("cli");
+    throwApiClientUpdateRequired({
+      expectedVersion: bundleVersion,
+      receivedVersion: clientBundleVersion,
+      target: "cli",
+    });
   }
 };
 
@@ -99,6 +104,27 @@ const prepareProjectBundleForClient = async (
   };
 };
 
+const createLoadProjectBundleByBuildIdHandler =
+  (dependencies: {
+    loadProjectBundleByBuildId: typeof loadProjectBundleByBuildId;
+    prepareProjectBundleForClient: typeof prepareProjectBundleForClient;
+  }) =>
+  async (ctx: AppContext, input: z.infer<typeof buildBundleInput>) => {
+    assertCliBundleVersion(ctx, input.bundleVersion);
+    return await dependencies.prepareProjectBundleForClient(
+      ctx,
+      await dependencies.loadProjectBundleByBuildId(input.buildId, ctx, {
+        contentIndex: input.contentIndex,
+      })
+    );
+  };
+
+const loadProjectBundleByBuildIdHandler =
+  createLoadProjectBundleByBuildIdHandler({
+    loadProjectBundleByBuildId,
+    prepareProjectBundleForClient,
+  });
+
 type ImportProjectBundleDependencies = {
   importPublishedProjectBundle: typeof importPublishedProjectBundle;
   readStagedUploadText: typeof readStagedUploadText;
@@ -126,7 +152,7 @@ const createImportProjectBundleHandler =
         });
         return await importPublishedProjectBundle({
           ctx,
-          data: publishedProjectBundle.parse(JSON.parse(text)),
+          data: historicalPublishedProjectBundle.parse(JSON.parse(text)),
           ignoreVersionCheck: input.ignoreVersionCheck,
           projectId: input.projectId,
         });
@@ -269,11 +295,7 @@ export const buildRouter = router({
   loadProjectBundleByBuildId: procedure
     .input(buildBundleInput)
     .query(async ({ ctx, input }) => {
-      assertCliBundleVersion(ctx, input.bundleVersion);
-      return await prepareProjectBundleForClient(
-        ctx,
-        await loadProjectBundleByBuildId(input.buildId, ctx)
-      );
+      return await loadProjectBundleByBuildIdHandler(ctx, input);
     }),
 
   loadProjectBundleByProjectId: procedure
@@ -298,15 +320,14 @@ export const buildRouter = router({
           "You don't have permission to edit this project."
         );
       }
-      return getContentDatabasePublishDiagnostics(
-        await loadProjectBundleByProjectId(input.projectId, ctx)
-      );
+      return await loadContentDatabasePublishDiagnostics(input.projectId, ctx);
     }),
 
   checkProjectBuildPermission: procedure
     .input(checkProjectBuildPermissionInput)
     .query(async ({ ctx, input }) => {
       await assertProjectBuildPermit({ ctx, projectId: input.projectId });
+      return { supportsStructuredImportErrors: true };
     }),
 
   importProjectBundle: procedure.input(importProjectBundleInput).mutation(
@@ -429,6 +450,8 @@ export const buildRouter = router({
 
 export const __testing__ = {
   createImportProjectBundleHandler,
+  createLoadProjectBundleByBuildIdHandler,
   assertCliBundleVersion,
+  loadContentDatabasePublishDiagnostics,
   prepareProjectBundleForClient,
 };

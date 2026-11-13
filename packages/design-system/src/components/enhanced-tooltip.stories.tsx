@@ -44,16 +44,16 @@ export const EnhancedTooltip = () => (
     <StorySection title="Side placements">
       <Flex gap="6" css={{ padding: 60 }}>
         <EnhancedTooltipComponent content="Top" side="top" defaultOpen>
-          <Button>Top</Button>
+          <Button color="primary">Top</Button>
         </EnhancedTooltipComponent>
         <EnhancedTooltipComponent content="Right" side="right" defaultOpen>
-          <Button>Right</Button>
+          <Button color="primary">Right</Button>
         </EnhancedTooltipComponent>
         <EnhancedTooltipComponent content="Bottom" side="bottom" defaultOpen>
-          <Button>Bottom</Button>
+          <Button color="primary">Bottom</Button>
         </EnhancedTooltipComponent>
         <EnhancedTooltipComponent content="Left" side="left" defaultOpen>
-          <Button>Left</Button>
+          <Button color="primary">Left</Button>
         </EnhancedTooltipComponent>
       </Flex>
     </StorySection>
@@ -76,17 +76,17 @@ export const EnhancedTooltip = () => (
           align="start"
           defaultOpen
         >
-          <Button>Start</Button>
+          <Button color="primary">Start</Button>
         </EnhancedTooltipComponent>
         <EnhancedTooltipComponent
           content="Aligned center"
           align="center"
           defaultOpen
         >
-          <Button>Center</Button>
+          <Button color="primary">Center</Button>
         </EnhancedTooltipComponent>
         <EnhancedTooltipComponent content="Aligned end" align="end" defaultOpen>
-          <Button>End</Button>
+          <Button color="primary">End</Button>
         </EnhancedTooltipComponent>
       </Flex>
     </StorySection>

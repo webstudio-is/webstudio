@@ -20,7 +20,7 @@ export const useStringOptions = ({
       : [value, ...meta.options];
   const label = humanizeAttribute(meta.label || propName);
   const binding = useBindableControl({
-    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    boundExpression: prop?.type === "expression" ? prop : undefined,
     fallbackExpression: JSON.stringify(computedValue),
   });
 

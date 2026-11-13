@@ -7,6 +7,10 @@ import {
 } from "@webstudio-is/sdk";
 import { z } from "zod";
 import { parseDataEnvelope } from "./data-envelope";
+import {
+  ambiguousFormClipboardMessage,
+  hasAmbiguousFormInstance,
+} from "../fragment-identity";
 
 export type PageCopyData = {
   page: Page;
@@ -80,15 +84,36 @@ export const pageTransferItemInput = z.union([
   pageTransferFolderInput,
 ]);
 
+const pageClipboardTransferItemInput = pageTransferItemInput.and(
+  z.object({
+    sourceOrigin: z.string().url().optional(),
+    assetPaths: z.record(z.string(), z.string()).optional(),
+  })
+);
 export const pageTransferDataVersion = "@webstudio/page/v0.1";
 
 export const parsePageTransferData = (serializedData: string) => {
   const transferData = parseDataEnvelope({
     serializedData,
-    schemas: [[pageTransferDataVersion, pageTransferItemInput]] as const,
+    schemas: [
+      [pageTransferDataVersion, pageClipboardTransferItemInput],
+    ] as const,
   });
   if (transferData.valid === false) {
     return transferData;
+  }
+  if (
+    collectPageTransferItems(transferData.data).some(
+      (item) =>
+        hasAmbiguousFormInstance(item.rootFragment) ||
+        hasAmbiguousFormInstance(item.bodyFragment)
+    )
+  ) {
+    return {
+      owned: true,
+      valid: false,
+      error: ambiguousFormClipboardMessage,
+    } as const;
   }
   return {
     owned: true,

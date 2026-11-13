@@ -1,7 +1,8 @@
 import { forwardRef } from "react";
-import { styled, theme } from "../stitches.config";
+import { styled } from "../stitches.config";
 import { textVariants } from "./text";
 import { ExternalLinkIcon } from "@webstudio-is/icons";
+import { cssVar } from "../css-var";
 
 export const IconLink = forwardRef<
   HTMLAnchorElement,
@@ -14,15 +15,17 @@ export const IconLink = forwardRef<
 
 export const Link = styled("a", {
   cursor: "pointer",
+  color: cssVar("--foreground-primary"),
+  "&:hover, &:visited": { color: cssVar("--foreground-primary") },
   "&[aria-disabled=true]": {
     cursor: "default",
-    color: theme.colors.foregroundDisabled,
+    color: cssVar("--foreground-disabled"),
     "&:hover, &:visited": {
-      color: theme.colors.foregroundDisabled,
+      color: cssVar("--foreground-disabled"),
     },
   },
   "&:focus-visible": {
-    outline: `1px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${cssVar("--border-focus")}`,
   },
   variants: {
     variant: {
@@ -42,21 +45,9 @@ export const Link = styled("a", {
       monoBold: textVariants.monoBoldLink,
     },
     color: {
-      main: {
-        color: theme.colors.foregroundMain,
-        "&:hover, &:visited": { color: theme.colors.foregroundMain },
-      },
-      contrast: {
-        color: theme.colors.foregroundContrastMain,
-        "&:hover, &:visited": { color: theme.colors.foregroundContrastMain },
-      },
       subtle: {
-        color: theme.colors.foregroundTextSubtle,
-        "&:hover, &:visited": { color: theme.colors.foregroundTextSubtle },
-      },
-      moreSubtle: {
-        color: theme.colors.foregroundTextMoreSubtle,
-        "&:hover, &:visited": { color: theme.colors.foregroundTextMoreSubtle },
+        color: cssVar("--foreground-secondary"),
+        "&:hover, &:visited": { color: cssVar("--foreground-secondary") },
       },
       inherit: {
         color: "inherit",
@@ -89,7 +80,6 @@ export const Link = styled("a", {
   },
   defaultVariants: {
     variant: "regular",
-    color: "main",
     underline: "always",
   },
 });

@@ -1,21 +1,41 @@
-import { parseExpressionAt } from "acorn";
-import { transpileExpression } from "@webstudio-is/expression";
-import { getFontFaces } from "@webstudio-is/fonts";
-import { getQueryConditions } from "@webstudio-is/query-builder/runtime";
+// Validates each high-impact fixture from typed final-state and MCP-trace
+// evidence instead of depending on agent prose or exact replayed wording.
+import { parse, parseExpressionAt } from "acorn";
+import { simple } from "acorn-walk";
 import {
+  hasPropertyAssignment,
+  parseJsonExpression,
+  parseStaticMemberPath,
+  transpileExpression,
+} from "@webstudio-is/expression";
+import { getFontFaces } from "@webstudio-is/fonts";
+import { mapQueryWhere } from "@webstudio-is/query-builder/runtime";
+import {
+  collectionComponent,
+  defaultVisitorConfirmationBody,
+  blockComponent,
+  blockBodyComponent,
+  blockTemplateComponent,
+  getWritableContentBlockDocumentBinding,
   decodeDataSourceVariable,
+  encodeDataSourceVariable,
   isAssetsResource,
   parseStructuredAssetQueryResourceBody,
   type FontAsset,
   type Resource,
+  type StructuredAssetQueryResourceConfiguration,
   type StructuredAssetQueryWhereBinding,
 } from "@webstudio-is/sdk";
 import {
   authenticatedPageFixture,
   designInputFixture,
   fontAssetsFixture,
+  managedFormAuthoringFixture,
+  managedFormRuntimeFixture,
+  formModesAuthoringFixture,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
+  mdxArticleFixture,
   type EvaluationInstance,
   type EvaluationProject,
   type HighImpactFixture,
@@ -30,6 +50,10 @@ import {
   markdownBlogFixtureDocuments,
 } from "./markdown-blog-fixture";
 import { hasMcpToolCallRetries, isBroadRead } from "./evaluation-metrics";
+import {
+  getAssetQueryContractFingerprints,
+  getPageSettingsContractFingerprint,
+} from "./evaluation-trace-contract";
 
 export type EvaluationToolCall = {
   name: string;
@@ -42,6 +66,14 @@ export type EvaluationToolCall = {
   isError?: boolean;
   errorCode?: string;
   errorIssues?: Array<{ code: string; path: string }>;
+  formStatus?: "validation_failed" | "submitted" | "unknown";
+  formState?:
+    | "initial"
+    | "pending"
+    | "success"
+    | "error"
+    | "invalid"
+    | "unknown";
 };
 
 export type EvaluationArtifact = {
@@ -56,6 +88,7 @@ export type HighImpactEvaluationInput = {
   project: EvaluationProject;
   toolCalls: EvaluationToolCall[];
   artifacts?: EvaluationArtifact[];
+  mdxDocument?: { frontmatter: Record<string, unknown>; body: string };
   contentDatabase?: {
     usedBytes: number;
     maxBytes: number;
@@ -68,6 +101,10 @@ export type HighImpactEvaluationInput = {
     documentGraphEdgeCount: number;
     embeddedContentBytes: number;
   };
+  formRuntimeDeliveries?: Array<{
+    path: "/submit" | "/reject";
+    status: 200 | 503;
+  }>;
 };
 
 export type HighImpactEvaluationResult = {
@@ -137,6 +174,16 @@ const textOf = (instances: EvaluationInstance[]) =>
     .join(" ")
     .toLowerCase();
 
+const renderedTextOf = (instances: EvaluationInstance[]) =>
+  instances
+    .flatMap((instance) =>
+      instance.children.flatMap((child) =>
+        child.type === "text" ? [child.value] : []
+      )
+    )
+    .join(" ")
+    .toLowerCase();
+
 const getPageEvaluationContext = (project: EvaluationProject, path: string) => {
   const page = project.pages.find((candidate) => candidate.path === path);
   return {
@@ -168,6 +215,169 @@ const isValidExpression = (value: string) => {
       preserveParens: true,
     });
     return value.slice(expression.end).trim() === "";
+  } catch {
+    return false;
+  }
+};
+
+// Compare parsed expression structure so whitespace, quotes, and parentheses
+// cannot make unchanged template bindings fail the rubric.
+const isEquivalentExpression = (value: unknown, expected: string) => {
+  if (typeof value !== "string") {
+    return false;
+  }
+  const signature = (code: string) => {
+    const statement = parse(`(${code}\n)`, { ecmaVersion: "latest" }).body[0];
+    if (statement?.type !== "ExpressionStatement") {
+      return undefined;
+    }
+    return JSON.stringify(statement.expression, (key, value) =>
+      ["start", "end", "raw"].includes(key) ? undefined : value
+    );
+  };
+  try {
+    const actual = signature(value);
+    return actual !== undefined && actual === signature(expected);
+  } catch {
+    return false;
+  }
+};
+
+const isIdentifierExpression = (value: unknown, identifier: string) => {
+  if (typeof value !== "string" || identifier === "") {
+    return false;
+  }
+  try {
+    const expression = parseExpressionAt(value, 0, { ecmaVersion: "latest" });
+    return (
+      value.slice(expression.end).trim() === "" &&
+      expression.type === "Identifier" &&
+      expression.name === identifier
+    );
+  } catch {
+    return false;
+  }
+};
+
+const isStateVisibilityExpression = (
+  value: unknown,
+  identifier: string,
+  state: "success" | "error"
+) => {
+  if (typeof value !== "string" || identifier === "") {
+    return false;
+  }
+  try {
+    const expression = parseExpressionAt(value, 0, { ecmaVersion: "latest" });
+    if (
+      value.slice(expression.end).trim() !== "" ||
+      expression.type !== "BinaryExpression" ||
+      expression.operator !== "==="
+    ) {
+      return false;
+    }
+    const matches = (
+      left: typeof expression.left | typeof expression.right,
+      right: typeof expression.left | typeof expression.right
+    ) =>
+      left.type === "Identifier" &&
+      left.name === identifier &&
+      right.type === "Literal" &&
+      right.value === state;
+    return (
+      matches(expression.left, expression.right) ||
+      matches(expression.right, expression.left)
+    );
+  } catch {
+    return false;
+  }
+};
+
+const hasIdentifierAssignment = (
+  value: unknown,
+  target: string,
+  source: string
+) => {
+  if (typeof value !== "string" || target === "") {
+    return false;
+  }
+  try {
+    const program = parse(value, { ecmaVersion: "latest" });
+    let found = false;
+    simple(program, {
+      AssignmentExpression(node) {
+        if (
+          node.operator === "=" &&
+          node.left.type === "Identifier" &&
+          node.left.name === target &&
+          node.right.type === "Identifier" &&
+          node.right.name === source
+        ) {
+          found = true;
+        }
+      },
+    });
+    return found;
+  } catch {
+    return false;
+  }
+};
+
+const getExecuteActionCode = (value: unknown, argument: string) => {
+  if (Array.isArray(value) === false || value.length !== 1) {
+    return undefined;
+  }
+  const action = value[0];
+  return typeof action === "object" &&
+    action !== null &&
+    action.type === "execute" &&
+    Array.isArray(action.args) &&
+    action.args.length === 1 &&
+    action.args[0] === argument &&
+    typeof action.code === "string"
+    ? action.code
+    : undefined;
+};
+
+const hasResultPropertyAssignment = (
+  code: string,
+  target: string,
+  property: string
+) => {
+  if (hasPropertyAssignment({ code, target, source: "result", property })) {
+    return true;
+  }
+  try {
+    const program = parse(code, { ecmaVersion: "latest" });
+    let found = false;
+    simple(program, {
+      AssignmentExpression(node) {
+        if (
+          node.operator !== "=" ||
+          node.left.type !== "Identifier" ||
+          node.left.name !== target ||
+          node.right.type !== "ChainExpression"
+        ) {
+          return;
+        }
+        const member = node.right.expression;
+        if (
+          member.type === "MemberExpression" &&
+          member.optional === true &&
+          member.object.type === "Identifier" &&
+          member.object.name === "result" &&
+          ((member.computed === false &&
+            member.property.type === "Identifier" &&
+            member.property.name === property) ||
+            (member.computed === true &&
+              member.property.type === "Literal" &&
+              member.property.value === property))
+        ) {
+          found = true;
+        }
+      },
+    });
+    return found;
   } catch {
     return false;
   }
@@ -260,12 +470,17 @@ const validateCommon = (
   failures: string[]
 ) => {
   const source = stringifyProject(input.project);
+  const guidanceCalls = input.toolCalls.filter(
+    (call) => call.name === "meta.guide"
+  );
   recordCheck(
     checks,
     failures,
     "guidance",
-    hasSuccessfulCall(input.toolCalls, "meta.guide"),
-    "The agent did not request focused guidance before authoring."
+    guidanceCalls.length >= 1 &&
+      guidanceCalls[0]?.isError !== true &&
+      input.toolCalls[0] === guidanceCalls[0],
+    "The agent must request focused guidance before other operations."
   );
   recordCheck(
     checks,
@@ -367,6 +582,447 @@ const validateAuth = (
     instances.length >= 6 &&
       instances.every((instance) => instance.component !== "HtmlEmbed"),
     "Auth states must be ordinary editable components, not an embed or flat placeholder."
+  );
+};
+
+const validateManagedFormAuthoring = (
+  input: HighImpactEvaluationInput,
+  checks: Record<string, "passed" | "failed">,
+  failures: string[]
+) => {
+  const { page, instances } = getPageEvaluationContext(
+    input.project,
+    "/contact"
+  );
+  const formInstances = instances.filter(
+    ({ component }) => component === "ResourceForm"
+  );
+  const form = formInstances[0];
+  const propsByInstance = new Map<string, EvaluationProject["props"]>();
+  for (const prop of input.project.props) {
+    const current = propsByInstance.get(prop.instanceId) ?? [];
+    current.push(prop);
+    propsByInstance.set(prop.instanceId, current);
+  }
+  const getProp = (instanceId: string, name: string) =>
+    propsByInstance.get(instanceId)?.find((prop) => prop.name === name)?.value;
+  const formDescendants =
+    form === undefined ? [] : descendants(input.project, form.id);
+  const fields = [
+    { name: "name", component: "Input", type: undefined },
+    { name: "email", component: "Input", type: "email" },
+    { name: "subject", component: "Input", type: undefined },
+    { name: "message", component: "Textarea", type: undefined },
+  ];
+  const fieldControls = formDescendants.filter(({ component }) =>
+    ["Input", "Textarea"].includes(component)
+  );
+  const fieldsComplete = fields.every(({ name, component, type }) => {
+    const matches = fieldControls.filter(
+      (instance) =>
+        instance.component === component &&
+        getProp(instance.id, "name") === name
+    );
+    const field = matches[0];
+    return (
+      matches.length === 1 &&
+      getProp(field!.id, "required") === true &&
+      (type === undefined || getProp(field!.id, "type") === type) &&
+      formDescendants.some(
+        (candidate) =>
+          candidate.component === "Label" &&
+          candidate.children.some(
+            (child) => child.type === "id" && child.value === field!.id
+          ) &&
+          /[\p{L}\p{N}]/u.test(
+            renderedTextOf(descendants(input.project, candidate.id))
+          )
+      )
+    );
+  });
+  const heading = instances.find(({ tag }) => tag === "h1");
+  const introParagraph = instances.find(
+    (instance) =>
+      instance.tag === "p" &&
+      formDescendants.some(({ id }) => id === instance.id) === false &&
+      renderedTextOf([instance]).trim().length > 0
+  );
+  const formState = input.project.dataSources.find(
+    (dataSource) =>
+      dataSource.type === "variable" &&
+      dataSource.name === "formState" &&
+      dataSource.scopeInstanceId === form?.id
+  );
+  const results = input.project.dataSources.find(
+    (dataSource) =>
+      dataSource.type === "variable" &&
+      dataSource.name === "results" &&
+      dataSource.scopeInstanceId === form?.id
+  );
+  const errors = input.project.dataSources.find(
+    (dataSource) =>
+      dataSource.type === "variable" &&
+      dataSource.name === "errors" &&
+      dataSource.scopeInstanceId === form?.id
+  );
+  const formStateReference =
+    formState === undefined
+      ? ""
+      : encodeDataSourceVariable(String(formState.id));
+  const stateProp = form === undefined ? undefined : getProp(form.id, "state");
+  const stateChange =
+    form === undefined
+      ? undefined
+      : getExecuteActionCode(getProp(form.id, "onStateChange"), "state");
+  const resultChange =
+    form === undefined
+      ? undefined
+      : getExecuteActionCode(getProp(form.id, "onResultChange"), "result");
+  const successMessage = formDescendants.find(
+    ({ label }) => label?.toLowerCase() === "success message"
+  );
+  const errorMessage = formDescendants.find(
+    ({ label }) => label?.toLowerCase() === "error message"
+  );
+  const successVisibility =
+    successMessage === undefined
+      ? undefined
+      : getProp(successMessage.id, "data-ws-show");
+  const errorVisibility =
+    errorMessage === undefined
+      ? undefined
+      : getProp(errorMessage.id, "data-ws-show");
+  const collection =
+    errorMessage === undefined
+      ? undefined
+      : descendants(input.project, errorMessage.id).find(
+          ({ component }) => component === collectionComponent
+        );
+  const collectionData =
+    collection === undefined ? undefined : getProp(collection.id, "data");
+  const submitButton = formDescendants.find(
+    (instance) =>
+      instance.component === "Button" &&
+      getProp(instance.id, "type") === "submit" &&
+      renderedTextOf(descendants(input.project, instance.id)).includes(
+        "send message"
+      )
+  );
+  const successText = renderedTextOf(
+    descendants(input.project, successMessage?.id ?? "")
+  );
+  const errorText = renderedTextOf(
+    descendants(input.project, errorMessage?.id ?? "")
+  );
+  const feedbackCopyComplete =
+    successText.includes("thanks, we received your message") &&
+    successText.includes("one business day") &&
+    errorText.includes("couldn't send your message") &&
+    errorText.includes("try again");
+  const formStateBindingComplete =
+    formState !== undefined && stateProp === undefined;
+  const formStateChangeComplete =
+    formState !== undefined &&
+    hasIdentifierAssignment(stateChange, formStateReference, "state");
+  const feedbackVisibilityComplete =
+    isStateVisibilityExpression(
+      successVisibility,
+      formStateReference,
+      "success"
+    ) &&
+    isStateVisibilityExpression(errorVisibility, formStateReference, "error");
+  const actionResultsComplete =
+    results !== undefined &&
+    errors !== undefined &&
+    typeof resultChange === "string" &&
+    hasResultPropertyAssignment(
+      resultChange,
+      encodeDataSourceVariable(String(results.id)),
+      "results"
+    ) &&
+    hasResultPropertyAssignment(
+      resultChange,
+      encodeDataSourceVariable(String(errors.id)),
+      "errors"
+    );
+  const actionErrorsComplete =
+    errors !== undefined &&
+    isIdentifierExpression(
+      collectionData,
+      encodeDataSourceVariable(String(errors.id))
+    );
+  const feedbackBindingsComplete =
+    formStateBindingComplete &&
+    formStateChangeComplete &&
+    feedbackVisibilityComplete &&
+    actionResultsComplete &&
+    actionErrorsComplete;
+  const action = form === undefined ? undefined : getProp(form.id, "action");
+  const selectedActions = Array.isArray(action) ? action : [];
+  const resourcesById = new Map(
+    input.project.resources.map((resource) => [String(resource.id), resource])
+  );
+  // Resource scope belongs to its resource data source in the project model.
+  const scopedResources = input.project.dataSources
+    .filter(
+      (dataSource) =>
+        dataSource.type === "resource" &&
+        dataSource.scopeInstanceId === form?.id &&
+        typeof dataSource.resourceId === "string"
+    )
+    .flatMap((dataSource) => {
+      const resource = resourcesById.get(String(dataSource.resourceId));
+      return resource === undefined
+        ? []
+        : [
+            {
+              name: resource.name,
+              dataSourceId: dataSource.id,
+              resource,
+            },
+          ];
+    });
+  const expectedResources = [
+    { name: "Email to owner", recipientMode: "project" },
+    { name: "Email to visitor", recipientMode: "visitor" },
+  ];
+  const parameterReference = (name: string) => {
+    const parameter = input.project.dataSources.find(
+      (source) =>
+        source.type === "parameter" &&
+        source.name === name &&
+        source.scopeInstanceId === form?.id
+    );
+    return parameter === undefined
+      ? undefined
+      : encodeDataSourceVariable(String(parameter.id));
+  };
+  const formDataReference = parameterReference("formData");
+  const browserInfoReference = parameterReference("browserInfo");
+  const ownerSubject = `"Contact form: " + (${formDataReference}.subject ?? "New message")`;
+  const ownerBody =
+    "`" +
+    "${" +
+    browserInfoReference +
+    ".pageUrl ? `Page: ${" +
+    browserInfoReference +
+    '.pageUrl}\n\n` : ""}${' +
+    formDataReference +
+    "}`";
+  const visitorSubject = `${formDataReference}.subject ?? "Your message"`;
+  const orderedActions = selectedActions.map((selected) =>
+    typeof selected === "object" &&
+    selected !== null &&
+    "dataSourceId" in selected &&
+    typeof selected.dataSourceId === "string"
+      ? selected
+      : undefined
+  );
+  const actionsConfigured =
+    form !== undefined &&
+    formDataReference !== undefined &&
+    browserInfoReference !== undefined &&
+    getProp(form.id, "formData") ===
+      decodeDataSourceVariable(formDataReference) &&
+    getProp(form.id, "browserInfo") ===
+      decodeDataSourceVariable(browserInfoReference) &&
+    scopedResources.length === 2 &&
+    expectedResources.every(({ name, recipientMode }, index) => {
+      const scopedResource = scopedResources[index];
+      const email = scopedResource?.resource.email;
+      return (
+        scopedResource?.name === name &&
+        scopedResource.resource.control === "email" &&
+        scopedResource.resource.method === "post" &&
+        scopedResource.resource.url === '""' &&
+        typeof email === "object" &&
+        email !== null &&
+        "recipientMode" in email &&
+        email.recipientMode === recipientMode &&
+        (recipientMode !== "visitor" ||
+          ("visitorEmailField" in email &&
+            email.visitorEmailField === "email" &&
+            "subject" in email &&
+            isEquivalentExpression(email.subject, visitorSubject) &&
+            "body" in email &&
+            isEquivalentExpression(
+              email.body,
+              JSON.stringify(defaultVisitorConfirmationBody)
+            ) &&
+            "confirmationSubject" in email &&
+            email.confirmationSubject === "formSubject" &&
+            "confirmationBody" in email &&
+            email.confirmationBody === "default" &&
+            "includeAttachments" in email &&
+            email.includeAttachments === false)) &&
+        (recipientMode !== "project" ||
+          ("subject" in email &&
+            isEquivalentExpression(email.subject, ownerSubject) &&
+            "body" in email &&
+            isEquivalentExpression(email.body, ownerBody)))
+      );
+    }) &&
+    selectedActions.length === 2 &&
+    scopedResources.every(
+      (resource, index) =>
+        orderedActions[index]?.dataSourceId === resource.dataSourceId
+    );
+  const managedFormStructureComplete =
+    formInstances.length === 1 &&
+    fieldsComplete &&
+    submitButton !== undefined &&
+    feedbackCopyComplete &&
+    feedbackBindingsComplete;
+  const verification = input.toolCalls
+    .filter(
+      (call) =>
+        call.name === "verify-page-responsive" &&
+        call.isError !== true &&
+        call.arguments?.path === "/contact"
+    )
+    .at(-1);
+  const viewports = Array.isArray(verification?.arguments?.viewports)
+    ? (verification.arguments.viewports as Array<{ width?: unknown }>)
+    : [];
+  const hasDesktop = viewports.some(
+    (viewport) => Number(viewport.width) >= 1200
+  );
+  const hasMobile = viewports.some((viewport) => Number(viewport.width) <= 479);
+  const discoveryIndex = input.toolCalls.findIndex(
+    (call) =>
+      call.name === "components.search" &&
+      call.isError !== true &&
+      call.arguments?.searchesForForm === true
+  );
+  const templateInspectionIndex = input.toolCalls.findIndex(
+    (call) =>
+      call.name === "templates.get" &&
+      call.isError !== true &&
+      call.arguments?.inspectsFormTemplate === true
+  );
+  const insertionIndex = input.toolCalls.findIndex(
+    (call) =>
+      call.name === "insert-component" &&
+      call.isError !== true &&
+      call.arguments?.insertsFormTemplate === true
+  );
+
+  recordCheck(
+    checks,
+    failures,
+    "contactPage",
+    page !== undefined &&
+      heading !== undefined &&
+      renderedTextOf(descendants(input.project, heading.id)).trim() ===
+        "contact northstar" &&
+      introParagraph !== undefined,
+    "The contact page needs a semantic heading and authored content."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "formTemplateDiscovery",
+    discoveryIndex > 0 &&
+      insertionIndex > discoveryIndex &&
+      templateInspectionIndex > discoveryIndex &&
+      insertionIndex > templateInspectionIndex,
+    "Search for Form (Beta), inspect its template, and insert the registered Form template."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "managedFormStructure",
+    managedFormStructureComplete,
+    "Keep one accessible managed Form with the four required fields and the requested feedback copy."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "managedFormCount",
+    formInstances.length === 1,
+    "Keep exactly one managed Form on the contact page."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "managedFormFields",
+    fieldsComplete,
+    "Keep all four required contact fields associated with meaningful labels."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "managedFormSubmit",
+    submitButton !== undefined,
+    "Keep a submit button with the requested label."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "feedbackCopy",
+    feedbackCopyComplete,
+    "Show the requested success and error copy in their feedback regions."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "feedbackBindings",
+    feedbackBindingsComplete,
+    "Keep feedback visibility, Form callbacks, and the errors collection bound to formState, results, and errors."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "formStateBinding",
+    formStateBindingComplete && formStateChangeComplete,
+    "Keep Form state internal and bind the state-change callback to formState."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "feedbackVisibility",
+    feedbackVisibilityComplete,
+    "Show success and error feedback for the matching formState."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "actionResultBindings",
+    actionResultsComplete && actionErrorsComplete,
+    "Bind each Action result and error to the Form result variables and error list."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "formActionsPreserved",
+    form !== undefined && actionsConfigured,
+    "Keep both default Form Email actions, including the visitor confirmation subject and body, selected and scoped to the Form."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "resourceActionsNotTriggered",
+    input.toolCalls.every(
+      (call) =>
+        call.name !== "submit-form" &&
+        call.name !== "preview-form-submit" &&
+        call.name !== "form.submit"
+    ),
+    "Do not submit the Form or trigger any Resource action during authoring."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "audit",
+    verification !== undefined,
+    "No successful contact page audit evidence was retained."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "responsiveEvidence",
+    hasDesktop && hasMobile,
+    "Verify the contact page at desktop and mobile sizes."
   );
 };
 
@@ -522,8 +1178,8 @@ const validateFontAssets = (
       fontAssets.every(
         (asset) =>
           asset.meta.family === fontAssetFixtureMeta.family &&
-          "style" in asset.meta &&
           asset.meta.style === fontAssetFixtureMeta.style &&
+          "weight" in asset.meta &&
           asset.meta.weight === fontAssetFixtureMeta.weight
       ),
     "Uploaded font metadata did not persist as Rajdhani normal 600."
@@ -576,10 +1232,21 @@ const getAssetResourceConfigurations = (project: EvaluationProject) =>
     return configuration === undefined ? [] : [{ resource, configuration }];
   });
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
 const pathsEqual = (left: unknown, right: readonly string[]) =>
   Array.isArray(left) &&
   left.length === right.length &&
   left.every((segment, index) => segment === right[index]);
+
+const hasExactAllWhere = (
+  where: StructuredAssetQueryWhereBinding,
+  conditionCount: number
+) =>
+  "all" in where &&
+  where.all.length === conditionCount &&
+  where.all.every((condition) => "field" in condition);
 
 const hasWhereCondition = ({
   where,
@@ -593,14 +1260,19 @@ const hasWhereCondition = ({
   operator: string;
   value: string;
   normalizeExpression?: (expression: string) => string;
-}) =>
-  getQueryConditions(where).some(
+}) => {
+  if (!("all" in where)) {
+    return false;
+  }
+  return where.all.some(
     (condition) =>
+      "field" in condition &&
       pathsEqual(condition.field, field) &&
       condition.operator === operator &&
       typeof condition.value === "string" &&
       normalizeExpression(condition.value) === normalizeExpression(value)
   );
+};
 
 const getMemberPath = (value: unknown): string[] | undefined => {
   if (typeof value !== "object" || value === null || !("type" in value)) {
@@ -680,6 +1352,14 @@ const hasOutputField = (output: unknown, field: string[]) =>
   Array.isArray(output.fields) &&
   output.fields.some((candidate) => pathsEqual(candidate, field));
 
+const hasExactOutputFields = (output: unknown, fields: string[][]) =>
+  isRecord(output) &&
+  output.mode === "fields" &&
+  output.includeMetadata === false &&
+  Array.isArray(output.fields) &&
+  output.fields.length === fields.length &&
+  fields.every((field) => hasOutputField(output, field));
+
 const hasSort = (
   sort: unknown,
   expected: Array<{ field: string[]; direction: string }>
@@ -706,17 +1386,12 @@ const validateMarkdownBlog = (
     const toolDiscoveryIndex = input.toolCalls.findIndex(
       (call) => call.name === "meta.get-more-tools" && call.isError !== true
     );
-    const toolDiscoveryCount = input.toolCalls.filter(
-      (call) => call.name === "meta.get-more-tools"
-    ).length;
     recordCheck(
       checks,
       failures,
       "referenceDocumentationDiscovery",
-      guidanceIndex !== -1 &&
-        toolDiscoveryIndex > guidanceIndex &&
-        toolDiscoveryCount === 1,
-      "The reference workflow must use guidance followed by exactly one focused tool discovery call."
+      guidanceIndex !== -1 && toolDiscoveryIndex > guidanceIndex,
+      "The reference workflow must use guidance followed by focused tool discovery."
     );
     recordCheck(
       checks,
@@ -743,6 +1418,18 @@ const validateMarkdownBlog = (
   const blogFolder = input.project.assetFolders.find(
     (folder) => folder.name === "Blog"
   );
+  const fixtureAssetFolderIds = new Set(
+    input.fixture.project.assetFolders.map((folder) => folder.id)
+  );
+  const preservesFixtureAssetFolders = input.fixture.project.assetFolders.every(
+    (expected) =>
+      input.project.assetFolders.some(
+        (candidate) =>
+          candidate.id === expected.id &&
+          candidate.name === expected.name &&
+          candidate.parentId === expected.parentId
+      )
+  );
   recordCheck(
     checks,
     failures,
@@ -767,22 +1454,55 @@ const validateMarkdownBlog = (
     failures,
     "blogAssetFolder",
     blogFolder !== undefined &&
+      blogFolder.parentId === undefined &&
+      fixtureAssetFolderIds.has(blogFolder.id) === false &&
+      input.project.assetFolders.length ===
+        input.fixture.project.assetFolders.length + 1 &&
+      preservesFixtureAssetFolders &&
       folderIds.size === 1 &&
       folderIds.has(blogFolder.id),
-    "The Markdown articles are not all stored in one Blog asset folder."
+    "The project must preserve its existing asset folders and add only one Blog folder containing every Markdown article."
   );
 
   const overview = getPageEvaluationContext(input.project, "/blog");
   const detail = getPageEvaluationContext(input.project, "/blog/:slug");
+  const fixturePageIds = new Set(
+    input.fixture.project.pages.map((page) => page.id)
+  );
+  const preservesFixturePages = input.fixture.project.pages.every((expected) =>
+    input.project.pages.some(
+      (candidate) =>
+        candidate.id === expected.id &&
+        candidate.path === expected.path &&
+        candidate.rootInstanceId === expected.rootInstanceId
+    )
+  );
   recordCheck(
     checks,
     failures,
     "blogRoutes",
-    overview.page !== undefined && detail.page !== undefined,
-    "The /blog overview and /blog/:slug detail pages are required."
+    overview.page !== undefined &&
+      detail.page !== undefined &&
+      overview.page.id !== detail.page.id &&
+      fixturePageIds.has(overview.page.id) === false &&
+      fixturePageIds.has(detail.page.id) === false &&
+      input.project.pages.length === input.fixture.project.pages.length + 2 &&
+      preservesFixturePages,
+    "The project must preserve its existing pages and add only /blog and /blog/:slug."
   );
 
   const configurations = getAssetResourceConfigurations(input.project);
+  const assetResources = input.project.resources.filter((resource) =>
+    isAssetsResource(resource as Resource)
+  );
+  const assetResourceIds = new Set(
+    assetResources.map((resource) => String(resource.id))
+  );
+  const assetResourceDataSources = input.project.dataSources.filter(
+    (dataSource) =>
+      dataSource.type === "resource" &&
+      assetResourceIds.has(String(dataSource.resourceId))
+  );
   const dataSourceNameById = new Map(
     input.project.dataSources.map((dataSource) => [
       String(dataSource.id),
@@ -808,6 +1528,87 @@ const validateMarkdownBlog = (
       return expression;
     }
   };
+  const matchesOverviewQuery = (
+    configuration: StructuredAssetQueryResourceConfiguration | undefined
+  ) =>
+    configuration !== undefined &&
+    blogFolder !== undefined &&
+    configuration.result === "many" &&
+    hasExactAllWhere(configuration.where, 3) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["extension"],
+      operator: "eq",
+      value: '"md"',
+    }) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["folderId"],
+      operator: "eq",
+      value: JSON.stringify(blogFolder.id),
+    }) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["properties", "draft"],
+      operator: "ne",
+      value: "true",
+      normalizeExpression,
+    }) &&
+    hasSort(configuration.sort, [
+      { field: ["properties", "publishedAt"], direction: "desc" },
+      { field: ["id"], direction: "asc" },
+    ]) &&
+    configuration.limit === "20" &&
+    configuration.offset === "0" &&
+    hasExactOutputFields(configuration.output, [
+      ["properties", "title"],
+      ["properties", "slug"],
+      ["properties", "publishedAt"],
+      ["properties", "author"],
+      ["properties", "excerpt"],
+    ]) &&
+    configuration.content.mode === "none";
+  const matchesDetailQuery = (
+    configuration: StructuredAssetQueryResourceConfiguration | undefined,
+    slugValue: string
+  ) =>
+    configuration !== undefined &&
+    blogFolder !== undefined &&
+    configuration.result === "one" &&
+    hasExactAllWhere(configuration.where, 4) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["extension"],
+      operator: "eq",
+      value: '"md"',
+    }) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["folderId"],
+      operator: "eq",
+      value: JSON.stringify(blogFolder.id),
+    }) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["properties", "slug"],
+      operator: "eq",
+      value: slugValue,
+      normalizeExpression,
+    }) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["properties", "draft"],
+      operator: "ne",
+      value: "true",
+      normalizeExpression,
+    }) &&
+    hasExactOutputFields(configuration.output, [
+      ["properties", "title"],
+      ["properties", "author"],
+      ["properties", "excerpt"],
+      ["properties", "featureImage", "src"],
+    ]) &&
+    configuration.content.mode === "markdown-body-ref";
   const findConfigurationByDataSourceName = (name: string) => {
     const resourceId = input.project.dataSources.find(
       (dataSource) => dataSource.type === "resource" && dataSource.name === name
@@ -839,77 +1640,124 @@ const validateMarkdownBlog = (
     checks,
     failures,
     "scopedBlogResources",
-    isResourceScopedTo(listingEntry?.resource.id, overviewInstanceIds) &&
+    assetResources.length === 2 &&
+      configurations.length === 2 &&
+      assetResourceDataSources.length === 2 &&
+      new Set(assetResourceDataSources.map(({ resourceId }) => resourceId))
+        .size === 2 &&
+      listingEntry?.resource.id !== articleEntry?.resource.id &&
+      isResourceScopedTo(listingEntry?.resource.id, overviewInstanceIds) &&
       isResourceScopedTo(articleEntry?.resource.id, detailInstanceIds),
-    "Each Assets resource must be scoped to its corresponding blog page."
+    "The blog must have exactly two valid Assets resources, each scoped to its corresponding page without stale placeholders."
+  );
+
+  const indexedCalls = input.toolCalls.map((call, index) => ({ call, index }));
+  const validationCalls = indexedCalls.filter(
+    ({ call }) => call.name === "validate-asset-query"
+  );
+  const previewCalls = indexedCalls.filter(
+    ({ call }) => call.name === "preview-asset-query"
+  );
+  const resourceCreationCalls = indexedCalls.filter(
+    ({ call }) => call.name === "create-assets-resource"
+  );
+  const toResolvedQuery = (
+    configuration: StructuredAssetQueryResourceConfiguration | undefined
+  ) => {
+    if (configuration === undefined) {
+      return;
+    }
+    let valid = true;
+    const resolveValue = (expression: string) => {
+      const literal = parseJsonExpression(expression);
+      if (literal !== undefined) {
+        return literal;
+      }
+      if (normalizeExpression(expression) === "system.params.slug") {
+        return "aurora-trails";
+      }
+      valid = false;
+    };
+    const query = {
+      ...configuration,
+      where: mapQueryWhere(configuration.where, (condition) => ({
+        ...condition,
+        value: resolveValue(condition.value),
+      })),
+      limit: resolveValue(configuration.limit),
+      offset: resolveValue(configuration.offset),
+    };
+    return valid ? query : undefined;
+  };
+  const overviewQueryFingerprints = getAssetQueryContractFingerprints(
+    toResolvedQuery(listing)
+  );
+  const detailQueryFingerprints = getAssetQueryContractFingerprints(
+    toResolvedQuery(article)
+  );
+  const validatedQueryShapeFingerprints = validationCalls.map(
+    ({ call }) => call.arguments?.assetQueryShapeSha256
+  );
+  const overviewValidationIndex = validationCalls.find(
+    ({ call }) =>
+      call.arguments?.assetQueryShapeSha256 ===
+      overviewQueryFingerprints?.shapeSha256
+  )?.index;
+  const detailValidationIndex = validationCalls.find(
+    ({ call }) =>
+      call.arguments?.assetQueryShapeSha256 ===
+      detailQueryFingerprints?.shapeSha256
+  )?.index;
+  const detailPreviewIndex = previewCalls.find(
+    ({ call }) =>
+      call.arguments?.assetQuerySha256 === detailQueryFingerprints?.sha256
+  )?.index;
+  const firstResourceCreationIndex =
+    resourceCreationCalls[0]?.index ?? Number.POSITIVE_INFINITY;
+  const firstBindingIndex =
+    indexedCalls.find(
+      ({ call }) =>
+        call.name === "insert-collection" || call.name === "insert-fragment"
+    )?.index ?? Number.POSITIVE_INFINITY;
+  recordCheck(
+    checks,
+    failures,
+    "queryVerification",
+    validationCalls.length >= 2 &&
+      validationCalls.every(({ call }) => call.isError !== true) &&
+      overviewQueryFingerprints !== undefined &&
+      detailQueryFingerprints !== undefined &&
+      validatedQueryShapeFingerprints.includes(
+        overviewQueryFingerprints.shapeSha256
+      ) &&
+      validatedQueryShapeFingerprints.includes(
+        detailQueryFingerprints.shapeSha256
+      ) &&
+      previewCalls.length >= 1 &&
+      previewCalls.every(({ call }) => call.isError !== true) &&
+      resourceCreationCalls.length === 2 &&
+      resourceCreationCalls.every(({ call }) => call.isError !== true) &&
+      overviewValidationIndex !== undefined &&
+      overviewValidationIndex < firstResourceCreationIndex &&
+      detailValidationIndex !== undefined &&
+      detailValidationIndex < firstResourceCreationIndex &&
+      detailPreviewIndex !== undefined &&
+      detailPreviewIndex < firstBindingIndex,
+    "Both blog queries must be validated before resource creation, and the detail query must be previewed before binding."
   );
   recordCheck(
     checks,
     failures,
     "listingQuery",
-    listing !== undefined &&
-      blogFolder !== undefined &&
-      hasWhereCondition({
-        where: listing.where,
-        field: ["extension"],
-        operator: "eq",
-        value: '"md"',
-      }) &&
-      hasWhereCondition({
-        where: listing.where,
-        field: ["folderId"],
-        operator: "eq",
-        value: JSON.stringify(blogFolder.id),
-      }) &&
-      hasWhereCondition({
-        where: listing.where,
-        field: ["properties", "draft"],
-        operator: "ne",
-        value: "true",
-        normalizeExpression,
-      }) &&
-      hasSort(listing.sort, [
-        { field: ["properties", "publishedAt"], direction: "desc" },
-        { field: ["id"], direction: "asc" },
-      ]) &&
-      listing.limit === "20" &&
-      ["title", "slug", "publishedAt"].every((field) =>
-        hasOutputField(listing.output, ["properties", field])
-      ) &&
-      hasOutputField(listing.output, ["properties", "excerpt"]) &&
-      listing.output.includeMetadata === false,
+    matchesOverviewQuery(listing),
     "The overview Assets resource is not a bounded metadata-only published-post query."
   );
   recordCheck(
     checks,
     failures,
     "detailQuery",
-    article !== undefined &&
-      blogFolder !== undefined &&
-      article.content.mode === "markdown-body-ref" &&
-      hasWhereCondition({
-        where: article.where,
-        field: ["extension"],
-        operator: "eq",
-        value: '"md"',
-      }) &&
-      hasWhereCondition({
-        where: article.where,
-        field: ["folderId"],
-        operator: "eq",
-        value: JSON.stringify(blogFolder.id),
-      }) &&
-      hasWhereCondition({
-        where: article.where,
-        field: ["properties", "slug"],
-        operator: "eq",
-        value: "system.params.slug",
-        normalizeExpression,
-      }) &&
-      article.result === "one" &&
-      article.output.includeMetadata === false &&
-      hasOutputField(article.output, ["properties", "body"]) === false,
-    "The detail Assets resource does not defer one Markdown body selected by the dynamic slug parameter."
+    matchesDetailQuery(article, "system.params.slug"),
+    "The detail Assets resource must exclude drafts, select the metadata consumed by the page, and defer one Markdown body selected by the dynamic slug parameter."
   );
   recordCheck(
     checks,
@@ -966,13 +1814,27 @@ const validateMarkdownBlog = (
   };
   const overviewExpressionPaths = getPageExpressionPaths(overview.instances);
   const detailExpressionPaths = getPageExpressionPaths(detail.instances);
+  const overviewCollections = overview.instances.filter(
+    (instance) => instance.component === collectionComponent
+  );
+  const markdownEmbedInstances = detail.instances.filter(
+    (instance) => instance.component === "MarkdownEmbed"
+  );
+  const markdownEmbed = markdownEmbedInstances[0];
+  const markdownCodeBindings = input.project.props.filter(
+    (prop) =>
+      prop.instanceId === markdownEmbed?.id &&
+      prop.name === "code" &&
+      prop.type === "expression"
+  );
+  const markdownCodePath = parseStaticMemberPath(
+    normalizeExpression(String(markdownCodeBindings[0]?.value ?? ""))
+  );
   recordCheck(
     checks,
     failures,
     "editableBlogBindings",
-    overview.instances.some((instance) =>
-      instance.component.toLowerCase().endsWith("collection")
-    ) &&
+    overviewCollections.length === 1 &&
       [
         "collectionItem.properties.title",
         "collectionItem.properties.excerpt",
@@ -980,33 +1842,89 @@ const validateMarkdownBlog = (
         "collectionItem.properties.slug",
         "collectionItem.properties.author.name",
       ].every((expression) => overviewExpressionPaths.has(expression)) &&
-      detail.instances.some((instance) =>
-        instance.component.toLowerCase().endsWith("collection")
+      detail.instances.every(
+        (instance) => instance.component !== collectionComponent
       ) &&
-      detail.instances.some((instance) =>
-        instance.component.toLowerCase().endsWith("markdownembed")
-      ) &&
-      detailExpressionPaths.has("collectionItem.content.text") &&
-      detailExpressionPaths.has("collectionItem.properties.author.name"),
-    "The blog is not rendered through editable Collections, author bindings, and a Markdown Embed."
+      markdownEmbedInstances.length === 1 &&
+      markdownCodeBindings.length === 1 &&
+      pathsEqual(markdownCodePath, ["post", "data", "content", "text"]) &&
+      detailExpressionPaths.has("post.data.properties.title") &&
+      detailExpressionPaths.has("post.data.properties.author.name"),
+    "The overview must use an editable Collection and the result-one detail must bind directly to a Markdown Embed."
   );
   recordCheck(
     checks,
     failures,
     "bindingVerification",
-    hasSuccessfulCall(input.toolCalls, "insert-fragment-verified") ||
-      hasSuccessfulCall(input.toolCalls, "verify-bindings") ||
-      hasSuccessfulCall(input.toolCalls, "insert-collection"),
-    "The persisted blog bindings were not verified."
+    input.toolCalls.filter(
+      (call) => call.name === "insert-collection" && call.isError !== true
+    ).length === 1 &&
+      input.toolCalls.filter(
+        (call) => call.name === "insert-fragment" && call.isError !== true
+      ).length >= 1,
+    "One persisted overview Collection and at least one direct fragment must be inserted successfully."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "detailPageSettings",
+    (() => {
+      const expected = {
+        title: 'post.data.properties.title ?? "Article"',
+        description: 'post.data.properties.excerpt ?? ""',
+        socialImageUrl: 'post.data.properties.featureImage.src ?? ""',
+        status: "post.data ? 200 : 404",
+      };
+      const matchesExpression = (value: unknown, expression: string) =>
+        typeof value === "string" &&
+        normalizeExpression(value) === normalizeExpression(expression);
+      const pageMatches =
+        matchesExpression(detail.page?.title, expected.title) &&
+        matchesExpression(
+          detail.page?.meta?.description,
+          expected.description
+        ) &&
+        matchesExpression(
+          detail.page?.meta?.socialImageUrl,
+          expected.socialImageUrl
+        ) &&
+        matchesExpression(detail.page?.meta?.status, expected.status);
+      const updateCalls = input.toolCalls.filter(
+        (call) => call.name === "update-page" && call.isError !== true
+      );
+      const expectedPageSettingsFingerprint =
+        detail.page === undefined
+          ? undefined
+          : getPageSettingsContractFingerprint({
+              pageId: detail.page.id,
+              values: {
+                title: expected.title,
+                meta: {
+                  description: expected.description,
+                  socialImageUrl: expected.socialImageUrl,
+                  status: expected.status,
+                },
+              },
+            });
+      const callMatches =
+        updateCalls.length >= 1 &&
+        expectedPageSettingsFingerprint !== undefined &&
+        updateCalls.some(
+          (call) =>
+            call.arguments?.pageSettingsSha256 ===
+            expectedPageSettingsFingerprint
+        );
+      return pageMatches && callMatches;
+    })(),
+    "The dynamic detail page title, description, social image, and status must be persisted and applied to the detail page from the post resource."
   );
 
-  const verificationCalls = input.toolCalls.filter(
-    (call) => call.name === "verify-page-responsive" && call.isError !== true
+  const verificationCalls = input.toolCalls.flatMap((call, index) =>
+    call.name === "verify-page-responsive" && call.isError !== true
+      ? [{ call, index }]
+      : []
   );
-  const verifiedPaths = new Set(
-    verificationCalls.map((call) => String(call.arguments?.path ?? ""))
-  );
-  const hasBothViewports = verificationCalls.every((call) => {
+  const hasBothViewports = verificationCalls.every(({ call }) => {
     const viewports = Array.isArray(call.arguments?.viewports)
       ? call.arguments.viewports
       : [];
@@ -1025,15 +1943,357 @@ const validateMarkdownBlog = (
       )
     );
   });
+  const verificationPaths = new Set(
+    verificationCalls.map(({ call }) => call.arguments?.path)
+  );
   recordCheck(
     checks,
     failures,
     "blogRouteEvidence",
-    verificationCalls.length === 2 &&
-      verifiedPaths.has("/blog") &&
-      verifiedPaths.has("/blog/aurora-trails") &&
+    verificationCalls.length >= 2 &&
+      verificationCalls.at(-1)?.index === input.toolCalls.length - 1 &&
+      verificationPaths.has("/blog") &&
+      verificationPaths.has("/blog/aurora-trails") &&
       hasBothViewports,
-    "Both blog routes require successful desktop and mobile rendered verification."
+    "The workflow must verify /blog and /blog/aurora-trails at desktop and mobile sizes, with verification as the final call."
+  );
+};
+
+const validateMdxArticle = (
+  input: HighImpactEvaluationInput,
+  checks: Record<string, "passed" | "failed">,
+  failures: string[]
+) => {
+  const block = input.project.instances.find(
+    (instance) => instance.id === "article-block"
+  );
+  const source = input.project.props.find(
+    (prop) => prop.instanceId === block?.id && prop.name === "src"
+  );
+  const document = input.project.props.find(
+    (prop) =>
+      prop.instanceId === block?.id &&
+      prop.name === "document" &&
+      prop.type === "parameter"
+  );
+  recordCheck(
+    checks,
+    failures,
+    "mdxDocumentVariable",
+    typeof document?.value === "string" &&
+      input.project.dataSources.some(
+        (dataSource) =>
+          dataSource.id === document.value &&
+          dataSource.type === "parameter" &&
+          dataSource.scopeInstanceId === block?.id
+      ),
+    "The document parameter must refer to a variable owned by this Content Block."
+  );
+  const headerInstanceIds = new Set(
+    (block?.children ?? []).flatMap((child) => {
+      if (child.type !== "id") {
+        return [];
+      }
+      const instance = input.project.instances.find(
+        (instance) => instance.id === child.value
+      );
+      if (
+        instance?.component === blockBodyComponent ||
+        instance?.component === blockTemplateComponent
+      ) {
+        return [];
+      }
+      return descendants(input.project, child.value).map(
+        (instance) => instance.id
+      );
+    })
+  );
+  recordCheck(
+    checks,
+    failures,
+    "mdxSourceConnected",
+    block?.component === blockComponent &&
+      ((source?.type === "asset" && source.value === "article-file") ||
+        (source?.type === "expression" &&
+          typeof source.value === "string" &&
+          parseJsonExpression(source.value) === "article-file")),
+    "The article Content Block must stay connected to the supplied MDX Asset."
+  );
+  for (const [id, path] of [
+    ["article-title", ["title"]],
+    ["article-author", ["author", "name"]],
+    ["article-reading-time", ["readingTime"]],
+  ] as const) {
+    const instance = input.project.instances.find(
+      (instance) => instance.id === id
+    );
+    const binding =
+      instance?.children.length === 1 ? instance.children[0] : undefined;
+    const writable =
+      binding?.type === "expression" && typeof document?.value === "string"
+        ? getWritableContentBlockDocumentBinding({
+            binding,
+            documentDataSourceId: document.value,
+          })
+        : undefined;
+    recordCheck(
+      checks,
+      failures,
+      `${id}-editable`,
+      headerInstanceIds.has(id) &&
+        JSON.stringify(writable?.frontmatterPath) === JSON.stringify(path),
+      `${id} must use a direct writable document binding inside the designed header.`
+    );
+  }
+  recordCheck(
+    checks,
+    failures,
+    "mdxMetadataPreserved",
+    input.mdxDocument?.frontmatter.title === "Aurora trails" &&
+      JSON.stringify(input.mdxDocument.frontmatter.author) ===
+        JSON.stringify({ name: "Noor Silva" }) &&
+      input.mdxDocument.frontmatter.readingTime === 6 &&
+      input.mdxDocument.frontmatter.draft === false &&
+      Object.keys(input.mdxDocument.frontmatter).length === 4,
+    "The saved author change must preserve the other frontmatter fields."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "mdxBodyPreserved",
+    input.mdxDocument?.body.trim() ===
+      "## Plan your route\n\nFollow the marked trail and carry a map.",
+    "Frontmatter editing must preserve the article body."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "mdxSuffixPreserved",
+    headerInstanceIds.has("article-reading-suffix") &&
+      JSON.stringify(
+        input.project.instances.find(
+          (instance) => instance.id === "article-reading-suffix"
+        )?.children
+      ) === JSON.stringify([{ type: "text", value: " min read" }]),
+    "Keep the static suffix separate from the editable reading-time value."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "mdxSavedAndReloaded",
+    hasSuccessfulCall(input.toolCalls, "update-content-block-frontmatter") &&
+      hasSuccessfulCall(input.toolCalls, "reload-content-block-source") &&
+      hasSuccessfulCall(input.toolCalls, "inspect-content-block-source") &&
+      hasSuccessfulCall(input.toolCalls, "audit"),
+    "Save through the dedicated source operation, reload, inspect, and audit."
+  );
+};
+
+const validateFormModesAuthoring = (
+  input: HighImpactEvaluationInput,
+  checks: Record<string, "passed" | "failed">,
+  failures: string[]
+) => {
+  const getProp = (id: string, name: string) =>
+    input.project.props.find(
+      (prop) => prop.instanceId === id && prop.name === name
+    )?.value;
+  const resourceForms = input.project.instances.filter(
+    (instance) => instance.component === "ResourceForm"
+  );
+  const contact = resourceForms.find((instance) => {
+    const actions = getProp(instance.id, "action");
+    return Array.isArray(actions) && actions.length > 0;
+  });
+  const search = resourceForms.find((instance) => {
+    const actions = getProp(instance.id, "action");
+    return Array.isArray(actions) && actions.length === 0;
+  });
+  const native = input.project.instances.find(
+    (instance) =>
+      (instance.component === "Element" ||
+        instance.component === "ws:element") &&
+      (instance.tag === "form" || getProp(instance.id, "tag") === "form")
+  );
+  const contactActions = getProp(contact?.id ?? "", "action");
+  const searchActions = getProp(search?.id ?? "", "action");
+  recordCheck(
+    checks,
+    failures,
+    "resourceFormMode",
+    resourceForms.length >= 2 &&
+      contact?.component === "ResourceForm" &&
+      Array.isArray(contactActions) &&
+      contactActions.length > 0,
+    "Contact must be a Form with connected Resource actions."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "navigationFormMode",
+    resourceForms.length >= 2 &&
+      search?.component === "ResourceForm" &&
+      Array.isArray(searchActions) &&
+      searchActions.length === 0,
+    "Search must be a Form with an explicitly empty Action array."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "nativeFormMode",
+    (native?.component === "Element" || native?.component === "ws:element") &&
+      (native.tag === "form" || getProp(native.id, "tag") === "form") &&
+      getProp(native.id, "action") === undefined,
+    "Native must be an Element form without a managed Action."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "formModesRegistryDiscovery",
+    input.toolCalls.some(
+      (call) =>
+        call.name === "components.search" &&
+        call.arguments?.searchesForForm === true
+    ) &&
+      input.toolCalls.some(
+        (call) =>
+          call.name === "components.search" &&
+          call.arguments?.searchesForElement === true
+      ) &&
+      input.toolCalls.some((call) => call.name === "templates.get") &&
+      input.toolCalls.filter((call) => call.name === "insert-component")
+        .length >= 3,
+    "Discover the registered components and insert their templates through MCP."
+  );
+};
+
+const validateManagedFormRuntime = (
+  input: HighImpactEvaluationInput,
+  checks: Record<string, "passed" | "failed">,
+  failures: string[]
+) => {
+  const route = input.project.pages.find(
+    ({ path }) => path === "/contact-runtime"
+  );
+  const form =
+    route === undefined
+      ? undefined
+      : descendants(input.project, route.rootInstanceId).find(
+          ({ component }) => component === "ResourceForm"
+        );
+  const formDescendants =
+    form === undefined ? [] : descendants(input.project, form.id);
+  const fieldsComplete = ["name", "email", "subject", "message"].every((name) =>
+    formDescendants.some(
+      (instance) =>
+        ["Input", "Textarea"].includes(instance.component) &&
+        input.project.props.some(
+          (prop) =>
+            prop.instanceId === instance.id &&
+            prop.name === "name" &&
+            prop.value === name
+        )
+    )
+  );
+  recordCheck(
+    checks,
+    failures,
+    "runtimeFormFields",
+    form !== undefined && fieldsComplete,
+    "Keep the four named fields inside the managed Form."
+  );
+  const actions = input.project.props.find(
+    ({ instanceId, name }) => instanceId === form?.id && name === "action"
+  )?.value;
+  const selected = Array.isArray(actions)
+    ? actions.filter(
+        (action) =>
+          typeof action === "object" &&
+          action !== null &&
+          "dataSourceId" in action &&
+          typeof action.dataSourceId === "string"
+      )
+    : [];
+  const selectedSource = input.project.dataSources.find(
+    (source) =>
+      source.id ===
+      (selected[0] as { dataSourceId?: string } | undefined)?.dataSourceId
+  );
+  const selectedResource = input.project.resources.find(
+    (resource) => resource.id === selectedSource?.resourceId
+  );
+  const resourceUrl = selectedResource?.url;
+  const safeResourceUrl =
+    resourceUrl === "https://mcp-delivery.example/submit" ||
+    resourceUrl === '"https://mcp-delivery.example/submit"';
+  recordCheck(
+    checks,
+    failures,
+    "runtimeFormAction",
+    form !== undefined &&
+      Array.isArray(actions) &&
+      selected.length === actions.length &&
+      selected.length === 1 &&
+      selectedResource?.method === "post" &&
+      safeResourceUrl &&
+      input.project.resources.every(
+        (resource) =>
+          resource.control === "email" ||
+          resource.url === "https://mcp-delivery.example/submit" ||
+          resource.url === '"https://mcp-delivery.example/submit"'
+      ),
+    "The runtime Form must retain only its fixed local-test HTTP action."
+  );
+
+  const calls = input.toolCalls;
+  const submissions = calls.filter(
+    ({ name }) => name === "forms.simulate-submission"
+  );
+  recordCheck(
+    checks,
+    failures,
+    "runtimeSessionPreview",
+    submissions.length === 3 &&
+      calls.every(
+        ({ name }) =>
+          name !== "preview.start" &&
+          name !== "preview.submit-form" &&
+          name !== "preview.stop"
+      ),
+    "Run three server-side simulations without Preview or browser submission."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "runtimeSyntheticInputs",
+    submissions.length === 3 &&
+      submissions.every(
+        (call) =>
+          call.arguments?.path === "/contact-runtime" &&
+          (call.arguments?.siteOrigin === undefined ||
+            call.arguments.siteOrigin === "https://site.example") &&
+          call.arguments?.hasFormFile !== true &&
+          Array.isArray(call.arguments?.formValueNames) &&
+          ["name", "email", "subject", "message"].every((name) =>
+            (call.arguments?.formValueNames as string[]).includes(name)
+          )
+      ),
+    "Submit only the named synthetic fields without files."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "runtimeObservedStates",
+    submissions.length === 3 &&
+      submissions.every(
+        (call) => call.isError !== true && call.formStatus === "submitted"
+      ) &&
+      submissions.map(({ formState }) => formState).join(",") ===
+        "success,error,success" &&
+      input.formRuntimeDeliveries
+        ?.map(({ path, status }) => `${path}:${status}`)
+        .join(",") === "/submit:200,/reject:503,/submit:200",
+    "Observe success, failure, and recovery with one delivery per submission."
   );
 };
 
@@ -1043,7 +2303,15 @@ export const evaluateHighImpactOutcome = (
   const checks: Record<string, "passed" | "failed"> = {};
   const failures: string[] = [];
   validateCommon(input, checks, failures);
-  if (input.fixture.id === authenticatedPageFixture.id) {
+  if (input.fixture.id === formModesAuthoringFixture.id) {
+    validateFormModesAuthoring(input, checks, failures);
+  } else if (input.fixture.id === managedFormRuntimeFixture.id) {
+    validateManagedFormRuntime(input, checks, failures);
+  } else if (input.fixture.id === mdxArticleFixture.id) {
+    validateMdxArticle(input, checks, failures);
+  } else if (input.fixture.id === managedFormAuthoringFixture.id) {
+    validateManagedFormAuthoring(input, checks, failures);
+  } else if (input.fixture.id === authenticatedPageFixture.id) {
     validateAuth(input, checks, failures);
   } else if (input.fixture.id === fontAssetsFixture.id) {
     validateFontAssets(input, checks, failures);

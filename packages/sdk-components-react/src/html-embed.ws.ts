@@ -43,6 +43,7 @@ export const meta: WsComponentMeta = {
       control: "code",
       language: "html",
       type: "string",
+      contentMode: true,
     },
   },
 };

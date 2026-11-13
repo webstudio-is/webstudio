@@ -1,7 +1,6 @@
 import { useMemo, useLayoutEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
-import { css } from "@webstudio-is/design-system";
-import { theme, textVariants } from "@webstudio-is/design-system";
+import { css, cssVar, textVariants } from "@webstudio-is/design-system";
 import { $gridCellData } from "~/shared/nano-states";
 import {
   $scale,
@@ -10,6 +9,7 @@ import {
 } from "~/builder/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { parseGridAreas } from "@webstudio-is/css-data";
+import { canvasToolColors } from "./color-recipes";
 
 // Compute the AABB offset that CSS transforms cause, by letting the browser
 // do all parsing and matrix composition via a hidden probe element.
@@ -91,7 +91,7 @@ const getAreaSpans = (cssText: string) => {
 
 const cellStyle = css({
   pointerEvents: "none",
-  outline: `1px dashed ${theme.colors.borderMain}`,
+  outline: `1px dashed ${cssVar("--border-default")}`,
   outlineOffset: "-0.5px",
   // Area cells suppress their per-cell outline; a merged area outline
   // div renders a single border around the whole area instead.
@@ -102,7 +102,7 @@ const cellStyle = css({
 
 const areaOutlineStyle = css({
   pointerEvents: "none",
-  outline: `1px solid ${theme.colors.borderMain}`,
+  outline: `1px solid ${cssVar("--border-default")}`,
   outlineOffset: "-0.5px",
 });
 
@@ -110,7 +110,7 @@ const areaLabelStyle = css(textVariants.regular, {
   position: "absolute",
   top: 2,
   left: 4,
-  color: theme.colors.foregroundSubtle,
+  color: cssVar("--foreground-secondary"),
   pointerEvents: "none",
   whiteSpace: "nowrap",
   overflow: "hidden",
@@ -120,7 +120,7 @@ const areaLabelStyle = css(textVariants.regular, {
 
 const highlightStyle = css({
   pointerEvents: "none",
-  backgroundColor: "oklch(94.8% 0.027 246.4 / 0.6)",
+  backgroundColor: canvasToolColors.selectionSubtle,
 });
 
 export const GridGuides = () => {

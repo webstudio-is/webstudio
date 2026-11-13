@@ -2,13 +2,18 @@ import {
   deleteAssetFoldersWithClient,
   patchAssetFoldersWithClient,
   patchAssets,
+  loadAssetsByProjectWithClient,
+  prepareAssetPatchWithClient,
+  type AssetObjectReader,
 } from "@webstudio-is/asset-uploader/server";
-import type { Build } from "@webstudio-is/project-build";
+import type { Build, ProjectSettings } from "@webstudio-is/project-build";
+import { parseConfig } from "@webstudio-is/project-build/persistence";
 import { loadRawBuildById } from "@webstudio-is/project-build/server";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { Project } from "./project";
 import { updatePreviewImage } from "./project";
+import { validateProjectSettingsContactEmail } from "./project-settings-email";
 import {
   createBuildPatchUpdate,
   singlePlayerVersionMismatchResult,
@@ -39,12 +44,14 @@ export const patchLoadedBuild = async (
     projectId,
     transactions,
     clientVersion,
+    assetStore,
   }: {
     build: Database["public"]["Tables"]["Build"]["Row"];
     buildId: Build["id"];
     projectId: Project["id"];
     transactions: BuildPatchTransaction[];
     clientVersion: number;
+    assetStore?: AssetObjectReader;
   },
   context: AppContext
 ): Promise<PatchLoadedBuildResult> => {
@@ -52,6 +59,32 @@ export const patchLoadedBuild = async (
     build,
     clientVersion,
     transactions,
+    loadAssets: async (ids, patches) => {
+      const client = context.postgrest.client;
+      if (patches.length === 0) {
+        return {
+          assets: await loadAssetsByProjectWithClient(projectId, client, ids),
+          changedAssetIds: new Set(),
+        };
+      }
+      const { assetsMap, canonicalAssets } = await prepareAssetPatchWithClient({
+        projectId,
+        client,
+        patches,
+      });
+      const changedAssetIds = new Set<string>();
+      for (const [id, asset] of canonicalAssets) {
+        const previous = assetsMap.get(id);
+        if (
+          previous?.type !== asset.type ||
+          previous?.format !== asset.format ||
+          previous?.name !== asset.name
+        ) {
+          changedAssetIds.add(id);
+        }
+      }
+      return { assets: [...canonicalAssets.values()], changedAssetIds };
+    },
   });
 
   if (result.status !== "ok") {
@@ -62,7 +95,24 @@ export const patchLoadedBuild = async (
     return { status: "ok", version: result.nextVersion, build };
   }
   const buildUpdate = result.update;
-
+  if (typeof buildUpdate.projectSettings === "string") {
+    const nextSettings = parseConfig<ProjectSettings>(
+      buildUpdate.projectSettings
+    );
+    const currentSettings = parseConfig<ProjectSettings>(build.projectSettings);
+    const error = await validateProjectSettingsContactEmail({
+      projectId,
+      currentContactEmail: currentSettings.meta.contactEmail,
+      nextContactEmail: nextSettings.meta.contactEmail,
+      context,
+    });
+    if (error !== undefined) {
+      return { status: "error", errors: error };
+    }
+  }
+  if (result.assetPatches.length > 0 && assetStore === undefined) {
+    throw new Error("Asset object storage is required to patch assets");
+  }
   // build.patch does not have the worker's atomic Build+asset commit path.
   // Apply app-side asset mutations before marking the Build with
   // lastTransactionId so a failed asset mutation is not later treated as an
@@ -76,7 +126,11 @@ export const patchLoadedBuild = async (
           { deferDeletes: true }
         );
   if (result.assetPatches.length > 0) {
-    await patchAssets({ projectId }, result.assetPatches.flat(), context);
+    await patchAssets(
+      { projectId, assetStore: assetStore! },
+      result.assetPatches.flat(),
+      context
+    );
   }
   await deleteAssetFoldersWithClient(
     { projectId, ids: deletedAssetFolderIds },
@@ -125,17 +179,19 @@ export const patchBuild = async (
     projectId,
     transactions,
     clientVersion,
+    assetStore,
   }: {
     buildId: Build["id"];
     projectId: Project["id"];
     transactions: BuildPatchTransaction[];
     clientVersion: number;
+    assetStore?: AssetObjectReader;
   },
   context: AppContext
 ): Promise<PatchBuildResult> => {
   const build = await loadRawBuildById(context, buildId);
   const result = await patchLoadedBuild(
-    { build, buildId, projectId, transactions, clientVersion },
+    { build, buildId, projectId, transactions, clientVersion, assetStore },
     context
   );
 

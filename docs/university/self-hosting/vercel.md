@@ -21,7 +21,7 @@ How to Export and Self-Host Your Site on Vercel
 ### **Prerequisites**
 
 * Install the [Webstudio CLI](../cli.md)
-* [Build](../cli.md#sync-and-build) your project locally
+* [Build](../cli.md#export-and-build-a-project) your project locally
 
 Once you've built the project locally, you can use the [Vercel CLI](https://vercel.com/docs/cli) to deploy your app directly to Vercel:
 
@@ -41,11 +41,15 @@ Vercel injects a few [files](https://github.com/vercel/vercel/blob/a8ad176262ef8
 
 Learn how to upload your static site to Vercel.
 
+Vercel serves both forms of a path by default, but can redirect to slashless
+paths with project configuration. Review the
+[static site URL behavior](./#static-site-url-behavior) before deployment.
+
 <figure><img src="../../.gitbook/assets/vercel-new-project.png" alt="Vercel add new project dashboard"><figcaption></figcaption></figure>
 
 ### Prerequisites
 
-* Export your project using one of the [export methods](./#exporting)
+* Export your project using one of the [export methods](./#export-methods)
 * Upload/commit your project to a Git provider (GitHub, Bitbucket, GitLab)
 
 **How to upload your project to Netlify:**

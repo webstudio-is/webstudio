@@ -30,6 +30,7 @@ type Attribute = {
   required?: boolean;
   type: "string" | "boolean" | "number" | "select" | "url";
   options?: string[];
+  defaultValue?: string;
 };
 
 const overrides: Record<string, Record<string, false | Partial<Attribute>>> = {
@@ -87,7 +88,7 @@ const overrides: Record<string, Record<string, false | Partial<Attribute>>> = {
     name: { required: true },
     value: { required: true },
     checked: { required: true },
-    type: { required: true },
+    type: { required: true, defaultValue: "text" },
     placeholder: { required: true },
     required: { required: true },
     autofocus: { required: true },
@@ -341,7 +342,8 @@ let attributesContent = `type Attribute = {
   description: string,
   required?: boolean,
   type: 'string' | 'boolean' | 'number' | 'select' | 'url',
-  options?: string[]
+  options?: string[],
+  defaultValue?: string
 }
 
 `;
@@ -496,8 +498,8 @@ let standardAttributesContent = "";
 standardAttributesContent += `export const standardAttributesToReactProps: Record<string, string> = ${JSON.stringify(standardAttributesToReactProps, null, 2)};\n\n`;
 standardAttributesContent += `export const reactPropsToStandardAttributes: Record<string, string> = ${JSON.stringify(reactPropsToStandardAttributes, null, 2)};\n`;
 
-await mkdir("../react-sdk/src/__generated__", { recursive: true });
+await mkdir("../content-engine/src/__generated__", { recursive: true });
 await writeFile(
-  "../react-sdk/src/__generated__/standard-attributes.ts",
+  "../content-engine/src/__generated__/standard-attributes.ts",
   standardAttributesContent
 );
