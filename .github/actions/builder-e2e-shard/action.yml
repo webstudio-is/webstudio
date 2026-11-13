@@ -45,7 +45,7 @@ runs:
         E2E_TEST_SHARD: ${{ inputs.shard }}
         E2E_TEST_PARTITION: ${{ inputs.partition }}
       run: |
-        workers=2
+        workers=4
         if [ "$E2E_TEST_SHARD" = "shard-5" ]; then
           workers=1
         fi
