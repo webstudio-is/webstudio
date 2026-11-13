@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogMaximize,
   DialogTitle,
   DialogTitleActions,
   Flex,
@@ -21,6 +22,7 @@ import {
   SectionTitleLabel,
   Separator,
   Text,
+  theme,
 } from "@webstudio-is/design-system";
 import { CopyIcon } from "@webstudio-is/icons";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
@@ -250,6 +252,7 @@ export const PublishDiagnosticsDialog = ({
           css={{ display: "flex", flexDirection: "column" }}
         >
           <DialogTitle
+            maximizable
             suffix={
               <DialogTitleActions>
                 {canViewPublishLogs && copyText.length > 0 && (
@@ -263,6 +266,7 @@ export const PublishDiagnosticsDialog = ({
                     </IconButton>
                   </CopyToClipboard>
                 )}
+                <DialogMaximize />
                 <DialogClose />
               </DialogTitleActions>
             }
@@ -406,7 +410,13 @@ export const PublishDiagnosticsDialog = ({
                               </SectionTitle>
                             </Collapsible.Trigger>
                             <Collapsible.Content asChild>
-                              <Flex direction="column" gap={2}>
+                              <Flex
+                                direction="column"
+                                gap={2}
+                                css={{
+                                  paddingInline: theme.panel.paddingInline,
+                                }}
+                              >
                                 <Text color="subtle">
                                   {item.status === "pending"
                                     ? "Publishing started"

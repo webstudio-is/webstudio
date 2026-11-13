@@ -396,6 +396,53 @@ test("collapses each complete publish and copies its full log from the header", 
   expect(triggers[0]?.getAttribute("aria-expanded")).toBe("true");
 });
 
+test("can maximize Diagnostics and aligns publish content with its title", async () => {
+  render(
+    [],
+    true,
+    [
+      {
+        buildId: "build-1",
+        target: "site",
+        domains: ["example.com"],
+        findings: [],
+        status: "success",
+        logState: "available",
+        logText: "Build output",
+      },
+    ],
+    undefined,
+    true
+  );
+
+  const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]');
+  const titleButton = document.body.querySelector<HTMLButtonElement>(
+    "button[aria-labelledby]"
+  );
+  const title = document.getElementById(
+    titleButton?.getAttribute("aria-labelledby") ?? ""
+  );
+  const log = document.body.querySelector<HTMLElement>("pre");
+  expect(dialog).not.toBeNull();
+  expect(title).not.toBeNull();
+  expect(log).not.toBeNull();
+  expect(
+    Math.abs(
+      title!.getBoundingClientRect().left - log!.getBoundingClientRect().left
+    )
+  ).toBeLessThan(1);
+
+  const width = dialog!.getBoundingClientRect().width;
+  const maximize = document.body.querySelector<HTMLButtonElement>(
+    'button[aria-label="Expand"]'
+  );
+  expect(maximize).not.toBeNull();
+  await act(async () => userEvent.click(maximize!));
+  expect(dialog!.getBoundingClientRect().width).not.toBe(width);
+  await act(async () => userEvent.click(maximize!));
+  expect(dialog!.getBoundingClientRect().width).toBe(width);
+});
+
 test("publish failure is plain text and links to the Publish tab", async () => {
   render(
     [
