@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import {
   Button,
+  Collapsible,
   Dialog,
   DialogClose,
   DialogContent,
@@ -15,6 +16,8 @@ import {
   PanelTabsList,
   PanelTabsTrigger,
   ScrollArea,
+  SectionTitle,
+  SectionTitleLabel,
   Separator,
   Text,
 } from "@webstudio-is/design-system";
@@ -388,16 +391,65 @@ export const PublishDiagnosticsDialog = ({
                           {canViewPublishLogs &&
                             item.status !== "pending" &&
                             (item.logState === "available" ? (
-                              <Text
-                                as="pre"
-                                userSelect="text"
-                                css={{
-                                  whiteSpace: "pre-wrap",
-                                  overflowWrap: "anywhere",
-                                }}
-                              >
-                                {item.logText}
-                              </Text>
+                              item.logSteps === undefined ? (
+                                <Text
+                                  as="pre"
+                                  userSelect="text"
+                                  css={{
+                                    whiteSpace: "pre-wrap",
+                                    overflowWrap: "anywhere",
+                                  }}
+                                >
+                                  {item.logText}
+                                </Text>
+                              ) : (
+                                item.logSteps.map((step, index) => (
+                                  <Collapsible.Root
+                                    key={index}
+                                    defaultOpen={step.status !== "success"}
+                                  >
+                                    <Collapsible.Trigger asChild>
+                                      <SectionTitle
+                                        suffixPlaceholder={
+                                          <CopyIcon aria-hidden />
+                                        }
+                                        suffix={
+                                          <CopyToClipboard
+                                            text={step.text}
+                                            copyText="Copy log"
+                                          >
+                                            <IconButton
+                                              type="button"
+                                              aria-label="Copy log"
+                                              onPointerDown={(event) =>
+                                                event.stopPropagation()
+                                              }
+                                            >
+                                              <CopyIcon aria-hidden />
+                                            </IconButton>
+                                          </CopyToClipboard>
+                                        }
+                                      >
+                                        <SectionTitleLabel>
+                                          {step.name}
+                                        </SectionTitleLabel>
+                                      </SectionTitle>
+                                    </Collapsible.Trigger>
+                                    <Collapsible.Content>
+                                      <Text
+                                        as="pre"
+                                        userSelect="text"
+                                        css={{
+                                          whiteSpace: "pre-wrap",
+                                          overflowWrap: "anywhere",
+                                        }}
+                                      >
+                                        {step.text}
+                                      </Text>
+                                    </Collapsible.Content>
+                                  </Collapsible.Root>
+                                ))
+                              )
                             ) : (
                               <Text color="subtle">
                                 {item.logHandle === undefined ||

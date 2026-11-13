@@ -175,6 +175,30 @@ test("Free does not fetch logs, then Pro reads the full UTF-8 log from byte zero
   expect(session.items[0]?.issues).toBeUndefined();
 });
 
+test("decodes structured step boundaries without reading headings from log text", () => {
+  const first = new TextEncoder().encode("\nBuild\nfailed €\n");
+  const second = new TextEncoder().encode("\nDeploy\ndone\n");
+  const bytes = new Uint8Array([...first, ...second]);
+  const chunks = [
+    encoded([...bytes.subarray(0, first.length - 3)]),
+    encoded([...bytes.subarray(first.length - 3)]),
+  ];
+  expect(
+    sessionModule.decodePublishLogSteps(chunks, [
+      { name: "Build", status: "failure", offset: 0, contentOffset: 7 },
+      {
+        name: "Deploy",
+        status: "success",
+        offset: first.length,
+        contentOffset: first.length + 8,
+      },
+    ])
+  ).toEqual([
+    { name: "Build", status: "failure", text: "failed €\n" },
+    { name: "Deploy", status: "success", text: "done\n" },
+  ]);
+});
+
 test("missing execution handle does not retry an accepted publish", () => {
   render(false);
   act(() =>

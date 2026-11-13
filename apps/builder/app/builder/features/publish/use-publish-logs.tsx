@@ -18,6 +18,7 @@ export type PublishLog = {
   issuesOmitted?: number;
   logState?: "loading" | "available" | "unavailable";
   logText?: string;
+  logSteps?: { name: string; status: string; text: string }[];
 };
 
 const decodeChunk = (chunk: string) => {
@@ -32,6 +33,37 @@ export const decodePublishLog = (chunks: string[]) => {
       decoder.decode(decodeChunk(chunk), { stream: index < chunks.length - 1 })
     )
     .join("");
+};
+
+export const decodePublishLogSteps = (
+  chunks: string[],
+  steps: {
+    name: string;
+    status: string;
+    offset: number;
+    contentOffset: number;
+  }[]
+) => {
+  const decoded = chunks.map(decodeChunk);
+  const bytes = new Uint8Array(
+    decoded.reduce((total, chunk) => total + chunk.byteLength, 0)
+  );
+  let offset = 0;
+  for (const chunk of decoded) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const decoder = new TextDecoder();
+  return steps.map((step, index) => ({
+    name: step.name,
+    status: step.status,
+    text: decoder.decode(
+      bytes.subarray(
+        step.contentOffset,
+        steps[index + 1]?.offset ?? bytes.length
+      )
+    ),
+  }));
 };
 
 export const getPublishDuration = (item: PublishLog) => {
@@ -116,6 +148,7 @@ export const usePublishLogs = (
           issuesOmitted: undefined,
           logState: undefined,
           logText: undefined,
+          logSteps: undefined,
         }))
       );
     }
@@ -201,6 +234,12 @@ export const usePublishLogs = (
       try {
         let cursor: number | undefined;
         const chunks: string[] = [];
+        const steps: {
+          name: string;
+          status: string;
+          offset: number;
+          contentOffset: number;
+        }[] = [];
         const issues: NonNullable<PublishLog["issues"]> = [];
         let issuesOmitted = 0;
         while (isReadCurrent()) {
@@ -229,6 +268,7 @@ export const usePublishLogs = (
             return;
           }
           chunks.push(log.chunk);
+          steps.push(...(log.steps ?? []));
           for (const issue of log.issues ?? []) {
             if (issues.length < 20) {
               issues.push(issue);
@@ -249,6 +289,10 @@ export const usePublishLogs = (
             update(item.buildId, {
               logState: "available",
               logText: decodePublishLog(chunks),
+              logSteps:
+                steps.length > 0
+                  ? decodePublishLogSteps(chunks, steps)
+                  : undefined,
               issues: [
                 ...issues.filter(({ severity }) => severity === "error"),
                 ...issues.filter(({ severity }) => severity === "warning"),
