@@ -32,8 +32,8 @@ const getMcpBrowserPath = () => {
     process.platform === "darwin"
       ? "chrome-mac"
       : process.platform === "win32"
-      ? "chrome-win"
-      : "chrome-linux",
+        ? "chrome-win"
+        : "chrome-linux",
     process.platform === "win32" ? "headless_shell.exe" : "headless_shell"
   );
   return existsSync(shellPath) ? shellPath : chromiumPath;
