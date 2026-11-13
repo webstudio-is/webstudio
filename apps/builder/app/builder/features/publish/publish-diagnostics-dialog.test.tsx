@@ -89,7 +89,7 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
   expect(document.body.textContent).toContain("Warnings");
   expect(document.body.textContent).toContain("error-5");
   expect(document.body.textContent).not.toContain("warning-0");
-  expect(document.body.querySelectorAll('[role="tab"]')).toHaveLength(3);
+  expect(document.body.querySelectorAll('[role="tab"]')).toHaveLength(2);
   expect(
     getComputedStyle(document.body.querySelector('[role="dialog"]')!).resize
   ).toBe("both");
@@ -144,7 +144,7 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
 });
 
 test.each(["error", "warning"] as const)(
-  "keeps all three tabs in the %s-only state",
+  "shows only the populated tab in the %s-only state",
   (severity) => {
     const element = render([createFinding(severity, 0)]);
     openDetails(element);
@@ -152,7 +152,7 @@ test.each(["error", "warning"] as const)(
       Array.from(document.body.querySelectorAll('[role="tab"]')).map(
         (tab) => tab.textContent
       )
-    ).toEqual(["Warnings", "Errors", "Publish"]);
+    ).toEqual([severity === "error" ? "Errors" : "Warnings"]);
   }
 );
 

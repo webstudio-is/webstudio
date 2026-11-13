@@ -147,6 +147,16 @@ export const PublishDiagnosticsDialog = ({
   const selectedItem = items.find(({ buildId }) => buildId === selectedBuildId);
   const defaultTab = initialTab ?? (errors.length > 0 ? "errors" : "warnings");
   const [tab, setTab] = useState(defaultTab);
+  const activeTab =
+    (tab === "warnings" && warnings.length > 0) ||
+    (tab === "errors" && errors.length > 0) ||
+    (tab === "publish" && items.length > 0)
+      ? tab
+      : errors.length > 0
+        ? "errors"
+        : warnings.length > 0
+          ? "warnings"
+          : "publish";
   const reportText = findings.map(({ reportText }) => reportText).join("\n\n");
 
   useEffect(() => {
@@ -277,14 +287,20 @@ export const PublishDiagnosticsDialog = ({
             </PanelContent>
           ) : (
             <PanelTabs
-              value={tab}
+              value={activeTab}
               onValueChange={(value) => setTab(value as typeof tab)}
               css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
             >
               <PanelTabsList aria-label="Publish check severity">
-                <PanelTabsTrigger value="warnings">Warnings</PanelTabsTrigger>
-                <PanelTabsTrigger value="errors">Errors</PanelTabsTrigger>
-                <PanelTabsTrigger value="publish">Publish</PanelTabsTrigger>
+                {warnings.length > 0 && (
+                  <PanelTabsTrigger value="warnings">Warnings</PanelTabsTrigger>
+                )}
+                {errors.length > 0 && (
+                  <PanelTabsTrigger value="errors">Errors</PanelTabsTrigger>
+                )}
+                {items.length > 0 && (
+                  <PanelTabsTrigger value="publish">Publish</PanelTabsTrigger>
+                )}
               </PanelTabsList>
               <PanelTabsContent
                 value="warnings"
