@@ -122,6 +122,7 @@ import {
 import { getContentDatabasePublishFindings } from "./content-database-publish-warning";
 import {
   PublishDiagnosticsDialog,
+  PublishValidationBanner,
   type PublishValidationFinding,
 } from "./publish-diagnostics-dialog";
 import {
@@ -866,6 +867,7 @@ const usePublishProgress = (projectId: Project["id"]) => {
     setPublishFindings,
     beginPublishDiagnostics,
     publishError: publishErrorState?.value,
+    publishErrorSource: publishErrorState?.source,
     publishErrorDomains: publishErrorState?.domains,
     setPublishError,
     setPublishStatusError,
@@ -1214,7 +1216,6 @@ const Publish = ({
         progress.setPublishFindings(
           getServerPublishFindings(publishResult.auditFindings)
         );
-        onOpenReport(domains[0], "errors");
         return;
       }
       console.error(publishResult.error);
@@ -1320,12 +1321,6 @@ const Publish = ({
         return;
       }
       validationFindings.update(session, checks.findings);
-      onOpenReport(
-        undefined,
-        checks.findings.some(({ severity }) => severity === "error")
-          ? "errors"
-          : "warnings"
-      );
       if (checks.passed === false) {
         onValidationStateChange("idle");
         return;
@@ -1339,7 +1334,6 @@ const Publish = ({
       reportPublishValidationFailure(error, (findings) =>
         validationFindings.update(session, findings)
       );
-      onOpenReport(undefined, "errors");
     }
   };
 
@@ -1376,9 +1370,54 @@ const Publish = ({
   };
 
   const getForm = () => buttonRef.current?.closest("form");
+  const findings = [
+    ...validationFindings.findings,
+    ...progress.publishFindings,
+  ];
+  const hasSessionPublish = publishLogs.items.some(
+    ({ target }) => target === "site"
+  );
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
+      {progress.publishError !== undefined ? (
+        <PanelBanner variant="error">
+          <Flex align="center" justify="between" gap={2}>
+            <Text css={{ flex: 1, minWidth: 0 }}>
+              {typeof progress.publishError === "string"
+                ? progress.publishError.slice(0, 160)
+                : progress.publishError}
+            </Text>
+            <Button
+              type="button"
+              color="ghost"
+              css={{ flexShrink: 0 }}
+              onClick={() =>
+                onOpenReport(
+                  undefined,
+                  progress.publishErrorSource === "status" && hasSessionPublish
+                    ? "publish"
+                    : "errors"
+                )
+              }
+            >
+              See issues
+            </Button>
+          </Flex>
+        </PanelBanner>
+      ) : (
+        <PublishValidationBanner
+          findings={findings}
+          onOpen={() =>
+            onOpenReport(
+              undefined,
+              findings.some(({ severity }) => severity === "error")
+                ? "errors"
+                : "warnings"
+            )
+          }
+        />
+      )}
       <PublishActions
         publishButtonRef={buttonRef}
         validationState={validationState}

@@ -25,7 +25,11 @@ of the generated site.
 
 ## Publish details
 
-Choose **Validate** to see findings in the **Warnings** and **Errors** tabs.
+Choose **Validate** to see a short result in the publish popover. When it finds
+issues, choose **See issues** to open the **Warnings** or **Errors** tab.
+If publishing fails, the popover shows the failure and a **See issues** button.
+It opens **Publish** for a publish that started, or **Errors** if the request
+failed before a publish started.
 Click the status icon beside a domain to open the same dialog on the
 **Publish** tab for that domain. For a static export, click its status icon.
 

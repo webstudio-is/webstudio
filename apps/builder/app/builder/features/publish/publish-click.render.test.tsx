@@ -26,6 +26,7 @@ let stores: typeof import("~/shared/sync/data-stores");
 let nanoStates: typeof import("~/shared/nano-states");
 let builderStates: typeof import("~/builder/shared/nano-states");
 const requests: Array<{ path: string; input: unknown }> = [];
+let publishResponse: unknown = { success: false, error: "Publish blocked" };
 
 beforeAll(async () => {
   Object.defineProperty(Element.prototype, "scrollIntoView", {
@@ -45,7 +46,10 @@ beforeAll(async () => {
       let data: unknown;
       switch (url.pathname) {
         case "/trpc/domain.publish":
-          data = { success: false, error: "Publish blocked" };
+          data = publishResponse;
+          break;
+        case "/trpc/api.publish.getJob":
+          data = { status: "failed", code: "BUILD_FAILED" };
           break;
         default:
           throw new Error(`Unexpected request: ${url.pathname}`);
@@ -65,6 +69,8 @@ beforeAll(async () => {
 
 beforeEach(() => {
   reactEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+  publishResponse = { success: false, error: "Publish blocked" };
+  requests.length = 0;
 });
 
 afterEach(() => {
@@ -216,3 +222,106 @@ test("keeps Diagnostics visible but disabled before there is anything to show", 
   expect(diagnostics).toBeDefined();
   expect(diagnostics?.getAttribute("data-disabled")).not.toBeNull();
 });
+
+test.each([
+  ["Validate", "Errors", false],
+  ["Publish", "Errors", false],
+  ["Publish", "Publish", true],
+] as const)(
+  "%s keeps the result in the popover until See issues opens %s",
+  async (action, expectedTab, accepted) => {
+    if (accepted) {
+      publishResponse = {
+        success: true,
+        buildId: "build-1",
+        logHandle: "log-handle",
+        findings: [],
+      };
+    }
+    stores.$project.set({
+      id: "project-1",
+      domain: "example",
+      domainsVirtual: [],
+      latestStaticBuild: null,
+    } as unknown as Project);
+    nanoStates.$authTokenPermissions.set({
+      canClone: true,
+      canCopy: true,
+      canPublish: true,
+    });
+    builderStates.$publishDialog.set("publish");
+    resetStores = () => {
+      stores.$project.set(undefined);
+      builderStates.$publishDialog.set("none");
+    };
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () => {
+      root?.render(
+        <TooltipProvider>
+          <publishModule.PublishButton projectId="project-1" />
+        </TooltipProvider>
+      );
+    });
+
+    const domain = document.body.querySelector<HTMLInputElement>(
+      'input[name="domainToPublish[]"]'
+    );
+    expect(domain).not.toBeNull();
+    if (domain?.checked === false) {
+      const checkbox =
+        document.body.querySelector<HTMLElement>('[role="checkbox"]');
+      expect(checkbox).not.toBeNull();
+      await act(async () => checkbox?.click());
+    }
+    expect(
+      new FormData(domain?.closest("form")!).getAll("domainToPublish[]")
+    ).toEqual(["example"]);
+
+    const actionButton = Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>("button")
+    )
+      .filter((button) => button.textContent?.trim() === action)
+      .at(-1);
+    expect(actionButton).toBeDefined();
+    expect(actionButton?.disabled).toBe(false);
+    await act(async () => actionButton?.click());
+    await vi.waitFor(() => {
+      expect(
+        Array.from(document.body.querySelectorAll("button")).some(
+          (button) => button.textContent?.trim() === "See issues"
+        )
+      ).toBe(true);
+    });
+    if (accepted) {
+      await vi.waitFor(() => {
+        const seeIssues = Array.from(
+          document.body.querySelectorAll<HTMLButtonElement>("button")
+        ).find((button) => button.textContent?.trim() === "See issues");
+        expect(seeIssues?.parentElement?.textContent).toContain(
+          "Publish failed"
+        );
+      });
+    }
+
+    expect(builderStates.$publishDialog.get()).toBe("publish");
+    if (accepted) {
+      expect(requests.map(({ path }) => path)).toContain(
+        "/trpc/api.publish.getJob"
+      );
+    }
+    expect(document.body.querySelector('[role="tablist"]')).toBeNull();
+    const seeIssues = Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent?.trim() === "See issues");
+    await act(async () => seeIssues?.click());
+    expect(builderStates.$publishDialog.get()).toBe("none");
+    expect(document.body.querySelector('[role="tablist"]')).not.toBeNull();
+    expect(
+      document.body.querySelector<HTMLElement>(
+        '[role="tab"][aria-selected="true"]'
+      )?.textContent
+    ).toBe(expectedTab);
+  }
+);
