@@ -1868,6 +1868,15 @@ const Content = (props: {
                 >
                   Export
                 </DropdownMenuItem>
+                {props.publishLogs.items.some(
+                  ({ target }) => target === "site"
+                ) && (
+                  <DropdownMenuItem
+                    onSelect={() => props.onOpenReport(undefined, "publish")}
+                  >
+                    Diagnostics
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   icon={<GearIcon />}
