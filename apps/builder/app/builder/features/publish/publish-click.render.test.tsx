@@ -10,7 +10,6 @@ import {
   vi,
 } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
-import { userEvent } from "@vitest/browser/context";
 import type { Project } from "@webstudio-is/project";
 
 const reactEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
@@ -206,7 +205,11 @@ test("keeps Diagnostics visible but disabled before there is anything to show", 
     'button[aria-label="Publish options"]'
   );
   expect(options).not.toBeNull();
-  await act(async () => userEvent.click(options!));
+  await act(async () => {
+    options?.dispatchEvent(
+      new PointerEvent("pointerdown", { bubbles: true, pointerType: "mouse" })
+    );
+  });
   const diagnostics = Array.from(
     document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
   ).find((item) => item.textContent?.trim() === "Diagnostics");
