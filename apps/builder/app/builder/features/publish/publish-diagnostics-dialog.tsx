@@ -45,15 +45,21 @@ const shortFinding = (finding: PublishValidationFinding) =>
 
 export const PublishValidationBanner = ({
   findings,
+  passed = false,
   onOpen,
 }: {
   findings: PublishValidationFinding[];
+  passed?: boolean;
   onOpen: () => void;
 }) => {
   const errors = findings.filter(({ severity }) => severity === "error");
   const warnings = findings.filter(({ severity }) => severity === "warning");
   if (findings.length === 0) {
-    return null;
+    return passed ? (
+      <PanelBanner variant="success" role="status">
+        <Text>Validation passed. Ready to publish.</Text>
+      </PanelBanner>
+    ) : null;
   }
   const countLabel = [
     errors.length > 0 &&

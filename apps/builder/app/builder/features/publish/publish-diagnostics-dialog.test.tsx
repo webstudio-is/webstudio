@@ -5,6 +5,7 @@ import { userEvent } from "@vitest/browser/context";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import {
   PublishDiagnosticsDialog,
+  PublishValidationBanner,
   type PublishValidationFinding,
 } from "./publish-diagnostics-dialog";
 import type { PublishLog } from "./use-publish-logs";
@@ -69,6 +70,20 @@ const openDetails = (element: HTMLElement) => {
 
 test("renders no publish summary when there are no findings", () => {
   expect(render([]).textContent).toBe("");
+});
+
+test("shows a clean validation result without offering an empty issues dialog", () => {
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <PublishValidationBanner findings={[]} passed onOpen={vi.fn()} />
+    );
+  });
+
+  expect(container.querySelector('[role="status"]')).not.toBeNull();
+  expect(container.querySelector("button")).toBeNull();
 });
 
 test("shows all mixed findings, counted tabs, selectable text, and copy-all", async () => {

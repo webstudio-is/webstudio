@@ -27,6 +27,7 @@ of the generated site.
 
 Choose **Validate** to see a short result in the publish popover. When it finds
 issues, choose **See issues** to open the **Warnings** or **Errors** tab.
+When validation passes with no issues, the popover says it is ready to publish.
 If publishing fails, the popover shows the failure and a **See issues** button.
 It opens **Publish** for a publish that started, or **Errors** if the request
 failed before a publish started.

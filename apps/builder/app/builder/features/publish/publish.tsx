@@ -1339,6 +1339,7 @@ const Publish = ({
 
   const handlePublish = (formData: FormData) => {
     validationFindings.invalidate();
+    onValidationStateChange("idle");
     progress.clearErrors();
     const domains = getDomainsFromForm(formData);
     const diagnostics = progress.beginPublishDiagnostics(domains);
@@ -1408,6 +1409,7 @@ const Publish = ({
       ) : (
         <PublishValidationBanner
           findings={findings}
+          passed={validationState === "passed"}
           onOpen={() =>
             onOpenReport(
               undefined,
