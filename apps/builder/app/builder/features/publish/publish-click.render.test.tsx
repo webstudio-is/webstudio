@@ -10,6 +10,7 @@ import {
   vi,
 } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
+import { userEvent } from "@vitest/browser/context";
 import type { Project } from "@webstudio-is/project";
 
 const reactEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
@@ -173,3 +174,42 @@ test("static export reaches the server without waiting for diagnostics", async (
     )
   ).toBe(false);
 }, 10_000);
+
+test("keeps Diagnostics visible but disabled before there is anything to show", async () => {
+  stores.$project.set({
+    id: "project-1",
+    domain: "example",
+    domainsVirtual: [],
+    latestStaticBuild: null,
+  } as unknown as Project);
+  nanoStates.$authTokenPermissions.set({
+    canClone: true,
+    canCopy: true,
+    canPublish: true,
+  });
+  builderStates.$publishDialog.set("publish");
+  resetStores = () => {
+    stores.$project.set(undefined);
+    builderStates.$publishDialog.set("none");
+  };
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      <TooltipProvider>
+        <publishModule.PublishButton projectId="project-1" />
+      </TooltipProvider>
+    );
+  });
+  const options = document.body.querySelector<HTMLButtonElement>(
+    'button[aria-label="Publish options"]'
+  );
+  expect(options).not.toBeNull();
+  await act(async () => userEvent.click(options!));
+  const diagnostics = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  ).find((item) => item.textContent?.trim() === "Diagnostics");
+  expect(diagnostics).toBeDefined();
+  expect(diagnostics?.getAttribute("data-disabled")).not.toBeNull();
+});

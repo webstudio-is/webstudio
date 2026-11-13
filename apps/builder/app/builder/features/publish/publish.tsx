@@ -1843,6 +1843,17 @@ const Content = (props: {
   const hasCustomDomains = project.domainsVirtual.some(
     (domain) => domain.status === "ACTIVE" && domain.verified
   );
+  const hasSitePublish = props.publishLogs.items.some(
+    ({ target }) => target === "site"
+  );
+  const diagnosticFindings = [
+    ...props.progress.manualValidationFindings.findings,
+    ...props.progress.publishFindings,
+  ];
+  const hasDiagnostics =
+    hasSitePublish ||
+    diagnosticFindings.length > 0 ||
+    props.progress.publishError !== undefined;
 
   return (
     <>
@@ -1868,15 +1879,24 @@ const Content = (props: {
                 >
                   Export
                 </DropdownMenuItem>
-                {props.publishLogs.items.some(
-                  ({ target }) => target === "site"
-                ) && (
-                  <DropdownMenuItem
-                    onSelect={() => props.onOpenReport(undefined, "publish")}
-                  >
-                    Diagnostics
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem
+                  disabled={!hasDiagnostics}
+                  onSelect={() =>
+                    props.onOpenReport(
+                      undefined,
+                      hasSitePublish
+                        ? "publish"
+                        : props.progress.publishError !== undefined ||
+                            diagnosticFindings.some(
+                              ({ severity }) => severity === "error"
+                            )
+                          ? "errors"
+                          : "warnings"
+                    )
+                  }
+                >
+                  Diagnostics
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   icon={<GearIcon />}
