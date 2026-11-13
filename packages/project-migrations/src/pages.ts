@@ -104,9 +104,10 @@ const isSerializedPages = (pages: unknown): pages is MigratablePages => {
   );
 };
 
-const removeOrphanFolderChildren = (
+const normalizeFolderChildren = (
   pages: Map<Page["id"], Page>,
-  folders: Map<Folder["id"], Folder>
+  folders: Map<Folder["id"], Folder>,
+  rootFolderId: Folder["id"]
 ) => {
   const nextFolders = new Map<Folder["id"], Folder>();
   for (const [folderId, folder] of folders) {
@@ -116,6 +117,49 @@ const removeOrphanFolderChildren = (
         (childId) => pages.has(childId) || folders.has(childId)
       ),
     });
+  }
+
+  const visiting = new Set<Folder["id"]>();
+  const visited = new Set<Folder["id"]>();
+  const visit = (folderId: Folder["id"]): boolean => {
+    const folder = nextFolders.get(folderId);
+    if (folder === undefined || visited.has(folderId)) {
+      return false;
+    }
+    visiting.add(folderId);
+    let repaired = false;
+    const children = folder.children.filter((childId) => {
+      if (nextFolders.has(childId) === false) {
+        return true;
+      }
+      if (visiting.has(childId)) {
+        repaired = true;
+        return false;
+      }
+      repaired = visit(childId) || repaired;
+      return true;
+    });
+    nextFolders.set(folderId, { ...folder, children });
+    visiting.delete(folderId);
+    visited.add(folderId);
+    return repaired;
+  };
+
+  // Keep existing paths from the root when choosing which cycle edge to remove.
+  visit(rootFolderId);
+  const referenced = new Set(
+    [...nextFolders.values()].flatMap((folder) => folder.children)
+  );
+  const folderIds = [...nextFolders.keys()].sort();
+  const root = nextFolders.get(rootFolderId);
+  // Visit detached tree roots before isolated cycles, then attach repaired trees.
+  for (const folderId of [
+    ...folderIds.filter((id) => referenced.has(id) === false),
+    ...folderIds,
+  ]) {
+    if (visit(folderId) && root !== undefined) {
+      root.children.push(folderId);
+    }
   }
   return nextFolders;
 };
@@ -154,9 +198,10 @@ export const migratePages = (pagesData: unknown): Pages => {
     const normalizedPages = {
       ...currentPages,
       pageTemplates: currentPages.pageTemplates ?? new Map(),
-      folders: removeOrphanFolderChildren(
+      folders: normalizeFolderChildren(
         currentPages.pages,
-        currentPages.folders
+        currentPages.folders,
+        currentPages.rootFolderId
       ),
     };
     if (hasHistoricalFormComponentIdentityVersion(currentPages)) {
@@ -179,7 +224,11 @@ export const migratePages = (pagesData: unknown): Pages => {
         pagesData.pageTemplates === undefined
           ? new Map()
           : toMap<PageTemplate>(pagesData.pageTemplates),
-      folders: removeOrphanFolderChildren(nextPages, nextFolders),
+      folders: normalizeFolderChildren(
+        nextPages,
+        nextFolders,
+        pagesData.rootFolderId
+      ),
     };
   }
 
@@ -250,6 +299,6 @@ export const migratePages = (pagesData: unknown): Pages => {
     rootFolderId: rootFolder.id,
     pages: nextPages,
     pageTemplates: new Map(),
-    folders: nextFolders,
+    folders: normalizeFolderChildren(nextPages, nextFolders, rootFolder.id),
   };
 };
