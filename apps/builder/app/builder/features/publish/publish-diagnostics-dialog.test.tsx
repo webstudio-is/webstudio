@@ -326,9 +326,7 @@ test("lists each publish domain and copies the full loaded log", async () => {
   expect(document.body.textContent).toContain("first.example");
   expect(document.body.textContent).toContain("second.example");
   expect(document.body.textContent).toContain("third.example");
-  expect(document.body.textContent).not.toContain(
-    "first.example, second.example"
-  );
+  expect(document.body.textContent).toContain("first.example, second.example");
   const copyButton = document.body.querySelector<HTMLButtonElement>(
     'button[aria-label="Copy all reports"]'
   );

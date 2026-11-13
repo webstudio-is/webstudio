@@ -404,7 +404,7 @@ export const PublishDiagnosticsDialog = ({
                               >
                                 <SectionTitleLabel>
                                   {item.domains.length > 0
-                                    ? item.domains.join(" · ")
+                                    ? item.domains.join(", ")
                                     : "Static export"}
                                 </SectionTitleLabel>
                               </SectionTitle>
