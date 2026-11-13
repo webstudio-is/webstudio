@@ -136,6 +136,9 @@ export const openProjectBuilder = async ({
     .waitForLoadState("networkidle", { timeout: builderNetworkIdleTimeout })
     .catch(() => undefined);
   const canvas = await waitForCanvasFrame({ page });
+  await page
+    .getByRole("progressbar")
+    .waitFor({ state: "hidden", timeout: 30_000 });
   return canvas;
 };
 
@@ -151,5 +154,8 @@ export const openBuilderUrl = async ({
     .waitForLoadState("networkidle", { timeout: builderNetworkIdleTimeout })
     .catch(() => undefined);
   const canvas = await waitForCanvasFrame({ page });
+  await page
+    .getByRole("progressbar")
+    .waitFor({ state: "hidden", timeout: 30_000 });
   return canvas;
 };
