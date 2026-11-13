@@ -364,21 +364,21 @@ test("collapses each complete publish and copies its full log from the header", 
     document.body.querySelectorAll<HTMLButtonElement>("button[aria-labelledby]")
   );
   expect(triggers).toHaveLength(2);
-  expect(triggers[0]?.getAttribute("aria-expanded")).toBe("true");
-  expect(triggers[1]?.getAttribute("aria-expanded")).toBe("false");
+  expect(triggers[0]?.getAttribute("aria-expanded")).toBe("false");
+  expect(triggers[1]?.getAttribute("aria-expanded")).toBe("true");
   expect(document.body.textContent).toContain("Complete first publish log");
   expect(document.body.textContent).not.toContain(
     "Complete second publish log"
   );
-  await act(async () => userEvent.click(triggers[1]!));
+  await act(async () => userEvent.click(triggers[0]!));
   expect(document.body.textContent).toContain("Complete second publish log");
   const copyButtons = document.body.querySelectorAll<HTMLButtonElement>(
     'button[aria-label="Copy log"]'
   );
   expect(copyButtons).toHaveLength(2);
-  await act(async () => userEvent.click(copyButtons[1]!));
+  await act(async () => userEvent.click(copyButtons[0]!));
   expect(writeText).toHaveBeenCalledWith("Complete second publish log");
-  expect(triggers[1]?.getAttribute("aria-expanded")).toBe("true");
+  expect(triggers[0]?.getAttribute("aria-expanded")).toBe("true");
 });
 
 test("publish failure is plain text and links to the Publish tab", async () => {
@@ -429,7 +429,7 @@ test("publish failure is plain text and links to the Publish tab", async () => {
   ).toBe("true");
 });
 
-test("Free publish failures do not offer a log link", () => {
+test("Free publish failures link to a Publish upgrade banner without exposing logs", async () => {
   render(
     [
       {
@@ -447,15 +447,65 @@ test("Free publish failures do not offer a log link", () => {
         domains: ["first.example"],
         findings: [],
         status: "failed",
+        logState: "available",
+        logText: "private runner output",
       },
     ],
     undefined,
     true
   );
   expect(document.body.textContent).toContain("Publish failed");
+  const link = Array.from(document.body.querySelectorAll("button")).find(
+    (button) => button.textContent === "show logs"
+  );
+  expect(link).toBeDefined();
+  await act(async () => userEvent.click(link!));
   expect(
-    document.body.querySelector('[role="tabpanel"][data-state="active"] button')
-  ).toBeNull();
+    document.body.querySelector('[role="tab"][aria-selected="true"]')
+      ?.textContent
+  ).toBe("Publish");
+  expect(
+    document.body.querySelector(
+      '[role="tabpanel"][data-state="active"] [role="note"]'
+    )
+  ).not.toBeNull();
+  expect(document.body.textContent).not.toContain("private runner output");
+});
+
+test("lists publishes oldest first and opens the newest entry", () => {
+  render(
+    [],
+    true,
+    [
+      {
+        buildId: "new",
+        target: "site",
+        domains: ["new.example"],
+        findings: [],
+        status: "success",
+      },
+      {
+        buildId: "old",
+        target: "site",
+        domains: ["old.example"],
+        findings: [],
+        status: "failed",
+      },
+    ],
+    undefined,
+    true
+  );
+  const triggers = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button[aria-labelledby]")
+  );
+  const labels = triggers.map(
+    (button) =>
+      document.getElementById(button.getAttribute("aria-labelledby") ?? "")
+        ?.textContent
+  );
+  expect(labels).toEqual(["old.example", "new.example"]);
+  expect(triggers[0]?.getAttribute("aria-expanded")).toBe("false");
+  expect(triggers[1]?.getAttribute("aria-expanded")).toBe("true");
 });
 
 test("pre-dispatch failure has no link to an absent Publish tab", () => {

@@ -107,7 +107,7 @@ const FindingList = ({
             {finding.source === "publish" ? (
               <Text variant="labels" userSelect="text">
                 {canViewPublishLogs ? finding.title : shortFinding(finding)}
-                {canViewPublishLogs && onOpenPublish !== undefined && (
+                {onOpenPublish !== undefined && (
                   <>
                     {" "}
                     <Link
@@ -173,6 +173,7 @@ export const PublishDiagnosticsDialog = ({
   const warnings = findings.filter(({ severity }) => severity === "warning");
   const defaultTab = initialTab ?? (errors.length > 0 ? "errors" : "warnings");
   const [tab, setTab] = useState(defaultTab);
+  const orderedItems = [...items].reverse();
   const activeTab =
     (tab === "warnings" && warnings.length > 0) ||
     (tab === "errors" && errors.length > 0) ||
@@ -184,7 +185,7 @@ export const PublishDiagnosticsDialog = ({
           ? "warnings"
           : "publish";
   const reportText = findings.map(({ reportText }) => reportText).join("\n\n");
-  const publishText = items
+  const publishText = orderedItems
     .filter(
       (item) => item.logState === "available" && item.logText !== undefined
     )
@@ -350,16 +351,21 @@ export const PublishDiagnosticsDialog = ({
               >
                 <ScrollArea css={{ height: "100%" }}>
                   <PanelContent as={Flex} direction="column" gap={3}>
+                    {!canViewPublishLogs && (
+                      <PanelBanner variant="info" role="note">
+                        <Text>Upgrade to Pro to view publish logs.</Text>
+                      </PanelBanner>
+                    )}
                     {items.length === 0 && (
                       <Text color="subtle">No publishes in this session.</Text>
                     )}
-                    {items.map((item, index) => {
+                    {orderedItems.map((item, index) => {
                       const duration = getPublishDuration(item);
                       return (
                         <Collapsible.Root
                           key={item.buildId}
                           asChild
-                          defaultOpen={index === 0}
+                          defaultOpen={index === orderedItems.length - 1}
                         >
                           <Flex direction="column" gap={2}>
                             <Collapsible.Trigger asChild>
@@ -486,11 +492,6 @@ export const PublishDiagnosticsDialog = ({
                                       shown.
                                     </Text>
                                   )}
-                                {!canViewPublishLogs && (
-                                  <Text color="subtle">
-                                    Upgrade to Pro to view publish logs.
-                                  </Text>
-                                )}
                               </Flex>
                             </Collapsible.Content>
                             <Separator />
