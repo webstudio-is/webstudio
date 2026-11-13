@@ -20,7 +20,7 @@ The Head Slot provides a visual interface for controlling your website's `<head>
 ## Key information
 
 - Even though the Head Slot is visually in the Body instance, the contents of Head Slot are added to the `<head>`. This hierarchy enables [data variables](../foundations/variables.md) defined on the Body to be used in the head.
-- If Head Slot and Page Settings define the same data, such as meta title, Head Slot will take priority. Similarly, a default canonical is output on every page and references the current path. By specifying a canonical in Head Slot, the default canonical will not be displayed on the page.
+- If Head Slot and Page Settings define the same data, such as meta title, Head Slot will take priority. A default canonical references the current path unless the page returns 404. By specifying a canonical in Head Slot, the default canonical will not be displayed on the page.
 - Head Slot comes with an instance for Title, Link, and Meta. These can be duplicated. If you remove them and later need to add them back, you can copy them from a new Head Slot instance.
 
 ## Supported components
