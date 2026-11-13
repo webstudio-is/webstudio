@@ -105,7 +105,10 @@ test("prints api command schema as json", () => {
       }),
       expect.objectContaining({
         useCase: "Publish project",
-        commands: ["webstudio publish deploy --target production --json"],
+        commands: [
+          "webstudio publish deploy --target production --json",
+          "webstudio publish deploy --target production --json --wait",
+        ],
       }),
     ])
   );
@@ -155,8 +158,17 @@ test("prints compact mcp tool summaries as json by default", () => {
       inputSchema,
     })
   );
-  // Includes Form simulation, custom response headers, screenshot, and all three style source transfer schemas.
-  expect(JSON.stringify(handshakePayload).length).toBeLessThan(224_500);
+  // Publish validation and execution occupy about 1.5k characters; keep the old
+  // budget for all other tools and a tight overall handshake budget.
+  expect(JSON.stringify(handshakePayload).length).toBeLessThan(226_000);
+  expect(
+    JSON.stringify(
+      handshakePayload.filter(
+        ({ name }) =>
+          name !== "validate-publish" && name !== "get-publish-report"
+      )
+    ).length
+  ).toBeLessThan(224_500);
   const screenshotTool = expectedTools.find(
     ({ name }) => name === "screenshot"
   );
