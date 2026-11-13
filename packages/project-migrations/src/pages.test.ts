@@ -163,7 +163,7 @@ test.each(["serialized", "current"])(
   }
 );
 
-test("reattaches a detached cycle so its folders remain visible", () => {
+test("reattaches the root of a detached folder tree containing a cycle", () => {
   const recovered = migratePages({
     homePageId: "home",
     rootFolderId: "root",
@@ -188,13 +188,15 @@ test("reattaches a detached cycle so its folders remain visible", () => {
     folders: [
       { id: "root", name: "Root", slug: "", children: ["home"] },
       { id: "a", name: "A", slug: "a", children: ["b"] },
-      { id: "b", name: "B", slug: "b", children: ["a", "nested"] },
+      { id: "b", name: "B", slug: "b", children: ["c"] },
+      { id: "c", name: "C", slug: "c", children: ["b", "nested"] },
     ],
   });
 
   expect(recovered.folders.get("root")?.children).toEqual(["home", "a"]);
   expect(recovered.folders.get("a")?.children).toEqual(["b"]);
-  expect(recovered.folders.get("b")?.children).toEqual(["nested"]);
+  expect(recovered.folders.get("b")?.children).toEqual(["c"]);
+  expect(recovered.folders.get("c")?.children).toEqual(["nested"]);
   expect(recovered.pages.has("nested")).toBe(true);
   expect(() => serializePages(recovered)).not.toThrow();
 });

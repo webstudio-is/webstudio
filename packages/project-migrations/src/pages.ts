@@ -121,54 +121,45 @@ const normalizeFolderChildren = (
 
   const visiting = new Set<Folder["id"]>();
   const visited = new Set<Folder["id"]>();
-  const detached = new Set<Folder["id"]>();
-  const visit = (folderId: Folder["id"]) => {
+  const visit = (folderId: Folder["id"]): boolean => {
     const folder = nextFolders.get(folderId);
-    if (folder === undefined) {
-      return;
+    if (folder === undefined || visited.has(folderId)) {
+      return false;
     }
     visiting.add(folderId);
+    let repaired = false;
     const children = folder.children.filter((childId) => {
       if (nextFolders.has(childId) === false) {
         return true;
       }
       if (visiting.has(childId)) {
-        detached.add(childId);
+        repaired = true;
         return false;
       }
-      if (visited.has(childId) === false) {
-        visit(childId);
-      }
+      repaired = visit(childId) || repaired;
       return true;
     });
     nextFolders.set(folderId, { ...folder, children });
     visiting.delete(folderId);
     visited.add(folderId);
+    return repaired;
   };
 
   // Keep existing paths from the root when choosing which cycle edge to remove.
   visit(rootFolderId);
-  for (const folderId of [...nextFolders.keys()].sort()) {
-    if (visited.has(folderId) === false) {
-      visit(folderId);
-    }
-  }
-
-  // A detached cycle needs a new root link to remain visible in the Pages panel.
   const referenced = new Set(
     [...nextFolders.values()].flatMap((folder) => folder.children)
   );
+  const folderIds = [...nextFolders.keys()].sort();
   const root = nextFolders.get(rootFolderId);
-  if (root !== undefined) {
-    nextFolders.set(rootFolderId, {
-      ...root,
-      children: [
-        ...root.children,
-        ...[...detached]
-          .sort()
-          .filter((id) => id !== rootFolderId && referenced.has(id) === false),
-      ],
-    });
+  // Visit detached tree roots before isolated cycles, then attach repaired trees.
+  for (const folderId of [
+    ...folderIds.filter((id) => referenced.has(id) === false),
+    ...folderIds,
+  ]) {
+    if (visit(folderId) && root !== undefined) {
+      root.children.push(folderId);
+    }
   }
   return nextFolders;
 };
