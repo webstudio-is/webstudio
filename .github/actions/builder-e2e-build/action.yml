@@ -38,9 +38,36 @@ runs:
       shell: bash
       run: pnpm --filter @webstudio-is/sdk-components-react-router build
 
+    - name: Identify schema snapshot
+      id: schema
+      shell: bash
+      run: |
+        ROOT_DIR="$PWD"
+        source apps/builder/backend/lib.sh
+        echo "fingerprint=$(builder_backend_schema_fingerprint)" >> "$GITHUB_OUTPUT"
+
+    - name: Restore schema snapshot
+      id: schema-cache
+      uses: actions/cache/restore@v5
+      with:
+        path: .cache/builder-e2e/schema-${{ steps.schema.outputs.fingerprint }}.sql
+        key: builder-e2e-schema-v1-${{ runner.os }}-${{ steps.schema.outputs.fingerprint }}
+
     - name: Generate schema snapshot
+      if: steps.schema-cache.outputs.cache-hit != 'true'
       shell: bash
       run: pnpm --filter @webstudio-is/builder e2e:schema-cache
+
+    - name: Check schema snapshot
+      shell: bash
+      run: test -s ".cache/builder-e2e/schema-${{ steps.schema.outputs.fingerprint }}.sql"
+
+    - name: Save schema snapshot
+      if: steps.schema-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: .cache/builder-e2e/schema-${{ steps.schema.outputs.fingerprint }}.sql
+        key: builder-e2e-schema-v1-${{ runner.os }}-${{ steps.schema.outputs.fingerprint }}
 
     - name: Upload prerequisites
       uses: actions/upload-artifact@v6

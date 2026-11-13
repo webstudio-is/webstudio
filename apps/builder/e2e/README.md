@@ -12,6 +12,9 @@ Use the full command for CI-like validation:
 pnpm e2e:builder
 ```
 
+The local command builds Builder and the generated React Router components
+used by Preview tests.
+
 The first run after migrations change applies the regular migration pipeline
 and writes an ignored schema cache under `.cache/builder-e2e`. Refresh it
 explicitly with:
