@@ -69,16 +69,6 @@ export const publishLogOutput = z.discriminatedUnion("availability", [
         chunk: z.string().max(400_000),
         complete: z.boolean(),
         nextCursor: z.number().int().nonnegative().safe().optional(),
-        steps: z
-          .array(
-            z.object({
-              name: z.string(),
-              status: z.string(),
-              offset: z.number().int().nonnegative().safe(),
-              contentOffset: z.number().int().nonnegative().safe(),
-            })
-          )
-          .optional(),
         issues: z
           .array(
             z.object({

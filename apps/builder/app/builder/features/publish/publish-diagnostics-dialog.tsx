@@ -343,164 +343,149 @@ export const PublishDiagnosticsDialog = ({
                     {items.length === 0 && (
                       <Text color="subtle">No publishes in this session.</Text>
                     )}
-                    {items.map((item) => {
+                    {items.map((item, index) => {
                       const duration = getPublishDuration(item);
                       return (
-                        <Flex key={item.buildId} direction="column" gap={2}>
-                          {item.domains.length > 0 ? (
-                            <Flex direction="column" gap={1}>
-                              {item.domains.map((domain) => (
-                                <Text key={domain} variant="labels">
-                                  {domain}
-                                </Text>
-                              ))}
-                            </Flex>
-                          ) : (
-                            <Text variant="labels">Static export</Text>
-                          )}
-                          <Text color="subtle">
-                            {item.status === "pending"
-                              ? "Publishing started"
-                              : item.status === "success"
-                                ? "Published"
-                                : "Publish failed"}
-                          </Text>
-                          {canViewPublishLogs &&
-                            item.startedAt !== undefined && (
-                              <Text>
-                                Started:{" "}
-                                {new Date(item.startedAt).toLocaleString()}
-                              </Text>
-                            )}
-                          {canViewPublishLogs && duration !== undefined && (
-                            <Text>Duration: {duration}s</Text>
-                          )}
-                          {canViewPublishLogs &&
-                            item.status === "failed" &&
-                            (item.failedStage !== undefined ||
-                              item.code !== undefined) && (
-                              <Text color="destructive">
-                                {[
-                                  item.failedStage,
-                                  item.code?.replaceAll("_", " "),
-                                ]
-                                  .filter(Boolean)
-                                  .join(" · ")}
-                              </Text>
-                            )}
-                          {canViewPublishLogs &&
-                            item.status !== "pending" &&
-                            (item.logState === "available" ? (
-                              item.logSteps === undefined ? (
-                                <Text
-                                  as="pre"
-                                  userSelect="text"
-                                  css={{
-                                    whiteSpace: "pre-wrap",
-                                    overflowWrap: "anywhere",
-                                  }}
-                                >
-                                  {item.logText}
-                                </Text>
-                              ) : (
-                                item.logSteps.map((step, index) => (
-                                  <Collapsible.Root
-                                    key={index}
-                                    defaultOpen={step.status !== "success"}
-                                  >
-                                    <Collapsible.Trigger asChild>
-                                      <SectionTitle
-                                        suffixPlaceholder={
-                                          <CopyIcon aria-hidden />
-                                        }
-                                        suffix={
-                                          <CopyToClipboard
-                                            text={step.text}
-                                            copyText="Copy log"
-                                          >
-                                            <IconButton
-                                              type="button"
-                                              aria-label="Copy log"
-                                              onPointerDown={(event) =>
-                                                event.stopPropagation()
-                                              }
-                                            >
-                                              <CopyIcon aria-hidden />
-                                            </IconButton>
-                                          </CopyToClipboard>
+                        <Collapsible.Root
+                          key={item.buildId}
+                          asChild
+                          defaultOpen={index === 0}
+                        >
+                          <Flex direction="column" gap={2}>
+                            <Collapsible.Trigger asChild>
+                              <SectionTitle
+                                suffixPlaceholder={<CopyIcon aria-hidden />}
+                                suffix={
+                                  canViewPublishLogs &&
+                                  item.logState === "available" &&
+                                  item.logText !== undefined && (
+                                    <CopyToClipboard
+                                      text={item.logText}
+                                      copyText="Copy log"
+                                    >
+                                      <IconButton
+                                        type="button"
+                                        aria-label="Copy log"
+                                        onPointerDown={(event) =>
+                                          event.stopPropagation()
                                         }
                                       >
-                                        <SectionTitleLabel>
-                                          {step.name}
-                                        </SectionTitleLabel>
-                                      </SectionTitle>
-                                    </Collapsible.Trigger>
-                                    <Collapsible.Content>
-                                      <Text
-                                        as="pre"
-                                        userSelect="text"
-                                        css={{
-                                          whiteSpace: "pre-wrap",
-                                          overflowWrap: "anywhere",
-                                        }}
-                                      >
-                                        {step.text}
-                                      </Text>
-                                    </Collapsible.Content>
-                                  </Collapsible.Root>
-                                ))
-                              )
-                            ) : (
-                              <Text color="subtle">
-                                {item.logHandle === undefined ||
-                                item.logState === "unavailable"
-                                  ? "Publish logs are unavailable."
-                                  : "Loading logs…"}
-                              </Text>
-                            ))}
-                          {item.findings.length > 0 && (
-                            <Flex direction="column" gap={1}>
-                              <Text variant="labels">Audit</Text>
-                              {item.findings.map((finding, index) => (
-                                <Text key={index}>
-                                  {canViewPublishLogs
-                                    ? (finding.summary ?? finding.title)
-                                    : shortFinding(finding)}
-                                </Text>
-                              ))}
-                            </Flex>
-                          )}
-                          {canViewPublishLogs &&
-                            item.issues !== undefined &&
-                            item.issues.length > 0 && (
-                              <Text variant="labels">Build</Text>
-                            )}
-                          {canViewPublishLogs &&
-                            item.issues?.map((issue, index) => (
-                              <Text
-                                key={index}
-                                color={
-                                  issue.severity === "error"
-                                    ? "destructive"
-                                    : "subtle"
+                                        <CopyIcon aria-hidden />
+                                      </IconButton>
+                                    </CopyToClipboard>
+                                  )
                                 }
                               >
-                                {issue.message}
-                              </Text>
-                            ))}
-                          {canViewPublishLogs &&
-                            (item.issuesOmitted ?? 0) > 0 && (
-                              <Text color="subtle">
-                                {item.issuesOmitted} more issues not shown.
-                              </Text>
-                            )}
-                          {!canViewPublishLogs && (
-                            <Text color="subtle">
-                              Upgrade to Pro to view publish logs.
-                            </Text>
-                          )}
-                          <Separator />
-                        </Flex>
+                                <SectionTitleLabel>
+                                  {item.domains.length > 0
+                                    ? item.domains.join(" · ")
+                                    : "Static export"}
+                                </SectionTitleLabel>
+                              </SectionTitle>
+                            </Collapsible.Trigger>
+                            <Collapsible.Content asChild>
+                              <Flex direction="column" gap={2}>
+                                <Text color="subtle">
+                                  {item.status === "pending"
+                                    ? "Publishing started"
+                                    : item.status === "success"
+                                      ? "Published"
+                                      : "Publish failed"}
+                                </Text>
+                                {canViewPublishLogs &&
+                                  item.startedAt !== undefined && (
+                                    <Text>
+                                      Started:{" "}
+                                      {new Date(
+                                        item.startedAt
+                                      ).toLocaleString()}
+                                    </Text>
+                                  )}
+                                {canViewPublishLogs &&
+                                  duration !== undefined && (
+                                    <Text>Duration: {duration}s</Text>
+                                  )}
+                                {canViewPublishLogs &&
+                                  item.status === "failed" &&
+                                  (item.failedStage !== undefined ||
+                                    item.code !== undefined) && (
+                                    <Text color="destructive">
+                                      {[
+                                        item.failedStage,
+                                        item.code?.replaceAll("_", " "),
+                                      ]
+                                        .filter(Boolean)
+                                        .join(" · ")}
+                                    </Text>
+                                  )}
+                                {canViewPublishLogs &&
+                                  item.status !== "pending" &&
+                                  (item.logState === "available" ? (
+                                    <Text
+                                      as="pre"
+                                      userSelect="text"
+                                      css={{
+                                        whiteSpace: "pre-wrap",
+                                        overflowWrap: "anywhere",
+                                      }}
+                                    >
+                                      {item.logText}
+                                    </Text>
+                                  ) : (
+                                    <Text color="subtle">
+                                      {item.logHandle === undefined ||
+                                      item.logState === "unavailable"
+                                        ? "Publish logs are unavailable."
+                                        : "Loading logs…"}
+                                    </Text>
+                                  ))}
+                                {item.findings.length > 0 && (
+                                  <Flex direction="column" gap={1}>
+                                    <Text variant="labels">Audit</Text>
+                                    {item.findings.map((finding, index) => (
+                                      <Text key={index}>
+                                        {canViewPublishLogs
+                                          ? (finding.summary ?? finding.title)
+                                          : shortFinding(finding)}
+                                      </Text>
+                                    ))}
+                                  </Flex>
+                                )}
+                                {canViewPublishLogs &&
+                                  item.issues !== undefined &&
+                                  item.issues.length > 0 && (
+                                    <Text variant="labels">Build</Text>
+                                  )}
+                                {canViewPublishLogs &&
+                                  item.issues?.map((issue, index) => (
+                                    <Text
+                                      key={index}
+                                      color={
+                                        issue.severity === "error"
+                                          ? "destructive"
+                                          : "subtle"
+                                      }
+                                    >
+                                      {issue.message}
+                                    </Text>
+                                  ))}
+                                {canViewPublishLogs &&
+                                  (item.issuesOmitted ?? 0) > 0 && (
+                                    <Text color="subtle">
+                                      {item.issuesOmitted} more issues not
+                                      shown.
+                                    </Text>
+                                  )}
+                                {!canViewPublishLogs && (
+                                  <Text color="subtle">
+                                    Upgrade to Pro to view publish logs.
+                                  </Text>
+                                )}
+                              </Flex>
+                            </Collapsible.Content>
+                            <Separator />
+                          </Flex>
+                        </Collapsible.Root>
                       );
                     })}
                   </PanelContent>

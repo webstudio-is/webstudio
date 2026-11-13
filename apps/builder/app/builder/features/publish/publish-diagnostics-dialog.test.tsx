@@ -328,7 +328,7 @@ test("lists each publish domain and copies the full loaded log", async () => {
   expect(copied).toContain("third.example");
 });
 
-test("shows separate collapsible steps and copies only the selected step", async () => {
+test("collapses each complete publish and copies its full log from the header", async () => {
   const writeText = vi.fn(async (_text: string) => {});
   Object.defineProperty(navigator, "clipboard", {
     configurable: true,
@@ -341,51 +341,44 @@ test("shows separate collapsible steps and copies only the selected step", async
       {
         buildId: "build-1",
         target: "site",
-        domains: ["example.com"],
+        domains: ["first.example"],
         findings: [],
         status: "failed",
         logState: "available",
-        logText: "\nBuild (failure)\nfailed\n\nDeploy\ndone\n",
-        logSteps: [
-          { name: "Build", status: "failure", text: "failed\n" },
-          { name: "Deploy", status: "success", text: "done\n" },
-        ],
+        logText: "Complete first publish log",
+      },
+      {
+        buildId: "build-2",
+        target: "site",
+        domains: ["second.example"],
+        findings: [],
+        status: "success",
+        logState: "available",
+        logText: "Complete second publish log",
       },
     ],
     undefined,
     true
   );
-  const buttons = Array.from(
+  const triggers = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button[aria-labelledby]")
   );
-  const labelOf = (button: HTMLButtonElement) =>
-    document.getElementById(button.getAttribute("aria-labelledby") ?? "")
-      ?.textContent;
-  const build = buttons.find((button) => labelOf(button) === "Build");
-  const deploy = buttons.find((button) => labelOf(button) === "Deploy");
-  expect(build).toBeDefined();
-  expect(deploy).toBeDefined();
-  expect(build?.getAttribute("aria-expanded")).toBe("true");
-  expect(deploy?.getAttribute("aria-expanded")).toBe("false");
-  await act(async () => userEvent.click(deploy!));
-  expect(deploy?.getAttribute("aria-expanded")).toBe("true");
+  expect(triggers).toHaveLength(2);
+  expect(triggers[0]?.getAttribute("aria-expanded")).toBe("true");
+  expect(triggers[1]?.getAttribute("aria-expanded")).toBe("false");
+  expect(document.body.textContent).toContain("Complete first publish log");
+  expect(document.body.textContent).not.toContain(
+    "Complete second publish log"
+  );
+  await act(async () => userEvent.click(triggers[1]!));
+  expect(document.body.textContent).toContain("Complete second publish log");
   const copyButtons = document.body.querySelectorAll<HTMLButtonElement>(
     'button[aria-label="Copy log"]'
   );
   expect(copyButtons).toHaveLength(2);
   await act(async () => userEvent.click(copyButtons[1]!));
-  expect(writeText).toHaveBeenCalledWith("done\n");
-  expect(deploy?.getAttribute("aria-expanded")).toBe("true");
-  await act(async () =>
-    userEvent.click(
-      document.body.querySelector<HTMLButtonElement>(
-        'button[aria-label="Copy all reports"]'
-      )!
-    )
-  );
-  expect(writeText).toHaveBeenLastCalledWith(
-    "example.com\n\nBuild (failure)\nfailed\n\nDeploy\ndone\n"
-  );
+  expect(writeText).toHaveBeenCalledWith("Complete second publish log");
+  expect(triggers[1]?.getAttribute("aria-expanded")).toBe("true");
 });
 
 test("publish failure is plain text and links to the Publish tab", async () => {

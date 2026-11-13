@@ -30,22 +30,6 @@ test("the public deployment contract validates publish and status-only log reque
       code: "cancelled",
     }).availability
   ).toBe("available");
-  const page = publishLogOutput.parse({
-    availability: "available",
-    outcome: "failed",
-    logAvailability: "available",
-    log: {
-      encoding: "base64url",
-      chunk: "ZmFpbGVk",
-      complete: true,
-      steps: [
-        { name: "Build", status: "failure", offset: 0, contentOffset: 7 },
-      ],
-    },
-  });
-  expect(page.availability === "available" && page.log?.steps).toEqual([
-    { name: "Build", status: "failure", offset: 0, contentOffset: 7 },
-  ]);
   expect(
     publishLogInput.safeParse({
       buildId: "build-1",
