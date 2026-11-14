@@ -20,6 +20,7 @@ import {
 } from "./mdx-materialization";
 import {
   materializeMdxAuthoredContent,
+  rebaseMdxAuthoredContent,
   serializeMdxAuthoredContent,
 } from "./mdx-authored-content";
 import {
@@ -274,6 +275,169 @@ const getUnresolvedTemplate = (
 };
 
 describe("materializeMdxTemplates", () => {
+  test("persists Markdown heading edits inside nested named templates", async () => {
+    const data = createData();
+    const templates = [
+      { id: "link", name: "ServiceCard", tag: "a" },
+      { id: "shell", name: "CardShell", tag: "div" },
+      { id: "text", name: "CardText", tag: "div" },
+    ];
+    for (const template of templates) {
+      data.instances.set(template.id, {
+        ...template,
+        type: "instance",
+        component: "ws:element",
+        children: [{ type: "text", value: "Template default" }],
+      });
+    }
+    data.instances.get("templates")!.children = templates.map(({ id }) => ({
+      type: "id",
+      value: id,
+    }));
+    const materialize = async (source: string) => {
+      const document = await parseMdxDocument({ source });
+      const templateMaterialization = await materializeMdxTemplates({
+        identity,
+        resolution: resolveMdxTemplates({
+          document,
+          identity,
+          instances: data.instances,
+          metas,
+        }),
+        data,
+        metas,
+        projectId: "target-project",
+      });
+      return materializeMdxAuthoredContent({
+        identity,
+        document,
+        templateMaterialization,
+      });
+    };
+    const root = await materialize(`
+  <ServiceCard href="/services">
+    <CardShell>
+      <CardText>
+        ## Before
+
+        Card description
+      </CardText>
+    </CardShell>
+  </ServiceCard>
+
+  <CardText />
+  `);
+    const fragment = structuredClone(root.fragment);
+    const heading = fragment.instances.find(({ tag }) => tag === "h2");
+    expect(heading?.children).toEqual([{ type: "text", value: "Before" }]);
+    heading!.children = [{ type: "text", value: "After" }];
+
+    const next = await rebaseMdxAuthoredContent({
+      root,
+      fragment,
+      latest: root.document,
+    });
+    const reopened = await materialize(serializeMdxDocument(next));
+
+    expect(reopened.document.children).toMatchObject([
+      {
+        name: "ServiceCard",
+        children: [
+          {
+            name: "CardShell",
+            children: [
+              {
+                name: "CardText",
+                children: [
+                  {
+                    syntax: "markdown",
+                    tag: "h2",
+                    children: [{ type: "text", value: "After" }],
+                  },
+                  { syntax: "markdown", tag: "p" },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      { name: "CardText", selfClosing: true, children: [] },
+    ]);
+    expect(
+      reopened.fragment.instances.find(({ tag }) => tag === "h2")?.children
+    ).toEqual([{ type: "text", value: "After" }]);
+  });
+
+  test("keeps inline formatting inside a self-closing heading template", async () => {
+    const data = createData();
+    data.instances.set("title", {
+      type: "instance",
+      id: "title",
+      component: "ws:element",
+      tag: "h2",
+      name: "Title",
+      children: [{ type: "text", value: "Bold title" }],
+    });
+    data.instances.get("templates")!.children.push({
+      type: "id",
+      value: "title",
+    });
+    const document = await parseMdxDocument({ source: "<Title />" });
+    const templateMaterialization = await materializeMdxTemplates({
+      identity,
+      resolution: resolveMdxTemplates({
+        document,
+        identity,
+        instances: data.instances,
+        metas,
+      }),
+      data,
+      metas,
+      projectId: "target-project",
+    });
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization,
+    });
+    const fragment = structuredClone(root.fragment);
+    const heading = fragment.instances.find(({ tag }) => tag === "h2")!;
+    heading.children = [{ type: "id", value: "strong" }];
+    fragment.instances.push({
+      type: "instance",
+      id: "strong",
+      component: "ws:element",
+      tag: "strong",
+      children: [{ type: "text", value: "Bold title" }],
+    });
+
+    const next = await rebaseMdxAuthoredContent({
+      root,
+      fragment,
+      latest: root.document,
+    });
+    const reopened = await materializeMdxAuthoredContent({
+      identity,
+      document: await parseMdxDocument({
+        source: serializeMdxDocument(next),
+      }),
+      templateMaterialization,
+    });
+    const reopenedHeading = reopened.fragment.instances.find(
+      ({ tag }) => tag === "h2"
+    )!;
+    const inlineChildId = reopenedHeading.children.find(
+      (child) => child.type === "id"
+    )?.value;
+
+    expect(
+      reopened.fragment.instances.find(({ id }) => id === inlineChildId)?.tag
+    ).toBe("strong");
+    expect(reopened.fragment.instances.map(({ tag }) => tag)).not.toContain(
+      "p"
+    );
+  });
+
   test.each([
     ["existing source", undefined, "image", true],
     ["existing source, mismatched", undefined, "other-image", false],
