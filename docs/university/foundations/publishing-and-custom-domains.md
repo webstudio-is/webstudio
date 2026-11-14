@@ -14,7 +14,9 @@ Choose **Validate** in the publish dialog before publishing or exporting. Webstu
 checks publishable pages for broken Resource references and invalid HTML nesting
 that could make the generated site fail or behave unexpectedly.
 
-- **Errors** stop publishing until you resolve them.
+- Validation errors should be fixed before publishing. Publish also runs
+  best-effort checks while sending the request; any issues found are reported in
+  Diagnostics, and the server may reject the publish.
 - **Warnings** appear immediately but do not prevent publishing.
 
 On paid plans, when a finding identifies a component, choose **Show element** to
@@ -33,6 +35,8 @@ It opens **Publish** for a publish that started, or **Errors** if the request
 failed before a publish started.
 Click the status icon beside a domain to open the same dialog on the
 **Publish** tab for that domain. For a static export, click its status icon.
+If a static export fails before a build starts, open its status icon to see the
+error in Diagnostics.
 
 The **Publish** tab shows up to 10 recent publishes started in the current Builder tab. It keeps
 results when you close the dialog, but clears them when you reload or close the
