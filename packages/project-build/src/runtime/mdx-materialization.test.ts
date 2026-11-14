@@ -368,6 +368,76 @@ describe("materializeMdxTemplates", () => {
     ).toEqual([{ type: "text", value: "After" }]);
   });
 
+  test("keeps inline formatting inside a self-closing heading template", async () => {
+    const data = createData();
+    data.instances.set("title", {
+      type: "instance",
+      id: "title",
+      component: "ws:element",
+      tag: "h2",
+      name: "Title",
+      children: [{ type: "text", value: "Bold title" }],
+    });
+    data.instances.get("templates")!.children.push({
+      type: "id",
+      value: "title",
+    });
+    const document = await parseMdxDocument({ source: "<Title />" });
+    const templateMaterialization = await materializeMdxTemplates({
+      identity,
+      resolution: resolveMdxTemplates({
+        document,
+        identity,
+        instances: data.instances,
+        metas,
+      }),
+      data,
+      metas,
+      projectId: "target-project",
+    });
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization,
+    });
+    const fragment = structuredClone(root.fragment);
+    const heading = fragment.instances.find(({ tag }) => tag === "h2")!;
+    heading.children = [{ type: "id", value: "strong" }];
+    fragment.instances.push({
+      type: "instance",
+      id: "strong",
+      component: "ws:element",
+      tag: "strong",
+      children: [{ type: "text", value: "Bold title" }],
+    });
+
+    const next = await rebaseMdxAuthoredContent({
+      root,
+      fragment,
+      latest: root.document,
+    });
+    const reopened = await materializeMdxAuthoredContent({
+      identity,
+      document: await parseMdxDocument({
+        source: serializeMdxDocument(next),
+      }),
+      templateMaterialization,
+    });
+    const reopenedHeading = reopened.fragment.instances.find(
+      ({ tag }) => tag === "h2"
+    )!;
+    const inlineChildId = reopenedHeading.children.find(
+      (child) => child.type === "id"
+    )?.value;
+
+    expect(
+      reopened.fragment.instances.find(({ id }) => id === inlineChildId)?.tag
+    ).toBe("strong");
+    expect(reopened.fragment.instances.map(({ tag }) => tag)).not.toContain(
+      "p"
+    );
+  });
+
   test.each([
     ["existing source", undefined, "image", true],
     ["existing source, mismatched", undefined, "other-image", false],

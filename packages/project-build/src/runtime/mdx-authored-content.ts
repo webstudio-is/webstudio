@@ -2593,7 +2593,7 @@ export const reconcileMdxAuthoredContent = ({
           mode === "text" ||
           (provenance.editableTextChildren &&
             children.length > 0 &&
-            children.every((child) => child.type === "text"))
+            getInsertedNodeMode(instance.children) === "text")
             ? "text"
             : original.mdxMode,
       };
