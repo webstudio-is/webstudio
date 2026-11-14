@@ -58,7 +58,7 @@ jobs:
         shell: bash
         run: |
           node --input-type=module <<'NODE'
-          const url = `https://${process.env.BUILDER_HOST}/`;
+          const url = `https://${process.env.BUILDER_HOST}/rest/cli-compatibility`;
 
           for (let attempt = 1; attempt <= 30; attempt++) {
             try {
