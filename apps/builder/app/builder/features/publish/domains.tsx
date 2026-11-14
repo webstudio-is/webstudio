@@ -46,6 +46,7 @@ import { RelativeTime } from "~/builder/shared/relative-time";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
 import type { PublishLog } from "./use-publish-logs";
+import { publishLogStatus } from "./constants";
 
 export type Domain = Project["domainsVirtual"][number];
 
@@ -175,30 +176,8 @@ const StatusIcon = (props: {
     props.latestLog?.buildId === props.projectDomain.latestBuildVirtual?.buildId
       ? props.latestLog
       : undefined;
-  const Icon =
-    latestLog?.status === "pending"
-      ? SpinnerIcon
-      : latestLog?.status === "failed"
-        ? AlertIcon
-        : latestLog?.status === "success"
-          ? CheckCircleIcon
-          : fallback.Icon;
-  const color =
-    latestLog?.status === "pending"
-      ? cssVar("--foreground-warning")
-      : latestLog?.status === "failed"
-        ? cssVar("--foreground-negative")
-        : latestLog?.status === "success"
-          ? cssVar("--foreground-positive")
-          : fallback.color;
-  const text =
-    latestLog?.status === "pending"
-      ? "Publishing started"
-      : latestLog?.status === "failed"
-        ? "Publish failed"
-        : latestLog?.status === "success"
-          ? "Published"
-          : fallback.text;
+  const { Icon, color, text } =
+    latestLog === undefined ? fallback : publishLogStatus[latestLog.status];
 
   return (
     <Tooltip content={text}>

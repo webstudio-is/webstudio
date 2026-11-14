@@ -8,7 +8,7 @@ import { $publishDialog } from "~/builder/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { __testing__ } from "./publish";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
-import { PublishDiagnosticsDialog } from "./publish-diagnostics-dialog";
+import { PublishDiagnosticsDialog } from "./diagnostics";
 
 const {
   usePublishProgress,

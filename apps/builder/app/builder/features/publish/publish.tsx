@@ -124,7 +124,7 @@ import {
   PublishDiagnosticsDialog,
   PublishValidationBanner,
   type PublishValidationFinding,
-} from "./publish-diagnostics-dialog";
+} from "./diagnostics";
 import {
   selectPublishLogs,
   usePublishLogs,
@@ -134,6 +134,7 @@ import { PublishActions, usePublishValidationState } from "./publish-actions";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
 import { getPublishValidationErrorMessage } from "./publish-error";
 import { runPublishAfterBestEffortChecks } from "./publish-preflight";
+import { publishLogStatus } from "./constants";
 
 const getPrePublishInstanceTarget = (
   instanceId: string,
@@ -455,30 +456,13 @@ const ChangeProjectDomain = ({
     latestLog?.buildId === latestProjectDomainBuild?.buildId
       ? latestLog
       : undefined;
-  const LogIcon =
-    currentLog?.status === "pending"
-      ? SpinnerIcon
-      : currentLog?.status === "failed"
-        ? AlertIcon
-        : currentLog?.status === "success"
-          ? CheckCircleIcon
-          : Icon;
-  const logColor =
-    currentLog?.status === "pending"
-      ? cssVar("--foreground-warning")
-      : currentLog?.status === "failed"
-        ? cssVar("--foreground-negative")
-        : currentLog?.status === "success"
-          ? cssVar("--foreground-positive")
-          : color;
-  const logStatusText =
-    currentLog?.status === "pending"
-      ? "Publishing started"
-      : currentLog?.status === "failed"
-        ? "Publish failed"
-        : currentLog?.status === "success"
-          ? "Published"
-          : statusText;
+  const {
+    Icon: LogIcon,
+    color: logColor,
+    text: logStatusText,
+  } = currentLog === undefined
+    ? { Icon, color, text: statusText }
+    : publishLogStatus[currentLog.status];
 
   const isPublished = latestProjectDomainBuild != null;
 

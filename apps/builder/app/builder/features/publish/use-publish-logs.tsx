@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { nativeClient } from "~/shared/trpc/trpc-client";
-import type { PublishValidationFinding } from "./publish-diagnostics-dialog";
+import type { PublishValidationFinding } from "./diagnostics";
 
 export type PublishLog = {
   buildId: string;

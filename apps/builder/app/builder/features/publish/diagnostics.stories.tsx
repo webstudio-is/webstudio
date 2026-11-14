@@ -3,7 +3,7 @@ import { StorySection } from "@webstudio-is/design-system";
 import {
   PublishDiagnosticsDialog,
   type PublishValidationFinding,
-} from "./publish-diagnostics-dialog";
+} from "./diagnostics";
 
 export default {
   title: "Publish/Validation results",

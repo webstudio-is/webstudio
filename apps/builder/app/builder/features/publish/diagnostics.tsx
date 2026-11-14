@@ -17,7 +17,7 @@ import {
   PanelTabsContent,
   PanelTabsList,
   PanelTabsTrigger,
-  ScrollArea,
+  ScrollAreaNative,
   SectionTitle,
   Separator,
   Text,
@@ -27,6 +27,7 @@ import { CopyIcon } from "@webstudio-is/icons";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import type { PublishLog } from "./use-publish-logs";
 import { getPublishDuration } from "./use-publish-logs";
+import { publishLogStatus } from "./constants";
 
 export type PublishValidationFinding = {
   severity: "error" | "warning";
@@ -101,7 +102,7 @@ const FindingList = ({
   onSelect: (finding: PublishValidationFinding) => void;
   onOpenPublish?: () => void;
 }) => (
-  <ScrollArea css={{ height: "100%" }}>
+  <ScrollAreaNative css={{ height: "100%" }}>
     <PanelContent as={Flex} direction="column" gap={3}>
       {findings.map((finding, index) => (
         <Fragment key={`${finding.severity}-${index}`}>
@@ -149,7 +150,7 @@ const FindingList = ({
         </Fragment>
       ))}
     </PanelContent>
-  </ScrollArea>
+  </ScrollAreaNative>
 );
 
 export const PublishDiagnosticsDialog = ({
@@ -290,9 +291,11 @@ export const PublishDiagnosticsDialog = ({
                 {selectedFinding.title}
               </Text>
               {selectedFinding.details !== undefined && (
-                <ScrollArea css={{ minHeight: 0, flex: 1 }}>
-                  <Text userSelect="text">{selectedFinding.details}</Text>
-                </ScrollArea>
+                <ScrollAreaNative css={{ minHeight: 0, flex: 1 }}>
+                  <Text css={{ userSelect: "text" }}>
+                    {selectedFinding.details}
+                  </Text>
+                </ScrollAreaNative>
               )}
               <div
                 onClick={(event) => {
@@ -358,7 +361,7 @@ export const PublishDiagnosticsDialog = ({
                 value="publish"
                 css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
               >
-                <ScrollArea css={{ height: "100%" }}>
+                <ScrollAreaNative css={{ height: "100%" }}>
                   <PanelContent as={Flex} direction="column" gap={3}>
                     {!canViewPublishLogs && (
                       <PanelBanner variant="info" role="note">
@@ -424,11 +427,7 @@ export const PublishDiagnosticsDialog = ({
                                 }}
                               >
                                 <Text color="subtle">
-                                  {item.status === "pending"
-                                    ? "Publishing started"
-                                    : item.status === "success"
-                                      ? "Published"
-                                      : "Publish failed"}
+                                  {publishLogStatus[item.status].text}
                                 </Text>
                                 {canViewPublishLogs &&
                                   item.startedAt !== undefined && (
@@ -523,7 +522,7 @@ export const PublishDiagnosticsDialog = ({
                       );
                     })}
                   </PanelContent>
-                </ScrollArea>
+                </ScrollAreaNative>
               </PanelTabsContent>
             </PanelTabs>
           )}

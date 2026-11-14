@@ -7,7 +7,7 @@ import {
   PublishDiagnosticsDialog,
   PublishValidationBanner,
   type PublishValidationFinding,
-} from "./publish-diagnostics-dialog";
+} from "./diagnostics";
 import type { PublishLog } from "./use-publish-logs";
 
 let root: Root | undefined;
@@ -67,6 +67,69 @@ const openDetails = (element: HTMLElement) => {
   expect(button).toBeDefined();
   act(() => button?.click());
 };
+
+test.each(["findings", "details", "publish"] as const)(
+  "scrolls overflowing %s with the native scroll container",
+  async (view) => {
+    const content = <div data-overflow-content style={{ height: 2000 }} />;
+    render(
+      view === "publish"
+        ? []
+        : [
+            {
+              severity: "error",
+              title: view === "details" ? "finding" : content,
+              details: content,
+              reportText: "report",
+            },
+          ],
+      true,
+      view === "publish"
+        ? [
+            {
+              buildId: "scrolling-build",
+              target: "site",
+              domains: ["example.com"],
+              findings: [],
+              status: "success",
+              logState: "available",
+              logText: "line\n".repeat(200),
+            },
+          ]
+        : [],
+      undefined,
+      true
+    );
+    if (view === "details") {
+      const finding = Array.from(document.body.querySelectorAll("button")).find(
+        (button) => button.textContent === "finding"
+      );
+      await act(async () => userEvent.click(finding!));
+    }
+    const contentElement = document.body.querySelector<HTMLElement>(
+      view === "publish" ? "pre" : "[data-overflow-content]"
+    );
+    if (view === "details") {
+      expect(getComputedStyle(contentElement!.parentElement!).userSelect).toBe(
+        "text"
+      );
+    }
+    let scrollContainer = contentElement?.parentElement;
+    while (
+      scrollContainer &&
+      getComputedStyle(scrollContainer).overflowY !== "auto"
+    ) {
+      scrollContainer = scrollContainer.parentElement;
+    }
+    expect(scrollContainer).toBeTruthy();
+    expect(scrollContainer!.clientHeight).toBeGreaterThan(0);
+    expect(scrollContainer!.scrollHeight).toBeGreaterThan(
+      scrollContainer!.clientHeight
+    );
+    scrollContainer!.scrollTop = 100;
+    expect(scrollContainer!.scrollTop).toBe(100);
+  }
+);
 
 test("renders no publish summary when there are no findings", () => {
   expect(render([]).textContent).toBe("");
