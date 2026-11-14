@@ -2584,23 +2584,19 @@ export const reconcileMdxAuthoredContent = ({
         }
         return { ...original, props: normalizedProps, children };
       }
-      if (expandsToAuthoredChildren) {
-        return {
-          ...original,
-          selfClosing: false,
-          props: normalizedProps,
-          children,
-          mdxMode:
-            mode === "text" ||
-            (provenance.editableTextChildren && children.length > 0)
-              ? "text"
-              : original.mdxMode,
-        };
-      }
-      return mode === "text" ||
-        (provenance.editableTextChildren && children.length > 0)
-        ? { ...original, props: normalizedProps, children, mdxMode: "text" }
-        : { ...original, props: normalizedProps, children };
+      return {
+        ...original,
+        ...(expandsToAuthoredChildren ? { selfClosing: false } : {}),
+        props: normalizedProps,
+        children,
+        mdxMode:
+          mode === "text" ||
+          (provenance.editableTextChildren &&
+            children.length > 0 &&
+            children.every((child) => child.type === "text"))
+            ? "text"
+            : original.mdxMode,
+      };
     }
     const owningTemplate = templateByExpandedInstanceId.get(instanceId);
     const isExpandedTemplateDescendant =
