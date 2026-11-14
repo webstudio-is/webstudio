@@ -1,3 +1,4 @@
+import { getDiagnosticsReport } from "./diagnostics-utils";
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import {
   Button,
@@ -38,6 +39,7 @@ export type PublishValidationFinding = {
   link?: ReactNode;
   relatedInstanceId?: string;
   reportText: string;
+  buildId?: string;
 };
 
 const shortFinding = (finding: PublishValidationFinding) =>
@@ -96,11 +98,15 @@ const FindingList = ({
   canViewPublishLogs,
   onSelect,
   onOpenPublish,
+  issuesOmitted = 0,
+  publishBuildIds,
 }: {
   findings: PublishValidationFinding[];
   canViewPublishLogs: boolean;
   onSelect: (finding: PublishValidationFinding) => void;
   onOpenPublish?: () => void;
+  issuesOmitted?: number;
+  publishBuildIds: string[];
 }) => (
   <ScrollAreaNative css={{ height: "100%" }}>
     <PanelContent as={Flex} direction="column" gap={3}>
@@ -115,22 +121,24 @@ const FindingList = ({
             {finding.source === "publish" ? (
               <Text variant="labels" userSelect="text">
                 {canViewPublishLogs ? finding.title : shortFinding(finding)}
-                {onOpenPublish !== undefined && (
-                  <>
-                    {" "}
-                    <Link
-                      as="button"
-                      type="button"
-                      variant="inherit"
-                      color="inherit"
-                      underline="always"
-                      css={{ border: 0, padding: 0, background: "none" }}
-                      onClick={onOpenPublish}
-                    >
-                      show logs
-                    </Link>
-                  </>
-                )}
+                {onOpenPublish !== undefined &&
+                  finding.buildId !== undefined &&
+                  publishBuildIds.includes(finding.buildId) && (
+                    <>
+                      {" "}
+                      <Link
+                        as="button"
+                        type="button"
+                        variant="inherit"
+                        color="inherit"
+                        underline="always"
+                        css={{ border: 0, padding: 0, background: "none" }}
+                        onClick={onOpenPublish}
+                      >
+                        show logs
+                      </Link>
+                    </>
+                  )}
               </Text>
             ) : canViewPublishLogs ? (
               <Button
@@ -149,9 +157,204 @@ const FindingList = ({
           {index < findings.length - 1 && <Separator />}
         </Fragment>
       ))}
+      {canViewPublishLogs && issuesOmitted > 0 && (
+        <Text color="subtle">{issuesOmitted} more issues not shown.</Text>
+      )}
     </PanelContent>
   </ScrollAreaNative>
 );
+
+const FindingDetails = ({
+  finding,
+  onBack,
+  onNavigate,
+}: {
+  finding: PublishValidationFinding;
+  onBack: () => void;
+  onNavigate: () => void;
+}) => (
+  <PanelContent
+    as={Flex}
+    direction="column"
+    gap={3}
+    css={{ minHeight: 0, flex: 1 }}
+  >
+    <Button type="button" color="neutral" onClick={onBack}>
+      Back
+    </Button>
+    <Text variant="titles" userSelect="text">
+      {finding.title}
+    </Text>
+    {finding.details !== undefined && (
+      <ScrollAreaNative css={{ minHeight: 0, flex: 1 }}>
+        <Text css={{ userSelect: "text" }}>{finding.details}</Text>
+      </ScrollAreaNative>
+    )}
+    <div
+      onClick={(event) => {
+        if (
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+        onNavigate();
+      }}
+    >
+      {finding.link}
+    </div>
+  </PanelContent>
+);
+
+const PublishHistoryEntry = ({
+  item,
+  defaultOpen,
+  canViewPublishLogs,
+}: {
+  item: PublishLog;
+  defaultOpen: boolean;
+  canViewPublishLogs: boolean;
+}) => {
+  const duration = getPublishDuration(item);
+  return (
+    <Collapsible.Root asChild defaultOpen={defaultOpen}>
+      <Flex direction="column" gap={2}>
+        <Collapsible.Trigger asChild>
+          <SectionTitle
+            aria-labelledby={`publish-title-${item.buildId}`}
+            suffixPlaceholder={<CopyIcon aria-hidden />}
+            suffix={
+              canViewPublishLogs &&
+              item.logState === "available" &&
+              item.logText !== undefined && (
+                <CopyToClipboard text={item.logText} copyText="Copy log">
+                  <IconButton
+                    type="button"
+                    aria-label="Copy log"
+                    onPointerDown={(event) => event.stopPropagation()}
+                  >
+                    <CopyIcon aria-hidden />
+                  </IconButton>
+                </CopyToClipboard>
+              )
+            }
+          >
+            <Text
+              as="span"
+              id={`publish-title-${item.buildId}`}
+              variant="titles"
+              truncate
+              css={{ flex: "0 1 auto", minWidth: 0 }}
+            >
+              {item.domains.length > 0
+                ? item.domains.join(", ")
+                : "Static export"}
+            </Text>
+          </SectionTitle>
+        </Collapsible.Trigger>
+        <Collapsible.Content asChild>
+          <Flex
+            direction="column"
+            gap={2}
+            css={{
+              paddingInline: theme.panel.paddingInline,
+            }}
+          >
+            <Text color="subtle">{publishLogStatus[item.status].text}</Text>
+            {canViewPublishLogs && item.startedAt !== undefined && (
+              <Text>Started: {new Date(item.startedAt).toLocaleString()}</Text>
+            )}
+            {canViewPublishLogs && duration !== undefined && (
+              <Text>Duration: {duration}s</Text>
+            )}
+            {canViewPublishLogs &&
+              item.status === "failed" &&
+              (item.failedStage !== undefined || item.code !== undefined) && (
+                <Text color="destructive">
+                  {[item.failedStage, item.code?.replaceAll("_", " ")]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </Text>
+              )}
+            {canViewPublishLogs &&
+              item.status !== "pending" &&
+              (item.logState === "available" ? (
+                <Text
+                  as="pre"
+                  variant="mono"
+                  userSelect="text"
+                  css={{
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {item.logText}
+                </Text>
+              ) : (
+                <Text color="subtle">
+                  {item.logHandle === undefined ||
+                  item.logState === "unavailable"
+                    ? "Publish logs are unavailable."
+                    : "Loading logs…"}
+                </Text>
+              ))}
+          </Flex>
+        </Collapsible.Content>
+        <Separator />
+      </Flex>
+    </Collapsible.Root>
+  );
+};
+
+const PublishHistory = ({
+  items,
+  canViewPublishLogs,
+  onLoadLog,
+}: {
+  items: PublishLog[];
+  canViewPublishLogs: boolean;
+  onLoadLog?: (item: PublishLog) => void;
+}) => {
+  useEffect(() => {
+    if (!canViewPublishLogs) {
+      return;
+    }
+    for (const item of items) {
+      if (
+        item.status !== "pending" &&
+        item.logHandle !== undefined &&
+        item.logState === undefined
+      ) {
+        onLoadLog?.(item);
+      }
+    }
+  }, [canViewPublishLogs, items, onLoadLog]);
+  return (
+    <ScrollAreaNative css={{ height: "100%" }}>
+      <PanelContent as={Flex} direction="column" gap={3}>
+        {!canViewPublishLogs && (
+          <PanelBanner variant="info" role="note">
+            <Text>Upgrade to Pro to view publish logs.</Text>
+          </PanelBanner>
+        )}
+        {items.length === 0 && (
+          <Text color="subtle">No publishes in this session.</Text>
+        )}
+        {items.map((item, index) => (
+          <PublishHistoryEntry
+            key={item.buildId}
+            item={item}
+            defaultOpen={index === items.length - 1}
+            canViewPublishLogs={canViewPublishLogs}
+          />
+        ))}
+      </PanelContent>
+    </ScrollAreaNative>
+  );
+};
 
 export const PublishDiagnosticsDialog = ({
   findings,
@@ -161,6 +364,7 @@ export const PublishDiagnosticsDialog = ({
   initialTab,
   items = [],
   canViewPublishLogs = true,
+  includeLatestPublishFindings = true,
   onLoadLog,
 }: {
   findings: PublishValidationFinding[];
@@ -170,6 +374,7 @@ export const PublishDiagnosticsDialog = ({
   initialTab?: "warnings" | "errors" | "publish";
   items?: PublishLog[];
   canViewPublishLogs?: boolean;
+  includeLatestPublishFindings?: boolean;
   onLoadLog?: (item: PublishLog) => void;
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -177,33 +382,29 @@ export const PublishDiagnosticsDialog = ({
     useState<PublishValidationFinding>();
   const isOpen = open ?? internalOpen;
   const setIsOpen = onOpenChange ?? setInternalOpen;
-  const errors = findings.filter(({ severity }) => severity === "error");
-  const warnings = findings.filter(({ severity }) => severity === "warning");
-  const defaultTab = initialTab ?? (errors.length > 0 ? "errors" : "warnings");
+
+  const {
+    findings: reportFindings,
+    tabs,
+    publishes: orderedItems,
+    reportText,
+    publishText,
+    issuesOmitted,
+  } = getDiagnosticsReport({
+    findings,
+    items,
+    canViewPublishLogs,
+    includeLatestPublishFindings,
+  });
+  const defaultTab = initialTab ?? tabs.at(-1)?.value ?? "publish";
   const [tab, setTab] = useState(defaultTab);
-  const orderedItems = [...items].reverse();
+
   const activeTab =
-    (tab === "warnings" && warnings.length > 0) ||
-    (tab === "errors" && errors.length > 0) ||
-    (tab === "publish" && items.length > 0)
+    (tab === "publish" && items.length > 0) ||
+    tabs.some(({ value }) => value === tab)
       ? tab
-      : errors.length > 0
-        ? "errors"
-        : warnings.length > 0
-          ? "warnings"
-          : "publish";
-  const reportText = findings.map(({ reportText }) => reportText).join("\n\n");
-  const publishText = orderedItems
-    .filter(
-      (item) => item.logState === "available" && item.logText !== undefined
-    )
-    .map((item) =>
-      [
-        ...(item.domains.length > 0 ? item.domains : ["Static export"]),
-        item.logText,
-      ].join("\n")
-    )
-    .join("\n\n");
+      : (tabs.at(-1)?.value ?? "publish");
+
   const copyText = activeTab === "publish" ? publishText : reportText;
 
   useEffect(() => {
@@ -217,22 +418,7 @@ export const PublishDiagnosticsDialog = ({
     }
   }, [canViewPublishLogs]);
 
-  useEffect(() => {
-    if (isOpen === false || activeTab !== "publish" || !canViewPublishLogs) {
-      return;
-    }
-    for (const item of items) {
-      if (
-        item.status !== "pending" &&
-        item.logHandle !== undefined &&
-        item.logState === undefined
-      ) {
-        onLoadLog?.(item);
-      }
-    }
-  }, [activeTab, canViewPublishLogs, isOpen, items, onLoadLog]);
-
-  if (open === undefined && findings.length === 0) {
+  if (open === undefined && reportFindings.length === 0 && items.length === 0) {
     return null;
   }
 
@@ -240,7 +426,7 @@ export const PublishDiagnosticsDialog = ({
     <>
       {open === undefined && (
         <PublishValidationBanner
-          findings={findings}
+          findings={reportFindings}
           onOpen={() => setIsOpen(true)}
         />
       )}
@@ -274,46 +460,11 @@ export const PublishDiagnosticsDialog = ({
             Diagnostics
           </DialogTitle>
           {selectedFinding !== undefined && canViewPublishLogs ? (
-            <PanelContent
-              as={Flex}
-              direction="column"
-              gap={3}
-              css={{ minHeight: 0, flex: 1 }}
-            >
-              <Button
-                type="button"
-                color="neutral"
-                onClick={() => setSelectedFinding(undefined)}
-              >
-                Back
-              </Button>
-              <Text variant="titles" userSelect="text">
-                {selectedFinding.title}
-              </Text>
-              {selectedFinding.details !== undefined && (
-                <ScrollAreaNative css={{ minHeight: 0, flex: 1 }}>
-                  <Text css={{ userSelect: "text" }}>
-                    {selectedFinding.details}
-                  </Text>
-                </ScrollAreaNative>
-              )}
-              <div
-                onClick={(event) => {
-                  if (
-                    event.button !== 0 ||
-                    event.metaKey ||
-                    event.ctrlKey ||
-                    event.shiftKey ||
-                    event.altKey
-                  ) {
-                    return;
-                  }
-                  setIsOpen(false);
-                }}
-              >
-                {selectedFinding.link}
-              </div>
-            </PanelContent>
+            <FindingDetails
+              finding={selectedFinding}
+              onBack={() => setSelectedFinding(undefined)}
+              onNavigate={() => setIsOpen(false)}
+            />
           ) : (
             <PanelTabs
               value={activeTab}
@@ -321,208 +472,42 @@ export const PublishDiagnosticsDialog = ({
               css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
             >
               <PanelTabsList aria-label="Publish check severity">
-                {warnings.length > 0 && (
-                  <PanelTabsTrigger value="warnings">Warnings</PanelTabsTrigger>
-                )}
-                {errors.length > 0 && (
-                  <PanelTabsTrigger value="errors">Errors</PanelTabsTrigger>
-                )}
+                {tabs.map(({ value, label }) => (
+                  <PanelTabsTrigger key={value} value={value}>
+                    {label}
+                  </PanelTabsTrigger>
+                ))}
                 {items.length > 0 && (
                   <PanelTabsTrigger value="publish">Publish</PanelTabsTrigger>
                 )}
               </PanelTabsList>
-              <PanelTabsContent
-                value="warnings"
-                css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
-              >
-                <FindingList
-                  findings={warnings}
-                  canViewPublishLogs={canViewPublishLogs}
-                  onSelect={setSelectedFinding}
-                  onOpenPublish={
-                    items.length > 0 ? () => setTab("publish") : undefined
-                  }
-                />
-              </PanelTabsContent>
-              <PanelTabsContent
-                value="errors"
-                css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
-              >
-                <FindingList
-                  findings={errors}
-                  canViewPublishLogs={canViewPublishLogs}
-                  onSelect={setSelectedFinding}
-                  onOpenPublish={
-                    items.length > 0 ? () => setTab("publish") : undefined
-                  }
-                />
-              </PanelTabsContent>
+              {tabs.map(({ value, findings }) => (
+                <PanelTabsContent
+                  key={value}
+                  value={value}
+                  css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
+                >
+                  <FindingList
+                    findings={findings}
+                    canViewPublishLogs={canViewPublishLogs}
+                    issuesOmitted={issuesOmitted}
+                    publishBuildIds={items.map(({ buildId }) => buildId)}
+                    onSelect={setSelectedFinding}
+                    onOpenPublish={
+                      items.length > 0 ? () => setTab("publish") : undefined
+                    }
+                  />
+                </PanelTabsContent>
+              ))}
               <PanelTabsContent
                 value="publish"
                 css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
               >
-                <ScrollAreaNative css={{ height: "100%" }}>
-                  <PanelContent as={Flex} direction="column" gap={3}>
-                    {!canViewPublishLogs && (
-                      <PanelBanner variant="info" role="note">
-                        <Text>Upgrade to Pro to view publish logs.</Text>
-                      </PanelBanner>
-                    )}
-                    {items.length === 0 && (
-                      <Text color="subtle">No publishes in this session.</Text>
-                    )}
-                    {orderedItems.map((item, index) => {
-                      const duration = getPublishDuration(item);
-                      return (
-                        <Collapsible.Root
-                          key={item.buildId}
-                          asChild
-                          defaultOpen={index === orderedItems.length - 1}
-                        >
-                          <Flex direction="column" gap={2}>
-                            <Collapsible.Trigger asChild>
-                              <SectionTitle
-                                aria-labelledby={`publish-title-${item.buildId}`}
-                                suffixPlaceholder={<CopyIcon aria-hidden />}
-                                suffix={
-                                  canViewPublishLogs &&
-                                  item.logState === "available" &&
-                                  item.logText !== undefined && (
-                                    <CopyToClipboard
-                                      text={item.logText}
-                                      copyText="Copy log"
-                                    >
-                                      <IconButton
-                                        type="button"
-                                        aria-label="Copy log"
-                                        onPointerDown={(event) =>
-                                          event.stopPropagation()
-                                        }
-                                      >
-                                        <CopyIcon aria-hidden />
-                                      </IconButton>
-                                    </CopyToClipboard>
-                                  )
-                                }
-                              >
-                                <Text
-                                  as="span"
-                                  id={`publish-title-${item.buildId}`}
-                                  variant="titles"
-                                  truncate
-                                  css={{ flex: "0 1 auto", minWidth: 0 }}
-                                >
-                                  {item.domains.length > 0
-                                    ? item.domains.join(", ")
-                                    : "Static export"}
-                                </Text>
-                              </SectionTitle>
-                            </Collapsible.Trigger>
-                            <Collapsible.Content asChild>
-                              <Flex
-                                direction="column"
-                                gap={2}
-                                css={{
-                                  paddingInline: theme.panel.paddingInline,
-                                }}
-                              >
-                                <Text color="subtle">
-                                  {publishLogStatus[item.status].text}
-                                </Text>
-                                {canViewPublishLogs &&
-                                  item.startedAt !== undefined && (
-                                    <Text>
-                                      Started:{" "}
-                                      {new Date(
-                                        item.startedAt
-                                      ).toLocaleString()}
-                                    </Text>
-                                  )}
-                                {canViewPublishLogs &&
-                                  duration !== undefined && (
-                                    <Text>Duration: {duration}s</Text>
-                                  )}
-                                {canViewPublishLogs &&
-                                  item.status === "failed" &&
-                                  (item.failedStage !== undefined ||
-                                    item.code !== undefined) && (
-                                    <Text color="destructive">
-                                      {[
-                                        item.failedStage,
-                                        item.code?.replaceAll("_", " "),
-                                      ]
-                                        .filter(Boolean)
-                                        .join(" · ")}
-                                    </Text>
-                                  )}
-                                {canViewPublishLogs &&
-                                  item.status !== "pending" &&
-                                  (item.logState === "available" ? (
-                                    <Text
-                                      as="pre"
-                                      variant="mono"
-                                      userSelect="text"
-                                      css={{
-                                        whiteSpace: "pre-wrap",
-                                        overflowWrap: "anywhere",
-                                      }}
-                                    >
-                                      {item.logText}
-                                    </Text>
-                                  ) : (
-                                    <Text color="subtle">
-                                      {item.logHandle === undefined ||
-                                      item.logState === "unavailable"
-                                        ? "Publish logs are unavailable."
-                                        : "Loading logs…"}
-                                    </Text>
-                                  ))}
-                                {item.findings.length > 0 && (
-                                  <Flex direction="column" gap={1}>
-                                    <Text variant="labels">Audit</Text>
-                                    {item.findings.map((finding, index) => (
-                                      <Text key={index}>
-                                        {canViewPublishLogs
-                                          ? (finding.summary ?? finding.title)
-                                          : shortFinding(finding)}
-                                      </Text>
-                                    ))}
-                                  </Flex>
-                                )}
-                                {canViewPublishLogs &&
-                                  item.issues !== undefined &&
-                                  item.issues.length > 0 && (
-                                    <Text variant="labels">Build</Text>
-                                  )}
-                                {canViewPublishLogs &&
-                                  item.issues?.map((issue, index) => (
-                                    <Text
-                                      key={index}
-                                      color={
-                                        issue.severity === "error"
-                                          ? "destructive"
-                                          : "subtle"
-                                      }
-                                    >
-                                      {issue.message}
-                                    </Text>
-                                  ))}
-                                {canViewPublishLogs &&
-                                  (item.issuesOmitted ?? 0) > 0 && (
-                                    <Text color="subtle">
-                                      {item.issuesOmitted} more issues not
-                                      shown.
-                                    </Text>
-                                  )}
-                              </Flex>
-                            </Collapsible.Content>
-                            <Separator />
-                          </Flex>
-                        </Collapsible.Root>
-                      );
-                    })}
-                  </PanelContent>
-                </ScrollAreaNative>
+                <PublishHistory
+                  items={orderedItems}
+                  canViewPublishLogs={canViewPublishLogs}
+                  onLoadLog={onLoadLog}
+                />
               </PanelTabsContent>
             </PanelTabs>
           )}

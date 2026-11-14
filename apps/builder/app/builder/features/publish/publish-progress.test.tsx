@@ -6,7 +6,7 @@ import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { $publishDialog } from "~/builder/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
-import { __testing__ } from "./publish";
+import { __testing__ } from "./use-publish-progress";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { PublishDiagnosticsDialog } from "./diagnostics";
 
@@ -563,7 +563,7 @@ test("an old poll cannot update a newly mounted copy of the same project", async
   expect($project.get()).toBe(reopenedProject);
 });
 
-test("publish failure shows a toast while the Publish panel is open", () => {
+test("publish failure updates the banner without a duplicate toast while Publish is open", () => {
   const successToast = vi.spyOn(toast, "success").mockImplementation(() => "");
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   const setPublishError = vi.fn();
@@ -585,7 +585,7 @@ test("publish failure shows a toast while the Publish panel is open", () => {
   });
 
   expect(successToast).not.toHaveBeenCalled();
-  expect(errorToast).toHaveBeenCalledOnce();
+  expect(errorToast).not.toHaveBeenCalled();
   expect(setPublishError).toHaveBeenCalledOnce();
 });
 
@@ -648,10 +648,10 @@ test("publish completion shows a toast after the dialog closes", () => {
 
   expect(successToast).toHaveBeenCalledOnce();
   expect(errorToast).toHaveBeenCalledOnce();
-  expect(setPublishError).toHaveBeenCalledWith(failedStatusText);
+  expect(setPublishError).toHaveBeenCalledWith(failedStatusText, undefined);
 });
 
-test("a rejected publish request shows a toast while the dialog is open", async () => {
+test("a rejected publish request updates the banner without a duplicate toast", async () => {
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   $publishDialog.set("publish");
   $project.set({ id: "project" } as Project);
@@ -683,7 +683,7 @@ test("a rejected publish request shows a toast while the dialog is open", async 
   expect(container.querySelector("output")?.textContent).toBe(
     "Network unavailable"
   );
-  expect(errorToast).toHaveBeenCalledOnce();
+  expect(errorToast).not.toHaveBeenCalled();
 });
 
 test("starting validation clears a previous request failure", async () => {
@@ -756,7 +756,7 @@ test("a rejected publish request shows a toast after the dialog closes", async (
   );
 });
 
-test("a rejected publish request shows a toast after the panel reopens", async () => {
+test("a rejected publish request does not duplicate its banner after the panel reopens", async () => {
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   $publishDialog.set("publish");
   $project.set({ id: "project" } as Project);
@@ -806,7 +806,7 @@ test("a rejected publish request shows a toast after the panel reopens", async (
   expect(container.querySelector("output")?.textContent).toBe(
     "Network unavailable"
   );
-  expect(errorToast).toHaveBeenCalledOnce();
+  expect(errorToast).not.toHaveBeenCalled();
 });
 
 test("a publish failure remains available after the panel remounts", () => {
@@ -848,7 +848,7 @@ test("a publish failure remains available after the panel remounts", () => {
   act(() => finish.click());
 
   expect(container.querySelector("output")?.textContent).toBe("Build failed");
-  expect(errorToast).toHaveBeenCalledOnce();
+  expect(errorToast).not.toHaveBeenCalled();
 });
 
 test("a successful status refresh clears a persisted publish failure", () => {
@@ -1121,7 +1121,7 @@ test("publish diagnostics remain visible after the panel remounts", () => {
         <button onClick={() => setIsOpen(true)}>Reopen</button>
         <button
           onClick={() =>
-            progress.setPublishFindings([
+            progress.beginPublishDiagnostics().setFindings([
               {
                 severity: "warning",
                 title: "Check",
@@ -1346,3 +1346,41 @@ test("a rejected request after project navigation does not show a stale toast", 
   await act(async () => rejectPublish(new Error("Network unavailable")));
   expect(errorToast).not.toHaveBeenCalled();
 });
+
+test.each(["site", "static"] as const)(
+  "keeps %s findings when diagnostics for the other target start",
+  (firstTarget) => {
+    const secondTarget = firstTarget === "site" ? "static" : "site";
+    let progress: ReturnType<typeof usePublishProgress>;
+    const Harness = () => {
+      progress = usePublishProgress("project");
+      return null;
+    };
+    $project.set({ id: "project" } as Project);
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    act(() => root?.render(<Harness />));
+    act(() => {
+      progress
+        .beginPublishDiagnostics([], firstTarget)
+        .setFindings([
+          { severity: "warning", title: firstTarget, reportText: firstTarget },
+        ]);
+    });
+    act(() => {
+      progress.beginPublishDiagnostics([], secondTarget).setFindings([
+        {
+          severity: "warning",
+          title: secondTarget,
+          reportText: secondTarget,
+        },
+      ]);
+    });
+    expect(
+      progress!.publishDiagnostics[firstTarget].findings.map(
+        ({ reportText }) => reportText
+      )
+    ).toEqual([firstTarget]);
+  }
+);

@@ -68,6 +68,45 @@ const openDetails = (element: HTMLElement) => {
   act(() => button?.click());
 };
 
+test("keeps audit and build findings in severity tabs, not in publish logs", async () => {
+  render(
+    [],
+    true,
+    [
+      {
+        buildId: "build-separated",
+        target: "site",
+        domains: ["example.com"],
+        status: "failed",
+        findings: [createFinding("warning", 42)],
+        issues: [{ severity: "error", message: "build-issue-42" }],
+        logState: "available",
+        logText: "runner-output-42",
+      },
+    ],
+    undefined,
+    true
+  );
+  const tabs = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="tab"]')
+  );
+  expect(tabs).toHaveLength(3);
+  const publishTab = tabs.find((tab) => tab.textContent === "Publish")!;
+  await act(async () => userEvent.click(publishTab));
+  const active = document.body.querySelector(
+    '[role="tabpanel"][data-state="active"]'
+  )!;
+  expect(active.textContent).toContain("runner-output-42");
+  expect(active.textContent).not.toContain("warning-42");
+  expect(active.textContent).not.toContain("build-issue-42");
+  const warningsTab = tabs.find((tab) => tab.textContent === "Warnings")!;
+  await act(async () => userEvent.click(warningsTab));
+  expect(document.body.textContent).toContain("warning-42");
+  const errorsTab = tabs.find((tab) => tab.textContent === "Errors")!;
+  await act(async () => userEvent.click(errorsTab));
+  expect(document.body.textContent).toContain("build-issue-42");
+});
+
 test.each(["findings", "details", "publish"] as const)(
   "scrolls overflowing %s with the native scroll container",
   async (view) => {
@@ -455,6 +494,14 @@ test("collapses each complete publish and copies its full log from the header", 
   await act(async () => userEvent.click(copyButtons[0]!));
   expect(writeText).toHaveBeenCalledWith("Complete second publish log");
   expect(triggers[0]?.getAttribute("aria-expanded")).toBe("true");
+  const keyboardCopy = document.body.querySelector<HTMLButtonElement>(
+    'button[aria-label="Copy log"]'
+  )!;
+  expect(keyboardCopy.parentElement?.closest("button")).toBeNull();
+  act(() => keyboardCopy.focus());
+  await act(async () => userEvent.keyboard("{Enter}"));
+  expect(writeText).toHaveBeenCalledTimes(2);
+  expect(triggers[0]?.getAttribute("aria-expanded")).toBe("true");
 });
 
 test("can maximize Diagnostics and aligns publish content with its title", async () => {
@@ -513,6 +560,7 @@ test("publish failure is plain text and links to the Publish tab", async () => {
         severity: "error",
         source: "publish",
         title: "Build failed before deployment",
+        buildId: "build-1",
         summary: "Build failed before deployment",
         reportText: "Build failed before deployment",
       },
@@ -561,6 +609,7 @@ test("Free publish failures link to a Publish upgrade banner without exposing lo
         severity: "error",
         source: "publish",
         title: "Publish failed",
+        buildId: "build-1",
         reportText: "Publish failed",
       },
     ],
@@ -664,6 +713,45 @@ test("pre-dispatch failure has no link to an absent Publish tab", () => {
     )
   ).toBe(false);
 });
+
+test.each([true, false])(
+  "pre-dispatch failure does not link an older publish (paid: %s)",
+  (paid) => {
+    render(
+      [
+        {
+          severity: "error",
+          source: "publish",
+          title: "new-request-rejection",
+          reportText: "new-request-rejection",
+        },
+      ],
+      paid,
+      [
+        {
+          buildId: "old-build",
+          target: "site",
+          domains: ["example.com"],
+          status: "success",
+          findings: [],
+          logState: "available",
+          logText: "old-output",
+        },
+      ],
+      undefined,
+      true
+    );
+    expect(
+      document.body.querySelector('[role="tab"][aria-selected="true"]')
+        ?.textContent
+    ).toBe("Errors");
+    expect(
+      Array.from(document.body.querySelectorAll("button")).some(
+        (button) => button.textContent === "show logs"
+      )
+    ).toBe(false);
+  }
+);
 
 test("Free audit summaries do not expose long cached details", () => {
   const longSummary = `Short reason ${"private context ".repeat(30)}`;
