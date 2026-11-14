@@ -31,6 +31,15 @@ The API commands operate on the single project configured by:
 - Use --refresh on local-capable commands to refresh required namespaces before running.
 - Successful JSON responses include compact meta.session with operationId, buildId, version, source, committed, namespaceCounts, diagnosticCount, non-empty diagnostic summaries, and optional compatibilityVersion.
 
+## Publish and wait
+
+Use `webstudio publish deploy --target production --json --wait` to wait for
+this publish and read its available diagnostics before the CLI exits. Without
+`--wait`, publish returns as soon as the job is accepted. Waiting stops after
+360 checks at five-second intervals, plus the time spent on API requests. It
+does not stop the remote publish or save its logs. A successful publish still
+succeeds if its logs are unavailable.
+
 ## Search project data
 
 Run `webstudio search-project '{"query":"known value"}'` to search all Builder

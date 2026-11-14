@@ -4659,6 +4659,7 @@ const capabilityAreas = [
       "publish",
       "list-publishes",
       "get-publish-job",
+      "get-publish-log",
       "unpublish",
       "list-domains",
       "create-domain",

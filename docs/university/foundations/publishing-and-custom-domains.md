@@ -14,13 +14,43 @@ Choose **Validate** in the publish dialog before publishing or exporting. Webstu
 checks publishable pages for broken Resource references and invalid HTML nesting
 that could make the generated site fail or behave unexpectedly.
 
-- **Errors** stop publishing until you resolve them.
+- Validation errors should be fixed before publishing. Publish also runs
+  best-effort checks while sending the request; any issues found are reported in
+  Diagnostics, and the server may reject the publish.
 - **Warnings** appear immediately but do not prevent publishing.
 
-When a finding identifies a component, choose **Show element** to close the
-publish dialog, open the affected page, select the instance, and scroll it into
-view. Fix the problem, then publish again. Draft pages are excluded because
-they are not part of the generated site.
+On paid plans, when a finding identifies a component, choose **Show element** to
+select the affected instance. Free plans show a
+short error or warning without full details or element navigation. Fix the
+problem, then publish again. Draft pages are excluded because they are not part
+of the generated site.
+
+## Publish details
+
+Choose **Validate** to see a short result in the publish popover. When it finds
+issues, choose **See issues** to open the **Warnings** or **Errors** tab.
+When validation passes with no issues, the popover says it is ready to publish.
+If publishing fails, the popover shows the failure and a **See issues** button.
+It opens **Publish** for a publish that started, or **Errors** if the request
+failed before a publish started.
+Click the status icon beside a domain to open the same dialog on the
+**Publish** tab for that domain. For a static export, click its status icon.
+If a static export fails before a build starts, open its status icon to see the
+error in Diagnostics.
+
+The **Publish** tab shows up to 10 recent publishes started in the current Builder tab. It keeps
+results when you close the dialog, but clears them when you reload or close the
+Builder tab. Results for other domains stay separate. An older published status
+may still appear after reload, without a session log.
+
+Free plans show validation findings and a short publish failure notice, but not
+build-log issues or detailed build errors. Pro and Team plans can open finding
+details and view publish logs. Successful publishes show output from publish
+steps. Failed publishes show the failed step first and output from commands
+that ran. GitHub's runner setup output and environment listing are not shown.
+If a step fails before its command starts or its log is unavailable,
+Webstudio shows its step name and status without the raw runner log. GitHub may
+provide no log even when publishing succeeds or fails.
 
 ## Adding a custom domain
 

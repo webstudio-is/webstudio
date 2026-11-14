@@ -32,6 +32,21 @@ export type PrePublishAuditFinding = {
   };
 };
 
+export class PrePublishAuditError extends Error {
+  findings: PrePublishAuditFinding[];
+
+  constructor(findings: PrePublishAuditFinding[]) {
+    const firstError = findings.find(({ severity }) => severity === "error");
+    super(
+      firstError === undefined
+        ? "Pre-publish audit failed."
+        : formatPrePublishAuditFinding(firstError)
+    );
+    this.name = "PrePublishAuditError";
+    this.findings = findings;
+  }
+}
+
 type PrePublishAuditContext = {
   pages: Pages;
   instances: Instances;
@@ -66,32 +81,26 @@ const checkHtmlContentModel: PrePublishAuditCheck = ({
   }
 
   for (const page of getPublishablePages(pages)) {
-    let message: string | undefined;
-    let instanceId: string | undefined;
-    const isValid = isTreeSatisfyingContentModel({
+    isTreeSatisfyingContentModel({
       instances,
       props,
       metas: auditMetas,
       instanceSelector: [page.rootInstanceId],
+      collectAllErrors: true,
       onError: (error, instanceSelector) => {
-        message ??= error;
-        instanceId ??= instanceSelector[0];
+        findings.push({
+          ruleId: "html-content-model",
+          severity: "warning",
+          message: error,
+          location: {
+            pageId: page.id,
+            pageName: page.name,
+            pagePath: getPagePath(page.id, pages) || "/",
+            instanceId: instanceSelector[0],
+          },
+        });
       },
     });
-
-    if (isValid === false) {
-      findings.push({
-        ruleId: "html-content-model",
-        severity: "warning",
-        message: message ?? "The page contains invalid element nesting.",
-        location: {
-          pageId: page.id,
-          pageName: page.name,
-          pagePath: getPagePath(page.id, pages) || "/",
-          instanceId,
-        },
-      });
-    }
   }
 
   return findings;
@@ -206,6 +215,8 @@ const prePublishAuditChecks: PrePublishAuditCheck[] = [
   checkBuildIntegrity,
 ];
 
+const maxAuditFindings = 500;
+
 export const runPrePublishAudit = ({
   pages,
   ...context
@@ -224,7 +235,47 @@ export const runPrePublishAudit = ({
     ];
   }
 
-  return prePublishAuditChecks.flatMap((check) => check({ ...context, pages }));
+  const findings: PrePublishAuditFinding[] = [];
+  for (const check of prePublishAuditChecks) {
+    try {
+      findings.push(...check({ ...context, pages }));
+    } catch {
+      findings.push({
+        ruleId: "validation-incomplete",
+        severity: "error",
+        message:
+          "Part of the pre-publish audit could not complete. Review the other findings and try again.",
+        location: {},
+      });
+    }
+  }
+  return limitPrePublishAuditFindings(findings);
+};
+
+export const limitPrePublishAuditFindings = (
+  findings: PrePublishAuditFinding[]
+): PrePublishAuditFinding[] => {
+  if (findings.length <= maxAuditFindings) {
+    return findings;
+  }
+  const omittedCount = findings.length - maxAuditFindings + 1;
+  const prioritizedFindings = [
+    ...findings.filter(({ severity }) => severity === "error"),
+    ...findings.filter(({ ruleId }) => ruleId === "audit-truncated"),
+    ...findings.filter(
+      ({ severity, ruleId }) =>
+        severity !== "error" && ruleId !== "audit-truncated"
+    ),
+  ];
+  return [
+    ...prioritizedFindings.slice(0, maxAuditFindings - 1),
+    {
+      ruleId: "audit-truncated",
+      severity: "warning",
+      message: `${omittedCount} additional audit findings were omitted from this report.`,
+      location: {},
+    },
+  ];
 };
 
 export const formatPrePublishAuditFinding = (

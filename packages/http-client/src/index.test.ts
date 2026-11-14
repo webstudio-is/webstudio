@@ -54,6 +54,7 @@ import {
   extractDesignToken,
   findAssetUsage,
   getPublishJob,
+  getPublishLog,
   getApiCompatibilityMessage,
   getApiErrorCode,
   getErrorStatus,
@@ -864,9 +865,21 @@ test("wraps project api trpc calls in named functions", async () => {
       message: "Ship",
       idempotencyKey: "publish-key",
     });
+    await publish({
+      ...params,
+      target: "static",
+      templates: ["ssg", "vercel"],
+    });
     await getPublishJob({
       ...params,
       jobId: "job-id",
+      logHandle: "signed-handle",
+    });
+    await getPublishLog({
+      ...params,
+      buildId: "build-id",
+      logHandle: "signed-handle",
+      cursor: 256,
     });
     await unpublish({
       ...params,
@@ -1117,7 +1130,12 @@ test("wraps project api trpc calls in named functions", async () => {
       "/trpc/api.publish.create",
       '"idempotencyKey":"publish-key"'
     ),
+    expectBodyRequest(
+      "/trpc/api.publish.create",
+      '"templates":["ssg","vercel"]'
+    ),
     expectRequest("/trpc/api.publish.getJob"),
+    expectRequest("/trpc/api.publish.getLog"),
     expectBodyRequest("/trpc/api.publish.unpublish", '"confirm":true'),
     expectRequest("/trpc/api.domains.list"),
     expectBodyRequest("/trpc/api.domains.create", '"domain":"example.com"'),

@@ -6,6 +6,7 @@ import {
   router,
   type AppContext,
   type AuthPermit,
+  getProjectPlanFeatures,
 } from "@webstudio-is/trpc-interface/index.server";
 import {
   loadById,
@@ -21,13 +22,17 @@ import {
   getDefaultPublishDomains,
   getVerifiedPublishDomains,
   getProjectPublishJob,
+  getProjectPublishLog,
   listProjectDomains,
   listProjectPublishes,
   publishProject,
+  publishStaticProject,
+  getVisiblePublishFindings,
   updateProjectDomain,
   unpublishProjectDomains,
   verifyProjectDomain,
 } from "@webstudio-is/domain/index.server";
+import { PrePublishAuditError } from "@webstudio-is/project-build/runtime";
 import {
   getBuilderRuntimeOperationInputSchema,
   getBuildIntegrityIssues,
@@ -67,6 +72,7 @@ import { componentMetas } from "~/shared/component-metas.server";
 import {
   generateCss,
   getStyleDeclKey,
+  templates as templateSchema,
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
@@ -1248,34 +1254,88 @@ export const apiRouter = router({
     ),
 
     create: projectMutation(
-      projectIdInput.extend({
-        target: z.enum(["staging", "production"]),
-        domains: z.array(z.string()).optional(),
-        message: z.string().optional(),
-        idempotencyKey: z.string().optional(),
-      }),
+      z.discriminatedUnion("target", [
+        projectIdInput.extend({
+          target: z.enum(["staging", "production"]),
+          domains: z.array(z.string()).optional(),
+          message: z.string().optional(),
+          idempotencyKey: z.string().optional(),
+        }),
+        projectIdInput.extend({
+          target: z.literal("static"),
+          templates: z.array(templateSchema).default(["ssg"]),
+          idempotencyKey: z.string().optional(),
+        }),
+      ]),
       "edit",
       async ({ auth, ctx, input }) => {
-        const project = await loadById(input.projectId, ctx);
-        const domains =
-          input.domains ?? getDefaultPublishDomains(project, input.target);
-        assertApiPublishDomains({ auth, domains, project });
-        const { build, deploymentNotImplemented } = await publishProject(
-          { project, domains, target: input.target },
+        const { allowPublishLogs } = await getProjectPlanFeatures(
+          input.projectId,
           ctx
         );
-        return {
-          jobId: build.id,
-          warning: deploymentNotImplemented
-            ? "Publish was recorded locally, but the deployment service is not available in this environment."
-            : undefined,
-        };
+        try {
+          if (input.target === "static") {
+            const result = await publishStaticProject(
+              { projectId: input.projectId, templates: input.templates },
+              ctx
+            );
+            if (result.success === false) {
+              throw new Error(result.error);
+            }
+            return {
+              status: "pending" as const,
+              jobId: result.build.id,
+              buildId: result.build.id,
+              logHandle: result.logHandle,
+              findings: getVisiblePublishFindings(
+                result.findings,
+                allowPublishLogs
+              ),
+              artifact: { readiness: "pending" as const, name: result.name },
+            };
+          }
+          const project = await loadById(input.projectId, ctx);
+          const domains =
+            input.domains ?? getDefaultPublishDomains(project, input.target);
+          assertApiPublishDomains({ auth, domains, project });
+          const result = await publishProject(
+            { project, domains, target: input.target },
+            ctx
+          );
+          return {
+            status: "pending" as const,
+            jobId: result.build.id,
+            buildId: result.build.id,
+            logHandle: result.logHandle,
+            findings: getVisiblePublishFindings(
+              result.findings,
+              allowPublishLogs
+            ),
+            warning: result.deploymentNotImplemented
+              ? "Publish was recorded locally, but the deployment service is not available in this environment."
+              : undefined,
+          };
+        } catch (error) {
+          if (error instanceof PrePublishAuditError) {
+            return {
+              status: "blocked" as const,
+              findings: getVisiblePublishFindings(
+                error.findings,
+                allowPublishLogs
+              ),
+            };
+          }
+          throw error;
+        }
       },
       { command: "publish", client: "publish" }
     ),
 
     getJob: projectQuery(
-      projectIdInput.extend({ jobId: z.string() }),
+      projectIdInput.extend({
+        jobId: z.string(),
+        logHandle: z.string().max(2048).optional(),
+      }),
       "view",
       async ({ ctx, input }) => {
         const publishJob = await getProjectPublishJob(input, ctx);
@@ -1285,6 +1345,17 @@ export const apiRouter = router({
         return publishJob;
       },
       { command: "get-publish-job", client: "getPublishJob" }
+    ),
+
+    getLog: projectQuery(
+      projectIdInput.extend({
+        buildId: z.string(),
+        logHandle: z.string().max(2048),
+        cursor: z.number().int().nonnegative().safe().optional(),
+      }),
+      "view",
+      async ({ ctx, input }) => getProjectPublishLog(input, ctx),
+      { command: "get-publish-log", client: "getPublishLog" }
     ),
 
     unpublish: projectMutation(

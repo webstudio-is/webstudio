@@ -36,6 +36,28 @@ const XmlNode = createTemplateComponentFixture("XmlNode");
 
 const defaultMetas = componentMetas;
 
+test("keeps matcher validation short-circuited by default", () => {
+  const { instances, props } = renderData(
+    <ws.element ws:tag="body" ws:id="body">
+      <ws.element ws:tag="p">
+        <ws.element ws:tag="h2" ws:id="first" />
+        <ws.element ws:tag="h2" ws:id="second" />
+      </ws.element>
+    </ws.element>
+  );
+  const errors: string[] = [];
+  expect(
+    isTreeSatisfyingContentModel({
+      instances,
+      props,
+      metas: defaultMetas,
+      instanceSelector: ["body"],
+      onError: (_message, selector) => errors.push(selector[0]),
+    })
+  ).toBe(false);
+  expect(errors).toEqual(["first"]);
+});
+
 test.each(["body", "templates", "list-item"])(
   "validates template HTML independently when starting at %s",
   (start) => {

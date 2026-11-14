@@ -6,9 +6,9 @@ import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { $publishDialog } from "~/builder/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
-import { __testing__ } from "./publish";
+import { __testing__ } from "./use-publish-progress";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
-import { PublishValidationResults } from "./publish-validation-results";
+import { PublishDiagnosticsDialog } from "./diagnostics";
 
 const {
   usePublishProgress,
@@ -123,6 +123,124 @@ test("closing publish hides the countdown while polling continues and completion
   expect(statusRequests).toBe(2);
 });
 
+test("a verified runner failure finishes the existing status wait without a project refresh", async () => {
+  const refresh = vi.fn(async () => undefined);
+  const getJob = vi.fn(async () => ({
+    status: "failed",
+    code: "runner_failed",
+  }));
+  const result = await waitForPublishStatus(
+    refresh,
+    () => true,
+    undefined,
+    {
+      projectId: "project",
+      buildId: "build-1",
+      logHandle: "handle-1",
+    },
+    getJob
+  );
+  expect(result?.status).toBe("FAILED");
+  expect(result?.code).toBe("runner_failed");
+  expect(refresh).not.toHaveBeenCalled();
+  expect(getJob).toHaveBeenCalledWith({
+    projectId: "project",
+    jobId: "build-1",
+    logHandle: "handle-1",
+  });
+});
+
+test("a pending runner cannot promote a refreshed Build to success", async () => {
+  vi.useFakeTimers();
+  const refresh = vi.fn(
+    async () =>
+      ({
+        latestBuildVirtual: {
+          buildId: "build-1",
+          createdAt: new Date().toISOString(),
+          publishStatus: "PUBLISHED",
+        },
+      }) as Project
+  );
+  const getJob = vi
+    .fn()
+    .mockResolvedValueOnce({ status: "pending" })
+    .mockResolvedValueOnce({ status: "failed", code: "runner_failed" });
+  const waiting = waitForPublishStatus(
+    refresh,
+    () => true,
+    undefined,
+    { projectId: "project", buildId: "build-1", logHandle: "handle-1" },
+    getJob
+  );
+  await vi.advanceTimersByTimeAsync(15_000);
+  expect((await waiting)?.status).toBe("FAILED");
+  expect(refresh).toHaveBeenCalledOnce();
+  expect(getJob).toHaveBeenCalledTimes(2);
+});
+
+test("a pending runner cannot turn a timed-out Build into failure", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-11-13T10:10:00Z"));
+  const refresh = vi.fn(
+    async () =>
+      ({
+        latestBuildVirtual: {
+          buildId: "build-1",
+          createdAt: "2026-11-13T10:00:00Z",
+          publishStatus: "PENDING",
+        },
+      }) as Project
+  );
+  const getJob = vi
+    .fn()
+    .mockResolvedValueOnce({ status: "pending" })
+    .mockResolvedValueOnce({ status: "failed", code: "runner_failed" });
+  const waiting = waitForPublishStatus(
+    refresh,
+    () => true,
+    undefined,
+    { projectId: "project", buildId: "build-1", logHandle: "handle-1" },
+    getJob
+  );
+  await vi.advanceTimersByTimeAsync(15_000);
+  expect((await waiting)?.code).toBe("runner_failed");
+  expect(getJob).toHaveBeenCalledTimes(2);
+});
+
+test("static status waits for the matching runner before download readiness", async () => {
+  vi.useFakeTimers();
+  const refresh = vi.fn(
+    async () =>
+      ({
+        latestStaticBuild: {
+          buildId: "static-1",
+          updatedAt: new Date().toISOString(),
+          publishStatus: "PUBLISHED",
+        },
+      }) as Project
+  );
+  const getJob = vi
+    .fn()
+    .mockResolvedValueOnce({ status: "pending" })
+    .mockResolvedValueOnce({ status: "success" });
+  const waiting = waitForPublishStatus(
+    refresh,
+    () => true,
+    undefined,
+    {
+      projectId: "project",
+      buildId: "static-1",
+      logHandle: "handle-1",
+      target: "static",
+    },
+    getJob
+  );
+  await vi.advanceTimersByTimeAsync(15_000);
+  expect((await waiting)?.status).toBe("PUBLISHED");
+  expect(getJob).toHaveBeenCalledTimes(2);
+});
+
 test("reopening refresh retries after a rejected status request", async () => {
   vi.useFakeTimers();
   const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -144,6 +262,51 @@ test("reopening refresh retries after a rejected status request", async () => {
   } finally {
     errorLog.mockRestore();
   }
+});
+
+test("reopening resumes a retained pending session even after the Build is published", async () => {
+  const project = {
+    latestBuildVirtual: {
+      buildId: "build-1",
+      createdAt: new Date().toISOString(),
+      publishStatus: "PUBLISHED",
+    },
+  } as Project;
+  const onPending = vi.fn();
+  await refreshUntilSuccess(
+    async () => project,
+    () => true,
+    onPending,
+    () => true
+  );
+  expect(onPending).toHaveBeenCalledWith(project);
+});
+
+test("an old publish completion cannot clear the new project's pending state", async () => {
+  let finishOld: (() => void) | undefined;
+  let progress: ReturnType<typeof usePublishProgress>;
+  const Harness = ({ projectId }: { projectId: string }) => {
+    progress = usePublishProgress(projectId);
+    return <output>{progress.isPublishing ? "pending" : "idle"}</output>;
+  };
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  $project.set({ id: "project-a" } as Project);
+  act(() => root?.render(<Harness projectId="project-a" />));
+  act(() =>
+    progress.start(
+      () =>
+        new Promise<void>((resolve) => {
+          finishOld = resolve;
+        })
+    )
+  );
+  $project.set({ id: "project-b" } as Project);
+  act(() => root?.render(<Harness projectId="project-b" />));
+  act(() => progress.start(() => new Promise<void>(() => {})));
+  await act(async () => finishOld?.());
+  expect(container.querySelector("output")?.textContent).toBe("pending");
 });
 
 test("reopening stops after three unsuccessful project refreshes and shows the error", async () => {
@@ -400,7 +563,7 @@ test("an old poll cannot update a newly mounted copy of the same project", async
   expect($project.get()).toBe(reopenedProject);
 });
 
-test("publish completion does not show a toast while the Publish panel is open", () => {
+test("publish failure updates the banner without a duplicate toast while Publish is open", () => {
   const successToast = vi.spyOn(toast, "success").mockImplementation(() => "");
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   const setPublishError = vi.fn();
@@ -485,10 +648,10 @@ test("publish completion shows a toast after the dialog closes", () => {
 
   expect(successToast).toHaveBeenCalledOnce();
   expect(errorToast).toHaveBeenCalledOnce();
-  expect(setPublishError).toHaveBeenCalledWith(failedStatusText);
+  expect(setPublishError).toHaveBeenCalledWith(failedStatusText, undefined);
 });
 
-test("a rejected publish request shows an inline error while the dialog is open", async () => {
+test("a rejected publish request updates the banner without a duplicate toast", async () => {
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   $publishDialog.set("publish");
   $project.set({ id: "project" } as Project);
@@ -593,7 +756,7 @@ test("a rejected publish request shows a toast after the dialog closes", async (
   );
 });
 
-test("a rejected publish request appears in the panel reopened before rejection", async () => {
+test("a rejected publish request does not duplicate its banner after the panel reopens", async () => {
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   $publishDialog.set("publish");
   $project.set({ id: "project" } as Project);
@@ -646,7 +809,7 @@ test("a rejected publish request appears in the panel reopened before rejection"
   expect(errorToast).not.toHaveBeenCalled();
 });
 
-test("a publish failure remains visible after the panel remounts", () => {
+test("a publish failure remains available after the panel remounts", () => {
   $project.set({ id: "project" } as Project);
   $publishDialog.set("publish");
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
@@ -958,7 +1121,7 @@ test("publish diagnostics remain visible after the panel remounts", () => {
         <button onClick={() => setIsOpen(true)}>Reopen</button>
         <button
           onClick={() =>
-            progress.setPublishFindings([
+            progress.beginPublishDiagnostics().setFindings([
               {
                 severity: "warning",
                 title: "Check",
@@ -1042,7 +1205,7 @@ test("manual validation report stays available after the popover reopens", () =>
           Validate
         </button>
         {isOpen && (
-          <PublishValidationResults
+          <PublishDiagnosticsDialog
             findings={manualValidationFindings.findings}
           />
         )}
@@ -1158,7 +1321,7 @@ test("older publish diagnostics cannot replace a newer operation", () => {
   expect(container.querySelector("output")?.textContent).toBe("New");
 });
 
-test("a rejected request after project navigation shows a toast", async () => {
+test("a rejected request after project navigation does not show a stale toast", async () => {
   $project.set({ id: "old-project" } as Project);
   $publishDialog.set("publish");
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
@@ -1181,5 +1344,43 @@ test("a rejected request after project navigation shows a toast", async () => {
   $project.set({ id: "new-project" } as Project);
 
   await act(async () => rejectPublish(new Error("Network unavailable")));
-  expect(errorToast).toHaveBeenCalledOnce();
+  expect(errorToast).not.toHaveBeenCalled();
 });
+
+test.each(["site", "static"] as const)(
+  "keeps %s findings when diagnostics for the other target start",
+  (firstTarget) => {
+    const secondTarget = firstTarget === "site" ? "static" : "site";
+    let progress: ReturnType<typeof usePublishProgress>;
+    const Harness = () => {
+      progress = usePublishProgress("project");
+      return null;
+    };
+    $project.set({ id: "project" } as Project);
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    act(() => root?.render(<Harness />));
+    act(() => {
+      progress
+        .beginPublishDiagnostics([], firstTarget)
+        .setFindings([
+          { severity: "warning", title: firstTarget, reportText: firstTarget },
+        ]);
+    });
+    act(() => {
+      progress.beginPublishDiagnostics([], secondTarget).setFindings([
+        {
+          severity: "warning",
+          title: secondTarget,
+          reportText: secondTarget,
+        },
+      ]);
+    });
+    expect(
+      progress!.publishDiagnostics[firstTarget].findings.map(
+        ({ reportText }) => reportText
+      )
+    ).toEqual([firstTarget]);
+  }
+);

@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from "vitest";
+import { beforeEach, describe, test, expect, vi } from "vitest";
 import {
   createTestServer,
   db,
@@ -606,6 +606,126 @@ describe("createBuild (msw)", () => {
 // ---------------------------------------------------------------------------
 
 describe("createProductionBuild (msw)", () => {
+  beforeEach(() => server.use(db.get("Asset", () => json([]))));
+  test("retries a changed development version before publishing", async () => {
+    const expectedVersions: number[] = [];
+    let readVersion = 0;
+    const createBuild = vi.fn(async ({ request }: { request: Request }) => {
+      const body = (await request.json()) as { expected_version: number };
+      expectedVersions.push(body.expected_version);
+      return json(createBuild.mock.calls.length === 1 ? null : "build-prod");
+    });
+    server.use(
+      ownershipHandler,
+      db.get("Build", () => json([{ ...buildRow, version: readVersion++ }])),
+      db.post("rpc/create_production_build_expected", createBuild)
+    );
+
+    await expect(
+      createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: {
+            destination: "static",
+            name: "export.zip",
+            assetsDomain: "project-domain",
+            templates: ["ssg"],
+          },
+        },
+        createContext()
+      )
+    ).resolves.toMatchObject({ id: "build-prod" });
+    expect(createBuild).toHaveBeenCalledTimes(2);
+    expect(expectedVersions).toEqual([0, 1]);
+    expect(readVersion).toBe(2);
+  });
+
+  test("stops after two changed development versions without dispatching", async () => {
+    const expectedVersions: number[] = [];
+    let readVersion = 0;
+    const createBuild = vi.fn(async ({ request }: { request: Request }) => {
+      const body = (await request.json()) as { expected_version: number };
+      expectedVersions.push(body.expected_version);
+      return json(null);
+    });
+    server.use(
+      ownershipHandler,
+      db.get("Build", () => json([{ ...buildRow, version: readVersion++ }])),
+      db.post("rpc/create_production_build_expected", createBuild)
+    );
+
+    await expect(
+      createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: {
+            destination: "static",
+            name: "export.zip",
+            assetsDomain: "project-domain",
+            templates: ["ssg"],
+          },
+        },
+        createContext()
+      )
+    ).rejects.toThrow("The project changed during validation");
+    expect(createBuild).toHaveBeenCalledTimes(2);
+    expect(expectedVersions).toEqual([0, 1]);
+    expect(readVersion).toBe(2);
+  });
+
+  test("blocks when the retried development version fails audit", async () => {
+    let readVersion = 0;
+    const createBuild = vi.fn(() => json(null));
+    server.use(
+      ownershipHandler,
+      db.get("Build", () => {
+        const version = readVersion++;
+        return json([
+          {
+            ...buildRow,
+            version,
+            ...(version === 0
+              ? {}
+              : {
+                  props: JSON.stringify([
+                    {
+                      id: "prop-invalid",
+                      instanceId: "body-1",
+                      name: "config",
+                      type: "json",
+                    },
+                  ]),
+                }),
+          },
+        ]);
+      }),
+      db.post("rpc/create_production_build_expected", createBuild)
+    );
+
+    await expect(
+      createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: {
+            destination: "static",
+            name: "export.zip",
+            assetsDomain: "project-domain",
+            templates: ["ssg"],
+          },
+        },
+        createContext()
+      )
+    ).rejects.toMatchObject({
+      findings: [
+        expect.objectContaining({
+          ruleId: "json-prop-value",
+          severity: "error",
+        }),
+      ],
+    });
+    expect(readVersion).toBe(2);
+    expect(createBuild).toHaveBeenCalledOnce();
+  });
   test.each([
     { label: "without custom headers", headers: [], denied: false },
     {
@@ -641,7 +761,9 @@ describe("createProductionBuild (msw)", () => {
           }
           return json([buildRow]);
         }),
-        db.post("rpc/create_production_build", () => json("build-prod")),
+        db.post("rpc/create_production_build_expected", () =>
+          json("build-prod")
+        ),
         db.delete("Build", removeBuild)
       );
       const result = createProductionBuild(
@@ -657,7 +779,7 @@ describe("createProductionBuild (msw)", () => {
         );
         expect(removeBuild).toHaveBeenCalledOnce();
       } else {
-        await expect(result).resolves.toEqual({ id: "build-prod" });
+        await expect(result).resolves.toMatchObject({ id: "build-prod" });
         expect(removeBuild).not.toHaveBeenCalled();
       }
     }
@@ -772,7 +894,7 @@ describe("createProductionBuild (msw)", () => {
             },
           ])
         ),
-        db.post("rpc/create_production_build", createBuild),
+        db.post("rpc/create_production_build_expected", createBuild),
         db.delete("Build", removeBuild)
       );
       const result = createProductionBuild(
@@ -794,7 +916,7 @@ describe("createProductionBuild (msw)", () => {
         );
         expect(removeBuild).toHaveBeenCalledOnce();
       } else {
-        await expect(result).resolves.toEqual({ id: "build-prod" });
+        await expect(result).resolves.toMatchObject({ id: "build-prod" });
         expect(removeBuild).not.toHaveBeenCalled();
       }
       expect(createBuild).toHaveBeenCalledOnce();
@@ -860,7 +982,9 @@ describe("createProductionBuild (msw)", () => {
           // Development settings change before the RPC snapshots them.
           return json([buildRow]);
         }),
-        db.post("rpc/create_production_build", () => json("build-prod")),
+        db.post("rpc/create_production_build_expected", () =>
+          json("build-prod")
+        ),
         db.delete("Build", removeBuild)
       );
       const result = createProductionBuild(
@@ -879,7 +1003,7 @@ describe("createProductionBuild (msw)", () => {
         );
         expect(removeBuild).toHaveBeenCalledOnce();
       } else {
-        await expect(result).resolves.toEqual({ id: "build-prod" });
+        await expect(result).resolves.toMatchObject({ id: "build-prod" });
         expect(removeBuild).not.toHaveBeenCalled();
       }
       expect(readSnapshot).toHaveBeenCalledOnce();
@@ -895,7 +1019,7 @@ describe("createProductionBuild (msw)", () => {
           ? json([])
           : json([buildRow])
       ),
-      db.post("rpc/create_production_build", () => json("build-prod")),
+      db.post("rpc/create_production_build_expected", () => json("build-prod")),
       db.delete("Build", removeBuild)
     );
     await expect(
@@ -929,7 +1053,8 @@ describe("createProductionBuild (msw)", () => {
           },
         ])
       ),
-      db.post("rpc/create_production_build", () => {
+      db.get("Asset", () => json([])),
+      db.post("rpc/create_production_build_expected", () => {
         didCreateProductionBuild = true;
         return json("build-prod");
       })

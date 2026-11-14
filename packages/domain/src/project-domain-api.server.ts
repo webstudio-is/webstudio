@@ -13,12 +13,29 @@ import {
   type Deployment,
   type PublishTarget,
 } from "@webstudio-is/sdk";
-import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import {
+  authorizeProject,
+  AuthorizationError,
+  getProjectPlanFeatures,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/index.server";
+import { PrePublishAuditError } from "@webstudio-is/project-build/runtime";
 import { db } from "./db";
 import { validateDomain } from "./db/validate";
 
 type LoadedProject = Awaited<ReturnType<typeof projectApi.loadById>>;
 type ProjectDomain = LoadedProject["domainsVirtual"][number];
+export const getVisiblePublishFindings = (
+  findings: PrePublishAuditError["findings"],
+  allowPublishLogs: boolean | undefined
+) =>
+  allowPublishLogs === true
+    ? findings
+    : findings.map(({ message, location, ...finding }) => ({
+        ...finding,
+        message: message.slice(0, 160),
+        location: {},
+      }));
 
 const publishResponseDiagnosticHeaders = [
   "content-type",
@@ -196,7 +213,7 @@ export const listProjectPublishes = async (
 };
 
 export const getProjectPublishJob = async (
-  input: { projectId: string; jobId: string },
+  input: { projectId: string; jobId: string; logHandle?: string },
   context: AppContext
 ) => {
   const result = await context.postgrest.client
@@ -231,7 +248,7 @@ export const getProjectPublishJob = async (
     hostedDeployment?.domains.includes(hostedDomain)
       ? hostedDomain
       : undefined;
-  const status =
+  let status: "removed" | "success" | "failed" | "pending" =
     deployment === undefined
       ? "removed"
       : publishJob.publishStatus === "PUBLISHED"
@@ -239,23 +256,94 @@ export const getProjectPublishJob = async (
         : publishJob.publishStatus === "FAILED"
           ? "failed"
           : "pending";
+  let completedAt =
+    status === "success" || status === "failed"
+      ? publishJob.updatedAt
+      : undefined;
+  let code: string | undefined;
+  if (input.logHandle !== undefined && status !== "removed") {
+    try {
+      const result =
+        await context.deployment.deploymentTrpc.getPublishLog.query({
+          buildId: publishJob.id,
+          logHandle: input.logHandle,
+          includeLog: false,
+        });
+      if (result.availability === "pending") {
+        status = "pending";
+        completedAt = undefined;
+      }
+      if (result.availability === "available") {
+        status = result.outcome === "succeeded" ? "success" : "failed";
+        completedAt = result.completedAt;
+        code = result.outcome === "failed" ? result.code : undefined;
+      }
+    } catch {
+      // The durable Build status remains available when GitHub status is not.
+    }
+  }
   return {
     id: publishJob.id,
     version: publishJob.version,
     status,
+    ...(code === undefined ? {} : { code }),
     target,
     domains: hostedDeployment?.domains ?? [],
     ...(stagingDomain === undefined
       ? {}
       : {
-          stagingUrl: `https://${stagingDomain.includes(".") ? stagingDomain : `${stagingDomain}.${context.deployment.env.PUBLISHER_HOST}`}`,
+          stagingUrl: `https://${
+            stagingDomain.includes(".")
+              ? stagingDomain
+              : `${stagingDomain}.${context.deployment.env.PUBLISHER_HOST}`
+          }`,
         }),
     createdAt: publishJob.createdAt,
-    completedAt:
-      status === "success" || status === "failed"
-        ? publishJob.updatedAt
-        : undefined,
+    completedAt,
   };
+};
+
+export const getProjectPublishLog = async (
+  input: {
+    projectId: string;
+    buildId: string;
+    logHandle: string;
+    cursor?: number;
+  },
+  context: AppContext
+) => {
+  const allowed = await authorizeProject.hasProjectPermit(
+    { projectId: input.projectId, permit: "view" },
+    context
+  );
+  if (allowed === false) {
+    throw new AuthorizationError("You don't have access to this project");
+  }
+  const build = await context.postgrest.client
+    .from("Build")
+    .select("id")
+    .eq("projectId", input.projectId)
+    .eq("id", input.buildId)
+    .maybeSingle();
+  if (build.error) {
+    throw build.error;
+  }
+  if (build.data === null) {
+    return { availability: "unavailable" as const };
+  }
+  const { allowPublishLogs } = await getProjectPlanFeatures(
+    input.projectId,
+    context
+  );
+  if (allowPublishLogs !== true) {
+    return { availability: "unavailable" as const };
+  }
+  return await context.deployment.deploymentTrpc.getPublishLog.query({
+    buildId: input.buildId,
+    logHandle: input.logHandle,
+    cursor: input.cursor,
+    includeLog: true,
+  });
 };
 
 const createPublishedDeployment = ({
@@ -299,6 +387,7 @@ export const publishProject = async (
     },
     context
   );
+  const findings = build.auditFindings;
   const { deploymentTrpc, env } = context.deployment;
 
   if (env.BUILDER_ORIGIN === undefined) {
@@ -329,22 +418,31 @@ export const publishProject = async (
     throw new Error(String(result.error ?? "Publish failed"));
   }
 
-  return { build, project, deploymentNotImplemented };
+  return {
+    build,
+    project,
+    logHandle: result.success ? result.logHandle : undefined,
+    findings,
+    deploymentNotImplemented,
+  };
 };
 
 export const publishStaticProject = async (
   {
     projectId,
     templates,
+    project: loadedProject,
     name = `${projectId}-${createId("nano")}.zip`,
   }: {
     projectId: string;
     templates: z.infer<typeof templateSchema>[];
+    project?: LoadedProject;
     name?: string;
   },
   context: AppContext
 ) => {
-  const project = await projectApi.loadById(projectId, context);
+  const project =
+    loadedProject ?? (await projectApi.loadById(projectId, context));
   const build = await createProductionBuild(
     {
       projectId,
@@ -358,6 +456,7 @@ export const publishStaticProject = async (
     context
   );
 
+  const findings = build.auditFindings;
   const { deploymentTrpc, env } = context.deployment;
 
   if (env.BUILDER_ORIGIN === undefined) {
@@ -374,7 +473,14 @@ export const publishStaticProject = async (
   });
 
   return result.success
-    ? { success: true as const, name, build, project }
+    ? {
+        success: true as const,
+        name,
+        build,
+        project,
+        logHandle: result.logHandle,
+        findings,
+      }
     : result;
 };
 

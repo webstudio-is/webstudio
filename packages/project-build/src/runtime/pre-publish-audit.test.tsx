@@ -16,9 +16,44 @@ import {
 } from "@webstudio-is/template";
 import {
   formatPrePublishAuditFinding,
+  limitPrePublishAuditFindings,
   runPrePublishAudit,
 } from "./pre-publish-audit";
 
+test("keeps the content warning within the shared 500-finding limit", () => {
+  const contentWarning = {
+    ruleId: "content-database-truncated",
+    severity: "warning" as const,
+    message: "Published content is incomplete.",
+    location: {},
+  };
+  const existingWarnings = Array.from({ length: 499 }, (_, index) => ({
+    ruleId: `warning-${index}`,
+    severity: "warning" as const,
+    message: "Existing warning",
+    location: {},
+  }));
+  const previousTruncation = {
+    ruleId: "audit-truncated",
+    severity: "warning" as const,
+    message: "Some earlier audit findings were omitted.",
+    location: {},
+  };
+
+  const findings = limitPrePublishAuditFindings([
+    contentWarning,
+    ...existingWarnings,
+    previousTruncation,
+  ]);
+
+  expect(findings).toHaveLength(500);
+  expect(findings).toContainEqual(contentWarning);
+  expect(findings).toContainEqual(previousTruncation);
+  expect(findings.at(-1)?.ruleId).toBe("audit-truncated");
+  expect(
+    findings.filter(({ ruleId }) => ruleId === "audit-truncated")
+  ).toHaveLength(2);
+});
 const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");
 const CodeText = createTemplateComponentFixture("CodeText");
@@ -98,6 +133,53 @@ test("warns without blocking legacy invalid HTML", () => {
   expect(formatPrePublishAuditFinding(findings[0]!)).toBe(
     'Publish warning for "MarketEdge" (/marketedge): Placing <h3> element inside a <button> violates HTML spec.'
   );
+});
+
+test("reports invalid sibling and descendant HTML on each published page, not drafts", () => {
+  const { instances, props } = renderData(
+    <>
+      <Body ws:id="body">
+        <Paragraph>
+          <Heading ws:id="first" ws:tag="h2">
+            <Heading ws:id="nested" ws:tag="h3">
+              Nested
+            </Heading>
+          </Heading>
+          <Heading ws:id="second" ws:tag="h2">
+            Second
+          </Heading>
+        </Paragraph>
+      </Body>
+      <Body ws:id="draft-body">
+        <Paragraph>
+          <Heading ws:id="draft-heading" ws:tag="h2">
+            Draft
+          </Heading>
+        </Paragraph>
+      </Body>
+    </>
+  );
+  const pages = createPages(marketEdgePage);
+  pages.pages.set("draft", {
+    ...marketEdgePage,
+    id: "draft",
+    name: "Draft",
+    path: "/draft",
+    rootInstanceId: "draft-body",
+    isDraft: true,
+  });
+  const findings = runAudit({ pages, instances, props }).filter(
+    ({ ruleId }) => ruleId === "html-content-model"
+  );
+
+  expect(findings.map(({ location }) => location.instanceId)).toEqual([
+    "first",
+    "nested",
+    "second",
+  ]);
+  expect(
+    findings.every(({ location }) => location.pagePath === "/marketedge")
+  ).toBe(true);
 });
 
 test("warns for nested and shared Webhook Forms on every published page", () => {

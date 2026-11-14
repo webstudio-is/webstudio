@@ -23,6 +23,11 @@
     "vitest": "^3.1.2"
   },
   "exports": {
+    "./deployment-contract": {
+      "webstudio": "./src/shared/deployment-contract.ts",
+      "types": "./src/shared/deployment-contract.ts",
+      "import": "./src/shared/deployment-contract.ts"
+    },
     "./api-compatibility": {
       "webstudio": "./src/api-compatibility.ts",
       "types": "./src/api-compatibility.ts",

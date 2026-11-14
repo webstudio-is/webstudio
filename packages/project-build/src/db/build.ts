@@ -20,6 +20,8 @@ import {
   type StyleSourceSelection,
   type StyleDecl,
 } from "@webstudio-is/sdk";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { loadAssetsByProjectWithClient } from "@webstudio-is/asset-uploader/patch-assets-core.server";
 import {
   hasHistoricalFormComponentIdentityVersion,
   migratePages,
@@ -47,7 +49,10 @@ import {
   parseConfig,
   serializeData,
 } from "./build-parser";
-import { assertBuildIntegrity } from "../build-integrity";
+import {
+  PrePublishAuditError,
+  runPrePublishAudit,
+} from "../runtime/pre-publish-audit";
 
 export {
   parseConfig,
@@ -432,88 +437,114 @@ export const createProductionBuild = async (
     }
   }
 
-  const devBuild = await loadDevBuildByProjectId(context, props.projectId);
-  assertBuildIntegrity(devBuild, { messagePrefix: "Cannot publish" });
-
-  const build = await context.postgrest.client.rpc("create_production_build", {
-    project_id: props.projectId,
-    deployment: JSON.stringify(props.deployment),
-  });
-  const buildId = build.data;
-  if (build.error) {
-    throw build.error;
-  }
-  if (buildId === null) {
-    throw Error(`Project ${props.projectId} not found`);
-  }
-
-  if (props.deployment.destination === "static") {
-    return { id: buildId };
-  }
-
-  try {
-    // Check the saved snapshot so concurrent development edits cannot bypass
-    // the Pro requirement. The caller publishes only after this check passes.
-    const snapshot = await context.postgrest.client
-      .from("Build")
-      .select("projectSettings,pages")
-      .eq("id", buildId);
-    if (snapshot.error) {
-      throw snapshot.error;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const devBuild = await loadDevBuildByProjectId(context, props.projectId);
+    const projectAssets = await loadAssetsByProjectWithClient(
+      props.projectId,
+      context.postgrest.client
+    );
+    const findings = runPrePublishAudit({
+      pages: devBuild.pages,
+      instances: new Map(devBuild.instances.map((item) => [item.id, item])),
+      props: new Map(devBuild.props.map((item) => [item.id, item])),
+      dataSources: new Map(devBuild.dataSources.map((item) => [item.id, item])),
+      resources: new Map(devBuild.resources.map((item) => [item.id, item])),
+      metas: componentMetas,
+      assets: new Map(projectAssets.map((item) => [item.id, item])),
+    });
+    if (findings.some(({ severity }) => severity === "error")) {
+      throw new PrePublishAuditError(findings);
     }
-    if (snapshot.data.length !== 1) {
-      throw new Error("Cannot verify published response headers");
+
+    const build = await (
+      context.postgrest.client as unknown as {
+        rpc: (
+          name: string,
+          args: Record<string, unknown>
+        ) => Promise<{ data: string | null; error: unknown }>;
+      }
+    ).rpc("create_production_build_expected", {
+      project_id: props.projectId,
+      deployment: JSON.stringify(props.deployment),
+      expected_version: devBuild.version,
+    });
+    if (build.error) {
+      throw build.error;
     }
-    const savedBuild = snapshot.data[0];
-    const settings =
-      savedBuild.projectSettings === undefined ||
-      savedBuild.projectSettings === null
-        ? createProjectSettingsFromPages(
-            migratePages(parseConfig<unknown>(savedBuild.pages))
+    if (build.data !== null) {
+      const savedBuildId = build.data;
+      if (props.deployment.destination === "static") {
+        return { id: savedBuildId, auditFindings: findings };
+      }
+
+      try {
+        // Check the saved snapshot so concurrent development edits cannot bypass
+        // the Pro requirement. The caller publishes only after this check passes.
+        const snapshot = await context.postgrest.client
+          .from("Build")
+          .select("projectSettings,pages")
+          .eq("id", savedBuildId);
+        if (snapshot.error) {
+          throw snapshot.error;
+        }
+        if (snapshot.data.length !== 1) {
+          throw new Error("Cannot verify published response headers");
+        }
+        const savedBuild = snapshot.data[0];
+        const settings =
+          savedBuild.projectSettings === undefined ||
+          savedBuild.projectSettings === null
+            ? createProjectSettingsFromPages(
+                migratePages(parseConfig<unknown>(savedBuild.pages))
+              )
+            : parseProjectSettings(
+                parseConfig<unknown>(savedBuild.projectSettings)
+              );
+        if (!hasCustomResponseHeaders(settings.meta.customHeaders)) {
+          return { id: savedBuildId, auditFindings: findings };
+        }
+        // Use the saved staging domain, not caller-supplied deployment metadata.
+        const project = await context.postgrest.client
+          .from("Project")
+          .select("domain")
+          .eq("id", props.projectId)
+          .single();
+        if (project.error) {
+          throw project.error;
+        }
+        if (
+          props.deployment.domains.every(
+            (domain) => domain === project.data.domain
           )
-        : parseProjectSettings(
-            parseConfig<unknown>(savedBuild.projectSettings)
+        ) {
+          return { id: savedBuildId, auditFindings: findings };
+        }
+        const plan = await getProjectPlanFeatures(props.projectId, context);
+        if (plan.allowDynamicData !== true) {
+          throw new AuthorizationError(
+            "Custom headers are a Pro feature. Upgrade to Pro or reset the response headers to defaults to publish to custom domains. You can still publish to staging."
           );
-    if (!hasCustomResponseHeaders(settings.meta.customHeaders)) {
-      return { id: buildId };
-    }
-    // Use the saved staging domain, not caller-supplied deployment metadata.
-    const project = await context.postgrest.client
-      .from("Project")
-      .select("domain")
-      .eq("id", props.projectId)
-      .single();
-    if (project.error) {
-      throw project.error;
-    }
-    if (
-      props.deployment.domains.every((domain) => domain === project.data.domain)
-    ) {
-      return { id: buildId };
-    }
-    const plan = await getProjectPlanFeatures(props.projectId, context);
-    if (plan.allowDynamicData !== true) {
-      throw new AuthorizationError(
-        "Custom headers are a Pro feature. Upgrade to Pro or reset the response headers to defaults to publish to custom domains. You can still publish to staging."
-      );
-    }
-  } catch (error) {
-    const cleanup = await context.postgrest.client
-      .from("Build")
-      .delete()
-      .eq("id", buildId);
-    if (cleanup.error) {
-      throw new AggregateError(
-        [error, cleanup.error],
-        "Could not verify response headers or remove the unpublished build"
-      );
-    }
-    throw error;
-  }
+        }
+      } catch (error) {
+        const cleanup = await context.postgrest.client
+          .from("Build")
+          .delete()
+          .eq("id", savedBuildId);
+        if (cleanup.error) {
+          throw new AggregateError(
+            [error, cleanup.error],
+            "Could not verify response headers or remove the unpublished build"
+          );
+        }
+        throw error;
+      }
 
-  return {
-    id: buildId,
-  };
+      return { id: savedBuildId, auditFindings: findings };
+    }
+  }
+  throw Error(
+    "The project changed during validation. Review the latest audit and publish again."
+  );
 };
 
 export const __testing__ = { canTokenPublishDeployment };
