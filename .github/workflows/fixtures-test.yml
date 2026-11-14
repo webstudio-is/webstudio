@@ -54,6 +54,42 @@ jobs:
       - name: Testing cli link command
         run: pnpm --filter='./fixtures/*' --sequential run fixtures:link
 
+      - name: Wait for Builder deployment
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const url = `https://${process.env.BUILDER_HOST}/`;
+
+          for (let attempt = 1; attempt <= 30; attempt++) {
+            try {
+              const response = await fetch(url, {
+                headers: { "x-webstudio-automation": "webstudio" },
+                signal: AbortSignal.timeout(5_000),
+              });
+              await response.body?.cancel();
+
+              if (response.ok) {
+                console.log(`Builder is ready at ${url}`);
+                process.exit(0);
+              }
+
+              console.log(
+                `Builder returned HTTP ${response.status} (attempt ${attempt}/30)`
+              );
+            } catch (error) {
+              console.log(
+                `Builder is not reachable yet (attempt ${attempt}/30): ${error.cause?.code ?? error.message}`
+              );
+            }
+
+            if (attempt < 30) {
+              await new Promise((resolve) => setTimeout(resolve, 5_000));
+            }
+          }
+
+          throw new Error(`Builder did not become ready at ${url} within 5 minutes`);
+          NODE
+
       - name: Testing cli sync command
         shell: bash
         run: |
