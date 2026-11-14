@@ -19,7 +19,6 @@ import {
   PanelTabsTrigger,
   ScrollArea,
   SectionTitle,
-  SectionTitleLabel,
   Separator,
   Text,
   theme,
@@ -380,6 +379,7 @@ export const PublishDiagnosticsDialog = ({
                           <Flex direction="column" gap={2}>
                             <Collapsible.Trigger asChild>
                               <SectionTitle
+                                aria-labelledby={`publish-title-${item.buildId}`}
                                 suffixPlaceholder={<CopyIcon aria-hidden />}
                                 suffix={
                                   canViewPublishLogs &&
@@ -402,11 +402,17 @@ export const PublishDiagnosticsDialog = ({
                                   )
                                 }
                               >
-                                <SectionTitleLabel>
+                                <Text
+                                  as="span"
+                                  id={`publish-title-${item.buildId}`}
+                                  variant="titles"
+                                  truncate
+                                  css={{ flex: "0 1 auto", minWidth: 0 }}
+                                >
                                   {item.domains.length > 0
                                     ? item.domains.join(", ")
                                     : "Static export"}
-                                </SectionTitleLabel>
+                                </Text>
                               </SectionTitle>
                             </Collapsible.Trigger>
                             <Collapsible.Content asChild>
@@ -455,6 +461,7 @@ export const PublishDiagnosticsDialog = ({
                                   (item.logState === "available" ? (
                                     <Text
                                       as="pre"
+                                      variant="mono"
                                       userSelect="text"
                                       css={{
                                         whiteSpace: "pre-wrap",

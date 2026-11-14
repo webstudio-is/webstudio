@@ -423,7 +423,9 @@ test("can maximize Diagnostics and aligns publish content with its title", async
   const log = document.body.querySelector<HTMLElement>("pre");
   expect(dialog).not.toBeNull();
   expect(title).not.toBeNull();
+  expect(title?.tagName).toBe("SPAN");
   expect(log).not.toBeNull();
+  expect(getComputedStyle(log!).fontFamily).toContain("Roboto Mono");
   expect(
     Math.abs(
       title!.getBoundingClientRect().left - log!.getBoundingClientRect().left
