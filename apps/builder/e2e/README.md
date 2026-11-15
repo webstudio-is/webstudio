@@ -15,6 +15,10 @@ pnpm e2e:builder
 The local command builds Builder and the generated React Router components
 used by Preview tests.
 
+In CI, the build job caches those compiled files. A later E2E-only change can
+restore them after dependency setup; changes outside `apps/builder/e2e` still
+compile Builder before the ten shards download the build artifact.
+
 The schema snapshot is generated from the regular migration pipeline and
 committed at `e2e/schema/schema-<fingerprint>.sql`. When a migration or backend
 input changes, refresh the snapshot and commit the new file:
@@ -35,7 +39,7 @@ Pass normal Playwright Test arguments after `--`. For example:
 
 ```sh
 pnpm e2e:builder -- --grep "Builder can copy, duplicate, and delete a page"
-pnpm e2e:builder -- 'apps/builder/e2e/tests/pages-actions.[shard-3].e2e.ts'
+pnpm e2e:builder -- 'pages-actions'
 pnpm e2e:builder -- --debug --grep "Builder can copy"
 ```
 
