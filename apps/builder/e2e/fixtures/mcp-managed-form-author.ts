@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect } from "@playwright/test";
@@ -122,6 +123,7 @@ const author = async () => {
   let stored: ProjectSessionPersistedSnapshot | undefined;
   let revision = 0;
   let nextId = 0;
+  const idPrefix = randomUUID();
   const persist = async () => {
     const snapshot = createBuilderBuildDataSnapshotFromState(remote.state);
     build = await updateBuild(build.id, {
@@ -141,7 +143,7 @@ const author = async () => {
   const session = createProjectSession({
     projectId: projectId,
     compatibilityVersion: "mcp-preview-form-e2e-v1",
-    runtimeContext: { createId: () => `mcp-preview-${nextId++}` },
+    runtimeContext: { createId: () => `mcp-preview-${idPrefix}-${nextId++}` },
     storage: {
       load: async () => stored,
       save: async (snapshot, options) => {
@@ -195,7 +197,7 @@ const author = async () => {
             state: remote.state,
             input,
             context: {
-              createId: () => `mcp-preview-server-${nextId++}`,
+              createId: () => `mcp-preview-server-${idPrefix}-${nextId++}`,
               projectId: remote.projectId,
               projectVersion: remote.version,
             },
@@ -206,7 +208,7 @@ const author = async () => {
           version: remote.version + 1,
           state: applyBuilderPatchTransactions(remote.state, [
             {
-              id: `mcp-preview-transaction-${nextId++}`,
+              id: `mcp-preview-transaction-${idPrefix}-${nextId++}`,
               payload: mutation.payload,
             },
           ]).state,

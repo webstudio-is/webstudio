@@ -5,7 +5,10 @@ import { promisify } from "node:util";
 import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { withGeneratedPreview } from "../flows/generated-app";
-import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
+import {
+  closePreviewFormMcpClient,
+  submitPreviewFormViaMcp,
+} from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -138,6 +141,10 @@ test("MCP-authored native GET form submits repeated fields to a local receiver",
       },
     });
   } finally {
-    await new Promise<void>((resolve) => server.close(() => resolve()));
+    try {
+      await closePreviewFormMcpClient();
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
   }
 });

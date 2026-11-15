@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createProjectSessionMcpServer } from "@webstudio-is/project-build/mcp";
+import { createInterface } from "node:readline";
 
 const previewModuleUrl = new URL(
   "../../../../packages/cli/src/commands/mcp-preview.ts",
@@ -13,27 +14,7 @@ const screenshotModuleUrl = new URL(
 const { createMcpPreviewHandlers } = await import(previewModuleUrl);
 const { createScreenshotCaptureSession } = await import(screenshotModuleUrl);
 
-let payload = "";
-for await (const chunk of process.stdin) {
-  payload += String(chunk);
-  if (payload.length > 8_000_000) {
-    throw new Error("MCP Preview submit fixture input is too large.");
-  }
-}
-const request = JSON.parse(payload) as {
-  url: string;
-  input: Record<string, unknown>;
-};
-if (
-  typeof request.url !== "string" ||
-  typeof request.input !== "object" ||
-  request.input === null
-) {
-  throw new Error(
-    "Expected one JSON payload with Preview url and submit input."
-  );
-}
-const { url, input } = request;
+let url = "";
 
 const previewHandlers = createMcpPreviewHandlers({
   preview: {
@@ -74,16 +55,33 @@ try {
     server.connect(serverTransport),
     client.connect(clientTransport),
   ]);
-  const result = await client.callTool({
-    name: "preview.submit-form",
-    arguments: input,
-  });
-  if (result.isError) {
-    throw new Error(
-      `MCP submit failed: ${JSON.stringify(result.structuredContent)}`
-    );
+  for await (const line of createInterface({ input: process.stdin })) {
+    if (line.length > 8_000_000) {
+      throw new Error("MCP Preview submit fixture input is too large.");
+    }
+    const request = JSON.parse(line) as {
+      url: string;
+      input: Record<string, unknown>;
+    };
+    if (
+      typeof request.url !== "string" ||
+      typeof request.input !== "object" ||
+      request.input === null
+    ) {
+      throw new Error("Expected Preview url and submit input.");
+    }
+    url = request.url;
+    const result = await client.callTool({
+      name: "preview.submit-form",
+      arguments: request.input,
+    });
+    if (result.isError) {
+      throw new Error(
+        `MCP submit failed: ${JSON.stringify(result.structuredContent)}`
+      );
+    }
+    process.stdout.write(`${JSON.stringify(result.structuredContent)}\n`);
   }
-  process.stdout.write(`${JSON.stringify(result.structuredContent)}\n`);
 } finally {
   await Promise.all([
     client.close(),

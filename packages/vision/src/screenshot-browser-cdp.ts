@@ -2436,6 +2436,9 @@ const submitFormWithBrowserRuntime = async (
   let managedResponseBody:
     | Promise<{ body?: string; base64Encoded?: boolean } | undefined>
     | undefined;
+  let interceptedManagedResponseBody:
+    | Promise<{ body?: string; base64Encoded?: boolean } | undefined>
+    | undefined;
   const submissionRequestIds = new Set<string>();
   const completedRequestIds = new Set<string>();
   let navigationObserved = false;
@@ -2583,6 +2586,53 @@ const submitFormWithBrowserRuntime = async (
         }
       }
     });
+    cdp.on("Fetch.requestPaused", (params) => {
+      if (
+        typeof params !== "object" ||
+        params === null ||
+        !("requestId" in params) ||
+        typeof params.requestId !== "string"
+      ) {
+        return;
+      }
+      const requestId = params.requestId;
+      if (
+        dispatchStarted &&
+        mainFrameId !== undefined &&
+        "frameId" in params &&
+        params.frameId === mainFrameId &&
+        "networkId" in params &&
+        typeof params.networkId === "string" &&
+        submissionRequestIds.has(params.networkId) &&
+        "responseStatusCode" in params &&
+        typeof params.responseStatusCode === "number" &&
+        "request" in params &&
+        typeof params.request === "object" &&
+        params.request !== null &&
+        "url" in params.request &&
+        typeof params.request.url === "string" &&
+        "method" in params.request &&
+        params.request.method === "POST"
+      ) {
+        const responseUrl = new URL(params.request.url);
+        const initialUrl = new URL(initialPageUrl);
+        if (
+          responseUrl.origin === initialUrl.origin &&
+          responseUrl.pathname ===
+            `/__ws-form${initialUrl.pathname === "/" ? "" : initialUrl.pathname}`
+        ) {
+          // Read before releasing the response so a fast redirect cannot discard it.
+          interceptedManagedResponseBody = send<{
+            body?: string;
+            base64Encoded?: boolean;
+          }>("Fetch.getResponseBody", { requestId })
+            .finally(() => send("Fetch.continueResponse", { requestId }))
+            .catch(() => undefined);
+          return;
+        }
+      }
+      void send("Fetch.continueResponse", { requestId }).catch(() => undefined);
+    });
     await Promise.all([
       send("Page.enable"),
       send("Runtime.enable"),
@@ -2590,6 +2640,9 @@ const submitFormWithBrowserRuntime = async (
         enableDurableMessages: true,
         maxTotalBufferSize: 4_000_000,
         maxResourceBufferSize: 1_000_000,
+      }),
+      send("Fetch.enable", {
+        patterns: [{ urlPattern: "*__ws-form*", requestStage: "Response" }],
       }),
       send("Page.setLifecycleEventsEnabled", { enabled: true }),
     ]);
@@ -2716,8 +2769,13 @@ const submitFormWithBrowserRuntime = async (
       resourceName?: string;
     }[] = [];
     const errors: { status?: number; name?: string; message: string }[] = [];
-    if (managedResponseBody !== undefined) {
-      const body = await managedResponseBody;
+    if (
+      interceptedManagedResponseBody !== undefined ||
+      managedResponseBody !== undefined
+    ) {
+      const body =
+        (await interceptedManagedResponseBody?.catch(() => undefined)) ??
+        (await managedResponseBody);
       if (body?.body !== undefined && body.body.length < 1_000_000) {
         try {
           const parsed: unknown = JSON.parse(

@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, expect, test } from "vitest";
 
@@ -63,6 +63,37 @@ test("schema fingerprint includes new backend files", async () => {
   const before = await readSchemaFingerprint(root);
 
   await writeFile(join(root, "apps/builder/backend/init.sql"), "SELECT 2;");
+
+  expect(await readSchemaFingerprint(root)).not.toBe(before);
+});
+
+test("schema fingerprint ignores generated migration clients", async () => {
+  const root = await createRepositoryFixture();
+  const before = await readSchemaFingerprint(root);
+  const client = join(
+    root,
+    "packages/prisma-client/prisma/migrations/initial/client"
+  );
+  await mkdir(client, { recursive: true });
+  await writeFile(join(client, "schema.prisma"), "generated");
+
+  expect(await readSchemaFingerprint(root)).toBe(before);
+});
+
+test.each([
+  "packages/prisma-client/prisma/migrations/initial/schema.prisma",
+  "packages/prisma-client/prisma/schema.prisma",
+  "packages/prisma-client/migrations-cli/commands.ts",
+  "packages/prisma-client/src/prisma.ts",
+  "packages/prisma-client/package.json",
+  "pnpm-lock.yaml",
+])("schema fingerprint includes %s", async (file) => {
+  const root = await createRepositoryFixture();
+  const path = join(root, file);
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, "before");
+  const before = await readSchemaFingerprint(root);
+  await writeFile(path, "after");
 
   expect(await readSchemaFingerprint(root)).not.toBe(before);
 });

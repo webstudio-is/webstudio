@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
 import type { Instance, Prop } from "@webstudio-is/sdk";
 import { loadDevBuild } from "../db";
@@ -116,7 +117,7 @@ export const createDragProject = async (
     context,
     email: `drag-${name}@webstudio.test`,
     title: `Drag ${name}`,
-    builderToken: `drag-${name}-builder-token`,
+    builderToken: `drag-${name}-${randomUUID()}-builder-token`,
     createBuildUpdate: (build) => seedBuild(build.pages),
   });
 };

@@ -22,6 +22,8 @@ import { e2eEmailPlanName } from "../plans";
 import { test } from "../test";
 import { measure } from "../perf";
 
+test.describe.configure({ mode: "parallel" });
+
 type PersistedPages = {
   redirects?: Array<{
     old: string;

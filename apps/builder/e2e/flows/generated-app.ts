@@ -317,15 +317,34 @@ export const expectGeneratedAppNavigation = async ({
   page,
   linkText,
   targetPath,
+  expectedRenderedText,
+  renderPath,
 }: {
   projectId: string;
   page: PlaywrightPage;
   linkText: string;
   targetPath: string;
+  expectedRenderedText?: string;
+  renderPath?: string;
 }) => {
   await withGeneratedPreview({
     projectId,
     callback: async ({ url }) => {
+      if (expectedRenderedText !== undefined) {
+        const path = renderPath ?? "/";
+        const response = await fetch(new URL(path, url), {
+          redirect: "manual",
+        });
+        const html = await response.text();
+        if (
+          response.ok === false ||
+          html.includes(expectedRenderedText) === false
+        ) {
+          throw new Error(
+            `Expected generated preview route ${JSON.stringify(path)} at ${url} to render ${JSON.stringify(expectedRenderedText)}.`
+          );
+        }
+      }
       const targetUrl = new URL(targetPath, url).toString();
       await page.goto(url);
       await page.getByRole("link", { name: linkText, exact: true }).click();

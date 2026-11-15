@@ -4,10 +4,7 @@ import {
   openBuilderUrl,
   waitForCanvasFrame,
 } from "../flows/builder";
-import {
-  expectGeneratedAppNavigation,
-  expectGeneratedAppToRender,
-} from "../flows/generated-app";
+import { expectGeneratedAppNavigation } from "../flows/generated-app";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { insertAuthorizationToken, loadDevBuild, updateBuild } from "../db";
 import { getProjectBuilderUrl, test, withBrowserContext } from "../test";
@@ -417,18 +414,15 @@ test("Preview links expose current page state for components and element anchors
 test("Generated preview renders and navigates linked routes", async ({
   page,
 }) => {
-  // Each assertion starts and compiles a separate production preview.
+  // Preview compilation is part of this test's production route coverage.
   test.setTimeout(300_000);
 
-  await expectGeneratedAppToRender({
-    projectId: fixture.projectId,
-    path: "/my-page",
-    expectedText: previewLinkText.pageLink,
-  });
   await expectGeneratedAppNavigation({
     projectId: fixture.projectId,
     page,
     linkText: previewLinkText.pageLink,
     targetPath: "/my-page",
+    renderPath: "/my-page",
+    expectedRenderedText: previewLinkText.pageLink,
   });
 });

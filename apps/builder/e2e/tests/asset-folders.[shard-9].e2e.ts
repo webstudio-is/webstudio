@@ -14,6 +14,8 @@ import {
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { dashboardUrl, test } from "../test";
 
+test.describe.configure({ mode: "parallel" });
+
 test("Cloning a project preserves nested asset folders", async ({
   context,
 }) => {
