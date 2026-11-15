@@ -35,9 +35,10 @@ the **Publish** tab. Free plans can open the tab but cannot view its logs.
 
 The export contains a static site consisting of HTML, CSS, JS, and images ready to be uploaded to another platform.
 
-To check an export, open **Publish**, choose **Export**, and click the status
-icon beside the static-site build button.
-Its **Warnings**, **Errors**, and **Publish** tabs work like the [publish details for a domain](../foundations/publishing-and-custom-domains.md#publish-details):
+If an export fails while Builder remains open, choose **See issues** in the
+failure notice to open Diagnostics. After reloading Builder, the last failure
+remains visible, but that session's issues and logs are no longer available.
+The **Warnings**, **Errors**, and **Publish** tabs work like the [publish details for a domain](../foundations/publishing-and-custom-domains.md#publish-details):
 Publish shows exports started in this Builder tab, while Warnings and Errors
 show current project checks. Full logs, when available on your plan, open from
 Publish in the same dialog.
