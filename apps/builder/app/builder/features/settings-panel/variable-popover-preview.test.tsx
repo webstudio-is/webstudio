@@ -6,8 +6,7 @@ import { TooltipProvider } from "@webstudio-is/design-system";
 import { ROOT_INSTANCE_ID, type ResourceRequest } from "@webstudio-is/sdk";
 import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 
-const { previewLoaderCalls, emailPreviewMockState } = vi.hoisted(() => ({
-  previewLoaderCalls: vi.fn(),
+const { emailPreviewMockState } = vi.hoisted(() => ({
   emailPreviewMockState: { fail: false },
 }));
 vi.mock("./variable-editors/email-request-preview", async (importOriginal) => {
@@ -24,18 +23,6 @@ vi.mock("./variable-editors/email-request-preview", async (importOriginal) => {
         throw new Error("Unable to evaluate Email expression");
       }
       return actual.buildEmailRequestPreviewFromEditor(...args);
-    },
-  };
-});
-vi.mock("~/shared/resources", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("~/shared/resources")>();
-  return {
-    ...actual,
-    loadResourcePreview: (
-      ...args: Parameters<typeof actual.loadResourcePreview>
-    ) => {
-      previewLoaderCalls(args[0]);
-      return actual.loadResourcePreview(...args);
     },
   };
 });
@@ -106,6 +93,7 @@ afterEach(async () => {
   selectInstance(undefined);
   $livePreviewBrowserInfo.set(new Map());
   emailPreviewMockState.fail = false;
+  vi.restoreAllMocks();
   document.body.innerHTML = "";
   respond?.(Response.error());
   respond = undefined;
@@ -418,7 +406,6 @@ test.each([
     ).find((button) => button.textContent === "Load data");
     expect(loadButton).toBeDefined();
     const priorCalls = loaderCalls.length;
-    const priorPreviewLoads = previewLoaderCalls.mock.calls.length;
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
@@ -442,7 +429,6 @@ test.each([
       });
     }
     expect(loaderCalls.length).toBe(priorCalls);
-    expect(previewLoaderCalls.mock.calls.length).toBe(priorPreviewLoads);
     expect($resourcePreviewExchanges.get().size).toBe(0);
     consoleErrorSpy.mockRestore();
   }

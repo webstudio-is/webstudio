@@ -38,9 +38,6 @@ vi.mock("@webstudio-is/sdk/protected-resource-fetch-node", () => ({
   createNodeProtectedResourceFetch: vi.fn(),
 }));
 vi.mock("~/shared/context.server", () => ({ createContext: vi.fn() }));
-vi.mock("~/services/no-cross-origin-cookie", () => ({
-  preventCrossOriginCookie: vi.fn(),
-}));
 vi.mock("~/services/csrf-session.server", () => ({ checkCsrf: vi.fn() }));
 vi.mock("~/env/env.server", () => ({
   default: {
@@ -101,7 +98,15 @@ const request = (file?: File, headers?: HeadersInit) => {
   if (file) {
     formData.set("attachment", file);
   }
-  return new Request(url, { method: "POST", body: formData, headers });
+  const requestHeaders = new Headers(headers);
+  if (!requestHeaders.has("sec-fetch-site")) {
+    requestHeaders.set("sec-fetch-site", "same-origin");
+  }
+  return new Request(url, {
+    method: "POST",
+    body: formData,
+    headers: requestHeaders,
+  });
 };
 
 const draftBuild = {
@@ -213,14 +218,11 @@ test("an unauthenticated request cannot load the project draft", async () => {
 });
 
 test("a cross-origin request cannot reach project authorization or actions", async () => {
-  const { preventCrossOriginCookie } =
-    await import("~/services/no-cross-origin-cookie");
-  vi.mocked(preventCrossOriginCookie).mockImplementationOnce(() => {
-    throw new Response("Cross-origin request", { status: 403 });
-  });
-  await expect(action({ request: request() } as never)).rejects.toMatchObject({
-    status: 403,
-  });
+  await expect(
+    action({
+      request: request(undefined, { "sec-fetch-site": "cross-site" }),
+    } as never)
+  ).rejects.toMatchObject({ status: 403 });
   expect(createContext).not.toHaveBeenCalled();
   expect(createNodeProtectedResourceFetch).not.toHaveBeenCalled();
 });
@@ -879,7 +881,11 @@ test("Preview returns JSON when Remix's Response has no static json method", asy
     const formData = await invalid.formData();
     formData.delete("ws--form-bot");
     const failure = await action({
-      request: new Request(invalid.url, { method: "POST", body: formData }),
+      request: new Request(invalid.url, {
+        method: "POST",
+        body: formData,
+        headers: { "sec-fetch-site": "same-origin" },
+      }),
     } as never);
     expect(failure.status).toBe(400);
     expect(await failure.json()).toMatchObject({
@@ -910,6 +916,7 @@ test.each([
       request: new Request(validRequest.url, {
         method: "POST",
         body: formData,
+        headers: { "sec-fetch-site": "same-origin" },
       }),
     } as never);
     expect(await response.json()).toMatchObject({
@@ -1096,6 +1103,7 @@ test("Preview binds each page's submitted values and browser context to its own 
           method: "POST",
           body: formData,
           headers: {
+            "sec-fetch-site": "same-origin",
             "cf-connecting-ip": page.ip,
             "x-forwarded-for": "192.0.2.99",
             "user-agent": page.userAgent,
