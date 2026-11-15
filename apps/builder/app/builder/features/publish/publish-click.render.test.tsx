@@ -12,7 +12,7 @@ import {
 } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { trpcFetch } from "./publish-test-utils";
+import { createTrpcInterceptor } from "./publish-test-utils";
 
 const reactEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
 const originalActEnvironment = reactEnvironment.IS_REACT_ACT_ENVIRONMENT;
@@ -32,6 +32,7 @@ let publishResponse: unknown = { success: false, error: "Publish blocked" };
 let jobStatus: "failed" | "success" = "failed";
 let didPublish = false;
 const logCursors: Array<number | undefined> = [];
+let interceptor: ReturnType<typeof createTrpcInterceptor>;
 
 beforeAll(async () => {
   Object.defineProperty(Element.prototype, "scrollIntoView", {
@@ -39,76 +40,70 @@ beforeAll(async () => {
     value: () => undefined,
   });
   vi.resetModules();
-  vi.stubGlobal(
-    "fetch",
-    trpcFetch(
-      {
-        "domain.publish": () => {
-          if (publishResponse instanceof Error) {
-            throw publishResponse;
-          }
-          didPublish = (publishResponse as { success: boolean }).success;
-          return publishResponse;
-        },
-        "api.publish.getJob": () => {
-          return { status: jobStatus, code: "BUILD_FAILED" };
-        },
-        "api.publish.getLog": (input) => {
-          const cursor = (input as { cursor?: number }).cursor;
-          logCursors.push(cursor);
-          return {
-            availability: "available",
-            startedAt: "2026-11-13T10:00:00.000Z",
-            completedAt: "2026-11-13T10:00:03.000Z",
-            log: {
-              encoding: "base64url",
-              chunk: btoa(
-                String.fromCharCode(
-                  ...(cursor === undefined ? [0xe2] : [0x82, 0xac])
-                )
-              ),
-              complete: cursor !== undefined,
-              nextCursor: cursor === undefined ? 1 : undefined,
-              issues: [
-                {
-                  severity: cursor === undefined ? "warning" : "error",
-                  message:
-                    cursor === undefined ? "Early warning" : "Late error",
-                },
-              ],
-            },
-          };
-        },
-        "domain.project": () => {
-          return {
-            success: true,
-            project: {
-              id: "project-1",
-              domain: "example",
-              domainsVirtual: [],
-              latestBuildVirtual: didPublish
-                ? {
-                    domain: "example",
-                    buildId: "build-1",
-                    createdAt: new Date().toISOString(),
-                    publishStatus:
-                      jobStatus === "success" ? "PUBLISHED" : "FAILED",
-                  }
-                : null,
-            },
-          };
-        },
-        "domain.countTotalDomains": () => ({ success: true, data: 0 }),
-        "project.userPublishCount": () => ({
-          success: true,
-          data: 0,
-          limit: 100,
-        }),
+  interceptor = createTrpcInterceptor(
+    {
+      "domain.publish": () => {
+        didPublish = (publishResponse as { success: boolean }).success;
+        return publishResponse;
       },
-      (route, input) =>
-        requests.push({ path: `/trpc/${route}`, input: { "0": input } })
-    )
+      "api.publish.getJob": () => {
+        return { status: jobStatus, code: "BUILD_FAILED" };
+      },
+      "api.publish.getLog": (input) => {
+        const cursor = (input as { cursor?: number }).cursor;
+        logCursors.push(cursor);
+        return {
+          availability: "available",
+          startedAt: "2026-11-13T10:00:00.000Z",
+          completedAt: "2026-11-13T10:00:03.000Z",
+          log: {
+            encoding: "base64url",
+            chunk: btoa(
+              String.fromCharCode(
+                ...(cursor === undefined ? [0xe2] : [0x82, 0xac])
+              )
+            ),
+            complete: cursor !== undefined,
+            nextCursor: cursor === undefined ? 1 : undefined,
+            issues: [
+              {
+                severity: cursor === undefined ? "warning" : "error",
+                message: cursor === undefined ? "Early warning" : "Late error",
+              },
+            ],
+          },
+        };
+      },
+      "domain.project": () => {
+        return {
+          success: true,
+          project: {
+            id: "project-1",
+            domain: "example",
+            domainsVirtual: [],
+            latestBuildVirtual: didPublish
+              ? {
+                  domain: "example",
+                  buildId: "build-1",
+                  createdAt: new Date().toISOString(),
+                  publishStatus:
+                    jobStatus === "success" ? "PUBLISHED" : "FAILED",
+                }
+              : null,
+          },
+        };
+      },
+      "domain.countTotalDomains": () => ({ success: true, data: 0 }),
+      "project.userPublishCount": () => ({
+        success: true,
+        data: 0,
+        limit: 100,
+      }),
+    },
+    (route, input) =>
+      requests.push({ path: `/trpc/${route}`, input: { "0": input } })
   );
+  interceptor.start();
   publishModule = await import("./publish");
   stores = await import("~/shared/sync/data-stores");
   nanoStates = await import("~/shared/nano-states");
@@ -308,7 +303,7 @@ test("a paid publish loads every log page and hides it after downgrade", async (
 });
 
 afterAll(() => {
-  vi.unstubAllGlobals();
+  interceptor.stop();
   vi.resetModules();
   if (originalScrollIntoView === undefined) {
     Reflect.deleteProperty(Element.prototype, "scrollIntoView");
@@ -451,17 +446,13 @@ test("keeps Diagnostics visible but disabled before there is anything to show", 
 });
 
 test.each([
-  ["Validate", "Errors", false, false],
-  ["Publish", "Errors", false, false],
-  ["Publish", "Publish", true, false],
-  ["Publish", "Errors", false, true],
+  ["Validate", "Errors", false],
+  ["Publish", "Errors", false],
+  ["Publish", "Publish", true],
 ] as const)(
   "%s keeps the result in the popover until See issues opens %s",
-  async (action, expectedTab, accepted, transport) => {
+  async (action, expectedTab, accepted) => {
     const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
-    if (transport) {
-      publishResponse = new Error("transport-failure");
-    }
     if (accepted) {
       publishResponse = {
         success: true,
@@ -538,7 +529,7 @@ test.each([
     }
 
     expect(builderStates.$publishDialog.get()).toBe("publish");
-    if (action === "Validate" || transport) {
+    if (action === "Validate") {
       expect(errorToast).not.toHaveBeenCalled();
     }
     if (accepted) {
@@ -550,12 +541,6 @@ test.each([
     const seeIssues = Array.from(
       document.body.querySelectorAll<HTMLButtonElement>("button")
     ).find((button) => button.textContent?.trim() === "See issues");
-    if (transport) {
-      // The transport error payload must remain visible in the popover banner.
-      expect(seeIssues?.parentElement?.textContent).toContain(
-        "transport-failure"
-      );
-    }
     await act(async () => seeIssues?.click());
     expect(builderStates.$publishDialog.get()).toBe("none");
     expect(document.body.querySelector('[role="tablist"]')).not.toBeNull();

@@ -14,7 +14,7 @@ import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import type { Project } from "@webstudio-is/project";
 import type { Pages } from "@webstudio-is/sdk";
-import { deferred, trpcFetch } from "./publish-test-utils";
+import { createTrpcInterceptor, deferred } from "./publish-test-utils";
 
 let checks = deferred<unknown>();
 let dispatch = deferred<unknown>();
@@ -29,66 +29,65 @@ let nanoStates: typeof import("~/shared/nano-states");
 let publishDialog: typeof import("~/builder/shared/nano-states").$publishDialog;
 let assetBridge: typeof import("~/shared/asset-content-bridge.client");
 let contentSession: ReturnType<typeof createAssetContentSession>;
+let interceptor: ReturnType<typeof createTrpcInterceptor>;
 
 beforeAll(async () => {
   (
     globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
   ).IS_REACT_ACT_ENVIRONMENT = true;
   vi.resetModules();
-  vi.stubGlobal(
-    "fetch",
-    trpcFetch({
-      "domain.publish": () => {
-        publishRequests += 1;
-        return dispatch.promise;
+  interceptor = createTrpcInterceptor({
+    "domain.publish": () => {
+      publishRequests += 1;
+      return dispatch.promise;
+    },
+    "api.publish.getJob": () => ({
+      status: "failed",
+      code: "BUILD_FAILED",
+    }),
+    "api.publish.getLog": () => ({
+      availability: "available",
+      log: {
+        encoding: "base64url",
+        chunk: btoa("older publish output"),
+        complete: true,
+        issues: [{ severity: "error", message: "older build issue" }],
       },
-      "api.publish.getJob": () => ({
-        status: "failed",
-        code: "BUILD_FAILED",
-      }),
-      "api.publish.getLog": () => ({
-        availability: "available",
-        log: {
-          encoding: "base64url",
-          chunk: btoa("older publish output"),
-          complete: true,
-          issues: [{ severity: "error", message: "older build issue" }],
-        },
-      }),
-      "domain.project": () => ({
-        success: true,
-        project: stores.$project.get(),
-      }),
-      "domain.countTotalDomains": () => ({ success: true, data: 0 }),
-      "project.userPublishCount": () => ({
-        success: true,
-        data: 0,
-        limit: 100,
-      }),
-      "api.publish.validate": async () => {
-        checkRequests += 1;
-        try {
-          const result = await checks.promise;
-          checksRead += 1;
-          return result;
-        } catch (error) {
-          checksRead += 1;
-          throw error;
-        }
-      },
-      "build.contentDatabasePublishDiagnostics": async () => {
-        checkRequests += 1;
-        try {
-          const result = await checks.promise;
-          checksRead += 1;
-          return result;
-        } catch (error) {
-          checksRead += 1;
-          throw error;
-        }
-      },
-    })
-  );
+    }),
+    "domain.project": () => ({
+      success: true,
+      project: stores.$project.get(),
+    }),
+    "domain.countTotalDomains": () => ({ success: true, data: 0 }),
+    "project.userPublishCount": () => ({
+      success: true,
+      data: 0,
+      limit: 100,
+    }),
+    "api.publish.validate": async () => {
+      checkRequests += 1;
+      try {
+        const result = await checks.promise;
+        checksRead += 1;
+        return result;
+      } catch (error) {
+        checksRead += 1;
+        throw error;
+      }
+    },
+    "build.contentDatabasePublishDiagnostics": async () => {
+      checkRequests += 1;
+      try {
+        const result = await checks.promise;
+        checksRead += 1;
+        return result;
+      } catch (error) {
+        checksRead += 1;
+        throw error;
+      }
+    },
+  });
+  interceptor.start();
   PublishButton = (await import("./publish")).PublishButton;
   stores = await import("~/shared/sync/data-stores");
   nanoStates = await import("~/shared/nano-states");
@@ -170,7 +169,7 @@ afterEach(async () => {
   vi.restoreAllMocks();
 });
 
-afterAll(() => vi.unstubAllGlobals());
+afterAll(() => interceptor.stop());
 
 const mount = async (target: "site" | "static") => {
   publishDialog.set(target === "site" ? "publish" : "export");
@@ -527,9 +526,13 @@ test.each(["site", "static"] as const)(
   async (target) => {
     await mount(target);
     await clickPublish(target);
-    publishDialog.set("publish");
+    await act(async () => publishDialog.set("publish"));
     await completeChecks(true);
-    expect(toast.error).toHaveBeenCalledTimes(target === "site" ? 0 : 1);
+    if (target === "static") {
+      await vi.waitFor(() => expect(toast.error).toHaveBeenCalledOnce());
+    } else {
+      expect(toast.error).not.toHaveBeenCalled();
+    }
   }
 );
 

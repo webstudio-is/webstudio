@@ -4,7 +4,7 @@ import { userEvent } from "@vitest/browser/context";
 import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { trpcFetch } from "./publish-test-utils";
+import { createTrpcInterceptor } from "./publish-test-utils";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -24,6 +24,7 @@ let getJobStatus: "pending" | "success" | "failed" = "pending";
 let publishRequests = 0;
 let jobRequests = 0;
 const downloads = vi.fn();
+let interceptor: ReturnType<typeof createTrpcInterceptor>;
 
 // Observe the real download URL without navigating away from the test runner.
 const interceptDownload = (event: NavigateEvent) => {
@@ -41,37 +42,35 @@ const interceptDownload = (event: NavigateEvent) => {
 beforeAll(async () => {
   window.navigation.addEventListener("navigate", interceptDownload);
   vi.resetModules();
-  vi.stubGlobal(
-    "fetch",
-    trpcFetch({
-      "build.contentDatabasePublishDiagnostics": () => ({
-        mdxErrors: [],
-        mdxOmissions: [],
-      }),
-      "domain.publish": () => {
-        publishRequests += 1;
-        return staticResponse;
+  interceptor = createTrpcInterceptor({
+    "build.contentDatabasePublishDiagnostics": () => ({
+      mdxErrors: [],
+      mdxOmissions: [],
+    }),
+    "domain.publish": () => {
+      publishRequests += 1;
+      return staticResponse;
+    },
+    "api.publish.getJob": () => {
+      jobRequests += 1;
+      return { status: getJobStatus };
+    },
+    "domain.project": () => ({
+      success: true,
+      project: {
+        ...projectStore.get(),
+        latestStaticBuild:
+          publishRequests === 0
+            ? null
+            : {
+                buildId: "static-1",
+                updatedAt: new Date().toISOString(),
+                publishStatus: "PUBLISHED",
+              },
       },
-      "api.publish.getJob": () => {
-        jobRequests += 1;
-        return { status: getJobStatus };
-      },
-      "domain.project": () => ({
-        success: true,
-        project: {
-          ...projectStore.get(),
-          latestStaticBuild:
-            publishRequests === 0
-              ? null
-              : {
-                  buildId: "static-1",
-                  updatedAt: new Date().toISOString(),
-                  publishStatus: "PUBLISHED",
-                },
-        },
-      }),
-    })
-  );
+    }),
+  });
+  interceptor.start();
   publishModule = await import("./publish");
   nanoStates = await import("~/shared/nano-states");
   publishDialog = (await import("~/builder/shared/nano-states")).$publishDialog;
@@ -102,7 +101,7 @@ afterEach(async () => {
 
 afterAll(() => {
   window.navigation.removeEventListener("navigate", interceptDownload);
-  vi.unstubAllGlobals();
+  interceptor.stop();
 });
 
 const createProject = (id = "project-a") =>

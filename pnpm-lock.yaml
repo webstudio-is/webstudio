@@ -479,6 +479,9 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(zod@4.4.3)
     devDependencies:
+      '@mswjs/interceptors':
+        specifier: ^0.41.2
+        version: 0.41.3
       '@playwright/test':
         specifier: 1.50.1
         version: 1.50.1

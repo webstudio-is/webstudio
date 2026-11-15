@@ -13,7 +13,7 @@ import {
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
-import { deferred, trpcFetch } from "./publish-test-utils";
+import { createTrpcInterceptor, deferred } from "./publish-test-utils";
 
 const reactEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
 const originalActEnvironment = reactEnvironment.IS_REACT_ACT_ENVIRONMENT;
@@ -26,6 +26,7 @@ let nanoStates: typeof import("~/shared/nano-states");
 let dialog: typeof import("~/builder/shared/nano-states").$publishDialog;
 let assetBridge: typeof import("~/shared/asset-content-bridge.client");
 let contentSession: ReturnType<typeof createAssetContentSession>;
+let interceptor: ReturnType<typeof createTrpcInterceptor>;
 let initialPlan: ReturnType<typeof nanoStates.$planFeatures.get>;
 let project: Project;
 let publish: () => Promise<unknown>;
@@ -60,28 +61,26 @@ const makeProject = (
 beforeAll(async () => {
   reactEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   vi.resetModules();
-  vi.stubGlobal(
-    "fetch",
-    trpcFetch(
-      {
-        "domain.project": () => refresh(),
-        "domain.publish": () => publish(),
-        "api.publish.validate": () => validate(),
-        "build.contentDatabasePublishDiagnostics": () => validate(),
-        "api.publish.getJob": () => job(),
-        "domain.countTotalDomains": () => ({
-          success: true,
-          data: 0,
-        }),
-        "project.userPublishCount": () => ({
-          success: true,
-          data: 0,
-          limit: 100,
-        }),
-      },
-      (route, input) => requests.push({ route, input })
-    )
+  interceptor = createTrpcInterceptor(
+    {
+      "domain.project": () => refresh(),
+      "domain.publish": () => publish(),
+      "api.publish.validate": () => validate(),
+      "build.contentDatabasePublishDiagnostics": () => validate(),
+      "api.publish.getJob": () => job(),
+      "domain.countTotalDomains": () => ({
+        success: true,
+        data: 0,
+      }),
+      "project.userPublishCount": () => ({
+        success: true,
+        data: 0,
+        limit: 100,
+      }),
+    },
+    (route, input) => requests.push({ route, input })
   );
+  interceptor.start();
   PublishButton = (await import("./publish")).PublishButton;
   stores = await import("~/shared/sync/data-stores");
   nanoStates = await import("~/shared/nano-states");
@@ -164,7 +163,7 @@ afterEach(async () => {
 });
 
 afterAll(() => {
-  vi.unstubAllGlobals();
+  interceptor.stop();
   reactEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment;
 });
 
@@ -392,7 +391,15 @@ test.each(["PUBLISHED", "FAILED"] as const)(
 );
 
 test("a recovered pending build keeps polling after the popover closes", async () => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({
+    toFake: [
+      "setTimeout",
+      "clearTimeout",
+      "setInterval",
+      "clearInterval",
+      "Date",
+    ],
+  });
   project = makeProject("project", {
     buildId: "recovered",
     publishStatus: "PENDING",
@@ -512,7 +519,15 @@ test.each(["success", "transport"] as const)(
 );
 
 test("closing publish hides its countdown while polling continues to completion", async () => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({
+    toFake: [
+      "setTimeout",
+      "clearTimeout",
+      "setInterval",
+      "clearInterval",
+      "Date",
+    ],
+  });
   const pending = deferred<unknown>();
   publish = async () => accept();
   job = () => pending.promise;

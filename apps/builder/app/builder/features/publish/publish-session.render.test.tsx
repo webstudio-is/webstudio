@@ -12,7 +12,7 @@ import {
 } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { deferred, trpcFetch } from "./publish-test-utils";
+import { createTrpcInterceptor, deferred } from "./publish-test-utils";
 
 const encoded = (bytes: number[]) => btoa(String.fromCharCode(...bytes));
 const logRequests: Array<{
@@ -29,6 +29,7 @@ let holdLog:
   | undefined;
 let heldJob: ReturnType<typeof deferred<unknown>> | undefined;
 let heldPublish: ReturnType<typeof deferred<unknown>> | undefined;
+let interceptor: ReturnType<typeof createTrpcInterceptor>;
 let PublishButton: typeof import("./publish").PublishButton;
 let stores: typeof import("~/shared/sync/data-stores");
 let nanoStates: typeof import("~/shared/nano-states");
@@ -49,78 +50,76 @@ beforeAll(async () => {
     value: () => {},
   });
   vi.resetModules();
-  vi.stubGlobal(
-    "fetch",
-    trpcFetch({
-      "domain.project": () => ({
-        success: true,
-        project: {
-          ...stores.$project.get(),
-          latestBuildVirtual: {
-            domain: "example",
-            buildId: acceptedBuildId,
-            createdAt: new Date().toISOString(),
-            publishStatus: "PUBLISHED",
-          },
+  interceptor = createTrpcInterceptor({
+    "domain.project": () => ({
+      success: true,
+      project: {
+        ...stores.$project.get(),
+        latestBuildVirtual: {
+          domain: "example",
+          buildId: acceptedBuildId,
+          createdAt: new Date().toISOString(),
+          publishStatus: "PUBLISHED",
         },
-      }),
-      "domain.countTotalDomains": () => ({ success: true, data: 0 }),
-      "project.userPublishCount": () => ({
-        success: true,
-        data: 0,
-        limit: 100,
-      }),
-      "domain.publish": async () => {
-        publishRequests += 1;
-        const data = heldPublish
-          ? await heldPublish.promise
-          : {
-              success: true,
-              buildId,
-              ...(withHandle ? { logHandle: "handle" } : {}),
-              findings: [],
-            };
-        acceptedBuildId = (data as { buildId: string }).buildId;
-        return data;
       },
-      "api.publish.getJob": () =>
-        heldJob ? heldJob.promise : { status: "success" },
-      "api.publish.getLog": async (value) => {
-        const input = value as (typeof logRequests)[number];
-        logRequests.push(input);
-        const first = input.cursor === undefined;
-        if (
-          input.buildId === "build-1" &&
-          holdLog &&
-          holdLog.cursor === input.cursor
-        ) {
-          await holdLog.response.promise;
-        }
-        return {
-          availability: "available",
-          startedAt: "2026-11-13T10:00:00.000Z",
-          completedAt: "2026-11-13T10:00:03.000Z",
-          log: {
-            encoding: "base64url",
-            chunk: first ? encoded([0xe2]) : encoded([0x82, 0xac]),
-            complete: !first,
-            nextCursor: first ? 1 : undefined,
-            issues: [
-              {
-                severity: first ? "warning" : "error",
-                message: first ? "Early warning" : "Late error",
-              },
-            ],
-            issuesOmitted: first ? 1 : 0,
-          },
-        };
-      },
-      "build.contentDatabasePublishDiagnostics": () => ({
-        mdxErrors: [],
-        mdxOmissions: [],
-      }),
-    })
-  );
+    }),
+    "domain.countTotalDomains": () => ({ success: true, data: 0 }),
+    "project.userPublishCount": () => ({
+      success: true,
+      data: 0,
+      limit: 100,
+    }),
+    "domain.publish": async () => {
+      publishRequests += 1;
+      const data = heldPublish
+        ? await heldPublish.promise
+        : {
+            success: true,
+            buildId,
+            ...(withHandle ? { logHandle: "handle" } : {}),
+            findings: [],
+          };
+      acceptedBuildId = (data as { buildId: string }).buildId;
+      return data;
+    },
+    "api.publish.getJob": () =>
+      heldJob ? heldJob.promise : { status: "success" },
+    "api.publish.getLog": async (value) => {
+      const input = value as (typeof logRequests)[number];
+      logRequests.push(input);
+      const first = input.cursor === undefined;
+      if (
+        input.buildId === "build-1" &&
+        holdLog &&
+        holdLog.cursor === input.cursor
+      ) {
+        await holdLog.response.promise;
+      }
+      return {
+        availability: "available",
+        startedAt: "2026-11-13T10:00:00.000Z",
+        completedAt: "2026-11-13T10:00:03.000Z",
+        log: {
+          encoding: "base64url",
+          chunk: first ? encoded([0xe2]) : encoded([0x82, 0xac]),
+          complete: !first,
+          nextCursor: first ? 1 : undefined,
+          issues: [
+            {
+              severity: first ? "warning" : "error",
+              message: first ? "Early warning" : "Late error",
+            },
+          ],
+          issuesOmitted: first ? 1 : 0,
+        },
+      };
+    },
+    "build.contentDatabasePublishDiagnostics": () => ({
+      mdxErrors: [],
+      mdxOmissions: [],
+    }),
+  });
+  interceptor.start();
   PublishButton = (await import("./publish")).PublishButton;
   stores = await import("~/shared/sync/data-stores");
   nanoStates = await import("~/shared/nano-states");
@@ -184,7 +183,7 @@ afterEach(async () => {
 });
 
 afterAll(() => {
-  vi.unstubAllGlobals();
+  interceptor.stop();
   vi.resetModules();
   reactEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment;
   if (originalScrollIntoView === undefined) {
