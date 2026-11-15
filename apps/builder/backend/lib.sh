@@ -58,7 +58,7 @@ builder_backend_schema_fingerprint() {
 }
 
 builder_backend_init_schema_snapshot() {
-  SCHEMA_SNAPSHOT="${SCHEMA_SNAPSHOT:-$ROOT_DIR/.cache/builder-e2e/schema-$(builder_backend_schema_fingerprint).sql}"
+  SCHEMA_SNAPSHOT="${SCHEMA_SNAPSHOT:-$ROOT_DIR/apps/builder/e2e/schema/schema-$(builder_backend_schema_fingerprint).sql}"
 }
 
 builder_compose() {
@@ -186,7 +186,7 @@ builder_backend_write_schema_snapshot() {
   # Dump only the application-owned public schema so the snapshot can be
   # restored without replacing database-owned schemas.
   if builder_compose exec -T db \
-    sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --schema=public --schema-only --clean --if-exists --no-owner --no-privileges' \
+    sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --schema=public --schema-only --clean --if-exists --no-owner --no-privileges --restrict-key=webstudioE2ESchema' \
     >"$temporary_snapshot"; then
     mv "$temporary_snapshot" "$SCHEMA_SNAPSHOT"
   else

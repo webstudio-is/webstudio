@@ -80,6 +80,26 @@ test("schema fingerprint ignores generated migration clients", async () => {
   expect(await readSchemaFingerprint(root)).toBe(before);
 });
 
+test("schema snapshot lives in the repository at its source fingerprint", async () => {
+  const root = await createRepositoryFixture();
+  const fingerprint = await readSchemaFingerprint(root);
+  const { stdout } = await execFileAsync(
+    "bash",
+    [
+      "-c",
+      'source "$1"; ROOT_DIR="$2"; builder_backend_init_schema_snapshot; printf "%s" "$SCHEMA_SNAPSHOT"',
+      "bash",
+      backendLibrary,
+      root,
+    ],
+    { cwd: root }
+  );
+
+  expect(stdout).toBe(
+    join(root, "apps/builder/e2e/schema", `schema-${fingerprint}.sql`)
+  );
+});
+
 test.each([
   "packages/prisma-client/prisma/migrations/initial/schema.prisma",
   "packages/prisma-client/prisma/schema.prisma",
