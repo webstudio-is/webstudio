@@ -1323,6 +1323,39 @@ describe("project session mcp adapter", () => {
     expect(tool?.inputSchema.properties).not.toHaveProperty("runtime");
   });
 
+  test("keeps discriminated publish inputs valid in the MCP tool schema", () => {
+    const [tool] = listProjectSessionMcpTools([
+      publicOperation({
+        command: "publish",
+        id: "build.publish",
+        description: "Publish a site or static export",
+        localCapable: false,
+        serverOnly: true,
+        inputSchema: getTestInputSchema(
+          z.discriminatedUnion("target", [
+            z.object({
+              target: z.literal("production"),
+              domains: z.array(z.string()),
+            }),
+            z.object({
+              target: z.literal("static"),
+              templates: z.array(z.string()),
+            }),
+          ])
+        ),
+      }),
+    ]);
+
+    expect(tool?.inputSchema).toMatchObject({
+      oneOf: [
+        { properties: { target: { const: "production" } } },
+        { properties: { target: { const: "static" } } },
+      ],
+      required: ["target"],
+      additionalProperties: true,
+    });
+  });
+
   test("defers oversized input schemas until focused discovery", async () => {
     const description = "x".repeat(25_000);
     const operation = publicOperation({

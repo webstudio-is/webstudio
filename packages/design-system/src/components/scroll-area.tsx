@@ -79,8 +79,9 @@ type ScrollAreaProps = {
 } & Pick<ComponentProps<"div">, "onScroll" | "children">;
 
 /**
- * @deprecated Use ScrollAreaNative instead. Native scrolling avoids interaction
- * bugs from the custom Radix scroll area implementation.
+ * @deprecated Do not use in new code. Use ScrollAreaNative instead. This legacy
+ * Radix implementation remains only for existing callers; native scrolling
+ * avoids its interaction bugs.
  */
 export const ScrollArea = forwardRef(
   (

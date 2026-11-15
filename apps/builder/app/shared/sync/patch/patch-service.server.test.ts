@@ -24,11 +24,6 @@ import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import * as assetUploader from "@webstudio-is/asset-uploader/server";
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
 
-const applyPatchRequestForTest = (
-  context: AppContext,
-  patch: NormalizedPatchRequest
-) => applyPatchRequest(context, patch);
-
 const configuredResources = JSON.stringify([
   {
     id: "posts",
@@ -60,33 +55,42 @@ const createContext = () => {
   const context = {
     postgrest: {
       client: {
-        from: () => ({
-          select: (columns: string) => ({
-            selectedColumns,
-            eq: () => {
-              selectedColumns.push(columns);
-              const result = Promise.resolve({
-                data: [
-                  Object.fromEntries(
-                    columns
-                      .split(", ")
-                      .map((column) => [
-                        column,
-                        buildRow[column as keyof typeof buildRow],
-                      ])
-                  ),
-                ],
-                error: undefined,
-              });
-              return Object.assign(result, {
-                single: async () => ({
-                  data: buildRow,
+        from: (table: string) => {
+          if (table !== "Build") {
+            throw new Error(`Unexpected table: ${table}`);
+          }
+          return {
+            select: (columns: string) => ({
+              eq: (column: string, value: string) => {
+                if (column !== "id" || value !== "build-1") {
+                  throw new Error(
+                    `Unexpected Build filter: ${column}=${value}`
+                  );
+                }
+                selectedColumns.push(columns);
+                const result = Promise.resolve({
+                  data: [
+                    Object.fromEntries(
+                      columns
+                        .split(", ")
+                        .map((column) => [
+                          column,
+                          buildRow[column as keyof typeof buildRow],
+                        ])
+                    ),
+                  ],
                   error: undefined,
-                }),
-              });
-            },
-          }),
-        }),
+                });
+                return Object.assign(result, {
+                  single: async () => ({
+                    data: buildRow,
+                    error: undefined,
+                  }),
+                });
+              },
+            }),
+          };
+        },
       },
     },
   };
@@ -143,7 +147,7 @@ describe("applyPatchRequest", () => {
       });
       const context = createContext();
       await expect(
-        applyPatchRequestForTest(context, { ...patch, entries: [entry] })
+        applyPatchRequest(context, { ...patch, entries: [entry] })
       ).resolves.toMatchObject({ status: "ok" });
       const columns = context.selectedColumns.at(-1)?.split(", ");
       expect(columns).toEqual(expect.arrayContaining(["instances", "props"]));
@@ -152,7 +156,7 @@ describe("applyPatchRequest", () => {
     }
   );
 
-  test("applies a combined resource and asset patch without derived work", async () => {
+  test("forwards a combined resource and asset patch", async () => {
     const combinedEntry = {
       ...patch.entries[0],
       transaction: {
@@ -192,13 +196,30 @@ describe("applyPatchRequest", () => {
       version: 4,
       build: { ...build, version: 4, resources: nextResources },
     }));
-    await applyPatchRequestForTest(createContext(), {
+    const context = createContext();
+    const result = await applyPatchRequest(context, {
       ...patch,
       entries: [combinedEntry],
     });
+    expect(context.selectedColumns).toEqual([
+      "projectId, version",
+      "projectId, version, lastTransactionId, resources, props, instances",
+    ]);
+    expect(patchLoadedBuild).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        transactions: [combinedEntry.transaction],
+        build: expect.objectContaining({ resources: configuredResources }),
+      }),
+      { writer: 1 }
+    );
+    expect(result).toEqual({
+      status: "ok",
+      version: 4,
+      entries: [{ seq: 1, transactionId: "tx-combined", status: "accepted" }],
+    });
   });
 
-  test("applies asset-folder patches without derived work", async () => {
+  test("forwards asset-folder patches", async () => {
     const folderEntry = {
       ...patch.entries[0],
       transaction: {
@@ -223,15 +244,22 @@ describe("applyPatchRequest", () => {
       build: { ...build, version: 4 },
     }));
 
-    await expect(
-      applyPatchRequestForTest(createContext(), {
-        ...patch,
-        entries: [folderEntry],
-      })
-    ).resolves.toMatchObject({ status: "ok" });
+    const result = await applyPatchRequest(createContext(), {
+      ...patch,
+      entries: [folderEntry],
+    });
+    expect(patchLoadedBuild).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ transactions: [folderEntry.transaction] }),
+      { writer: 1 }
+    );
+    expect(result).toEqual({
+      status: "ok",
+      version: 4,
+      entries: [{ seq: 1, transactionId: "tx-folder", status: "accepted" }],
+    });
   });
 
-  test("applies added assets without derived work", async () => {
+  test("forwards added assets", async () => {
     const assetEntry = {
       ...patch.entries[0],
       transaction: {
@@ -260,15 +288,22 @@ describe("applyPatchRequest", () => {
       build: { ...build, version: 4 },
     }));
 
-    await expect(
-      applyPatchRequestForTest(createContext(), {
-        ...patch,
-        entries: [assetEntry],
-      })
-    ).resolves.toMatchObject({ status: "ok" });
+    const result = await applyPatchRequest(createContext(), {
+      ...patch,
+      entries: [assetEntry],
+    });
+    expect(patchLoadedBuild).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ transactions: [assetEntry.transaction] }),
+      { writer: 1 }
+    );
+    expect(result).toEqual({
+      status: "ok",
+      version: 4,
+      entries: [{ seq: 1, transactionId: "tx-asset-add", status: "accepted" }],
+    });
   });
 
-  test("applies a swapped asset revision without derived work", async () => {
+  test("forwards a swapped asset revision", async () => {
     const assetEntry = {
       ...patch.entries[0],
       transaction: {
@@ -297,13 +332,24 @@ describe("applyPatchRequest", () => {
       build: { ...build, version: 4 },
     }));
 
-    await applyPatchRequestForTest(createContext(), {
+    const result = await applyPatchRequest(createContext(), {
       ...patch,
       entries: [assetEntry],
     });
+    expect(patchLoadedBuild).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ transactions: [assetEntry.transaction] }),
+      { writer: 1 }
+    );
+    expect(result).toEqual({
+      status: "ok",
+      version: 4,
+      entries: [
+        { seq: 1, transactionId: "tx-asset-revision", status: "accepted" },
+      ],
+    });
   });
 
-  test("applies standard asset metadata changes without derived work", async () => {
+  test("forwards standard asset metadata changes", async () => {
     const assetEntry = {
       ...patch.entries[0],
       transaction: {
@@ -332,13 +378,24 @@ describe("applyPatchRequest", () => {
       build: { ...build, version: 4 },
     }));
 
-    await applyPatchRequestForTest(createContext(), {
+    const result = await applyPatchRequest(createContext(), {
       ...patch,
       entries: [assetEntry],
     });
+    expect(patchLoadedBuild).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ transactions: [assetEntry.transaction] }),
+      { writer: 1 }
+    );
+    expect(result).toEqual({
+      status: "ok",
+      version: 4,
+      entries: [
+        { seq: 1, transactionId: "tx-asset-filename", status: "accepted" },
+      ],
+    });
   });
 
-  test("applies asset descriptions without derived work", async () => {
+  test("forwards asset descriptions", async () => {
     const assetEntry = {
       ...patch.entries[0],
       transaction: {
@@ -367,9 +424,20 @@ describe("applyPatchRequest", () => {
       build: { ...build, version: 4 },
     }));
 
-    await applyPatchRequestForTest(createContext(), {
+    const result = await applyPatchRequest(createContext(), {
       ...patch,
       entries: [assetEntry],
+    });
+    expect(patchLoadedBuild).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ transactions: [assetEntry.transaction] }),
+      { writer: 1 }
+    );
+    expect(result).toEqual({
+      status: "ok",
+      version: 4,
+      entries: [
+        { seq: 1, transactionId: "tx-asset-description", status: "accepted" },
+      ],
     });
   });
 
@@ -391,7 +459,7 @@ describe("applyPatchRequest", () => {
 
     const context = createContext();
 
-    const result = await applyPatchRequestForTest(context, patch);
+    const result = await applyPatchRequest(context, patch);
 
     expect(createContentModeCapabilities).not.toHaveBeenCalled();
     expect(context.selectedColumns).toEqual([
@@ -442,7 +510,7 @@ describe("applyPatchRequest", () => {
     }));
     const context = createContext();
 
-    const result = await applyPatchRequestForTest(context, patch);
+    const result = await applyPatchRequest(context, patch);
 
     expect(createContentModeCapabilities).toHaveBeenCalledWith({
       breakpoints: JSON.stringify([]),
@@ -491,12 +559,12 @@ describe("applyPatchRequest", () => {
     );
 
     try {
-      await applyPatchRequestForTest(createContext(), folderPatch);
+      await applyPatchRequest(createContext(), folderPatch);
       expect(loadFolders).toHaveBeenCalledTimes(1);
       expect(loadFolders).toHaveBeenCalledWith("project-1", expect.anything(), {
         skipPermissionsCheck: true,
       });
-      await applyPatchRequestForTest(createContext(), patch);
+      await applyPatchRequest(createContext(), patch);
       expect(loadFolders).toHaveBeenCalledTimes(1);
     } finally {
       loadFolders.mockRestore();
@@ -515,7 +583,7 @@ describe("applyPatchRequest", () => {
     });
     const context = createContext();
 
-    const result = await applyPatchRequestForTest(context, patch);
+    const result = await applyPatchRequest(context, patch);
 
     expect(context.selectedColumns).toEqual(["projectId, version"]);
     expect(patchLoadedBuild).not.toHaveBeenCalled();
@@ -555,7 +623,7 @@ describe("applyPatchRequest", () => {
     }));
     const context = createContext();
 
-    const result = await applyPatchRequestForTest(context, assetsPatch);
+    const result = await applyPatchRequest(context, assetsPatch);
 
     expect(context.selectedColumns).toEqual([
       "projectId, version",
@@ -597,7 +665,7 @@ describe("applyPatchRequest", () => {
       }))
       .mockResolvedValueOnce({ status: "error", errors: "entry failed" });
 
-    const result = await applyPatchRequestForTest(createContext(), patch);
+    const result = await applyPatchRequest(createContext(), patch);
 
     expect(result).toEqual({
       status: "partial",
@@ -627,7 +695,7 @@ describe("applyPatchRequest", () => {
       errors: "first save failed",
     });
 
-    const result = await applyPatchRequestForTest(createContext(), patch);
+    const result = await applyPatchRequest(createContext(), patch);
 
     expect(patchLoadedBuild).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
@@ -670,7 +738,7 @@ describe("applyPatchRequest", () => {
         build: { ...build, version: 5 },
       }));
 
-    const result = await applyPatchRequestForTest(createContext(), patch);
+    const result = await applyPatchRequest(createContext(), patch);
 
     expect(patchLoadedBuild).toHaveBeenCalledTimes(2);
     expect(patchLoadedBuild).toHaveBeenNthCalledWith(
@@ -734,10 +802,7 @@ describe("applyPatchRequest", () => {
       build: { ...build, version: 4 },
     }));
 
-    const result = await applyPatchRequestForTest(
-      createContext(),
-      duplicatePatch
-    );
+    const result = await applyPatchRequest(createContext(), duplicatePatch);
 
     expect(result).toEqual({
       status: "partial",
@@ -772,9 +837,9 @@ describe("applyPatchRequest", () => {
       }))
       .mockRejectedValueOnce(new Error("PostgREST unavailable"));
 
-    await expect(
-      applyPatchRequestForTest(createContext(), patch)
-    ).rejects.toThrow("PostgREST unavailable");
+    await expect(applyPatchRequest(createContext(), patch)).rejects.toThrow(
+      "PostgREST unavailable"
+    );
   });
 });
 

@@ -1,7 +1,7 @@
 import { Flex, Text } from "@webstudio-is/design-system";
 import type { nativeClient } from "~/shared/trpc/trpc-client";
 import { ContentDatabasePublishWarning } from "./content-database-publish-warning-view";
-import type { PublishValidationFinding } from "./publish-validation-results";
+import type { DiagnosticFinding } from "./diagnostics";
 
 type ContentDatabasePublishDiagnostics = Awaited<
   ReturnType<typeof nativeClient.build.contentDatabasePublishDiagnostics.query>
@@ -28,7 +28,7 @@ const invalidMdxFixes = {
 export const getContentDatabasePublishFindings = (
   diagnostics: ContentDatabasePublishDiagnostics
 ) => {
-  const findings: PublishValidationFinding[] = diagnostics.mdxErrors.map(
+  const findings: DiagnosticFinding[] = diagnostics.mdxErrors.map(
     ({ filename, diagnostic }) => {
       const start =
         "sourceRange" in diagnostic ? diagnostic.sourceRange?.start : undefined;
@@ -63,6 +63,7 @@ export const getContentDatabasePublishFindings = (
       return {
         severity: "error" as const,
         title: `${filename}${location}`,
+        summary: message.slice(0, 160),
         relatedInstanceId: diagnostic.blockInstanceId,
         details: (
           <Flex direction="column" gap={2}>
@@ -95,6 +96,8 @@ export const getContentDatabasePublishFindings = (
     ...diagnostics.mdxOmissions.map((issue) => ({
       severity: "warning" as const,
       title: `${issue.filename}: ${issue.templateName}`,
+      summary:
+        "This MDX content cannot render because its custom template is missing or ambiguous.",
       relatedInstanceId: issue.blockInstanceId,
       details: (
         <Flex direction="column" gap={2}>

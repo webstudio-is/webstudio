@@ -39,6 +39,7 @@ type ApiCommandDependencies = typeof apiCommandHttpClient & {
   readFile: typeof readFile;
   createCliProjectSession: typeof createCliProjectSession;
   getServerApiContract: typeof getCliServerApiContract;
+  pause: (durationMs: number) => Promise<void>;
 };
 
 const defaultDependencies: ApiCommandDependencies = {
@@ -47,6 +48,8 @@ const defaultDependencies: ApiCommandDependencies = {
   readFile,
   createCliProjectSession,
   getServerApiContract: getCliServerApiContract,
+  pause: (durationMs) =>
+    new Promise((resolve) => setTimeout(resolve, durationMs)),
 };
 
 export type ApiCommandName = ProjectSessionApiCommand;
@@ -1134,9 +1137,16 @@ export const deleteResourceCommandOptions = (yargs: CommonYargsArgv) =>
         "Also remove direct resource prop references that point at this resource",
     });
 
-const publishTargetOption = (yargs: CommonYargsArgv) =>
+const deploymentTargetOption = (yargs: CommonYargsArgv) =>
   yargs.option("target", {
     choices: ["staging", "production"] as const,
+    describe: "Required deployment target",
+    demandOption: true,
+  });
+
+const publishTargetOption = (yargs: CommonYargsArgv) =>
+  yargs.option("target", {
+    choices: ["staging", "production", "static"] as const,
     describe: "Required publish target",
     demandOption: true,
   });
@@ -1151,6 +1161,10 @@ const publishDomainsOption = (yargs: CommonYargsArgv) =>
 
 export const publishCommandOptions = (yargs: CommonYargsArgv) =>
   publishDomainsOption(publishTargetOption(apiCommandOptions(yargs)))
+    .option("wait", {
+      type: "boolean",
+      describe: "Wait for publishing to finish",
+    })
     .option("message", {
       type: "string",
       describe: "Optional human-readable publish message",
@@ -1158,10 +1172,24 @@ export const publishCommandOptions = (yargs: CommonYargsArgv) =>
     .option("idempotency-key", {
       type: "string",
       describe: "Optional idempotency key for retrying the same publish",
+    })
+    .option("template", {
+      type: "array",
+      string: true,
+      choices: [
+        "docker",
+        "vercel",
+        "netlify",
+        "ssg",
+        "ssg-netlify",
+        "ssg-vercel",
+      ] as const,
+      describe:
+        "Static export template. Repeat to request multiple templates; defaults to ssg.",
     });
 
 export const validatePublishCommandOptions = (yargs: CommonYargsArgv) =>
-  publishDomainsOption(publishTargetOption(apiCommandOptions(yargs)));
+  publishDomainsOption(deploymentTargetOption(apiCommandOptions(yargs)));
 
 export const publishJobCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs).option("job", {
@@ -1170,9 +1198,15 @@ export const publishJobCommandOptions = (yargs: CommonYargsArgv) =>
     demandOption: true,
   });
 
+export const publishLogCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs)
+    .option("build-id", { type: "string", demandOption: true })
+    .option("log-handle", { type: "string", demandOption: true })
+    .option("cursor", { type: "number" });
+
 export const unpublishCommandOptions = (yargs: CommonYargsArgv) =>
   confirmOption(
-    publishDomainsOption(publishTargetOption(apiCommandOptions(yargs))),
+    publishDomainsOption(deploymentTargetOption(apiCommandOptions(yargs))),
     "Required. Confirm that selected domains should be unpublished"
   );
 
@@ -1371,8 +1405,11 @@ export type ApiCommandOptions = {
   asset?: string | string[];
   domain?: string | string[];
   domainId?: string;
-  target?: "staging" | "production";
+  target?: "staging" | "production" | "static";
   job?: string;
+  buildId?: string;
+  logHandle?: string;
+  wait?: boolean;
   idempotencyKey?: string;
   from?: string;
   to?: string;
@@ -1650,8 +1687,22 @@ const assetListTypeOption = (
 
 const publishTargetValue = (
   value: ApiCommandOptions["target"]
+): "staging" | "production" | "static" =>
+  requiredChoice(value, ["staging", "production", "static"], "--target");
+
+const deploymentTargetValue = (
+  value: ApiCommandOptions["target"]
 ): "staging" | "production" =>
   requiredChoice(value, ["staging", "production"], "--target");
+
+const publishTemplateValues = (value: ApiCommandOptions["template"]) =>
+  listStringOption(value)?.map((template) =>
+    requiredChoice(
+      template,
+      ["docker", "vercel", "netlify", "ssg", "ssg-netlify", "ssg-vercel"],
+      "--template"
+    )
+  );
 
 const textUpdateModeOption = (
   value: ApiCommandOptions["mode"]
@@ -1881,6 +1932,162 @@ const runProjectSessionCommand = async (
     dryRun: options.dryRun ?? activeApiCommandDryRun,
     refresh: activeApiCommandRefresh,
   });
+
+const publishWaitDelayMs = 5_000;
+const publishWaitPolls = 360;
+const publishLogGracePolls = 12;
+
+const waitForPublish = async (
+  publishResult: unknown,
+  connection: ApiCommandConnection,
+  dependencies: ApiCommandDependencies
+) => {
+  if (
+    isPlainRecord(publishResult) === false ||
+    publishResult.status !== "pending"
+  ) {
+    return publishResult;
+  }
+  const { jobId, buildId, logHandle } = publishResult;
+  if (typeof jobId !== "string") {
+    return { ...publishResult, waitStatus: "unavailable" };
+  }
+  let job: unknown;
+  console.error(
+    JSON.stringify({ event: "publish.wait", jobId, status: "pending" })
+  );
+  for (let poll = 0; poll < publishWaitPolls; poll++) {
+    try {
+      job = await dependencies.getPublishJob({
+        ...connection,
+        jobId,
+        ...(typeof logHandle === "string" ? { logHandle } : {}),
+      });
+    } catch {
+      return { ...publishResult, waitStatus: "unavailable" };
+    }
+    const status = isPlainRecord(job) ? job.status : undefined;
+    if (
+      poll === 0 ||
+      poll % 6 === 5 ||
+      status === "success" ||
+      status === "failed"
+    ) {
+      console.error(
+        JSON.stringify({
+          event: "publish.wait",
+          jobId,
+          status: status ?? "unknown",
+        })
+      );
+    }
+    if (status === "success" || status === "failed" || status === "removed") {
+      break;
+    }
+    if (poll < publishWaitPolls - 1) {
+      await dependencies.pause(publishWaitDelayMs);
+    }
+  }
+  const status = isPlainRecord(job) ? job.status : undefined;
+  if (status !== "success" && status !== "failed") {
+    return {
+      ...publishResult,
+      job,
+      waitStatus: status === "pending" ? "timeout" : "unavailable",
+    };
+  }
+  const terminalResult = {
+    ...publishResult,
+    status,
+    job,
+    publishLog: { availability: "unavailable" },
+  };
+  if (typeof buildId !== "string" || typeof logHandle !== "string") {
+    return terminalResult;
+  }
+  let publishLog: unknown;
+  for (let poll = 0; poll < publishLogGracePolls; poll++) {
+    try {
+      publishLog = await dependencies.getPublishLog({
+        ...connection,
+        buildId,
+        logHandle,
+      });
+    } catch {
+      return terminalResult;
+    }
+    if (isPlainRecord(publishLog) && publishLog.availability === "available") {
+      break;
+    }
+    if (
+      isPlainRecord(publishLog) === false ||
+      publishLog.availability !== "pending"
+    ) {
+      return terminalResult;
+    }
+    if (poll < publishLogGracePolls - 1) {
+      await dependencies.pause(publishWaitDelayMs);
+    }
+  }
+  if (
+    isPlainRecord(publishLog) === false ||
+    publishLog.availability !== "available" ||
+    publishLog.logAvailability !== "available"
+  ) {
+    return terminalResult;
+  }
+  const firstLog = publishLog;
+  const chunks: Buffer[] = [];
+  const issues: unknown[] = [];
+  let issuesOmitted = 0;
+  let cursor: number | undefined;
+  while (isPlainRecord(publishLog) && publishLog.availability === "available") {
+    const log = isPlainRecord(publishLog.log) ? publishLog.log : undefined;
+    if (
+      publishLog.logAvailability !== "available" ||
+      log?.encoding !== "base64url" ||
+      typeof log.chunk !== "string"
+    ) {
+      return terminalResult;
+    }
+    chunks.push(Buffer.from(log.chunk, "base64url"));
+    if (Array.isArray(log.issues)) {
+      issues.push(...log.issues);
+    }
+    if (typeof log.issuesOmitted === "number") {
+      issuesOmitted += log.issuesOmitted;
+    }
+    if (log.complete === true) {
+      return {
+        ...terminalResult,
+        publishLog: {
+          ...firstLog,
+          log: { complete: true, issues, issuesOmitted },
+          logText: new TextDecoder().decode(Buffer.concat(chunks)),
+        },
+      };
+    }
+    if (
+      log.complete !== false ||
+      typeof log.nextCursor !== "number" ||
+      log.nextCursor <= (cursor ?? -1)
+    ) {
+      return terminalResult;
+    }
+    cursor = log.nextCursor;
+    try {
+      publishLog = await dependencies.getPublishLog({
+        ...connection,
+        buildId,
+        logHandle,
+        cursor,
+      });
+    } catch {
+      return terminalResult;
+    }
+  }
+  return terminalResult;
+};
 
 type ApiCommandHandler = (
   options: ApiCommandOptions,
@@ -3028,17 +3235,47 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     );
   },
   publish: async (options, connection, dependencies) => {
-    const input = {
-      target: publishTargetValue(options.target),
-      domains: listStringOption(options.domain),
-      message: options.message,
-      idempotencyKey: options.idempotencyKey,
-    };
-    return runProjectSessionCommand("publish", input, connection, dependencies);
+    const target = publishTargetValue(options.target);
+    let envelope;
+    if (target === "static") {
+      envelope = await runProjectSessionCommand(
+        "publish",
+        {
+          target,
+          templates: publishTemplateValues(options.template),
+          idempotencyKey: options.idempotencyKey,
+        },
+        connection,
+        dependencies
+      );
+    } else {
+      const input = {
+        target,
+        domains: listStringOption(options.domain),
+        message: options.message,
+        idempotencyKey: options.idempotencyKey,
+      };
+      envelope = await runProjectSessionCommand(
+        "publish",
+        input,
+        connection,
+        dependencies
+      );
+    }
+    return options.wait === true
+      ? {
+          ...envelope,
+          result: await waitForPublish(
+            envelope.result,
+            connection,
+            dependencies
+          ),
+        }
+      : envelope;
   },
   "validate-publish": async (options, connection, dependencies) => {
     const input = {
-      target: publishTargetValue(options.target),
+      target: deploymentTargetValue(options.target),
       domains: listStringOption(options.domain),
     };
     return runProjectSessionCommand(
@@ -3068,10 +3305,23 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
+  "get-publish-log": async (options, connection, dependencies) => {
+    const input = {
+      buildId: requireOption(options.buildId, "--build-id"),
+      logHandle: requireOption(options.logHandle, "--log-handle"),
+      cursor: options.cursor === undefined ? undefined : Number(options.cursor),
+    };
+    return runProjectSessionCommand(
+      "get-publish-log",
+      input,
+      connection,
+      dependencies
+    );
+  },
   unpublish: async (options, connection, dependencies) => {
     requireTrueOption(options.confirm, "--confirm");
     const input = {
-      target: publishTargetValue(options.target),
+      target: deploymentTargetValue(options.target),
       domains: listStringOption(options.domain),
     };
     return runProjectSessionCommand(
@@ -3309,14 +3559,40 @@ export const apiCommand = async (
     const result = isProjectSessionEnvelope(response)
       ? response.result
       : response;
+    const publishFailure =
+      options.command === "publish" && isPlainRecord(result)
+        ? result.status === "blocked" ||
+          (options.wait === true &&
+            (result.waitStatus === "timeout" ||
+              result.waitStatus === "unavailable" ||
+              result.status === "failed"))
+        : false;
     if (options.command === "audit" && options.json !== true) {
       printAuditReport(result);
     } else if (options.command === "permissions" && options.json !== true) {
       printPermissions(result);
     } else {
       printJson({
-        ok: true,
+        ok: publishFailure === false,
         data: result,
+        ...(publishFailure
+          ? {
+              error: {
+                code:
+                  isPlainRecord(result) && result.waitStatus === "timeout"
+                    ? "PUBLISH_WAIT_TIMEOUT"
+                    : isPlainRecord(result) &&
+                        result.waitStatus === "unavailable"
+                      ? "PUBLISH_WAIT_UNAVAILABLE"
+                      : isPlainRecord(result) && result.status === "blocked"
+                        ? "PUBLISH_BLOCKED"
+                        : "PUBLISH_FAILED",
+                ...(isPlainRecord(result) && result.waitStatus === "timeout"
+                  ? { message: "Publishing is still running. Stopped waiting." }
+                  : {}),
+              },
+            }
+          : {}),
         meta: {
           command: options.command,
           projectId: connection.projectId,
@@ -3325,7 +3601,13 @@ export const apiCommand = async (
         },
       });
     }
+    if (publishFailure) {
+      throw new HandledCliError();
+    }
   } catch (error) {
+    if (error instanceof HandledCliError) {
+      throw error;
+    }
     const issues = getCliErrorIssues(error);
     if (options.json === true) {
       const code = getErrorCode(error);

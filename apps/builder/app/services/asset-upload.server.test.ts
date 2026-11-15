@@ -1,4 +1,6 @@
-import { afterEach, expect, test, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
 import {
   getAssetContentHash,
   RESIZABLE_IMAGE_MIME_TYPES,
@@ -8,9 +10,22 @@ import {
   getUrlAssetContentHash,
 } from "./asset-upload.server";
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
+const server = setupServer();
+beforeAll(() =>
+  server.listen({
+    onUnhandledRequest(request, print) {
+      const { origin } = new URL(request.url);
+      if (
+        origin === "https://example.com" ||
+        origin === "https://source.example.com"
+      ) {
+        print.error();
+      }
+    },
+  })
+);
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 test("keeps raw browser upload request bodies unchanged", async () => {
   const request = new Request(
@@ -60,8 +75,17 @@ test("keeps JSON files with a root URL field as file content", async () => {
 });
 
 test("keeps browser URL image uploads by fetching the remote image body", async () => {
-  const fetch = vi.fn(async () => new Response("remote image"));
-  vi.stubGlobal("fetch", fetch);
+  const received = vi.fn((request: Request) => {
+    expect(request.headers.get("accept")).toBe(
+      RESIZABLE_IMAGE_MIME_TYPES.join(",")
+    );
+    return new HttpResponse("remote image");
+  });
+  server.use(
+    http.get("https://example.com/image.png", ({ request }) =>
+      received(request)
+    )
+  );
   const request = new Request(
     "https://webstudio.is/rest/assets/uploads/image.png",
     {
@@ -77,16 +101,19 @@ test("keeps browser URL image uploads by fetching the remote image body", async 
   await expect(
     new Response(await getBrowserUploadBody(request, "application/json")).text()
   ).resolves.toBe("remote image");
-  expect(fetch).toHaveBeenCalledWith("https://example.com/image.png", {
-    method: "GET",
-    headers: { Accept: RESIZABLE_IMAGE_MIME_TYPES.join(",") },
-  });
+  expect(received).toHaveBeenCalledOnce();
+  // The image backend must not replace other fetch requests in this process.
+  await expect(
+    fetch("data:text/plain,unrelated").then((response) => response.text())
+  ).resolves.toBe("unrelated");
 });
 
 test("reports browser URL image fetch failures", async () => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async () => new Response("not found", { status: 404 }))
+  server.use(
+    http.get(
+      "https://example.com/image.png",
+      () => new HttpResponse("not found", { status: 404 })
+    )
   );
   const request = new Request(
     "https://webstudio.is/rest/assets/uploads/image.png",
@@ -109,8 +136,13 @@ test("reports browser URL image fetch failures", async () => {
 
 test("hashes remote SVG bytes for upload deduplication", async () => {
   const svg = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
-  const fetch = vi.fn(async () => new Response(svg));
-  vi.stubGlobal("fetch", fetch);
+  const received = vi.fn(() => new HttpResponse(svg));
+  server.use(
+    http.get("https://source.example.com/cgi/image/logo.svg", ({ request }) => {
+      expect(new URL(request.url).searchParams.get("format")).toBe("raw");
+      return received();
+    })
+  );
 
   await expect(
     getUrlAssetContentHash(
@@ -118,5 +150,5 @@ test("hashes remote SVG bytes for upload deduplication", async () => {
       "logo.svg"
     )
   ).resolves.toBe(await getAssetContentHash(new TextEncoder().encode(svg)));
-  expect(fetch).toHaveBeenCalledOnce();
+  expect(received).toHaveBeenCalledOnce();
 });

@@ -38,7 +38,12 @@ const userRow = {
 
 describe("getUserById (msw)", () => {
   test("returns user when found", async () => {
-    server.use(db.get("User", () => json(userRow)));
+    server.use(
+      db.get("User", ({ request }) => {
+        expect(new URL(request.url).searchParams.get("id")).toBe("eq.user-1");
+        return json(userRow);
+      })
+    );
 
     const result = await getUserById(createContext(), "user-1");
     expect(result.id).toBe("user-1");
@@ -69,9 +74,17 @@ describe("createOrLoginWithDev (msw)", () => {
     let workspaceChecked = false;
     server.use(
       // User SELECT resolves successfully → existing user
-      db.get("User", () => json(userRow)),
+      db.get("User", ({ request }) => {
+        expect(new URL(request.url).searchParams.get("email")).toBe(
+          "eq.test@example.com"
+        );
+        return json(userRow);
+      }),
       // Workspace check — has default workspace
-      db.get("Workspace", () => {
+      db.get("Workspace", ({ request }) => {
+        const filters = new URL(request.url).searchParams;
+        expect(filters.get("userId")).toBe("eq.user-1");
+        expect(filters.get("isDefault")).toBe("eq.true");
         workspaceChecked = true;
         return json({ id: "ws-1" });
       })
@@ -91,7 +104,12 @@ describe("createOrLoginWithDev (msw)", () => {
       db.get("User", () => json(userRow)),
       // maybeSingle returns null when no row exists
       db.get("Workspace", () => json(null)),
-      db.post("Workspace", () => {
+      db.post("Workspace", async ({ request }) => {
+        expect(await request.json()).toEqual({
+          name: "My workspace",
+          isDefault: true,
+          userId: "user-1",
+        });
         workspaceCreated = true;
         return json({ id: "ws-new" }, { status: 201 });
       })
@@ -106,21 +124,36 @@ describe("createOrLoginWithDev (msw)", () => {
   });
 
   test("creates new user and workspace when email not found", async () => {
-    let userInserted = false;
+    let insertedUserId: string | undefined;
     let workspaceInserted = false;
     server.use(
       // User SELECT → PGRST116 (not found)
-      db.get("User", () =>
-        json(
+      db.get("User", ({ request }) => {
+        expect(new URL(request.url).searchParams.get("email")).toBe(
+          "eq.new@example.com"
+        );
+        return json(
           { code: "PGRST116", message: "Row not found", details: "", hint: "" },
           { status: 406 }
-        )
-      ),
-      db.post("User", () => {
-        userInserted = true;
-        return json({ ...userRow, id: "new-user" }, { status: 201 });
+        );
       }),
-      db.post("Workspace", () => {
+      db.post("User", async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        expect(body).toMatchObject({
+          email: "new@example.com",
+          username: "admin",
+          provider: "dev",
+        });
+        expect(body.id).toEqual(expect.any(String));
+        insertedUserId = body.id as string;
+        return json({ ...userRow, ...body }, { status: 201 });
+      }),
+      db.post("Workspace", async ({ request }) => {
+        expect(await request.json()).toEqual({
+          name: "My workspace",
+          isDefault: true,
+          userId: insertedUserId,
+        });
         workspaceInserted = true;
         return json({ id: "ws-new" }, { status: 201 });
       })
@@ -131,8 +164,8 @@ describe("createOrLoginWithDev (msw)", () => {
       "new@example.com"
     );
 
-    expect(result.email).toBe("test@example.com"); // from userRow mock
-    expect(userInserted).toBe(true);
+    expect(result.email).toBe("new@example.com");
+    expect(insertedUserId).toBeDefined();
     expect(workspaceInserted).toBe(true);
   });
 
@@ -167,6 +200,7 @@ describe("createOrLoginWithOAuth (msw)", () => {
     server.use(
       db.get("User", () => json(userRow)),
       db.patch("User", async ({ request }) => {
+        expect(new URL(request.url).searchParams.get("id")).toBe("eq.user-1");
         capturedBody = await request.json();
         return json(updatedUser);
       }),
@@ -196,9 +230,11 @@ describe("updateUserProjectsTags (msw)", () => {
 
   test("returns updated tags", async () => {
     server.use(
-      db.patch("User", () =>
-        json({ ...userRow, projectsTags: tags }, { status: 200 })
-      )
+      db.patch("User", async ({ request }) => {
+        expect(new URL(request.url).searchParams.get("id")).toBe("eq.user-1");
+        expect(await request.json()).toEqual({ projectsTags: tags });
+        return json({ ...userRow, projectsTags: tags }, { status: 200 });
+      })
     );
 
     const result = await updateUserProjectsTags({ tags }, createContext());

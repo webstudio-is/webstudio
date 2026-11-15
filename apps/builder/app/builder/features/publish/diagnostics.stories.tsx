@@ -1,16 +1,16 @@
 import { useEffect } from "react";
 import { StorySection } from "@webstudio-is/design-system";
 import {
-  PublishValidationResults,
-  type PublishValidationFinding,
-} from "./publish-validation-results";
+  PublishDiagnosticsDialog,
+  type DiagnosticFinding,
+} from "./diagnostics";
 
 export default {
   title: "Publish/Validation results",
-  component: PublishValidationResults,
+  component: PublishDiagnosticsDialog,
 };
 
-const errorsAndWarnings: PublishValidationFinding[] = [
+const errorsAndWarnings: DiagnosticFinding[] = [
   {
     severity: "error",
     title: "Unable to complete publish validation",
@@ -25,11 +25,7 @@ const errorsAndWarnings: PublishValidationFinding[] = [
   },
 ];
 
-const ValidationStory = ({
-  findings,
-}: {
-  findings: PublishValidationFinding[];
-}) => {
+const ValidationStory = ({ findings }: { findings: DiagnosticFinding[] }) => {
   useEffect(() => {
     const open = () => {
       const button = Array.from(document.querySelectorAll("button")).find(
@@ -48,7 +44,7 @@ const ValidationStory = ({
 
   return (
     <StorySection title="Publish validation">
-      <PublishValidationResults findings={findings} />
+      <PublishDiagnosticsDialog findings={findings} />
     </StorySection>
   );
 };

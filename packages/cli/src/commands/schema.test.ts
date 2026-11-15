@@ -54,14 +54,18 @@ test("prints api command schema as json", () => {
         operation: "publish",
         method: "mutation",
         inputSchema: expect.objectContaining({
-          type: "object",
-          properties: expect.objectContaining({
-            target: expect.objectContaining({
-              enum: expect.arrayContaining(["staging", "production"]),
+          oneOf: expect.arrayContaining([
+            expect.objectContaining({
+              type: "object",
+              properties: expect.objectContaining({
+                target: expect.objectContaining({
+                  enum: expect.arrayContaining(["staging", "production"]),
+                }),
+                domains: expect.objectContaining({ type: "array" }),
+                message: expect.objectContaining({ type: "string" }),
+              }),
             }),
-            domains: expect.objectContaining({ type: "array" }),
-            message: expect.objectContaining({ type: "string" }),
-          }),
+          ]),
         }),
       }),
       expect.objectContaining({
@@ -72,9 +76,11 @@ test("prints api command schema as json", () => {
     ])
   );
   for (const command of output.commands) {
-    expect(command.inputSchema).toEqual(
-      expect.objectContaining({ type: "object" })
-    );
+    const schemas = command.inputSchema.oneOf ?? [command.inputSchema];
+    expect(schemas).not.toHaveLength(0);
+    for (const inputSchema of schemas) {
+      expect(inputSchema).toEqual(expect.objectContaining({ type: "object" }));
+    }
   }
   expect(output.commands).not.toEqual(
     expect.arrayContaining([
@@ -99,7 +105,10 @@ test("prints api command schema as json", () => {
       }),
       expect.objectContaining({
         useCase: "Publish project",
-        commands: ["webstudio publish deploy --target production --json"],
+        commands: [
+          "webstudio publish deploy --target production --json",
+          "webstudio publish deploy --target production --json --wait",
+        ],
       }),
     ])
   );
@@ -149,8 +158,16 @@ test("prints compact mcp tool summaries as json by default", () => {
       inputSchema,
     })
   );
-  // Includes Form simulation, custom response headers, screenshot, and all three style source transfer schemas.
-  expect(JSON.stringify(handshakePayload).length).toBeLessThan(224_500);
+  // Publish validation and execution occupy about 1.5k characters; keep the old
+  // budget for all other tools and a tight overall handshake budget.
+  expect(JSON.stringify(handshakePayload).length).toBeLessThan(226_000);
+  expect(
+    JSON.stringify(
+      handshakePayload.filter(
+        ({ name }) => name !== "validate-publish" && name !== "get-publish-log"
+      )
+    ).length
+  ).toBeLessThan(224_500);
   const screenshotTool = expectedTools.find(
     ({ name }) => name === "screenshot"
   );

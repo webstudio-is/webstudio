@@ -14,6 +14,7 @@ import { parseWebstudioJsxFragment } from "@webstudio-is/project-build/transfer/
 import { applyBuilderNamespacePatches } from "@webstudio-is/project-build/state";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import * as projectBuild from "@webstudio-is/project-build/server";
+import { PrePublishAuditError } from "@webstudio-is/project-build/runtime";
 import * as projectApi from "@webstudio-is/project/index.server";
 import * as domainApi from "@webstudio-is/domain/index.server";
 import {
@@ -820,6 +821,97 @@ afterEach(() => {
 });
 
 describe("api router permits", () => {
+  test.each([
+    { ownerAllowed: false, blocked: true },
+    { ownerAllowed: true, blocked: false },
+  ])(
+    "uses owner diagnostics entitlement for publish findings ($ownerAllowed, $blocked)",
+    async ({ ownerAllowed, blocked }) => {
+      vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+      server.use(postgrestDb.get("Project", () => json({ userId: "owner-1" })));
+      const context = createContext(true, {
+        type: "user",
+        userId: "collaborator",
+        sessionCreatedAt: 0,
+        isLoggedInToBuilder: async () => true,
+      });
+      context.planFeatures.allowPublishLogs = !ownerAllowed;
+      const getOwnerPlanFeatures = vi.fn(async () => ({
+        ...defaultPlanFeatures,
+        allowPublishLogs: ownerAllowed,
+      }));
+      context.getOwnerPlanFeatures = getOwnerPlanFeatures;
+      const finding = {
+        ruleId: "html-content-model",
+        severity: "warning" as const,
+        message: "x".repeat(200),
+        location: { pageId: "page-1", instanceId: "instance-1" },
+      };
+      if (blocked) {
+        vi.spyOn(domainApi, "publishStaticProject").mockRejectedValue(
+          new PrePublishAuditError([finding])
+        );
+      } else {
+        vi.spyOn(domainApi, "publishStaticProject").mockResolvedValue({
+          success: true,
+          name: "export.zip",
+          build: { id: "build-1" },
+          logHandle: undefined,
+          findings: [finding],
+        } as never);
+      }
+
+      const result = await createCaller(context).publish.create({
+        projectId: "project-1",
+        target: "static",
+        templates: ["ssg"],
+      });
+      expect(result.status).toBe(blocked ? "blocked" : "pending");
+      expect(result.findings).toEqual([
+        ownerAllowed
+          ? finding
+          : { ...finding, message: "x".repeat(160), location: {} },
+      ]);
+      expect(getOwnerPlanFeatures).toHaveBeenCalledExactlyOnceWith("owner-1");
+    }
+  );
+
+  test("keeps hosted audit failures blocked after checking domains", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    server.use(postgrestDb.get("Project", () => json({ userId: "owner-1" })));
+    const context = createContext(true, {
+      type: "user",
+      userId: "owner-1",
+      sessionCreatedAt: 0,
+      isLoggedInToBuilder: async () => true,
+    });
+    vi.spyOn(projectApi, "loadById").mockResolvedValue({
+      domain: "project.wstd.dev",
+      domainsVirtual: [],
+    } as never);
+    vi.spyOn(domainApi, "publishProject").mockRejectedValue(
+      new PrePublishAuditError([
+        {
+          ruleId: "json-prop-value",
+          severity: "error",
+          message: "Invalid prop",
+          location: { propId: "prop-1" },
+        },
+      ])
+    );
+
+    await expect(
+      createCaller(context).publish.create({
+        projectId: "project-1",
+        target: "staging",
+        domains: ["project.wstd.dev"],
+      })
+    ).resolves.toMatchObject({
+      status: "blocked",
+      findings: [{ ruleId: "json-prop-value", severity: "error" }],
+    });
+  });
+
   test("missing publish jobs carry a not-found error marker", async () => {
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
@@ -835,6 +927,41 @@ describe("api router permits", () => {
       message: "Publish job not found",
       cause: { webstudioCode: "NOT_FOUND" },
     });
+  });
+
+  test("checks project access before reading a signed publish job", async () => {
+    const permit = vi
+      .spyOn(authorizeProject, "hasProjectPermit")
+      .mockResolvedValue(true);
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    const getJob = vi
+      .spyOn(domainApi, "getProjectPublishJob")
+      .mockResolvedValue({ status: "pending" } as never);
+
+    await createCaller(createContext(true)).publish.getJob({
+      projectId: "project-1",
+      jobId: "build-prod",
+      logHandle: "signed-handle",
+    });
+    expect(getJob).toHaveBeenCalledWith(
+      {
+        projectId: "project-1",
+        jobId: "build-prod",
+        logHandle: "signed-handle",
+      },
+      expect.anything()
+    );
+
+    permit.mockResolvedValue(false);
+
+    await expect(
+      createCaller(createContext(true)).publish.getJob({
+        projectId: "project-1",
+        jobId: "build-prod",
+        logHandle: "signed-handle",
+      })
+    ).rejects.toThrow();
+    expect(getJob).toHaveBeenCalledOnce();
   });
 
   test("unpublish completes without returning a nonexistent publish job", async () => {

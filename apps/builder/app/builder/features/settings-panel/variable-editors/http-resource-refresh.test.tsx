@@ -1,10 +1,11 @@
 import { createRef } from "react";
+import { FetchInterceptor } from "@mswjs/interceptors/fetch";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { userEvent } from "@vitest/browser/context";
 import { Dialog, TooltipProvider } from "@webstudio-is/design-system";
 import type { ResourceRequest } from "@webstudio-is/sdk";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 
 import { $resources } from "~/shared/sync/data-stores";
 
@@ -14,6 +15,9 @@ import { $resources } from "~/shared/sync/data-stores";
 
 let root: Root | undefined;
 const initialResources = $resources.get();
+const interceptor = new FetchInterceptor();
+beforeAll(() => interceptor.apply());
+afterAll(() => interceptor.dispose());
 
 afterEach(async () => {
   act(() => root?.unmount());
@@ -22,24 +26,28 @@ afterEach(async () => {
   const { __testing__ } = await import("~/shared/resources");
   __testing__.reset();
   document.body.innerHTML = "";
-  vi.unstubAllGlobals();
+  interceptor.removeAllListeners("request");
 });
 
 test("Resource editor Refresh sends its computed GET to the inspected loader", async () => {
   const url = "https://api.tilmaplatform.com/api/orgs/holyredeemer/en/";
-  const loaderCalls: Array<{ input: string; init?: RequestInit }> = [];
-  const nativeFetch = globalThis.fetch;
-  vi.stubGlobal(
-    "fetch",
-    async (input: RequestInfo | URL, init?: RequestInit) => {
-      if (String(input).startsWith("/rest/resources-loader")) {
-        loaderCalls.push({ input: String(input), init });
-        return Response.json({ resources: [] });
-      }
-      return nativeFetch(input, init);
+  const loaderCalls: Request[] = [];
+  interceptor.on("request", ({ request, controller }) => {
+    const requestUrl = new URL(request.url);
+    if (
+      requestUrl.origin !== location.origin ||
+      requestUrl.pathname !== "/rest/resources-loader"
+    ) {
+      return;
     }
-  );
-  // fetch.client captures fetch at import time.
+    loaderCalls.push(request.clone());
+    controller.respondWith(
+      request.method === "POST"
+        ? Response.json({ resources: [] })
+        : Response.error()
+    );
+  });
+  // Install interception before fetch.client captures fetch at import time.
   const [{ HttpResourceEditor }, { updateCsrfToken }] = await Promise.all([
     import("./http-resource-editor"),
     import("~/shared/csrf.client"),
@@ -107,10 +115,10 @@ test("Resource editor Refresh sends its computed GET to the inspected loader", a
     );
   });
   await vi.waitFor(() => expect(loaderCalls).toHaveLength(1));
-  const [{ input, init }] = loaderCalls;
-  expect(input).toMatch(/^\/rest\/resources-loader\?inspect=/);
-  expect(init?.method).toBe("POST");
-  expect(JSON.parse(String(init?.body)) as ResourceRequest[]).toEqual([
+  const [request] = loaderCalls;
+  expect(new URL(request.url).searchParams.has("inspect")).toBe(true);
+  expect(request.method).toBe("POST");
+  expect((await request.json()) as ResourceRequest[]).toEqual([
     {
       name: variable.name,
       method: "get",

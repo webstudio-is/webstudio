@@ -18,11 +18,9 @@ import {
 import type { Project } from "@webstudio-is/project";
 import {
   AlertIcon,
-  CheckCircleIcon,
   CopyIcon,
   HelpIcon,
   InfoCircleIcon,
-  SpinnerIcon,
 } from "@webstudio-is/icons";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
@@ -42,9 +40,11 @@ import { extractCname } from "./cname";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { DomainCheckbox } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
-import { RelativeTime } from "~/builder/shared/relative-time";
+import { getPublishStatusDisplay } from "./publish-status";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
+import type { SessionPublish } from "./session-publishes";
+import { DomainStatusButton } from "./domain-status-button";
 
 export type Domain = Project["domainsVirtual"][number];
 
@@ -60,54 +60,6 @@ export const getStatus = (projectDomain: Domain) =>
   projectDomain.verified
     ? (`VERIFIED_${projectDomain.status}` as const)
     : `UNVERIFIED`;
-
-export const PENDING_TIMEOUT =
-  process.env.NODE_ENV === "production" ? 60 * 3 * 1000 : 35000;
-
-export const getPublishStatusAndText = ({
-  createdAt,
-  publishStatus,
-}: Pick<
-  NonNullable<Domain["latestBuildVirtual"]>,
-  "createdAt" | "publishStatus"
->) => {
-  let status = publishStatus;
-
-  const delta = Date.now() - new Date(createdAt).getTime();
-  // Assume build failed after 3 minutes
-
-  if (publishStatus === "PENDING" && delta > PENDING_TIMEOUT) {
-    status = "FAILED";
-  }
-
-  const textStart =
-    status === "PUBLISHED"
-      ? "Published"
-      : status === "FAILED"
-        ? "Publish failed"
-        : "Publishing started";
-
-  const statusText = (
-    <>
-      {textStart} <RelativeTime time={new Date(createdAt)} />
-    </>
-  );
-
-  const color =
-    status === "PUBLISHED"
-      ? cssVar("--foreground-positive")
-      : status === "FAILED"
-        ? cssVar("--foreground-negative")
-        : cssVar("--foreground-warning");
-  const Icon =
-    status === "PUBLISHED"
-      ? CheckCircleIcon
-      : status === "FAILED"
-        ? AlertIcon
-        : SpinnerIcon;
-
-  return { statusText, status, color, Icon };
-};
 
 const getStatusText = (props: {
   projectDomain: Domain;
@@ -136,11 +88,11 @@ const getStatusText = (props: {
       text = "Status: Active, not published";
 
       if (props.projectDomain.latestBuildVirtual !== null) {
-        const publishText = getPublishStatusAndText(
+        const publishText = getPublishStatusDisplay(
           props.projectDomain.latestBuildVirtual
         );
 
-        text = publishText.statusText;
+        text = publishText.statusContent;
         color = publishText.color;
         Icon = publishText.Icon;
       }
@@ -163,39 +115,39 @@ const getStatusText = (props: {
   };
 };
 
-const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
-  const { color, Icon, text } = getStatusText(props);
-
+const StatusIcon = (props: {
+  projectDomain: Domain;
+  isLoading: boolean;
+  latestPublish?: SessionPublish;
+  onOpenReport?: (domain: string) => void;
+}) => {
+  const fallback = getStatusText(props);
   return (
-    <Tooltip content={text}>
-      <Flex
-        align="center"
-        justify="center"
-        css={{
-          cursor: "pointer",
-          width: theme.sizes.controlHeight,
-          height: theme.sizes.controlHeight,
-          color,
-        }}
-      >
-        <Icon />
-      </Flex>
-    </Tooltip>
+    <DomainStatusButton
+      domain={props.projectDomain.domain}
+      buildId={props.projectDomain.latestBuildVirtual?.buildId}
+      latestPublish={props.latestPublish}
+      fallback={fallback}
+      onOpenReport={() => props.onOpenReport?.(props.projectDomain.domain)}
+    />
   );
 };
-
 const DomainItem = ({
   initiallyOpen,
   projectDomain,
   project,
   refresh,
   validatedDomains,
+  onOpenReport,
+  latestPublish,
 }: {
   initiallyOpen: boolean;
   projectDomain: Domain;
   project: Project;
   refresh: () => Promise<void>;
   validatedDomains?: readonly string[];
+  onOpenReport?: (domain: string) => void;
+  latestPublish?: SessionPublish;
 }) => {
   const timeSinceLastUpdateMs =
     Date.now() - new Date(projectDomain.updatedAt).getTime();
@@ -368,8 +320,10 @@ const DomainItem = ({
       suffix={
         <Grid flow="column">
           <StatusIcon
-            isLoading={isStatusLoading}
             projectDomain={projectDomain}
+            isLoading={isStatusLoading}
+            onOpenReport={onOpenReport}
+            latestPublish={latestPublish}
           />
 
           <CopyToClipboard
@@ -582,6 +536,8 @@ type DomainsProps = {
   refresh: () => Promise<void>;
   project: Project;
   validatedDomains?: readonly string[];
+  onOpenReport?: (domain: string) => void;
+  sessionPublishes?: SessionPublish[];
 };
 
 export const Domains = ({
@@ -590,6 +546,8 @@ export const Domains = ({
   refresh,
   project,
   validatedDomains,
+  onOpenReport,
+  sessionPublishes = [],
 }: DomainsProps) => {
   return (
     <>
@@ -601,13 +559,16 @@ export const Domains = ({
           refresh={refresh}
           project={project}
           validatedDomains={validatedDomains}
+          onOpenReport={onOpenReport}
+          latestPublish={sessionPublishes.find(
+            (item) =>
+              item.target === "site" &&
+              item.domains.includes(projectDomain.domain)
+          )}
         />
       ))}
     </>
   );
 };
-
-undefined;
-undefined;
 
 export const __testing__ = { StatusIcon };

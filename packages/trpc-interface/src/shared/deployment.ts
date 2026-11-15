@@ -1,33 +1,11 @@
-import { z } from "zod";
 import { router, procedure } from "./trpc";
-
-// Has corresponding type in saas
-export const publishInput = z.object({
-  // used to load build data from the builder with build.loadProjectBundleByBuildId
-  buildId: z.string(),
-  builderOrigin: z.string(),
-  githubSha: z.string().optional(),
-
-  destination: z.enum(["saas", "static"]),
-  // preview support
-  branchName: z.string(),
-  // action log helper (not used for deployment, but for action logs readablity)
-  logProjectName: z.string(),
-});
-
-export const unpublishInput = z.object({
-  domain: z.string(),
-});
-
-export const output = z.discriminatedUnion("success", [
-  z.object({
-    success: z.literal(true),
-  }),
-  z.object({
-    success: z.literal(false),
-    error: z.string(),
-  }),
-]);
+import {
+  publishInput,
+  unpublishInput,
+  output,
+  publishLogInput,
+  publishLogOutput,
+} from "./deployment-contract";
 
 /**
  * This is the ContentManagementService. It is currently used to publish content to a custom domain.
@@ -52,4 +30,8 @@ export const deploymentRouter = router({
         error: "NOT_IMPLEMENTED",
       };
     }),
+  getPublishLog: procedure
+    .input(publishLogInput)
+    .output(publishLogOutput)
+    .query(() => ({ availability: "unavailable" as const })),
 });
