@@ -26,8 +26,8 @@ import {
 } from "@webstudio-is/design-system";
 import { CopyIcon } from "@webstudio-is/icons";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
-import type { SessionPublish } from "./use-session-publishes";
-import { getPublishDuration } from "./use-session-publishes";
+import type { SessionPublish } from "./session-publishes";
+import { getPublishDuration } from "./session-publishes";
 import { publishLogStatus } from "./constants";
 
 export type DiagnosticFinding = {

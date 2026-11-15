@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { IconButton, Tooltip } from "@webstudio-is/design-system";
 import type { AlertIcon } from "@webstudio-is/icons";
 import { publishLogStatus } from "./constants";
-import type { SessionPublish } from "./use-session-publishes";
+import type { SessionPublish } from "./session-publishes";
 
 export const DomainStatusButton = ({
   domain,

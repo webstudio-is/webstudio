@@ -1,5 +1,5 @@
 import type { DiagnosticFinding } from "./diagnostics";
-import type { SessionPublish } from "./use-session-publishes";
+import type { SessionPublish } from "./session-publishes";
 import { publishLogStatus } from "./constants";
 
 export const getDiagnosticsReport = ({

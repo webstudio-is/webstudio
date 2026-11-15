@@ -4,7 +4,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { __testing__, type Domain } from "./domains";
 import { PENDING_TIMEOUT } from "./publish-status";
-import type { SessionPublish } from "./use-session-publishes";
+import type { SessionPublish } from "./session-publishes";
 
 const { StatusIcon } = __testing__;
 let root: Root | undefined;

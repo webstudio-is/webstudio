@@ -8,7 +8,7 @@ import {
   PublishValidationBanner,
   type DiagnosticFinding,
 } from "./diagnostics";
-import type { SessionPublish } from "./use-session-publishes";
+import type { SessionPublish } from "./session-publishes";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;

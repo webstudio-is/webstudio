@@ -1,8 +1,6 @@
 import { expect, test, vi } from "vitest";
 import type { Project } from "@webstudio-is/project";
-import { __testing__ } from "./use-publish-progress";
-
-const { waitForPublishStatus } = __testing__;
+import { waitForPublishStatus } from "./publish-progress";
 
 test("a new publish waits past the previous build's failure", async () => {
   vi.useFakeTimers();

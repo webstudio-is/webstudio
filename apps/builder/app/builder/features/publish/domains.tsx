@@ -43,7 +43,7 @@ import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { getPublishStatusDisplay } from "./publish-status";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
-import type { SessionPublish } from "./use-session-publishes";
+import type { SessionPublish } from "./session-publishes";
 import { DomainStatusButton } from "./domain-status-button";
 
 export type Domain = Project["domainsVirtual"][number];

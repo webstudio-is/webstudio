@@ -8,8 +8,8 @@ import type { Project } from "@webstudio-is/project";
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
 let publishModule: typeof import("./publish");
-let flowModule: typeof import("./use-publish-flow");
-let diagnosticsModule: typeof import("./diagnostics");
+let nanoStates: typeof import("~/shared/nano-states");
+let publishDialog: typeof import("~/builder/shared/nano-states").$publishDialog;
 const acceptedResponse = {
   success: true,
   buildId: "static-1",
@@ -22,8 +22,16 @@ let projectStore: (typeof import("~/shared/sync/data-stores"))["$project"];
 let getJobStatus: "pending" | "success" | "failed" = "pending";
 let publishRequests = 0;
 let jobRequests = 0;
-let projectRequests = 0;
 const downloads = vi.fn();
+
+// Observe the real download URL without navigating away from the test runner.
+const interceptDownload = (event: NavigateEvent) => {
+  const url = new URL(event.destination.url);
+  if (url.pathname.startsWith("/cgi/static/ssg/")) {
+    event.preventDefault();
+    downloads(url.pathname);
+  }
+};
 
 const respond = (data: unknown) =>
   new Response(JSON.stringify([{ result: { data } }]), {
@@ -35,9 +43,25 @@ const respond = (data: unknown) =>
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 beforeAll(async () => {
+  window.navigation.addEventListener("navigate", interceptDownload);
   vi.resetModules();
   vi.stubGlobal("fetch", async (requestInfo: RequestInfo | URL) => {
     const path = new URL(String(requestInfo), "http://localhost").pathname;
+    if (path.includes(",")) {
+      const responses = await Promise.all(
+        path
+          .slice("/trpc/".length)
+          .split(",")
+          .map(async (route) => {
+            const response = await fetch(`/trpc/${route}`);
+            const results = (await response.json()) as unknown[];
+            return results[0];
+          })
+      );
+      return new Response(JSON.stringify(responses), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     if (path === "/trpc/build.contentDatabasePublishDiagnostics") {
       return respond({ mdxErrors: [], mdxOmissions: [] });
     }
@@ -50,142 +74,152 @@ beforeAll(async () => {
       return respond({ status: getJobStatus });
     }
     if (path === "/trpc/domain.project") {
-      projectRequests += 1;
       return respond({
         success: true,
         project: {
-          id: "project-a",
-          latestStaticBuild: {
-            buildId: "static-1",
-            updatedAt: new Date().toISOString(),
-            publishStatus: "PUBLISHED",
-          },
+          ...projectStore.get(),
+          latestStaticBuild:
+            publishRequests === 0
+              ? null
+              : {
+                  buildId: "static-1",
+                  updatedAt: new Date().toISOString(),
+                  publishStatus: "PUBLISHED",
+                },
         },
       });
     }
     throw new Error(`Unexpected request: ${path}`);
   });
   publishModule = await import("./publish");
-  flowModule = await import("./use-publish-flow");
-  diagnosticsModule = await import("./diagnostics");
+  nanoStates = await import("~/shared/nano-states");
+  publishDialog = (await import("~/builder/shared/nano-states")).$publishDialog;
   projectStore = (await import("~/shared/sync/data-stores")).$project;
   const { updateCsrfToken } = await import("~/shared/csrf.client");
   updateCsrfToken("test-token");
 });
 
-afterEach(() => {
-  act(() => root?.unmount());
+afterEach(async () => {
+  await act(async () => root?.unmount());
+  if (vi.isFakeTimers()) {
+    // Finish queued tRPC batches before switching back to real timers.
+    await act(async () => vi.runAllTimersAsync());
+  }
   root = undefined;
   container?.remove();
   container = undefined;
   projectStore.set(undefined);
+  publishDialog.set("none");
   getJobStatus = "pending";
   staticResponse = acceptedResponse;
   publishRequests = 0;
   jobRequests = 0;
-  projectRequests = 0;
   downloads.mockClear();
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
-afterAll(() => vi.unstubAllGlobals());
+afterAll(() => {
+  window.navigation.removeEventListener("navigate", interceptDownload);
+  vi.unstubAllGlobals();
+});
 
-const Harness = ({
-  open,
-  projectId = "project-a",
-}: {
-  open: boolean;
-  projectId?: string;
-}) => {
-  const flow = flowModule.usePublishFlow(projectId, false, "none");
-  return (
-    <TooltipProvider>
-      <output>{flow.isPublishing ? "pending" : "idle"}</output>
-      <output data-log-status>{flow.publishes[0]?.status}</output>
-      <output data-static-error>{flow.staticFailureFinding?.severity}</output>
-      {open && (
-        <publishModule.__testing__.PublishStatic
-          templates={["ssg"]}
-          flow={flow}
-          onDownload={downloads}
-        />
-      )}
-      <diagnosticsModule.PublishDiagnosticsDialog
-        findings={flow.reportFindings}
-        includeLatestPublishFindings={flow.includeLatestPublishFindings}
-        items={flow.reportPublishes}
-        open={flow.diagnosticsSelection !== undefined}
-        onOpenChange={(open) => {
-          if (!open) {
-            flow.closeReport();
-          }
-        }}
-        initialTab={flow.diagnosticsSelection?.tab}
-        canViewPublishLogs={false}
-      />
-    </TooltipProvider>
+const createProject = (id = "project-a") =>
+  ({
+    id,
+    domain: "example",
+    domainsVirtual: [],
+    latestStaticBuild: null,
+  }) as unknown as Project;
+
+const staticButton = () =>
+  Array.from(document.body.querySelectorAll<HTMLButtonElement>("button")).find(
+    (button) => button.textContent?.startsWith("Build and download static site")
   );
-};
 
-const render = (open: boolean, projectId = "project-a") => {
+const render = async (open: boolean, projectId = "project-a") => {
+  nanoStates.$authTokenPermissions.set({
+    canClone: true,
+    canCopy: true,
+    canPublish: true,
+  });
+  nanoStates.$planFeatures.set({
+    ...nanoStates.$planFeatures.get(),
+    allowPublishLogs: false,
+  });
   if (container === undefined) {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
   }
-  act(() => root?.render(<Harness open={open} projectId={projectId} />));
+  await act(async () => {
+    publishDialog.set(open ? "export" : "none");
+    root?.render(
+      <TooltipProvider>
+        <publishModule.PublishButton projectId={projectId} />
+      </TooltipProvider>
+    );
+  });
+  if (open && staticButton() === undefined) {
+    await act(async () =>
+      document.body
+        .querySelector<HTMLButtonElement>('button[role="combobox"]')
+        ?.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+        )
+    );
+    const option = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="option"]')
+    ).find((option) => option.textContent?.trim() === "Static");
+    expect(option).toBeDefined();
+    await act(async () => option?.click());
+  }
 };
 
 test("reopening an active static publish keeps one status owner and one download", async () => {
   vi.useFakeTimers();
-  projectStore.set({ id: "project-a", latestStaticBuild: null } as Project);
-  render(true);
-  const button = Array.from(container!.querySelectorAll("button")).find(
-    (candidate) => candidate.textContent === "Build and download static site"
-  );
+  projectStore.set(createProject());
+  await render(true);
+  const button = staticButton();
+  expect(button).toBeDefined();
   await act(async () => button?.click());
-  await act(async () => vi.waitFor(() => expect(projectRequests).toBe(1)));
+  await act(async () => vi.waitFor(() => expect(jobRequests).toBe(1)));
   expect(publishRequests).toBe(1);
   expect(jobRequests).toBe(1);
   expect(downloads).not.toHaveBeenCalled();
-  render(false);
-  render(true);
-  expect(container?.querySelector("output")?.textContent).toBe("pending");
+  await render(false);
+  await render(true);
+  expect(staticButton()?.dataset.state).toBe("pending");
   getJobStatus = "success";
   await act(async () => vi.advanceTimersByTimeAsync(15_000));
-  expect(downloads).toHaveBeenCalledExactlyOnceWith("site.zip");
-  expect(container?.querySelector("[data-log-status]")?.textContent).toBe(
-    "success"
-  );
+  await vi.waitFor(async () => {
+    await act(async () => {});
+    expect(downloads).toHaveBeenCalledOnce();
+  });
+  expect(downloads).toHaveBeenCalledExactlyOnceWith("/cgi/static/ssg/site.zip");
+  expect(staticButton()?.dataset.state).not.toBe("pending");
   expect(publishRequests).toBe(1);
   expect(jobRequests).toBe(2);
-  expect(container?.querySelector("[data-static-error]")?.textContent).toBe("");
 });
 
 test("project navigation suppresses an old static download and error toast", async () => {
   vi.useFakeTimers();
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
-  projectStore.set({ id: "project-a", latestStaticBuild: null } as Project);
-  render(true);
-  const button = Array.from(container!.querySelectorAll("button")).find(
-    (candidate) => candidate.textContent === "Build and download static site"
-  );
+  projectStore.set(createProject());
+  await render(true);
+  const button = staticButton();
+  expect(button).toBeDefined();
   await act(async () => button?.click());
-  await act(async () => vi.waitFor(() => expect(projectRequests).toBe(1)));
+  await act(async () => vi.waitFor(() => expect(jobRequests).toBe(1)));
   await act(async () =>
     vi.waitFor(() =>
       expect(projectStore.get()?.latestStaticBuild?.buildId).toBe("static-1")
     )
   );
-  act(() =>
-    projectStore.set({ id: "project-b", latestStaticBuild: null } as Project)
-  );
-  render(false, "project-b");
-  act(() =>
-    projectStore.set({ id: "project-a", latestStaticBuild: null } as Project)
-  );
-  render(false, "project-a");
+  act(() => projectStore.set(createProject("project-b")));
+  await render(false, "project-b");
+  act(() => projectStore.set(createProject()));
+  await render(false, "project-a");
   getJobStatus = "success";
   await act(async () => vi.advanceTimersByTimeAsync(15_000));
   await act(async () => vi.advanceTimersByTimeAsync(1_000));
@@ -196,25 +230,21 @@ test("project navigation suppresses an old static download and error toast", asy
 test("a failed static runner clears progress without starting a download", async () => {
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   getJobStatus = "failed";
-  projectStore.set({ id: "project-a", latestStaticBuild: null } as Project);
-  render(true);
-  const button = Array.from(container!.querySelectorAll("button")).find(
-    (candidate) => candidate.textContent === "Build and download static site"
-  );
+  projectStore.set(createProject());
+  await render(true);
+  const button = staticButton();
+  expect(button).toBeDefined();
   await act(async () => button?.click());
   await act(async () => vi.waitFor(() => expect(jobRequests).toBe(1)));
   expect(downloads).not.toHaveBeenCalled();
   expect(errorToast).toHaveBeenCalledOnce();
-  expect(container?.querySelector("[data-log-status]")?.textContent).toBe(
-    "failed"
-  );
-  expect(container?.querySelector("output")?.textContent).toBe("idle");
+  expect(staticButton()?.dataset.state).not.toBe("pending");
   await act(async () =>
-    userEvent.click(
-      container!.querySelector<HTMLButtonElement>(
+    document.body
+      .querySelector<HTMLButtonElement>(
         'button[aria-label="Publish log: Static export"]'
-      )!
-    )
+      )
+      ?.click()
   );
   const errors = Array.from(
     document.body.querySelectorAll<HTMLElement>('[role="tab"]')
@@ -223,7 +253,7 @@ test("a failed static runner clears progress without starting a download", async
   await act(async () => userEvent.click(errors!));
   const showLogs = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
-  ).find((button) => button.textContent === "show logs");
+  ).find((button) => button.textContent?.trim() === "show logs");
   expect(showLogs).toBeDefined();
   await act(async () => userEvent.click(showLogs!));
   expect(
@@ -239,28 +269,20 @@ test("a failed static runner clears progress without starting a download", async
 
 test("the static status reopens an audit rejection instead of an older successful publish", async () => {
   getJobStatus = "success";
-  projectStore.set({ id: "project-a", latestStaticBuild: null } as Project);
-  render(true);
-  const publish = Array.from(
-    container!.querySelectorAll<HTMLButtonElement>("button")
-  ).find((button) => button.textContent === "Build and download static site")!;
+  projectStore.set(createProject());
+  await render(true);
+  const publish = staticButton()!;
   await act(async () => publish.click());
   await vi.waitFor(async () => {
     await act(async () => {});
-    expect(container?.querySelector("[data-log-status]")?.textContent).toBe(
-      "success"
-    );
-    expect(container?.querySelector("output")?.textContent).toBe("idle");
+    expect(downloads).toHaveBeenCalledOnce();
+    expect(staticButton()?.dataset.state).not.toBe("pending");
   });
   staticResponse = {
     success: false,
     auditFindings: [{ severity: "error", message: "audit-rejection" }],
   };
-  await act(async () =>
-    Array.from(container!.querySelectorAll<HTMLButtonElement>("button"))
-      .find((button) => button.textContent === "Build and download static site")
-      ?.click()
-  );
+  await act(async () => staticButton()?.click());
   const activeTab = () =>
     document.body.querySelector('[role="tab"][aria-selected="true"]')
       ?.textContent;
@@ -277,8 +299,9 @@ test("the static status reopens an audit rejection instead of an older successfu
     await act(async () => {});
     expect(document.body.querySelector('[role="dialog"]')).toBeNull();
   });
+  await render(true);
   await act(async () =>
-    container!
+    document.body
       .querySelector<HTMLButtonElement>(
         'button[aria-label="Publish log: Static export"]'
       )

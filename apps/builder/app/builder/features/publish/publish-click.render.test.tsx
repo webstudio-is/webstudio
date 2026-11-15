@@ -1,4 +1,5 @@
 import { act } from "react-dom/test-utils";
+import { userEvent } from "@vitest/browser/context";
 import { createRoot, type Root } from "react-dom/client";
 import {
   afterAll,
@@ -29,6 +30,7 @@ const requests: Array<{ path: string; input: unknown }> = [];
 let publishResponse: unknown = { success: false, error: "Publish blocked" };
 let jobStatus: "failed" | "success" = "failed";
 let didPublish = false;
+const logCursors: Array<number | undefined> = [];
 
 beforeAll(async () => {
   Object.defineProperty(Element.prototype, "scrollIntoView", {
@@ -62,6 +64,34 @@ beforeAll(async () => {
             case "/trpc/api.publish.getJob":
               data = { status: jobStatus, code: "BUILD_FAILED" };
               break;
+            case "/trpc/api.publish.getLog": {
+              const cursor = (input[String(index)] as { cursor?: number })
+                .cursor;
+              logCursors.push(cursor);
+              data = {
+                availability: "available",
+                startedAt: "2026-11-13T10:00:00.000Z",
+                completedAt: "2026-11-13T10:00:03.000Z",
+                log: {
+                  encoding: "base64url",
+                  chunk: btoa(
+                    String.fromCharCode(
+                      ...(cursor === undefined ? [0xe2] : [0x82, 0xac])
+                    )
+                  ),
+                  complete: cursor !== undefined,
+                  nextCursor: cursor === undefined ? 1 : undefined,
+                  issues: [
+                    {
+                      severity: cursor === undefined ? "warning" : "error",
+                      message:
+                        cursor === undefined ? "Early warning" : "Late error",
+                    },
+                  ],
+                },
+              };
+              break;
+            }
             case "/trpc/domain.project":
               data = {
                 success: true,
@@ -121,6 +151,11 @@ beforeEach(() => {
   requests.length = 0;
   jobStatus = "failed";
   didPublish = false;
+  logCursors.length = 0;
+  nanoStates.$planFeatures.set({
+    ...nanoStates.$planFeatures.get(),
+    allowPublishLogs: false,
+  });
 });
 
 test("a successful site runner finishes the current publish and retains its report", async () => {
@@ -208,7 +243,96 @@ afterEach(() => {
   root = undefined;
   resetStores = undefined;
   document.body.innerHTML = "";
+  nanoStates.$planFeatures.set({
+    ...nanoStates.$planFeatures.get(),
+    allowPublishLogs: false,
+  });
   vi.restoreAllMocks();
+});
+
+test("a paid publish loads every log page and hides it after downgrade", async () => {
+  jobStatus = "success";
+  publishResponse = {
+    success: true,
+    buildId: "build-1",
+    logHandle: "log-handle",
+    findings: [],
+  };
+  stores.$project.set({
+    id: "project-1",
+    domain: "example",
+    domainsVirtual: [],
+    latestStaticBuild: null,
+  } as unknown as Project);
+  nanoStates.$authTokenPermissions.set({
+    canClone: true,
+    canCopy: true,
+    canPublish: true,
+  });
+  nanoStates.$planFeatures.set({
+    ...nanoStates.$planFeatures.get(),
+    allowPublishLogs: true,
+  });
+  builderStates.$publishDialog.set("publish");
+  resetStores = () => {
+    stores.$project.set(undefined);
+    builderStates.$publishDialog.set("none");
+  };
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <publishModule.PublishButton projectId="project-1" />
+      </TooltipProvider>
+    )
+  );
+  const domain = document.body.querySelector<HTMLInputElement>(
+    'input[name="domainToPublish[]"]'
+  )!;
+  if (!domain.checked) {
+    await act(async () =>
+      document.body.querySelector<HTMLElement>('[role="checkbox"]')?.click()
+    );
+  }
+  const publish = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  )
+    .filter((button) => button.textContent === "Publish")
+    .at(-1)!;
+  await act(async () => publish.click());
+  await act(async () =>
+    vi.waitFor(() => expect(logCursors).toEqual([undefined, 1]))
+  );
+  const report = document.body.querySelector<HTMLButtonElement>(
+    'button[aria-label^="Publish log:"]'
+  )!;
+  await act(async () => report.click());
+  expect(document.body.textContent).toContain("€");
+  const selectTab = async (name: string) => {
+    const tab = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="tab"]')
+    ).find((candidate) => candidate.textContent?.startsWith(name));
+    expect(tab).toBeDefined();
+    await act(async () => userEvent.click(tab!));
+  };
+  await selectTab("Errors");
+  expect(document.body.textContent).toContain("Late error");
+  await selectTab("Warnings");
+  expect(document.body.textContent).toContain("Early warning");
+  await selectTab("Publish");
+
+  await act(async () =>
+    nanoStates.$planFeatures.set({
+      ...nanoStates.$planFeatures.get(),
+      allowPublishLogs: false,
+    })
+  );
+  expect(document.body.textContent).not.toContain("€");
+  expect(document.body.textContent).toContain(
+    "Upgrade to Pro to view publish logs."
+  );
 });
 
 afterAll(() => {

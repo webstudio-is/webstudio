@@ -1,6 +1,6 @@
 import { cssVar } from "@webstudio-is/design-system";
 import { AlertIcon, CheckCircleIcon, SpinnerIcon } from "@webstudio-is/icons";
-import type { SessionPublish } from "./use-session-publishes";
+import type { SessionPublish } from "./session-publishes";
 
 export const publishLogStatus = {
   pending: {

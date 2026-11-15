@@ -1,1183 +1,1086 @@
-import stripIndent from "strip-indent";
-import { computed } from "nanostores";
 import {
+  useCallback,
   useEffect,
-  useState,
-  useOptimistic,
-  startTransition,
   useRef,
-  useId,
+  useState,
+  type SetStateAction,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  PanelContent,
   Button,
-  cssVar,
-  Tooltip,
-  InfoTooltip,
-  IconButton,
-  Grid,
-  Flex,
-  Label,
-  Text,
-  InputField,
-  Separator,
-  ScrollArea,
-  rawTheme,
-  Select,
-  theme,
-  TextArea,
   Link,
-  LinkButton,
-  PanelBanner,
-  toast,
-  RadioGroup,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
   Popover,
-  PopoverTrigger,
   PopoverContent,
   PopoverTitle,
-  PopoverClose,
-  PopoverTitleActions,
-  css,
-  textVariants,
-  SmallIconButton,
+  PopoverTrigger,
+  Text,
+  Tooltip,
+  rawTheme,
+  theme,
+  toast,
 } from "@webstudio-is/design-system";
-import { validateProjectDomain, type Project } from "@webstudio-is/project";
+import type { Project } from "@webstudio-is/project";
 import {
-  $planFeatures,
-  $selectedPageId,
-  selectInstance,
+  publishedDeploymentDestination,
+  type Templates,
+} from "@webstudio-is/sdk";
+import {
   $authTokenPermissions,
-  $editingPageId,
   $permissions,
-  $stagingUsername,
-  $stagingPassword,
+  $planFeatures,
 } from "~/shared/nano-states";
-import { $publisherHost } from "~/shared/sync/data-stores";
-import {
-  $publishDialog,
-  setActiveSidebarPanel,
-} from "../../shared/nano-states";
+import { $publishDialog } from "~/builder/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
-import { Domains } from "./domains";
-import { CollapsibleDomainSection } from "./collapsible-domain-section";
-import {
-  ActivityIcon,
-  AlertIcon,
-  CheckCircleIcon,
-  CopyIcon,
-  GearIcon,
-  UpgradeIcon,
-  HelpIcon,
-  InfoCircleIcon,
-  EllipsesIcon,
-  PlusIcon,
-  SpinnerIcon,
-  TerminalIcon,
-} from "@webstudio-is/icons";
-import { AddDomain } from "./add-domain";
-import { humanizeString } from "~/shared/string-utils";
-import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import type { Templates } from "@webstudio-is/sdk";
-import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
-import { CopyToClipboard } from "~/shared/copy-to-clipboard";
-import { $openProjectSettings } from "~/shared/nano-states/project-settings";
-import {
-  $dataSources,
-  $instances,
-  $pages,
-  $projectSettings,
-  $resources,
-} from "~/shared/sync/data-stores";
-import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
-import { $currentSystem } from "~/shared/system";
-import { getPublishUrl } from "./publish-url";
-import {
-  getRestrictedFeatures,
-  type RestrictedFeature,
-} from "./restricted-features";
+import { nativeClient } from "~/shared/trpc/trpc-client";
 import {
   PublishDiagnosticsDialog,
-  PublishValidationBanner,
+  type DiagnosticFinding,
 } from "./diagnostics";
-import type { SessionPublish } from "./use-session-publishes";
-import { PublishActions } from "./publish-actions";
-import { usePublishFlow } from "./use-publish-flow";
-import { fetchAndStoreProject } from "./use-publish-progress";
 import {
-  getPublishStatusDisplay,
-  getStaticPublishStatusDisplay,
-} from "./publish-status";
-import { DomainStatusButton } from "./domain-status-button";
-
-type ChangeProjectDomainProps = {
-  project: Project;
-  refresh: () => Promise<void>;
-  validatedDomains?: readonly string[];
-  onOpenReport: (domain: string) => void;
-  latestPublish?: SessionPublish;
-};
-
-const ChangeProjectDomain = ({
-  project,
-  refresh,
-  validatedDomains,
-  onOpenReport,
-  latestPublish,
-}: ChangeProjectDomainProps) => {
-  const id = useId();
-  const currentSystem = useStore($currentSystem);
-  const stagingUsername = useStore($stagingUsername);
-  const stagingPassword = useStore($stagingPassword);
-  const publisherHost = useStore($publisherHost);
-
-  const [domain, setDomain] = useState(project.domain);
-  const [error, setError] = useState<string>();
-  const [isUpdateInProgress, setIsUpdateInProgress] = useOptimistic(false);
-  const [isUnpublishing, setIsUnpublishing] = useOptimistic(false);
-
-  const pageUrl = getPublishUrl({
-    domain: `${project.domain}.${publisherHost}`,
-    pathname: currentSystem.pathname,
-    username: stagingUsername,
-    password: stagingPassword,
-  });
-
-  const updateProjectDomain = async () => {
-    setIsUpdateInProgress(true);
-    const validationResult = validateProjectDomain(domain);
-
-    if (validationResult.success === false) {
-      setError(validationResult.error);
-      return;
-    }
-
-    const updateResult = await nativeClient.domain.updateProjectDomain.mutate({
-      domain,
-      projectId: project.id,
-    });
-
-    if (updateResult.success === false) {
-      setError(updateResult.error);
-      return;
-    }
-
-    await refresh();
-  };
-
-  const handleUpdateProjectDomain = () => {
-    startTransition(async () => {
-      await updateProjectDomain();
-    });
-  };
-
-  const handleUnpublish = async () => {
-    setIsUnpublishing(true);
-    const result = await nativeClient.domain.unpublish.mutate({
-      projectId: project.id,
-      domain: `${project.domain}.${publisherHost}`,
-    });
-    if (result.success === false) {
-      toast.error(result.message);
-      return;
-    }
-    await refresh();
-    toast.success(result.message);
-  };
-
-  const latestProjectDomainBuild =
-    project.latestBuildVirtual?.domain === project.domain
-      ? project.latestBuildVirtual
-      : undefined;
-
-  const { statusContent, color, Icon } =
-    latestProjectDomainBuild != null
-      ? getPublishStatusDisplay(latestProjectDomainBuild)
-      : {
-          statusContent: "Not published",
-          color: cssVar("--foreground-secondary"),
-          Icon: InfoCircleIcon,
-        };
-
-  const isPublished = latestProjectDomainBuild != null;
-
-  return (
-    <CollapsibleDomainSection
-      title={pageUrl.host}
-      prefix={
-        <DomainCheckbox
-          defaultChecked={latestProjectDomainBuild?.domain === domain}
-          validatedDomains={validatedDomains}
-          buildId={latestProjectDomainBuild?.buildId}
-          domain={domain}
-        />
-      }
-      suffix={
-        <Grid flow="column" align="center">
-          <DomainStatusButton
-            domain={pageUrl.host}
-            buildId={latestProjectDomainBuild?.buildId}
-            latestPublish={error === undefined ? latestPublish : undefined}
-            fallback={{
-              Icon: error === undefined ? Icon : AlertIcon,
-              color:
-                error === undefined ? color : cssVar("--foreground-negative"),
-              text: error ?? <Text>{statusContent}</Text>,
-            }}
-            onOpenReport={() => onOpenReport(project.domain)}
-          />
-
-          <CopyToClipboard
-            text={pageUrl.toString()}
-            copyText={`Copy link: ${pageUrl.toString()}`}
-          >
-            <IconButton type="button" tabIndex={-1}>
-              <CopyIcon />
-            </IconButton>
-          </CopyToClipboard>
-        </Grid>
-      }
-    >
-      <Grid gap={2}>
-        <Grid flow="column" align="center" gap={2}>
-          <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
-            <Label htmlFor={id}>Domain:</Label>
-            <InfoTooltip
-              label="About domain name"
-              content="Domain can't be renamed once published. Unpublish to enable renaming."
-            />
-          </Flex>
-          <InputField
-            text="mono"
-            id={id}
-            placeholder="Domain"
-            value={domain}
-            disabled={isUpdateInProgress || isPublished}
-            onChange={(event) => {
-              setError(undefined);
-              setDomain(event.target.value);
-            }}
-            onBlur={handleUpdateProjectDomain}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                handleUpdateProjectDomain();
-              }
-
-              if (event.key === "Escape") {
-                if (project.domain !== domain) {
-                  setDomain(project.domain);
-                  event.preventDefault();
-                }
-              }
-            }}
-            color={error !== undefined ? "error" : undefined}
-          />
-          {error !== undefined && <Text color="destructive">{error}</Text>}
-        </Grid>
-        {stagingUsername && (
-          <Grid flow="column" align="center" gap={2}>
-            <Label
-              htmlFor={`${id}-username`}
-              css={{ width: theme.spacing[20] }}
-            >
-              Username:
-            </Label>
-            <InputField
-              text="mono"
-              id={`${id}-username`}
-              type="text"
-              value={stagingUsername}
-              readOnly
-            />
-          </Grid>
-        )}
-        {stagingPassword && (
-          <Grid flow="column" align="center" gap={2}>
-            <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
-              <Label htmlFor={`${id}-password`}>Password:</Label>
-              <InfoTooltip
-                label="About staging password"
-                content="This password is read-only and cannot be changed. It is the same for every user. This prevents phishing attacks."
-              />
-            </Flex>
-            <InputField
-              text="mono"
-              id={`${id}-password`}
-              type="text"
-              value={stagingPassword}
-              readOnly
-            />
-          </Grid>
-        )}
-        {isPublished && (
-          <Tooltip content="Unpublish to enable domain renaming">
-            <Button
-              formAction={handleUnpublish}
-              color="destructive"
-              state={isUnpublishing ? "pending" : undefined}
-              css={{ width: "100%" }}
-            >
-              Unpublish
-            </Button>
-          </Tooltip>
-        )}
-      </Grid>
-    </CollapsibleDomainSection>
-  );
-};
-
-const $restrictedFeatures = computed(
-  [
-    $pages,
-    $projectSettings,
-    $dataSources,
-    $resources,
-    $instances,
-    $permissions,
-  ],
-  (pages, projectSettings, dataSources, resources, instances, permissions) =>
-    getRestrictedFeatures({
-      pages,
-      projectSettings,
-      dataSources,
-      resources,
-      instances,
-      permissions,
-    })
-);
-
-const matchesValidatedDomains = (form: HTMLFormElement, domains: string[]) => {
-  const selected = new Set(domains);
-  const current = new FormData(form)
-    .getAll(domainToPublishName)
-    .map((domain) => domain.toString());
-  return (
-    current.length === selected.size &&
-    current.every((domain) => selected.has(domain))
-  );
-};
-
-const Publish = ({
-  project,
-  quota,
-  restrictedFeatures,
-  flow,
-}: {
-  project: Project;
-  quota: ReturnType<typeof useUserPublishCount>;
-  restrictedFeatures: Map<string, RestrictedFeature>;
-  flow: ReturnType<typeof usePublishFlow>;
-}) => {
-  const {
-    isPublishing,
-    countdown,
-    validationState,
-    validatedDomains,
-    invalidateValidation,
-    publishes,
-    siteError,
-    siteErrorSource,
-    openSiteReport: onOpenReport,
-  } = flow;
-  const { userPublishCount, maxDailyPublishesPerUser } = quota;
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
-  const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
-    useState(false);
-  const previousDomainsKey = useRef<string>();
-  const hasPendingState = project.latestBuildVirtual
-    ? getPublishStatusDisplay(project.latestBuildVirtual).status === "PENDING"
-    : false;
-  const isPublishInProgress = isPublishing || hasPendingState;
-
-  useEffect(() => {
-    const form = buttonRef.current?.closest("form");
-
-    if (form == null) {
-      return;
-    }
-
-    const handleFormInput = () => {
-      const formData = new FormData(form);
-      const domainsSelected = formData
-        .getAll(domainToPublishName)
-        .map((domain) => domain.toString());
-      const domainsKey = domainsSelected.join("\u0000");
-
-      if (
-        previousDomainsKey.current !== undefined &&
-        previousDomainsKey.current !== domainsKey
-      ) {
-        invalidateValidation();
-      }
-      previousDomainsKey.current = domainsKey;
-
-      setHasSelectedDomains(domainsSelected.length > 0);
-
-      // Check if any custom domains are selected
-      // Custom domains are those that are NOT the staging domain (project.domain)
-      const hasCustom = domainsSelected.some(
-        (domain) => domain !== project.domain
-      );
-      setHasCustomDomainsSelected(hasCustom);
-    };
-
-    const observer = new MutationObserver(() => {
-      handleFormInput();
-    });
-
-    observer.observe(form, {
-      attributes: true,
-      childList: true,
-      subtree: true,
-      attributeFilter: ["value", "checked"],
-    });
-
-    if (validatedDomains !== undefined) {
-      if (matchesValidatedDomains(form, validatedDomains)) {
-        previousDomainsKey.current = validatedDomains.join("\u0000");
-      } else {
-        invalidateValidation();
-      }
-    }
-
-    handleFormInput();
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [invalidateValidation, project.domain, validatedDomains]);
-
-  const getDomainsFromForm = (formData: FormData) =>
-    formData
-      .getAll(domainToPublishName)
-      .map((domainEntry) => domainEntry.toString());
-
-  const getForm = () => buttonRef.current?.closest("form");
-  const findings = flow.siteFindings;
-  const hasSessionPublish = publishes.some(({ target }) => target === "site");
-
-  return (
-    <Flex gap={2} shrink={false} direction={"column"}>
-      {siteError !== undefined ? (
-        <PanelBanner variant="error">
-          <Flex align="center" justify="between" gap={2}>
-            <Text css={{ flex: 1, minWidth: 0 }}>
-              {typeof siteError === "string"
-                ? siteError.slice(0, 160)
-                : siteError}
-            </Text>
-            <Button
-              type="button"
-              color="ghost"
-              css={{ flexShrink: 0 }}
-              onClick={() =>
-                onOpenReport(
-                  undefined,
-                  siteErrorSource === "status" && hasSessionPublish
-                    ? "publish"
-                    : "errors"
-                )
-              }
-            >
-              See issues
-            </Button>
-          </Flex>
-        </PanelBanner>
-      ) : (
-        <PublishValidationBanner
-          findings={findings}
-          passed={validationState === "passed"}
-          onOpen={() =>
-            onOpenReport(
-              undefined,
-              findings.some(({ severity }) => severity === "error")
-                ? "errors"
-                : "warnings"
-            )
-          }
-        />
-      )}
-      <PublishActions
-        publishButtonRef={buttonRef}
-        validationState={validationState}
-        validateDisabled={isPublishInProgress}
-        publishDisabled={
-          hasSelectedDomains === false ||
-          (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
-          userPublishCount >= maxDailyPublishesPerUser
-        }
-        publishInProgress={isPublishInProgress}
-        publishPending={
-          isPublishInProgress && (countdown === undefined || countdown === 0)
-        }
-        hasSelectedDomains={hasSelectedDomains}
-        publishLabel={
-          countdown !== undefined && countdown > 0
-            ? `Publishing (${countdown}s)`
-            : "Publish"
-        }
-        onValidate={async () => {
-          const form = getForm();
-          if (form) {
-            await flow.validate(getDomainsFromForm(new FormData(form)));
-          }
-        }}
-        onPublish={() => {
-          const form = getForm();
-          if (form) {
-            flow.publish({
-              target: "site",
-              domains: getDomainsFromForm(new FormData(form)),
-              timesLeft: maxDailyPublishesPerUser - userPublishCount,
-              maxDailyPublishesPerUser,
-            });
-          }
-        }}
-      />
-    </Flex>
-  );
-};
-
-const PublishStatic = ({
-  templates,
-  flow,
-  onDownload,
-}: {
-  templates: readonly Templates[];
-  flow: ReturnType<typeof usePublishFlow>;
-  onDownload?: (name: string) => void;
-}) => {
-  const {
-    isPublishing,
-    publishes,
-    staticFailureFinding,
-    openStaticReport: onOpenReport,
-  } = flow;
-  const project = useStore($project);
-
-  if (project == null) {
-    throw new Error("Project not found");
-  }
-
-  const { status, statusContent } =
-    project.latestStaticBuild == null
-      ? { status: "LOADED" as const, statusContent: "Not published" }
-      : getStaticPublishStatusDisplay(project.latestStaticBuild);
-  const latestPublish = publishes.find(
-    (item) =>
-      item.target === "static" &&
-      item.buildId === project.latestStaticBuild?.buildId
-  );
-  const logStatus =
-    staticFailureFinding !== undefined
-      ? "FAILED"
-      : latestPublish?.status === "pending"
-        ? "PENDING"
-        : latestPublish?.status === "failed"
-          ? "FAILED"
-          : latestPublish?.status === "success"
-            ? "PUBLISHED"
-            : status;
-
-  const isPublishInProgress = status === "PENDING" || isPublishing;
-
-  return (
-    <Flex gap={2} shrink={false} direction={"column"}>
-      <Flex gap={2} align="center">
-        <Tooltip
-          content={
-            staticFailureFinding?.title ??
-            (latestPublish?.status === "failed"
-              ? "Publish failed"
-              : statusContent)
-          }
-        >
-          <IconButton
-            type="button"
-            aria-label="Publish log: Static export"
-            onClick={() => onOpenReport()}
-          >
-            {logStatus === "FAILED" ? (
-              <AlertIcon />
-            ) : logStatus === "PUBLISHED" ? (
-              <CheckCircleIcon />
-            ) : logStatus === "PENDING" ? (
-              <SpinnerIcon />
-            ) : (
-              <InfoCircleIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-      </Flex>
-
-      <Tooltip
-        content={isPublishInProgress ? "Preparing static site" : undefined}
-      >
-        <Button
-          type="button"
-          color="primary"
-          state={isPublishInProgress ? "pending" : undefined}
-          onClick={() =>
-            flow.publish({ target: "static", templates, onDownload })
-          }
-        >
-          Build and download static site
-        </Button>
-      </Tooltip>
-    </Flex>
-  );
-};
-
-const useCanAddDomain = () => {
-  const { load, data } = trpcClient.domain.countTotalDomains.useQuery();
-  const { maxDomainsAllowedPerUser } = useStore($permissions);
-  const project = useStore($project);
-  const activeDomainsCount = project?.domainsVirtual.filter(
-    (domain) => domain.status === "ACTIVE" && domain.verified
-  ).length;
-  useEffect(() => {
-    if (project?.id !== undefined) {
-      load({ projectId: project.id });
-    }
-  }, [load, activeDomainsCount, project?.id]);
-  const canAddDomain = data
-    ? data.success && data.data < maxDomainsAllowedPerUser
-    : true;
-  return { canAddDomain, maxDomainsAllowedPerUser };
-};
-
-const useUserPublishCount = () => {
-  const { load, data } = trpcClient.project.userPublishCount.useQuery();
-  const { maxDailyPublishesPerUser } = useStore($permissions);
-  const project = useStore($project);
-  useEffect(() => {
-    if (project?.id !== undefined) {
-      load({ projectId: project.id });
-    }
-  }, [load, project?.id]);
-  return {
-    userPublishCount: data?.success ? data.data : 0,
-    maxDailyPublishesPerUser:
-      data?.success && "limit" in data ? data.limit : maxDailyPublishesPerUser,
-  };
-};
-
-const refreshProject = async () => {
-  await fetchAndStoreProject({ projectId: $project.get()!.id });
-};
-
-const buttonLinkClass = css({
-  all: "unset",
-  cursor: "pointer",
-  ...textVariants.link,
-}).toString();
-
-const UpgradeBanner = ({
-  hasCustomDomains,
-  quota,
-}: {
-  hasCustomDomains: boolean;
-  quota: ReturnType<typeof useUserPublishCount>;
-}) => {
-  const restrictedFeatures = useStore($restrictedFeatures);
-  const { canAddDomain } = useCanAddDomain();
-  const { userPublishCount, maxDailyPublishesPerUser } = quota;
-  if (userPublishCount >= maxDailyPublishesPerUser) {
-    return (
-      <PanelBanner>
-        <Text variant="regularBold">
-          Upgrade to publish more than {maxDailyPublishesPerUser} times per day:
-        </Text>
-        <LinkButton
-          color="primary"
-          href="https://webstudio.is/pricing"
-          target="_blank"
-        >
-          Upgrade
-        </LinkButton>
-      </PanelBanner>
-    );
-  }
-
-  // Only show Pro feature upgrade banner if custom domains are available
-  // Free tier users can still publish to staging domain with Pro features
-  if (restrictedFeatures.size > 0 && hasCustomDomains) {
-    return (
-      <PanelBanner>
-        <img
-          src={cmsUpgradeBanner}
-          alt="Upgrade for CMS"
-          width={rawTheme.spacing[28]}
-          style={{ aspectRatio: "4.1" }}
-        />
-        <Text variant="regularBold">Following Pro features are used:</Text>
-        <Text as="ul" color="destructive" css={{ paddingLeft: "1em" }}>
-          {Array.from(restrictedFeatures).map(
-            ([message, { navigate, view, info } = {}], index) => (
-              <li key={index}>
-                <Flex align="center" gap="1">
-                  {navigate ? (
-                    <button
-                      className={buttonLinkClass}
-                      type="button"
-                      onClick={() => {
-                        $selectedPageId.set(navigate.pageId);
-                        selectInstance(navigate.instanceSelector);
-                        if (view === "pageSettings") {
-                          setActiveSidebarPanel("pages");
-                          $editingPageId.set(navigate.pageId);
-                        }
-                      }}
-                    >
-                      {message}
-                    </button>
-                  ) : (
-                    message
-                  )}
-                  {info && (
-                    <Tooltip variant="wrapped" content={info}>
-                      <SmallIconButton icon={<HelpIcon />} />
-                    </Tooltip>
-                  )}
-                </Flex>
-              </li>
-            )
-          )}
-        </Text>
-        <Text>
-          You can delete these features or upgrade to publish to custom domains.
-        </Text>
-        <Flex align="center" gap={1}>
-          <UpgradeIcon />
-          <Link
-            color="inherit"
-            target="_blank"
-            href="https://webstudio.is/pricing"
-          >
-            Upgrade to Pro
-          </Link>
-        </Flex>
-      </PanelBanner>
-    );
-  }
-  if (canAddDomain === false) {
-    return (
-      <PanelBanner>
-        <Text variant="regular">
-          <Text variant="regularBold" inline>
-            Upgrade to a Pro account
-          </Text>{" "}
-          to add unlimited domains and publish to each domain individually.
-        </Text>
-        <Flex align="center" gap={1}>
-          <UpgradeIcon />
-          <Link
-            color="inherit"
-            target="_blank"
-            href="https://webstudio.is/pricing"
-          >
-            Upgrade to Pro
-          </Link>
-        </Flex>
-      </PanelBanner>
-    );
-  }
-};
-
-const Content = (props: {
-  projectId: Project["id"];
-  onExportClick: () => void;
-  flow: ReturnType<typeof usePublishFlow>;
-}) => {
-  const restrictedFeatures = useStore($restrictedFeatures);
-  const [newDomains, setNewDomains] = useState(new Set<string>());
-  const [isAddingDomain, setIsAddingDomain] = useState(false);
-
-  const project = useStore($project);
-
-  if (project == null) {
-    throw new Error("Project not found");
-  }
-
-  const quota = useUserPublishCount();
-
-  const hasUnpublishedDomains = project.domainsVirtual.some(
-    (domain) =>
-      domain.verified &&
-      domain.status === "ACTIVE" &&
-      domain.latestBuildVirtual == null
-  );
-
-  // Check if any custom domains exist (active and verified)
-  const hasCustomDomains = project.domainsVirtual.some(
-    (domain) => domain.status === "ACTIVE" && domain.verified
-  );
-  const hasSitePublish = props.flow.publishes.some(
-    ({ target }) => target === "site"
-  );
-  const diagnosticFindings = props.flow.siteFindings;
-  const hasDiagnostics =
-    hasSitePublish ||
-    diagnosticFindings.length > 0 ||
-    props.flow.siteError !== undefined;
-
-  return (
-    <>
-      <PopoverTitle
-        suffix={
-          <PopoverTitleActions>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <IconButton type="button" aria-label="Publish options">
-                  <EllipsesIcon />
-                </IconButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  icon={<PlusIcon />}
-                  onSelect={() => setIsAddingDomain(true)}
-                >
-                  Add new domain
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  icon={<TerminalIcon />}
-                  onSelect={props.onExportClick}
-                >
-                  Export
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  icon={<ActivityIcon />}
-                  disabled={!hasDiagnostics}
-                  onSelect={() =>
-                    props.flow.openSiteReport(
-                      undefined,
-                      hasSitePublish
-                        ? "publish"
-                        : props.flow.siteError !== undefined ||
-                            diagnosticFindings.some(
-                              ({ severity }) => severity === "error"
-                            )
-                          ? "errors"
-                          : "warnings"
-                    )
-                  }
-                >
-                  Diagnostics
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  icon={<GearIcon />}
-                  onSelect={() => $openProjectSettings.set("publish")}
-                >
-                  Publish settings
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <PopoverClose />
-          </PopoverTitleActions>
-        }
-      >
-        Publish
-      </PopoverTitle>
-      <form>
-        <ScrollArea>
-          <RadioGroup name="publishDomain">
-            <ChangeProjectDomain
-              refresh={refreshProject}
-              project={project}
-              validatedDomains={props.flow.validatedDomains}
-              onOpenReport={(domain) =>
-                props.flow.openSiteReport(domain, "publish")
-              }
-              latestPublish={props.flow.publishes.find(
-                (item) =>
-                  item.target === "site" &&
-                  item.domains.includes(project.domain)
-              )}
-            />
-
-            <Domains
-              newDomains={newDomains}
-              domains={project.domainsVirtual}
-              refresh={refreshProject}
-              project={project}
-              validatedDomains={props.flow.validatedDomains}
-              onOpenReport={(domain) =>
-                props.flow.openSiteReport(domain, "publish")
-              }
-              sessionPublishes={props.flow.publishes}
-            />
-          </RadioGroup>
-        </ScrollArea>
-        <Flex direction="column" justify="end" css={{ height: 0 }}>
-          <Separator />
-        </Flex>
-        <PanelContent as={Flex} direction="column" gap="2">
-          <AddDomain
-            projectId={props.projectId}
-            isOpen={isAddingDomain}
-            onOpenChange={setIsAddingDomain}
-            refresh={refreshProject}
-            onCreate={(domain) => {
-              setNewDomains((prev) => new Set([...prev, domain]));
-            }}
-          />
-          {isAddingDomain && <Separator />}
-          <UpgradeBanner hasCustomDomains={hasCustomDomains} quota={quota} />
-          {hasUnpublishedDomains && (
-            <PanelBanner>
-              <Flex align="center" gap="1">
-                <InfoCircleIcon color={cssVar("--foreground-primary")} />
-                <Text variant="regularBold">Don't forget to publish</Text>
-              </Flex>
-              <Text>
-                You have a custom domain that hasn't been published yet. Hit
-                publish to make it live.
-              </Text>
-            </PanelBanner>
-          )}
-          <Publish
-            project={project}
-            quota={quota}
-            restrictedFeatures={restrictedFeatures}
-            flow={props.flow}
-          />
-        </PanelContent>
-      </form>
-    </>
-  );
-};
-
-type DeployTarget = {
-  docs?: string;
-  command?: string;
-  ssgTemplates?: Templates[];
-};
-
-const deployTargets: Record<string, DeployTarget> = {
-  docker: {
-    docs: "https://docs.docker.com",
-    command: `
-      docker build -t my-image .
-      docker run my-image
-    `,
-  },
-  static: {
-    ssgTemplates: ["ssg"],
-  },
-  vercel: {
-    docs: "https://vercel.com/docs/cli",
-    command: "npx vercel@latest",
-    ssgTemplates: ["ssg-vercel"],
-  },
-  netlify: {
-    docs: "https://docs.netlify.com/cli/get-started/",
-    command: `
-npx netlify-cli@latest login
-npx netlify-cli sites:create
-npx netlify-cli build
-npx netlify-cli deploy`,
-    ssgTemplates: ["ssg-netlify"],
-  },
-};
-
-type DeployTargets = keyof typeof deployTargets;
-
-const isDeployTargets = (value: string): value is DeployTargets =>
-  Object.keys(deployTargets).includes(value);
-
-const ExportContent = (props: { flow: ReturnType<typeof usePublishFlow> }) => {
-  const npxCommand = "npx webstudio@latest";
-  const [deployTarget, setDeployTarget] = useState<DeployTargets>("docker");
-
-  return (
-    <PanelContent as={Grid} columns={1} gap={3}>
-      <Grid columns={1} gap={2}>
-        <div />
-        <Grid columns={2} gap={2} align={"center"}>
-          <Text color="main" variant="labels">
-            Destination
-          </Text>
-
-          <Select
-            fullWidth
-            value={deployTarget}
-            options={Object.keys(deployTargets)}
-            getLabel={(value) => humanizeString(value)}
-            onChange={(value) => {
-              if (isDeployTargets(value)) {
-                setDeployTarget(value);
-              }
-            }}
-          />
-        </Grid>
-      </Grid>
-
-      {deployTargets[deployTarget].ssgTemplates && (
-        <Grid columns={1} gap={1}>
-          <PublishStatic
-            templates={deployTargets[deployTarget].ssgTemplates}
-            flow={props.flow}
-          />
-          <div />
-          <Text color="subtle">
-            Learn about deploying static sites{" "}
-            <Link
-              variant="inherit"
-              color="inherit"
-              href="https://wstd.us/ssg"
-              target="_blank"
-              rel="noreferrer"
-            >
-              here
-            </Link>
-          </Text>
-        </Grid>
-      )}
-
-      {deployTargets[deployTarget].command && (
-        <Grid columns={1} gap={2}>
-          <Grid
-            gap={2}
-            align={"center"}
-            css={{
-              gridTemplateColumns: `1fr auto 1fr`,
-            }}
-          >
-            <Separator css={{ alignSelf: "unset" }} />
-            <Text color="main">CLI</Text>
-            <Separator css={{ alignSelf: "unset" }} />
-          </Grid>
-          <Grid columns={1} gap={1}>
-            <Text color="main" variant="labels">
-              Step 1
-            </Text>
-            <Text color="subtle">
-              Download and install Node v20+ from{" "}
-              <Link
-                variant="inherit"
-                color="inherit"
-                href="https://nodejs.org/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                nodejs.org
-              </Link>{" "}
-              or with{" "}
-              <Link
-                variant="inherit"
-                color="inherit"
-                href="https://nodejs.org/en/download/package-manager"
-                target="_blank"
-                rel="noreferrer"
-              >
-                a package manager
-              </Link>
-              .
-            </Text>
-          </Grid>
-
-          <Grid columns={1} gap={2}>
-            <Grid columns={1} gap={1}>
-              <Text color="main" variant="labels">
-                Step 2
-              </Text>
-              <Text color="subtle">
-                Run this command in your Terminal to install Webstudio CLI and
-                sync your project.
-              </Text>
-            </Grid>
-            <Flex gap={2}>
-              <InputField
-                css={{ flex: 1 }}
-                text="mono"
-                readOnly
-                value={npxCommand}
-              />
-              <CopyToClipboard text={npxCommand}>
-                <Button type="button" prefix={<CopyIcon />}>
-                  Copy
-                </Button>
-              </CopyToClipboard>
-            </Flex>
-          </Grid>
-
-          <Grid columns={1} gap={2}>
-            <Grid columns={1} gap={1}>
-              <Text color="main" variant="labels">
-                Step 3
-              </Text>
-              <Text color="subtle">
-                Run this command to publish to{" "}
-                <Link
-                  variant="inherit"
-                  color="inherit"
-                  href={deployTargets[deployTarget].docs}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {humanizeString(deployTarget)}
-                </Link>{" "}
-              </Text>
-            </Grid>
-            <Flex gap={2} align="end">
-              <TextArea
-                css={{ flex: 1 }}
-                variant="mono"
-                readOnly
-                value={stripIndent(deployTargets[deployTarget].command)
-                  .trimStart()
-                  .replace(/ +$/, "")}
-              />
-              <CopyToClipboard text={deployTargets[deployTarget].command}>
-                <Button
-                  type="button"
-                  css={{ flexShrink: 0 }}
-                  prefix={<CopyIcon />}
-                >
-                  Copy
-                </Button>
-              </CopyToClipboard>
-            </Flex>
-          </Grid>
-
-          <Grid columns={1} gap={1}>
-            <Text color="subtle">
-              Read the detailed documentation{" "}
-              <Link
-                variant="inherit"
-                color="inherit"
-                href="https://wstd.us/cli"
-                target="_blank"
-                rel="noreferrer"
-              >
-                here
-              </Link>
-            </Text>
-          </Grid>
-        </Grid>
-      )}
-    </PanelContent>
-  );
-};
+  decodePublishLog,
+  selectSessionPublishes,
+  type SessionPublish,
+} from "./session-publishes";
+import type { PublishValidationState } from "./publish-actions";
+import {
+  fetchAndStoreProject,
+  waitForPublishStatus,
+  refreshProjectWithRetry,
+  reportPublishResult,
+  type PublishExecution,
+} from "./publish-progress";
+import {
+  runPublishDiagnostics,
+  runPublishValidation,
+  reportPublishValidationFailure,
+  getServerPublishFindings,
+} from "./publish-validation";
+import { runPublishAfterBestEffortChecks } from "./publish-preflight";
+import { getPublishStatusDisplay } from "./publish-status";
+import { Content, ExportContent } from "./publish-ui";
 
 type PublishProps = {
   projectId: Project["id"];
 };
 
+const COUNTDOWN_DURATION = 60_000;
+
+const getPublishErrorFinding = (
+  error: JSX.Element | string,
+  buildId?: string
+): DiagnosticFinding => ({
+  severity: "error",
+  source: "publish",
+  buildId,
+  title: error,
+  summary: typeof error === "string" ? error.slice(0, 160) : "Publish failed",
+  reportText: typeof error === "string" ? error : "Publish failed",
+});
+
 export const PublishButton = ({ projectId }: PublishProps) => {
   const publishDialog = useStore($publishDialog);
   const authTokenPermissions = useStore($authTokenPermissions);
   const { allowPublishLogs = false } = useStore($planFeatures);
-  const flow = usePublishFlow(projectId, allowPublishLogs, publishDialog);
-  const { diagnosticsSelection, closeReport, reportFindings, reportPublishes } =
-    flow;
+  const [manualFindings, setManualFindings] = useState<DiagnosticFinding[]>([]);
+  const [manualDomains, setManualDomains] = useState<string[]>();
+  const validationSession = useRef(0);
+  const requestedManualDomains = useRef<string[]>([]);
+
+  useEffect(() => {
+    return () => {
+      validationSession.current += 1;
+    };
+  }, []);
+
+  const beginManualValidation = useCallback((manualDomains: string[] = []) => {
+    validationSession.current += 1;
+    requestedManualDomains.current = manualDomains;
+    setManualFindings([]);
+    setManualDomains(undefined);
+    return validationSession.current;
+  }, []);
+
+  const invalidateManualValidation = useCallback(() => {
+    validationSession.current += 1;
+    setManualFindings([]);
+    setManualDomains(undefined);
+  }, []);
+
+  const isManualValidationCurrent = useCallback(
+    (id: number) => validationSession.current === id,
+    []
+  );
+
+  const updateManualValidation = useCallback(
+    (id: number, next: DiagnosticFinding[]) => {
+      if (validationSession.current === id) {
+        setManualFindings(next);
+        setManualDomains(
+          next.length > 0 ? requestedManualDomains.current : undefined
+        );
+      }
+    },
+    []
+  );
+
+  const projectScope = useRef({ projectId, token: 0 });
+  if (projectScope.current.projectId !== projectId) {
+    projectScope.current = { projectId, token: projectScope.current.token + 1 };
+  }
+  const scopeToken = projectScope.current.token;
+  const [startedAt, setStartedAt] = useState<number>();
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishDiagnostics, setPublishDiagnostics] = useState<
+    Record<
+      "site" | "static",
+      {
+        domains: string[];
+        findings: DiagnosticFinding[];
+        rejected?: boolean;
+      }
+    >
+  >({
+    site: { domains: [], findings: [] },
+    static: { domains: [], findings: [] },
+  });
+  const publishDiagnosticsSession = useRef({ site: 0, static: 0 });
+  const [publishErrorState, setPublishErrorState] = useState<{
+    value: JSX.Element | string;
+    source: "request" | "transport" | "status";
+    domains?: string[];
+    buildId?: string;
+  }>();
+  const [now, setNow] = useState(Date.now);
+  const isMounted = useRef(false);
+  const requestBaselineBuildId = useRef<string>();
+  const hasStartedPublishRequest = useRef(false);
+  const refreshGeneration = useRef(0);
+  const recoveredPoll = useRef<{
+    generation: number;
+    promise: Promise<void>;
+  }>();
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    publishDiagnosticsSession.current.site += 1;
+    publishDiagnosticsSession.current.static += 1;
+    setPublishDiagnostics({
+      site: { domains: [], findings: [] },
+      static: { domains: [], findings: [] },
+    });
+    setPublishErrorState(undefined);
+    setIsPublishing(false);
+    invalidateManualValidation();
+  }, [projectId, invalidateManualValidation]);
+
+  const isCurrentProject = useCallback(
+    () =>
+      isMounted.current &&
+      $project.get()?.id === projectId &&
+      projectScope.current.token === scopeToken,
+    [projectId, scopeToken]
+  );
+
+  const beginPopoverRefresh = useCallback(() => {
+    refreshGeneration.current += 1;
+    return refreshGeneration.current;
+  }, []);
+
+  const isRefreshCurrent = useCallback(
+    (generation: number) =>
+      isCurrentProject() && refreshGeneration.current === generation,
+    [isCurrentProject]
+  );
+
+  const setPublishError = (
+    value: JSX.Element | string | undefined,
+    domains?: string[]
+  ) => {
+    setPublishErrorState(
+      value === undefined ? undefined : { value, source: "request", domains }
+    );
+  };
+
+  const setPublishStatusError = useCallback(
+    (value: JSX.Element | string, buildId?: string) => {
+      setPublishErrorState({ value, source: "status", buildId });
+    },
+    []
+  );
+
+  const clearErrors = useCallback(() => {
+    setPublishErrorState(undefined);
+  }, []);
+
+  const beginPublishDiagnostics = useCallback(
+    (domains: string[] = [], target: "site" | "static" = "site") => {
+      const session = ++publishDiagnosticsSession.current[target];
+      setPublishDiagnostics((current) => ({
+        ...current,
+        [target]: { domains, findings: [] },
+      }));
+      const setFindings = (findings: SetStateAction<DiagnosticFinding[]>) => {
+        if (publishDiagnosticsSession.current[target] === session) {
+          setPublishDiagnostics((current) => ({
+            ...current,
+            [target]: {
+              domains,
+              findings:
+                typeof findings === "function"
+                  ? findings(current[target].findings)
+                  : findings,
+            },
+          }));
+        }
+      };
+      return {
+        isCurrent: () => publishDiagnosticsSession.current[target] === session,
+        setFindings,
+        finish: (findings?: SetStateAction<DiagnosticFinding[]>) => {
+          if (findings !== undefined) {
+            setFindings(findings);
+          }
+          if (publishDiagnosticsSession.current[target] === session) {
+            setPublishDiagnostics((current) => ({
+              ...current,
+              [target]: { ...current[target], rejected: true },
+            }));
+            publishDiagnosticsSession.current[target] += 1;
+          }
+        },
+      };
+    },
+    []
+  );
+
+  const reconcileRefreshedProject = useCallback((project: Project) => {
+    const build = project.latestBuildVirtual;
+    if (build == null) {
+      setPublishErrorState((current) =>
+        current?.source === "status" ? undefined : current
+      );
+      return;
+    }
+    const { status, statusContent } = getPublishStatusDisplay(build);
+    const isNewBuild =
+      build.buildId !== undefined &&
+      build.buildId !== requestBaselineBuildId.current;
+    if (status === "FAILED") {
+      if (hasStartedPublishRequest.current && isNewBuild) {
+        setPublishErrorState({
+          value: statusContent,
+          source: "status",
+          buildId: build.buildId,
+        });
+      }
+    } else {
+      setPublishErrorState((current) =>
+        current?.source === "status" ||
+        (isNewBuild && current?.source === "transport")
+          ? undefined
+          : current
+      );
+    }
+  }, []);
+
+  const watchPendingPublish = useCallback(
+    (
+      refresh: () => Promise<Project | undefined>,
+      generation = refreshGeneration.current,
+      execution?: PublishExecution,
+      onResult?: (
+        result: Awaited<ReturnType<typeof waitForPublishStatus>>
+      ) => void
+    ) => {
+      if (recoveredPoll.current?.generation === generation) {
+        return recoveredPoll.current.promise;
+      }
+      const polling = waitForPublishStatus(
+        refresh,
+        () => isRefreshCurrent(generation),
+        undefined,
+        execution
+      )
+        .then((result) => {
+          if (isRefreshCurrent(generation) === false) {
+            return;
+          }
+          if (execution?.target !== "static") {
+            reportPublishResult({
+              result,
+              buildId: execution?.buildId,
+              setPublishError: setPublishStatusError,
+              isCurrentProject,
+            });
+          } else if (result?.status === "FAILED") {
+            toast.error(result.statusContent);
+          }
+          onResult?.(result);
+        })
+        .finally(() => {
+          if (recoveredPoll.current?.promise === polling) {
+            recoveredPoll.current = undefined;
+          }
+        });
+      recoveredPoll.current = { generation, promise: polling };
+      return polling;
+    },
+    [isCurrentProject, isRefreshCurrent, setPublishStatusError]
+  );
+
+  useEffect(() => {
+    if (isPublishing === false || showCountdown === false) {
+      return;
+    }
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [isPublishing, showCountdown]);
+
+  const countdown =
+    isPublishing && showCountdown && startedAt !== undefined
+      ? Math.max(0, Math.ceil((COUNTDOWN_DURATION - (now - startedAt)) / 1000))
+      : undefined;
+
+  const dismissCountdown = useCallback(() => setShowCountdown(false), []);
+
+  const start = (
+    publish: () => Promise<void>,
+    {
+      target = "site",
+      domains,
+      onError,
+    }: {
+      target?: "site" | "static";
+      domains?: string[];
+      onError?: (message: string) => void;
+    } = {}
+  ) => {
+    const startedAt = Date.now();
+    if (target === "site") {
+      hasStartedPublishRequest.current = true;
+      requestBaselineBuildId.current =
+        $project.get()?.latestBuildVirtual?.buildId;
+      setPublishErrorState(undefined);
+    }
+    setStartedAt(startedAt);
+    setNow(startedAt);
+    setShowCountdown(true);
+    setIsPublishing(true);
+    publish()
+      .catch((error) => {
+        if (target === "site") {
+          console.error(error);
+        }
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        if (isCurrentProject()) {
+          onError?.(message);
+          if (target === "site") {
+            setPublishErrorState({
+              value: message,
+              source: "transport",
+              domains,
+            });
+          }
+          if (target === "static" || $publishDialog.get() !== "publish") {
+            toast.error(target === "static" ? message.slice(0, 200) : message);
+          }
+        }
+      })
+      .finally(() => {
+        if (isCurrentProject()) {
+          setIsPublishing(false);
+        }
+      });
+  };
+
+  const [items, setItems] = useState<SessionPublish[]>([]);
+  const itemsProjectId = useRef(projectId);
+  const generation = useRef(0);
+  const permission = useRef({ allowed: allowPublishLogs, generation: 0 });
+  if (permission.current.allowed !== allowPublishLogs) {
+    permission.current = {
+      allowed: allowPublishLogs,
+      generation: permission.current.generation + 1,
+    };
+  }
+  const loading = useRef(
+    new Map<string, { permissionGeneration: number; scopeToken: number }>()
+  );
+  const retainedBuilds = useRef(new Set<string>());
+
+  useEffect(() => {
+    generation.current += 1;
+    itemsProjectId.current = projectId;
+    setItems([]);
+    loading.current.clear();
+    retainedBuilds.current.clear();
+    return () => {
+      generation.current += 1;
+    };
+  }, [projectId]);
+
+  useEffect(() => {
+    if (allowPublishLogs === false) {
+      setItems((current) =>
+        current.map((item) => ({
+          ...item,
+          startedAt: undefined,
+          completedAt: undefined,
+          failedStage: undefined,
+          code: undefined,
+          issues: undefined,
+          issuesOmitted: undefined,
+          logState: undefined,
+          logText: undefined,
+        }))
+      );
+    }
+  }, [allowPublishLogs]);
+
+  const update = useCallback(
+    (buildId: string, change: Partial<SessionPublish>) => {
+      setItems((current) =>
+        current.map((item) =>
+          item.buildId === buildId ? { ...item, ...change } : item
+        )
+      );
+    },
+    []
+  );
+
+  const record = useCallback(
+    (item: Omit<SessionPublish, "status">) => {
+      if (isCurrentProject() === false) {
+        return;
+      }
+      const accepted: SessionPublish = {
+        ...item,
+        status: "pending",
+        startedAt: permission.current.allowed
+          ? new Date().toISOString()
+          : undefined,
+      };
+      retainedBuilds.current.delete(item.buildId);
+      retainedBuilds.current.add(item.buildId);
+      setItems((current) =>
+        [
+          accepted,
+          ...current.filter(({ buildId }) => buildId !== item.buildId),
+        ].slice(0, 10)
+      );
+      if (retainedBuilds.current.size > 10) {
+        const oldest = [...retainedBuilds.current][0];
+        retainedBuilds.current.delete(oldest);
+      }
+      return accepted;
+    },
+    [isCurrentProject]
+  );
+
+  const complete = useCallback(
+    (buildId: string, status: "success" | "failed", code?: string) => {
+      if (isCurrentProject() && retainedBuilds.current.has(buildId)) {
+        update(buildId, {
+          status,
+          code: permission.current.allowed ? code : undefined,
+        });
+      }
+    },
+    [isCurrentProject, update]
+  );
+
+  const loadLog = useCallback(
+    async (item: SessionPublish) => {
+      if (
+        isCurrentProject() === false ||
+        retainedBuilds.current.has(item.buildId) === false ||
+        item.logHandle === undefined ||
+        permission.current.allowed === false ||
+        item.logState === "available" ||
+        (loading.current.get(item.buildId)?.permissionGeneration ===
+          permission.current.generation &&
+          loading.current.get(item.buildId)?.scopeToken === scopeToken)
+      ) {
+        return;
+      }
+      const currentGeneration = generation.current;
+      const currentPermissionGeneration = permission.current.generation;
+      const request = {
+        permissionGeneration: currentPermissionGeneration,
+        scopeToken,
+      };
+      loading.current.set(item.buildId, request);
+      update(item.buildId, { logState: "loading" });
+      const isReadCurrent = () =>
+        generation.current === currentGeneration &&
+        isCurrentProject() &&
+        retainedBuilds.current.has(item.buildId) &&
+        permission.current.allowed &&
+        permission.current.generation === currentPermissionGeneration;
+      try {
+        let cursor: number | undefined;
+        const chunks: string[] = [];
+        const issues: NonNullable<SessionPublish["issues"]> = [];
+        let issuesOmitted = 0;
+        while (isReadCurrent()) {
+          const result = await nativeClient.api.publish.getLog.query({
+            projectId,
+            buildId: item.buildId,
+            logHandle: item.logHandle,
+            cursor,
+          });
+          if (isReadCurrent() === false) {
+            return;
+          }
+          if (result.availability !== "available") {
+            update(item.buildId, { logState: "unavailable" });
+            return;
+          }
+          update(item.buildId, {
+            startedAt: result.startedAt ?? item.startedAt,
+            completedAt: result.completedAt,
+            failedStage: result.failedStage,
+            code: result.code,
+          });
+          const log = result.log;
+          if (log === undefined || !("chunk" in log)) {
+            update(item.buildId, { logState: "unavailable" });
+            return;
+          }
+          chunks.push(log.chunk);
+          for (const issue of log.issues ?? []) {
+            if (issues.length < 20) {
+              issues.push(issue);
+            } else if (issue.severity === "error") {
+              const warningIndex = issues.findIndex(
+                ({ severity }) => severity === "warning"
+              );
+              if (warningIndex !== -1) {
+                issues.splice(warningIndex, 1, issue);
+              }
+              issuesOmitted += 1;
+            } else {
+              issuesOmitted += 1;
+            }
+          }
+          issuesOmitted += log.issuesOmitted ?? 0;
+          if (log.complete) {
+            update(item.buildId, {
+              logState: "available",
+              logText: decodePublishLog(chunks),
+              issues: [
+                ...issues.filter(({ severity }) => severity === "error"),
+                ...issues.filter(({ severity }) => severity === "warning"),
+              ],
+              issuesOmitted,
+              startedAt: result.startedAt ?? item.startedAt,
+              completedAt: result.completedAt,
+              failedStage: result.failedStage,
+              code: result.code,
+            });
+            return;
+          }
+          if (log.nextCursor === undefined || log.nextCursor === cursor) {
+            update(item.buildId, { logState: "unavailable" });
+            return;
+          }
+          cursor = log.nextCursor;
+        }
+      } catch {
+        if (isReadCurrent()) {
+          update(item.buildId, { logState: "unavailable" });
+        }
+      } finally {
+        if (loading.current.get(item.buildId) === request) {
+          loading.current.delete(item.buildId);
+        }
+      }
+    },
+    [isCurrentProject, projectId, scopeToken, update]
+  );
+
+  const visiblePublishes = itemsProjectId.current === projectId ? items : [];
+
+  const [validationState, setValidationState] =
+    useState<PublishValidationState>("idle");
+  const dialogRef = useRef(publishDialog);
+  dialogRef.current = publishDialog;
+
+  const resetValidationState = useCallback(() => {
+    setValidationState("idle");
+  }, []);
+
+  const updateValidationState = useCallback((state: PublishValidationState) => {
+    if (state === "passed" && dialogRef.current !== "publish") {
+      toast.success("Validation passed. Ready to publish.", {
+        duration: Number.POSITIVE_INFINITY,
+      });
+      return;
+    }
+    if (dialogRef.current === "publish") {
+      setValidationState(state);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (publishDialog !== "publish") {
+      resetValidationState();
+    }
+  }, [publishDialog, resetValidationState]);
+
+  const sessionPublishesRef = useRef(visiblePublishes);
+  sessionPublishesRef.current = visiblePublishes;
+  const [diagnosticsSelection, setDiagnosticsSelection] = useState<{
+    target: "static" | "site";
+    domain?: string;
+    tab: "warnings" | "errors" | "publish";
+  }>();
+  useEffect(() => {
+    setDiagnosticsSelection(undefined);
+  }, [projectId]);
+  useEffect(() => {
+    if (publishDialog !== "publish") {
+      dismissCountdown();
+    }
+  }, [publishDialog, dismissCountdown]);
+  const invalidateValidation = useCallback(() => {
+    invalidateManualValidation();
+    updateValidationState("idle");
+  }, [invalidateManualValidation, updateValidationState]);
+
+  const finishPublish = useCallback(
+    (
+      item: SessionPublish | undefined,
+      result: Awaited<ReturnType<typeof waitForPublishStatus>>
+    ) => {
+      if (
+        item === undefined ||
+        !isCurrentProject() ||
+        (result?.status !== "PUBLISHED" && result?.status !== "FAILED")
+      ) {
+        return;
+      }
+      const status = result.status === "PUBLISHED" ? "success" : "failed";
+      complete(item.buildId, status, result.code);
+      loadLog({ ...item, status });
+      if (
+        item.target === "static" &&
+        status === "success" &&
+        item.staticName !== undefined
+      ) {
+        window.location.href = `/cgi/static/ssg/${item.staticName}`;
+      }
+    },
+    [complete, loadLog, isCurrentProject]
+  );
+
+  const waitForCompletion = async (
+    item: SessionPublish | undefined,
+    previousBuildId?: string
+  ) => {
+    if (item === undefined) {
+      return;
+    }
+    const result = await waitForPublishStatus(
+      () => fetchAndStoreProject({ projectId, isCurrent: isCurrentProject }),
+      isCurrentProject,
+      previousBuildId,
+      {
+        projectId,
+        buildId: item.buildId,
+        logHandle: item.logHandle,
+        target: item.target,
+      }
+    );
+    finishPublish(item, result);
+    return result;
+  };
+  useEffect(() => {
+    // Refresh a build that finished while the popover was closed, including
+    // after a publish status request failed.
+    if (publishDialog !== "none" && isPublishing === false) {
+      let isOpen = true;
+      const generation = beginPopoverRefresh();
+      void refreshProjectWithRetry(
+        async (showError) => {
+          const refreshedProject = await fetchAndStoreProject({
+            projectId,
+            showError,
+            isCurrent: () => isOpen && isRefreshCurrent(generation),
+          });
+          if (
+            isOpen &&
+            isRefreshCurrent(generation) &&
+            refreshedProject !== undefined
+          ) {
+            reconcileRefreshedProject(refreshedProject);
+          }
+          return refreshedProject;
+        },
+        () => isOpen,
+        () => {
+          const target = publishDialog === "export" ? "static" : "site";
+          const pending = sessionPublishesRef.current.find(
+            (item) => item.target === target && item.status === "pending"
+          );
+          if (target === "static" && pending === undefined) {
+            return;
+          }
+          void watchPendingPublish(
+            () =>
+              fetchAndStoreProject({
+                projectId,
+                showError: false,
+                isCurrent: () => isRefreshCurrent(generation),
+              }),
+            generation,
+            pending === undefined
+              ? undefined
+              : {
+                  projectId,
+                  buildId: pending.buildId,
+                  logHandle: pending.logHandle,
+                  target,
+                },
+            (result) => finishPublish(pending, result)
+          );
+        },
+        () =>
+          sessionPublishesRef.current.some(
+            (item) =>
+              item.target ===
+                (publishDialog === "export" ? "static" : "site") &&
+              item.status === "pending"
+          )
+      );
+      return () => {
+        isOpen = false;
+      };
+    }
+  }, [
+    projectId,
+    publishDialog,
+    isPublishing,
+    reconcileRefreshedProject,
+    watchPendingPublish,
+    beginPopoverRefresh,
+    isRefreshCurrent,
+    finishPublish,
+  ]);
+  const openSiteReport = (
+    domain: string | undefined,
+    tab: "warnings" | "errors" | "publish"
+  ) => {
+    $publishDialog.set("none");
+    setDiagnosticsSelection({ target: "site", domain, tab });
+  };
+  const openStaticReport = (
+    tab: "warnings" | "errors" | "publish" = staticFailureFinding === undefined
+      ? "publish"
+      : "errors"
+  ) => {
+    $publishDialog.set("none");
+    setDiagnosticsSelection({ target: "static", tab });
+  };
+  const reportPublishes = selectSessionPublishes(
+    visiblePublishes,
+    diagnosticsSelection?.target ?? "site",
+    diagnosticsSelection?.domain
+  );
+  const domain = diagnosticsSelection?.domain;
+  const siteFindings = [...manualFindings, ...publishDiagnostics.site.findings];
+  const staticDiagnostics = publishDiagnostics.static;
+  const staticFailureFinding = staticDiagnostics.rejected
+    ? staticDiagnostics.findings
+        .filter(({ severity }) => severity === "error")
+        .at(-1)
+    : undefined;
+  const findings: DiagnosticFinding[] = [];
+  const diagnostics =
+    publishDiagnostics[diagnosticsSelection?.target ?? "site"];
+  const includesSelectedDomain =
+    domain === undefined || diagnostics.domains.includes(domain);
+  if (includesSelectedDomain) {
+    findings.push(...diagnostics.findings);
+  }
+  if (diagnosticsSelection?.target !== "static") {
+    if (domain === undefined || manualDomains?.includes(domain)) {
+      findings.push(...manualFindings);
+    }
+    const publishError = publishErrorState?.value;
+    const publishErrorDomains = publishErrorState?.domains;
+    if (
+      publishError !== undefined &&
+      (domain === undefined ||
+        publishErrorDomains === undefined ||
+        publishErrorDomains.includes(domain))
+    ) {
+      findings.push(
+        getPublishErrorFinding(publishError, publishErrorState?.buildId)
+      );
+    }
+  }
+
+  const validate = async (domains: string[]) => {
+    const session = beginManualValidation(domains);
+    clearErrors();
+    beginPublishDiagnostics(domains);
+    if (domains.length === 0) {
+      toast.error("Please select at least one domain to publish");
+      return;
+    }
+
+    try {
+      const checks = await runPublishValidation(projectId, domains);
+      if (isManualValidationCurrent(session) === false) {
+        return;
+      }
+      updateManualValidation(session, checks.findings);
+      if (checks.passed === false) {
+        updateValidationState("idle");
+        return;
+      }
+      updateValidationState("passed");
+    } catch (error) {
+      if (isManualValidationCurrent(session) === false) {
+        return;
+      }
+      updateValidationState("idle");
+      reportPublishValidationFailure(
+        error,
+        (findings) => updateManualValidation(session, findings),
+        { showToast: $publishDialog.get() !== "publish" }
+      );
+    }
+  };
+
+  const publishSite = (
+    domains: string[],
+    timesLeft: number,
+    maxDailyPublishesPerUser: number
+  ) => {
+    if (!isCurrentProject()) {
+      return;
+    }
+    invalidateManualValidation();
+    updateValidationState("idle");
+    if (domains.length === 0) {
+      toast.error("Please select at least one domain to publish");
+      return;
+    }
+    const diagnostics = beginPublishDiagnostics(domains);
+    start(
+      async () => {
+        const previousBuildId = $project.get()?.latestBuildVirtual?.buildId;
+        const publishResult = await runPublishAfterBestEffortChecks({
+          checks: async () => {
+            const checks = await runPublishDiagnostics(projectId, domains);
+            diagnostics.setFindings(checks.findings);
+          },
+          onCheckFailure: (error) => {
+            if (isCurrentProject() && diagnostics.isCurrent()) {
+              reportPublishValidationFailure(error, diagnostics.setFindings, {
+                publishingContinues: true,
+                showToast: $publishDialog.get() !== "publish",
+              });
+            }
+          },
+          publish: () =>
+            nativeClient.domain.publish.mutate({
+              projectId,
+              destination: publishedDeploymentDestination,
+              domains,
+            }),
+        });
+        if (!isCurrentProject()) {
+          return;
+        }
+        if (publishResult.success === false) {
+          if ("auditFindings" in publishResult) {
+            diagnostics.finish((findings) => [
+              ...findings,
+              ...getServerPublishFindings(publishResult.auditFindings),
+            ]);
+            return;
+          }
+          diagnostics.finish();
+          console.error(publishResult.error);
+
+          let error: JSX.Element | string = publishResult.error;
+          if (publishResult.error === "NOT_IMPLEMENTED") {
+            error = (
+              <>
+                <Tooltip
+                  content={
+                    <Text userSelect="text">
+                      {$project.get()?.latestBuildVirtual?.buildId}
+                    </Text>
+                  }
+                >
+                  <span>Build data</span>
+                </Tooltip>{" "}
+                for publishing has been successfully created. Use{" "}
+                <Link href="https://docs.webstudio.is/university/self-hosting/cli">
+                  Webstudio&nbsp;CLI
+                </Link>{" "}
+                to generate the code.
+              </>
+            );
+          }
+          setPublishError(error, domains);
+          if (publishResult.error === "NOT_IMPLEMENTED") {
+            toast.info(error);
+          } else if ($publishDialog.get() !== "publish") {
+            toast.error(
+              typeof error === "string" ? error.slice(0, 200) : error
+            );
+          }
+
+          if (process.env.NODE_ENV === "development") {
+            // Refresh locally as it's always an error
+            await fetchAndStoreProject({
+              projectId,
+              isCurrent: isCurrentProject,
+            });
+          }
+
+          return;
+        }
+
+        const accepted = record({
+          buildId: publishResult.buildId,
+          logHandle: publishResult.logHandle,
+          target: "site",
+          domains,
+          findings: getServerPublishFindings(publishResult.findings),
+        });
+        const outcome = await waitForCompletion(accepted, previousBuildId);
+        reportPublishResult({
+          result: outcome,
+          buildId: accepted?.buildId,
+          timesLeft,
+          maxDailyPublishesPerUser,
+          setPublishError: setPublishStatusError,
+          isCurrentProject,
+        });
+      },
+      {
+        domains,
+        onError: () => diagnostics.finish(),
+      }
+    );
+  };
+
+  const exportStatic = (templates: readonly Templates[]) => {
+    if (!isCurrentProject()) {
+      return;
+    }
+    const diagnostics = beginPublishDiagnostics([], "static");
+    start(
+      async () => {
+        const publishResult = await runPublishAfterBestEffortChecks({
+          checks: async () => {
+            const checks = await runPublishDiagnostics(projectId);
+            diagnostics.setFindings(checks.findings);
+          },
+          onCheckFailure: (error) => {
+            if (isCurrentProject() && diagnostics.isCurrent()) {
+              reportPublishValidationFailure(error, diagnostics.setFindings, {
+                publishingContinues: true,
+                showToast: true,
+              });
+            }
+          },
+          publish: () =>
+            nativeClient.domain.publish.mutate({
+              projectId,
+              destination: "static",
+              templates: [...templates],
+            }),
+        });
+        if (!isCurrentProject()) {
+          return;
+        }
+        if (publishResult.success === false) {
+          if ("auditFindings" in publishResult) {
+            diagnostics.finish((findings) => [
+              ...findings,
+              ...getServerPublishFindings(publishResult.auditFindings),
+            ]);
+            openStaticReport("errors");
+            return;
+          }
+          diagnostics.finish((findings) => [
+            ...findings,
+            getPublishErrorFinding(publishResult.error),
+          ]);
+          toast.error(publishResult.error.slice(0, 200));
+          return;
+        }
+        const accepted = record({
+          buildId: publishResult.buildId,
+          logHandle: publishResult.logHandle,
+          target: "static",
+          domains: [],
+          findings: getServerPublishFindings(publishResult.findings),
+          staticName: "name" in publishResult ? publishResult.name : undefined,
+        });
+        if (accepted?.staticName == null) {
+          toast.error('File name must be defined in "result"');
+        }
+        const outcome = await waitForCompletion(accepted);
+        if (isCurrentProject() && outcome?.status === "FAILED") {
+          toast.error(outcome.statusContent);
+        }
+      },
+      {
+        target: "static",
+        domains: [],
+        onError: (message) =>
+          diagnostics.finish((findings) => [
+            ...findings,
+            getPublishErrorFinding(message),
+          ]),
+      }
+    );
+  };
+  const flow = {
+    isPublishing,
+    countdown,
+    validationState,
+    validatedDomains: manualDomains,
+    siteError: publishErrorState?.value,
+    siteErrorSource: publishErrorState?.source,
+    siteFindings,
+    staticFailureFinding,
+    publishes: visiblePublishes,
+    loadLog,
+    diagnosticsSelection,
+    closeReport: () => setDiagnosticsSelection(undefined),
+    reportPublishes,
+    reportFindings: findings,
+    includeLatestPublishFindings: !(
+      diagnostics.rejected && includesSelectedDomain
+    ),
+    openSiteReport,
+    openStaticReport,
+    validate,
+    publishSite,
+    exportStatic,
+    invalidateValidation,
+    reset: () => {
+      resetValidationState();
+      dismissCountdown();
+    },
+  };
   const { canPublishToStagingOnly } = useStore($permissions);
   const isPublishEnabled =
     authTokenPermissions.canPublish || canPublishToStagingOnly;
@@ -1237,12 +1140,12 @@ export const PublishButton = ({ projectId }: PublishProps) => {
         </PopoverContent>
       </Popover>
       <PublishDiagnosticsDialog
-        findings={reportFindings}
+        findings={flow.reportFindings}
         includeLatestPublishFindings={flow.includeLatestPublishFindings}
         open={diagnosticsSelection !== undefined}
         onOpenChange={(open) => {
           if (open === false) {
-            closeReport();
+            flow.closeReport();
           }
         }}
         target={
@@ -1251,12 +1154,10 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             : diagnosticsSelection?.domain
         }
         initialTab={diagnosticsSelection?.tab}
-        items={reportPublishes}
+        items={flow.reportPublishes}
         canViewPublishLogs={allowPublishLogs}
         onLoadLog={flow.loadLog}
       />
     </>
   );
 };
-
-export const __testing__ = { PublishStatic };
