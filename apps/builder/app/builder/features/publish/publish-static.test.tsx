@@ -170,6 +170,11 @@ test("reopening an active static publish keeps one status owner and one download
   await render(false);
   await render(true);
   expect(staticButton()?.dataset.state).toBe("pending");
+  expect(
+    document.body.querySelector(
+      'button[aria-label="Publish log: Static export"] svg style'
+    )
+  ).toBeNull();
   getJobStatus = "success";
   await act(async () => vi.advanceTimersByTimeAsync(15_000));
   await vi.waitFor(async () => {

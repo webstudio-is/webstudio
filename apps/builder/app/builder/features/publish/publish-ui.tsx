@@ -76,7 +76,6 @@ import {
   InfoCircleIcon,
   EllipsesIcon,
   PlusIcon,
-  SpinnerIcon,
   TerminalIcon,
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
@@ -662,8 +661,6 @@ const PublishStatic = ({
               <AlertIcon />
             ) : logStatus === "PUBLISHED" ? (
               <CheckCircleIcon />
-            ) : logStatus === "PENDING" ? (
-              <SpinnerIcon />
             ) : (
               <InfoCircleIcon />
             )}
