@@ -1,4 +1,4 @@
-import type { Frame, Page } from "@playwright/test";
+import type { Frame, Page, Request, Response } from "@playwright/test";
 import { getProjectBuilderUrl } from "../test";
 import { measure } from "../perf";
 
@@ -108,14 +108,51 @@ export const waitForCanvasTextHidden = async ({
 };
 
 const openBuilderPage = async (page: Page, url: string): Promise<Frame> => {
-  await measure("builder page navigation", () => page.goto(url));
-  const canvas = await measure("builder canvas ready", () =>
-    waitForCanvasFrame({ page })
-  );
-  await measure("builder loading indicator hidden", () =>
-    page.getByRole("progressbar").waitFor({ state: "hidden", timeout: 30_000 })
-  );
-  return canvas;
+  const startedAt = Date.now();
+  let dataRequestAt: number | undefined;
+  let dataResponseAt: number | undefined;
+  let dataFinishedAt: number | undefined;
+  const isDataRequest = (request: Request) =>
+    new URL(request.url()).pathname.includes("build.loadData");
+  const onRequest = (request: Request) => {
+    if (isDataRequest(request)) {
+      dataRequestAt ??= Date.now();
+    }
+  };
+  const onResponse = (response: Response) => {
+    if (isDataRequest(response.request())) {
+      dataResponseAt ??= Date.now();
+    }
+  };
+  const onRequestFinished = (request: Request) => {
+    if (isDataRequest(request)) {
+      dataFinishedAt = Date.now();
+    }
+  };
+  page.on("request", onRequest);
+  page.on("response", onResponse);
+  page.on("requestfinished", onRequestFinished);
+  try {
+    await measure("builder page navigation", () => page.goto(url));
+    const navigationEndedAt = Date.now();
+    const canvas = await measure("builder canvas iframe attached", () =>
+      waitForCanvasFrame({ page })
+    );
+    const iframeAttachedAt = Date.now();
+    console.info(
+      `[e2e:load] navigation=${navigationEndedAt - startedAt}ms data_request=${dataRequestAt === undefined ? "none" : dataRequestAt - startedAt + "ms"} data_response=${dataResponseAt === undefined ? "none" : dataResponseAt - startedAt + "ms"} data_finished=${dataFinishedAt === undefined ? "none" : dataFinishedAt - startedAt + "ms"} iframe_attached=${iframeAttachedAt - startedAt}ms`
+    );
+    await measure("builder loading indicator hidden", () =>
+      page
+        .getByRole("progressbar")
+        .waitFor({ state: "hidden", timeout: 30_000 })
+    );
+    return canvas;
+  } finally {
+    page.off("request", onRequest);
+    page.off("response", onResponse);
+    page.off("requestfinished", onRequestFinished);
+  }
 };
 
 export const openProjectBuilder = async ({
