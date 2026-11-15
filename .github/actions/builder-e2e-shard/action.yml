@@ -33,6 +33,21 @@ runs:
           ~/.cache/ms-playwright/ffmpeg-*
         key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
+    - name: Wait for Builder E2E build
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        for attempt in {1..84}; do
+          count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=builder-e2e-build" --jq '.total_count')
+          if [ "$count" -gt 0 ]; then
+            exit 0
+          fi
+          sleep 5
+        done
+        echo "Builder E2E build artifact was not uploaded within 7 minutes" >&2
+        exit 1
+
     - name: Download Builder E2E build
       uses: actions/download-artifact@v7
       with:

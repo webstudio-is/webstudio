@@ -201,13 +201,25 @@ jobs:
     name: builder-e2e (${{ matrix.shard }})
     timeout-minutes: 12
 
-    needs: builder-e2e-build
-
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.builder-e2e-build.outputs.shards) }}
+        shard:
+          - shard-1
+          - shard-2
+          - shard-3
+          - shard-4
+          - shard-5
+          - shard-6
+          - shard-7
+          - shard-8
+          - shard-9
+          - shard-10
+
+    permissions:
+      contents: read
+      actions: read
 
     environment:
       name: development
@@ -222,4 +234,3 @@ jobs:
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
           shard: ${{ matrix.shard }}
-          partition: ${{ matrix.partition }}
