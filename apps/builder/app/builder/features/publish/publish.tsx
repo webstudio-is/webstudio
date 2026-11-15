@@ -64,6 +64,8 @@ type PublishProps = {
 };
 
 const COUNTDOWN_DURATION = 60_000;
+const PUBLISH_LOG_RETRY_DELAY = 5_000;
+const PUBLISH_LOG_MAX_ATTEMPTS = 12;
 
 const getPublishErrorFinding = (
   error: JSX.Element | string,
@@ -531,20 +533,40 @@ export const PublishButton = ({ projectId }: PublishProps) => {
         const chunks: string[] = [];
         const issues: NonNullable<SessionPublish["issues"]> = [];
         let issuesOmitted = 0;
+        let retryAttempts = 0;
         while (isReadCurrent()) {
-          const result = await nativeClient.api.publish.getLog.query({
-            projectId,
-            buildId: item.buildId,
-            logHandle: item.logHandle,
-            cursor,
-          });
+          let result: Awaited<
+            ReturnType<typeof nativeClient.api.publish.getLog.query>
+          >;
+          try {
+            result = await nativeClient.api.publish.getLog.query({
+              projectId,
+              buildId: item.buildId,
+              logHandle: item.logHandle,
+              cursor,
+            });
+          } catch {
+            result = { availability: "pending" };
+          }
           if (isReadCurrent() === false) {
             return;
+          }
+          if (result.availability === "pending") {
+            retryAttempts += 1;
+            if (retryAttempts >= PUBLISH_LOG_MAX_ATTEMPTS) {
+              update(item.buildId, { logState: "unavailable" });
+              return;
+            }
+            await new Promise((resolve) =>
+              setTimeout(resolve, PUBLISH_LOG_RETRY_DELAY)
+            );
+            continue;
           }
           if (result.availability !== "available") {
             update(item.buildId, { logState: "unavailable" });
             return;
           }
+          retryAttempts = 0;
           update(item.buildId, {
             startedAt: result.startedAt ?? item.startedAt,
             completedAt: result.completedAt,

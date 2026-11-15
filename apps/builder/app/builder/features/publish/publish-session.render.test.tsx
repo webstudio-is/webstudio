@@ -27,6 +27,8 @@ let publishRequests = 0;
 let buildId = "build-1";
 let acceptedBuildId = "previous-build";
 let withHandle = true;
+let pendingLogResponses = 0;
+let failedLogResponses = 0;
 let holdLog:
   | { cursor?: number; response: ReturnType<typeof deferred<void>> }
   | undefined;
@@ -90,6 +92,14 @@ beforeAll(async () => {
     "api.publish.getLog": async (value) => {
       const input = value as (typeof logRequests)[number];
       logRequests.push(input);
+      if (pendingLogResponses > 0) {
+        pendingLogResponses -= 1;
+        return { availability: "pending" };
+      }
+      if (failedLogResponses > 0) {
+        failedLogResponses -= 1;
+        throw new Error("Temporary log failure");
+      }
       const first = input.cursor === undefined;
       if (
         input.buildId === "build-1" &&
@@ -154,6 +164,8 @@ beforeEach(() => {
   publishRequests = 0;
   logRequests.length = 0;
   withHandle = true;
+  pendingLogResponses = 0;
+  failedLogResponses = 0;
   holdLog = undefined;
   heldJob = undefined;
   heldPublish = undefined;
@@ -294,6 +306,28 @@ test("a pending publish shows its local start time, then the runner time and dur
   await setPaid(false);
   expect(panel().textContent).not.toContain("Started:");
   expect(panel().textContent).not.toContain("Duration:");
+});
+
+test("retries pending and failed log reads before giving up on the session", async () => {
+  vi.useFakeTimers();
+  pendingLogResponses = 1;
+  failedLogResponses = 1;
+  await render();
+  await publish();
+  await openReport();
+  await act(async () => vi.waitFor(() => expect(logRequests).toHaveLength(1)));
+  await act(async () => vi.advanceTimersByTimeAsync(5_000));
+  await act(async () => vi.waitFor(() => expect(logRequests).toHaveLength(2)));
+  await act(async () => vi.advanceTimersByTimeAsync(5_000));
+  await waitFor(() =>
+    expect(panel().querySelector("pre")?.textContent).toBe("€")
+  );
+  expect(logRequests.map(({ cursor }) => cursor)).toEqual([
+    undefined,
+    undefined,
+    undefined,
+    1,
+  ]);
 });
 
 test("Free does not fetch logs; upgrading reads UTF-8 from byte zero and preserves issue severity", async () => {
