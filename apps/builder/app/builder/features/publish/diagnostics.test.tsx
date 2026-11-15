@@ -26,10 +26,17 @@ afterEach(() => {
 
 const render = (
   findings: DiagnosticFinding[],
-  canViewPublishLogs = true,
-  items: SessionPublish[] = [],
-  onLoadLog?: (item: SessionPublish) => void,
-  open?: boolean
+  {
+    canViewPublishLogs = true,
+    items = [],
+    onLoadLog,
+    open,
+  }: {
+    canViewPublishLogs?: boolean;
+    items?: SessionPublish[];
+    onLoadLog?: (item: SessionPublish) => void;
+    open?: boolean;
+  } = {}
 ) => {
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -69,10 +76,8 @@ const openDetails = (element: HTMLElement) => {
 };
 
 test("keeps audit and build findings in severity tabs, not in publish logs", async () => {
-  render(
-    [],
-    true,
-    [
+  render([], {
+    items: [
       {
         buildId: "build-separated",
         target: "site",
@@ -84,9 +89,8 @@ test("keeps audit and build findings in severity tabs, not in publish logs", asy
         logText: "runner-output-42",
       },
     ],
-    undefined,
-    true
-  );
+    open: true,
+  });
   const tabs = Array.from(
     document.body.querySelectorAll<HTMLElement>('[role="tab"]')
   );
@@ -122,22 +126,23 @@ test.each(["findings", "details", "publish"] as const)(
               reportText: "report",
             },
           ],
-      true,
-      view === "publish"
-        ? [
-            {
-              buildId: "scrolling-build",
-              target: "site",
-              domains: ["example.com"],
-              findings: [],
-              status: "success",
-              logState: "available",
-              logText: "line\n".repeat(200),
-            },
-          ]
-        : [],
-      undefined,
-      true
+      {
+        items:
+          view === "publish"
+            ? [
+                {
+                  buildId: "scrolling-build",
+                  target: "site",
+                  domains: ["example.com"],
+                  findings: [],
+                  status: "success",
+                  logState: "available",
+                  logText: "line\n".repeat(200),
+                },
+              ]
+            : [],
+        open: true,
+      }
     );
     if (view === "details") {
       const finding = Array.from(document.body.querySelectorAll("button")).find(
@@ -289,7 +294,7 @@ test("Free shows the actual short error without details, navigation, or report c
         reportText: "Private long diagnostic context",
       },
     ],
-    false
+    { canViewPublishLogs: false }
   );
   openDetails(element);
   expect(document.body.textContent).toContain("Invalid MDX element nesting");
@@ -304,18 +309,21 @@ test("Free shows the actual short error without details, navigation, or report c
 });
 
 test("Free hides log-derived issues, stage, and code", async () => {
-  const element = render([createFinding("warning", 0)], false, [
-    {
-      buildId: "build-1",
-      target: "site",
-      domains: ["example.com"],
-      findings: [],
-      status: "failed",
-      code: "private-code",
-      failedStage: "private-stage",
-      issues: [{ severity: "error", message: "private-log-issue" }],
-    },
-  ]);
+  const element = render([createFinding("warning", 0)], {
+    canViewPublishLogs: false,
+    items: [
+      {
+        buildId: "build-1",
+        target: "site",
+        domains: ["example.com"],
+        findings: [],
+        status: "failed",
+        code: "private-code",
+        failedStage: "private-stage",
+        issues: [{ severity: "error", message: "private-log-issue" }],
+      },
+    ],
+  });
   openDetails(element);
   const publishTab = Array.from(
     document.body.querySelectorAll('[role="tab"]')
@@ -337,12 +345,10 @@ test("loads a completed publish when Publish opens and shows its log inline", as
     status: "failed",
   };
   const onLoadLog = vi.fn();
-  const element = render(
-    [createFinding("warning", 0)],
-    true,
-    [item],
-    onLoadLog
-  );
+  const element = render([createFinding("warning", 0)], {
+    items: [item],
+    onLoadLog,
+  });
   openDetails(element);
   expect(onLoadLog).not.toHaveBeenCalled();
   const publishTab = Array.from(
@@ -370,10 +376,8 @@ test("loads a completed publish when Publish opens and shows its log inline", as
 
 test("shows unavailable instead of loading forever when a publish has no log handle", async () => {
   const onLoadLog = vi.fn();
-  const element = render(
-    [createFinding("warning", 0)],
-    true,
-    [
+  const element = render([createFinding("warning", 0)], {
+    items: [
       {
         buildId: "build-1",
         target: "site",
@@ -382,8 +386,8 @@ test("shows unavailable instead of loading forever when a publish has no log han
         status: "failed",
       },
     ],
-    onLoadLog
-  );
+    onLoadLog,
+  });
   openDetails(element);
   const publishTab = Array.from(
     document.body.querySelectorAll('[role="tab"]')
@@ -399,10 +403,8 @@ test("lists each publish domain and copies the full loaded log", async () => {
     configurable: true,
     value: { writeText },
   });
-  render(
-    [],
-    true,
-    [
+  render([], {
+    items: [
       {
         buildId: "build-1",
         target: "site",
@@ -422,9 +424,8 @@ test("lists each publish domain and copies the full loaded log", async () => {
         logText: "Second complete runner log",
       },
     ],
-    undefined,
-    true
-  );
+    open: true,
+  });
   expect(document.body.textContent).toContain("first.example");
   expect(document.body.textContent).toContain("second.example");
   expect(document.body.textContent).toContain("third.example");
@@ -449,10 +450,8 @@ test("collapses each complete publish and copies its full log from the header", 
     configurable: true,
     value: { writeText },
   });
-  render(
-    [],
-    true,
-    [
+  render([], {
+    items: [
       {
         buildId: "build-1",
         target: "site",
@@ -472,9 +471,8 @@ test("collapses each complete publish and copies its full log from the header", 
         logText: "Complete second publish log",
       },
     ],
-    undefined,
-    true
-  );
+    open: true,
+  });
   const triggers = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button[aria-labelledby]")
   );
@@ -505,10 +503,8 @@ test("collapses each complete publish and copies its full log from the header", 
 });
 
 test("can maximize Diagnostics and aligns publish content with its title", async () => {
-  render(
-    [],
-    true,
-    [
+  render([], {
+    items: [
       {
         buildId: "build-1",
         target: "site",
@@ -519,9 +515,8 @@ test("can maximize Diagnostics and aligns publish content with its title", async
         logText: "Build output",
       },
     ],
-    undefined,
-    true
-  );
+    open: true,
+  });
 
   const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]');
   const titleButton = document.body.querySelector<HTMLButtonElement>(
@@ -565,18 +560,18 @@ test("publish failure is plain text and links to the Publish tab", async () => {
         reportText: "Build failed before deployment",
       },
     ],
-    true,
-    [
-      {
-        buildId: "build-1",
-        target: "site",
-        domains: ["first.example"],
-        findings: [],
-        status: "failed",
-      },
-    ],
-    undefined,
-    true
+    {
+      items: [
+        {
+          buildId: "build-1",
+          target: "site",
+          domains: ["first.example"],
+          findings: [],
+          status: "failed",
+        },
+      ],
+      open: true,
+    }
   );
   expect(document.body.textContent).toContain("Build failed before deployment");
   expect(document.body.textContent).not.toContain("Audit");
@@ -613,20 +608,21 @@ test("Free publish failures link to a Publish upgrade banner without exposing lo
         reportText: "Publish failed",
       },
     ],
-    false,
-    [
-      {
-        buildId: "build-1",
-        target: "site",
-        domains: ["first.example"],
-        findings: [],
-        status: "failed",
-        logState: "available",
-        logText: "private runner output",
-      },
-    ],
-    undefined,
-    true
+    {
+      canViewPublishLogs: false,
+      items: [
+        {
+          buildId: "build-1",
+          target: "site",
+          domains: ["first.example"],
+          findings: [],
+          status: "failed",
+          logState: "available",
+          logText: "private runner output",
+        },
+      ],
+      open: true,
+    }
   );
   expect(document.body.textContent).toContain("Publish failed");
   const link = Array.from(document.body.querySelectorAll("button")).find(
@@ -647,10 +643,8 @@ test("Free publish failures link to a Publish upgrade banner without exposing lo
 });
 
 test("lists publishes oldest first and opens the newest entry", () => {
-  render(
-    [],
-    true,
-    [
+  render([], {
+    items: [
       {
         buildId: "new",
         target: "site",
@@ -666,9 +660,8 @@ test("lists publishes oldest first and opens the newest entry", () => {
         status: "failed",
       },
     ],
-    undefined,
-    true
-  );
+    open: true,
+  });
   const triggers = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button[aria-labelledby]")
   );
@@ -692,10 +685,7 @@ test("pre-dispatch failure has no link to an absent Publish tab", () => {
         reportText: "Publish request failed",
       },
     ],
-    true,
-    [],
-    undefined,
-    true
+    { open: true }
   );
   expect(document.body.textContent).toContain("Publish request failed");
   expect(document.body.textContent).not.toContain("Audit");
@@ -726,20 +716,21 @@ test.each([true, false])(
           reportText: "new-request-rejection",
         },
       ],
-      paid,
-      [
-        {
-          buildId: "old-build",
-          target: "site",
-          domains: ["example.com"],
-          status: "success",
-          findings: [],
-          logState: "available",
-          logText: "old-output",
-        },
-      ],
-      undefined,
-      true
+      {
+        canViewPublishLogs: paid,
+        items: [
+          {
+            buildId: "old-build",
+            target: "site",
+            domains: ["example.com"],
+            status: "success",
+            findings: [],
+            logState: "available",
+            logText: "old-output",
+          },
+        ],
+        open: true,
+      }
     );
     expect(
       document.body.querySelector('[role="tab"][aria-selected="true"]')
@@ -764,7 +755,7 @@ test("Free audit summaries do not expose long cached details", () => {
         reportText: longSummary,
       },
     ],
-    false
+    { canViewPublishLogs: false }
   );
   openDetails(element);
   expect(document.body.textContent).toContain("Short reason");

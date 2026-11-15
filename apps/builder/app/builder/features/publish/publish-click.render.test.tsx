@@ -12,6 +12,7 @@ import {
 } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
+import { trpcFetch } from "./publish-test-utils";
 
 const reactEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
 const originalActEnvironment = reactEnvironment.IS_REACT_ACT_ENVIRONMENT;
@@ -40,102 +41,73 @@ beforeAll(async () => {
   vi.resetModules();
   vi.stubGlobal(
     "fetch",
-    async (requestInfo: RequestInfo | URL, requestInit?: RequestInit) => {
-      const url = new URL(String(requestInfo), "http://localhost");
-      const input =
-        requestInit?.body === undefined
-          ? JSON.parse(url.searchParams.get("input") ?? "{}")
-          : JSON.parse(String(requestInit.body));
-      const results = url.pathname
-        .slice("/trpc/".length)
-        .split(",")
-        .map((route, index) => {
-          const path = `/trpc/${route}`;
-          requests.push({ path, input: { "0": input[String(index)] } });
-          let data: unknown;
-          switch (path) {
-            case "/trpc/domain.publish":
-              if (publishResponse instanceof Error) {
-                throw publishResponse;
-              }
-              data = publishResponse;
-              didPublish = (publishResponse as { success: boolean }).success;
-              break;
-            case "/trpc/api.publish.getJob":
-              data = { status: jobStatus, code: "BUILD_FAILED" };
-              break;
-            case "/trpc/api.publish.getLog": {
-              const cursor = (input[String(index)] as { cursor?: number })
-                .cursor;
-              logCursors.push(cursor);
-              data = {
-                availability: "available",
-                startedAt: "2026-11-13T10:00:00.000Z",
-                completedAt: "2026-11-13T10:00:03.000Z",
-                log: {
-                  encoding: "base64url",
-                  chunk: btoa(
-                    String.fromCharCode(
-                      ...(cursor === undefined ? [0xe2] : [0x82, 0xac])
-                    )
-                  ),
-                  complete: cursor !== undefined,
-                  nextCursor: cursor === undefined ? 1 : undefined,
-                  issues: [
-                    {
-                      severity: cursor === undefined ? "warning" : "error",
-                      message:
-                        cursor === undefined ? "Early warning" : "Late error",
-                    },
-                  ],
-                },
-              };
-              break;
-            }
-            case "/trpc/domain.project":
-              data = {
-                success: true,
-                project: {
-                  id: "project-1",
-                  domain: "example",
-                  domainsVirtual: [],
-                  latestBuildVirtual: didPublish
-                    ? {
-                        domain: "example",
-                        buildId: "build-1",
-                        createdAt: new Date().toISOString(),
-                        publishStatus:
-                          jobStatus === "success" ? "PUBLISHED" : "FAILED",
-                      }
-                    : null,
-                },
-              };
-              break;
-            case "/trpc/domain.countTotalDomains":
-              data = { success: true, data: 0 };
-              break;
-            case "/trpc/project.userPublishCount":
-              data = { success: true, data: 0, limit: 100 };
-              break;
-            default:
-              return {
-                error: {
-                  message: `Unexpected request: ${path}`,
-                  code: -32603,
-                  data: {
-                    code: "INTERNAL_SERVER_ERROR",
-                    httpStatus: 500,
-                    path: route,
-                  },
-                },
-              };
+    trpcFetch(
+      {
+        "domain.publish": () => {
+          if (publishResponse instanceof Error) {
+            throw publishResponse;
           }
-          return { result: { data } };
-        });
-      return new Response(JSON.stringify(results), {
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+          didPublish = (publishResponse as { success: boolean }).success;
+          return publishResponse;
+        },
+        "api.publish.getJob": () => {
+          return { status: jobStatus, code: "BUILD_FAILED" };
+        },
+        "api.publish.getLog": (input) => {
+          const cursor = (input as { cursor?: number }).cursor;
+          logCursors.push(cursor);
+          return {
+            availability: "available",
+            startedAt: "2026-11-13T10:00:00.000Z",
+            completedAt: "2026-11-13T10:00:03.000Z",
+            log: {
+              encoding: "base64url",
+              chunk: btoa(
+                String.fromCharCode(
+                  ...(cursor === undefined ? [0xe2] : [0x82, 0xac])
+                )
+              ),
+              complete: cursor !== undefined,
+              nextCursor: cursor === undefined ? 1 : undefined,
+              issues: [
+                {
+                  severity: cursor === undefined ? "warning" : "error",
+                  message:
+                    cursor === undefined ? "Early warning" : "Late error",
+                },
+              ],
+            },
+          };
+        },
+        "domain.project": () => {
+          return {
+            success: true,
+            project: {
+              id: "project-1",
+              domain: "example",
+              domainsVirtual: [],
+              latestBuildVirtual: didPublish
+                ? {
+                    domain: "example",
+                    buildId: "build-1",
+                    createdAt: new Date().toISOString(),
+                    publishStatus:
+                      jobStatus === "success" ? "PUBLISHED" : "FAILED",
+                  }
+                : null,
+            },
+          };
+        },
+        "domain.countTotalDomains": () => ({ success: true, data: 0 }),
+        "project.userPublishCount": () => ({
+          success: true,
+          data: 0,
+          limit: 100,
+        }),
+      },
+      (route, input) =>
+        requests.push({ path: `/trpc/${route}`, input: { "0": input } })
+    )
   );
   publishModule = await import("./publish");
   stores = await import("~/shared/sync/data-stores");

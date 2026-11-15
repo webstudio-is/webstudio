@@ -4,6 +4,7 @@ import { userEvent } from "@vitest/browser/context";
 import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
+import { trpcFetch } from "./publish-test-utils";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -33,11 +34,6 @@ const interceptDownload = (event: NavigateEvent) => {
   }
 };
 
-const respond = (data: unknown) =>
-  new Response(JSON.stringify([{ result: { data } }]), {
-    headers: { "Content-Type": "application/json" },
-  });
-
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
@@ -45,36 +41,22 @@ const respond = (data: unknown) =>
 beforeAll(async () => {
   window.navigation.addEventListener("navigate", interceptDownload);
   vi.resetModules();
-  vi.stubGlobal("fetch", async (requestInfo: RequestInfo | URL) => {
-    const path = new URL(String(requestInfo), "http://localhost").pathname;
-    if (path.includes(",")) {
-      const responses = await Promise.all(
-        path
-          .slice("/trpc/".length)
-          .split(",")
-          .map(async (route) => {
-            const response = await fetch(`/trpc/${route}`);
-            const results = (await response.json()) as unknown[];
-            return results[0];
-          })
-      );
-      return new Response(JSON.stringify(responses), {
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    if (path === "/trpc/build.contentDatabasePublishDiagnostics") {
-      return respond({ mdxErrors: [], mdxOmissions: [] });
-    }
-    if (path === "/trpc/domain.publish") {
-      publishRequests += 1;
-      return respond(staticResponse);
-    }
-    if (path === "/trpc/api.publish.getJob") {
-      jobRequests += 1;
-      return respond({ status: getJobStatus });
-    }
-    if (path === "/trpc/domain.project") {
-      return respond({
+  vi.stubGlobal(
+    "fetch",
+    trpcFetch({
+      "build.contentDatabasePublishDiagnostics": () => ({
+        mdxErrors: [],
+        mdxOmissions: [],
+      }),
+      "domain.publish": () => {
+        publishRequests += 1;
+        return staticResponse;
+      },
+      "api.publish.getJob": () => {
+        jobRequests += 1;
+        return { status: getJobStatus };
+      },
+      "domain.project": () => ({
         success: true,
         project: {
           ...projectStore.get(),
@@ -87,10 +69,9 @@ beforeAll(async () => {
                   publishStatus: "PUBLISHED",
                 },
         },
-      });
-    }
-    throw new Error(`Unexpected request: ${path}`);
-  });
+      }),
+    })
+  );
   publishModule = await import("./publish");
   nanoStates = await import("~/shared/nano-states");
   publishDialog = (await import("~/builder/shared/nano-states")).$publishDialog;

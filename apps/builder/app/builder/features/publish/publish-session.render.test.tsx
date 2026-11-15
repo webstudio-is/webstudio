@@ -12,14 +12,8 @@ import {
 } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
+import { deferred, trpcFetch } from "./publish-test-utils";
 
-const deferred = <T,>() => {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((done) => {
-    resolve = done;
-  });
-  return { promise, resolve };
-};
 const encoded = (bytes: number[]) => btoa(String.fromCharCode(...bytes));
 const logRequests: Array<{
   cursor?: number;
@@ -57,99 +51,75 @@ beforeAll(async () => {
   vi.resetModules();
   vi.stubGlobal(
     "fetch",
-    async (requestInfo: RequestInfo | URL, init?: RequestInit) => {
-      const url = new URL(String(requestInfo), "http://localhost");
-      const inputs = JSON.parse(
-        init?.body === undefined
-          ? (url.searchParams.get("input") ?? "{}")
-          : String(init.body)
-      );
-      const results = await Promise.all(
-        url.pathname
-          .slice("/trpc/".length)
-          .split(",")
-          .map(async (route, index) => {
-            const input = inputs[String(index)];
-            let data: unknown;
-            switch (route) {
-              case "domain.project":
-                data = {
-                  success: true,
-                  project: {
-                    ...stores.$project.get(),
-                    latestBuildVirtual: {
-                      domain: "example",
-                      buildId: acceptedBuildId,
-                      createdAt: new Date().toISOString(),
-                      publishStatus: "PUBLISHED",
-                    },
-                  },
-                };
-                break;
-              case "domain.countTotalDomains":
-                data = { success: true, data: 0 };
-                break;
-              case "project.userPublishCount":
-                data = { success: true, data: 0, limit: 100 };
-                break;
-              case "domain.publish":
-                publishRequests += 1;
-                data = heldPublish
-                  ? await heldPublish.promise
-                  : {
-                      success: true,
-                      buildId,
-                      ...(withHandle ? { logHandle: "handle" } : {}),
-                      findings: [],
-                    };
-                acceptedBuildId = (data as { buildId: string }).buildId;
-                break;
-              case "api.publish.getJob":
-                data = heldJob ? await heldJob.promise : { status: "success" };
-                break;
-              case "api.publish.getLog": {
-                logRequests.push(input);
-                const first = input.cursor === undefined;
-                if (
-                  input.buildId === "build-1" &&
-                  holdLog &&
-                  holdLog.cursor === input.cursor
-                ) {
-                  await holdLog.response.promise;
-                }
-                data = {
-                  availability: "available",
-                  startedAt: "2026-11-13T10:00:00.000Z",
-                  completedAt: "2026-11-13T10:00:03.000Z",
-                  log: {
-                    encoding: "base64url",
-                    chunk: first ? encoded([0xe2]) : encoded([0x82, 0xac]),
-                    complete: !first,
-                    nextCursor: first ? 1 : undefined,
-                    issues: [
-                      {
-                        severity: first ? "warning" : "error",
-                        message: first ? "Early warning" : "Late error",
-                      },
-                    ],
-                    issuesOmitted: first ? 1 : 0,
-                  },
-                };
-                break;
-              }
-              case "build.contentDatabasePublishDiagnostics":
-                data = { mdxErrors: [], mdxOmissions: [] };
-                break;
-              default:
-                throw new Error(`Unexpected request: ${route}`);
-            }
-            return { result: { data } };
-          })
-      );
-      return new Response(JSON.stringify(results), {
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    trpcFetch({
+      "domain.project": () => ({
+        success: true,
+        project: {
+          ...stores.$project.get(),
+          latestBuildVirtual: {
+            domain: "example",
+            buildId: acceptedBuildId,
+            createdAt: new Date().toISOString(),
+            publishStatus: "PUBLISHED",
+          },
+        },
+      }),
+      "domain.countTotalDomains": () => ({ success: true, data: 0 }),
+      "project.userPublishCount": () => ({
+        success: true,
+        data: 0,
+        limit: 100,
+      }),
+      "domain.publish": async () => {
+        publishRequests += 1;
+        const data = heldPublish
+          ? await heldPublish.promise
+          : {
+              success: true,
+              buildId,
+              ...(withHandle ? { logHandle: "handle" } : {}),
+              findings: [],
+            };
+        acceptedBuildId = (data as { buildId: string }).buildId;
+        return data;
+      },
+      "api.publish.getJob": () =>
+        heldJob ? heldJob.promise : { status: "success" },
+      "api.publish.getLog": async (value) => {
+        const input = value as (typeof logRequests)[number];
+        logRequests.push(input);
+        const first = input.cursor === undefined;
+        if (
+          input.buildId === "build-1" &&
+          holdLog &&
+          holdLog.cursor === input.cursor
+        ) {
+          await holdLog.response.promise;
+        }
+        return {
+          availability: "available",
+          startedAt: "2026-11-13T10:00:00.000Z",
+          completedAt: "2026-11-13T10:00:03.000Z",
+          log: {
+            encoding: "base64url",
+            chunk: first ? encoded([0xe2]) : encoded([0x82, 0xac]),
+            complete: !first,
+            nextCursor: first ? 1 : undefined,
+            issues: [
+              {
+                severity: first ? "warning" : "error",
+                message: first ? "Early warning" : "Late error",
+              },
+            ],
+            issuesOmitted: first ? 1 : 0,
+          },
+        };
+      },
+      "build.contentDatabasePublishDiagnostics": () => ({
+        mdxErrors: [],
+        mdxOmissions: [],
+      }),
+    })
   );
   PublishButton = (await import("./publish")).PublishButton;
   stores = await import("~/shared/sync/data-stores");

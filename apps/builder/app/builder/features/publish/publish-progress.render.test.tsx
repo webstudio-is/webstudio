@@ -13,19 +13,10 @@ import {
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
+import { deferred, trpcFetch } from "./publish-test-utils";
 
 const reactEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
 const originalActEnvironment = reactEnvironment.IS_REACT_ACT_ENVIRONMENT;
-
-const deferred = <T,>() => {
-  let resolve!: (value: T) => void;
-  let reject!: (error: Error) => void;
-  const promise = new Promise<T>((done, fail) => {
-    resolve = done;
-    reject = fail;
-  });
-  return { promise, resolve, reject };
-};
 
 let root: Root | undefined;
 let container: HTMLDivElement;
@@ -71,50 +62,25 @@ beforeAll(async () => {
   vi.resetModules();
   vi.stubGlobal(
     "fetch",
-    async (info: RequestInfo | URL, init?: RequestInit) => {
-      const url = new URL(String(info), location.href);
-      const inputs = JSON.parse(
-        init?.body === undefined
-          ? (url.searchParams.get("input") ?? "{}")
-          : String(init.body)
-      );
-      const results = await Promise.all(
-        url.pathname
-          .slice("/trpc/".length)
-          .split(",")
-          .map(async (route, index) => {
-            requests.push({ route, input: inputs[String(index)] });
-            let data: unknown;
-            switch (route) {
-              case "domain.project":
-                data = await refresh();
-                break;
-              case "domain.publish":
-                data = await publish();
-                break;
-              case "api.publish.validate":
-              case "build.contentDatabasePublishDiagnostics":
-                data = await validate();
-                break;
-              case "api.publish.getJob":
-                data = await job();
-                break;
-              case "domain.countTotalDomains":
-                data = { success: true, data: 0 };
-                break;
-              case "project.userPublishCount":
-                data = { success: true, data: 0, limit: 100 };
-                break;
-              default:
-                throw new Error(`Unexpected request: ${route}`);
-            }
-            return { result: { data } };
-          })
-      );
-      return new Response(JSON.stringify(results), {
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    trpcFetch(
+      {
+        "domain.project": () => refresh(),
+        "domain.publish": () => publish(),
+        "api.publish.validate": () => validate(),
+        "build.contentDatabasePublishDiagnostics": () => validate(),
+        "api.publish.getJob": () => job(),
+        "domain.countTotalDomains": () => ({
+          success: true,
+          data: 0,
+        }),
+        "project.userPublishCount": () => ({
+          success: true,
+          data: 0,
+          limit: 100,
+        }),
+      },
+      (route, input) => requests.push({ route, input })
+    )
   );
   PublishButton = (await import("./publish")).PublishButton;
   stores = await import("~/shared/sync/data-stores");

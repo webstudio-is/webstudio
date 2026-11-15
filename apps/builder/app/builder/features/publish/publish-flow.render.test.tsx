@@ -14,24 +14,10 @@ import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import type { Project } from "@webstudio-is/project";
 import type { Pages } from "@webstudio-is/sdk";
+import { deferred, trpcFetch } from "./publish-test-utils";
 
-const deferred = <T,>() => {
-  let resolve!: (value: T) => void;
-  let reject!: (error: Error) => void;
-  const promise = new Promise<T>((done, fail) => {
-    resolve = done;
-    reject = fail;
-  });
-  return { promise, resolve, reject };
-};
-
-const respond = (data: unknown) =>
-  new Response(JSON.stringify([{ result: { data } }]), {
-    headers: { "Content-Type": "application/json" },
-  });
-
-let checks = deferred<Response>();
-let dispatch = deferred<Response>();
+let checks = deferred<unknown>();
+let dispatch = deferred<unknown>();
 let checkRequests = 0;
 let checksRead = 0;
 let publishRequests = 0;
@@ -49,58 +35,18 @@ beforeAll(async () => {
     globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
   ).IS_REACT_ACT_ENVIRONMENT = true;
   vi.resetModules();
-  vi.stubGlobal("fetch", async (requestInfo: RequestInfo | URL) => {
-    const path = new URL(String(requestInfo), "http://localhost").pathname;
-    if (path.includes(",")) {
-      const results = path
-        .slice("/trpc/".length)
-        .split(",")
-        .map((route) => {
-          if (route === "domain.project") {
-            return {
-              result: {
-                data: { success: true, project: stores.$project.get() },
-              },
-            };
-          }
-          if (route === "domain.countTotalDomains") {
-            return { result: { data: { success: true, data: 0 } } };
-          }
-          if (route === "project.userPublishCount") {
-            return { result: { data: { success: true, data: 0, limit: 100 } } };
-          }
-          if (route === "api.publish.getLog") {
-            return {
-              result: {
-                data: {
-                  availability: "available",
-                  log: {
-                    encoding: "base64url",
-                    chunk: btoa("older publish output"),
-                    complete: true,
-                    issues: [
-                      { severity: "error", message: "older build issue" },
-                    ],
-                  },
-                },
-              },
-            };
-          }
-          throw new Error(`Unexpected request: ${route}`);
-        });
-      return new Response(JSON.stringify(results), {
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    if (path === "/trpc/domain.publish") {
-      publishRequests += 1;
-      return dispatch.promise;
-    }
-    if (path === "/trpc/api.publish.getJob") {
-      return respond({ status: "failed", code: "BUILD_FAILED" });
-    }
-    if (path === "/trpc/api.publish.getLog") {
-      return respond({
+  vi.stubGlobal(
+    "fetch",
+    trpcFetch({
+      "domain.publish": () => {
+        publishRequests += 1;
+        return dispatch.promise;
+      },
+      "api.publish.getJob": () => ({
+        status: "failed",
+        code: "BUILD_FAILED",
+      }),
+      "api.publish.getLog": () => ({
         availability: "available",
         log: {
           encoding: "base64url",
@@ -108,38 +54,41 @@ beforeAll(async () => {
           complete: true,
           issues: [{ severity: "error", message: "older build issue" }],
         },
-      });
-    }
-    if (path === "/trpc/domain.project") {
-      return respond({ success: true, project: stores.$project.get() });
-    }
-    if (path === "/trpc/domain.countTotalDomains") {
-      return respond({ success: true, data: 0 });
-    }
-    if (path === "/trpc/project.userPublishCount") {
-      return respond({ success: true, data: 0, limit: 100 });
-    }
-    if (
-      path === "/trpc/api.publish.validate" ||
-      path === "/trpc/build.contentDatabasePublishDiagnostics"
-    ) {
-      checkRequests += 1;
-      try {
-        const response = (await checks.promise).clone();
-        const json = response.json.bind(response);
-        response.json = async () => {
-          const result = await json();
+      }),
+      "domain.project": () => ({
+        success: true,
+        project: stores.$project.get(),
+      }),
+      "domain.countTotalDomains": () => ({ success: true, data: 0 }),
+      "project.userPublishCount": () => ({
+        success: true,
+        data: 0,
+        limit: 100,
+      }),
+      "api.publish.validate": async () => {
+        checkRequests += 1;
+        try {
+          const result = await checks.promise;
           checksRead += 1;
           return result;
-        };
-        return response;
-      } catch (error) {
-        checksRead += 1;
-        throw error;
-      }
-    }
-    throw new Error(`Unexpected request: ${path}`);
-  });
+        } catch (error) {
+          checksRead += 1;
+          throw error;
+        }
+      },
+      "build.contentDatabasePublishDiagnostics": async () => {
+        checkRequests += 1;
+        try {
+          const result = await checks.promise;
+          checksRead += 1;
+          return result;
+        } catch (error) {
+          checksRead += 1;
+          throw error;
+        }
+      },
+    })
+  );
   PublishButton = (await import("./publish")).PublishButton;
   stores = await import("~/shared/sync/data-stores");
   nanoStates = await import("~/shared/nano-states");
@@ -169,8 +118,8 @@ beforeEach(() => {
       getContentSession: () => contentSession,
     })
   );
-  checks = deferred<Response>();
-  dispatch = deferred<Response>();
+  checks = deferred<unknown>();
+  dispatch = deferred<unknown>();
   checkRequests = 0;
   checksRead = 0;
   publishRequests = 0;
@@ -198,8 +147,8 @@ beforeEach(() => {
 
 afterEach(async () => {
   act(() => root.unmount());
-  checks.resolve(respond({ mdxErrors: [], mdxOmissions: [] }));
-  dispatch.resolve(respond({ success: false, error: "cleanup" }));
+  checks.resolve({ mdxErrors: [], mdxOmissions: [] });
+  dispatch.resolve({ success: false, error: "cleanup" });
   await act(async () =>
     vi.waitFor(() => expect(checksRead).toBe(checkRequests))
   );
@@ -280,14 +229,12 @@ const completeChecks = async (fail: boolean) => {
     if (fail) {
       checks.reject(new Error("check failure"));
     } else {
-      checks.resolve(
-        respond({
-          diagnostics: { mdxErrors: [], mdxOmissions: [] },
-          cssValid: false,
-          mdxErrors: [],
-          mdxOmissions: [{ filename: "check.mdx", templateName: "missing" }],
-        })
-      );
+      checks.resolve({
+        diagnostics: { mdxErrors: [], mdxOmissions: [] },
+        cssValid: false,
+        mdxErrors: [],
+        mdxOmissions: [{ filename: "check.mdx", templateName: "missing" }],
+      });
     }
     await checks.promise.catch(() => {});
     await vi.waitFor(() => expect(checksRead).toBe(checkRequests));
@@ -352,12 +299,10 @@ test.each([
       await completeChecks(failChecks);
     }
     await act(async () => {
-      dispatch.resolve(
-        respond({
-          success: false,
-          auditFindings: [{ severity: "error", message: "server rejection" }],
-        })
-      );
+      dispatch.resolve({
+        success: false,
+        auditFindings: [{ severity: "error", message: "server rejection" }],
+      });
       await dispatch.promise;
     });
     const errors = await openErrors(target);
@@ -399,20 +344,21 @@ test("closing Publish clears a completed validation", async () => {
   await act(async () => validate?.click());
   await act(async () => vi.waitFor(() => expect(checkRequests).toBe(1)));
   await act(async () => {
-    checks.resolve(
-      respond({
-        diagnostics: { mdxErrors: [], mdxOmissions: [] },
-        cssValid: true,
-      })
-    );
+    checks.resolve({
+      diagnostics: { mdxErrors: [], mdxOmissions: [] },
+      cssValid: true,
+    });
     await checks.promise;
     await vi.waitFor(() => expect(checksRead).toBe(1));
   });
-  expect(
-    Array.from(document.body.querySelectorAll("button")).some(
-      (button) => button.textContent?.trim() === "Validated"
-    )
-  ).toBe(true);
+  await vi.waitFor(async () => {
+    await act(async () => {});
+    expect(
+      Array.from(document.body.querySelectorAll("button")).map((button) =>
+        button.textContent?.trim()
+      )
+    ).toContain("Validated");
+  });
   await act(async () => publishDialog.set("none"));
   await act(async () => publishDialog.set("publish"));
   expect(
@@ -438,7 +384,7 @@ test.each([
     const message = `${failure} failure`;
     await act(async () => {
       if (failure === "request") {
-        dispatch.resolve(respond({ success: false, error: message }));
+        dispatch.resolve({ success: false, error: message });
       } else {
         dispatch.reject(new Error(message));
       }
@@ -483,22 +429,20 @@ test.each(["request", "transport"] as const)(
     await clickPublish("site");
     await completeChecks(false);
     await act(async () => {
-      dispatch.resolve(respond({ success: false, error: "site rejection" }));
+      dispatch.resolve({ success: false, error: "site rejection" });
       await dispatch.promise;
     });
     const originalSiteErrors = await openErrors("site");
     expect(originalSiteErrors?.textContent).toContain("site rejection");
     await closeReport();
-    checks = deferred<Response>();
-    dispatch = deferred<Response>();
+    checks = deferred<unknown>();
+    dispatch = deferred<unknown>();
     await mount("static");
     await clickPublish("static", 2);
     await completeChecks(false);
     await act(async () => {
       if (failure === "request") {
-        dispatch.resolve(
-          respond({ success: false, error: "static rejection" })
-        );
+        dispatch.resolve({ success: false, error: "static rejection" });
       } else {
         dispatch.reject(new Error("static transport"));
       }
@@ -594,14 +538,12 @@ test("an accepted site failure links to its own publish log", async () => {
   await clickPublish("site");
   await completeChecks(false);
   await act(async () => {
-    dispatch.resolve(
-      respond({
-        success: true,
-        buildId: "accepted-build",
-        logHandle: "handle",
-        findings: [],
-      })
-    );
+    dispatch.resolve({
+      success: true,
+      buildId: "accepted-build",
+      logHandle: "handle",
+      findings: [],
+    });
     await dispatch.promise;
   });
   const errors = await openErrors("site");
@@ -660,22 +602,31 @@ test.each([
       await act(async () => publishDialog.set("publish"));
     }
     await act(async () => {
-      checks.resolve(
-        respond({
-          diagnostics: { mdxErrors: [], mdxOmissions: [] },
-          cssValid: true,
-        })
-      );
+      checks.resolve({
+        diagnostics: { mdxErrors: [], mdxOmissions: [] },
+        cssValid: true,
+      });
       await checks.promise;
       await vi.waitFor(() => expect(checksRead).toBe(1));
     });
-    expect(successToast).toHaveBeenCalledTimes(expectedToasts);
-    if (destination === "publish" || reopen) {
-      expect(
-        Array.from(document.body.querySelectorAll("button")).some(
-          (button) => button.textContent?.trim() === "Validated"
+    if (expectedToasts > 0) {
+      await act(async () =>
+        vi.waitFor(() =>
+          expect(successToast).toHaveBeenCalledTimes(expectedToasts)
         )
-      ).toBe(true);
+      );
+    } else {
+      expect(successToast).not.toHaveBeenCalled();
+    }
+    if (destination === "publish" || reopen) {
+      await vi.waitFor(async () => {
+        await act(async () => {});
+        expect(
+          Array.from(document.body.querySelectorAll("button")).some(
+            (button) => button.textContent?.trim() === "Validated"
+          )
+        ).toBe(true);
+      });
     } else {
       await act(async () => publishDialog.set("publish"));
       expect(
@@ -705,15 +656,13 @@ test.each([
     await clickPublish(target);
     await completeChecks(false);
     await act(async () => {
-      dispatch.resolve(
-        respond({
-          success: true,
-          buildId: "older-build",
-          logHandle: "older-handle",
-          findings: [],
-          ...(target === "static" ? { name: "site.zip" } : {}),
-        })
-      );
+      dispatch.resolve({
+        success: true,
+        buildId: "older-build",
+        logHandle: "older-handle",
+        findings: [],
+        ...(target === "static" ? { name: "site.zip" } : {}),
+      });
       await dispatch.promise;
     });
     await act(async () =>
@@ -725,8 +674,8 @@ test.each([
         ).not.toBeNull()
       )
     );
-    checks = deferred<Response>();
-    dispatch = deferred<Response>();
+    checks = deferred<unknown>();
+    dispatch = deferred<unknown>();
     await mount(target);
     await clickPublish(target, 2);
     const message = `new ${failure} failure`;
@@ -735,14 +684,12 @@ test.each([
         dispatch.reject(new Error(message));
       } else {
         dispatch.resolve(
-          respond(
-            failure === "audit"
-              ? {
-                  success: false,
-                  auditFindings: [{ severity: "error", message }],
-                }
-              : { success: false, error: message }
-          )
+          failure === "audit"
+            ? {
+                success: false,
+                auditFindings: [{ severity: "error", message }],
+              }
+            : { success: false, error: message }
         );
       }
       await dispatch.promise.catch(() => {});
