@@ -10,8 +10,6 @@ import {
 import { test } from "../test";
 import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 
-test.describe.configure({ mode: "parallel" });
-
 // Both tests run two MCP authoring and generated preview phases.
 const twoPhaseTimeout = 240_000;
 
