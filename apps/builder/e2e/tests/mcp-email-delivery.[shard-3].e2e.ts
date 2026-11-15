@@ -6,13 +6,11 @@ import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { loadDevBuild } from "../db";
 import {
-  startLocalEmailReceiver,
   withMcpEmailPreview,
+  type CapturedEmail,
 } from "../flows/mcp-email-preview";
 import { test } from "../test";
 import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
-
-test.describe.configure({ mode: "parallel" });
 
 const execFileAsync = promisify(execFile);
 const authorPath = fileURLToPath(
@@ -21,17 +19,11 @@ const authorPath = fileURLToPath(
 const reactGlobalPath = fileURLToPath(
   new URL("../../../../scripts/register-react-global.ts", import.meta.url)
 );
+const cliTsconfigPath = fileURLToPath(
+  new URL("../../../../packages/cli/tsconfig.local.json", import.meta.url)
+);
 
-test("MCP-authored contact Form delivers customized Email messages locally", async ({
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context,
-    email: "mcp-email-delivery@webstudio.test",
-    title: "MCP Email delivery",
-    assetNamePrefix: "mcp-email-delivery-",
-    builderToken: "mcp-email-delivery-builder-token",
-  });
+const authorForm = async (projectId: string, mode: string) => {
   const { stdout } = await execFileAsync(
     process.execPath,
     [
@@ -41,27 +33,57 @@ test("MCP-authored contact Form delivers customized Email messages locally", asy
       reactGlobalPath,
       "--conditions=webstudio",
       authorPath,
-      fixture.projectId,
-      "email",
+      projectId,
+      mode,
     ],
     {
       timeout: 60_000,
-      env: {
-        ...process.env,
-        TSX_TSCONFIG_PATH: fileURLToPath(
-          new URL(
-            "../../../../packages/cli/tsconfig.local.json",
-            import.meta.url
-          )
-        ),
-      },
+      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
     }
   );
-  const { formId, emailResourceIds } = JSON.parse(stdout) as {
+  return JSON.parse(stdout) as {
     formId: string;
-    emailResourceIds: string[];
+    secondFormId?: string;
+    emailResourceIds?: string[];
+    emailResourceIdsByForm?: [string, string];
   };
+};
+
+type CapturedMessage = CapturedEmail & {
+  headers: { "X-Message-ID": string };
+};
+
+test("MCP Email delivery, Form isolation, and provider failure share one Preview", async ({
+  context,
+}) => {
+  test.setTimeout(240_000);
+  const fixture = await createContentModeProject({
+    context,
+    email: "mcp-email-scenarios@webstudio.test",
+    title: "MCP Email scenarios",
+    assetNamePrefix: "mcp-email-scenarios-",
+    builderToken: "mcp-email-scenarios-builder-token",
+  });
+  const standard = await authorForm(fixture.projectId, "email");
+  const isolated = await authorForm(
+    fixture.projectId,
+    JSON.stringify({ mode: "email-isolation" })
+  );
+  const emailResourceIds = standard.emailResourceIds;
+  const isolatedResourceIds = isolated.emailResourceIdsByForm;
+  if (
+    emailResourceIds === undefined ||
+    isolatedResourceIds === undefined ||
+    isolated.secondFormId === undefined
+  ) {
+    throw new Error("Expected authored Email Forms and Resources");
+  }
   expect(emailResourceIds).toHaveLength(2);
+  expect(isolated.secondFormId).toBeDefined();
+  expect(isolated.formId).not.toBe(isolated.secondFormId);
+  expect(isolatedResourceIds).toHaveLength(2);
+  expect(isolatedResourceIds[0]).not.toBe(isolatedResourceIds[1]);
+
   const authoredBuild = await loadDevBuild({ projectId: fixture.projectId });
   const authoredResources = JSON.parse(authoredBuild.resources) as Array<{
     id: string;
@@ -85,271 +107,37 @@ test("MCP-authored contact Form delivers customized Email messages locally", asy
       emailSender: "Contact Form <forms@mcp.test>",
     },
   });
-  const receiver = await startLocalEmailReceiver();
-  try {
-    await withMcpEmailPreview({
-      projectId: fixture.projectId,
-      emailPort: receiver.port,
-      callback: async ({ url }) => {
-        const submission = await submitPreviewFormViaMcp({
-          url,
-          input: {
-            path: "/",
-            selector: `[data-ws-managed-form-id="${formId}"]`,
-            values: [
-              { name: "name", value: "Ada Lovelace" },
-              { name: "email", value: "ada@example.test" },
-              { name: "subject", value: "MCP email test" },
-              {
-                name: "message",
-                value: "This submission should become two local messages.",
-              },
-              {
-                name: "upload",
-                file: {
-                  name: "notes.txt",
-                  type: "text/plain",
-                  base64: Buffer.from("MCP attachment payload").toString(
-                    "base64"
-                  ),
-                },
-              },
-            ],
-            submitter: "button[type=submit]",
-            timeout: 30_000,
-          },
-        });
-        expect(submission.data).toMatchObject({
-          status: "submitted",
-          formState: "success",
-          errors: [],
-        });
-        expect(submission.data.results).toEqual(
-          emailResourceIds.map((resourceId) =>
-            expect.objectContaining({ resourceId, status: 200 })
-          )
-        );
-        expect(receiver.messages).toHaveLength(2);
 
-        const ownerMessage = receiver.messages.find((message) =>
-          message.to.some(({ address }) => address === "owner@mcp.test")
-        );
-        const visitorMessage = receiver.messages.find((message) =>
-          message.to.some(({ address }) => address === "ada@example.test")
-        );
-        expect(ownerMessage).toBeDefined();
-        expect(visitorMessage).toBeDefined();
-        expect(ownerMessage).toMatchObject({
-          subject: "Contact form: MCP email test",
-          text: expect.stringContaining("Name: Ada Lovelace"),
-          replyTo: { address: "forms@mcp.test", name: "Contact Form" },
-          attachments: [
-            {
-              filename: "notes.txt",
-              contentType: "text/plain",
-              contentBase64: Buffer.from("MCP attachment payload").toString(
-                "base64"
-              ),
-            },
-          ],
-        });
-        expect(ownerMessage?.text).toContain("Email: ada@example.test");
-        expect(ownerMessage?.text).toContain("Subject: MCP email test");
-        expect(ownerMessage?.text).toContain("Page: http://127.0.0.1:");
-        expect(visitorMessage?.subject).toBe(
-          "Contact Form received your email: We received your message"
-        );
-        expect(visitorMessage?.text).toBe(
-          "Thanks for contacting us. We will reply soon."
-        );
-        expect(visitorMessage?.attachments ?? []).toEqual([]);
-      },
-    });
-  } finally {
-    await receiver.close();
-  }
-});
-
-test("custom recipients and Email overrides stay isolated between Forms", async ({
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context,
-    email: "mcp-email-isolation@webstudio.test",
-    title: "MCP Email isolation",
-    assetNamePrefix: "mcp-email-isolation-",
-    builderToken: "mcp-email-isolation-builder-token",
-  });
-  const { stdout } = await execFileAsync(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      "--import",
-      reactGlobalPath,
-      "--conditions=webstudio",
-      authorPath,
-      fixture.projectId,
-      JSON.stringify({ mode: "email-isolation" }),
-    ],
-    {
-      timeout: 60_000,
-      env: {
-        ...process.env,
-        TSX_TSCONFIG_PATH: fileURLToPath(
-          new URL(
-            "../../../../packages/cli/tsconfig.local.json",
-            import.meta.url
-          )
-        ),
-      },
-    }
-  );
-  const { formId, secondFormId, emailResourceIdsByForm } = JSON.parse(
-    stdout
-  ) as {
-    formId: string;
-    secondFormId: string;
-    emailResourceIdsByForm: [string, string];
-  };
-  expect(secondFormId).toBeDefined();
-  expect(formId).not.toBe(secondFormId);
-  expect(emailResourceIdsByForm).toHaveLength(2);
-  expect(emailResourceIdsByForm[0]).not.toBe(emailResourceIdsByForm[1]);
-
-  const receiver = await startLocalEmailReceiver();
-  try {
-    await withMcpEmailPreview({
-      projectId: fixture.projectId,
-      emailPort: receiver.port,
-      callback: async ({ url }) => {
-        for (const [id, expected] of [
-          [formId, { subject: "First Form message" }],
-          [secondFormId, { subject: "Second Form message" }],
-        ] as const) {
-          const submission = await submitPreviewFormViaMcp({
-            url,
-            input: {
-              path: "/",
-              selector: `[data-ws-managed-form-id="${id}"]`,
-              values: [
-                { name: "name", value: "MCP E2E visitor" },
-                { name: "email", value: "visitor@example.test" },
-                {
-                  name: "subject",
-                  value: `Visitor subject: ${expected.subject}`,
-                },
-                {
-                  name: "message",
-                  value: `Submitted through ${expected.subject}`,
-                },
-              ],
-              submitter: "button[type=submit]",
-              timeout: 30_000,
-            },
-          });
-          expect(submission.data).toMatchObject({
-            status: "submitted",
-            formState: "success",
-            errors: [],
-          });
-          expect(submission.data.results).toEqual([
-            expect.objectContaining({
-              resourceId: emailResourceIdsByForm[id === formId ? 0 : 1],
-              status: 200,
-            }),
-          ]);
-        }
-
-        await expect.poll(() => receiver.messages.length).toBe(2);
-        expect(receiver.messages).toEqual([
-          expect.objectContaining({
-            to: [expect.objectContaining({ address: "first-form@mcp.test" })],
-            subject: expect.stringContaining("First Form message"),
-            text: "Body override for the first Form.",
-          }),
-          expect.objectContaining({
-            to: [expect.objectContaining({ address: "second-form@mcp.test" })],
-            subject: expect.stringContaining("Second Form message"),
-            text: "Body override for the second Form.",
-          }),
-        ]);
-      },
-    });
-  } finally {
-    await receiver.close();
-  }
-});
-
-test("Email provider failure is not replayed, sibling succeeds, and a new submission gets a new message ID", async ({
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context,
-    email: "mcp-email-retry@webstudio.test",
-    title: "MCP Email retry",
-    assetNamePrefix: "mcp-email-retry-",
-    builderToken: "mcp-email-retry-builder-token",
-  });
-  const { stdout } = await execFileAsync(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      "--import",
-      reactGlobalPath,
-      "--conditions=webstudio",
-      authorPath,
-      fixture.projectId,
-      "email",
-    ],
-    {
-      timeout: 60_000,
-      env: {
-        ...process.env,
-        TSX_TSCONFIG_PATH: fileURLToPath(
-          new URL(
-            "../../../../packages/cli/tsconfig.local.json",
-            import.meta.url
-          )
-        ),
-      },
-    }
-  );
-  const { formId, emailResourceIds } = JSON.parse(stdout) as {
-    formId: string;
-    emailResourceIds: string[];
-  };
-  expect(emailResourceIds).toHaveLength(2);
-  const requests: Array<{
-    subject: string;
-    to: Array<{ address: string }>;
-    headers: { "X-Message-ID": string };
-  }> = [];
+  const messages: CapturedMessage[] = [];
+  let rejectNext = false;
   const receiver = createServer(async (request, response) => {
+    if (request.method !== "POST" || request.url !== "/send") {
+      response.writeHead(404).end();
+      return;
+    }
     const chunks: Buffer[] = [];
     for await (const chunk of request) {
       chunks.push(Buffer.from(chunk));
     }
-    const email = JSON.parse(Buffer.concat(chunks).toString("utf8")) as {
-      subject: string;
-      to: Array<{ address: string }>;
-      headers: { "X-Message-ID": string };
-    };
-    requests.push(email);
-    response.writeHead(requests.length === 1 ? 503 : 200, {
+    const message = JSON.parse(
+      Buffer.concat(chunks).toString("utf8")
+    ) as CapturedMessage;
+    messages.push(message);
+    const reject = rejectNext;
+    rejectNext = false;
+    response.writeHead(reject ? 503 : 200, {
       "content-type": "application/json",
     });
     response.end(
       JSON.stringify(
-        requests.length === 1
+        reject
           ? {
               error: {
                 code: "temporary_failure",
                 message: "Temporary local E2E failure",
               },
             }
-          : { id: `local-email-${requests.length}` }
+          : { id: "local-email-" + messages.length }
       )
     );
   });
@@ -366,82 +154,216 @@ test("Email provider failure is not replayed, sibling succeeds, and a new submis
       projectId: fixture.projectId,
       emailPort: address.port,
       callback: async ({ url }) => {
-        const submit = async (name: string, message: string) =>
-          await submitPreviewFormViaMcp({
+        await test.step("customized owner and visitor Email", async () => {
+          const submission = await submitPreviewFormViaMcp({
             url,
             input: {
               path: "/",
-              selector: `[data-ws-managed-form-id="${formId}"]`,
+              selector: '[data-ws-managed-form-id="' + standard.formId + '"]',
               values: [
-                { name: "name", value: name },
-                { name: "email", value: "visitor@example.test" },
-                { name: "subject", value: "Message ID test" },
-                { name: "message", value: message },
+                { name: "name", value: "Ada Lovelace" },
+                { name: "email", value: "ada@example.test" },
+                { name: "subject", value: "MCP email test" },
+                {
+                  name: "message",
+                  value: "This submission should become two local messages.",
+                },
+                {
+                  name: "upload",
+                  file: {
+                    name: "notes.txt",
+                    type: "text/plain",
+                    base64: Buffer.from("MCP attachment payload").toString(
+                      "base64"
+                    ),
+                  },
+                },
               ],
               submitter: "button[type=submit]",
               timeout: 30_000,
             },
           });
-        const firstSubmission = await submit(
-          "First local submission",
-          "First submission"
-        );
-        expect(firstSubmission.data).toMatchObject({
-          status: "submitted",
-          formState: "error",
-          results: [
-            expect.objectContaining({
-              resourceId: emailResourceIds[0],
-              status: 503,
-            }),
-            expect.objectContaining({
-              resourceId: emailResourceIds[1],
-              status: 200,
-            }),
-          ],
-          errors: [expect.objectContaining({ status: 503 })],
+          expect(submission.data).toMatchObject({
+            status: "submitted",
+            formState: "success",
+            errors: [],
+          });
+          expect(submission.data.results).toEqual(
+            emailResourceIds.map((resourceId) =>
+              expect.objectContaining({ resourceId, status: 200 })
+            )
+          );
+          expect(messages).toHaveLength(2);
+          const ownerMessage = messages.find((message) =>
+            message.to.some(({ address }) => address === "owner@mcp.test")
+          );
+          const visitorMessage = messages.find((message) =>
+            message.to.some(({ address }) => address === "ada@example.test")
+          );
+          expect(ownerMessage).toBeDefined();
+          expect(visitorMessage).toBeDefined();
+          expect(ownerMessage).toMatchObject({
+            subject: "Contact form: MCP email test",
+            text: expect.stringContaining("Name: Ada Lovelace"),
+            replyTo: { address: "forms@mcp.test", name: "Contact Form" },
+            attachments: [
+              {
+                filename: "notes.txt",
+                contentType: "text/plain",
+                contentBase64: Buffer.from("MCP attachment payload").toString(
+                  "base64"
+                ),
+              },
+            ],
+          });
+          expect(ownerMessage?.text).toContain("Email: ada@example.test");
+          expect(ownerMessage?.text).toContain("Subject: MCP email test");
+          expect(ownerMessage?.text).toContain("Page: http://127.0.0.1:");
+          expect(visitorMessage?.subject).toBe(
+            "Contact Form received your email: We received your message"
+          );
+          expect(visitorMessage?.text).toBe(
+            "Thanks for contacting us. We will reply soon."
+          );
+          expect(visitorMessage?.attachments ?? []).toEqual([]);
+          messages.splice(0);
         });
-        expect(requests).toHaveLength(2);
-        const secondSubmission = await submit(
-          "Second local submission",
-          "Second submission"
-        );
-        expect(secondSubmission.data).toMatchObject({
-          status: "submitted",
-          formState: "success",
-          errors: [],
-        });
-        expect(secondSubmission.data.results).toEqual(
-          emailResourceIds.map((resourceId) =>
-            expect.objectContaining({ resourceId, status: 200 })
-          )
-        );
-        expect(requests).toHaveLength(4);
 
-        const firstMessageId = requests[0].headers["X-Message-ID"];
-        expect(firstMessageId).not.toBe("");
-        expect(requests[1].headers["X-Message-ID"]).toBe(firstMessageId);
-        const expectedSubjects = new Set([
-          "Contact form: Message ID test",
-          "Contact Form received your email: We received your message",
-        ]);
-        expect(
-          new Set(requests.slice(0, 2).map(({ subject }) => subject))
-        ).toEqual(expectedSubjects);
-        const secondMessageIds = requests
-          .slice(2)
-          .map(({ headers }) => headers["X-Message-ID"]);
-        expect(secondMessageIds[0]).toBe(secondMessageIds[1]);
-        expect(secondMessageIds[0]).not.toBe(firstMessageId);
-        expect(
-          new Set(requests.slice(2).map(({ subject }) => subject))
-        ).toEqual(expectedSubjects);
-        expect(
-          new Set(requests.slice(0, 2).map(({ to }) => to[0]?.address))
-        ).toEqual(new Set(["owner@mcp.test", "visitor@example.test"]));
-        expect(
-          new Set(requests.slice(2).map(({ to }) => to[0]?.address))
-        ).toEqual(new Set(["owner@mcp.test", "visitor@example.test"]));
+        await test.step("custom recipients remain isolated between Forms", async () => {
+          for (const [id, expected] of [
+            [isolated.formId, { subject: "First Form message" }],
+            [isolated.secondFormId, { subject: "Second Form message" }],
+          ] as const) {
+            const submission = await submitPreviewFormViaMcp({
+              url,
+              input: {
+                path: "/",
+                selector: '[data-ws-managed-form-id="' + id + '"]',
+                values: [
+                  { name: "name", value: "MCP E2E visitor" },
+                  { name: "email", value: "visitor@example.test" },
+                  {
+                    name: "subject",
+                    value: "Visitor subject: " + expected.subject,
+                  },
+                  {
+                    name: "message",
+                    value: "Submitted through " + expected.subject,
+                  },
+                ],
+                submitter: "button[type=submit]",
+                timeout: 30_000,
+              },
+            });
+            expect(submission.data).toMatchObject({
+              status: "submitted",
+              formState: "success",
+              errors: [],
+            });
+            expect(submission.data.results).toEqual([
+              expect.objectContaining({
+                resourceId: isolatedResourceIds[id === isolated.formId ? 0 : 1],
+                status: 200,
+              }),
+            ]);
+          }
+          await expect.poll(() => messages.length).toBe(2);
+          expect(messages).toEqual([
+            expect.objectContaining({
+              to: [expect.objectContaining({ address: "first-form@mcp.test" })],
+              subject: expect.stringContaining("First Form message"),
+              text: "Body override for the first Form.",
+            }),
+            expect.objectContaining({
+              to: [
+                expect.objectContaining({ address: "second-form@mcp.test" }),
+              ],
+              subject: expect.stringContaining("Second Form message"),
+              text: "Body override for the second Form.",
+            }),
+          ]);
+          messages.splice(0);
+        });
+
+        await test.step("provider failure does not replay and new submission has a new message ID", async () => {
+          const submit = async (name: string, message: string) =>
+            await submitPreviewFormViaMcp({
+              url,
+              input: {
+                path: "/",
+                selector: '[data-ws-managed-form-id="' + standard.formId + '"]',
+                values: [
+                  { name: "name", value: name },
+                  { name: "email", value: "visitor@example.test" },
+                  { name: "subject", value: "Message ID test" },
+                  { name: "message", value: message },
+                ],
+                submitter: "button[type=submit]",
+                timeout: 30_000,
+              },
+            });
+          rejectNext = true;
+          const firstSubmission = await submit(
+            "First local submission",
+            "First submission"
+          );
+          expect(firstSubmission.data).toMatchObject({
+            status: "submitted",
+            formState: "error",
+            results: [
+              expect.objectContaining({
+                resourceId: emailResourceIds[0],
+                status: 503,
+              }),
+              expect.objectContaining({
+                resourceId: emailResourceIds[1],
+                status: 200,
+              }),
+            ],
+            errors: [expect.objectContaining({ status: 503 })],
+          });
+          expect(messages).toHaveLength(2);
+          const secondSubmission = await submit(
+            "Second local submission",
+            "Second submission"
+          );
+          expect(secondSubmission.data).toMatchObject({
+            status: "submitted",
+            formState: "success",
+            errors: [],
+          });
+          expect(secondSubmission.data.results).toEqual(
+            emailResourceIds.map((resourceId) =>
+              expect.objectContaining({ resourceId, status: 200 })
+            )
+          );
+          expect(messages).toHaveLength(4);
+
+          const firstMessageId = messages[0].headers["X-Message-ID"];
+          expect(firstMessageId).not.toBe("");
+          expect(messages[1].headers["X-Message-ID"]).toBe(firstMessageId);
+          const expectedSubjects = new Set([
+            "Contact form: Message ID test",
+            "Contact Form received your email: We received your message",
+          ]);
+          expect(
+            new Set(messages.slice(0, 2).map(({ subject }) => subject))
+          ).toEqual(expectedSubjects);
+          const secondMessageIds = messages
+            .slice(2)
+            .map(({ headers }) => headers["X-Message-ID"]);
+          expect(secondMessageIds[0]).toBe(secondMessageIds[1]);
+          expect(secondMessageIds[0]).not.toBe(firstMessageId);
+          expect(
+            new Set(messages.slice(2).map(({ subject }) => subject))
+          ).toEqual(expectedSubjects);
+          expect(
+            new Set(messages.slice(0, 2).map(({ to }) => to[0]?.address))
+          ).toEqual(new Set(["owner@mcp.test", "visitor@example.test"]));
+          expect(
+            new Set(messages.slice(2).map(({ to }) => to[0]?.address))
+          ).toEqual(new Set(["owner@mcp.test", "visitor@example.test"]));
+        });
       },
     });
   } finally {

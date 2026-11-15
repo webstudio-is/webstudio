@@ -20,15 +20,18 @@ read_pressure() {
 }
 
 sample() {
-  local cpu_usage cpu_pressure memory_usage memory_pressure oom
+  local cpu_usage cpu_pressure memory_usage memory_pressure oom browsers shm_used memory_available
   cpu_usage="$(read_metric /sys/fs/cgroup/cpu.stat usage_usec)"
   cpu_pressure="$(read_pressure /sys/fs/cgroup/cpu.pressure)"
   memory_usage="$(cat /sys/fs/cgroup/memory.current 2>/dev/null || true)"
   memory_pressure="$(read_pressure /sys/fs/cgroup/memory.pressure)"
   oom="$(read_metric /sys/fs/cgroup/memory.events oom)"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+  browsers="$(ps -eo comm= 2>/dev/null | awk '$1 ~ /^(chrome|chromium|headless_shell)$/ { count++ } END { print count + 0 }')"
+  shm_used="$(df -B1 --output=used /dev/shm 2>/dev/null | tail -n 1 | tr -d ' ')"
+  memory_available="$(awk '$1 == "MemAvailable:" { print $2 * 1024; exit }' /proc/meminfo 2>/dev/null || true)"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "$(date +%s%N)" "$cpu_usage" "$cpu_pressure" \
-    "$memory_usage" "$memory_pressure" "$oom" >> "$samples"
+    "$memory_usage" "$memory_pressure" "$oom" "$browsers" "$shm_used" "$memory_available" >> "$samples"
 }
 
 printf '[e2e:resources] logical_cpus=%s cpu_quota=%s memory_limit=%s\n' \
@@ -61,7 +64,7 @@ import sys
 rows = []
 for line in open(sys.argv[1]):
     values = line.rstrip("\n").split("\t")
-    if len(values) != 6:
+    if len(values) != 9:
         continue
     rows.append([int(value) if value.isdigit() else None for value in values])
 
@@ -75,6 +78,9 @@ if len(rows) >= 2:
         return "unavailable" if change is None else f"{change / 10_000 / elapsed:.1f}%"
     cpu = delta(1)
     memory = [row[3] for row in rows if row[3] is not None]
+    browsers = [row[6] for row in rows if row[6] is not None]
+    shared_memory = [row[7] for row in rows if row[7] is not None]
+    memory_available = [row[8] for row in rows if row[8] is not None]
     print(
         "[e2e:resources] "
         f"elapsed={elapsed:.1f}s "
@@ -82,7 +88,10 @@ if len(rows) >= 2:
         f"cpu_pressure={pressure(2)} "
         f"memory_peak_gib={'unavailable' if not memory else f'{max(memory) / 2**30:.2f}'} "
         f"memory_pressure={pressure(4)} "
-        f"oom_events={delta(5)}"
+        f"oom_events={delta(5)} "
+        f"browser_processes_peak={max(browsers) if browsers else 'unavailable'} "
+        f"shared_memory_peak_mib={'unavailable' if not shared_memory else f'{max(shared_memory) / 2**20:.1f}'}"
+        f" memory_available_min_gib={'unavailable' if not memory_available else f'{min(memory_available) / 2**30:.2f}'}"
     )
 PY
 

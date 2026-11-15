@@ -17,7 +17,9 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: process.env.CI !== undefined,
   retries: 0,
-  reporter: process.env.CI ? [["line"], ["html", { open: "never" }]] : "line",
+  reporter: process.env.CI
+    ? [["line"], ["html", { open: "never" }], ["./e2e/timing-reporter.ts"]]
+    : "line",
   use: {
     ...browserContextOptions,
     actionTimeout: 20_000,

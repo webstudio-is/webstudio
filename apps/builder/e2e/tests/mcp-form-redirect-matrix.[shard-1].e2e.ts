@@ -9,8 +9,6 @@ import {
 } from "../flows/generated-form-delivery";
 import { test } from "../test";
 
-test.describe.configure({ mode: "parallel" });
-
 const execFileAsync = promisify(execFile);
 const authorPath = fileURLToPath(
   new URL("../fixtures/mcp-managed-form-author.ts", import.meta.url)
@@ -128,7 +126,7 @@ const createFixture = async (
     builderToken: `mcp-redirect-matrix-${name}-builder-token`,
   });
 
-for (const { name, redirect, expected } of [
+const redirects = [
   {
     name: "internal",
     redirect: "/?matrix=internal",
@@ -151,102 +149,119 @@ for (const { name, redirect, expected } of [
     redirect: "https://redirect.example/landing",
     expected: (url: URL) => url.href === "https://redirect.example/landing",
   },
-] as const) {
-  test(`MCP Form success redirect reaches ${name} destination`, async ({
-    page,
-    context,
-  }) => {
-    const fixture = await createFixture(context, name);
-    const { formId } = await authorForm(fixture.projectId, redirect);
-    const receiver = await startFormDeliveryReceiver();
-    try {
-      await withGeneratedFormDeliveryPreview({
-        projectId: fixture.projectId,
-        receiverPort: receiver.port,
-        callback: async ({ url }) => {
-          await openPreview(page, url);
-          const navigated = page.waitForURL((target) => expected(target));
-          await fillAndSubmit(page, formId);
-          await navigated;
-          expect(expected(new URL(page.url()))).toBe(true);
-          expect(receiver.deliveries).toHaveLength(1);
-          expect(receiver.deliveries[0]).toMatchObject({
-            pathname: "/submit",
-            method: "POST",
-          });
-        },
-      });
-    } finally {
-      await receiver.close();
-    }
-  });
-}
+] as const;
 
-for (const { name, fail, message, behavior } of [
-  {
-    name: "success",
-    fail: false,
-    message: successMessage,
-    behavior: "smooth",
-  },
-  {
-    name: "failure",
-    fail: true,
-    message: errorMessage,
-    behavior: "instant",
-  },
-] as const) {
-  test(`MCP Form ${name} reveals off-screen feedback with ${behavior} scroll`, async ({
-    page,
-    context,
-  }) => {
-    const fixture = await createFixture(context, `feedback-${name}`);
+test("MCP Form redirect destinations and feedback share one generated Preview", async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(180_000);
+  const fixture = await createFixture(context, "destinations");
+  const forms: Array<(typeof redirects)[number] & { formId: string }> = [];
+  for (const redirect of redirects) {
+    forms.push({
+      ...redirect,
+      ...(await authorForm(fixture.projectId, redirect.redirect)),
+    });
+  }
+  const feedbackScenarios = [
+    {
+      name: "success",
+      fail: false,
+      message: successMessage,
+      behavior: "smooth",
+    },
+    {
+      name: "failure",
+      fail: true,
+      message: errorMessage,
+      behavior: "instant",
+    },
+  ] as const;
+  const feedbackForms: Array<{
+    name: string;
+    fail: boolean;
+    message: string;
+    behavior: "smooth" | "instant";
+    formId: string;
+  }> = [];
+  for (const { name, fail, message, behavior } of feedbackScenarios) {
     const { formId } = await authorForm(
       fixture.projectId,
       fail ? "/?matrix=must-not-redirect" : undefined,
       fail
     );
-    const receiver = await startFormDeliveryReceiver();
-    try {
-      await withGeneratedFormDeliveryPreview({
-        projectId: fixture.projectId,
-        receiverPort: receiver.port,
-        callback: async ({ url }) => {
-          await page.emulateMedia({
-            reducedMotion: fail ? "reduce" : "no-preference",
+    feedbackForms.push({ name, fail, message, behavior, formId });
+  }
+
+  const receiver = await startFormDeliveryReceiver();
+  try {
+    await withGeneratedFormDeliveryPreview({
+      projectId: fixture.projectId,
+      receiverPort: receiver.port,
+      callback: async ({ url }) => {
+        await openPreview(page, url);
+        for (const [index, { name, expected, formId }] of forms.entries()) {
+          await test.step(name + " redirect", async () => {
+            if (index > 0) {
+              await page.goto(url);
+            }
+            const navigated = page.waitForURL((target) => expected(target));
+            await fillAndSubmit(page, formId);
+            await navigated;
+            expect(expected(new URL(page.url()))).toBe(true);
+            expect(receiver.deliveries).toHaveLength(index + 1);
+            expect(receiver.deliveries.at(-1)).toMatchObject({
+              pathname: "/submit",
+              method: "POST",
+            });
           });
-          await openPreview(page, url);
-          const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-          await moveFeedbackBelowViewport(page, message);
-          await fillAndSubmit(page, formId);
-          await expect(form).toHaveAttribute(
-            "data-state",
-            name === "failure" ? "error" : "success"
-          );
-          await expect(form.getByText(message, { exact: true })).toBeVisible();
-          await expect
-            .poll(() =>
-              page.evaluate(
-                () =>
-                  (
-                    window as Window & {
-                      __redirectMatrixScrollCalls?: Array<{
-                        behavior?: ScrollBehavior;
-                        tagName: string;
-                      }>;
-                    }
-                  ).__redirectMatrixScrollCalls ?? []
+        }
+        receiver.deliveries.splice(0);
+
+        for (const { name, fail, message, behavior, formId } of feedbackForms) {
+          await test.step(name + " feedback scroll", async () => {
+            await page.emulateMedia({
+              reducedMotion: fail ? "reduce" : "no-preference",
+            });
+            await page.goto(url);
+            const form = page.locator(
+              '[data-ws-managed-form-id="' + formId + '"]'
+            );
+            await moveFeedbackBelowViewport(page, message);
+            await fillAndSubmit(page, formId);
+            await expect(form).toHaveAttribute(
+              "data-state",
+              name === "failure" ? "error" : "success"
+            );
+            await expect(
+              form.getByText(message, { exact: true })
+            ).toBeVisible();
+            await expect
+              .poll(() =>
+                page.evaluate(
+                  () =>
+                    (
+                      window as Window & {
+                        __redirectMatrixScrollCalls?: Array<{
+                          behavior?: ScrollBehavior;
+                          tagName: string;
+                        }>;
+                      }
+                    ).__redirectMatrixScrollCalls ?? []
+                )
               )
-            )
-            .toEqual([{ tagName: "FORM", behavior }]);
-          expect(new URL(page.url()).searchParams.has("matrix")).toBe(false);
-          expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual(
-            fail ? ["/reject"] : ["/submit"]
-          );
-        },
-      });
-    } finally {
-      await receiver.close();
-    }
-  });
-}
+              .toEqual([{ tagName: "FORM", behavior }]);
+            expect(new URL(page.url()).searchParams.has("matrix")).toBe(false);
+            expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual(
+              fail ? ["/reject"] : ["/submit"]
+            );
+            receiver.deliveries.splice(0);
+          });
+        }
+      },
+    });
+  } finally {
+    await receiver.close();
+  }
+});
