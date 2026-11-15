@@ -215,6 +215,89 @@ test("a successful site runner finishes the current publish and retains its repo
     document.body.querySelector('[role="tabpanel"][data-state="active"]')
       ?.textContent
   ).toContain("Published");
+  await act(async () =>
+    document.body
+      .querySelector<HTMLButtonElement>(
+        '[role="dialog"] button[aria-label="Close"]'
+      )
+      ?.click()
+  );
+  await act(async () => builderStates.$publishDialog.set("publish"));
+  const validate = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent?.trim() === "Validate");
+  expect(validate).toBeDefined();
+  await act(async () => validate?.click());
+  await act(async () =>
+    vi.waitFor(() =>
+      expect(
+        Array.from(
+          document.body.querySelectorAll<HTMLButtonElement>("button")
+        ).some((button) => button.textContent?.trim() === "See issues")
+      ).toBe(true)
+    )
+  );
+  expect(document.body.textContent).not.toContain("Published successfully.");
+});
+
+test("a rejected publish replaces an older success notice with its findings", async () => {
+  jobStatus = "success";
+  publishResponse = {
+    success: true,
+    buildId: "build-1",
+    logHandle: "log-handle",
+    findings: [],
+  };
+  await mount();
+  const domain = document.body.querySelector<HTMLInputElement>(
+    'input[name="domainToPublish[]"]'
+  )!;
+  if (domain.checked === false) {
+    await act(async () =>
+      document.body.querySelector<HTMLElement>('[role="checkbox"]')?.click()
+    );
+  }
+  const publish = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  )
+    .filter((button) => button.textContent?.trim() === "Publish")
+    .at(-1)!;
+  await act(async () => publish.click());
+  await act(async () =>
+    vi.waitFor(() =>
+      expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe("build-1")
+    )
+  );
+  expect(document.body.textContent).toContain("Published successfully.");
+
+  publishResponse = {
+    success: false,
+    auditFindings: [{ severity: "error", message: "new audit failure" }],
+  };
+  const publishAgain = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  )
+    .filter((button) => button.textContent?.trim() === "Publish")
+    .at(-1)!;
+  expect(publishAgain.disabled).toBe(false);
+  await act(async () => publishAgain.click());
+  await act(async () =>
+    vi.waitFor(() =>
+      expect(
+        requests.filter(({ path }) => path === "/trpc/domain.publish")
+      ).toHaveLength(2)
+    )
+  );
+  const seeIssues = () =>
+    Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent?.trim() === "See issues");
+  await act(async () => vi.waitFor(() => expect(seeIssues()).toBeDefined()));
+  expect(document.body.textContent).not.toContain("Published successfully.");
+  await act(async () => seeIssues()?.click());
+  expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain(
+    "new audit failure"
+  );
 });
 
 test("a successful static export links to its publish report until another export starts", async () => {

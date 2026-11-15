@@ -816,7 +816,11 @@ export const PublishButton = ({ projectId }: PublishProps) => {
       findings.push(...manualFindings);
     }
     const publishError = publishErrorState?.value;
-    const publishErrorDomains = publishErrorState?.domains;
+    const publishErrorDomains =
+      publishErrorState?.domains ??
+      visiblePublishes.find(
+        (item) => item.buildId === publishErrorState?.buildId
+      )?.domains;
     if (
       publishError !== undefined &&
       (domain === undefined ||
@@ -1060,6 +1064,10 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     siteError: publishErrorState?.value,
     siteErrorSource: publishErrorState?.source,
     siteFindings,
+    siteHasValidationResult:
+      publishDiagnostics.site.rejected === true ||
+      manualDomains !== undefined ||
+      validationState === "passed",
     staticFailureFinding,
     publishes: visiblePublishes,
     loadLog,

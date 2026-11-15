@@ -523,6 +523,47 @@ test("a site transport error appears only for its attempted domain", async () =>
   );
 });
 
+test("an accepted publish failure appears only for its attempted domain", async () => {
+  stores.$project.set({
+    id: "project",
+    domain: "example",
+    domainsVirtual: [
+      {
+        domain: "other.example",
+        projectId: "project",
+        domainId: "other-id",
+        status: "ACTIVE",
+        verified: true,
+        updatedAt: new Date().toISOString(),
+        latestBuildVirtual: null,
+      },
+    ],
+    latestStaticBuild: null,
+  } as unknown as Project);
+  await mount("site");
+  await clickPublish("site");
+  await completeChecks(false);
+  await act(async () => {
+    dispatch.resolve({
+      success: true,
+      buildId: "accepted-build",
+      logHandle: "handle",
+      findings: [],
+    });
+    await dispatch.promise;
+  });
+  const otherDomainStatus = document.body.querySelector<HTMLButtonElement>(
+    'button[aria-label="Publish log: other.example"]'
+  );
+  expect(otherDomainStatus).toBeDefined();
+  await act(async () => otherDomainStatus?.click());
+  expect(
+    Array.from(document.body.querySelectorAll('[role="tab"]')).some((tab) =>
+      tab.textContent?.startsWith("Errors")
+    )
+  ).toBe(false);
+});
+
 test.each(["site", "static"] as const)(
   "%s check failure has one notice while Publish is open",
   async (target) => {

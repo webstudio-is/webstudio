@@ -113,6 +113,7 @@ type PublishUiState = {
   siteError?: string | JSX.Element;
   siteErrorSource?: "request" | "transport" | "status";
   siteFindings: DiagnosticFinding[];
+  siteHasValidationResult: boolean;
   staticFailureFinding?: DiagnosticFinding;
   openSiteReport: (
     domain: string | undefined,
@@ -534,7 +535,9 @@ const Publish = ({
             </Button>
           </Flex>
         </PanelBanner>
-      ) : latestSitePublish?.status === "success" && !isPublishInProgress ? (
+      ) : latestSitePublish?.status === "success" &&
+        !isPublishInProgress &&
+        !flow.siteHasValidationResult ? (
         <PublishSuccessBanner
           message="Published successfully."
           onOpen={() => onOpenReport(undefined, "publish")}
