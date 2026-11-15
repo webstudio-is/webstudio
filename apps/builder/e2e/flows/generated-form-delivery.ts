@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadDevBuild } from "../db";
+import { measure } from "../perf";
 import { stopChildProcess } from "../process";
 import {
   createLocalBundleFromDevBuild,
@@ -73,12 +74,14 @@ export const startGeneratedFormDeliveryPreview = async ({
     preview.stdout?.on("data", appendOutput);
     preview.stderr?.on("data", appendOutput);
     const url = `http://127.0.0.1:${port}/`;
-    await waitForGeneratedPreview({
-      process: preview,
-      url,
-      output: () => output.join(""),
-    });
     const runningPreview = preview;
+    await measure("generated form preview startup", () =>
+      waitForGeneratedPreview({
+        process: runningPreview,
+        url,
+        output: () => output.join(""),
+      })
+    );
     return {
       url,
       close: async () => {
@@ -114,7 +117,9 @@ export const withGeneratedFormDeliveryPreview = async <Result>({
     receiverPort,
   });
   try {
-    return await callback({ url: preview.url });
+    return await measure("generated form preview callback", () =>
+      callback({ url: preview.url })
+    );
   } finally {
     await preview.close();
   }
