@@ -66,6 +66,7 @@ class FakeWebSocket {
     | "exception-error"
     | "stale-outgoing-error"
     | "hash-navigation-error";
+  readonly exceptionUrl?: string;
   private navigationCount = 0;
   imageInspectionFinished = false;
   screenshotStartedBeforeImageInspectionFinished = false;
@@ -78,7 +79,8 @@ class FakeWebSocket {
     readinessWidths?: number[],
     lifecycleFrames = ["main"],
     pendingFonts = false,
-    runtimeErrorScenario?: FakeWebSocket["runtimeErrorScenario"]
+    runtimeErrorScenario?: FakeWebSocket["runtimeErrorScenario"],
+    exceptionUrl?: string
   ) {
     this.status = status;
     this.finalUrl = finalUrl;
@@ -87,6 +89,7 @@ class FakeWebSocket {
     this.lifecycleFrames = lifecycleFrames;
     this.pendingFonts = pendingFonts;
     this.runtimeErrorScenario = runtimeErrorScenario;
+    this.exceptionUrl = exceptionUrl;
     setTimeout(() => this.emit("open"), 0);
   }
 
@@ -461,7 +464,9 @@ class FakeWebSocket {
                         this.runtimeErrorScenario === "exception-error"
                           ? executionContextId
                           : 1,
-                      url: "https://example.com/assets/exception.js?token=private",
+                      url:
+                        this.exceptionUrl ??
+                        "https://user:pass@example.com/assets/exception.js?token=private#fragment",
                       lineNumber: 6,
                     },
                   }
@@ -2429,7 +2434,7 @@ test("does not treat console.error as an uncaught page exception", async () => {
   expect(layout.navigation).not.toHaveProperty("javascriptErrorLocation");
 });
 
-test("does not expose a page exception URL", async () => {
+test("reports a page exception script path and one-based line without its URL query", async () => {
   const layout = await captureBrowserScreenshot(
     {
       url: "https://example.com",
@@ -2455,7 +2460,49 @@ test("does not expose a page exception URL", async () => {
   );
 
   expect(layout.navigation?.javascriptErrorPresent).toBe(true);
-  expect(layout.navigation).not.toHaveProperty("javascriptErrorLocation");
+  expect(layout.navigation?.javascriptErrorLocation).toEqual({
+    pathname: "/assets/exception.js",
+    line: 7,
+  });
+  expect(JSON.stringify(layout.navigation)).not.toContain("token=private");
+  expect(JSON.stringify(layout.navigation)).not.toContain("user:pass");
+  expect(JSON.stringify(layout.navigation)).not.toContain("fragment");
+});
+
+test.each([
+  "https://example.com/private/customer-123.js?token=private",
+  "https://example.com/assets/data.json",
+])("omits a non-script path from page exception results: %s", async (url) => {
+  const layout = await captureBrowserScreenshot(
+    {
+      url: "https://example.com",
+      output: "/tmp/private-exception.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "networkidle",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        "exception-error",
+        url
+      ),
+    })
+  );
+
+  expect(layout.navigation?.javascriptErrorPresent).toBe(true);
+  expect(layout.navigation?.javascriptErrorLocation).toBeUndefined();
+  expect(JSON.stringify(layout.navigation)).not.toContain(
+    new URL(url).pathname
+  );
 });
 
 test("does not attribute an outgoing page error to the next route", async () => {
@@ -2495,6 +2542,9 @@ test("does not attribute an outgoing page error to the next route", async () => 
 
   expect(
     layouts.map(({ navigation }) => navigation?.javascriptErrorPresent)
+  ).toEqual([undefined, undefined]);
+  expect(
+    layouts.map(({ navigation }) => navigation?.javascriptErrorLocation)
   ).toEqual([undefined, undefined]);
   await session.close();
 });
@@ -2537,6 +2587,10 @@ test("keeps tracking the document context across hash navigations", async () => 
   expect(
     layouts.map(({ navigation }) => navigation?.javascriptErrorPresent)
   ).toEqual([undefined, true]);
+  expect(layouts[1]?.navigation?.javascriptErrorLocation).toEqual({
+    pathname: "/assets/exception.js",
+    line: 7,
+  });
   await session.close();
 });
 

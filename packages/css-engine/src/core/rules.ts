@@ -365,7 +365,8 @@ export class MediaRule {
     // If condition is set, use it exclusively (minWidth/maxWidth must be undefined)
     if (condition !== undefined) {
       query =
-        mediaType === "all" && condition.startsWith("not (")
+        mediaType === "all" &&
+        (condition.trimStart().startsWith("(") || condition.startsWith("not ("))
           ? condition
           : `${mediaType} and (${condition})`;
     } else {
