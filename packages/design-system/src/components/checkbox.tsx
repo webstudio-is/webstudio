@@ -22,8 +22,14 @@ const checkboxStyle = css({
   position: "relative",
   borderRadius: theme.borderRadius[3],
   color: cssVar("--foreground-primary"),
-  background: cssVar("--background-secondary"),
-  border: `1px solid ${cssVar("--foreground-secondary")}`,
+  background: `light-dark(${cssVar("--background-secondary")}, ${cssVar(
+    "--foreground-disabled"
+  )})`,
+  border: "1px solid transparent",
+
+  "&:hover": {
+    borderColor: cssVar("--border-default"),
+  },
 
   "&:focus-visible": {
     borderColor: cssVar("--border-focus"),
@@ -31,7 +37,9 @@ const checkboxStyle = css({
 
   // [data-state] is needed to make selector specificity higher
   "&[data-state]:disabled": {
-    color: cssVar("--foreground-disabled"),
+    color: `light-dark(${cssVar("--foreground-disabled")}, ${cssVar(
+      "--foreground-on-inverse"
+    )})`,
   },
 });
 

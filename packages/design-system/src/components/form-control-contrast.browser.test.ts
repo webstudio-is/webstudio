@@ -64,13 +64,22 @@ const contrast = (first: number[], second: number[]) => {
   );
 };
 
-const expectCheckboxContrast = (checkbox: Element, state: string) => {
+const expectCheckboxBackground = (
+  checkbox: Element,
+  mode: string,
+  state: string
+) => {
   const style = getComputedStyle(checkbox);
-  const border = readColor(style.borderColor);
-  expect(border[3], `${state} border opacity`).toBe(255);
+  const background = readColor(style.backgroundColor);
+  if (mode === "light") {
+    expect(background, `${state} light background`).toEqual(
+      readTokenColor("--background-secondary")
+    );
+    return;
+  }
   expect(
-    contrast(border, readColor(style.backgroundColor)),
-    `${state} border contrast`
+    contrast(background, readTokenColor("--background-floating-raised")),
+    `${state} dark background contrast`
   ).toBeGreaterThanOrEqual(3);
 };
 
@@ -97,6 +106,16 @@ test("compact form controls keep their intended contrast", async () => {
           }),
           createElement(Checkbox, {
             "aria-label": "Disabled checkbox",
+            disabled: true,
+          }),
+          createElement(Checkbox, {
+            "aria-label": "Disabled checked checkbox",
+            checked: true,
+            disabled: true,
+          }),
+          createElement(Checkbox, {
+            "aria-label": "Disabled indeterminate checkbox",
+            checked: "indeterminate",
             disabled: true,
           }),
           createElement(
@@ -138,7 +157,8 @@ test("compact form controls keep their intended contrast", async () => {
     act(() => checkbox.blur());
     await page.getByText("Neutral").hover();
     expect(checkbox.matches(":hover, :focus-visible")).toBe(false);
-    expectCheckboxContrast(checkbox, `${mode} resting checkbox`);
+    expectCheckboxBackground(checkbox, mode, "resting checkbox");
+    expect(readColor(getComputedStyle(checkbox).borderColor)[3]).toBe(0);
     const checkedCheckbox = container.querySelector<HTMLButtonElement>(
       '[aria-label="Checked checkbox"]'
     );
@@ -148,18 +168,51 @@ test("compact form controls keep their intended contrast", async () => {
     if (checkedCheckbox === null || disabledCheckbox === null) {
       throw new Error("Expected checked and disabled checkboxes");
     }
-    expectCheckboxContrast(checkedCheckbox, `${mode} checked checkbox`);
-    expectCheckboxContrast(disabledCheckbox, `${mode} disabled checkbox`);
+    expectCheckboxBackground(checkedCheckbox, mode, "checked checkbox");
+    expect(
+      contrast(
+        readColor(getComputedStyle(checkedCheckbox).color),
+        readColor(getComputedStyle(checkedCheckbox).backgroundColor)
+      ),
+      `${mode} checked icon contrast`
+    ).toBeGreaterThanOrEqual(3);
+    expectCheckboxBackground(disabledCheckbox, mode, "disabled checkbox");
+    for (const label of [
+      "Disabled checked checkbox",
+      "Disabled indeterminate checkbox",
+    ]) {
+      const disabledMarked = container.querySelector<HTMLButtonElement>(
+        `[aria-label="${label}"]`
+      );
+      if (disabledMarked === null) {
+        throw new Error(`Expected ${label}`);
+      }
+      expectCheckboxBackground(disabledMarked, mode, label);
+      const style = getComputedStyle(disabledMarked);
+      if (mode === "light") {
+        expect(readColor(style.color)).toEqual(
+          readTokenColor("--foreground-disabled")
+        );
+      } else {
+        expect(
+          contrast(readColor(style.color), readColor(style.backgroundColor)),
+          `${label} dark mark contrast`
+        ).toBeGreaterThanOrEqual(3);
+      }
+    }
     await page.elementLocator(checkbox).hover();
     expect(checkbox.matches(":hover")).toBe(true);
-    expectCheckboxContrast(checkbox, `${mode} hovered checkbox`);
+    expectCheckboxBackground(checkbox, mode, "hovered checkbox");
+    expect(readColor(getComputedStyle(checkbox).borderColor)).toEqual(
+      readTokenColor("--border-default")
+    );
     act(() => checkedCheckbox.focus());
     await act(async () => userEvent.keyboard("{Shift>}{Tab}{/Shift}"));
     expect(checkbox.matches(":focus-visible")).toBe(true);
     expect(readColor(getComputedStyle(checkbox).borderColor)).toEqual(
       readTokenColor("--border-focus")
     );
-    expectCheckboxContrast(checkbox, `${mode} focused checkbox`);
+    expectCheckboxBackground(checkbox, mode, "focused checkbox");
 
     const switchControl = container.querySelector("[data-switch] > button");
     if (switchControl === null) {
