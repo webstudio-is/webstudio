@@ -5,7 +5,6 @@ import {
   type BrowserContextOptions,
 } from "@playwright/test";
 import env from "../app/env/env.server";
-import { closePreviewFormMcpClient } from "./flows/mcp-preview-submit";
 
 const builderPort = process.env.PORT ?? "3000";
 
@@ -59,6 +58,8 @@ export const test = base.extend<{}, { mcpClientCleanup: void }>({
   mcpClientCleanup: [
     async ({}, use) => {
       await use();
+      const { closePreviewFormMcpClient } =
+        await import("./flows/mcp-preview-submit");
       await closePreviewFormMcpClient();
     },
     { scope: "worker", auto: true },
