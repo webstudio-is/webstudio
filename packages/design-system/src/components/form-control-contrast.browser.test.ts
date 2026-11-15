@@ -158,7 +158,10 @@ test("compact form controls keep their intended contrast", async () => {
     await page.getByText("Neutral").hover();
     expect(checkbox.matches(":hover, :focus-visible")).toBe(false);
     expectCheckboxBackground(checkbox, mode, "resting checkbox");
-    expect(readColor(getComputedStyle(checkbox).borderColor)[3]).toBe(0);
+    const restingBorderColor = readColor(
+      getComputedStyle(checkbox).borderColor
+    );
+    expect(restingBorderColor[3]).toBe(0);
     const checkedCheckbox = container.querySelector<HTMLButtonElement>(
       '[aria-label="Checked checkbox"]'
     );
@@ -204,7 +207,7 @@ test("compact form controls keep their intended contrast", async () => {
     expect(checkbox.matches(":hover")).toBe(true);
     expectCheckboxBackground(checkbox, mode, "hovered checkbox");
     expect(readColor(getComputedStyle(checkbox).borderColor)).toEqual(
-      readTokenColor("--border-default")
+      restingBorderColor
     );
     act(() => checkedCheckbox.focus());
     await act(async () => userEvent.keyboard("{Shift>}{Tab}{/Shift}"));
