@@ -135,6 +135,43 @@ test("static status waits for the matching runner before download readiness", as
   expect(getJob).toHaveBeenCalledTimes(2);
 });
 
+test.each(["site", "static"] as const)(
+  "finishes an accepted %s publish when a newer build becomes latest",
+  async (target) => {
+    vi.useFakeTimers();
+    const newerBuild = {
+      buildId: "build-2",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      publishStatus: "PUBLISHED",
+    };
+    const refresh = vi.fn(
+      async () =>
+        ({
+          latestBuildVirtual: target === "site" ? newerBuild : null,
+          latestStaticBuild: target === "static" ? newerBuild : null,
+        }) as Project
+    );
+    const getJob = vi.fn(async () => ({ status: "success" }));
+    const waiting = waitForPublishStatus(
+      refresh,
+      () => true,
+      undefined,
+      {
+        projectId: "project",
+        buildId: "build-1",
+        logHandle: "handle-1",
+        target,
+      },
+      getJob
+    );
+
+    await vi.runAllTimersAsync();
+    expect((await waiting)?.status).toBe("PUBLISHED");
+    expect(refresh).toHaveBeenCalledOnce();
+  }
+);
+
 test("reopening refresh retries after a rejected status request", async () => {
   vi.useFakeTimers();
   const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});

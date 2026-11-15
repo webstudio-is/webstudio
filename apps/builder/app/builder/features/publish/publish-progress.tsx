@@ -36,6 +36,7 @@ export const waitForPublishStatus = async (
   const timeToFinish = Date.now() + PENDING_TIMEOUT + 2 * sleepTime;
 
   while (Date.now() < timeToFinish && isCurrentProject()) {
+    let runnerSucceeded = false;
     try {
       let runnerPending = false;
       if (execution?.logHandle !== undefined) {
@@ -56,6 +57,7 @@ export const waitForPublishStatus = async (
             };
           }
           runnerPending = job.status === "pending";
+          runnerSucceeded = job.status === "success";
         } catch (error) {
           console.error("Could not refresh publish status", error);
         }
@@ -94,6 +96,13 @@ export const waitForPublishStatus = async (
       }
       // A failed status request should not stop watching an ongoing publish.
       console.error("Could not refresh publish status", error);
+    }
+    if (runnerSucceeded && isCurrentProject()) {
+      return {
+        status: "PUBLISHED" as const,
+        statusContent:
+          execution?.target === "static" ? "Downloaded" : "Published",
+      };
     }
 
     await new Promise((resolve) => setTimeout(resolve, sleepTime));

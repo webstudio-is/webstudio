@@ -683,9 +683,16 @@ const getOperationInputSchema = (
     operation.inputSchema
   );
   const properties = getInputJsonSchemaProperties(operation.inputSchema);
+  const hasComposedBranches =
+    operation.inputSchema.oneOf !== undefined ||
+    operation.inputSchema.anyOf !== undefined ||
+    operation.inputSchema.allOf !== undefined;
   const additionalProperties =
-    operation.inputSchema.additionalProperties ??
-    (properties === undefined || Object.keys(properties).length === 0);
+    hasComposedBranches &&
+    Object.keys(operation.inputSchema.properties ?? {}).length === 0
+      ? true
+      : (operation.inputSchema.additionalProperties ??
+        (properties === undefined || Object.keys(properties).length === 0));
   return {
     ...emptyInputSchema,
     ...operation.inputSchema,
@@ -2010,7 +2017,10 @@ const getMcpOperationInputSchema = (
   const properties = getInputJsonSchemaProperties(schema);
   if (
     schema.additionalProperties === true &&
-    (properties === undefined || Object.keys(properties).length === 0)
+    (properties === undefined || Object.keys(properties).length === 0) &&
+    schema.oneOf === undefined &&
+    schema.anyOf === undefined &&
+    schema.allOf === undefined
   ) {
     schema = { ...schema, additionalProperties: false };
   }

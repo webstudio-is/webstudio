@@ -2617,6 +2617,21 @@ test("exposes asset content editing through MCP discovery", () => {
   });
 });
 
+test("exposes valid inputs for both publish targets through MCP discovery", () => {
+  const tool = listProjectSessionMcpTools(publicApiOperations).find(
+    ({ name }) => name === "publish"
+  );
+
+  expect(tool?.inputSchema).toMatchObject({
+    additionalProperties: true,
+    required: ["target"],
+    oneOf: [
+      { properties: { target: expect.any(Object) } },
+      { properties: { target: expect.any(Object) } },
+    ],
+  });
+});
+
 test("exposes a client-valid update-props schema", () => {
   const tool = listProjectSessionMcpTools(publicApiOperations).find(
     ({ name }) => name === "update-props"
