@@ -187,6 +187,7 @@ test("reopening an active static publish keeps one status owner and one download
   expect(downloads).toHaveBeenCalledExactlyOnceWith("/cgi/static/ssg/site.zip");
   expect(staticButton()?.dataset.state).not.toBe("pending");
   expect(staticButton()?.disabled).toBe(false);
+  expect(document.body.querySelector('[role="status"]')).not.toBeNull();
   expect(document.body.textContent).toContain("Downloaded");
   expect(publishRequests).toBe(1);
   expect(jobRequests).toBe(2);
@@ -246,14 +247,13 @@ test("a failed static runner clears progress without starting a download", async
   await act(async () => vi.advanceTimersByTimeAsync(15_100));
   expect(jobRequests).toBe(2);
   expect(downloads).not.toHaveBeenCalled();
-  expect(errorToast).toHaveBeenCalledOnce();
+  expect(errorToast).not.toHaveBeenCalled();
   expect(staticButton()?.dataset.state).not.toBe("pending");
   expect(staticButton()?.disabled).toBe(false);
+  expect(document.body.querySelector('[role="alert"]')).not.toBeNull();
   await act(async () =>
-    document.body
-      .querySelector<HTMLButtonElement>(
-        'button[aria-label="Publish log: Static export"]'
-      )
+    Array.from(document.body.querySelectorAll<HTMLButtonElement>("button"))
+      .find((button) => button.textContent === "See issues")
       ?.click()
   );
   const errors = Array.from(
@@ -277,7 +277,7 @@ test("a failed static runner clears progress without starting a download", async
   ).not.toBeNull();
 });
 
-test("the static status reopens an audit rejection instead of an older successful publish", async () => {
+test("the static failure alert opens an audit rejection instead of an older successful publish", async () => {
   getJobStatus = "success";
   projectStore.set(createProject());
   await render(true);
@@ -298,8 +298,15 @@ test("the static status reopens an audit rejection instead of an older successfu
       ?.textContent;
   await vi.waitFor(async () => {
     await act(async () => {});
-    expect(activeTab()).toBe("Errors");
+    expect(document.body.querySelector('[role="alert"]')).not.toBeNull();
   });
+  expect(activeTab()).toBeUndefined();
+  await act(async () =>
+    Array.from(document.body.querySelectorAll<HTMLButtonElement>("button"))
+      .find((button) => button.textContent === "See issues")
+      ?.click()
+  );
+  expect(activeTab()).toBe("Errors");
   await act(async () =>
     document.body
       .querySelector<HTMLButtonElement>('button[aria-label="Close"]')
@@ -311,10 +318,8 @@ test("the static status reopens an audit rejection instead of an older successfu
   });
   await render(true);
   await act(async () =>
-    document.body
-      .querySelector<HTMLButtonElement>(
-        'button[aria-label="Publish log: Static export"]'
-      )
+    Array.from(document.body.querySelectorAll<HTMLButtonElement>("button"))
+      .find((button) => button.textContent === "See issues")
       ?.click()
   );
   expect(activeTab()).toBe("Errors");

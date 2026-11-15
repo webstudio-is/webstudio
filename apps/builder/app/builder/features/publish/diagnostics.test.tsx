@@ -146,7 +146,7 @@ test.each(["findings", "details", "publish"] as const)(
     );
     if (view === "details") {
       const finding = Array.from(document.body.querySelectorAll("button")).find(
-        (button) => button.textContent === "finding"
+        (button) => button.textContent === "Show more"
       );
       await act(async () => userEvent.click(finding!));
     }
@@ -222,7 +222,7 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
   expect(document.body.querySelector('[draggable="true"]')).not.toBeNull();
   const firstFinding = Array.from(
     document.body.querySelectorAll("button")
-  ).find((button) => button.textContent === "error-0");
+  ).find((button) => button.textContent === "Show more");
   expect(firstFinding).toBeDefined();
   await act(async () => userEvent.click(firstFinding as HTMLElement));
   const selectableText = Array.from(document.body.querySelectorAll("*")).find(
@@ -244,7 +244,7 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
   expect(document.body.textContent).not.toContain("error-0");
   const warningFinding = Array.from(
     document.body.querySelectorAll("button")
-  ).find((button) => button.textContent === "warning-0");
+  ).find((button) => button.textContent === "Show more");
   await act(async () => userEvent.click(warningFinding as HTMLElement));
   const warningBack = Array.from(document.body.querySelectorAll("button")).find(
     (button) => button.textContent === "Back"
@@ -281,6 +281,25 @@ test.each(["error", "warning"] as const)(
     ).toEqual([severity === "error" ? "Errors" : "Warnings"]);
   }
 );
+
+test("warning text can be selected without opening its details", async () => {
+  render([createFinding("warning", 0)], { open: true });
+  const warning = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="tabpanel"] div')
+  ).find(
+    (element) =>
+      element.textContent === "warning-0" &&
+      getComputedStyle(element).userSelect === "text"
+  );
+  expect(warning).toBeDefined();
+  await act(async () => userEvent.click(warning!));
+  expect(document.body.textContent).not.toContain("Back");
+  const showMore = Array.from(document.body.querySelectorAll("button")).find(
+    (button) => button.textContent === "Show more"
+  );
+  await act(async () => userEvent.click(showMore!));
+  expect(document.body.textContent).toContain("details-warning-0");
+});
 
 test("Free shows the actual short error without details, navigation, or report copy", () => {
   const element = render(
@@ -773,7 +792,7 @@ test("Show element closes the diagnostics dialog on ordinary navigation", async 
   ]);
   openDetails(element);
   const finding = Array.from(document.body.querySelectorAll("button")).find(
-    (button) => button.textContent === "Invalid element"
+    (button) => button.textContent === "Show more"
   );
   await act(async () => userEvent.click(finding as HTMLElement));
   const link =

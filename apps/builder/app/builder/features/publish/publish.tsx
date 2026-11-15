@@ -341,7 +341,10 @@ export const PublishButton = ({ projectId }: PublishProps) => {
               setPublishError: setPublishStatusError,
               isCurrentProject,
             });
-          } else if (result?.status === "FAILED") {
+          } else if (
+            result?.status === "FAILED" &&
+            $publishDialog.get() !== "export"
+          ) {
             toast.error(result.statusContent);
           }
           onResult?.(result);
@@ -411,7 +414,10 @@ export const PublishButton = ({ projectId }: PublishProps) => {
               domains,
             });
           }
-          if (target === "static" || $publishDialog.get() !== "publish") {
+          if (
+            $publishDialog.get() !==
+            (target === "static" ? "export" : "publish")
+          ) {
             toast.error(target === "static" ? message.slice(0, 200) : message);
           }
         }
@@ -1040,7 +1046,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             if (isCurrentProject() && diagnostics.isCurrent()) {
               reportPublishValidationFailure(error, diagnostics.setFindings, {
                 publishingContinues: true,
-                showToast: true,
+                showToast: $publishDialog.get() !== "export",
               });
             }
           },
@@ -1060,14 +1066,15 @@ export const PublishButton = ({ projectId }: PublishProps) => {
               ...findings,
               ...getServerPublishFindings(publishResult.auditFindings),
             ]);
-            openStaticReport("errors");
             return;
           }
           diagnostics.finish((findings) => [
             ...findings,
             getPublishErrorFinding(publishResult.error),
           ]);
-          toast.error(publishResult.error.slice(0, 200));
+          if ($publishDialog.get() !== "export") {
+            toast.error(publishResult.error.slice(0, 200));
+          }
           return;
         }
         const accepted = record({
@@ -1082,7 +1089,11 @@ export const PublishButton = ({ projectId }: PublishProps) => {
           toast.error('File name must be defined in "result"');
         }
         const outcome = await waitForCompletion(accepted);
-        if (isCurrentProject() && outcome?.status === "FAILED") {
+        if (
+          isCurrentProject() &&
+          outcome?.status === "FAILED" &&
+          $publishDialog.get() !== "export"
+        ) {
           toast.error(outcome.statusContent);
         }
       },

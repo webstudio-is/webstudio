@@ -141,13 +141,25 @@ const FindingList = ({
                   )}
               </Text>
             ) : canViewPublishLogs ? (
-              <Button
-                type="button"
-                color="ghost"
-                onClick={() => onSelect(finding)}
-              >
-                {finding.title}
-              </Button>
+              <Flex align="center" gap={1} wrap="wrap">
+                <Text variant="labels" userSelect="text">
+                  {finding.title}
+                </Text>
+                {(finding.details !== undefined ||
+                  finding.link !== undefined) && (
+                  <Link
+                    as="button"
+                    type="button"
+                    variant="inherit"
+                    color="inherit"
+                    underline="always"
+                    css={{ border: 0, padding: 0, background: "none" }}
+                    onClick={() => onSelect(finding)}
+                  >
+                    Show more
+                  </Link>
+                )}
+              </Flex>
             ) : (
               <Text variant="labels" userSelect="text">
                 {shortFinding(finding)}
