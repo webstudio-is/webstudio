@@ -155,73 +155,22 @@ const fillForm = async (page: Page, formId: string) => {
   return form;
 };
 
-for (const { mode, message, status } of [
-  { mode: "success", message: successMessage, status: 200 },
-  { mode: "error", message: errorMessage, status: 502 },
-] as const) {
-  test(`MCP-authored ${mode} feedback already in viewport does not scroll`, async ({
-    page,
-    context,
-  }) => {
-    const fixture = await createContentModeProject({
-      context,
-      email: `mcp-form-visible-${mode}@webstudio.test`,
-      title: `MCP Form visible ${mode} feedback`,
-      assetNamePrefix: `mcp-form-visible-${mode}-`,
-      builderToken: `mcp-form-visible-${mode}-builder-token`,
-    });
-    const { formId } = await authorForm(fixture.projectId, mode);
-    const receiver = await startFormDeliveryReceiver();
-    try {
-      await withGeneratedFormDeliveryPreview({
-        projectId: fixture.projectId,
-        receiverPort: receiver.port,
-        callback: async ({ url }) => {
-          await openLocalPreview(page, url);
-          await positionFeedback(page, message, "visible");
-          const form = await fillForm(page, formId);
-          const submission = page.waitForResponse(
-            (response) =>
-              new URL(response.url()).pathname.startsWith("/__ws-form") &&
-              response.request().method() === "POST"
-          );
-          await form.getByRole("button", { name: "Submit" }).click();
-          expect((await submission).status()).toBe(status);
-          await expect(form).toHaveAttribute("data-state", mode);
-          await expectFeedbackInsideViewport(page, message);
-          await page.evaluate(
-            () =>
-              new Promise<void>((resolve) =>
-                requestAnimationFrame(() =>
-                  requestAnimationFrame(() => resolve())
-                )
-              )
-          );
-          expect(await getScrollCalls(page)).toEqual([]);
-        },
-      });
-    } finally {
-      await receiver.close();
-    }
-  });
-}
-
-test("MCP-authored partial Action failure scrolls error feedback into view", async ({
+test("MCP Form feedback states share one generated Preview", async ({
   page,
   context,
 }) => {
+  test.setTimeout(180_000);
   const fixture = await createContentModeProject({
     context,
-    email: "mcp-form-partial-feedback@webstudio.test",
-    title: "MCP Form partial Action failure feedback",
-    assetNamePrefix: "mcp-form-partial-feedback-",
-    builderToken: "mcp-form-partial-feedback-builder-token",
+    email: "mcp-form-feedback-states@webstudio.test",
+    title: "MCP Form feedback states",
+    assetNamePrefix: "mcp-form-feedback-states-",
+    builderToken: "mcp-form-feedback-states-builder-token",
   });
-  const { formId, resourceId, successfulResourceId } = await authorForm(
-    fixture.projectId,
-    "partial"
-  );
-  expect(successfulResourceId).toBeDefined();
+  const success = await authorForm(fixture.projectId, "success");
+  const error = await authorForm(fixture.projectId, "error");
+  const partial = await authorForm(fixture.projectId, "partial");
+  expect(partial.successfulResourceId).toBeDefined();
   const receiver = await startFormDeliveryReceiver();
   try {
     await withGeneratedFormDeliveryPreview({
@@ -229,35 +178,91 @@ test("MCP-authored partial Action failure scrolls error feedback into view", asy
       receiverPort: receiver.port,
       callback: async ({ url }) => {
         await openLocalPreview(page, url);
-        await positionFeedback(page, errorMessage, "offscreen");
-        const form = await fillForm(page, formId);
-        const submission = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
-        );
-        await form.getByRole("button", { name: "Submit" }).click();
-        const response = await submission;
-        expect(response.status()).toBe(502);
-        expect(await response.json()).toMatchObject({
-          success: false,
-          results: [
-            expect.objectContaining({
-              resourceId: successfulResourceId,
-              status: 200,
-            }),
-            expect.objectContaining({ resourceId, status: 503 }),
-          ],
-          errors: [expect.objectContaining({ resourceId, status: 503 })],
+        for (const { mode, message, status, formId } of [
+          {
+            mode: "success",
+            message: successMessage,
+            status: 200,
+            formId: success.formId,
+          },
+          {
+            mode: "error",
+            message: errorMessage,
+            status: 502,
+            formId: error.formId,
+          },
+        ] as const) {
+          await test.step(
+            mode + " feedback already in viewport does not scroll",
+            async () => {
+              if (mode === "error") {
+                await page.goto(url);
+              }
+              await positionFeedback(page, message, "visible");
+              const form = await fillForm(page, formId);
+              const submission = page.waitForResponse(
+                (response) =>
+                  new URL(response.url()).pathname.startsWith("/__ws-form") &&
+                  response.request().method() === "POST"
+              );
+              await form.getByRole("button", { name: "Submit" }).click();
+              expect((await submission).status()).toBe(status);
+              await expect(form).toHaveAttribute("data-state", mode);
+              await expectFeedbackInsideViewport(page, message);
+              await page.evaluate(
+                () =>
+                  new Promise<void>((resolve) =>
+                    requestAnimationFrame(() =>
+                      requestAnimationFrame(() => resolve())
+                    )
+                  )
+              );
+              expect(await getScrollCalls(page)).toEqual([]);
+              receiver.deliveries.splice(0);
+            }
+          );
+        }
+
+        await test.step("partial Action failure scrolls error feedback into view", async () => {
+          await page.goto(url);
+          await positionFeedback(page, errorMessage, "offscreen");
+          const form = await fillForm(page, partial.formId);
+          const submission = page.waitForResponse(
+            (response) =>
+              new URL(response.url()).pathname.startsWith("/__ws-form") &&
+              response.request().method() === "POST"
+          );
+          await form.getByRole("button", { name: "Submit" }).click();
+          const response = await submission;
+          expect(response.status()).toBe(502);
+          expect(await response.json()).toMatchObject({
+            success: false,
+            results: [
+              expect.objectContaining({
+                resourceId: partial.successfulResourceId,
+                status: 200,
+              }),
+              expect.objectContaining({
+                resourceId: partial.resourceId,
+                status: 503,
+              }),
+            ],
+            errors: [
+              expect.objectContaining({
+                resourceId: partial.resourceId,
+                status: 503,
+              }),
+            ],
+          });
+          await expect(form).toHaveAttribute("data-state", "error");
+          await expectFeedbackInsideViewport(page, errorMessage);
+          await expect
+            .poll(() => getScrollCalls(page))
+            .toEqual([expect.stringContaining(errorMessage)]);
+          expect(
+            receiver.deliveries.map(({ pathname }) => pathname).sort()
+          ).toEqual(["/reject", "/submit"]);
         });
-        await expect(form).toHaveAttribute("data-state", "error");
-        await expectFeedbackInsideViewport(page, errorMessage);
-        await expect
-          .poll(() => getScrollCalls(page))
-          .toEqual([expect.stringContaining(errorMessage)]);
-        expect(
-          receiver.deliveries.map(({ pathname }) => pathname).sort()
-        ).toEqual(["/reject", "/submit"]);
       },
     });
   } finally {
