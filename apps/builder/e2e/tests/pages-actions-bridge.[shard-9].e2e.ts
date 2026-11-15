@@ -252,52 +252,11 @@ test("Builder can insert through the engine bridge, undo, redo, and reload", asy
   });
 });
 
-test("Builder Components panel filters catalog-only entries and inserts a persisted component", async ({
-  page,
-}) => {
-  const insertedButtonText = "Button";
-
-  await measure("pages actions open builder for components panel", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-  await waitForCanvasText({ page, text: "Initial content" });
-
-  await measure(
-    "pages actions verify components panel catalog filters",
-    async () => {
-      await openComponentsPanel({ page });
-      await expectComponentPanelOptionHidden({ page, name: "Body" });
-    }
-  );
-
-  await selectCanvasTextInstance({ page, text: "Initial content" });
-  await measure(
-    "pages actions insert component from components panel",
-    async () => {
-      await openComponentsPanel({ page });
-      await insertComponentPanelOption({ page, name: "Button" });
-    }
-  );
-  await waitForCanvasText({ page, text: insertedButtonText });
-
-  await measure("pages actions reload components panel insert", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-  await waitForCanvasText({ page, text: insertedButtonText });
-});
-
-test("Builder can duplicate a component through the engine bridge, undo, redo, and reload", async ({
+test("Builder filters the catalog and persists component actions from shortcuts and Navigator", async ({
   page,
 }) => {
   const componentName = "Image";
+  const insertedButtonText = "Button";
 
   await measure("pages actions open builder for command panel", async () => {
     await openProjectBuilder({
@@ -307,6 +266,14 @@ test("Builder can duplicate a component through the engine bridge, undo, redo, a
     });
   });
   await waitForCanvasText({ page, text: "Initial content" });
+  await selectCanvasTextInstance({ page, text: "Initial content" });
+
+  await test.step("filter the components catalog and insert a Button", async () => {
+    await openComponentsPanel({ page });
+    await expectComponentPanelOptionHidden({ page, name: "Body" });
+    await insertComponentPanelOption({ page, name: "Button" });
+    await waitForCanvasText({ page, text: insertedButtonText });
+  });
   await selectCanvasTextInstance({ page, text: "Initial content" });
 
   const initialCount = await getInstanceComponentCount({
@@ -373,64 +340,6 @@ test("Builder can duplicate a component through the engine bridge, undo, redo, a
     );
   }
 
-  await measure("pages actions reload duplicate command", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-  const reloadedCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (reloadedCount !== initialCount + 2) {
-    throw new Error(
-      `Expected reloaded project to keep duplicated ${componentName}. Before ${initialCount}, after ${reloadedCount}`
-    );
-  }
-});
-
-test("Builder can duplicate and delete a component from Navigator context menu", async ({
-  page,
-}) => {
-  const componentName = "Image";
-
-  await measure(
-    "pages actions open builder for navigator context menu",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    }
-  );
-  await waitForCanvasText({ page, text: "Initial content" });
-  await selectCanvasTextInstance({ page, text: "Initial content" });
-
-  const initialCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-
-  await measure(
-    "pages actions insert component before navigator actions",
-    async () => {
-      await openComponentsPanel({ page });
-      await insertComponentPanelOption({ page, name: componentName });
-    }
-  );
-  const insertedCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (insertedCount !== initialCount + 1) {
-    throw new Error(
-      `Expected components panel to insert one ${componentName}. Before ${initialCount}, after ${insertedCount}. Components: ${await getInstanceComponentCountSummary(fixture)}`
-    );
-  }
-
   await measure(
     "pages actions duplicate component from navigator",
     async () => {
@@ -442,13 +351,13 @@ test("Builder can duplicate and delete a component from Navigator context menu",
       });
     }
   );
-  const duplicatedCount = await getInstanceComponentCount({
+  const navigatorDuplicateCount = await getInstanceComponentCount({
     fixture,
     component: componentName,
   });
-  if (duplicatedCount !== initialCount + 2) {
+  if (navigatorDuplicateCount !== redoCount + 1) {
     throw new Error(
-      `Expected Navigator duplicate to add one ${componentName}. Before ${initialCount}, after ${duplicatedCount}. Components: ${await getInstanceComponentCountSummary(fixture)}. Navigator: ${JSON.stringify(await getNavigatorButtonSummary({ page, text: componentName }))}`
+      `Expected Navigator duplicate to add one ${componentName}. Before ${redoCount}, after ${navigatorDuplicateCount}. Components: ${await getInstanceComponentCountSummary(fixture)}. Navigator: ${JSON.stringify(await getNavigatorButtonSummary({ page, text: componentName }))}`
     );
   }
 
@@ -459,9 +368,9 @@ test("Builder can duplicate and delete a component from Navigator context menu",
     fixture,
     component: componentName,
   });
-  if (undoDuplicateCount !== initialCount + 1) {
+  if (undoDuplicateCount !== redoCount) {
     throw new Error(
-      `Expected undo to remove Navigator duplicate ${componentName}. Before ${initialCount}, after ${undoDuplicateCount}`
+      `Expected undo to remove Navigator duplicate ${componentName}. Before ${redoCount}, after ${undoDuplicateCount}`
     );
   }
 
@@ -472,9 +381,9 @@ test("Builder can duplicate and delete a component from Navigator context menu",
     fixture,
     component: componentName,
   });
-  if (redoDuplicateCount !== initialCount + 2) {
+  if (redoDuplicateCount !== redoCount + 1) {
     throw new Error(
-      `Expected redo to restore Navigator duplicate ${componentName}. Before ${initialCount}, after ${redoDuplicateCount}`
+      `Expected redo to restore Navigator duplicate ${componentName}. Before ${redoCount}, after ${redoDuplicateCount}`
     );
   }
 
@@ -490,9 +399,9 @@ test("Builder can duplicate and delete a component from Navigator context menu",
     fixture,
     component: componentName,
   });
-  if (deletedCount !== initialCount + 1) {
+  if (deletedCount !== redoCount) {
     throw new Error(
-      `Expected Navigator delete to remove one ${componentName}. Before ${initialCount}, after ${deletedCount}`
+      `Expected Navigator delete to remove one ${componentName}. Before ${redoCount}, after ${deletedCount}`
     );
   }
 
@@ -503,29 +412,27 @@ test("Builder can duplicate and delete a component from Navigator context menu",
     fixture,
     component: componentName,
   });
-  if (undoDeleteCount !== initialCount + 2) {
+  if (undoDeleteCount !== redoCount + 1) {
     throw new Error(
-      `Expected undo to restore Navigator-deleted ${componentName}. Before ${initialCount}, after ${undoDeleteCount}`
+      `Expected undo to restore Navigator-deleted ${componentName}. Before ${redoCount}, after ${undoDeleteCount}`
     );
   }
 
-  await measure(
-    "pages actions reload navigator context menu mutations",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    }
-  );
+  await measure("pages actions reload component mutations", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+    });
+  });
+  await waitForCanvasText({ page, text: insertedButtonText });
   const reloadedCount = await getInstanceComponentCount({
     fixture,
     component: componentName,
   });
-  if (reloadedCount !== initialCount + 2) {
+  if (reloadedCount !== initialCount + 3) {
     throw new Error(
-      `Expected reload to preserve Navigator mutations for ${componentName}. Before ${initialCount}, after ${reloadedCount}`
+      `Expected reload to preserve component actions for ${componentName}. Before ${initialCount}, after ${reloadedCount}`
     );
   }
 });

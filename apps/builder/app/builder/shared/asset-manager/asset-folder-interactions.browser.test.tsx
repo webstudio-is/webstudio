@@ -128,3 +128,61 @@ test("asset settings move to the selected subfolder only after leaving the folde
   );
   await expect.element(first).toBeVisible();
 });
+
+test("dragging a selected folder into a folder moves the entire selection", async () => {
+  act(() => {
+    $assetFolders.set(
+      createAssetFoldersFixture(
+        createAssetFolderFixture({ id: "parent", name: "Parent" }),
+        createAssetFolderFixture({ id: "alpha", name: "Alpha" }),
+        createAssetFolderFixture({ id: "bravo", name: "Bravo" })
+      )
+    );
+  });
+  const alpha = page.getByRole("button", { name: "Folder Alpha", exact: true });
+  const bravo = page.getByRole("button", { name: "Folder Bravo", exact: true });
+  const parent = page.getByRole("button", {
+    name: "Folder Parent",
+    exact: true,
+  });
+  await act(async () => alpha.click());
+  await act(async () => bravo.click({ modifiers: ["ControlOrMeta"] }));
+  expect(page.getByRole("option", { selected: true }).elements()).toHaveLength(
+    2
+  );
+  await act(async () => userEvent.dragAndDrop(bravo, parent));
+  await expect.element(alpha).not.toBeInTheDocument();
+  await expect.element(bravo).not.toBeInTheDocument();
+  await act(async () => parent.dblClick());
+  await expect.element(alpha).toBeVisible();
+  await expect.element(bravo).toBeVisible();
+});
+
+test("the context menu moves all selected assets into the chosen folder", async () => {
+  const first = page.getByTitle("first.txt");
+  const second = page.getByTitle("second.txt");
+  await act(async () => first.click());
+  await act(async () => second.click({ modifiers: ["ControlOrMeta"] }));
+  await act(async () => second.click({ button: "right" }));
+  await act(async () =>
+    page.getByRole("menuitem", { name: "Move", exact: true }).click()
+  );
+  const dialog = page.getByRole("dialog", { name: "Move items" });
+  await act(async () =>
+    dialog.getByRole("combobox", { name: "Folder", exact: true }).click()
+  );
+  await act(async () =>
+    page.getByRole("option", { name: "Parent", exact: true }).click()
+  );
+  await act(async () =>
+    dialog.getByRole("button", { name: "Move", exact: true }).click()
+  );
+
+  await expect.element(first).not.toBeInTheDocument();
+  await expect.element(second).not.toBeInTheDocument();
+  await act(async () =>
+    page.getByRole("button", { name: "Folder Parent", exact: true }).dblClick()
+  );
+  await expect.element(first).toBeVisible();
+  await expect.element(second).toBeVisible();
+});

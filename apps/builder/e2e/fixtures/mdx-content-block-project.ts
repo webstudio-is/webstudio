@@ -1,5 +1,10 @@
+import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import type { BrowserContext } from "@playwright/test";
 import { encodeDataSourceVariable } from "@webstudio-is/sdk";
-import { loadDevBuild, updateBuild } from "../db";
+import { getAssetUploadApiUrl } from "@webstudio-is/sdk/runtime";
+import { insertAuthorizationToken, loadDevBuild, updateBuild } from "../db";
+import { builderUrl } from "../test";
 
 type InstanceData = {
   type: "instance";
@@ -29,6 +34,7 @@ type DataSourceData = {
 
 const blockId = "content-block";
 const templateId = "content-block-template";
+export const lifecycleTemplateId = "lifecycle-card-template";
 
 const getBuildData = async (projectId: string) => {
   const build = await loadDevBuild({ projectId });
@@ -55,33 +61,12 @@ export const configureRepresentableContentBlockBody = async (
   await updateBuild(build.id, { instances: JSON.stringify(instances) });
 };
 
-export const configureEmptyHeadingTemplate = async (projectId: string) => {
-  const { build, instances } = await getBuildData(projectId);
-  const templates = instances.find((instance) => instance.id === templateId);
-  if (templates === undefined) {
-    throw new Error("Expected the Content Block templates fixture instance");
-  }
-  const emptyHeadingId = "empty-heading-template";
-  templates.children.push({ type: "id", value: emptyHeadingId });
-  instances.push({
-    type: "instance",
-    id: emptyHeadingId,
-    component: "ws:element",
-    tag: "h1",
-    name: "EmptyHeadingTemplate",
-    label: "Empty Heading Template",
-    children: [],
-  });
-  await updateBuild(build.id, { instances: JSON.stringify(instances) });
-};
-
 export const configureNamedTemplateLifecycle = async (projectId: string) => {
   const { build, instances } = await getBuildData(projectId);
   const templates = instances.find((instance) => instance.id === templateId);
   if (templates === undefined) {
     throw new Error("Expected the Content Block templates fixture instance");
   }
-  const lifecycleTemplateId = "lifecycle-card-template";
   templates.children.push({ type: "id", value: lifecycleTemplateId });
   instances.push({
     type: "instance",
@@ -95,43 +80,104 @@ export const configureNamedTemplateLifecycle = async (projectId: string) => {
   await updateBuild(build.id, { instances: JSON.stringify(instances) });
 };
 
-const configureSourceBlock = ({
-  instances,
-  props,
-  expression,
+export const mdxEditorPageNames = {
+  detail: "Dynamic MDX detail",
+  repeated: "Repeated MDX content",
+};
+
+export const prepareMdxEditorPages = async ({
+  context,
+  projectId,
+  sourceFilename,
+  alternateFilename,
+  emptyFilename,
 }: {
-  instances: InstanceData[];
-  props: PropData[];
-  expression: string;
+  context: BrowserContext;
+  projectId: string;
+  sourceFilename: string;
+  alternateFilename: string;
+  emptyFilename: string;
 }) => {
-  const block = instances.find((instance) => instance.id === blockId);
-  if (block === undefined) {
-    throw new Error("Expected the Content Block fixture instance");
+  const token = randomUUID();
+  await insertAuthorizationToken({
+    token,
+    projectId,
+    name: "MDX fixture setup",
+    relation: "builders",
+    canUseApi: true,
+  });
+  const upload = async (filename: string, uploadedFilename = filename) => {
+    const url = new URL(getAssetUploadApiUrl(uploadedFilename), builderUrl);
+    url.searchParams.set("projectId", projectId);
+    url.searchParams.set("type", "file");
+    url.searchParams.set("format", "mdx");
+    if (uploadedFilename !== filename) {
+      url.searchParams.set("force", "true");
+    }
+    const response = await context.request.post(url.href, {
+      headers: {
+        "x-auth-token": token,
+        "content-type": "application/octet-stream",
+      },
+      data: await readFile(new URL(`./assets/${filename}`, import.meta.url)),
+    });
+    if (response.ok() === false) {
+      throw new Error(
+        `MDX fixture upload failed for ${filename}: ${response.status()}`
+      );
+    }
+    const { uploadedAssets } = (await response.json()) as {
+      uploadedAssets: Array<{ id: string }>;
+    };
+    const [asset] = uploadedAssets;
+    if (asset === undefined) {
+      throw new Error(`Expected an asset ID for ${filename}`);
+    }
+    return asset.id;
+  };
+  const [
+    { build, instances, props, dataSources },
+    sourceAssetId,
+    alternateAssetId,
+    emptyAssetId,
+    detailSourceAssetId,
+    detailAlternateAssetId,
+  ] = await Promise.all([
+    getBuildData(projectId),
+    upload(sourceFilename),
+    upload(alternateFilename),
+    upload(emptyFilename),
+    upload(sourceFilename, `detail-${sourceFilename}`),
+    upload(alternateFilename, `detail-${alternateFilename}`),
+  ]);
+
+  const homeBlock = instances.find((instance) => instance.id === blockId);
+  const homeTemplates = instances.find(
+    (instance) => instance.id === templateId
+  );
+  if (homeBlock === undefined || homeTemplates === undefined) {
+    throw new Error("Expected the Content Block fixture instances");
   }
-  block.children = [{ type: "id", value: templateId }];
+  const emptyHeadingId = "empty-heading-template";
+  homeTemplates.children.push({ type: "id", value: emptyHeadingId });
+  instances.push({
+    type: "instance",
+    id: emptyHeadingId,
+    component: "ws:element",
+    tag: "h1",
+    name: "EmptyHeadingTemplate",
+    label: "Empty Heading Template",
+    children: [],
+  });
+  homeBlock.children = [{ type: "id", value: templateId }];
   props.push({
     id: "content-block-source",
     instanceId: blockId,
     name: "src",
-    type: "expression",
-    value: expression,
+    type: "asset",
+    value: emptyAssetId,
   });
-};
 
-export const configureDynamicDetailContentBlock = async ({
-  projectId,
-  initialAssetId,
-}: {
-  projectId: string;
-  initialAssetId: string;
-}) => {
-  const { build, instances, props, dataSources } =
-    await getBuildData(projectId);
-  configureSourceBlock({
-    instances,
-    props,
-    expression: "$ws$system.params.assetid",
-  });
   const pages = JSON.parse(build.pages) as {
     homePageId: string;
     rootFolderId: string;
@@ -145,80 +191,99 @@ export const configureDynamicDetailContentBlock = async ({
     }>;
     folders: Array<{ id: string; children: string[] }>;
   };
-  const homePage = pages.pages.find((page) => page.id === pages.homePageId);
-  if (homePage === undefined) {
-    throw new Error("Expected the Content Block fixture home page");
-  }
-  const dynamicPageId = homePage.id;
-  const homeRootId = "mdx-detail-home-root";
-  const body = instances.find(
-    (instance) => instance.id === homePage.rootInstanceId
-  );
-  if (body === undefined) {
-    throw new Error("Expected the Content Block fixture page root");
-  }
-  instances.push({ ...body, id: homeRootId, children: [] });
-  pages.pages.push({
-    ...homePage,
-    id: "mdx-detail-home-page",
-    name: "MDX detail home",
-    title: JSON.stringify("MDX detail home"),
-    path: "",
-    history: [],
-    rootInstanceId: homeRootId,
-  });
-  pages.homePageId = "mdx-detail-home-page";
+  const home = pages.pages.find((page) => page.id === pages.homePageId);
   const rootFolder = pages.folders.find(
     (folder) => folder.id === pages.rootFolderId
   );
-  if (rootFolder === undefined) {
-    throw new Error("Expected the Content Block fixture root folder");
+  if (home === undefined || rootFolder === undefined) {
+    throw new Error(
+      "Expected the Content Block fixture home page and root folder"
+    );
   }
-  rootFolder.children = [
-    pages.homePageId,
-    dynamicPageId,
-    ...rootFolder.children.filter((id) => id !== dynamicPageId),
-  ];
-  homePage.name = "Dynamic MDX detail";
-  homePage.title = JSON.stringify("Dynamic MDX detail");
-  homePage.path = "/:assetid";
-  homePage.history = [`/${initialAssetId}`];
-  await updateBuild(build.id, {
-    instances: JSON.stringify(instances),
-    props: JSON.stringify(props),
-    dataSources: JSON.stringify(dataSources),
-    pages: JSON.stringify(pages),
-  });
-  return dynamicPageId;
-};
 
-export const configureRepeatedContentBlock = async ({
-  projectId,
-  assetIds,
-}: {
-  projectId: string;
-  assetIds: [string, string];
-}) => {
-  const { build, instances, props, dataSources } =
-    await getBuildData(projectId);
+  const addSourcePage = ({
+    id,
+    name,
+    path,
+    history,
+    expression,
+    collectionId,
+  }: {
+    id: string;
+    name: string;
+    path: string;
+    history?: string[];
+    expression: string;
+    collectionId?: string;
+  }) => {
+    const rootInstanceId = `${id}-root`;
+    const blockInstanceId = `${id}-block`;
+    const blockTemplateId = `${id}-templates`;
+    pages.pages.push({
+      ...home,
+      id,
+      name,
+      title: JSON.stringify(name),
+      path,
+      history,
+      rootInstanceId,
+    });
+    rootFolder.children.push(id);
+    instances.push(
+      {
+        type: "instance",
+        id: rootInstanceId,
+        component: "ws:element",
+        tag: "body",
+        children: [{ type: "id", value: collectionId ?? blockInstanceId }],
+      },
+      {
+        type: "instance",
+        id: blockInstanceId,
+        component: "ws:block",
+        children: [{ type: "id", value: blockTemplateId }],
+      },
+      {
+        type: "instance",
+        id: blockTemplateId,
+        component: "ws:block-template",
+        children: [],
+      }
+    );
+    props.push({
+      id: `${id}-source`,
+      instanceId: blockInstanceId,
+      name: "src",
+      type: "expression",
+      value: expression,
+    });
+    return blockInstanceId;
+  };
+
+  addSourcePage({
+    id: "mdx-detail-page",
+    name: mdxEditorPageNames.detail,
+    path: "/:assetid",
+    history: [`/${detailSourceAssetId}`],
+    expression: "$ws$system.params.assetid",
+  });
+
   const collectionId = "mdx-content-collection";
   const itemParameterId = "mdx-content-collection-item";
   const itemKeyParameterId = "mdx-content-collection-item-key";
-  configureSourceBlock({
-    instances,
-    props,
-    expression: `${encodeDataSourceVariable(itemParameterId)}?.assetId`,
+  const repeatedPageId = "mdx-repeated-page";
+  const repeatedBlockId = addSourcePage({
+    id: repeatedPageId,
+    name: mdxEditorPageNames.repeated,
+    path: "/repeated",
+    expression: `${encodeDataSourceVariable(itemParameterId)}.assetId`,
+    collectionId,
   });
-  const body = instances.find((instance) => instance.id === "body");
-  if (body === undefined) {
-    throw new Error("Expected the Content Block fixture body");
-  }
-  body.children = [{ type: "id", value: collectionId }];
   instances.push({
     type: "instance",
     id: collectionId,
     component: "ws:collection",
-    children: [{ type: "id", value: blockId }],
+    children: [{ type: "id", value: repeatedBlockId }],
   });
   props.push(
     {
@@ -226,7 +291,7 @@ export const configureRepeatedContentBlock = async ({
       instanceId: collectionId,
       name: "data",
       type: "json",
-      value: assetIds.map((assetId) => ({ assetId })),
+      value: [sourceAssetId, alternateAssetId].map((assetId) => ({ assetId })),
     },
     {
       id: "mdx-content-collection-item-prop",
@@ -261,5 +326,12 @@ export const configureRepeatedContentBlock = async ({
     instances: JSON.stringify(instances),
     props: JSON.stringify(props),
     dataSources: JSON.stringify(dataSources),
+    pages: JSON.stringify(pages),
   });
+  return {
+    homePageName: home.name,
+    repeatedPageId,
+    detailSourceAssetId,
+    detailAlternateAssetId,
+  };
 };

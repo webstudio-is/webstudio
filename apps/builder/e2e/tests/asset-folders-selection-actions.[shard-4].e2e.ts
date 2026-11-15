@@ -6,7 +6,6 @@ import {
   uploadAsset,
 } from "../flows/assets-panel";
 import { openProjectBuilder } from "../flows/builder";
-import { dragPointer } from "../flows/drag";
 import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
@@ -16,16 +15,28 @@ import { test } from "../test";
 
 test.describe.configure({ mode: "parallel" });
 
-test("Assets can be selected by dragging across the panel", async ({
+test("Asset selection and drag work across a long folder list", async ({
   page,
   context,
 }) => {
   const fixture = await createContentModeProject({
     context: context,
-    email: "asset-folder-lasso-select-e2e@webstudio.test",
-    title: "Asset Folder Lasso Select E2E",
-    builderToken: "asset-folder-lasso-select-e2e-builder-token",
+    email: "asset-folder-autoscroll-e2e@webstudio.test",
+    title: "Asset Folder Autoscroll E2E",
+    builderToken: "asset-folder-autoscroll-e2e-builder-token",
   });
+
+  // The long list is a precondition for the drag, so seed its filler folders together.
+  const createdAt = new Date().toISOString();
+  await insertAssetFolders(
+    Array.from({ length: 24 }, (_, index) => ({
+      id: randomUUID(),
+      projectId: fixture.projectId,
+      name: `Filler ${String(index).padStart(2, "0")}`,
+      parentId: null,
+      createdAt,
+    }))
+  );
 
   await openProjectBuilder({
     page,
@@ -44,6 +55,8 @@ test("Assets can be selected by dragging across the panel", async ({
   });
   const firstAsset = page.getByTitle(firstAssetTitle);
   const secondAsset = page.getByTitle(secondAssetTitle);
+  await firstAsset.scrollIntoViewIfNeeded();
+  await secondAsset.scrollIntoViewIfNeeded();
   const firstBounds = await firstAsset.boundingBox();
   const secondBounds = await secondAsset.boundingBox();
   const viewport = firstAsset.locator(
@@ -83,104 +96,13 @@ test("Assets can be selected by dragging across the panel", async ({
       );
     }
   }
-});
-
-test("Multiselected folders can be dragged into a folder", async ({
-  page,
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context: context,
-    email: "asset-folder-multifolder-drag-e2e@webstudio.test",
-    title: "Asset Folder Multifolder Drag E2E",
-    builderToken: "asset-folder-multifolder-drag-e2e-builder-token",
-  });
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await waitForSyncStatus({ page, status: "idle" });
-  await openAssetsPanel({ page });
-  const destination = await createAssetFolder({
-    page,
-    name: "Destination",
-  });
-  const alpha = await createAssetFolder({ page, name: "Alpha" });
-  const bravo = await createAssetFolder({ page, name: "Bravo" });
-
-  await alpha.click();
-  await bravo.click({
-    modifiers: [process.platform === "darwin" ? "Meta" : "Control"],
-  });
-  if (
-    (await page.locator('[role="option"][aria-selected="true"]').count()) !== 2
-  ) {
-    throw new Error("Expected both folders to be selected before dragging");
-  }
-
-  await Promise.all([
-    waitForChangeToBeSaved({ page, timeout: 30_000 }),
-    dragPointer({
-      page,
-      source: bravo,
-      target: destination,
-      ready: async () =>
-        (await destination.getAttribute("data-is-drop-over")) === "true",
-    }),
-  ]);
-  await alpha.waitFor({ state: "hidden" });
-  await bravo.waitFor({ state: "hidden" });
-  await destination.dblclick();
-  await page
-    .getByRole("button", { name: "Folder Alpha", exact: true })
-    .waitFor();
-  await page
-    .getByRole("button", { name: "Folder Bravo", exact: true })
-    .waitFor();
-});
-
-test("Dragging an asset auto-scrolls a long folder list", async ({
-  page,
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context: context,
-    email: "asset-folder-autoscroll-e2e@webstudio.test",
-    title: "Asset Folder Autoscroll E2E",
-    builderToken: "asset-folder-autoscroll-e2e-builder-token",
-  });
-
-  // The long list is a precondition for the drag, so seed its filler folders together.
-  const createdAt = new Date().toISOString();
-  await insertAssetFolders(
-    Array.from({ length: 24 }, (_, index) => ({
-      id: randomUUID(),
-      projectId: fixture.projectId,
-      name: `Filler ${String(index).padStart(2, "0")}`,
-      parentId: null,
-      createdAt,
-    }))
-  );
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await waitForSyncStatus({ page, status: "idle" });
-  await openAssetsPanel({ page });
-  const assetTitle = await uploadAsset({
-    page,
-    filename: "upload-image.svg",
-  });
+  await page.keyboard.press("Escape");
   const scrollArea = page.locator("[data-asset-manager-scroll-area]");
   const destination = await createAssetFolder({
     page,
     name: "Destination",
   });
-  const asset = page.getByTitle(assetTitle);
+  const asset = firstAsset;
   await asset.scrollIntoViewIfNeeded();
   if ((await scrollArea.evaluate((element) => element.scrollTop)) === 0) {
     throw new Error("Expected the long asset list to be scrolled");
@@ -254,61 +176,7 @@ test("Dragging an asset auto-scrolls a long folder list", async ({
 
   await asset.waitFor({ state: "hidden" });
   await destination.dblclick();
-  await page.getByTitle(assetTitle).waitFor();
-});
-
-test("Multiselected assets can be moved from the context menu", async ({
-  page,
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context: context,
-    email: "asset-folder-menu-move-e2e@webstudio.test",
-    title: "Asset Folder Menu Move E2E",
-    builderToken: "asset-folder-menu-move-e2e-builder-token",
-  });
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await waitForSyncStatus({ page, status: "idle" });
-  await openAssetsPanel({ page });
-  const destination = await createAssetFolder({
-    page,
-    name: "Destination",
-  });
-  const firstAssetTitle = await uploadAsset({
-    page,
-    filename: "upload-image.svg",
-  });
-  const secondAssetTitle = await uploadAsset({
-    page,
-    filename: "replacement-image.svg",
-  });
-  const firstAsset = page.getByTitle(firstAssetTitle);
-  const secondAsset = page.getByTitle(secondAssetTitle);
-
-  await firstAsset.click();
-  await secondAsset.click({
-    modifiers: [process.platform === "darwin" ? "Meta" : "Control"],
-  });
-  await secondAsset.click({ button: "right" });
-  await page.getByRole("menuitem", { name: "Move", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Move items" });
-  await dialog.getByRole("combobox", { name: "Folder" }).click();
-  await page.getByRole("option", { name: "Destination", exact: true }).click();
-  await Promise.all([
-    waitForChangeToBeSaved({ page, timeout: 30_000 }),
-    dialog.getByRole("button", { name: "Move", exact: true }).click(),
-  ]);
-
-  await firstAsset.waitFor({ state: "hidden" });
-  await secondAsset.waitFor({ state: "hidden" });
-  await destination.dblclick();
-  await page.getByTitle(firstAssetTitle).waitFor();
-  await page.getByTitle(secondAssetTitle).waitFor();
+  await firstAsset.waitFor();
 });
 
 test("Folders can be multiselected and deleted as one operation", async ({
@@ -322,6 +190,16 @@ test("Folders can be multiselected and deleted as one operation", async ({
     builderToken: "asset-folder-multiselect-e2e-builder-token",
   });
   const folderNames = ["Alpha", "Bravo", "Charlie"];
+  const createdAt = new Date().toISOString();
+  await insertAssetFolders(
+    folderNames.map((name) => ({
+      id: randomUUID(),
+      projectId: fixture.projectId,
+      name,
+      parentId: null,
+      createdAt,
+    }))
+  );
 
   await openProjectBuilder({
     page,
@@ -330,10 +208,9 @@ test("Folders can be multiselected and deleted as one operation", async ({
   });
   await waitForSyncStatus({ page, status: "idle" });
   await openAssetsPanel({ page });
-  const folders = [];
-  for (const name of folderNames) {
-    folders.push(await createAssetFolder({ page, name }));
-  }
+  const folders = folderNames.map((name) =>
+    page.getByRole("button", { name: `Folder ${name}`, exact: true })
+  );
 
   await folders[1]!.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Settings" }).waitFor();

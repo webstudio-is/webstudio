@@ -47,7 +47,7 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
     viewer: viewerDirectory,
     builder: builderDirectory,
   };
-  const clients = new Map<keyof typeof directories, Client>();
+  const clients = new Map<keyof typeof directories, Promise<Client>>();
   const connect = async (cwd: string, configDirectory: string) => {
     const client = new Client({
       name: "mcp-editor-pages-e2e",
@@ -71,19 +71,25 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
     }
     return client;
   };
+  const getClient = (role: keyof typeof directories) => {
+    let client = clients.get(role);
+    if (client === undefined) {
+      client = connect(
+        directories[role],
+        role === "editorRead" ? directories.editor : directories[role]
+      );
+      // A prestarted connection can fail before its first tool call is ready.
+      client.catch(() => undefined);
+      clients.set(role, client);
+    }
+    return client;
+  };
   const call = async (
     tool: string,
     input: Record<string, unknown>,
     role: keyof typeof directories = "editor"
   ) => {
-    let client = clients.get(role);
-    if (client === undefined) {
-      client = await connect(
-        directories[role],
-        role === "editorRead" ? directories.editor : directories[role]
-      );
-      clients.set(role, client);
-    }
+    const client = await getClient(role);
     const result = await client.callTool({ name: tool, arguments: input });
     return JSON.parse(JSON.stringify(result.structuredContent));
   };
@@ -145,6 +151,10 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
     expect(updated.ok, updated.error?.message).toBe(true);
     expect(updated.meta.session.commitStatus).toBe("committed");
 
+    // The remaining CLI processes have separate session directories. Start
+    // the role checks' connections while the fresh editor reads this commit.
+    getClient("viewer");
+    getClient("builder");
     const reloaded = await call("get-page", { pageId }, "editorRead");
     expect(reloaded.ok).toBe(true);
     expect(reloaded.data).toMatchObject({
@@ -263,7 +273,12 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
     const builderPage = await call("get-page", { pageId }, "builder");
     expect(builderPage.data.meta.status).toBe("302");
   } finally {
-    await Promise.all(Array.from(clients.values(), (client) => client.close()));
+    const connections = await Promise.allSettled(clients.values());
+    await Promise.all(
+      connections.flatMap((connection) =>
+        connection.status === "fulfilled" ? [connection.value.close()] : []
+      )
+    );
     await Promise.all([
       rm(directory, { recursive: true, force: true }),
       rm(freshDirectory, { recursive: true, force: true }),

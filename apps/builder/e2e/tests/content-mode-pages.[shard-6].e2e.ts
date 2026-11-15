@@ -1,9 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
-import { selectCanvasTextInstance } from "../flows/canvas-selection";
-import { expectLocatorHidden } from "../flows/assertions";
 import { waitForCanvasTextStyle } from "../flows/canvas-style";
-import { replaceCanvasText } from "../flows/content-editing";
 import {
   choosePageSettingsSocialImageAsset,
   createPageFromTemplate,
@@ -17,16 +14,13 @@ import {
   openPageSettings,
 } from "../flows/pages-panel";
 import { waitForSyncComplete } from "../flows/sync-status";
-import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test } from "../test";
+import { test } from "../test";
 import { measure } from "../perf";
 import { e2ePaidPlanName } from "../plans";
 
 let fixture: SeededContentModeProject;
-
-test.describe.configure({ mode: "parallel" });
 
 test.beforeEach(async ({ context }) => {
   fixture = await createContentModeProject({
@@ -194,94 +188,4 @@ test("Editor can create a styled page, edit allowed settings, and reload it in c
     content: "edited metadata",
   });
   await waitForSyncComplete({ page });
-});
-
-test("Edit-only and build-capable users can collaborate in content mode", async ({
-  browser,
-}) => {
-  const editor = await newIsolatedPage(browser);
-  const builder = await newIsolatedPage(browser);
-
-  try {
-    await measure("open editor and builder sessions", async () => {
-      await Promise.all([
-        openProjectBuilder({
-          page: editor.page,
-          projectId: fixture.projectId,
-          authToken: fixture.editorToken,
-          mode: "content",
-        }),
-        openProjectBuilder({
-          page: builder.page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        }),
-      ]);
-    });
-    await waitForCanvasText({ page: editor.page, text: "Initial content" });
-    await waitForCanvasText({ page: builder.page, text: "Initial content" });
-    await waitForSyncComplete({ page: editor.page });
-    await waitForSyncComplete({ page: builder.page });
-
-    await insertTemplateAfterCanvasText({
-      page: editor.page,
-      anchorText: "Initial content",
-      templateName: fixture.collaborationTemplateName,
-    });
-    await waitForCanvasText({
-      page: editor.page,
-      text: fixture.collaborationTemplateText,
-    });
-    await waitForSyncComplete({ page: editor.page });
-
-    await openProjectBuilder({
-      page: builder.page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await waitForCanvasText({
-      page: builder.page,
-      text: fixture.collaborationTemplateText,
-    });
-
-    await replaceCanvasText({
-      page: editor.page,
-      currentText: fixture.collaborationTemplateText,
-      text: "Collaborative editor text",
-    });
-    await waitForSyncComplete({ page: editor.page });
-
-    await selectCanvasTextInstance({
-      page: editor.page,
-      text: "Collaborative editor text",
-    });
-    await expectLocatorHidden({
-      locator: editor.page.getByRole("tab", { name: "Style" }),
-      message:
-        "Expected edit-only collaborator to be blocked from design controls",
-    });
-
-    await openProjectBuilder({
-      page: builder.page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await waitForCanvasText({
-      page: builder.page,
-      text: "Collaborative editor text",
-    });
-
-    await selectCanvasTextInstance({
-      page: builder.page,
-      text: "Collaborative editor text",
-    });
-    await builder.page
-      .getByRole("tab", { name: "Style" })
-      .waitFor({ state: "visible" });
-    await waitForSyncComplete({ page: editor.page });
-    await waitForSyncComplete({ page: builder.page });
-  } finally {
-    await editor.close();
-    await builder.close();
-  }
 });

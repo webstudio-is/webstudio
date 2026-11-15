@@ -153,42 +153,6 @@ test("Content templates persist with styles and assets, including after Builder 
     count: 2,
   });
 
-  await measure("content mode reload editor for asset template", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-  });
-  await waitForCanvasImage({
-    page,
-    alt: fixture.assetTemplateImageAlt,
-  });
-  await waitForCanvasVideoSource({
-    page,
-    sourceName: fixture.assetTemplateVideoName,
-  });
-  await waitForCanvasTextStyle({
-    page,
-    text: fixture.styledHeadingTemplateText,
-    property: "font-size",
-    value: fixture.styledHeadingTemplateFontSize,
-  });
-  await waitForCanvasTextStyle({
-    page,
-    text: fixture.tokenTemplateVisibleText,
-    property: "font-size",
-    value: fixture.tokenTemplateFontSize,
-  });
-  await waitForCanvasTextStyleCount({
-    page,
-    text: fixture.isolatedLocalTemplateText,
-    property: "font-size",
-    value: fixture.isolatedLocalTemplateFontSize,
-    count: 2,
-  });
-  await waitForSyncComplete({ page });
   await test.step("Builder can copy and paste the inserted image and reload its asset references", async () => {
     await measure("asset copy open build mode", async () => {
       await openProjectBuilder({
@@ -224,13 +188,41 @@ test("Content templates persist with styles and assets, including after Builder 
       );
     }
 
-    await measure("asset copy reload builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
+    await measure(
+      "content mode reload editor after Builder copy and paste",
+      async () => {
+        await openProjectBuilder({
+          page,
+          projectId: fixture.projectId,
+          authToken: fixture.editorToken,
+          mode: "content",
+        });
+      }
+    );
+    await waitForCanvasVideoSource({
+      page,
+      sourceName: fixture.assetTemplateVideoName,
     });
+    await waitForCanvasTextStyle({
+      page,
+      text: fixture.styledHeadingTemplateText,
+      property: "font-size",
+      value: fixture.styledHeadingTemplateFontSize,
+    });
+    await waitForCanvasTextStyle({
+      page,
+      text: fixture.tokenTemplateVisibleText,
+      property: "font-size",
+      value: fixture.tokenTemplateFontSize,
+    });
+    await waitForCanvasTextStyleCount({
+      page,
+      text: fixture.isolatedLocalTemplateText,
+      property: "font-size",
+      value: fixture.isolatedLocalTemplateFontSize,
+      count: 2,
+    });
+    await waitForSyncComplete({ page });
     await waitForCanvasImageCount({
       page,
       alt: fixture.assetTemplateImageAlt,
@@ -245,82 +237,18 @@ test("Content templates persist with styles and assets, including after Builder 
   });
 });
 
-test("Editor can manage assets and create an ordinary folder in content mode", async ({
+test("Editor can save assets, folders, and collection entries in content mode", async ({
   page,
 }) => {
-  const folderName = "Editor ordinary assets";
-  const uploadFilename = "upload-image.svg";
+  const uploadFilename = "large-image.svg";
   const replacementFilename = "replacement-image.svg";
-
-  await measure("content mode open editor for asset workflows", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-  });
-  await waitForCanvasText({ page, text: "Initial content" });
-  await waitForSyncComplete({ page });
-
-  let uploadedAssetTitle = "";
-  await measure("content mode upload asset", async () => {
-    await openAssetsPanel({ page });
-    uploadedAssetTitle = await uploadAsset({
-      page,
-      filename: uploadFilename,
-    });
-  });
-
-  let replacementAssetTitle = "";
-  await measure("content mode replace asset", async () => {
-    await openAssetSettings({ page, filename: uploadedAssetTitle });
-    const assetId = await page.locator("#asset-manager-id").inputValue();
-    if (assetId.length === 0) {
-      throw new Error(
-        "Expected Asset settings to expose the uploaded asset id"
-      );
-    }
-    await page.getByText("0 uses", { exact: true }).waitFor();
-    replacementAssetTitle = await replaceSelectedAsset({
-      page,
-      filename: replacementFilename,
-    });
-  });
-
-  await measure("content mode delete asset", async () => {
-    await openAssetSettings({ page, filename: replacementAssetTitle });
-    await deleteSelectedAsset({
-      page,
-      filename: replacementAssetTitle,
-    });
-  });
-
-  await createAssetFolder({ page, name: folderName });
-
-  await measure("content mode reload editor for asset workflows", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-  });
-  await openAssetsPanel({ page });
-  await page.getByTitle(uploadedAssetTitle).waitFor({ state: "hidden" });
-  await page.getByTitle(replacementAssetTitle).waitFor({ state: "hidden" });
-  await page
-    .getByRole("button", { name: `Folder ${folderName}`, exact: true })
-    .waitFor();
-  await waitForSyncComplete({ page });
-});
-
-test("Editor can create and reload a content collection entry", async ({
-  page,
-}) => {
-  const folderName = "Content collection entries";
+  const collectionName = "Content collection entries";
+  const folderName = "Editor ordinary assets";
   const entryTitle = "Content collection entry";
   const entryFilename = "content-collection-entry.mdx";
+  const assetsPanel = page.getByRole("tabpanel", { name: "Assets" });
+  const browseRoot = () =>
+    assetsPanel.getByRole("button", { name: "Root", exact: true }).click();
 
   await openProjectBuilder({
     page,
@@ -329,12 +257,12 @@ test("Editor can create and reload a content collection entry", async ({
   });
   await waitForSyncComplete({ page });
   await openAssetsPanel({ page });
-  const folder = await createAssetFolder({
+  const collection = await createAssetFolder({
     page,
-    name: folderName,
+    name: collectionName,
     useAsContentCollection: true,
   });
-  await folder.dblclick();
+  await collection.dblclick();
   await page.getByRole("button", { name: "Collection settings" }).waitFor();
 
   await openProjectBuilder({
@@ -359,38 +287,7 @@ test("Editor can create and reload a content collection entry", async ({
   await page.getByTitle("collection.json").waitFor({ state: "visible" });
   await page.getByTitle("template.mdx").waitFor({ state: "visible" });
 
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.editorToken,
-    mode: "content",
-  });
-  await openAssetsPanel({ page });
-  await waitForAsset({ page, filename: entryFilename });
-  await page.getByTitle("collection.json").waitFor({ state: "visible" });
-  await page.getByTitle("template.mdx").waitFor({ state: "visible" });
-});
-
-test("Editor can replace image source with asset in content mode", async ({
-  page,
-}) => {
-  const uploadFilename = "large-image.svg";
-  const replacementFilename = "replacement-image.svg";
-
-  await measure(
-    "content mode open editor for image source asset replacement",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    }
-  );
-  await waitForCanvasText({ page, text: "Initial content" });
-  await waitForSyncComplete({ page });
-
+  await browseRoot();
   await insertTemplateAfterCanvasText({
     page,
     anchorText: "Initial content",
@@ -445,22 +342,74 @@ test("Editor can replace image source with asset in content mode", async ({
   });
   await waitForSyncComplete({ page });
 
-  await measure(
-    "content mode reload editor for image source asset replacement",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
+  const folder = await createAssetFolder({ page, name: folderName });
+  await folder.dblclick();
+
+  const deletedAsset =
+    await test.step("Upload, replace and delete an unused asset in the ordinary folder", async () => {
+      const uploadFilename = "upload-image.svg";
+      const replacementFilename = "large-image.svg";
+      let uploadedAssetTitle = "";
+      await measure("content mode upload asset", async () => {
+        uploadedAssetTitle = await uploadAsset({
+          page,
+          filename: uploadFilename,
+        });
       });
-    }
-  );
+
+      let replacementAssetTitle = "";
+      await measure("content mode replace asset", async () => {
+        await openAssetSettings({ page, filename: uploadedAssetTitle });
+        const assetId = await page.locator("#asset-manager-id").inputValue();
+        if (assetId.length === 0) {
+          throw new Error(
+            "Expected Asset settings to expose the uploaded asset id"
+          );
+        }
+        await page.getByText("0 uses", { exact: true }).waitFor();
+        replacementAssetTitle = await replaceSelectedAsset({
+          page,
+          filename: replacementFilename,
+        });
+      });
+
+      await measure("content mode delete asset", async () => {
+        await openAssetSettings({ page, filename: replacementAssetTitle });
+        await deleteSelectedAsset({
+          page,
+          filename: replacementAssetTitle,
+        });
+      });
+
+      return { uploadedAssetTitle, replacementAssetTitle };
+    });
+
+  await browseRoot();
+  await collection.dblclick();
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await openAssetsPanel({ page });
+  await waitForAsset({ page, filename: entryFilename });
+  await page.getByTitle("collection.json").waitFor({ state: "visible" });
+  await page.getByTitle("template.mdx").waitFor({ state: "visible" });
+  await browseRoot();
+  const expectDeletedAssetAbsent = async () => {
+    await expect(
+      assetsPanel.getByTitle(deletedAsset.uploadedAssetTitle)
+    ).toHaveCount(0);
+    await expect(
+      assetsPanel.getByTitle(deletedAsset.replacementAssetTitle)
+    ).toHaveCount(0);
+  };
+  await expectDeletedAssetAbsent();
   await waitForCanvasImageSourceName({
     page,
     sourceName: "replacement-image_",
   });
-  await openAssetsPanel({ page });
   await page.getByTitle(replacementAssetTitle).waitFor();
   await waitForSyncComplete({ page });
   const reloadedCanvas = await waitForCanvasFrame({ page });
@@ -469,4 +418,6 @@ test("Editor can replace image source with asset in content mode", async ({
   );
   await expect(replacementImage).toHaveAttribute("width", "120");
   await expect(replacementImage).toHaveAttribute("height", "80");
+  await folder.dblclick();
+  await expectDeletedAssetAbsent();
 });

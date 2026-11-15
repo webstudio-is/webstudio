@@ -57,8 +57,8 @@ runs:
         GH_TOKEN: ${{ github.token }}
       run: |
         for attempt in {1..84}; do
-          count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=builder-e2e-build" --jq '.total_count')
-          if [ "$count" -gt 0 ]; then
+          available=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=builder-e2e-build" --jq '.artifacts | max_by(.id) | .expired == false')
+          if [ "$available" = true ]; then
             exit 0
           fi
           sleep 5
@@ -72,6 +72,8 @@ runs:
       with:
         name: builder-e2e-build
         path: .
+        # Use the same REST artifact lookup as the wait step.
+        github-token: ${{ github.token }}
 
     - name: Verify Builder E2E build inputs
       if: steps.build-cache.outputs.cache-hit != 'true'

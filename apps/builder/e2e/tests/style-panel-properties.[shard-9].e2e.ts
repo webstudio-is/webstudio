@@ -5,10 +5,7 @@ import {
   waitForCanvasTextStyle,
   waitForHoveredCanvasTextStyle,
 } from "../flows/canvas-style";
-import {
-  waitForChangeToBeSaved,
-  waitForSyncStatus,
-} from "../flows/sync-status";
+import { waitForChangeToBeSaved } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
 import { test } from "../test";
@@ -45,9 +42,6 @@ const setCssValue = async ({
   const save = waitForSave ? waitForChangeToBeSaved({ page }) : undefined;
   await input.press("Enter");
   await save;
-  if (waitForSave) {
-    await waitForSyncStatus({ page, status: "idle" });
-  }
 };
 
 const resetCssValue = async ({

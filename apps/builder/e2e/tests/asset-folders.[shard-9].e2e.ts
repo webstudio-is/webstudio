@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   createAssetFolder,
   dragAssetToFolder,
@@ -9,7 +10,8 @@ import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
 } from "../flows/sync-status";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { insertAssetFolders, insertAuthorizationToken } from "../db";
+import { createProjectThroughApi } from "../fixtures/create-project";
 import { dashboardUrl, test } from "../test";
 
 test("Asset folder moves survive Builder reload and project cloning", async ({
@@ -17,26 +19,41 @@ test("Asset folder moves survive Builder reload and project cloning", async ({
   context,
 }) => {
   const cloneTitle = "Asset Folder Clone Result";
-  const fixture = await createContentModeProject({
+  const projectId = await createProjectThroughApi({
     context,
     email: "asset-folder-clone-e2e@webstudio.test",
     title: "Asset Folder Clone Source",
-    builderToken: "asset-folder-clone-e2e-builder-token",
   });
+  const builderToken = randomUUID();
+  const parentId = randomUUID();
+  const childId = randomUUID();
+  const createdAt = new Date().toISOString();
+  // This hierarchy is the starting point for the drag and clone checks.
+  await Promise.all([
+    insertAuthorizationToken({
+      token: builderToken,
+      projectId,
+      name: "E2E asset folder builder",
+      relation: "builders",
+    }),
+    insertAssetFolders(
+      [
+        { id: parentId, name: "Parent", parentId: null },
+        { id: childId, name: "Child", parentId },
+      ].map((folder) => ({ ...folder, projectId, createdAt }))
+    ),
+  ]);
   const openSource = () =>
-    openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
+    openProjectBuilder({ page, projectId, authToken: builderToken });
 
   await openSource();
   await waitForSyncStatus({ page, status: "idle" });
   await openAssetsPanel({ page });
 
-  const parent = await createAssetFolder({ page, name: "Parent" });
-  await parent.dblclick();
-  const child = await createAssetFolder({ page, name: "Child" });
+  const child = page.getByRole("button", { name: "Folder Child", exact: true });
+  await page
+    .getByRole("button", { name: "Folder Parent", exact: true })
+    .dblclick();
   await child.dblclick();
   const grandchild = await createAssetFolder({ page, name: "Grandchild" });
   await grandchild.dblclick();
@@ -114,7 +131,7 @@ test("Asset folder moves survive Builder reload and project cloning", async ({
   await waitForSyncStatus({ page, status: "idle" });
 
   const cloneUrl = new URL("/dashboard", dashboardUrl);
-  cloneUrl.searchParams.set("projectToCloneAuthToken", fixture.builderToken);
+  cloneUrl.searchParams.set("projectToCloneAuthToken", builderToken);
   await page.goto(cloneUrl.href);
   const cloneDialog = page.getByRole("dialog", { name: "Clone project" });
   await cloneDialog.locator('input[name="title"]').fill(cloneTitle);

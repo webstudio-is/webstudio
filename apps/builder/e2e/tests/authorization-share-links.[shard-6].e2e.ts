@@ -16,7 +16,8 @@ import {
   openShareDialog,
   updateShareLinkRole,
 } from "../flows/share-dialog";
-import { waitForSyncStatus } from "../flows/sync-status";
+import { waitForSyncComplete } from "../flows/sync-status";
+import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
@@ -129,8 +130,8 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
   const editor = await newIsolatedPage(browser);
   const builderPage = await newIsolatedPage(browser);
   const admin = await newIsolatedPage(browser);
-  const visitor = await newIsolatedPage(browser);
   const editedText = "Share-link editor text";
+  const collaborativeText = "Collaborative editor text";
 
   try {
     expectLinkMode({ link: viewerUrl, mode: "preview" });
@@ -139,13 +140,7 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
     expectLinkMode({ link: adminUrl, mode: "design" });
 
     await Promise.all([
-      (async () => {
-        await openBuilderUrl({ page: editor.page, url: editorUrl });
-        await waitForCanvasText({ page: editor.page, text: baselineText });
-        await waitForSyncStatus({ page: editor.page, status: "idle" });
-        expectCurrentMode({ pageUrl: editor.page.url(), mode: "content" });
-      })(),
-      (async () => {
+      test.step("Viewer can view and gains design controls after the owner changes the same link", async () => {
         await openBuilderUrl({ page: viewer.page, url: viewerUrl });
         await waitForCanvasText({ page: viewer.page, text: baselineText });
         await expectShareUnavailable({ page: viewer.page });
@@ -157,28 +152,32 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
           locator: viewer.page.getByRole("tab", { name: "Style" }),
           message: "Expected Style tab to be unavailable for viewer link",
         });
-      })(),
-      (async () => {
-        await openBuilderUrl({ page: builderPage.page, url: builderUrl });
-        await waitForCanvasText({
-          page: builderPage.page,
-          text: baselineText,
+        await updateShareLinkRole({
+          page: ownerPage,
+          name: "E2E Viewer link",
+          role: "Builder",
         });
-        await waitForSyncStatus({ page: builderPage.page, status: "idle" });
-        await expectShareUnavailable({ page: builderPage.page });
+        const updatedBuilderUrl = await copyShareLink({
+          page: ownerPage,
+          name: "E2E Viewer link",
+        });
+        expectLinkMode({ link: updatedBuilderUrl, mode: "design" });
 
+        await openBuilderUrl({ page: viewer.page, url: updatedBuilderUrl });
+        await waitForCanvasText({ page: viewer.page, text: baselineText });
+        await expectShareUnavailable({ page: viewer.page });
         await selectCanvasTextInstance({
-          page: builderPage.page,
+          page: viewer.page,
           text: baselineText,
         });
-        await builderPage.page
+        await viewer.page
           .getByRole("tab", { name: "Style" })
           .waitFor({ state: "visible", timeout: 10_000 });
-      })(),
-      (async () => {
+      }),
+      test.step("Admin may publish", async () => {
         await openBuilderUrl({ page: admin.page, url: adminUrl });
         await waitForCanvasText({ page: admin.page, text: baselineText });
-        await waitForSyncStatus({ page: admin.page, status: "idle" });
+        await waitForSyncComplete({ page: admin.page });
         await expectShareUnavailable({ page: admin.page });
 
         const publishButton = admin.page.getByRole("button", {
@@ -188,77 +187,106 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
         if (await publishButton.isDisabled()) {
           throw new Error("Expected admin share link to allow publishing");
         }
-      })(),
+      }),
+      test.step("Editor can save content and collaborate with a Builder", async () => {
+        await openBuilderUrl({ page: editor.page, url: editorUrl });
+        await waitForCanvasText({ page: editor.page, text: baselineText });
+        await waitForSyncComplete({ page: editor.page });
+        expectCurrentMode({ pageUrl: editor.page.url(), mode: "content" });
+
+        await insertTemplateAfterCanvasText({
+          page: editor.page,
+          anchorText: baselineText,
+          templateName: fixture.collaborationTemplateName,
+        });
+        await waitForCanvasText({
+          page: editor.page,
+          text: fixture.collaborationTemplateText,
+        });
+        await openBuilderUrl({ page: builderPage.page, url: builderUrl });
+        await waitForCanvasText({
+          page: builderPage.page,
+          text: baselineText,
+        });
+        await waitForSyncComplete({ page: builderPage.page });
+        await expectShareUnavailable({ page: builderPage.page });
+
+        await selectCanvasTextInstance({
+          page: builderPage.page,
+          text: baselineText,
+        });
+        await builderPage.page
+          .getByRole("tab", { name: "Style" })
+          .waitFor({ state: "visible", timeout: 10_000 });
+
+        await waitForCanvasText({
+          page: builderPage.page,
+          text: fixture.collaborationTemplateText,
+        });
+        await waitForCanvasText({
+          page: editor.page,
+          text: fixture.shareLinkEditableText,
+        });
+        await replaceCanvasText({
+          page: editor.page,
+          currentText: fixture.shareLinkEditableText,
+          text: editedText,
+        });
+
+        await replaceCanvasText({
+          page: editor.page,
+          currentText: fixture.collaborationTemplateText,
+          text: collaborativeText,
+        });
+        await selectCanvasTextInstance({
+          page: editor.page,
+          text: collaborativeText,
+        });
+        await expectLocatorHidden({
+          locator: editor.page.getByRole("tab", { name: "Style" }),
+          message:
+            "Expected edit-only collaborator to be blocked from design controls",
+        });
+
+        await Promise.all([
+          (async () => {
+            await openBuilderUrl({ page: editor.page, url: editorUrl });
+            await waitForCanvasText({ page: editor.page, text: editedText });
+            await waitForSyncComplete({ page: editor.page });
+            await expectShareUnavailable({ page: editor.page });
+
+            await selectCanvasTextInstanceForProps({
+              page: editor.page,
+              text: "Initial link",
+              propertyLabel: "Href",
+            });
+            await expectLocatorHidden({
+              locator: editor.page.getByRole("tab", { name: "Style" }),
+              message: "Expected Style tab to be unavailable for editor link",
+            });
+          })(),
+          (async () => {
+            await openBuilderUrl({ page: builderPage.page, url: builderUrl });
+            await waitForCanvasText({
+              page: builderPage.page,
+              text: collaborativeText,
+            });
+            await selectCanvasTextInstance({
+              page: builderPage.page,
+              text: collaborativeText,
+            });
+            await builderPage.page
+              .getByRole("tab", { name: "Style" })
+              .waitFor({ state: "visible" });
+            await waitForSyncComplete({ page: builderPage.page });
+          })(),
+        ]);
+      }),
     ]);
-
-    await waitForCanvasText({
-      page: editor.page,
-      text: fixture.shareLinkEditableText,
-    });
-    await replaceCanvasText({
-      page: editor.page,
-      currentText: fixture.shareLinkEditableText,
-      text: editedText,
-    });
-
-    await openBuilderUrl({ page: editor.page, url: editorUrl });
-    await waitForCanvasText({ page: editor.page, text: editedText });
-    await waitForSyncStatus({ page: editor.page, status: "idle" });
-    await expectShareUnavailable({ page: editor.page });
-
-    await selectCanvasTextInstanceForProps({
-      page: editor.page,
-      text: "Initial link",
-      propertyLabel: "Href",
-    });
-    await expectLocatorHidden({
-      locator: editor.page.getByRole("tab", { name: "Style" }),
-      message: "Expected Style tab to be unavailable for editor link",
-    });
-
-    await createShareLink({
-      page: ownerPage,
-      name: "E2E Updated link",
-      role: "Viewer",
-    });
-    const updatedViewerUrl = await copyShareLink({
-      page: ownerPage,
-      name: "E2E Updated link",
-    });
-    expectLinkMode({ link: updatedViewerUrl, mode: "preview" });
-
-    await openBuilderUrl({ page: visitor.page, url: updatedViewerUrl });
-    await waitForCanvasText({ page: visitor.page, text: baselineText });
-    await expectLocatorHidden({
-      locator: visitor.page.getByRole("tab", { name: "Style" }),
-      message: "Expected updated link to start as viewer",
-    });
-
-    await updateShareLinkRole({
-      page: ownerPage,
-      name: "E2E Updated link",
-      role: "Builder",
-    });
-    const updatedBuilderUrl = await copyShareLink({
-      page: ownerPage,
-      name: "E2E Updated link",
-    });
-    expectLinkMode({ link: updatedBuilderUrl, mode: "design" });
-
-    await openBuilderUrl({ page: visitor.page, url: updatedBuilderUrl });
-    await waitForCanvasText({ page: visitor.page, text: baselineText });
-    await selectCanvasTextInstance({
-      page: visitor.page,
-      text: baselineText,
-    });
-    await visitor.page
-      .getByRole("tab", { name: "Style" })
-      .waitFor({ state: "visible", timeout: 10_000 });
   } finally {
     await viewer.close();
     await editor.close();
     await builderPage.close();
     await admin.close();
-    await visitor.close();
   }
 });
