@@ -80,11 +80,11 @@ export const waitForPublishStatus = async (
           refreshedProject.latestStaticBuild != null
             ? getStaticPublishStatusDisplay(refreshedProject.latestStaticBuild)
             : refreshedProject.latestBuildVirtual != null
-            ? getPublishStatusDisplay(refreshedProject.latestBuildVirtual)
-            : {
-                statusContent: "Not published",
-                status: "PENDING" as const,
-              };
+              ? getPublishStatusDisplay(refreshedProject.latestBuildVirtual)
+              : {
+                  statusContent: "Not published",
+                  status: "PENDING" as const,
+                };
 
         const inferredFailure =
           status === "FAILED" &&
