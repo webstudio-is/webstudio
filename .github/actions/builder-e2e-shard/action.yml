@@ -37,7 +37,8 @@ runs:
       id: build-key
       shell: bash
       run: |
-        echo "hash=$(git ls-files -s -- . ':!apps/builder/e2e/**' | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+        hash=$(bash .github/actions/builder-e2e-build/build-input-hash.sh)
+        echo "hash=$hash" >> "$GITHUB_OUTPUT"
 
     - name: Restore Builder build
       id: build-cache
@@ -71,6 +72,17 @@ runs:
       with:
         name: builder-e2e-build
         path: .
+
+    - name: Verify Builder E2E build inputs
+      if: steps.build-cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        BUILD_INPUT_HASH: ${{ steps.build-key.outputs.hash }}
+      run: |
+        if ! cmp -s <(printf '%s\n' "$BUILD_INPUT_HASH") apps/builder/build/e2e-build-input-hash; then
+          echo "Builder E2E build artifact does not match this shard's build inputs." >&2
+          exit 1
+        fi
 
     - name: Check Builder build
       shell: bash

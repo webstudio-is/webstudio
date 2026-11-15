@@ -41,7 +41,8 @@ runs:
       id: build-key
       shell: bash
       run: |
-        echo "hash=$(git ls-files -s -- . ':!apps/builder/e2e/**' | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+        hash=$(bash .github/actions/builder-e2e-build/build-input-hash.sh)
+        echo "hash=$hash" >> "$GITHUB_OUTPUT"
 
     - name: Cache Builder build
       id: build-cache
@@ -65,10 +66,13 @@ runs:
 
     - name: Check Builder build
       shell: bash
+      env:
+        BUILD_INPUT_HASH: ${{ steps.build-key.outputs.hash }}
       run: |
         test -d apps/builder/build/server
         test -d apps/builder/build/client/assets
         test -f packages/sdk-components-react-router/lib/components.js
+        printf '%s\n' "$BUILD_INPUT_HASH" > apps/builder/build/e2e-build-input-hash
 
     - name: Identify schema snapshot
       id: schema
@@ -92,6 +96,7 @@ runs:
         name: builder-e2e-build
         retention-days: 7
         path: |
+          apps/builder/build/e2e-build-input-hash
           apps/builder/build/server
           apps/builder/build/client/assets
           packages/*/lib
