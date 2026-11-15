@@ -54,7 +54,7 @@ test("a pending runner cannot promote a refreshed Build to success", async () =>
           createdAt: new Date().toISOString(),
           publishStatus: "PUBLISHED",
         },
-      }) as Project
+      } as Project)
   );
   const getJob = vi
     .fn()
@@ -84,7 +84,7 @@ test("a pending runner cannot turn a timed-out Build into failure", async () => 
           createdAt: "2026-11-13T10:00:00Z",
           publishStatus: "PENDING",
         },
-      }) as Project
+      } as Project)
   );
   const getJob = vi
     .fn()
@@ -112,7 +112,7 @@ test("static status waits for the matching runner before download readiness", as
           updatedAt: new Date().toISOString(),
           publishStatus: "PUBLISHED",
         },
-      }) as Project
+      } as Project)
   );
   const getJob = vi
     .fn()
@@ -150,7 +150,7 @@ test.each(["site", "static"] as const)(
         ({
           latestBuildVirtual: target === "site" ? newerBuild : null,
           latestStaticBuild: target === "static" ? newerBuild : null,
-        }) as Project
+        } as Project)
     );
     const getJob = vi.fn(async () => ({ status: "success" }));
     const waiting = waitForPublishStatus(
@@ -168,6 +168,43 @@ test.each(["site", "static"] as const)(
 
     await vi.runAllTimersAsync();
     expect((await waiting)?.status).toBe("PUBLISHED");
+    expect(refresh).toHaveBeenCalledOnce();
+  }
+);
+
+test.each(["site", "static"] as const)(
+  "does not treat a stale %s pending build as failed after runner success",
+  async (target) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-13T10:10:00Z"));
+    const staleBuild = {
+      buildId: "build-1",
+      createdAt: "2026-11-13T10:00:00Z",
+      updatedAt: "2026-11-13T10:00:00Z",
+      publishStatus: "PENDING",
+    };
+    const refresh = vi.fn(
+      async () =>
+        ({
+          latestBuildVirtual: target === "site" ? staleBuild : null,
+          latestStaticBuild: target === "static" ? staleBuild : null,
+        } as Project)
+    );
+    const getJob = vi.fn(async () => ({ status: "success" }));
+    const result = await waitForPublishStatus(
+      refresh,
+      () => true,
+      undefined,
+      {
+        projectId: "project",
+        buildId: "build-1",
+        logHandle: "handle-1",
+        target,
+      },
+      getJob
+    );
+
+    expect(result?.status).toBe("PUBLISHED");
     expect(refresh).toHaveBeenCalledOnce();
   }
 );
