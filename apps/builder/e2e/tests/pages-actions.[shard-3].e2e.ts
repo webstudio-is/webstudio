@@ -993,194 +993,10 @@ test("Builder command panel tag insertion persists after reload", async ({
   }
 });
 
-test("Builder pastes external HTML fragments through clipboard and reloads them", async ({
+test("Builder clipboard shortcuts and paste targets preserve saved content", async ({
   page,
 }) => {
-  const pastedHeading = "External paste heading";
-  const pastedLink = "External paste link";
-  const html = `
-    <section>
-      <article>
-        <h2>${pastedHeading}</h2>
-        <p>Nested external paste paragraph.</p>
-        <a href="/external-paste">${pastedLink}</a>
-      </article>
-    </section>
-  `;
-
-  await measure(
-    "pages actions open builder for external html paste",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    }
-  );
-  await waitForCanvasText({ page, text: "Initial content" });
-
-  const initialSectionCount = await getElementTagCount({
-    fixture,
-    tag: "section",
-  });
-  const initialArticleCount = await getElementTagCount({
-    fixture,
-    tag: "article",
-  });
-
-  await measure("pages actions paste external html into body", async () => {
-    await openNavigatorPanel({ page });
-    await selectNavigatorItem({ page, itemName: "Body" });
-    await pastePlainTextFromClipboardShortcut({ page, text: html });
-  });
-  await waitForCanvasText({ page, text: pastedHeading });
-  await waitForCanvasText({ page, text: pastedLink });
-
-  const pastedSectionCount = await getElementTagWithTextCount({
-    fixture,
-    tag: "section",
-    text: pastedHeading,
-  });
-  const pastedArticleCount = await getElementTagWithTextCount({
-    fixture,
-    tag: "article",
-    text: pastedLink,
-  });
-  if (pastedSectionCount !== 1) {
-    throw new Error(
-      `Expected pasted HTML to create one section containing "${pastedHeading}", found ${pastedSectionCount}`
-    );
-  }
-  if (pastedArticleCount !== 1) {
-    throw new Error(
-      `Expected pasted HTML to create one article containing "${pastedLink}", found ${pastedArticleCount}`
-    );
-  }
-
-  await measure("pages actions reload external html paste", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-  await waitForCanvasText({ page, text: pastedHeading });
-  await waitForCanvasText({ page, text: pastedLink });
-
-  const reloadedSectionCount = await getElementTagCount({
-    fixture,
-    tag: "section",
-  });
-  const reloadedArticleCount = await getElementTagCount({
-    fixture,
-    tag: "article",
-  });
-  if (reloadedSectionCount !== initialSectionCount + 1) {
-    throw new Error(
-      `Expected reload to preserve pasted section. Before ${initialSectionCount}, after ${reloadedSectionCount}`
-    );
-  }
-  if (reloadedArticleCount !== initialArticleCount + 1) {
-    throw new Error(
-      `Expected reload to preserve pasted article. Before ${initialArticleCount}, after ${reloadedArticleCount}`
-    );
-  }
-});
-
-test("Builder copies, pastes, and cuts instances through browser shortcuts", async ({
-  page,
-}) => {
-  const text = "Initial content";
-
-  await measure(
-    "pages actions open builder for instance clipboard shortcuts",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    }
-  );
-  await waitForCanvasText({ page, text });
-  await waitForSyncStatus({ page, status: "idle" });
-
-  const initialTextCount = await getExactTextChildCount({ fixture, text });
-  await selectCanvasTextInstance({ page, text });
-  await page.keyboard.press("ControlOrMeta+C");
-  await waitForClipboardTextIncludes({
-    page,
-    text: "@webstudio/instance/v0.1",
-  });
-
-  await pasteFromClipboardShortcut({ page });
-  const pastedFromCanvasSelectionCount = await getExactTextChildCount({
-    fixture,
-    text,
-  });
-  if (pastedFromCanvasSelectionCount !== initialTextCount + 1) {
-    throw new Error(
-      `Expected paste from canvas selection to duplicate text. Before ${initialTextCount}, after ${pastedFromCanvasSelectionCount}`
-    );
-  }
-
-  await cutSelectedInstanceShortcut({ page });
-  const afterCutCount = await getExactTextChildCount({ fixture, text });
-  if (afterCutCount !== initialTextCount) {
-    throw new Error(
-      `Expected cut shortcut to remove selected pasted instance. Before ${initialTextCount}, after ${afterCutCount}`
-    );
-  }
-});
-
-test("Builder pastes instance data into page templates", async ({ page }) => {
-  const templatePasteText = "Template instance paste heading";
-
-  await measure("pages actions open builder for template paste", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-  await openPage({
-    page,
-    pageName: fixture.pageTemplateName,
-    canvasText: fixture.pageTemplateText,
-  });
-
-  await selectBodyInNavigator({ page });
-  await pasteClipboardData({
-    page,
-    data: {
-      "application/json": createInstanceTransfer({
-        id: "template-instance-json-paste",
-        text: templatePasteText,
-      }),
-    },
-  });
-  await waitForCanvasText({ page, text: templatePasteText });
-
-  const pastedTextCount = await getElementTagWithTextCount({
-    fixture,
-    tag: "p",
-    text: templatePasteText,
-  });
-  if (pastedTextCount !== 1) {
-    throw new Error(
-      `Expected template paste to create one paragraph containing "${templatePasteText}", found ${pastedTextCount}`
-    );
-  }
-});
-
-test("Builder does not insert malformed Webstudio paste data as text", async ({
-  page,
-}) => {
-  const malformedData =
-    '{"@webstudio/instance/v0.1":{"instanceSelector":["missing","body"]';
-
-  await measure("pages actions open builder for malformed paste", async () => {
+  await measure("pages actions open builder for clipboard cases", async () => {
     await openProjectBuilder({
       page,
       projectId: fixture.projectId,
@@ -1188,56 +1004,195 @@ test("Builder does not insert malformed Webstudio paste data as text", async ({
     });
   });
   await waitForCanvasText({ page, text: "Initial content" });
-  await selectBodyInNavigator({ page });
 
-  await pasteTextFromClipboardShortcutWithoutSave({
-    page,
-    text: malformedData,
+  await test.step("reject malformed Webstudio clipboard data", async () => {
+    const malformedData =
+      '{"@webstudio/instance/v0.1":{"instanceSelector":["missing","body"]';
+
+    await selectBodyInNavigator({ page });
+
+    await pasteTextFromClipboardShortcutWithoutSave({
+      page,
+      text: malformedData,
+    });
+    await waitForCanvasTextHidden({ page, text: malformedData });
+    const malformedTextCount = await getExactTextChildCount({
+      fixture,
+      text: malformedData,
+    });
+    if (malformedTextCount !== 0) {
+      throw new Error(
+        `Expected malformed Webstudio data not to be inserted as text, found ${malformedTextCount}`
+      );
+    }
   });
-  await waitForCanvasTextHidden({ page, text: malformedData });
-  const malformedTextCount = await getExactTextChildCount({
-    fixture,
-    text: malformedData,
+
+  await test.step("paste text into a focused Builder input", async () => {
+    const pastedText = "<section>Native input paste</section>";
+
+    await openCommandPanel({ page });
+    const commandInput = page.getByPlaceholder("Type a command or search...", {
+      exact: true,
+    });
+    await page.evaluate(async (text) => {
+      await navigator.clipboard.writeText(text);
+    }, pastedText);
+    await page.keyboard.press("ControlOrMeta+V");
+    await commandInput.waitFor();
+    const value = await commandInput.inputValue();
+    if (value !== pastedText) {
+      throw new Error(
+        `Expected native input paste to preserve text "${pastedText}", got "${value}"`
+      );
+    }
+    await page.keyboard.press("Escape");
+    await waitForCanvasTextHidden({ page, text: pastedText });
   });
-  if (malformedTextCount !== 0) {
-    throw new Error(
-      `Expected malformed Webstudio data not to be inserted as text, found ${malformedTextCount}`
-    );
-  }
-});
 
-test("Builder allows native paste inside focused builder inputs", async ({
-  page,
-}) => {
-  const pastedText = "<section>Native input paste</section>";
+  await test.step("copy, paste, and cut with keyboard shortcuts", async () => {
+    const text = "Initial content";
 
-  await measure(
-    "pages actions open builder for native input paste",
-    async () => {
+    await waitForCanvasText({ page, text });
+    await waitForSyncStatus({ page, status: "idle" });
+
+    const initialTextCount = await getExactTextChildCount({ fixture, text });
+    await selectCanvasTextInstance({ page, text });
+    await page.keyboard.press("ControlOrMeta+C");
+    await waitForClipboardTextIncludes({
+      page,
+      text: "@webstudio/instance/v0.1",
+    });
+
+    await pasteFromClipboardShortcut({ page });
+    const pastedFromCanvasSelectionCount = await getExactTextChildCount({
+      fixture,
+      text,
+    });
+    if (pastedFromCanvasSelectionCount !== initialTextCount + 1) {
+      throw new Error(
+        `Expected paste from canvas selection to duplicate text. Before ${initialTextCount}, after ${pastedFromCanvasSelectionCount}`
+      );
+    }
+
+    await cutSelectedInstanceShortcut({ page });
+    const afterCutCount = await getExactTextChildCount({ fixture, text });
+    if (afterCutCount !== initialTextCount) {
+      throw new Error(
+        `Expected cut shortcut to remove selected pasted instance. Before ${initialTextCount}, after ${afterCutCount}`
+      );
+    }
+  });
+
+  await test.step("paste and reload external HTML", async () => {
+    const pastedHeading = "External paste heading";
+    const pastedLink = "External paste link";
+    const html = `
+      <section>
+        <article>
+          <h2>${pastedHeading}</h2>
+          <p>Nested external paste paragraph.</p>
+          <a href="/external-paste">${pastedLink}</a>
+        </article>
+      </section>
+    `;
+
+    const initialSectionCount = await getElementTagCount({
+      fixture,
+      tag: "section",
+    });
+    const initialArticleCount = await getElementTagCount({
+      fixture,
+      tag: "article",
+    });
+
+    await measure("pages actions paste external html into body", async () => {
+      await selectBodyInNavigator({ page });
+      await pastePlainTextFromClipboardShortcut({ page, text: html });
+    });
+    await waitForCanvasText({ page, text: pastedHeading });
+    await waitForCanvasText({ page, text: pastedLink });
+
+    const pastedSectionCount = await getElementTagWithTextCount({
+      fixture,
+      tag: "section",
+      text: pastedHeading,
+    });
+    const pastedArticleCount = await getElementTagWithTextCount({
+      fixture,
+      tag: "article",
+      text: pastedLink,
+    });
+    if (pastedSectionCount !== 1) {
+      throw new Error(
+        `Expected pasted HTML to create one section containing "${pastedHeading}", found ${pastedSectionCount}`
+      );
+    }
+    if (pastedArticleCount !== 1) {
+      throw new Error(
+        `Expected pasted HTML to create one article containing "${pastedLink}", found ${pastedArticleCount}`
+      );
+    }
+
+    await measure("pages actions reload external html paste", async () => {
       await openProjectBuilder({
         page,
         projectId: fixture.projectId,
         authToken: fixture.builderToken,
       });
-    }
-  );
-  await waitForCanvasText({ page, text: "Initial content" });
+    });
+    await waitForCanvasText({ page, text: pastedHeading });
+    await waitForCanvasText({ page, text: pastedLink });
 
-  await openCommandPanel({ page });
-  const commandInput = page.getByPlaceholder("Type a command or search...", {
-    exact: true,
+    const reloadedSectionCount = await getElementTagCount({
+      fixture,
+      tag: "section",
+    });
+    const reloadedArticleCount = await getElementTagCount({
+      fixture,
+      tag: "article",
+    });
+    if (reloadedSectionCount !== initialSectionCount + 1) {
+      throw new Error(
+        `Expected reload to preserve pasted section. Before ${initialSectionCount}, after ${reloadedSectionCount}`
+      );
+    }
+    if (reloadedArticleCount !== initialArticleCount + 1) {
+      throw new Error(
+        `Expected reload to preserve pasted article. Before ${initialArticleCount}, after ${reloadedArticleCount}`
+      );
+    }
   });
-  await page.evaluate(async (text) => {
-    await navigator.clipboard.writeText(text);
-  }, pastedText);
-  await page.keyboard.press("ControlOrMeta+V");
-  await commandInput.waitFor();
-  const value = await commandInput.inputValue();
-  if (value !== pastedText) {
-    throw new Error(
-      `Expected native input paste to preserve text "${pastedText}", got "${value}"`
-    );
-  }
-  await page.keyboard.press("Escape");
-  await waitForCanvasTextHidden({ page, text: pastedText });
+
+  await test.step("paste instance data into a page template", async () => {
+    const templatePasteText = "Template instance paste heading";
+
+    await openPage({
+      page,
+      pageName: fixture.pageTemplateName,
+      canvasText: fixture.pageTemplateText,
+    });
+
+    await selectBodyInNavigator({ page });
+    await pasteClipboardData({
+      page,
+      data: {
+        "application/json": createInstanceTransfer({
+          id: "template-instance-json-paste",
+          text: templatePasteText,
+        }),
+      },
+    });
+    await waitForCanvasText({ page, text: templatePasteText });
+
+    const pastedTextCount = await getElementTagWithTextCount({
+      fixture,
+      tag: "p",
+      text: templatePasteText,
+    });
+    if (pastedTextCount !== 1) {
+      throw new Error(
+        `Expected template paste to create one paragraph containing "${templatePasteText}", found ${pastedTextCount}`
+      );
+    }
+  });
 });

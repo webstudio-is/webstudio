@@ -1,9 +1,9 @@
-import { execFile } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
@@ -11,7 +11,6 @@ import { loadDevBuild } from "../db";
 import { e2ePaidPlanName } from "../plans";
 import { dashboardUrl, test } from "../test";
 
-const execFileAsync = promisify(execFile);
 const cliPath = fileURLToPath(
   new URL("../../../../packages/cli/local.js", import.meta.url)
 );
@@ -30,30 +29,13 @@ test("Editor MCP fragment insertion persists inside Content Block and rejects it
   const directory = await mkdtemp(join(tmpdir(), "webstudio-mcp-editor-"));
   const insertedText = "Editor MCP round-trip content";
   const deniedText = "Protected template must stay unchanged";
-  const call = async (tool: string, input: object) => {
-    const args = [
-      cliPath,
-      "mcp",
-      "single-op-call",
-      tool,
-      JSON.stringify(input),
-      "--project",
-      fixture.projectId,
-    ];
-    try {
-      const { stdout } = await execFileAsync(process.execPath, args, {
-        cwd: directory,
-        timeout: 60_000,
-        env: { ...process.env, WEBSTUDIO_CONFIG_DIR: directory },
-      });
-      return JSON.parse(stdout);
-    } catch (error) {
-      const stdout = (error as Error & { stdout?: string }).stdout;
-      if (stdout === undefined) {
-        throw error;
-      }
-      return JSON.parse(stdout);
-    }
+  const client = new Client({
+    name: "mcp-editor-fragment-e2e",
+    version: "1.0.0",
+  });
+  const call = async (name: string, args: Record<string, unknown>) => {
+    const result = await client.callTool({ name, arguments: args });
+    return JSON.parse(JSON.stringify(result.structuredContent));
   };
 
   try {
@@ -68,6 +50,19 @@ test("Editor MCP fragment insertion persists inside Content Block and rejects it
       { mode: 0o600 }
     );
 
+    await client.connect(
+      new StdioClientTransport({
+        command: process.execPath,
+        args: [cliPath, "mcp", "--project", fixture.projectId],
+        cwd: directory,
+        env: {
+          ...process.env,
+          WEBSTUDIO_CONFIG_DIR: directory,
+        } as Record<string, string>,
+        stderr: "inherit",
+      })
+    );
+
     const inserted = await call("insert-fragment", {
       parentInstanceId: "content-block",
       fragment: `<p>${insertedText}</p>`,
@@ -76,6 +71,7 @@ test("Editor MCP fragment insertion persists inside Content Block and rejects it
     expect(inserted.ok, inserted.error?.code).toBe(true);
     expect(inserted.meta.session.commitStatus).toBe("committed");
 
+    expect((await call("refresh", {})).ok).toBe(true);
     const reloaded = await call("list-texts", { contains: insertedText });
     expect(reloaded.ok).toBe(true);
     expect(reloaded.data.texts).toEqual(
@@ -105,6 +101,10 @@ test("Editor MCP fragment insertion persists inside Content Block and rejects it
     expect(afterDenied.version).toBe(beforeDenied.version);
     expect(afterDenied.instances).toEqual(beforeDenied.instances);
   } finally {
-    await rm(directory, { recursive: true, force: true });
+    try {
+      await client.close();
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   }
 });

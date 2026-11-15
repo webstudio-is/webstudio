@@ -1,62 +1,26 @@
-import { execFile } from "node:child_process";
-import { fileURLToPath } from "node:url";
 import { createServer } from "node:http";
-import { promisify } from "node:util";
 import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { loadDevBuild } from "../db";
-import {
-  withMcpEmailPreview,
-  type CapturedEmail,
-} from "../flows/mcp-email-preview";
+import { startFormDeliveryReceiver } from "../flows/generated-form-delivery";
+import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
+import type { CapturedEmail } from "../flows/mcp-email-preview";
+import { runFormAuthor } from "../flows/mcp-form-author";
 import { test } from "../test";
-import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
-
-const execFileAsync = promisify(execFile);
-const authorPath = fileURLToPath(
-  new URL("../fixtures/mcp-managed-form-author.ts", import.meta.url)
-);
-const reactGlobalPath = fileURLToPath(
-  new URL("../../../../scripts/register-react-global.ts", import.meta.url)
-);
-const cliTsconfigPath = fileURLToPath(
-  new URL("../../../../packages/cli/tsconfig.local.json", import.meta.url)
-);
-
-const authorForm = async (projectId: string, mode: string) => {
-  const { stdout } = await execFileAsync(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      "--import",
-      reactGlobalPath,
-      "--conditions=webstudio",
-      authorPath,
-      projectId,
-      mode,
-    ],
-    {
-      timeout: 60_000,
-      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
-    }
-  );
-  return JSON.parse(stdout) as {
-    formId: string;
-    secondFormId?: string;
-    emailResourceIds?: string[];
-    emailResourceIdsByForm?: [string, string];
-  };
-};
+import {
+  startPreviewFormMcpClient,
+  submitPreviewFormViaMcp,
+} from "../flows/mcp-preview-submit";
 
 type CapturedMessage = CapturedEmail & {
   headers: { "X-Message-ID": string };
 };
 
-test("MCP Email delivery, Form isolation, and provider failure share one Preview", async ({
+test("MCP Email and HTTP Actions deliver from generated Preview", async ({
   context,
 }) => {
   test.setTimeout(240_000);
+  await startPreviewFormMcpClient();
   const fixture = await createContentModeProject({
     context,
     email: "mcp-email-scenarios@webstudio.test",
@@ -64,11 +28,25 @@ test("MCP Email delivery, Form isolation, and provider failure share one Preview
     assetNamePrefix: "mcp-email-scenarios-",
     builderToken: "mcp-email-scenarios-builder-token",
   });
-  const standard = await authorForm(fixture.projectId, "email");
-  const isolated = await authorForm(
+  const { stdout } = await runFormAuthor(
+    "mcp-managed-form-author",
     fixture.projectId,
-    JSON.stringify({ mode: "email-isolation" })
+    "email",
+    "email-isolation",
+    "email-http-combination"
   );
+  const [standard, isolated, combined] = stdout
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line)) as [
+    { formId: string; emailResourceIds?: string[] },
+    {
+      formId: string;
+      secondFormId?: string;
+      emailResourceIdsByForm?: [string, string];
+    },
+    { formId: string; emailResourceId: string; httpResourceId: string },
+  ];
   const emailResourceIds = standard.emailResourceIds;
   const isolatedResourceIds = isolated.emailResourceIdsByForm;
   if (
@@ -141,18 +119,20 @@ test("MCP Email delivery, Form isolation, and provider failure share one Preview
       )
     );
   });
-  await new Promise<void>((resolve, reject) => {
-    receiver.once("error", reject);
-    receiver.listen(0, "127.0.0.1", resolve);
-  });
-  const address = receiver.address();
-  if (address === null || typeof address === "string") {
-    throw new Error("Expected a local Email Service receiver port");
-  }
+  const httpReceiver = await startFormDeliveryReceiver();
   try {
-    await withMcpEmailPreview({
+    await new Promise<void>((resolve, reject) => {
+      receiver.once("error", reject);
+      receiver.listen(0, "127.0.0.1", resolve);
+    });
+    const address = receiver.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Expected a local Email Service receiver port");
+    }
+    await withMcpEmailHttpPreview({
       projectId: fixture.projectId,
       emailPort: address.port,
+      httpPort: httpReceiver.port,
       callback: async ({ url }) => {
         await test.step("customized owner and visitor Email", async () => {
           const submission = await submitPreviewFormViaMcp({
@@ -364,9 +344,78 @@ test("MCP Email delivery, Form isolation, and provider failure share one Preview
             new Set(messages.slice(2).map(({ to }) => to[0]?.address))
           ).toEqual(new Set(["owner@mcp.test", "visitor@example.test"]));
         });
+
+        await test.step("Email and HTTP Actions return results in configured order", async () => {
+          messages.splice(0);
+          expect(httpReceiver.deliveries).toHaveLength(0);
+          const submission = await submitPreviewFormViaMcp({
+            url,
+            input: {
+              path: "/",
+              selector: `[data-ws-managed-form-id="${combined.formId}"]`,
+              values: [
+                { name: "name", value: "Ada Lovelace" },
+                { name: "email", value: "ada@example.test" },
+                { name: "subject", value: "Combined delivery" },
+                { name: "message", value: "One Form, two Actions" },
+              ],
+              submitter: "button[type=submit]",
+              timeout: 30_000,
+            },
+          });
+          expect(submission.ok).toBe(true);
+          expect(submission.data).toMatchObject({
+            status: "submitted",
+            formState: "success",
+            errors: [],
+          });
+          expect(submission.data.results).toEqual([
+            expect.objectContaining({
+              resourceId: combined.emailResourceId,
+              resourceName: "Email to owner",
+              status: 200,
+            }),
+            expect.objectContaining({
+              resourceId: combined.httpResourceId,
+              resourceName: "Combined HTTP action",
+              status: 200,
+            }),
+          ]);
+          expect(submission.data.exchanges).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                status: 200,
+                url: expect.stringContaining("/__ws-form"),
+              }),
+            ])
+          );
+
+          expect(messages).toHaveLength(1);
+          expect(messages[0]?.to).toEqual([{ address: "combined@mcp.test" }]);
+          expect(messages[0]?.text).toBe("Combined action exact body.");
+          expect(httpReceiver.deliveries).toHaveLength(1);
+          expect(httpReceiver.deliveries[0]).toMatchObject({
+            pathname: "/submit",
+            method: "POST",
+          });
+          expect(httpReceiver.deliveries[0]?.contentType).toContain(
+            "application/json"
+          );
+          expect(
+            JSON.parse(httpReceiver.deliveries[0]?.body ?? "null")
+          ).toEqual({
+            name: "Ada Lovelace",
+            email: "ada@example.test",
+            subject: "Combined delivery",
+            message: "One Form, two Actions",
+          });
+        });
       },
     });
   } finally {
-    await new Promise<void>((resolve) => receiver.close(() => resolve()));
+    await Promise.all([
+      new Promise<void>((resolve) => receiver.close(() => resolve())),
+      httpReceiver.close(),
+    ]);
   }
 });

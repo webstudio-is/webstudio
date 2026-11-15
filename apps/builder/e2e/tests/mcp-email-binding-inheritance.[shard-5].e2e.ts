@@ -1,5 +1,7 @@
 import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { expectFormQueryDelivery } from "../flows/form-query";
+import { startFormQueryReceiver } from "../flows/form-query-receiver";
 import { runFormAuthor } from "../flows/mcp-form-author";
 import {
   startLocalEmailReceiver,
@@ -13,8 +15,9 @@ import {
 
 const twoPhaseTimeout = 240_000;
 
-test("MCP Email binding changes share two production Preview phases", async ({
+test("MCP form query delivery and Email binding changes across two production Previews", async ({
   context,
+  page,
 }) => {
   test.setTimeout(twoPhaseTimeout);
   await startPreviewFormMcpClient();
@@ -30,12 +33,12 @@ test("MCP Email binding changes share two production Preview phases", async ({
     fixture.projectId,
     "initial"
   );
-  const { boundFormId, partialFormId } = JSON.parse(stdout) as {
+  const { boundFormId, partialFormId, query } = JSON.parse(stdout) as {
     boundFormId: string;
     partialFormId: string;
+    query: { formId: string; resourceId: string };
   };
 
-  const receiver = await startLocalEmailReceiver();
   const submit = async (url: string, formId: string, withUpload: boolean) => {
     const submission = await submitPreviewFormViaMcp({
       url,
@@ -79,34 +82,47 @@ test("MCP Email binding changes share two production Preview phases", async ({
     ]);
   };
 
+  const receiver = await startLocalEmailReceiver();
   try {
-    await withMcpEmailPreview({
-      projectId: fixture.projectId,
-      emailPort: receiver.port,
-      callback: async ({ url }) => {
-        await test.step("bound values and recipients", async () => {
-          await submit(url, boundFormId, false);
-          await expect.poll(() => receiver.messages.length).toBe(1);
-          expect(receiver.messages[0]).toMatchObject({
-            to: [{ address: "ada@example.test" }],
-            subject: expect.stringContaining("Bound: Account question"),
-            text: "Message from Ada Lovelace: Please send the project details.",
-            replyTo: { address: "ada@example.test" },
+    const queryReceiver = await startFormQueryReceiver();
+    try {
+      await withMcpEmailPreview({
+        projectId: fixture.projectId,
+        emailPort: receiver.port,
+        queryPort: queryReceiver.port,
+        callback: async ({ url }) => {
+          await test.step("bound values and recipients", async () => {
+            await submit(url, boundFormId, false);
+            await expect.poll(() => receiver.messages.length).toBe(1);
+            expect(receiver.messages[0]).toMatchObject({
+              to: [{ address: "ada@example.test" }],
+              subject: expect.stringContaining("Bound: Account question"),
+              text: "Message from Ada Lovelace: Please send the project details.",
+              replyTo: { address: "ada@example.test" },
+            });
           });
-        });
-        await test.step("partial body update keeps sender and attachment settings", async () => {
-          await submit(url, partialFormId, true);
-          await expect.poll(() => receiver.messages.length).toBe(2);
-          expect(receiver.messages[1]).toMatchObject({
-            to: [{ address: "ada@example.test" }],
-            text: "Custom confirmation",
-            replyTo: { address: "team@example.test", name: "Contact Team" },
-            fromName: "Contact Team",
+          await test.step("partial body update keeps sender and attachment settings", async () => {
+            await submit(url, partialFormId, true);
+            await expect.poll(() => receiver.messages.length).toBe(2);
+            expect(receiver.messages[1]).toMatchObject({
+              to: [{ address: "ada@example.test" }],
+              text: "Custom confirmation",
+              replyTo: { address: "team@example.test", name: "Contact Team" },
+              fromName: "Contact Team",
+            });
+            expect(receiver.messages[1]?.attachments ?? []).toEqual([]);
           });
-          expect(receiver.messages[1]?.attachments ?? []).toEqual([]);
-        });
-      },
-    });
+          await expectFormQueryDelivery({
+            page,
+            url,
+            receiver: queryReceiver,
+            ...query,
+          });
+        },
+      });
+    } finally {
+      await queryReceiver.close();
+    }
 
     await runFormAuthor(
       "mcp-email-binding-author",

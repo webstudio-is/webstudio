@@ -63,13 +63,8 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
     requiresConfirm: contract.requiresConfirm,
   }));
 
-const projectId = process.argv[2];
-const receiverUrl = process.argv[3];
-if (projectId === undefined || receiverUrl === undefined) {
-  throw new Error("Expected the disposable E2E project ID and receiver URL");
-}
-
-const author = async () => {
+const authorLegacyFormQuery = async (projectId: string) => {
+  const receiverUrl = "https://mcp-delivery.example/submit";
   let build = await loadDevBuild({ projectId: projectId });
   const parse = <Value>(field: keyof typeof build) =>
     JSON.parse(String(build[field])) as Value;
@@ -389,6 +384,7 @@ const author = async () => {
   }
 };
 
-await author();
-const managed = await authorManagedFormQuery(projectId);
-process.stdout.write(`${JSON.stringify(managed)}\n`);
+export const authorFormQueries = async (projectId: string) => {
+  await authorLegacyFormQuery(projectId);
+  return await authorManagedFormQuery(projectId);
+};

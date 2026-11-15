@@ -8,10 +8,7 @@ import {
   createSystemResourceVariable,
   selectContentInstance,
 } from "../flows/data-variables";
-import {
-  waitForChangeToBeSaved,
-  waitForSyncStatus,
-} from "../flows/sync-status";
+import { waitForChangeToBeSaved } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { test } from "../test";
 import { measure } from "../perf";
@@ -78,7 +75,6 @@ const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
   await page
     .getByText("New variable", { exact: true })
     .waitFor({ state: "hidden" });
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const editStringVariable = async ({
@@ -119,7 +115,6 @@ const deleteVariable = async ({
     .getByRole("button", { name: "Delete" })
     .click();
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const editHttpResourceVariableWithCurl = async ({

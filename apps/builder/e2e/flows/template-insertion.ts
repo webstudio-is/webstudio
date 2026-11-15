@@ -52,8 +52,5 @@ export const insertTemplateAfterCanvasText = async ({
   }
 
   await waitForSyncComplete({ page });
-  await Promise.all([
-    waitForChangeToBeSaved({ page }),
-    template.click(),
-  ]);
+  await Promise.all([waitForChangeToBeSaved({ page }), template.click()]);
 };

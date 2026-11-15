@@ -5,7 +5,10 @@ import { promisify } from "node:util";
 import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { withGeneratedFormDeliveryPreview } from "../flows/generated-form-delivery";
-import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
+import {
+  startPreviewFormMcpClient,
+  submitPreviewFormViaMcp,
+} from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -84,6 +87,7 @@ const startBarrierReceiver = async () => {
 test("MCP-authored Form starts connected Actions concurrently and runs all three", async ({
   context,
 }) => {
+  await startPreviewFormMcpClient();
   const fixture = await createContentModeProject({
     context,
     email: "mcp-form-action-concurrency@webstudio.test",

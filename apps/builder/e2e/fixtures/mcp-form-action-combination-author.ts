@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect } from "@playwright/test";
@@ -59,11 +60,10 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
     requiresConfirm: contract.requiresConfirm,
   }));
 
-const projectId = process.argv[2];
-if (projectId === undefined) {
-  throw new Error("Expected the disposable E2E project ID");
-}
-const author = async () => {
+export const authorFormActionCombination = async (
+  projectId: string,
+  mode?: string
+) => {
   let build = await loadDevBuild({ projectId: projectId });
   const parse = <Value>(field: keyof typeof build) =>
     JSON.parse(String(build[field])) as Value;
@@ -283,7 +283,7 @@ const author = async () => {
         dataSourceName: name,
         exposeAsDataSource: true,
       });
-    if (process.argv[3] === "ten-actions") {
+    if (mode === "ten-actions") {
       const created = [];
       for (let index = 0; index < 11; index++) {
         created.push(
@@ -330,14 +330,11 @@ const author = async () => {
           expect.objectContaining({ name: "action", value: actions }),
         ])
       );
-      process.stdout.write(
-        `${JSON.stringify({
-          formId: form.id,
-          resourceIds: created.slice(0, 10).map(({ resourceId }) => resourceId),
-          rejectedResourceId: created[10].resourceId,
-        })}\n`
-      );
-      return;
+      return {
+        formId: form.id,
+        resourceIds: created.slice(0, 10).map(({ resourceId }) => resourceId),
+        rejectedResourceId: created[10].resourceId,
+      };
     }
     const graphql = await createAction(
       "First GraphQL action",
@@ -367,18 +364,23 @@ const author = async () => {
         expect.objectContaining({ name: "action", value: actions }),
       ])
     );
-    process.stdout.write(
-      `${JSON.stringify({
-        formId: form.id,
-        graphqlResourceId: graphql.resourceId,
-        middleResourceId: middle.resourceId,
-        httpResourceId: http.resourceId,
-      })}\n`
-    );
+    return {
+      formId: form.id,
+      graphqlResourceId: graphql.resourceId,
+      middleResourceId: middle.resourceId,
+      httpResourceId: http.resourceId,
+    };
   } finally {
     await client.close();
     await server.close();
   }
 };
 
-await author();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const [, , projectId, mode] = process.argv;
+  if (projectId === undefined) {
+    throw new Error("Expected the disposable E2E project ID");
+  }
+  const result = await authorFormActionCombination(projectId, mode);
+  process.stdout.write(`${JSON.stringify(result)}\n`);
+}

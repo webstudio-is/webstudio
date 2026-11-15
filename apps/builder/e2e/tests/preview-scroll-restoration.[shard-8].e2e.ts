@@ -3,7 +3,6 @@ import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
 import type { Instance, Prop, StyleDecl } from "@webstudio-is/sdk";
 import { test } from "../test";
 import { createSeededBuilderProject } from "../fixtures/builder-project";
-import { loginWithSecret } from "../flows/dashboard";
 import { openProjectBuilder } from "../flows/builder";
 
 test("Builder Preview restores navigation scroll without consuming entry animations", async ({
@@ -192,7 +191,6 @@ test("Builder Preview restores navigation scroll without consuming entry animati
       };
     },
   });
-  await loginWithSecret({ page, email });
   const canvas = await openProjectBuilder({
     page,
     projectId: fixture.projectId,

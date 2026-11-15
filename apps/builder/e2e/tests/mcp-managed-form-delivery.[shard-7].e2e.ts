@@ -1,55 +1,120 @@
-import { execFile } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
-import { expect } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import {
   startFormDeliveryReceiver,
   withGeneratedFormDeliveryPreview,
 } from "../flows/generated-form-delivery";
-import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
+import { runFormAuthor } from "../flows/mcp-form-author";
+import {
+  startPreviewFormMcpClient,
+  submitPreviewFormViaMcp,
+} from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
-const execFileAsync = promisify(execFile);
-const authorPath = fileURLToPath(
-  new URL("../fixtures/mcp-managed-form-author.ts", import.meta.url)
-);
-const reactGlobalPath = fileURLToPath(
-  new URL("../../../../scripts/register-react-global.ts", import.meta.url)
-);
-const cliTsconfigPath = fileURLToPath(
-  new URL("../../../../packages/cli/tsconfig.local.json", import.meta.url)
-);
+const successMessage = "Thanks for contacting us. Your message has been sent.";
+const errorMessage = "We could not send your message. Please try again.";
 
-const authorForm = async (projectId: string, mode: string) => {
-  const { stdout } = await execFileAsync(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      "--import",
-      reactGlobalPath,
-      "--conditions=webstudio",
-      authorPath,
-      projectId,
-      mode,
-    ],
-    {
-      timeout: 60_000,
-      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
-    }
+const openLocalPreview = async (page: Page, url: string) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    const calls: string[] = [];
+    Object.assign(window, { __mcpFeedbackScrollCalls: calls });
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (options) {
+      calls.push(this.textContent ?? "");
+      original.call(this, options);
+    };
+  });
+  await page.route("**/*", (route) =>
+    new URL(route.request().url()).hostname === "127.0.0.1"
+      ? route.continue()
+      : route.abort()
   );
-  return JSON.parse(stdout) as {
-    formId: string;
-    resourceId: string;
-    successfulResourceId: string;
-  };
+  await page.goto(url);
 };
 
-test("MCP managed Form navigation, Action delivery, and multipart share one Preview", async ({
+const positionFeedback = async (
+  page: Page,
+  message: string,
+  position: "visible" | "offscreen"
+) => {
+  await page.evaluate(
+    ({ message, position }) => {
+      const place = () => {
+        const feedback = Array.from(
+          document.querySelectorAll<HTMLElement>("body *")
+        ).find((element) => element.textContent?.trim() === message);
+        if (feedback === undefined) {
+          return false;
+        }
+        if (position === "visible") {
+          const form = feedback.closest<HTMLElement>("form");
+          if (form === null) {
+            return false;
+          }
+          form.style.position = "fixed";
+          form.style.top = "16px";
+          form.style.left = "16px";
+          form.style.maxHeight = "calc(100vh - 32px)";
+          form.style.overflow = "auto";
+        } else {
+          feedback.style.marginBlockStart = "1600px";
+        }
+        return true;
+      };
+      if (place()) {
+        return;
+      }
+      const observer = new MutationObserver(() => {
+        if (place()) {
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    },
+    { message, position }
+  );
+};
+
+const getScrollCalls = async (page: Page) =>
+  await page.evaluate(
+    () =>
+      (window as Window & { __mcpFeedbackScrollCalls?: string[] })
+        .__mcpFeedbackScrollCalls ?? []
+  );
+
+const expectFeedbackInsideViewport = async (page: Page, message: string) => {
+  const feedback = page.getByText(message, { exact: true });
+  await expect(feedback).toBeVisible();
+  await expect
+    .poll(() =>
+      feedback.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        return (
+          bounds.width > 0 &&
+          bounds.height > 0 &&
+          bounds.top >= 0 &&
+          bounds.bottom <= window.innerHeight
+        );
+      })
+    )
+    .toBe(true);
+};
+
+const fillForm = async (page: Page, formId: string) => {
+  const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
+  await form.locator('input[name="name"]').fill("Ada");
+  await form.locator('input[name="email"]').fill("ada@example.com");
+  await form.locator('input[name="subject"]').fill("Feedback viewport");
+  await form.locator('textarea[name="message"]').fill("Local Preview");
+  return form;
+};
+
+test("MCP managed Form navigation, delivery, multipart, and feedback in generated Preview", async ({
   page,
   context,
 }) => {
+  await startPreviewFormMcpClient();
   const fixture = await createContentModeProject({
     context,
     email: "mcp-managed-form-delivery@webstudio.test",
@@ -57,9 +122,27 @@ test("MCP managed Form navigation, Action delivery, and multipart share one Prev
     assetNamePrefix: "mcp-managed-form-delivery-",
     builderToken: "mcp-managed-form-delivery-builder-token",
   });
-  const empty = await authorForm(fixture.projectId, "empty-action");
-  const delivery = await authorForm(fixture.projectId, "delivery");
-  const multipart = await authorForm(fixture.projectId, "multipart");
+  const { stdout } = await runFormAuthor(
+    "mcp-managed-form-author",
+    fixture.projectId,
+    "empty-action",
+    "delivery",
+    "multipart",
+    JSON.stringify({ mode: "redirect", fail: false }),
+    JSON.stringify({ mode: "redirect", fail: true })
+  );
+  const [empty, delivery, multipart, success, error] = stdout
+    .trim()
+    .split("\n")
+    .map(
+      (line) =>
+        JSON.parse(line) as {
+          formId: string;
+          resourceId: string;
+          successfulResourceId?: string;
+        }
+    );
+  expect(delivery.successfulResourceId).toBeDefined();
   const receiver = await startFormDeliveryReceiver();
 
   try {
@@ -67,46 +150,93 @@ test("MCP managed Form navigation, Action delivery, and multipart share one Prev
       projectId: fixture.projectId,
       receiverPort: receiver.port,
       callback: async ({ url }) => {
-        await test.step("no Actions navigate with query values and no Resource POST", async () => {
-          const formRequests: string[] = [];
-          page.on("request", (request) => {
-            if (new URL(request.url()).pathname.startsWith("/__ws-form")) {
-              formRequests.push(request.url());
+        await openLocalPreview(page, url);
+        for (const { mode, message, status, formId } of [
+          {
+            mode: "success",
+            message: successMessage,
+            status: 200,
+            formId: success.formId,
+          },
+          {
+            mode: "error",
+            message: errorMessage,
+            status: 502,
+            formId: error.formId,
+          },
+        ] as const) {
+          await test.step(
+            mode + " feedback already in viewport does not scroll",
+            async () => {
+              if (mode === "error") {
+                await page.goto(url);
+              }
+              await positionFeedback(page, message, "visible");
+              const form = await fillForm(page, formId);
+              const submission = page.waitForResponse(
+                (response) =>
+                  new URL(response.url()).pathname.startsWith("/__ws-form") &&
+                  response.request().method() === "POST"
+              );
+              await form.getByRole("button", { name: "Submit" }).click();
+              expect((await submission).status()).toBe(status);
+              await expect(form).toHaveAttribute("data-state", mode);
+              await expectFeedbackInsideViewport(page, message);
+              await page.evaluate(
+                () =>
+                  new Promise<void>((resolve) =>
+                    requestAnimationFrame(() =>
+                      requestAnimationFrame(() => resolve())
+                    )
+                  )
+              );
+              expect(await getScrollCalls(page)).toEqual([]);
+              receiver.deliveries.splice(0);
             }
-          });
-          await page.route("**/*", (route) => {
-            const target = new URL(route.request().url());
-            return target.hostname === "127.0.0.1"
-              ? route.continue()
-              : route.abort();
-          });
-          await page.goto(url);
-          const form = page.locator(
-            `[data-ws-managed-form-id="${empty.formId}"]`
           );
-          await form.locator('input[name="name"]').fill("Ada");
-          await form.locator('input[name="email"]').fill("ada@example.com");
-          await form.locator('input[name="subject"]').fill("No Action test");
-          await form.locator('textarea[name="message"]').fill("No dispatch");
-          await expect(form).toHaveAttribute(
-            "action",
-            "?__webstudio__=navigate"
+        }
+
+        await test.step("partial Action failure scrolls error feedback into view", async () => {
+          await page.goto(url);
+          await positionFeedback(page, errorMessage, "offscreen");
+          const form = await fillForm(page, delivery.formId);
+          const submission = page.waitForResponse(
+            (response) =>
+              new URL(response.url()).pathname.startsWith("/__ws-form") &&
+              response.request().method() === "POST"
           );
           await form.getByRole("button", { name: "Submit" }).click();
+          const response = await submission;
+          expect(response.status()).toBe(502);
+          expect(await response.json()).toMatchObject({
+            success: false,
+            results: [
+              expect.objectContaining({
+                resourceId: delivery.successfulResourceId,
+                status: 200,
+              }),
+              expect.objectContaining({
+                resourceId: delivery.resourceId,
+                status: 503,
+              }),
+            ],
+            errors: [
+              expect.objectContaining({
+                resourceId: delivery.resourceId,
+                status: 503,
+              }),
+            ],
+          });
+          await expect(form).toHaveAttribute("data-state", "error");
+          await expectFeedbackInsideViewport(page, errorMessage);
           await expect
-            .poll(() => new URL(page.url()).searchParams.get("name"))
-            .toBe("Ada");
-          expect(new URL(page.url()).searchParams.get("email")).toBe(
-            "ada@example.com"
-          );
-          expect(new URL(page.url()).searchParams.get("subject")).toBe(
-            "No Action test"
-          );
-          expect(new URL(page.url()).searchParams.get("message")).toBe(
-            "No dispatch"
-          );
-          expect(formRequests).toEqual([]);
+            .poll(() => getScrollCalls(page))
+            .toEqual([expect.stringContaining(errorMessage)]);
+          expect(
+            receiver.deliveries.map(({ pathname }) => pathname).sort()
+          ).toEqual(["/reject", "/submit"]);
         });
+        receiver.deliveries.length = 0;
 
         await test.step("one Action delivers and the next failure is reported", async () => {
           const submission = (
@@ -264,6 +394,41 @@ test("MCP managed Form navigation, Action delivery, and multipart share one Prev
           expect(Buffer.from(await uploadedFile.arrayBuffer())).toEqual(
             fileBytes
           );
+        });
+
+        await test.step("no Actions navigate with query values and no Resource POST", async () => {
+          const formRequests: string[] = [];
+          page.on("request", (request) => {
+            if (new URL(request.url()).pathname.startsWith("/__ws-form")) {
+              formRequests.push(request.url());
+            }
+          });
+          await page.goto(url);
+          const form = page.locator(
+            `[data-ws-managed-form-id="${empty.formId}"]`
+          );
+          await form.locator('input[name="name"]').fill("Ada");
+          await form.locator('input[name="email"]').fill("ada@example.com");
+          await form.locator('input[name="subject"]').fill("No Action test");
+          await form.locator('textarea[name="message"]').fill("No dispatch");
+          await expect(form).toHaveAttribute(
+            "action",
+            "?__webstudio__=navigate"
+          );
+          await form.getByRole("button", { name: "Submit" }).click();
+          await expect
+            .poll(() => new URL(page.url()).searchParams.get("name"))
+            .toBe("Ada");
+          expect(new URL(page.url()).searchParams.get("email")).toBe(
+            "ada@example.com"
+          );
+          expect(new URL(page.url()).searchParams.get("subject")).toBe(
+            "No Action test"
+          );
+          expect(new URL(page.url()).searchParams.get("message")).toBe(
+            "No dispatch"
+          );
+          expect(formRequests).toEqual([]);
         });
       },
     });

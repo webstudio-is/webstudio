@@ -25,6 +25,7 @@ import {
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
+import { authorManagedForm } from "./mcp-managed-form-author";
 
 const commands = new Set([
   "insert-fragment",
@@ -284,11 +285,18 @@ const author = async () => {
         }),
       ])
     );
-    process.stdout.write(`${JSON.stringify({ formInstanceId })}\n`);
+    return formInstanceId;
   } finally {
     await client.close();
     await server.close();
   }
 };
 
-await author();
+const blockedForm = await authorManagedForm(projectId, { mode: "default" });
+const emailForm = await authorManagedForm(projectId, {
+  mode: "email-attachments",
+});
+const nativeFormId = await author();
+process.stdout.write(
+  `${JSON.stringify({ blockedForm, emailForm, nativeFormId })}\n`
+);

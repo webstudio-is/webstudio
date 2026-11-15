@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 // Load the CLI in this isolated runner; Builder's tsconfig does not include
@@ -35,14 +35,20 @@ const project = await preparePreviewProject({
   generate: true,
   source: "local",
 });
+const adapterPath = join(
+  project.cwd,
+  "app/__generated__/$resources.managed-form-fetch.server.ts"
+);
+await rename(
+  adapterPath,
+  join(project.cwd, "app/__generated__/production-form-fetch.server.ts")
+);
 await writeFile(
-  join(
-    project.cwd,
-    "app/__generated__/$resources.managed-form-fetch.server.ts"
-  ),
+  adapterPath,
   `import { createCloudflareManagedFormEmailSender, validateCloudflareManagedFormEmail } from "@webstudio-is/sdk/runtime";
 import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";
 import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
+import { createManagedFormResourceFetch as createProductionFormFetch } from "./production-form-fetch.server";
 
 // This test-only RPC binding records payloads through the loopback capture server.
 export const createManagedFormEmailSender = ({ formData, projectId }: { context: unknown; formData: FormData; projectId: string }) => createCloudflareManagedFormEmailSender({
@@ -63,13 +69,18 @@ export const createManagedFormEmailSender = ({ formData, projectId }: { context:
 }, formData, projectId);
 
 export const validateManagedFormEmail = validateCloudflareManagedFormEmail;
-export const createManagedFormResourceFetch = ({ request, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
+export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
+  const previewHostname = new URL(request.url).hostname;
+  const productionFetch = createProductionFormFetch({ request, context, projectDomain });
   const protectedFetch = createNodeProtectedResourceFetch({
-    deniedHostnames: getDeniedResourceHostnames([new URL(request.url).hostname, projectDomain]),
+    deniedHostnames: getDeniedResourceHostnames([previewHostname, projectDomain]),
   });
   const testFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const outgoing = new Request(input, init);
     const destination = new URL(outgoing.url);
+    if (destination.hostname === previewHostname) {
+      return productionFetch(outgoing);
+    }
     protectedFetch.validateDestination(destination);
     if (destination.href !== "https://mcp-delivery.example/submit") {
       throw new Error("Unexpected E2E HTTP destination");
@@ -77,7 +88,9 @@ export const createManagedFormResourceFetch = ({ request, projectDomain }: { req
     return fetch(new Request("http://127.0.0.1:${httpPort}/submit", outgoing));
   };
   return Object.assign(testFetch, {
-    validateDestination: (url: URL) => protectedFetch.validateDestination(url),
+    validateDestination: (url: URL) => url.hostname === previewHostname
+      ? productionFetch.validateDestination(url)
+      : protectedFetch.validateDestination(url),
   });
 };
 `

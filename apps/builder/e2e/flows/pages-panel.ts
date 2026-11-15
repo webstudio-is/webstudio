@@ -1,11 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { expectLocatorHidden, expectTextHidden } from "./assertions";
 import { waitForCanvasText } from "./builder";
-import {
-  waitForChangeToBeSaved,
-  waitForSyncComplete,
-  waitForSyncStatus,
-} from "./sync-status";
+import { waitForChangeToBeSaved, waitForSyncComplete } from "./sync-status";
 
 const getPageSettingsControl = ({
   page,
@@ -206,7 +202,7 @@ export const openPage = async ({
   await openPagesPanel({ page });
   await page.getByText(pageName, { exact: true }).first().click();
   await waitForCanvasText({ page, text: canvasText });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 };
 
 export const createFolder = async ({
@@ -229,7 +225,6 @@ export const createFolder = async ({
   await page
     .getByRole("group", { name: `Folder ${folderName}`, exact: true })
     .waitFor();
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 export const createPageFromTemplate = async ({
@@ -256,7 +251,6 @@ export const createPageFromTemplate = async ({
   await save;
 
   await waitForCanvasText({ page, text: canvasText });
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 export const choosePageSettingsSocialImageAsset = async ({

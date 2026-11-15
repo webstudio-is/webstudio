@@ -26,6 +26,7 @@ import {
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
+import { authorFormQueries } from "./mcp-form-query-author";
 import { authorManagedForm } from "./mcp-managed-form-author";
 
 const [, , projectId, phase, savedBoundFormId, savedPartialFormId] =
@@ -421,4 +422,9 @@ for (const [mode, formId] of actions) {
   }
 }
 
-process.stdout.write(`${JSON.stringify({ boundFormId, partialFormId })}\n`);
+if (phase === "initial") {
+  const query = await authorFormQueries(projectId);
+  process.stdout.write(
+    `${JSON.stringify({ boundFormId, partialFormId, query })}\n`
+  );
+}

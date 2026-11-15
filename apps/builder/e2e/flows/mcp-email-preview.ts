@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadDevBuild } from "../db";
+import { measure } from "../perf";
 import { stopChildProcess } from "../process";
 import {
   createLocalBundleFromDevBuild,
@@ -81,10 +82,12 @@ export const startLocalEmailReceiver = async () => {
 export const withMcpEmailPreview = async <Result>({
   projectId,
   emailPort,
+  queryPort,
   callback,
 }: {
   projectId: string;
   emailPort: number;
+  queryPort?: number;
   callback: ({ url }: { url: string }) => Promise<Result>;
 }) => {
   const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-mcp-email-"));
@@ -109,6 +112,7 @@ export const withMcpEmailPreview = async <Result>({
         runnerPath,
         String(port),
         String(emailPort),
+        ...(queryPort === undefined ? [] : [String(queryPort)]),
       ],
       {
         cwd: tempDir,
@@ -130,11 +134,14 @@ export const withMcpEmailPreview = async <Result>({
     preview.stdout?.on("data", appendOutput);
     preview.stderr?.on("data", appendOutput);
     const url = `http://127.0.0.1:${port}/`;
-    await waitForGeneratedPreview({
-      process: preview,
-      url,
-      output: () => output.join(""),
-    });
+    const runningPreview = preview;
+    await measure("generated Email preview startup", () =>
+      waitForGeneratedPreview({
+        process: runningPreview,
+        url,
+        output: () => output.join(""),
+      })
+    );
     return await callback({ url });
   } finally {
     if (preview !== undefined) {

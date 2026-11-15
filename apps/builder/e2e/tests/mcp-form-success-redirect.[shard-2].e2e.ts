@@ -7,28 +7,23 @@ import {
   startFormDeliveryReceiver,
   withGeneratedFormDeliveryPreview,
 } from "../flows/generated-form-delivery";
-import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
+import {
+  startPreviewFormMcpClient,
+  submitPreviewFormViaMcp,
+} from "../flows/mcp-preview-submit";
+import { measure } from "../perf";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
 const authorPath = fileURLToPath(
-  new URL("../fixtures/mcp-managed-form-author.ts", import.meta.url)
+  new URL("../fixtures/mcp-form-outcomes-author.ts", import.meta.url)
 );
 const reactGlobalPath = fileURLToPath(
   new URL("../../../../scripts/register-react-global.ts", import.meta.url)
 );
-const successRedirect = "?mcp-e2e=success";
 const scrollCallsKey = "mcp-form-feedback-scroll-calls";
 
-const authorRedirectForm = async (
-  projectId: string,
-  fail: boolean,
-  redirect: string | null = successRedirect
-): Promise<{
-  formId: string;
-  resourceId: string;
-  successfulResourceId?: string;
-}> => {
+const authorForms = async (projectId: string) => {
   const { stdout } = await execFileAsync(
     process.execPath,
     [
@@ -39,11 +34,6 @@ const authorRedirectForm = async (
       "--conditions=webstudio",
       authorPath,
       projectId,
-      JSON.stringify({
-        mode: "redirect",
-        successRedirect: redirect ?? undefined,
-        fail,
-      }),
     ],
     {
       timeout: 60_000,
@@ -59,10 +49,22 @@ const authorRedirectForm = async (
     }
   );
   return JSON.parse(stdout) as {
-    formId: string;
-    resourceId: string;
-    successfulResourceId?: string;
+    successful: RedirectForm;
+    failed: RedirectForm;
+    feedback: RedirectForm;
+    combination: {
+      formId: string;
+      graphqlResourceId: string;
+      middleResourceId: string;
+      httpResourceId: string;
+    };
   };
+};
+
+type RedirectForm = {
+  formId: string;
+  resourceId: string;
+  successfulResourceId?: string;
 };
 
 const fillContactForm = async (form: import("@playwright/test").Locator) => {
@@ -189,11 +191,12 @@ const expectFeedbackInViewport = async (
   }
 };
 
-test("MCP Form redirect and feedback outcomes use one generated Preview", async ({
+test("MCP Forms preserve action order, redirect, and feedback in generated Preview", async ({
   page,
   context,
 }) => {
   test.setTimeout(240_000);
+  await startPreviewFormMcpClient();
   const fixture = await createContentModeProject({
     context,
     email: "mcp-form-redirect-combined@webstudio.test",
@@ -201,9 +204,12 @@ test("MCP Form redirect and feedback outcomes use one generated Preview", async 
     assetNamePrefix: "mcp-form-redirect-combined-",
     builderToken: "mcp-form-redirect-combined-builder-token",
   });
-  const successful = await authorRedirectForm(fixture.projectId, false);
-  const failed = await authorRedirectForm(fixture.projectId, true);
-  const feedback = await authorRedirectForm(fixture.projectId, false, null);
+  const { successful, failed, feedback, combination } = await measure(
+    "MCP author Form outcomes",
+    () => authorForms(fixture.projectId)
+  );
+  const { formId, graphqlResourceId, middleResourceId, httpResourceId } =
+    combination;
   expect(successful.successfulResourceId).toBeDefined();
   expect(failed.successfulResourceId).toBeUndefined();
   expect(feedback.successfulResourceId).toBeDefined();
@@ -214,6 +220,82 @@ test("MCP Form redirect and feedback outcomes use one generated Preview", async 
       projectId: fixture.projectId,
       receiverPort: receiver.port,
       callback: async ({ url }) => {
+        await test.step("MCP Form dispatches Actions in configured result order", async () => {
+          const submission = (
+            await submitPreviewFormViaMcp({
+              url,
+              input: {
+                path: "/",
+                selector: `[data-ws-managed-form-id="${formId}"]`,
+                values: [
+                  { name: "name", value: "Ada" },
+                  { name: "email", value: "ada@example.com" },
+                  { name: "subject", value: "Action combination" },
+                  { name: "message", value: "Two receivers" },
+                ],
+                submitter: "button[type=submit]",
+                timeout: 30_000,
+              },
+            })
+          ).data;
+          expect(submission).toMatchObject({
+            status: "submitted",
+            formState: "success",
+            errors: [],
+          });
+          expect(submission.exchanges).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                status: 200,
+                url: expect.stringContaining("/__ws-form"),
+              }),
+            ])
+          );
+          expect(submission.results).toEqual([
+            expect.objectContaining({
+              resourceId: graphqlResourceId,
+              resourceName: "First GraphQL action",
+              status: 200,
+            }),
+            expect.objectContaining({
+              resourceId: middleResourceId,
+              resourceName: "Middle HTTP action",
+              status: 200,
+            }),
+            expect.objectContaining({
+              resourceId: httpResourceId,
+              resourceName: "Last HTTP action",
+              status: 200,
+            }),
+          ]);
+          expect(receiver.deliveries).toHaveLength(3);
+          expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual([
+            "/submit",
+            "/submit",
+            "/submit",
+          ]);
+          const graphqlDelivery = receiver.deliveries.find(({ body }) =>
+            body.includes("mutation Record")
+          );
+          const httpDelivery = receiver.deliveries.find(
+            ({ body }) => !body.includes("mutation Record")
+          );
+          expect(graphqlDelivery).toMatchObject({ method: "POST" });
+          expect(graphqlDelivery?.contentType).toContain("application/json");
+          expect(JSON.parse(graphqlDelivery?.body ?? "null")).toMatchObject({
+            query: "mutation Record($name: String!) { record(name: $name) }",
+            variables: { name: "Ada" },
+          });
+          expect(httpDelivery).toMatchObject({ method: "POST" });
+          expect(JSON.parse(httpDelivery?.body ?? "null")).toMatchObject({
+            name: "Ada",
+            email: "ada@example.com",
+            subject: "Action combination",
+            message: "Two receivers",
+          });
+          receiver.deliveries.splice(0);
+        });
+
         for (const [name, form, fail] of [
           ["successful", successful, false],
           ["failed", failed, true],

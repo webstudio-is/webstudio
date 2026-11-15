@@ -20,7 +20,13 @@ const { startPreviewServer, waitForPreviewExit } = await import(
 
 const port = Number(process.argv[2]);
 const emailPort = Number(process.argv[3]);
-if (!Number.isInteger(port) || !Number.isInteger(emailPort)) {
+const queryPort =
+  process.argv[4] === undefined ? undefined : Number(process.argv[4]);
+if (
+  !Number.isInteger(port) ||
+  !Number.isInteger(emailPort) ||
+  (queryPort !== undefined && !Number.isInteger(queryPort))
+) {
   throw new Error("Expected Preview and local email receiver ports");
 }
 
@@ -59,9 +65,36 @@ export const createManagedFormEmailSender = ({ formData, projectId }: { context:
 
 export const validateManagedFormEmail = validateCloudflareManagedFormEmail;
 export const createManagedFormResourceFetch = ({ request, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
-  return createNodeProtectedResourceFetch({
+  const protectedFetch = createNodeProtectedResourceFetch({
     deniedHostnames: getDeniedResourceHostnames([new URL(request.url).hostname, projectDomain]),
   });
+  ${
+    queryPort === undefined
+      ? "return protectedFetch;"
+      : `
+  const validateDestination = (url: URL) => {
+    if (
+      url.origin !== "https://mcp-delivery.example" ||
+      url.pathname !== "/submit" ||
+      [...url.searchParams.keys()].some((key) => key !== "tag") ||
+      url.hash !== ""
+    ) {
+      throw new Error("Unexpected E2E Form query destination");
+    }
+    protectedFetch.validateDestination(url);
+  };
+  const captureQueryDelivery = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const outgoing = new Request(input, init);
+    const destination = new URL(outgoing.url);
+    validateDestination(destination);
+    if (outgoing.method !== "POST") {
+      throw new Error("Expected an E2E Form query POST");
+    }
+    const target = new URL(destination.pathname + destination.search, "http://127.0.0.1:${queryPort}");
+    return fetch(new Request(target, outgoing));
+  };
+  return Object.assign(captureQueryDelivery, { validateDestination });`
+  }
 };
 `
 );

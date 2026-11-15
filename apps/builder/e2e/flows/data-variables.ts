@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import type { Page } from "@playwright/test";
 import { selectCanvasTextInstance } from "./canvas-selection";
-import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
+import { waitForChangeToBeSaved } from "./sync-status";
 
 const getVariableForm = (page: Page) =>
   page
@@ -16,7 +16,6 @@ const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
   await page
     .getByText("New variable", { exact: true })
     .waitFor({ state: "hidden" });
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const openNewVariablePanel = async ({ page }: { page: Page }) => {
@@ -101,7 +100,6 @@ export const bindSelectedTextContentToExpression = async ({
       { cause: error }
     );
   }
-  await waitForSyncStatus({ page, status: "idle" });
   await page.keyboard.press("Escape");
 };
 

@@ -26,9 +26,11 @@ import {
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
+import { authorQuerySearch } from "./mcp-query-search-author";
 import { seedSavedLegacyForm } from "./saved-legacy-form";
 
 const commands = new Set([
+  "create-page",
   "insert-fragment",
   "set-text-content",
   "create-variable",
@@ -55,19 +57,19 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
     requiresConfirm: contract.requiresConfirm,
   }));
 
-const projectId = process.argv[2];
-if (projectId === undefined) {
-  throw new Error("Expected the disposable E2E project ID");
-}
-
-const mode = process.argv[3];
-const receiverUrl = process.argv[4];
-const verifyFieldChange = process.argv[5] === "field-change";
-if ((mode !== "legacy" && mode !== "managed") || receiverUrl === undefined) {
-  throw new Error("Expected legacy/managed mode and a local receiver URL");
-}
-
-const author = async () => {
+const author = async ({
+  projectId,
+  mode,
+  receiverUrl,
+  path,
+  verifyFieldChange = false,
+}: {
+  projectId: string;
+  mode: "legacy" | "managed";
+  receiverUrl: string;
+  path?: string;
+  verifyFieldChange?: boolean;
+}) => {
   let build = await loadDevBuild({ projectId: projectId });
   const parse = <Value>(field: keyof typeof build) =>
     JSON.parse(String(build[field])) as Value;
@@ -98,6 +100,7 @@ const author = async () => {
   let stored: ProjectSessionPersistedSnapshot | undefined;
   let revision = 0;
   let nextId = 0;
+  const idPrefix = `mcp-callback-${mode}`;
   const persist = async () => {
     const snapshot = createBuilderBuildDataSnapshotFromState(remote.state);
     build = await updateBuild(build.id, {
@@ -116,7 +119,7 @@ const author = async () => {
   const session = createProjectSession({
     projectId: projectId,
     compatibilityVersion: "mcp-form-callbacks-e2e-v1",
-    runtimeContext: { createId: () => `mcp-callback-${nextId++}` },
+    runtimeContext: { createId: () => `${idPrefix}-${nextId++}` },
     storage: {
       load: async () => stored,
       save: async (snapshot, options) => {
@@ -170,7 +173,7 @@ const author = async () => {
             state: remote.state,
             input,
             context: {
-              createId: () => `mcp-callback-server-${nextId++}`,
+              createId: () => `${idPrefix}-server-${nextId++}`,
               projectId: remote.projectId,
               projectVersion: remote.version,
             },
@@ -181,7 +184,7 @@ const author = async () => {
           version: remote.version + 1,
           state: applyBuilderPatchTransactions(remote.state, [
             {
-              id: `mcp-callback-transaction-${nextId++}`,
+              id: `${idPrefix}-transaction-${nextId++}`,
               payload: mutation.payload,
             },
           ]).state,
@@ -248,29 +251,38 @@ const author = async () => {
   };
 
   try {
+    const rootInstanceId =
+      path === undefined
+        ? home.rootInstanceId
+        : ((
+            await call("create-page", {
+              name: "Managed Form callbacks",
+              path,
+            })
+          ).rootInstanceId as string);
     const state = await call("create-variable", {
-      scopeInstanceId: home.rootInstanceId,
+      scopeInstanceId: rootInstanceId,
       name: "callbackState",
       value: { type: "string", value: "initial" },
     });
     const history = await call("create-variable", {
-      scopeInstanceId: home.rootInstanceId,
+      scopeInstanceId: rootInstanceId,
       name: "callbackHistory",
       value: { type: "string", value: "" },
     });
     const results = await call("create-variable", {
-      scopeInstanceId: home.rootInstanceId,
+      scopeInstanceId: rootInstanceId,
       name: "callbackResults",
       value: { type: "json", value: [] },
     });
     const errors = await call("create-variable", {
-      scopeInstanceId: home.rootInstanceId,
+      scopeInstanceId: rootInstanceId,
       name: "callbackErrors",
       value: { type: "json", value: [] },
     });
     const changeCount = verifyFieldChange
       ? await call("create-variable", {
-          scopeInstanceId: home.rootInstanceId,
+          scopeInstanceId: rootInstanceId,
           name: "fieldChangeCount",
           value: { type: "number", value: 0 },
         })
@@ -283,7 +295,7 @@ const author = async () => {
     if (mode === "legacy") {
       await expect(
         call("insert-fragment", {
-          parentInstanceId: home.rootInstanceId,
+          parentInstanceId: rootInstanceId,
           fragment: "<WebhookForm />",
         })
       ).rejects.toThrow("Webhook Form is deprecated");
@@ -293,7 +305,7 @@ const author = async () => {
         version: remote.version + 1,
         state: seedSavedLegacyForm({
           state: remote.state,
-          rootInstanceId: home.rootInstanceId,
+          rootInstanceId: rootInstanceId,
           formId,
         }),
       };
@@ -315,14 +327,14 @@ const author = async () => {
           '<Input name="outcome" /><Button type="submit">Submit callback form</Button>',
       });
       const fragment = await call("insert-fragment", {
-        parentInstanceId: home.rootInstanceId,
+        parentInstanceId: rootInstanceId,
         fragment:
           '<Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>',
       });
       [auditId, errorId] = fragment.rootInstanceIds as string[];
     } else {
       const fragment = await call("insert-fragment", {
-        parentInstanceId: home.rootInstanceId,
+        parentInstanceId: rootInstanceId,
         fragment: verifyFieldChange
           ? '<ResourceForm id="callback-form" /><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>'
           : '<ResourceForm id="callback-form"><Input name="outcome" /><Button type="submit">Submit callback form</Button></ResourceForm><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>',
@@ -480,4 +492,26 @@ const author = async () => {
   }
 };
 
-await author();
+const [, , projectId, mode, receiverUrl, option] = process.argv;
+if (
+  projectId === undefined ||
+  (mode !== "legacy" && mode !== "managed" && mode !== "legacy-and-managed") ||
+  receiverUrl === undefined
+) {
+  throw new Error("Expected a project ID, callback mode and receiver URL");
+}
+if (mode === "legacy-and-managed") {
+  if (option === undefined) {
+    throw new Error("Expected the managed callback page path");
+  }
+  await author({ projectId, mode: "legacy", receiverUrl });
+  await author({ projectId, mode: "managed", receiverUrl, path: option });
+  await authorQuerySearch(projectId);
+} else {
+  await author({
+    projectId,
+    mode,
+    receiverUrl,
+    verifyFieldChange: option === "field-change",
+  });
+}

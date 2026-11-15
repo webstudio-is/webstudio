@@ -15,10 +15,7 @@ import {
   openPagesPanel,
   openTemplateSettings,
 } from "../flows/pages-panel";
-import {
-  waitForChangeToBeSaved,
-  waitForSyncStatus,
-} from "../flows/sync-status";
+import { waitForChangeToBeSaved } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
 import { test, withBrowserContext } from "../test";
@@ -191,8 +188,9 @@ const selectContextAction = async ({
 };
 
 const pasteFromClipboardShortcut = async ({ page }: { page: Page }) => {
+  const save = waitForChangeToBeSaved({ page });
   await page.keyboard.press("ControlOrMeta+V");
-  await waitForSyncStatus({ page, status: "idle" });
+  await save;
 };
 
 const confirmDialogAction = async ({
@@ -443,7 +441,6 @@ test("Builder can draft, stage, copy, duplicate, and delete a page from the head
   const deleteSave = waitForChangeToBeSaved({ page });
   await confirmDialogAction({ page, action: "Delete Page" });
   await deleteSave;
-  await waitForSyncStatus({ page, status: "idle" });
   await expectPageRowHidden({ page, pageName: duplicatedPageName });
 
   await measure(
@@ -685,7 +682,6 @@ const pasteClipboardData = async ({
     );
   }, data);
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const countPastedElements = async ({

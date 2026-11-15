@@ -285,6 +285,73 @@ export const authorManagedForm = async (
       secondFormId = (insertedSecondForm.rootInstanceIds as string[])[0];
     }
     await call("refresh");
+    if (authorOptions.mode === "email-http-combination") {
+      await call("update-project-settings", {
+        meta: {
+          contactEmail: "owner@mcp.test",
+          emailSender: "Contact Form <forms@mcp.test>",
+        },
+      });
+      const resources = await call("list-resources", {
+        scopeInstanceId: formId,
+      });
+      const email = (
+        resources.resources as Array<{
+          id: string;
+          dataSourceId: string;
+          name: string;
+        }>
+      ).find(({ name }) => name === "Email to owner");
+      if (email === undefined) {
+        throw new Error("Expected the Form's Email to owner Email Action");
+      }
+      await call("update-resource", {
+        resourceId: email.id,
+        values: {
+          email: {
+            recipientMode: "custom",
+            recipients: "combined@mcp.test",
+            subject: JSON.stringify("Combined action subject"),
+            body: JSON.stringify("Combined action exact body."),
+          },
+        },
+      });
+      const http = await call("create-resource", {
+        resource: {
+          name: "Combined HTTP action",
+          method: "post",
+          url: "https://mcp-delivery.example/submit",
+          headers: [],
+        },
+        scopeInstanceId: formId,
+        dataSourceName: "Combined HTTP action",
+        exposeAsDataSource: true,
+      });
+      const actions = [
+        { dataSourceId: email.dataSourceId },
+        { dataSourceId: http.dataSourceId },
+      ];
+      await call("update-props", {
+        updates: [
+          { instanceId: formId, name: "action", type: "json", value: actions },
+        ],
+      });
+      await call("refresh");
+      const inspection = await call("inspect-instance", {
+        instanceId: formId,
+        include: ["props"],
+      });
+      expect(inspection.props).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "action", value: actions }),
+        ])
+      );
+      return {
+        formId,
+        emailResourceId: email.id,
+        httpResourceId: http.resourceId,
+      };
+    }
     if (emailIsolationMode && secondFormId === undefined) {
       throw new Error("Expected the second inserted Form ID");
     }
