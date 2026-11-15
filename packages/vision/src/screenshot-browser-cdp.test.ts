@@ -854,7 +854,8 @@ const createFormSubmissionSocket = (
   initialUrl: string,
   observe: () => { pageUrl: string; formState: string; busy?: boolean },
   preSubmitFormState: string | null = "initial",
-  navigationOnSubmit: "main" | "child" | false = false
+  navigationOnSubmit: "main" | "child" | false = false,
+  navigationUrl = initialUrl
 ) => {
   const socket = new FakeWebSocket(200, initialUrl);
   const send = socket.send;
@@ -890,7 +891,7 @@ const createFormSubmissionSocket = (
                 data: JSON.stringify({
                   method: "Page.navigatedWithinDocument",
                   params: {
-                    url: initialUrl,
+                    url: navigationUrl,
                     frameId: navigationOnSubmit === "main" ? "main" : "child",
                   },
                 }),
@@ -1510,6 +1511,34 @@ test("reports query-only navigation without exposing query values", async () => 
       selector: "form",
       values: [],
       timeout: 30_000,
+    });
+    expect(result).toMatchObject({
+      status: "submitted",
+      pageUrl: url,
+      redirect: url,
+    });
+    expect(JSON.stringify(result)).not.toContain("secret");
+  } finally {
+    await session.close();
+  }
+});
+
+test("reports a redirect when navigation arrives before the new page can be read", async () => {
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(
+    url,
+    () => ({ pageUrl: url, formState: "initial", busy: false }),
+    "initial",
+    "main",
+    `${url}?token=secret`
+  );
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 1000,
     });
     expect(result).toMatchObject({
       status: "submitted",
