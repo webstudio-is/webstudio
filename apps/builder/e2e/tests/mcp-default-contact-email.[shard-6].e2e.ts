@@ -8,7 +8,6 @@ import { formDataParameterName } from "@webstudio-is/sdk/runtime";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { loadDevBuild } from "../db";
 import {
-  startLocalEmailReceiver,
   withMcpEmailPreview,
   type CapturedEmail,
 } from "../flows/mcp-email-preview";
@@ -77,7 +76,7 @@ const submitContactForm = async (url: string, formId: string) =>
     },
   });
 
-test("MCP-inserted default contact Form sends its automatic owner message and visitor confirmation", async ({
+test("MCP-inserted default contact Form delivers owner and visitor emails and keeps visitor failure nonfatal", async ({
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -126,11 +125,52 @@ test("MCP-inserted default contact Form sends its automatic owner message and vi
       emailSender: "Contact Form <forms@mcp.test>",
     },
   });
-  const receiver = await startLocalEmailReceiver();
+  const messages: CapturedEmail[] = [];
+  let rejectVisitor = false;
+  const server = createServer(async (request, response) => {
+    if (request.method !== "POST" || request.url !== "/send") {
+      response.writeHead(404).end();
+      return;
+    }
+    const chunks: Buffer[] = [];
+    for await (const chunk of request) {
+      chunks.push(Buffer.from(chunk));
+    }
+    const message = JSON.parse(
+      Buffer.concat(chunks).toString("utf8")
+    ) as CapturedEmail;
+    messages.push(message);
+    response.setHeader("content-type", "application/json");
+    if (
+      rejectVisitor &&
+      message.to.some(({ address }) => address === "ada@example.test")
+    ) {
+      response.writeHead(429);
+      response.end(
+        JSON.stringify({
+          error: {
+            code: "email_rate_limited",
+            message: "Email sending limit reached",
+          },
+        })
+      );
+      return;
+    }
+    response.writeHead(200);
+    response.end(JSON.stringify({ id: `local-email-${messages.length}` }));
+  });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  if (address === null || typeof address === "string") {
+    throw new Error("Expected a local Email receiver port");
+  }
   try {
     await withMcpEmailPreview({
       projectId: fixture.projectId,
-      emailPort: receiver.port,
+      emailPort: address.port,
       callback: async ({ url }) => {
         const submission = await submitContactForm(url, formId);
         expect(submission.ok).toBe(true);
@@ -146,11 +186,11 @@ test("MCP-inserted default contact Form sends its automatic owner message and vi
             status: 200,
           }),
         ]);
-        await expect.poll(() => receiver.messages.length).toBe(2);
-        const owner = receiver.messages.find((message) =>
+        await expect.poll(() => messages.length).toBe(2);
+        const owner = messages.find((message) =>
           message.to.some(({ address }) => address === "owner@mcp.test")
         );
-        const visitor = receiver.messages.find((message) =>
+        const visitor = messages.find((message) =>
           message.to.some(({ address }) => address === "ada@example.test")
         );
         expect(owner).toMatchObject({
@@ -183,86 +223,29 @@ test("MCP-inserted default contact Form sends its automatic owner message and vi
           ),
         });
         expect(visitor?.attachments ?? []).toEqual([]);
-      },
-    });
-  } finally {
-    await receiver.close();
-  }
-});
-
-test("failed visitor confirmation stays nonfatal while the owner Email succeeds", async ({
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context,
-    email: "mcp-nonfatal-confirmation@webstudio.test",
-    title: "MCP nonfatal confirmation",
-    assetNamePrefix: "mcp-nonfatal-confirmation-",
-    builderToken: "mcp-nonfatal-confirmation-builder-token",
-  });
-  const { formId, ownerResourceId, visitorResourceId } =
-    await authorDefaultContactForm(fixture.projectId);
-  const messages: CapturedEmail[] = [];
-  const server = createServer(async (request, response) => {
-    const chunks: Buffer[] = [];
-    for await (const chunk of request) {
-      chunks.push(Buffer.from(chunk));
-    }
-    const message = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-    messages.push(message);
-    response.setHeader("content-type", "application/json");
-    if (
-      message.to.some(
-        ({ address }: { address: string }) => address === "ada@example.test"
-      )
-    ) {
-      response.writeHead(429);
-      response.end(
-        JSON.stringify({
-          error: {
-            code: "email_rate_limited",
-            message: "Email sending limit reached",
-          },
-        })
-      );
-      return;
-    }
-    response.writeHead(200);
-    response.end(JSON.stringify({ id: "owner-delivered" }));
-  });
-  await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", resolve);
-  });
-  const address = server.address();
-  if (address === null || typeof address === "string") {
-    throw new Error("Expected a local Email receiver port");
-  }
-  try {
-    await withMcpEmailPreview({
-      projectId: fixture.projectId,
-      emailPort: address.port,
-      callback: async ({ url }) => {
-        const submission = await submitContactForm(url, formId);
-        expect(submission.data.status).toBe("submitted");
-        expect(submission.data.results).toEqual([
+        rejectVisitor = true;
+        const failedSubmission = await submitContactForm(url, formId);
+        expect(failedSubmission.data.status).toBe("submitted");
+        expect(failedSubmission.data.results).toEqual([
           expect.objectContaining({ resourceId: ownerResourceId, status: 200 }),
           expect.objectContaining({
             resourceId: visitorResourceId,
             status: 429,
           }),
         ]);
-        expect(submission.data.errors).toEqual([
+        expect(failedSubmission.data.errors).toEqual([
           expect.objectContaining({
             status: 429,
             message: "Form resource returned HTTP 429",
           }),
         ]);
-        expect(messages).toHaveLength(2);
+        expect(messages).toHaveLength(4);
         expect(
-          messages.some((message) =>
-            message.to.some(({ address }) => address === "owner@mcp.test")
-          )
+          messages
+            .slice(2)
+            .some((message) =>
+              message.to.some(({ address }) => address === "owner@mcp.test")
+            )
         ).toBe(true);
       },
     });
