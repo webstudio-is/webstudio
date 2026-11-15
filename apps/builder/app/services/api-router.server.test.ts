@@ -1445,6 +1445,26 @@ describe("api router permits", () => {
         target: "staging",
       })
     ).resolves.toMatchObject({ valid: true, cssValid: true });
+    build.styles[0].value = { type: "keyword", value: "red" };
+    build.breakpoints[0].condition = "(prefers-reduced-motion: reduce)";
+    await expect(
+      createCaller(createContext(true)).publish.validate({
+        projectId: "project-1",
+        target: "staging",
+      })
+    ).resolves.toMatchObject({ valid: true, cssValid: true });
+    for (const condition of [
+      "(orientation: portrait) or (hover: hover)",
+      "(orientation: portrait) and (hover: hover)",
+    ]) {
+      build.breakpoints[0].condition = condition;
+      await expect(
+        createCaller(createContext(true)).publish.validate({
+          projectId: "project-1",
+          target: "staging",
+        })
+      ).resolves.toMatchObject({ valid: true, cssValid: true });
+    }
   });
 
   test.each(

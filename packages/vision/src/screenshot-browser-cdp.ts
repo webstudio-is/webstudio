@@ -442,6 +442,36 @@ const getExecutionContextId = (params: unknown) =>
     ? params.executionContextId
     : undefined;
 
+const isGeneratedStaticScriptPath = (pathname: string) =>
+  /^\/assets\/[^/?#]+\.(?:js|mjs)$/.test(pathname);
+
+const getJavascriptErrorLocation = (params: unknown) => {
+  if (typeof params !== "object" || params === null) {
+    return;
+  }
+  const { url, lineNumber } = params as Record<string, unknown>;
+  if (
+    typeof url !== "string" ||
+    typeof lineNumber !== "number" ||
+    Number.isSafeInteger(lineNumber) === false ||
+    lineNumber < 0 ||
+    lineNumber === Number.MAX_SAFE_INTEGER
+  ) {
+    return;
+  }
+  try {
+    const scriptUrl = new URL(url);
+    if (
+      (scriptUrl.protocol === "http:" || scriptUrl.protocol === "https:") &&
+      isGeneratedStaticScriptPath(scriptUrl.pathname)
+    ) {
+      return { pathname: scriptUrl.pathname, line: lineNumber + 1 };
+    }
+  } catch {
+    return;
+  }
+};
+
 const navigateAndWaitForLifecycle = async (
   cdp: CdpSession,
   waitUntil: ScreenshotWaitUntil,
@@ -791,6 +821,7 @@ export type BrowserScreenshotNavigation = {
   redirects: string[];
   documentReadyState: string;
   javascriptErrorPresent?: boolean;
+  javascriptErrorLocation?: { pathname: string; line: number };
   pageMetadata?: BrowserScreenshotPageMetadata;
   layoutStable: boolean;
 };
@@ -1720,19 +1751,28 @@ const capturePageWithBrowserRuntime = async (
           }
         >();
         let javascriptErrorPresent = false;
+        let javascriptErrorLocation: BrowserScreenshotNavigation["javascriptErrorLocation"];
         let navigationFrameId: string | undefined;
         let navigationExecutionContextFrames: Map<number, string> | undefined;
-        const navigationErrorsByContextId = new Set<number>();
+        const navigationErrorsByContextId = new Map<
+          number,
+          BrowserScreenshotNavigation["javascriptErrorLocation"]
+        >();
         let activeExecutionContextIds = new Set<number>();
         const recordJavascriptError = (params: unknown) => {
           const executionContextId = getExecutionContextId(params);
           if (executionContextId === undefined) {
             return;
           }
+          const location = getJavascriptErrorLocation(params);
           if (navigationExecutionContextFrames !== undefined) {
-            navigationErrorsByContextId.add(executionContextId);
+            navigationErrorsByContextId.set(
+              executionContextId,
+              navigationErrorsByContextId.get(executionContextId) ?? location
+            );
           } else if (activeExecutionContextIds.has(executionContextId)) {
             javascriptErrorPresent = true;
+            javascriptErrorLocation ??= location;
           }
         };
         cdp.on("Runtime.executionContextCreated", (params) => {
@@ -1847,6 +1887,7 @@ const capturePageWithBrowserRuntime = async (
               activeExecutionContextIds
             );
             javascriptErrorPresent = false;
+            javascriptErrorLocation = undefined;
             navigationExecutionContextFrames = new Map();
             navigationErrorsByContextId.clear();
             activeExecutionContextIds = new Set();
@@ -1890,6 +1931,8 @@ const capturePageWithBrowserRuntime = async (
             for (const executionContextId of activeExecutionContextIds) {
               if (navigationErrorsByContextId.has(executionContextId)) {
                 javascriptErrorPresent = true;
+                javascriptErrorLocation ??=
+                  navigationErrorsByContextId.get(executionContextId);
               }
             }
             navigationExecutionContextFrames = undefined;
@@ -2113,6 +2156,9 @@ const capturePageWithBrowserRuntime = async (
             redirects,
             ...readiness,
             ...(javascriptErrorPresent ? { javascriptErrorPresent: true } : {}),
+            ...(javascriptErrorPresent && javascriptErrorLocation !== undefined
+              ? { javascriptErrorLocation }
+              : {}),
           };
           if (images === undefined) {
             delete layout.images;
