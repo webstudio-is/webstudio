@@ -465,18 +465,7 @@ class FakeWebSocket {
                       lineNumber: 6,
                     },
                   }
-                : {
-                    type: "error",
-                    executionContextId,
-                    stackTrace: {
-                      callFrames: [
-                        {
-                          url: "https://example.com/assets/app.js?token=private",
-                          lineNumber: 41,
-                        },
-                      ],
-                    },
-                  },
+                : { type: "error", executionContextId },
             }),
           });
         }
