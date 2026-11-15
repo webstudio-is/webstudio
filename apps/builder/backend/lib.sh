@@ -36,6 +36,7 @@ builder_backend_schema_fingerprint() {
       find packages/prisma-client/prisma/migrations \
         -mindepth 1 -maxdepth 1 -type d -print
       find packages/prisma-client/prisma/migrations \
+        -type d -name client -prune -o \
         -type f \( -name migration.sql -o -name migration.ts -o -name schema.prisma -o -name migration_lock.toml -o -name template.txt \) -print
       find packages/prisma-client/migrations-cli \
         -type f -name '*.ts' ! -name '*.test.ts' -print

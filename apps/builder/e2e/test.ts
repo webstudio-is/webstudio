@@ -5,6 +5,7 @@ import {
   type BrowserContextOptions,
 } from "@playwright/test";
 import env from "../app/env/env.server";
+import { closePreviewFormMcpClient } from "./flows/mcp-preview-submit";
 
 const builderPort = process.env.PORT ?? "3000";
 
@@ -54,7 +55,15 @@ export const withBrowserContext = async <Result>(
   }
 };
 
-export const test = base;
+export const test = base.extend<{}, { mcpClientCleanup: void }>({
+  mcpClientCleanup: [
+    async ({}, use) => {
+      await use();
+      await closePreviewFormMcpClient();
+    },
+    { scope: "worker", auto: true },
+  ],
+});
 
 export const newIsolatedPage = async (browser: Browser) => {
   const context = await newBrowserContext(browser);

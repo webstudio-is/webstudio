@@ -1,4 +1,4 @@
-import type { BrowserContext } from "@playwright/test";
+import type { BrowserContext, Page } from "@playwright/test";
 import env from "../../app/env/env.server";
 import { getWorkerEmail } from "../flows/dashboard";
 import { measure } from "../perf";
@@ -14,6 +14,29 @@ type ContentModeProjectOptions = {
   editorToken?: string;
   editorCanUseApi?: boolean;
   builderToken?: string;
+};
+
+const apiPages = new WeakMap<BrowserContext, Promise<Page>>();
+const getApiPage = (context: BrowserContext) => {
+  let page = apiPages.get(context);
+  if (page === undefined) {
+    page = (async () => {
+      const page = await context.newPage();
+      const originUrl = `${dashboardUrl}/__e2e_origin`;
+      try {
+        await page.route(originUrl, (route) =>
+          route.fulfill({ contentType: "text/html", body: "<!doctype html>" })
+        );
+        await page.goto(originUrl);
+        return page;
+      } catch (error) {
+        await page.close();
+        throw error;
+      }
+    })();
+    apiPages.set(context, page);
+  }
+  return page;
 };
 
 const createProjectThroughApi = async ({
@@ -33,71 +56,65 @@ const createProjectThroughApi = async ({
   if (devPlan !== undefined) {
     await context.clearCookies();
   }
-  const loginPage = await context.request.get(`${dashboardUrl}/login`, {
-    headers: {
-      "sec-fetch-mode": "navigate",
-      "sec-fetch-dest": "document",
-      "sec-fetch-site": "same-origin",
+  const page = await getApiPage(context);
+  await page.evaluate(
+    async ({ email, devPlan, secret }) => {
+      const loginPage = await fetch("/login");
+      if (loginPage.ok === false) {
+        throw new Error(`E2E login check failed with HTTP ${loginPage.status}`);
+      }
+      if (new URL(loginPage.url).pathname === "/login") {
+        const login = await fetch("/auth/dev", {
+          method: "POST",
+          body: new URLSearchParams({ secret, email, devPlan }),
+        });
+        if (login.ok === false) {
+          throw new Error(`E2E dev login failed with HTTP ${login.status}`);
+        }
+      }
     },
-    maxRedirects: 0,
-  });
-  if (loginPage.status() === 200) {
-    const login = await context.request.post(`${dashboardUrl}/auth/dev`, {
-      form: {
-        secret: env.AUTH_SECRET,
-        email: getWorkerEmail(email),
-        devPlan: devPlan ?? "",
-      },
-      headers: { "sec-fetch-site": "same-origin" },
-      maxRedirects: 0,
-    });
-    if (login.status() !== 302) {
-      throw new Error(`E2E dev login failed with HTTP ${login.status()}`);
-    }
-  } else if (loginPage.status() !== 302) {
-    throw new Error(`E2E login check failed with HTTP ${loginPage.status()}`);
-  }
-
-  const csrf = await context.request.get(
-    `${dashboardUrl}/dashboard?_data=routes/_ui`,
     {
-      headers: {
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "same-origin",
-      },
+      email: getWorkerEmail(email),
+      devPlan: devPlan ?? "",
+      secret: env.AUTH_SECRET,
     }
   );
-  if (csrf.ok() === false) {
-    throw new Error(`E2E CSRF setup failed with HTTP ${csrf.status()}`);
+  const csrf = await page.goto(`${dashboardUrl}/dashboard?_data=routes/_ui`, {
+    waitUntil: "commit",
+  });
+  if (csrf === null || csrf.ok() === false) {
+    throw new Error(`E2E CSRF setup failed with HTTP ${csrf?.status()}`);
   }
   const { csrfToken } = (await csrf.json()) as { csrfToken?: string };
   if (csrfToken === undefined || csrfToken === "") {
     throw new Error("E2E CSRF setup did not return a token");
   }
-
-  const project = await context.request.post(
-    `${dashboardUrl}/trpc/dashboardProject.create?batch=1`,
-    {
-      data: { 0: { title } },
-      headers: {
-        "sec-fetch-site": "same-origin",
-        "x-csrf-token": csrfToken,
-      },
-    }
+  return await page.evaluate(
+    async ({ title, csrfToken }) => {
+      const project = await fetch("/trpc/dashboardProject.create?batch=1", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-csrf-token": csrfToken,
+        },
+        body: JSON.stringify({ 0: { title } }),
+      });
+      if (project.ok === false) {
+        throw new Error(
+          `E2E project creation failed with HTTP ${project.status}`
+        );
+      }
+      const result = (await project.json()) as Array<{
+        result?: { data?: { id?: string } };
+      }>;
+      const projectId = result[0]?.result?.data?.id;
+      if (projectId === undefined) {
+        throw new Error("E2E project creation did not return a project ID");
+      }
+      return projectId;
+    },
+    { title, csrfToken }
   );
-  if (project.ok() === false) {
-    throw new Error(
-      `E2E project creation failed with HTTP ${project.status()}`
-    );
-  }
-  const result = (await project.json()) as Array<{
-    result?: { data?: { id?: string } };
-  }>;
-  const projectId = result[0]?.result?.data?.id;
-  if (projectId === undefined) {
-    throw new Error("E2E project creation did not return a project ID");
-  }
-  return projectId;
 };
 
 export const createContentModeProject = async ({

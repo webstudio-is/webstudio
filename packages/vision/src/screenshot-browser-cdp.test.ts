@@ -955,6 +955,7 @@ const createManagedFormSocket = ({
   unreadable = false,
   navigationGap = false,
   fastRedirect = false,
+  interceptedBodyUnreadable = false,
   unrelated,
 }: {
   body?: string;
@@ -963,6 +964,7 @@ const createManagedFormSocket = ({
   unreadable?: boolean;
   navigationGap?: boolean | "stalled";
   fastRedirect?: boolean;
+  interceptedBodyUnreadable?: boolean;
   unrelated?: { method: string; url: string; frameId: string };
 } = {}) => {
   const url = "http://127.0.0.1:5173/contact";
@@ -1014,7 +1016,9 @@ const createManagedFormSocket = ({
           socket.emit("message", {
             data: JSON.stringify({
               id: message.id,
-              result: { body, base64Encoded },
+              ...(interceptedBodyUnreadable
+                ? { error: { code: -32000, message: "Body unavailable" } }
+                : { result: { body, base64Encoded } }),
             }),
           }),
         0
@@ -1201,6 +1205,31 @@ test("captures managed Form results before a fast redirect discards the network 
       interceptedReads: 1,
       continuedResponses: 1,
       reads: [],
+    });
+  } finally {
+    await session.close();
+  }
+});
+
+test("continues a fast redirect when its intercepted response body cannot be read", async () => {
+  const { socket, counters } = createManagedFormSocket({
+    fastRedirect: true,
+    interceptedBodyUnreadable: true,
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result.status).toBe("submitted");
+    expect(result.results).toEqual([]);
+    expect(counters).toMatchObject({
+      submissions: 1,
+      interceptedReads: 1,
+      continuedResponses: 1,
     });
   } finally {
     await session.close();

@@ -8,6 +8,7 @@ import type {
   ProjectSessionPreviewSubmitFormInput,
   ProjectSessionPreviewSubmitFormResult,
 } from "@webstudio-is/project-build/mcp";
+import { closeChildProcessInput } from "../process";
 
 const runnerPath = fileURLToPath(
   new URL("../fixtures/mcp-preview-submit-client.ts", import.meta.url)
@@ -84,6 +85,15 @@ const startClient = () => {
 
 let client: ReturnType<typeof startClient> | undefined;
 let queue = Promise.resolve();
+
+export const closePreviewFormMcpClient = async () => {
+  await queue;
+  const activeClient = client;
+  if (activeClient !== undefined) {
+    await closeChildProcessInput(activeClient.child);
+    client = undefined;
+  }
+};
 
 const submit = async ({ url, input }: SubmitRequest) => {
   const activeClient = (client ??= startClient());

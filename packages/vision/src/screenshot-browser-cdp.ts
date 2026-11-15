@@ -2582,9 +2582,9 @@ const submitFormWithBrowserRuntime = async (
           interceptedManagedResponseBody = send<{
             body?: string;
             base64Encoded?: boolean;
-          }>("Fetch.getResponseBody", { requestId }).finally(() =>
-            send("Fetch.continueResponse", { requestId })
-          );
+          }>("Fetch.getResponseBody", { requestId })
+            .finally(() => send("Fetch.continueResponse", { requestId }))
+            .catch(() => undefined);
           return;
         }
       }

@@ -67,6 +67,19 @@ test("schema fingerprint includes new backend files", async () => {
   expect(await readSchemaFingerprint(root)).not.toBe(before);
 });
 
+test("schema fingerprint ignores generated migration clients", async () => {
+  const root = await createRepositoryFixture();
+  const before = await readSchemaFingerprint(root);
+  const client = join(
+    root,
+    "packages/prisma-client/prisma/migrations/initial/client"
+  );
+  await mkdir(client, { recursive: true });
+  await writeFile(join(client, "schema.prisma"), "generated");
+
+  expect(await readSchemaFingerprint(root)).toBe(before);
+});
+
 test.each([
   "packages/prisma-client/prisma/migrations/initial/schema.prisma",
   "packages/prisma-client/prisma/schema.prisma",
