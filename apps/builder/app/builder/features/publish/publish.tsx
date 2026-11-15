@@ -157,6 +157,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   const isMounted = useRef(false);
   const requestBaselineBuildId = useRef<string>();
   const hasStartedPublishRequest = useRef(false);
+  const sessionPublishesRef = useRef<SessionPublish[]>([]);
   const refreshGeneration = useRef(0);
   const recoveredPoll = useRef<{
     generation: number;
@@ -268,6 +269,24 @@ export const PublishButton = ({ projectId }: PublishProps) => {
       setPublishErrorState((current) =>
         current?.source === "status" ? undefined : current
       );
+      return;
+    }
+    const confirmedPublish = sessionPublishesRef.current.find(
+      (item) =>
+        item.target === "site" &&
+        item.buildId === build.buildId &&
+        item.status !== "pending"
+    );
+    if (confirmedPublish?.status === "success") {
+      setPublishErrorState((current) =>
+        current?.source === "status" ? undefined : current
+      );
+      return;
+    }
+    if (
+      confirmedPublish?.status === "failed" &&
+      build.publishStatus !== "PUBLISHED"
+    ) {
       return;
     }
     const { status, statusContent } = getPublishStatusDisplay(build);
@@ -659,7 +678,6 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     }
   }, [publishDialog, resetValidationState]);
 
-  const sessionPublishesRef = useRef(visiblePublishes);
   sessionPublishesRef.current = visiblePublishes;
   const [diagnosticsSelection, setDiagnosticsSelection] = useState<{
     target: "static" | "site";

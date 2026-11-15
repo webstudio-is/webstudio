@@ -592,6 +592,32 @@ test.each(["success", "failed"] as const)(
   }
 );
 
+test("a confirmed site success survives a stale Build timeout during popover refresh", async () => {
+  publish = async () => {
+    project = makeProject("project", {
+      buildId: "accepted",
+      publishStatus: "PENDING",
+    });
+    project.latestBuildVirtual!.createdAt = new Date(
+      Date.now() - 10 * 60_000
+    ).toISOString();
+    return accept();
+  };
+  job = async () => ({ status: "success" });
+  await mount();
+  const previousRefreshes = requests.filter(
+    ({ route }) => route === "domain.project"
+  ).length;
+  await click("Publish");
+  await waitFor(() =>
+    expect(
+      requests.filter(({ route }) => route === "domain.project").length
+    ).toBeGreaterThanOrEqual(previousRefreshes + 2)
+  );
+  expect(button("See logs")).toBeDefined();
+  expect(button("See issues")).toBeUndefined();
+});
+
 test.each(["validation", "publish"] as const)(
   "%s diagnostics remain available after the popover reopens",
   async (action) => {
