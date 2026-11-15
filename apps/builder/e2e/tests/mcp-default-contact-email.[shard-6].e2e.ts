@@ -18,6 +18,9 @@ const execFileAsync = promisify(execFile);
 const authorPath = fileURLToPath(
   new URL("../fixtures/mcp-default-contact-email-author.ts", import.meta.url)
 );
+const formDataAuthorPath = fileURLToPath(
+  new URL("../fixtures/mcp-form-data-string-author.ts", import.meta.url)
+);
 const reactGlobalPath = fileURLToPath(
   new URL("../../../../scripts/register-react-global.ts", import.meta.url)
 );
@@ -76,7 +79,7 @@ const submitContactForm = async (url: string, formId: string) =>
     },
   });
 
-test("MCP-inserted default contact Form delivers owner and visitor emails and keeps visitor failure nonfatal", async ({
+test("MCP Forms deliver readable data and default owner and visitor emails in one Preview", async ({
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -86,6 +89,32 @@ test("MCP-inserted default contact Form delivers owner and visitor emails and ke
     assetNamePrefix: "mcp-default-contact-",
     builderToken: "mcp-default-contact-builder-token",
   });
+  const { stdout: formDataAuthorOutput } = await execFileAsync(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      "--import",
+      reactGlobalPath,
+      "--conditions=webstudio",
+      formDataAuthorPath,
+      fixture.projectId,
+    ],
+    {
+      timeout: 60_000,
+      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
+    }
+  );
+  const {
+    formId: formDataFormId,
+    ownerResourceId: formDataResourceId,
+    expression: formDataExpression,
+  } = JSON.parse(formDataAuthorOutput) as {
+    formId: string;
+    ownerResourceId: string;
+    expression: string;
+  };
+  expect(formDataExpression).toContain(".toString()");
   const { formId, ownerResourceId, visitorResourceId } =
     await authorDefaultContactForm(fixture.projectId);
   const build = await loadDevBuild({ projectId: fixture.projectId });
@@ -93,6 +122,9 @@ test("MCP-inserted default contact Form delivers owner and visitor emails and ke
     id: string;
     email?: Record<string, unknown>;
   }>;
+  expect(
+    resources.find(({ id }) => id === formDataResourceId)?.email?.body
+  ).toBe(formDataExpression);
   const dataSources = JSON.parse(build.dataSources) as Array<{
     id: string;
     name: string;
@@ -172,81 +204,160 @@ test("MCP-inserted default contact Form delivers owner and visitor emails and ke
       projectId: fixture.projectId,
       emailPort: address.port,
       callback: async ({ url }) => {
-        const submission = await submitContactForm(url, formId);
-        expect(submission.ok).toBe(true);
-        expect(submission.data).toMatchObject({
-          status: "submitted",
-          formState: "success",
-          errors: [],
+        await test.step("Form data email has readable fields and no private values", async () => {
+          const formDataSubmission = (
+            await submitPreviewFormViaMcp({
+              url,
+              input: {
+                path: "/",
+                selector: `[data-ws-managed-form-id="${formDataFormId}"]`,
+                values: [
+                  { name: "name", value: "Ada Lovelace" },
+                  { name: "email", value: "ada@example.test" },
+                  { name: "subject", value: "Readable fields" },
+                  { name: "message", value: "Hello from Lisbon" },
+                  { name: "profile.city", value: "Porto" },
+                  { name: "tag", value: "red" },
+                  { name: "tag", value: "blue" },
+                  { name: "password", value: "private-secret-734" },
+                  {
+                    name: "upload",
+                    file: {
+                      name: "project-brief.txt",
+                      type: "text/plain",
+                      base64: Buffer.from("A local-only attachment.").toString(
+                        "base64"
+                      ),
+                    },
+                  },
+                ],
+                submitter: "button[type=submit]",
+                timeout: 30_000,
+              },
+            })
+          ).data;
+          expect(formDataSubmission).toMatchObject({
+            status: "submitted",
+            formState: "success",
+            errors: [],
+          });
+          expect(formDataSubmission.exchanges).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                status: 200,
+                url: expect.stringContaining("/__ws-form"),
+              }),
+            ])
+          );
+          expect(formDataSubmission.results).toEqual([
+            expect.objectContaining({
+              resourceId: formDataResourceId,
+              status: 200,
+            }),
+          ]);
+          await expect.poll(() => messages.length).toBe(1);
+          const message = messages[0];
+          expect(message.to).toEqual([
+            expect.objectContaining({ address: "owner@mcp.test" }),
+          ]);
+          expect(message.text).toContain("Name: Ada Lovelace");
+          expect(message.text).toContain("Profile.city: Porto");
+          expect(message.text).toContain("Tag: red, blue");
+          expect(message.text).toContain("Upload: project-brief.txt");
+          expect(message.text).not.toContain("private-secret-734");
+          expect(message.text).not.toContain("Password:");
+          expect(message.text).not.toContain("ws--managed-form-id");
+          expect(message.text).not.toContain("ws--managed-form-array-names");
+          expect(message.text).not.toContain("ws--form-bot");
+          expect(message.attachments).toEqual([
+            expect.objectContaining({ filename: "project-brief.txt" }),
+          ]);
         });
-        expect(submission.data.results).toEqual([
-          expect.objectContaining({ resourceId: ownerResourceId, status: 200 }),
-          expect.objectContaining({
-            resourceId: visitorResourceId,
-            status: 200,
-          }),
-        ]);
-        await expect.poll(() => messages.length).toBe(2);
-        const owner = messages.find((message) =>
-          message.to.some(({ address }) => address === "owner@mcp.test")
-        );
-        const visitor = messages.find((message) =>
-          message.to.some(({ address }) => address === "ada@example.test")
-        );
-        expect(owner).toMatchObject({
-          subject: expect.stringContaining("Contact form: A question"),
-          replyTo: { address: "forms@mcp.test", name: "Contact Form" },
+        messages.length = 0;
+
+        await test.step("default owner and visitor delivery and nonfatal visitor failure", async () => {
+          const submission = await submitContactForm(url, formId);
+          expect(submission.ok).toBe(true);
+          expect(submission.data).toMatchObject({
+            status: "submitted",
+            formState: "success",
+            errors: [],
+          });
+          expect(submission.data.results).toEqual([
+            expect.objectContaining({
+              resourceId: ownerResourceId,
+              status: 200,
+            }),
+            expect.objectContaining({
+              resourceId: visitorResourceId,
+              status: 200,
+            }),
+          ]);
+          await expect.poll(() => messages.length).toBe(2);
+          const owner = messages.find((message) =>
+            message.to.some(({ address }) => address === "owner@mcp.test")
+          );
+          const visitor = messages.find((message) =>
+            message.to.some(({ address }) => address === "ada@example.test")
+          );
+          expect(owner).toMatchObject({
+            subject: expect.stringContaining("Contact form: A question"),
+            replyTo: { address: "forms@mcp.test", name: "Contact Form" },
+          });
+          expect(owner?.text).toContain(`Page: ${new URL(url).origin}`);
+          expect(owner?.text).toContain("Name: Ada Lovelace");
+          expect(owner?.text).toContain("Email: ada@example.test");
+          expect(owner?.text).toContain("Subject: A question");
+          expect(owner?.text).toContain(
+            "Message: Please get back to me about the project."
+          );
+          expect(owner?.text).toContain("Attachment: project-brief.txt");
+          expect(owner?.attachments).toEqual([
+            expect.objectContaining({
+              filename: "project-brief.txt",
+              contentType: "text/plain",
+              contentBase64: Buffer.from(
+                "Please review this project brief."
+              ).toString("base64"),
+            }),
+          ]);
+          expect(visitor).toMatchObject({
+            subject: expect.stringContaining(
+              "Contact Form received your email: A question"
+            ),
+            text: expect.stringContaining(
+              "Thank you for your message.\n\nWe received it and will respond as soon as possible.\n\nContact Form"
+            ),
+          });
+          expect(visitor?.attachments ?? []).toEqual([]);
+          rejectVisitor = true;
+          const failedSubmission = await submitContactForm(url, formId);
+          expect(failedSubmission.data.status).toBe("submitted");
+          expect(failedSubmission.data.results).toEqual([
+            expect.objectContaining({
+              resourceId: ownerResourceId,
+              status: 200,
+            }),
+            expect.objectContaining({
+              resourceId: visitorResourceId,
+              status: 429,
+            }),
+          ]);
+          expect(failedSubmission.data.errors).toEqual([
+            expect.objectContaining({
+              status: 429,
+              message: "Form resource returned HTTP 429",
+            }),
+          ]);
+          expect(messages).toHaveLength(4);
+          expect(
+            messages
+              .slice(2)
+              .some((message) =>
+                message.to.some(({ address }) => address === "owner@mcp.test")
+              )
+          ).toBe(true);
         });
-        expect(owner?.text).toContain(`Page: ${new URL(url).origin}`);
-        expect(owner?.text).toContain("Name: Ada Lovelace");
-        expect(owner?.text).toContain("Email: ada@example.test");
-        expect(owner?.text).toContain("Subject: A question");
-        expect(owner?.text).toContain(
-          "Message: Please get back to me about the project."
-        );
-        expect(owner?.text).toContain("Attachment: project-brief.txt");
-        expect(owner?.attachments).toEqual([
-          expect.objectContaining({
-            filename: "project-brief.txt",
-            contentType: "text/plain",
-            contentBase64: Buffer.from(
-              "Please review this project brief."
-            ).toString("base64"),
-          }),
-        ]);
-        expect(visitor).toMatchObject({
-          subject: expect.stringContaining(
-            "Contact Form received your email: A question"
-          ),
-          text: expect.stringContaining(
-            "Thank you for your message.\n\nWe received it and will respond as soon as possible.\n\nContact Form"
-          ),
-        });
-        expect(visitor?.attachments ?? []).toEqual([]);
-        rejectVisitor = true;
-        const failedSubmission = await submitContactForm(url, formId);
-        expect(failedSubmission.data.status).toBe("submitted");
-        expect(failedSubmission.data.results).toEqual([
-          expect.objectContaining({ resourceId: ownerResourceId, status: 200 }),
-          expect.objectContaining({
-            resourceId: visitorResourceId,
-            status: 429,
-          }),
-        ]);
-        expect(failedSubmission.data.errors).toEqual([
-          expect.objectContaining({
-            status: 429,
-            message: "Form resource returned HTTP 429",
-          }),
-        ]);
-        expect(messages).toHaveLength(4);
-        expect(
-          messages
-            .slice(2)
-            .some((message) =>
-              message.to.some(({ address }) => address === "owner@mcp.test")
-            )
-        ).toBe(true);
       },
     });
   } finally {

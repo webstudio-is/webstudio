@@ -112,7 +112,7 @@ const author = async () => {
   const session = createProjectSession({
     projectId: projectId,
     compatibilityVersion: "mcp-preview-form-e2e-v1",
-    runtimeContext: { createId: () => `mcp-preview-${nextId++}` },
+    runtimeContext: { createId: () => `mcp-form-data-${nextId++}` },
     storage: {
       load: async () => stored,
       save: async (snapshot, options) => {
@@ -166,7 +166,7 @@ const author = async () => {
             state: remote.state,
             input,
             context: {
-              createId: () => `mcp-preview-server-${nextId++}`,
+              createId: () => `mcp-form-data-server-${nextId++}`,
               projectId: remote.projectId,
               projectVersion: remote.version,
             },
@@ -177,7 +177,7 @@ const author = async () => {
           version: remote.version + 1,
           state: applyBuilderPatchTransactions(remote.state, [
             {
-              id: `mcp-preview-transaction-${nextId++}`,
+              id: `mcp-form-data-transaction-${nextId++}`,
               payload: mutation.payload,
             },
           ]).state,
