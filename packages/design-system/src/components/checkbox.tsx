@@ -27,10 +27,6 @@ const checkboxStyle = css({
   )})`,
   border: "1px solid transparent",
 
-  "&:hover": {
-    borderColor: cssVar("--border-default"),
-  },
-
   "&:focus-visible": {
     borderColor: cssVar("--border-focus"),
   },
