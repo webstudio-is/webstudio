@@ -29,10 +29,12 @@ import { fillSelectedStringProperty } from "../flows/props-panel";
 import { selectNavigatorItem } from "../flows/navigator";
 import {
   waitForChangeToBeSaved,
-  waitForSyncStatus,
+  waitForSyncComplete,
 } from "../flows/sync-status";
 import { e2ePaidPlanName } from "../plans";
 import { test, withBrowserContext } from "../test";
+
+test.describe.configure({ mode: "parallel" });
 
 test("Editor can open and save legacy content before a Builder migrates the project", async ({
   page,
@@ -139,7 +141,7 @@ test("Editor can open and save legacy content before a Builder migrates the proj
     mode: "content",
   });
   await waitForCanvasText({ page, text: fixture.shareLinkEditableText });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
   await waitForCanvasText({ page, text: code });
   expect((await loadDevBuild({ projectId: fixture.projectId })).version).toBe(
     0
@@ -151,15 +153,6 @@ test("Editor can open and save legacy content before a Builder migrates the proj
     currentText: fixture.shareLinkEditableText,
     text: editedText,
   });
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.editorToken,
-    mode: "content",
-  });
-  await waitForCanvasText({ page, text: editedText });
-  await waitForCanvasText({ page, text: code });
-  await waitForSyncStatus({ page, status: "idle" });
   const editedBuild = await loadDevBuild({ projectId: fixture.projectId });
   expect(JSON.parse(editedBuild.styles)).toEqual(styles);
   expect(JSON.parse(editedBuild.styleSources)).toEqual(styleSources);
@@ -187,8 +180,11 @@ test("Editor can open and save legacy content before a Builder migrates the proj
     authToken: fixture.editorToken,
     mode: "content",
   });
+  await waitForCanvasText({ page, text: editedText });
   await waitForCanvasText({ page, text: editedCode });
   await waitForCanvasText({ page, text: readOnlyCode });
+  await waitForSyncComplete({ page });
+  expect(unexpectedDialogs).toEqual([]);
 
   // Actual build permission still permits migration while using Content mode.
   await withBrowserContext(browser, async (context) => {
@@ -201,7 +197,7 @@ test("Editor can open and save legacy content before a Builder migrates the proj
     });
     await waitForCanvasText({ page: builderPage, text: editedText });
     await waitForCanvasText({ page: builderPage, text: editedCode });
-    await waitForSyncStatus({ page: builderPage, status: "idle" });
+    await waitForSyncComplete({ page: builderPage });
   });
   const migratedBuild = await loadDevBuild({ projectId: fixture.projectId });
   expect(
@@ -226,7 +222,7 @@ test("Editor can open and save legacy content before a Builder migrates the proj
   await waitForCanvasText({ page, text: editedText });
   await waitForCanvasText({ page, text: editedCode });
   await waitForCanvasText({ page, text: readOnlyCode });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
   expect(unexpectedDialogs).toEqual([]);
 });
 
@@ -356,7 +352,7 @@ test("Editor can edit legacy document bindings before a Builder visits", async (
     mode: "content",
   });
   await waitForCanvasText({ page, text: "Content source fixture" });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
   const editedTitle = "Edited legacy document title";
   const titleWrite = page.waitForResponse(
     (response) =>
@@ -398,7 +394,7 @@ test("Editor can edit legacy document bindings before a Builder visits", async (
   });
   await waitForCanvasText({ page, text: editedAlt });
   await waitForCanvasText({ page, text: "MDX source heading" });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
   const savedBuild = await loadDevBuild({ projectId: fixture.projectId });
   expect(JSON.parse(savedBuild.instances)).toEqual(instances);
   expect(JSON.parse(savedBuild.props)).toEqual(props);

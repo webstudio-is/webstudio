@@ -29,7 +29,10 @@ import {
   openPagesPanel,
 } from "../flows/pages-panel";
 import { selectNavigatorItem } from "../flows/navigator";
-import { waitForSyncStatus } from "../flows/sync-status";
+import {
+  waitForChangeToBeSaved,
+  waitForSyncComplete,
+} from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
@@ -141,24 +144,29 @@ const getElementHrefWithText = async ({
   return href.value;
 };
 
-const undoShortcut = async ({ page }: { page: Page }) => {
-  await page.keyboard.press("ControlOrMeta+Z");
-  await waitForSyncStatus({ page, status: "idle" });
-};
-
-const redoShortcut = async ({ page }: { page: Page }) => {
-  await page.keyboard.press("ControlOrMeta+Shift+Z");
-  await waitForSyncStatus({ page, status: "idle" });
+const applyHistoryShortcut = async ({
+  page,
+  shortcut,
+}: {
+  page: Page;
+  shortcut: "ControlOrMeta+Z" | "ControlOrMeta+Shift+Z";
+}) => {
+  const save = waitForChangeToBeSaved({ page });
+  save.catch(() => undefined);
+  await page.keyboard.press(shortcut);
+  await save;
 };
 
 let fixture: SeededContentModeProject;
 
-test.beforeAll(async ({ browser }) => {
+test.describe.configure({ mode: "parallel" });
+
+test.beforeEach(async ({ browser }) => {
   fixture = await withBrowserContext(browser, (context) =>
     createContentModeProject({ context, devPlan: e2ePaidPlanName })
   );
 });
-test("Editor can delete direct children but not protected containers", async ({
+test("Editor can paste text and delete direct children but not protected containers", async ({
   page,
 }) => {
   await measure(
@@ -173,7 +181,7 @@ test("Editor can delete direct children but not protected containers", async ({
     }
   );
   await waitForCanvasText({ page, text: "Initial content" });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await measure("content mode insert deletable template", async () => {
     await insertTemplateAfterCanvasText({
@@ -187,15 +195,24 @@ test("Editor can delete direct children but not protected containers", async ({
     text: fixture.deletableTemplateText,
   });
 
+  const pastedContent = "Pasted editable content";
+  await measure("content mode native paste text", async () => {
+    await pasteCanvasText({
+      page,
+      currentText: fixture.deletableTemplateText,
+      text: pastedContent,
+    });
+  });
+
   await measure("content mode delete direct child", async () => {
     await deleteContentBlockChildAfterCanvasText({
       page,
-      text: fixture.deletableTemplateText,
+      text: pastedContent,
     });
   });
   await waitForCanvasTextHidden({
     page,
-    text: fixture.deletableTemplateText,
+    text: pastedContent,
   });
 
   await measure(
@@ -209,11 +226,16 @@ test("Editor can delete direct children but not protected containers", async ({
       });
     }
   );
+  await waitForCanvasText({ page, text: "Initial content" });
+  await waitForCanvasTextHidden({
+    page,
+    text: pastedContent,
+  });
   await waitForCanvasTextHidden({
     page,
     text: fixture.deletableTemplateText,
   });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await measure("content mode insert nested template", async () => {
     await insertTemplateAfterCanvasText({
@@ -226,7 +248,7 @@ test("Editor can delete direct children but not protected containers", async ({
     page,
     text: fixture.nestedTemplateText,
   });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await measure("content mode try nested delete", async () => {
     const canvas = await waitForCanvasFrame({ page });
@@ -244,7 +266,7 @@ test("Editor can delete direct children but not protected containers", async ({
     page,
     text: fixture.nestedTemplateText,
   });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await openPagesPanel({ page });
   await expectContentModeTemplateActionsUnavailable({
@@ -255,7 +277,7 @@ test("Editor can delete direct children but not protected containers", async ({
   await page.getByRole("tab", { name: "Navigator" }).click();
   await expectTextHidden({ page, text: "Global Root" });
   await expectTextHidden({ page, text: fixture.pageTemplateName });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 });
 
 test("Editor can edit text and content props but not design props", async ({
@@ -277,7 +299,7 @@ test("Editor can edit text and content props but not design props", async ({
     });
   });
   await waitForCanvasText({ page, text: "Initial link" });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
   const canvas = await waitForCanvasFrame({ page });
 
   await insertTemplateAfterCanvasText({
@@ -314,7 +336,7 @@ test("Editor can edit text and content props but not design props", async ({
   });
   await page.keyboard.press("Enter");
   await expect(canvas.locator("[contenteditable]")).toHaveCount(0);
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
   await expect(protectedImage).toBeVisible();
 
   await insertTemplateAfterCanvasText({
@@ -429,7 +451,7 @@ test("Editor can edit text and content props but not design props", async ({
     text: fixture.contentPropsTemplateLinkText,
   });
   await waitForCanvasText({ page, text: editedContent });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
   const reloadedCanvas = await waitForCanvasFrame({ page });
   const reloadedHeading = reloadedCanvas
     .locator("h2")
@@ -499,40 +521,6 @@ test("Editor can edit text and content props but not design props", async ({
   await waitForCanvasText({ page, text: editedContent });
 });
 
-test("Editor can paste text while editing canvas content", async ({ page }) => {
-  const pastedContent = "Pasted editable content";
-
-  await measure("content mode open editor for text paste", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-  });
-  await waitForCanvasText({ page, text: "Initial content" });
-  await waitForSyncStatus({ page, status: "idle" });
-
-  await insertTemplateAfterCanvasText({
-    page,
-    anchorText: "Initial content",
-    templateName: fixture.editableTextTemplateName,
-  });
-  await waitForCanvasText({
-    page,
-    text: fixture.editableTextTemplateText,
-  });
-
-  await measure("content mode native paste text", async () => {
-    await pasteCanvasText({
-      page,
-      currentText: fixture.editableTextTemplateText,
-      text: pastedContent,
-    });
-  });
-  await waitForCanvasText({ page, text: pastedContent });
-});
-
 test("Editor rich text formatting persists after reload", async ({ page }) => {
   const formattedText = "Rich editor formatted copy";
   const editedHref = "/rich-text-editor-link";
@@ -549,7 +537,7 @@ test("Editor rich text formatting persists after reload", async ({ page }) => {
     }
   );
   await waitForCanvasText({ page, text: fixture.shareLinkEditableText });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await measure("content mode apply rich text formatting", async () => {
     await replaceCanvasTextAndApplyInlineFormats({
@@ -583,12 +571,12 @@ test("Editor rich text formatting persists after reload", async ({ page }) => {
   }
 
   await measure("content mode undo rich text formatting", async () => {
-    await undoShortcut({ page });
+    await applyHistoryShortcut({ page, shortcut: "ControlOrMeta+Z" });
   });
   await waitForCanvasTextHidden({ page, text: formattedText });
 
   await measure("content mode redo rich text formatting", async () => {
-    await redoShortcut({ page });
+    await applyHistoryShortcut({ page, shortcut: "ControlOrMeta+Shift+Z" });
   });
   await waitForCanvasText({ page, text: formattedText });
 

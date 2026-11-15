@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { waitForCanvasFrame } from "./builder";
-import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
+import { waitForChangeToBeSaved, waitForSyncComplete } from "./sync-status";
 
 export const deleteContentBlockChildAfterCanvasText = async ({
   page,
@@ -10,7 +10,7 @@ export const deleteContentBlockChildAfterCanvasText = async ({
   text: string;
 }) => {
   const canvas = await waitForCanvasFrame({ page });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await page.keyboard.down("Alt");
   try {

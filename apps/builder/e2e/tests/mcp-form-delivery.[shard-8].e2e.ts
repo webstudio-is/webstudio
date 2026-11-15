@@ -5,7 +5,10 @@ import { startFormDeliveryReceiver } from "../flows/generated-form-delivery";
 import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
 import { startLocalEmailReceiver } from "../flows/mcp-email-preview";
 import { runFormAuthor } from "../flows/mcp-form-author";
-import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
+import {
+  startPreviewFormMcpClient,
+  submitPreviewFormViaMcp,
+} from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 test("MCP-authored Forms deliver email attachments and ordered HTTP Actions in generated Preview", async ({
@@ -14,6 +17,7 @@ test("MCP-authored Forms deliver email attachments and ordered HTTP Actions in g
   // Author the HTTP and Email scenarios before building their shared Preview.
   test.setTimeout(180_000);
 
+  await startPreviewFormMcpClient();
   const fixture = await createContentModeProject({
     context,
     email: "mcp-email-attachments@webstudio.test",

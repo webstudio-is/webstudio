@@ -13,15 +13,6 @@ import {
 
 const twoPhaseTimeout = 240_000;
 
-const createForm = async (projectId: string) => {
-  const { stdout } = await runFormAuthor(
-    "mcp-managed-form-author",
-    projectId,
-    "email"
-  );
-  return JSON.parse(stdout) as { formId: string };
-};
-
 test("MCP Email binding changes share two production Preview phases", async ({
   context,
 }) => {
@@ -34,16 +25,15 @@ test("MCP Email binding changes share two production Preview phases", async ({
     assetNamePrefix: "mcp-email-binding-scenarios-",
     builderToken: "mcp-email-binding-scenarios-builder-token",
   });
-  const bound = await createForm(fixture.projectId);
-  const partial = await createForm(fixture.projectId);
-  expect(bound.formId).not.toBe(partial.formId);
-  await runFormAuthor(
+  const { stdout } = await runFormAuthor(
     "mcp-email-binding-author",
     fixture.projectId,
-    "initial",
-    bound.formId,
-    partial.formId
+    "initial"
   );
+  const { boundFormId, partialFormId } = JSON.parse(stdout) as {
+    boundFormId: string;
+    partialFormId: string;
+  };
 
   const receiver = await startLocalEmailReceiver();
   const submit = async (url: string, formId: string, withUpload: boolean) => {
@@ -95,7 +85,7 @@ test("MCP Email binding changes share two production Preview phases", async ({
       emailPort: receiver.port,
       callback: async ({ url }) => {
         await test.step("bound values and recipients", async () => {
-          await submit(url, bound.formId, false);
+          await submit(url, boundFormId, false);
           await expect.poll(() => receiver.messages.length).toBe(1);
           expect(receiver.messages[0]).toMatchObject({
             to: [{ address: "ada@example.test" }],
@@ -105,7 +95,7 @@ test("MCP Email binding changes share two production Preview phases", async ({
           });
         });
         await test.step("partial body update keeps sender and attachment settings", async () => {
-          await submit(url, partial.formId, true);
+          await submit(url, partialFormId, true);
           await expect.poll(() => receiver.messages.length).toBe(2);
           expect(receiver.messages[1]).toMatchObject({
             to: [{ address: "ada@example.test" }],
@@ -122,15 +112,15 @@ test("MCP Email binding changes share two production Preview phases", async ({
       "mcp-email-binding-author",
       fixture.projectId,
       "updated",
-      bound.formId,
-      partial.formId
+      boundFormId,
+      partialFormId
     );
     await withMcpEmailPreview({
       projectId: fixture.projectId,
       emailPort: receiver.port,
       callback: async ({ url }) => {
         await test.step("full reset restores project recipient and reply-to", async () => {
-          await submit(url, bound.formId, false);
+          await submit(url, boundFormId, false);
           await expect.poll(() => receiver.messages.length).toBe(3);
           expect(receiver.messages[2]).toMatchObject({
             to: [{ address: "owner@mcp.test" }],
@@ -140,7 +130,7 @@ test("MCP Email binding changes share two production Preview phases", async ({
           });
         });
         await test.step("empty body keeps recipient and sender settings", async () => {
-          await submit(url, partial.formId, true);
+          await submit(url, partialFormId, true);
           await expect.poll(() => receiver.messages.length).toBe(4);
           expect(receiver.messages[3]).toMatchObject({
             to: [{ address: "ada@example.test" }],

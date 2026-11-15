@@ -28,7 +28,7 @@ import {
 import { chooseSelectedAssetProperty } from "../flows/props-panel";
 import {
   waitForChangeToBeSaved,
-  waitForSyncStatus,
+  waitForSyncComplete,
 } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
@@ -49,9 +49,25 @@ test.beforeEach(async ({ context }) => {
     email: `content-mode-assets-${randomUUID()}@webstudio.test`,
   });
 });
-test("Editor can insert content templates with assets and styles", async ({
+test("Content templates persist with styles and assets, including after Builder copy/paste", async ({
   page,
 }) => {
+  const getImageAssetReferenceCount = async () => {
+    const build = await loadDevBuild({ projectId: fixture.projectId });
+    const props = JSON.parse(build.props) as Array<{
+      name: string;
+      type: string;
+      value: string;
+    }>;
+    const references = props.filter(
+      (prop) =>
+        prop.name === "src" &&
+        prop.type === "asset" &&
+        prop.value === fixture.assetTemplateImageAssetId
+    );
+    return references.length;
+  };
+
   await measure("content mode open editor for asset template", async () => {
     await openProjectBuilder({
       page,
@@ -61,7 +77,9 @@ test("Editor can insert content templates with assets and styles", async ({
     });
   });
   await waitForCanvasText({ page, text: "Initial content" });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
+
+  const initialAssetReferenceCount = await getImageAssetReferenceCount();
 
   await measure("content mode insert asset template", async () => {
     await insertTemplateAfterCanvasText({
@@ -170,12 +188,67 @@ test("Editor can insert content templates with assets and styles", async ({
     value: fixture.isolatedLocalTemplateFontSize,
     count: 2,
   });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
+  await test.step("Builder can copy and paste the inserted image and reload its asset references", async () => {
+    await measure("asset copy open build mode", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    });
+    await waitForCanvasImage({
+      page,
+      alt: fixture.assetTemplateImageAlt,
+    });
+    await selectCanvasImage({
+      page,
+      alt: fixture.assetTemplateImageAlt,
+    });
+    await page.keyboard.press("ControlOrMeta+C");
+    const save = waitForChangeToBeSaved({ page });
+    await page.keyboard.press("ControlOrMeta+V");
+    await save;
+    await waitForSyncComplete({ page });
+    await waitForCanvasImageCount({
+      page,
+      alt: fixture.assetTemplateImageAlt,
+      count: 2,
+    });
+    if (
+      (await getImageAssetReferenceCount()) !==
+      initialAssetReferenceCount + 2
+    ) {
+      throw new Error(
+        "Expected insertion and paste to add two asset references."
+      );
+    }
+
+    await measure("asset copy reload builder", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    });
+    await waitForCanvasImageCount({
+      page,
+      alt: fixture.assetTemplateImageAlt,
+      count: 2,
+    });
+    if (
+      (await getImageAssetReferenceCount()) !==
+      initialAssetReferenceCount + 2
+    ) {
+      throw new Error("Expected reload to preserve copied asset references.");
+    }
+  });
 });
 
-test("Editor can upload, replace, and delete asset in content mode", async ({
+test("Editor can manage assets and create an ordinary folder in content mode", async ({
   page,
 }) => {
+  const folderName = "Editor ordinary assets";
   const uploadFilename = "upload-image.svg";
   const replacementFilename = "replacement-image.svg";
 
@@ -188,7 +261,7 @@ test("Editor can upload, replace, and delete asset in content mode", async ({
     });
   });
   await waitForCanvasText({ page, text: "Initial content" });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   let uploadedAssetTitle = "";
   await measure("content mode upload asset", async () => {
@@ -223,6 +296,8 @@ test("Editor can upload, replace, and delete asset in content mode", async ({
     });
   });
 
+  await createAssetFolder({ page, name: folderName });
+
   await measure("content mode reload editor for asset workflows", async () => {
     await openProjectBuilder({
       page,
@@ -234,33 +309,10 @@ test("Editor can upload, replace, and delete asset in content mode", async ({
   await openAssetsPanel({ page });
   await page.getByTitle(uploadedAssetTitle).waitFor({ state: "hidden" });
   await page.getByTitle(replacementAssetTitle).waitFor({ state: "hidden" });
-  await waitForSyncStatus({ page, status: "idle" });
-});
-
-test("Editor can create and reload an ordinary asset folder", async ({
-  page,
-}) => {
-  const folderName = "Editor ordinary assets";
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.editorToken,
-    mode: "content",
-  });
-  await waitForSyncStatus({ page, status: "idle" });
-  await openAssetsPanel({ page });
-  await createAssetFolder({ page, name: folderName });
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.editorToken,
-    mode: "content",
-  });
-  await openAssetsPanel({ page });
   await page
     .getByRole("button", { name: `Folder ${folderName}`, exact: true })
     .waitFor();
+  await waitForSyncComplete({ page });
 });
 
 test("Editor can create and reload a content collection entry", async ({
@@ -275,7 +327,7 @@ test("Editor can create and reload a content collection entry", async ({
     projectId: fixture.projectId,
     authToken: fixture.builderToken,
   });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
   await openAssetsPanel({ page });
   const folder = await createAssetFolder({
     page,
@@ -291,7 +343,7 @@ test("Editor can create and reload a content collection entry", async ({
     authToken: fixture.editorToken,
     mode: "content",
   });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
   await openAssetsPanel({ page });
   // The last folder is remembered for this project, including across modes.
   await page.getByTitle("collection.json").waitFor({ state: "visible" });
@@ -337,7 +389,7 @@ test("Editor can replace image source with asset in content mode", async ({
     }
   );
   await waitForCanvasText({ page, text: "Initial content" });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await insertTemplateAfterCanvasText({
     page,
@@ -391,7 +443,7 @@ test("Editor can replace image source with asset in content mode", async ({
     page,
     sourceName: "replacement-image_",
   });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await measure(
     "content mode reload editor for image source asset replacement",
@@ -410,106 +462,11 @@ test("Editor can replace image source with asset in content mode", async ({
   });
   await openAssetsPanel({ page });
   await page.getByTitle(replacementAssetTitle).waitFor();
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
   const reloadedCanvas = await waitForCanvasFrame({ page });
   const replacementImage = reloadedCanvas.locator(
     'img[src*="replacement-image_"]'
   );
   await expect(replacementImage).toHaveAttribute("width", "120");
   await expect(replacementImage).toHaveAttribute("height", "80");
-});
-
-test("Builder copy/paste preserves image asset references after reload", async ({
-  page,
-}) => {
-  const getImageAssetReferenceCount = async () => {
-    const build = await loadDevBuild({ projectId: fixture.projectId });
-    const props = JSON.parse(build.props) as Array<{
-      name: string;
-      type: string;
-      value: string;
-    }>;
-    const references = props.filter(
-      (prop) =>
-        prop.name === "src" &&
-        prop.type === "asset" &&
-        prop.value === fixture.assetTemplateImageAssetId
-    );
-    return references.length;
-  };
-
-  await measure("asset copy open builder", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-  });
-  await waitForCanvasText({ page, text: "Initial content" });
-  const initialAssetReferenceCount = await getImageAssetReferenceCount();
-
-  await measure("asset copy insert template", async () => {
-    await insertTemplateAfterCanvasText({
-      page,
-      anchorText: "Initial content",
-      templateName: fixture.assetTemplateName,
-    });
-  });
-  await waitForCanvasImage({
-    page,
-    alt: fixture.assetTemplateImageAlt,
-  });
-  await measure("asset copy open build mode", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-  await waitForCanvasImage({
-    page,
-    alt: fixture.assetTemplateImageAlt,
-  });
-  await selectCanvasImage({
-    page,
-    alt: fixture.assetTemplateImageAlt,
-  });
-  await page.keyboard.press("ControlOrMeta+C");
-  const save = waitForChangeToBeSaved({ page });
-  await page.keyboard.press("ControlOrMeta+V");
-  await save;
-  await waitForSyncStatus({ page, status: "idle" });
-  await waitForCanvasImageCount({
-    page,
-    alt: fixture.assetTemplateImageAlt,
-    count: 2,
-  });
-  if (
-    (await getImageAssetReferenceCount()) !==
-    initialAssetReferenceCount + 2
-  ) {
-    throw new Error(
-      "Expected insertion and paste to add two asset references."
-    );
-  }
-
-  await measure("asset copy reload builder", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-  await waitForCanvasImageCount({
-    page,
-    alt: fixture.assetTemplateImageAlt,
-    count: 2,
-  });
-  if (
-    (await getImageAssetReferenceCount()) !==
-    initialAssetReferenceCount + 2
-  ) {
-    throw new Error("Expected reload to preserve copied asset references.");
-  }
 });

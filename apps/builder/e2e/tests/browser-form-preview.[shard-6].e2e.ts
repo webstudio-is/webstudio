@@ -1,54 +1,32 @@
-import { execFile } from "node:child_process";
 import { createServer } from "node:http";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
 import { expect } from "@playwright/test";
 import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 import { formDataParameterName } from "@webstudio-is/sdk/runtime";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { loadDevBuild } from "../db";
-import {
-  withMcpEmailPreview,
-  type CapturedEmail,
-} from "../flows/mcp-email-preview";
+import type { CapturedEmail } from "../flows/mcp-email-preview";
+import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
+import { startFormContextReceiver } from "../flows/form-context-receiver";
+import { runFormAuthor } from "../flows/mcp-form-author";
 import { test } from "../test";
-import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
+import {
+  startPreviewFormMcpClient,
+  submitPreviewFormViaMcp,
+} from "../flows/mcp-preview-submit";
 
-const execFileAsync = promisify(execFile);
-const authorPath = fileURLToPath(
-  new URL("../fixtures/mcp-default-contact-email-author.ts", import.meta.url)
-);
-const formDataAuthorPath = fileURLToPath(
-  new URL("../fixtures/mcp-form-data-string-author.ts", import.meta.url)
-);
-const reactGlobalPath = fileURLToPath(
-  new URL("../../../../scripts/register-react-global.ts", import.meta.url)
-);
-const cliTsconfigPath = fileURLToPath(
-  new URL("../../../../packages/cli/tsconfig.local.json", import.meta.url)
-);
-
-const authorDefaultContactForm = async (projectId: string) => {
-  const { stdout } = await execFileAsync(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      "--import",
-      reactGlobalPath,
-      "--conditions=webstudio",
-      authorPath,
-      projectId,
-    ],
-    {
-      timeout: 60_000,
-      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
-    }
+const authorForms = async (projectId: string) => {
+  const { stdout } = await runFormAuthor(
+    "mcp-default-contact-email-author",
+    projectId
   );
   return JSON.parse(stdout) as {
-    formId: string;
-    ownerResourceId: string;
-    visitorResourceId: string;
+    contact: {
+      formId: string;
+      ownerResourceId: string;
+      visitorResourceId: string;
+    };
+    formData: { formId: string; ownerResourceId: string; expression: string };
+    context: { formId: string };
   };
 };
 
@@ -79,9 +57,11 @@ const submitContactForm = async (url: string, formId: string) =>
     },
   });
 
-test("MCP Forms deliver readable data and default owner and visitor emails in one Preview", async ({
+test("Generated Preview delivers MCP-authored forms with readable email and browser context", async ({
   context,
+  page,
 }) => {
+  await startPreviewFormMcpClient();
   const fixture = await createContentModeProject({
     context,
     email: "mcp-default-contact@webstudio.test",
@@ -89,34 +69,16 @@ test("MCP Forms deliver readable data and default owner and visitor emails in on
     assetNamePrefix: "mcp-default-contact-",
     builderToken: "mcp-default-contact-builder-token",
   });
-  const { stdout: formDataAuthorOutput } = await execFileAsync(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      "--import",
-      reactGlobalPath,
-      "--conditions=webstudio",
-      formDataAuthorPath,
-      fixture.projectId,
-    ],
-    {
-      timeout: 60_000,
-      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
-    }
-  );
   const {
-    formId: formDataFormId,
-    ownerResourceId: formDataResourceId,
-    expression: formDataExpression,
-  } = JSON.parse(formDataAuthorOutput) as {
-    formId: string;
-    ownerResourceId: string;
-    expression: string;
-  };
+    formData: {
+      formId: formDataFormId,
+      ownerResourceId: formDataResourceId,
+      expression: formDataExpression,
+    },
+    contact: { formId, ownerResourceId, visitorResourceId },
+    context: { formId: contextFormId },
+  } = await authorForms(fixture.projectId);
   expect(formDataExpression).toContain(".toString()");
-  const { formId, ownerResourceId, visitorResourceId } =
-    await authorDefaultContactForm(fixture.projectId);
   const build = await loadDevBuild({ projectId: fixture.projectId });
   const resources = JSON.parse(build.resources) as Array<{
     id: string;
@@ -199,10 +161,12 @@ test("MCP Forms deliver readable data and default owner and visitor emails in on
   if (address === null || typeof address === "string") {
     throw new Error("Expected a local Email receiver port");
   }
+  const receiver = await startFormContextReceiver();
   try {
-    await withMcpEmailPreview({
+    await withMcpEmailHttpPreview({
       projectId: fixture.projectId,
       emailPort: address.port,
+      httpPort: receiver.port,
       callback: async ({ url }) => {
         await test.step("Form data email has readable fields and no private values", async () => {
           const formDataSubmission = (
@@ -358,9 +322,94 @@ test("MCP Forms deliver readable data and default owner and visitor emails in on
               )
           ).toBe(true);
         });
+        await test.step("dynamic route form delivers scoped submission and browser values", async () => {
+          await page.route("**/*", (route) =>
+            new URL(route.request().url()).hostname === "127.0.0.1"
+              ? route.continue()
+              : route.abort()
+          );
+          await context.setExtraHTTPHeaders({
+            "accept-language": "pt-PT",
+            "user-agent": "McpFormContextE2E/1.0",
+          });
+          await page.goto(url);
+          await page.getByRole("link", { name: "Open contact Form" }).click();
+          await expect(page).toHaveURL(
+            new URL("/contact/autumn?private=omit", url).href
+          );
+          const form = page.locator(
+            `[data-ws-managed-form-id="${contextFormId}"]`
+          );
+          await form.locator('input[name="name"]').fill("Ada");
+          await form.locator('input[name="email"]').fill("ada@example.com");
+          await form.locator('input[name="subject"]').fill("Context test");
+          await form.locator('textarea[name="message"]').fill("Hello");
+          const postRequests: string[] = [];
+          page.on("request", (request) => {
+            if (request.method() === "POST") {
+              postRequests.push(request.url());
+            }
+          });
+          const responsePromise = page.waitForResponse(
+            (response) =>
+              new URL(response.url()).pathname.startsWith("/__ws-form") &&
+              response.request().method() === "POST",
+            { timeout: 5_000 }
+          );
+          await form.getByRole("button", { name: "Submit" }).click();
+          const response = await responsePromise.catch(
+            async (error: unknown) => {
+              const validity = await form.evaluate(
+                (element: HTMLFormElement) => ({
+                  valid: element.checkValidity(),
+                  disabled: element.querySelector("button")?.disabled,
+                  invalid: Array.from(element.elements)
+                    .filter(
+                      (control) =>
+                        control instanceof HTMLInputElement ||
+                        control instanceof HTMLTextAreaElement
+                    )
+                    .filter((control) => !control.checkValidity())
+                    .map((control) => ({
+                      name: control.name,
+                      value: control.value,
+                    })),
+                })
+              );
+              throw new Error(
+                `${String(error)}; Form state=${await form.getAttribute("data-state")}; ` +
+                  `text=${await form.innerText()}; POSTs=${JSON.stringify(postRequests)}; ` +
+                  `validity=${JSON.stringify(validity)}`
+              );
+            }
+          );
+          expect(response.status()).toBe(200);
+          expect(await response.json()).toMatchObject({ success: true });
+          await expect(form).toHaveAttribute("data-state", "success");
+          expect(receiver.deliveries).toHaveLength(1);
+          expect(receiver.deliveries[0]).toMatchObject({
+            method: "POST",
+            languageHeader: "pt-PT",
+            body: {
+              name: "Ada",
+              email: "ada@example.com",
+              slug: "autumn",
+              browser: {
+                // Local generated Preview has no trusted platform IP header.
+                ip: null,
+                userAgent: "McpFormContextE2E/1.0",
+                language: "pt-PT",
+                referrer: new URL("/contact/autumn", url).href,
+              },
+            },
+          });
+        });
       },
     });
   } finally {
-    await new Promise<void>((resolve) => server.close(() => resolve()));
+    await Promise.all([
+      receiver.close(),
+      new Promise<void>((resolve) => server.close(() => resolve())),
+    ]);
   }
 });

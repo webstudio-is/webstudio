@@ -26,14 +26,20 @@ import {
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
+import { authorManagedFormQuery } from "./mcp-managed-form-query-author";
+import { seedSavedLegacyForm } from "./saved-legacy-form";
 
 const commands = new Set([
   "create-page",
   "insert-fragment",
   "insert-component",
+  "set-text-content",
+  "list-texts",
   "list-instances",
-  "list-variables",
+  "inspect-instance",
+  "refresh",
   "create-resource",
+  "create-variable",
   "update-resource",
   "update-props",
   "inspect-instance",
@@ -58,8 +64,9 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
   }));
 
 const projectId = process.argv[2];
-if (projectId === undefined) {
-  throw new Error("Expected the disposable E2E project ID");
+const receiverUrl = process.argv[3];
+if (projectId === undefined || receiverUrl === undefined) {
+  throw new Error("Expected the disposable E2E project ID and receiver URL");
 }
 
 const author = async () => {
@@ -110,8 +117,8 @@ const author = async () => {
   };
   const session = createProjectSession({
     projectId: projectId,
-    compatibilityVersion: "mcp-form-context-e2e-v1",
-    runtimeContext: { createId: () => `mcp-context-${nextId++}` },
+    compatibilityVersion: "mcp-legacy-form-query-e2e-v1",
+    runtimeContext: { createId: () => `mcp-legacy-query-${nextId++}` },
     storage: {
       load: async () => stored,
       save: async (snapshot, options) => {
@@ -147,7 +154,7 @@ const author = async () => {
         canUseApi: true,
       }),
       getCompatibility: async () => ({
-        sessionVersion: "mcp-form-context-e2e-v1",
+        sessionVersion: "mcp-legacy-form-query-e2e-v1",
         runtimeContractVersion: "test-runtime-contracts",
         projectSchemaVersion: "test-project-schema",
         apiCompatibilityVersion: "test-api",
@@ -165,7 +172,7 @@ const author = async () => {
             state: remote.state,
             input,
             context: {
-              createId: () => `mcp-context-server-${nextId++}`,
+              createId: () => `mcp-legacy-query-server-${nextId++}`,
               projectId: remote.projectId,
               projectVersion: remote.version,
             },
@@ -176,7 +183,7 @@ const author = async () => {
           version: remote.version + 1,
           state: applyBuilderPatchTransactions(remote.state, [
             {
-              id: `mcp-context-transaction-${nextId++}`,
+              id: `mcp-legacy-query-transaction-${nextId++}`,
               payload: mutation.payload,
             },
           ]).state,
@@ -222,7 +229,7 @@ const author = async () => {
   const [clientTransport, serverTransport] =
     InMemoryTransport.createLinkedPair();
   const client = new Client({
-    name: "mcp-form-context-e2e",
+    name: "mcp-legacy-form-query-e2e",
     version: "1.0.0",
   });
   await Promise.all([
@@ -243,61 +250,98 @@ const author = async () => {
   };
 
   try {
+    const queryPage = await call("create-page", {
+      name: "Legacy Form query values",
+      path: "/legacy-query",
+    });
+    const rootInstanceId = queryPage.rootInstanceId as string;
     await call("insert-fragment", {
       parentInstanceId: home.rootInstanceId,
       fragment:
-        '<Link href="/contact/autumn?private=omit">Open contact Form</Link>',
+        '<Link href="/legacy-query?tag=solo">Open legacy single query</Link>',
     });
-    const page = await call("create-page", {
-      name: "Form context",
-      path: "/contact/:slug",
-    });
-    const inserted = await call("insert-component", {
-      parentInstanceId: page.rootInstanceId,
-      component: "form",
-    });
-    const formId = (inserted.rootInstanceIds as string[])[0];
-    if (formId === undefined) {
-      throw new Error("Expected the inserted Form ID");
-    }
-    await call("refresh");
-    const formInspection = await call("inspect-instance", {
-      instanceId: formId,
-      include: ["props"],
-    });
-    const formProps = formInspection.props as Array<{
-      name: string;
-      value: unknown;
-    }>;
-    const variable = (name: string) => {
-      const id = formProps.find((prop) => prop.name === name)?.value;
-      if (typeof id !== "string") {
-        throw new Error(`Expected the ${name} Form parameter`);
-      }
-      return encodeDataSourceVariable(id);
+    await expect(
+      call("insert-component", {
+        parentInstanceId: rootInstanceId,
+        component: "WebhookForm",
+      })
+    ).rejects.toThrow("Webhook Form is deprecated");
+    const formId = `saved-legacy-query-${nextId++}`;
+    remote = {
+      ...remote,
+      version: remote.version + 1,
+      state: seedSavedLegacyForm({
+        state: remote.state,
+        rootInstanceId,
+        formId,
+      }),
     };
-    const formData = variable("formData");
-    const browserInfo = variable("browserInfo");
+    await persist();
+    await call("refresh");
+    await call("update-props", {
+      updates: [
+        {
+          instanceId: formId,
+          name: "id",
+          type: "string",
+          value: "legacy-query-form",
+        },
+      ],
+    });
+    await call("insert-fragment", {
+      parentInstanceId: formId,
+      fragment: '<Input name="message" /><Button type="submit">Submit</Button>',
+    });
+    const fragment = await call("insert-fragment", {
+      parentInstanceId: rootInstanceId,
+      fragment:
+        '<Text id="legacy-query-output">Pending query</Text>' +
+        '<Link href="/legacy-query?tag=second&amp;tag=first&amp;tag=second">Open legacy repeated query</Link>' +
+        '<Link href="/legacy-query?tag=solo">Open legacy single query</Link>',
+    });
+    const [outputInstanceId] = fragment.rootInstanceIds as string[];
+    expect(outputInstanceId).toBeDefined();
+    await call("set-text-content", {
+      operation: "set",
+      instanceId: outputInstanceId,
+      mode: "expression",
+      text: 'typeof system.search.tag + ":" + (typeof system.search.tag === "string" ? system.search.tag : system.search.tag.join("|"))',
+    });
+    await call("refresh");
+    const inspection = await call("list-texts", {
+      instanceId: outputInstanceId,
+      mode: "expression",
+      verbose: true,
+    });
+    expect(JSON.stringify(inspection)).toContain(".search.tag");
     const resource = await call("create-resource", {
       resource: {
-        name: "Context receiver",
+        name: "Legacy query receiver",
         method: "post",
-        url: "https://mcp-delivery.example/submit",
+        url: receiverUrl,
         headers: [],
       },
       scopeInstanceId: formId,
-      dataSourceName: "Context receiver",
+      dataSourceName: "Legacy query receiver",
       exposeAsDataSource: true,
     });
+    const state = await call("create-variable", {
+      scopeInstanceId: rootInstanceId,
+      name: "legacyFormState",
+      value: { type: "string", value: "initial" },
+    });
+    const stateCode = encodeDataSourceVariable(state.dataSourceId as string);
     await call("update-resource", {
       resourceId: resource.resourceId,
       scopeInstanceId: formId,
       exposeAsDataSource: true,
       values: {
-        bodyFormat: "json",
-        body: `{ name: ${formData}.name, email: ${formData}.email, slug: system.params.slug, browser: { ip: ${browserInfo}.ip ?? null, userAgent: ${browserInfo}.userAgent ?? null, language: ${browserInfo}.language ?? null, referrer: ${browserInfo}.referrer ?? null } }`,
-        headers: [
-          { name: "X-Form-Language", value: `${browserInfo}.language ?? ""` },
+        searchParams: [
+          {
+            name: "tag",
+            value:
+              'typeof system.search.tag === "string" ? system.search.tag : (system.search.tag ?? []).join("|")',
+          },
         ],
       },
     });
@@ -306,26 +350,38 @@ const author = async () => {
         {
           instanceId: formId,
           name: "action",
-          type: "json",
-          value: [{ dataSourceId: resource.dataSourceId }],
+          type: "resource",
+          value: resource.resourceId,
+        },
+        {
+          instanceId: formId,
+          name: "state",
+          type: "expression",
+          value: stateCode,
+        },
+        {
+          instanceId: formId,
+          name: "onStateChange",
+          type: "action",
+          value: [
+            { type: "execute", args: ["state"], code: `${stateCode} = state` },
+          ],
         },
       ],
     });
     await call("refresh");
-    const inspection = await call("inspect-instance", {
+    const formInspection = await call("inspect-instance", {
       instanceId: formId,
       include: ["props"],
     });
-    expect(inspection.props).toEqual(
+    expect(formInspection.props).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           name: "action",
-          type: "json",
+          type: "resource",
+          value: resource.resourceId,
         }),
       ])
-    );
-    process.stdout.write(
-      `${JSON.stringify({ formId, resourceId: resource.resourceId })}\n`
     );
   } finally {
     await client.close();
@@ -334,3 +390,5 @@ const author = async () => {
 };
 
 await author();
+const managed = await authorManagedFormQuery(projectId);
+process.stdout.write(`${JSON.stringify(managed)}\n`);

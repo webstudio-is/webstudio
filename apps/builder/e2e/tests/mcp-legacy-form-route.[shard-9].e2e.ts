@@ -1,17 +1,14 @@
-import { execFile } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
 import { expect } from "@playwright/test";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { createProjectThroughApi } from "../fixtures/create-project";
 import { withGeneratedPreview } from "../flows/generated-app";
 import { startLegacyFormRouteReceiver } from "../flows/legacy-form-route-receiver";
 import {
   startPreviewFormMcpClient,
   submitPreviewFormViaMcp,
 } from "../flows/mcp-preview-submit";
+import { runFormAuthor } from "../flows/mcp-form-author";
+import { measure } from "../perf";
 import { test } from "../test";
-
-const execFileAsync = promisify(execFile);
 
 test("MCP-edited saved deprecated Webhook Form action uses current dynamic route params in generated Preview", async ({
   page,
@@ -20,49 +17,20 @@ test("MCP-edited saved deprecated Webhook Form action uses current dynamic route
   const receiver = await startLegacyFormRouteReceiver();
   try {
     await startPreviewFormMcpClient();
-    const fixture = await createContentModeProject({
+    const projectId = await createProjectThroughApi({
       context,
       email: "mcp-legacy-form-route@webstudio.test",
       title: "MCP legacy Form route",
-      assetNamePrefix: "mcp-legacy-form-route-",
     });
-    await execFileAsync(
-      process.execPath,
-      [
-        "--import",
-        "tsx",
-        "--import",
-        fileURLToPath(
-          new URL(
-            "../../../../scripts/register-react-global.ts",
-            import.meta.url
-          )
-        ),
-        "--conditions=webstudio",
-        fileURLToPath(
-          new URL(
-            "../fixtures/mcp-legacy-form-route-author.ts",
-            import.meta.url
-          )
-        ),
-        fixture.projectId,
-        "https://mcp-delivery.example/submit",
-      ],
-      {
-        timeout: 60_000,
-        env: {
-          ...process.env,
-          TSX_TSCONFIG_PATH: fileURLToPath(
-            new URL(
-              "../../../../packages/cli/tsconfig.local.json",
-              import.meta.url
-            )
-          ),
-        },
-      }
+    await measure("author legacy form route through MCP", () =>
+      runFormAuthor(
+        "mcp-legacy-form-route-author",
+        projectId,
+        "https://mcp-delivery.example/submit"
+      )
     );
     await withGeneratedPreview({
-      projectId: fixture.projectId,
+      projectId,
       evaluationReceiverPort: new URL(receiver.url).port,
       callback: async ({ url }) => {
         await page.route("**/*", (route) =>

@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect } from "@playwright/test";
+import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 import {
   migratePages,
   serializePages,
@@ -27,7 +28,12 @@ import {
 import { loadDevBuild, updateBuild } from "../db";
 
 const commands = new Set([
+  "create-page",
   "insert-component",
+  "insert-fragment",
+  "create-resource",
+  "update-resource",
+  "update-props",
   "list-instances",
   "inspect-instance",
   "list-resources",
@@ -236,7 +242,7 @@ const author = async () => {
     return payload.data;
   };
 
-  try {
+  const authorDefaultContact = async () => {
     const inserted = await call("insert-component", {
       parentInstanceId: home.rootInstanceId,
       component: "form",
@@ -278,13 +284,166 @@ const author = async () => {
         expect.objectContaining({ name: "action", value: actions }),
       ])
     );
-    process.stdout.write(
-      `${JSON.stringify({
-        formId: form.id,
-        ownerResourceId: owner.id,
-        visitorResourceId: visitor.id,
-      })}\n`
+    return { formId, ownerResourceId: owner.id, visitorResourceId: visitor.id };
+  };
+
+  const authorReadableFormData = async () => {
+    const inserted = await call("insert-component", {
+      parentInstanceId: home.rootInstanceId,
+      component: "form",
+    });
+    const formId = (inserted.rootInstanceIds as string[])[0];
+    if (formId === undefined) {
+      throw new Error("Expected the inserted Form ID");
+    }
+    await call("refresh");
+    const form = { id: formId };
+    await call("insert-fragment", {
+      parentInstanceId: form.id,
+      fragment:
+        '<Input name="profile.city" /><Input name="tag" /><Input name="tag" /><Input name="password" type="password" /><Input name="upload" type="file" />',
+    });
+    const resources = await call("list-resources", {
+      scopeInstanceId: form.id,
+    });
+    const emails = resources.resources as Array<{
+      id: string;
+      dataSourceId: string;
+      name: string;
+    }>;
+    const owner = emails.find(({ name }) => name === "Email to owner");
+    const visitor = emails.find(({ name }) => name === "Email to visitor");
+    if (owner === undefined || visitor === undefined) {
+      throw new Error("Expected both default Form Email Resources");
+    }
+    const inspection = await call("inspect-instance", {
+      instanceId: form.id,
+      include: ["props"],
+    });
+    const formDataId = (
+      inspection.props as Array<{ name: string; value: unknown }>
+    ).find(({ name }) => name === "formData")?.value;
+    if (typeof formDataId !== "string") {
+      throw new Error("Expected Form data parameter");
+    }
+    const expression = `${encodeDataSourceVariable(formDataId)}.toString()`;
+    await call("update-resource", {
+      resourceId: owner.id,
+      values: { email: { body: expression } },
+    });
+    await call("update-props", {
+      updates: [
+        {
+          instanceId: form.id,
+          name: "action",
+          type: "json",
+          value: [{ dataSourceId: owner.dataSourceId }],
+        },
+      ],
+    });
+    const actions = [{ dataSourceId: owner.dataSourceId }];
+    const updatedInspection = await call("inspect-instance", {
+      instanceId: form.id,
+      include: ["props"],
+    });
+    expect(updatedInspection.props).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "action", value: actions }),
+      ])
     );
+    return { formId, ownerResourceId: owner.id, expression };
+  };
+
+  const authorFormContext = async () => {
+    await call("insert-fragment", {
+      parentInstanceId: home.rootInstanceId,
+      fragment:
+        '<Link href="/contact/autumn?private=omit">Open contact Form</Link>',
+    });
+    const page = await call("create-page", {
+      name: "Form context",
+      path: "/contact/:slug",
+    });
+    const inserted = await call("insert-component", {
+      parentInstanceId: page.rootInstanceId,
+      component: "form",
+    });
+    const formId = (inserted.rootInstanceIds as string[])[0];
+    if (formId === undefined) {
+      throw new Error("Expected the inserted Form ID");
+    }
+    await call("refresh");
+    const formInspection = await call("inspect-instance", {
+      instanceId: formId,
+      include: ["props"],
+    });
+    const formProps = formInspection.props as Array<{
+      name: string;
+      value: unknown;
+    }>;
+    const variable = (name: string) => {
+      const id = formProps.find((prop) => prop.name === name)?.value;
+      if (typeof id !== "string") {
+        throw new Error(`Expected the ${name} Form parameter`);
+      }
+      return encodeDataSourceVariable(id);
+    };
+    const formData = variable("formData");
+    const browserInfo = variable("browserInfo");
+    const resource = await call("create-resource", {
+      resource: {
+        name: "Context receiver",
+        method: "post",
+        url: "https://mcp-delivery.example/submit",
+        headers: [],
+      },
+      scopeInstanceId: formId,
+      dataSourceName: "Context receiver",
+      exposeAsDataSource: true,
+    });
+    await call("update-resource", {
+      resourceId: resource.resourceId,
+      scopeInstanceId: formId,
+      exposeAsDataSource: true,
+      values: {
+        bodyFormat: "json",
+        body: `{ name: ${formData}.name, email: ${formData}.email, slug: system.params.slug, browser: { ip: ${browserInfo}.ip ?? null, userAgent: ${browserInfo}.userAgent ?? null, language: ${browserInfo}.language ?? null, referrer: ${browserInfo}.referrer ?? null } }`,
+        headers: [
+          { name: "X-Form-Language", value: `${browserInfo}.language ?? ""` },
+        ],
+      },
+    });
+    await call("update-props", {
+      updates: [
+        {
+          instanceId: formId,
+          name: "action",
+          type: "json",
+          value: [{ dataSourceId: resource.dataSourceId }],
+        },
+      ],
+    });
+    await call("refresh");
+    const inspection = await call("inspect-instance", {
+      instanceId: formId,
+      include: ["props"],
+    });
+    expect(inspection.props).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "action",
+          type: "json",
+        }),
+      ])
+    );
+    return { formId };
+  };
+
+  try {
+    const formData = await authorReadableFormData();
+    const contact = await authorDefaultContact();
+    const context = await authorFormContext();
+    process.stdout.write(`${JSON.stringify({ formData, contact, context })}\n`);
   } finally {
     await client.close();
     await server.close();

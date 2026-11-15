@@ -13,12 +13,9 @@ import {
   waitForSyncStatus,
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { loginWithSecret } from "../flows/dashboard";
 import { test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
-
-test.describe.configure({ mode: "parallel" });
 
 type DataSourceRecord =
   | {
@@ -305,7 +302,7 @@ const expectPersistedDataVariables = async ({
   }
 };
 
-test("Builder-created data variables and resources persist after reload", async ({
+test("Builder-created variables, resources, and Text Content binding persist after reload", async ({
   page,
   context,
 }) => {
@@ -333,8 +330,6 @@ test("Builder-created data variables and resources persist after reload", async 
   const graphqlUrl = "https://example.com/graphql";
   const graphqlQuery = "query Posts { posts { id title } }";
   const systemName = "e2eSitemap";
-
-  await loginWithSecret({ page, email });
 
   await measure("data variables runtime open builder", async () => {
     await openProjectBuilder({
@@ -368,6 +363,11 @@ test("Builder-created data variables and resources persist after reload", async 
       await createSystemResourceVariable({ page, name: systemName });
     }
   );
+
+  await test.step("Bind Text Content to the new static variable", async () => {
+    await bindSelectedTextContentToExpression({ page, expression: staticName });
+    await waitForCanvasText({ page, text: staticValue });
+  });
 
   await measure(
     "data variables runtime edit resources and variables",
@@ -434,8 +434,8 @@ test("Builder-created data variables and resources persist after reload", async 
       authToken: fixture.builderToken,
     });
   });
-  await waitForCanvasText({ page, text: "Initial content" });
-  await selectContentInstance({ page });
+  await waitForCanvasText({ page, text: editedStaticValue });
+  await selectContentInstance({ page, text: editedStaticValue });
 
   await expectVariableListItem({
     page,
@@ -505,58 +505,4 @@ test("Builder-created data variables and resources persist after reload", async 
     systemName,
     deletedName: graphqlName,
   });
-});
-
-test("Text Content can bind to a Builder-created variable and persist after reload", async ({
-  page,
-  context,
-}) => {
-  const email = "text-content-binding@webstudio.test";
-  const fixture = await createContentModeProject({
-    context: context,
-    email,
-    title: "Text Content Binding",
-    assetNamePrefix: "text-content-binding-",
-    editorToken: "text-content-binding-editor-token",
-    builderToken: "text-content-binding-builder-token",
-  });
-  const staticName = "e2eTextBindingLabel";
-  const staticValue = "Bound Text Content";
-
-  await loginWithSecret({ page, email });
-
-  await measure("text content binding open builder", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await waitForCanvasText({ page, text: "Initial content" });
-  });
-  await selectContentInstance({ page });
-
-  await measure("text content binding create variable", async () => {
-    await createStringVariable({
-      page,
-      name: staticName,
-      value: staticValue,
-    });
-  });
-
-  await measure("text content binding bind expression", async () => {
-    await bindSelectedTextContentToExpression({
-      page,
-      expression: staticName,
-    });
-    await waitForCanvasText({ page, text: staticValue });
-  });
-
-  await measure("text content binding reload builder", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-  await waitForCanvasText({ page, text: staticValue });
 });

@@ -9,7 +9,6 @@ import {
   selectCanvasTextInstanceForProps,
 } from "../flows/canvas-selection";
 import { replaceCanvasText } from "../flows/content-editing";
-import { loginWithSecret } from "../flows/dashboard";
 import {
   copyShareLink,
   createShareLink,
@@ -19,32 +18,12 @@ import {
 } from "../flows/share-dialog";
 import { waitForSyncStatus } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { newBrowserContext, newIsolatedPage, test } from "../test";
+import { newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
 import { e2ePaidPlanName } from "../plans";
 
 const ownerEmail = "share-link-e2e@webstudio.test";
 const baselineText = "Initial content";
-let ownerContext: BrowserContext;
-
-type ShareLinkFixtures = {
-  projectId: string;
-  viewerUrl: string;
-  editorUrl: string;
-  builderUrl: string;
-  adminUrl: string;
-  shareLinkEditableText: string;
-};
-
-let links: ShareLinkFixtures | undefined;
-
-const getShareLinkFixtures = () => {
-  if (links === undefined) {
-    throw new Error("Expected share-link fixtures to be initialized");
-  }
-  return links;
-};
-
 const expectLinkMode = ({
   link,
   mode,
@@ -77,10 +56,13 @@ const expectCurrentMode = ({
   }
 };
 
-test.beforeAll(async ({ browser }) => {
-  ownerContext = await newBrowserContext(browser);
+test("Share links enforce viewer, editor, builder, admin, and owner permissions", async ({
+  browser,
+  context,
+  page: ownerPage,
+}) => {
   const fixture = await createContentModeProject({
-    context: ownerContext,
+    context,
     email: ownerEmail,
     title: "Share Link E2E",
     devPlan: e2ePaidPlanName,
@@ -88,18 +70,17 @@ test.beforeAll(async ({ browser }) => {
     editorToken: "share-link-e2e-editor-token",
     builderToken: "share-link-e2e-builder-token",
   });
-  const ownerPage = await ownerContext.newPage();
-
-  try {
-    await measure("share link open owner project", async () => {
-      await openProjectBuilder({
-        page: ownerPage,
-        projectId: fixture.projectId,
-      });
+  await measure("share link open owner project", async () => {
+    await openProjectBuilder({
+      page: ownerPage,
+      projectId: fixture.projectId,
     });
-    await waitForCanvasText({ page: ownerPage, text: baselineText });
+  });
+  await waitForCanvasText({ page: ownerPage, text: baselineText });
 
-    await measure("share link create links", async () => {
+  const { viewerUrl, editorUrl, builderUrl, adminUrl } = await measure(
+    "share link create links",
+    async () => {
       await openShareDialog({ page: ownerPage });
       await createShareLink({
         page: ownerPage,
@@ -141,38 +122,13 @@ test.beforeAll(async ({ browser }) => {
         name: "E2E Admin link",
       });
 
-      links = {
-        projectId: fixture.projectId,
-        viewerUrl,
-        editorUrl,
-        builderUrl,
-        adminUrl,
-        shareLinkEditableText: fixture.shareLinkEditableText,
-      };
-    });
-  } finally {
-    await ownerPage.close();
-  }
-});
-test.afterAll(async () => {
-  await ownerContext.close();
-});
-test("Share links enforce viewer, editor, builder, admin, and owner permissions", async ({
-  browser,
-}) => {
-  const {
-    projectId,
-    viewerUrl,
-    editorUrl,
-    builderUrl,
-    adminUrl,
-    shareLinkEditableText,
-  } = getShareLinkFixtures();
+      return { viewerUrl, editorUrl, builderUrl, adminUrl };
+    }
+  );
   const viewer = await newIsolatedPage(browser);
   const editor = await newIsolatedPage(browser);
   const builderPage = await newIsolatedPage(browser);
   const admin = await newIsolatedPage(browser);
-  const ownerPage = await ownerContext.newPage();
   const visitor = await newIsolatedPage(browser);
   const editedText = "Share-link editor text";
 
@@ -183,6 +139,12 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
     expectLinkMode({ link: adminUrl, mode: "design" });
 
     await Promise.all([
+      (async () => {
+        await openBuilderUrl({ page: editor.page, url: editorUrl });
+        await waitForCanvasText({ page: editor.page, text: baselineText });
+        await waitForSyncStatus({ page: editor.page, status: "idle" });
+        expectCurrentMode({ pageUrl: editor.page.url(), mode: "content" });
+      })(),
       (async () => {
         await openBuilderUrl({ page: viewer.page, url: viewerUrl });
         await waitForCanvasText({ page: viewer.page, text: baselineText });
@@ -229,15 +191,13 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
       })(),
     ]);
 
-    await openBuilderUrl({ page: editor.page, url: editorUrl });
-    await waitForCanvasText({ page: editor.page, text: baselineText });
-    await waitForSyncStatus({ page: editor.page, status: "idle" });
-    expectCurrentMode({ pageUrl: editor.page.url(), mode: "content" });
-
-    await waitForCanvasText({ page: editor.page, text: shareLinkEditableText });
+    await waitForCanvasText({
+      page: editor.page,
+      text: fixture.shareLinkEditableText,
+    });
     await replaceCanvasText({
       page: editor.page,
-      currentText: shareLinkEditableText,
+      currentText: fixture.shareLinkEditableText,
       text: editedText,
     });
 
@@ -256,11 +216,6 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
       message: "Expected Style tab to be unavailable for editor link",
     });
 
-    await loginWithSecret({ page: ownerPage, email: ownerEmail });
-    await openProjectBuilder({ page: ownerPage, projectId });
-    await waitForCanvasText({ page: ownerPage, text: baselineText });
-
-    await openShareDialog({ page: ownerPage });
     await createShareLink({
       page: ownerPage,
       name: "E2E Updated link",
@@ -304,8 +259,6 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
     await editor.close();
     await builderPage.close();
     await admin.close();
-    await ownerPage.close();
     await visitor.close();
   }
 });
-import type { BrowserContext } from "@playwright/test";

@@ -7,7 +7,10 @@ import {
   startFormDeliveryReceiver,
   startGeneratedFormDeliveryPreview,
 } from "../flows/generated-form-delivery";
-import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
+import {
+  startPreviewFormMcpClient,
+  submitPreviewFormViaMcp,
+} from "../flows/mcp-preview-submit";
 import { test, withBrowserContext } from "../test";
 
 test.describe.configure({ mode: "default" });
@@ -35,6 +38,7 @@ let preview:
   | undefined;
 
 test.beforeAll(async ({ browser }) => {
+  await startPreviewFormMcpClient();
   const projectId = await withBrowserContext(browser, async (context) => {
     const fixture = await createContentModeProject({
       context,
@@ -46,25 +50,27 @@ test.beforeAll(async ({ browser }) => {
     return fixture.projectId;
   });
 
-  for (const [mode] of formats) {
-    const { stdout } = await execFileAsync(
-      process.execPath,
-      [
-        "--import",
-        "tsx",
-        "--import",
-        reactGlobalPath,
-        "--conditions=webstudio",
-        authorPath,
-        projectId,
-        mode,
-      ],
-      {
-        timeout: 60_000,
-        env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
-      }
-    );
-    const { formId } = JSON.parse(stdout) as { formId: string };
+  const { stdout } = await execFileAsync(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      "--import",
+      reactGlobalPath,
+      "--conditions=webstudio",
+      authorPath,
+      projectId,
+      ...formats.map(([mode]) => mode),
+    ],
+    {
+      timeout: 60_000,
+      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
+    }
+  );
+  const authoredForms = stdout.trim().split("\n");
+  expect(authoredForms).toHaveLength(formats.length);
+  for (const [index, [mode]] of formats.entries()) {
+    const { formId } = JSON.parse(authoredForms[index]) as { formId: string };
     formIds.set(mode, formId);
   }
 

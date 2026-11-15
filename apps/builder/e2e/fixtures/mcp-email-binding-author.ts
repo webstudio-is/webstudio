@@ -26,16 +26,26 @@ import {
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
+import { authorManagedForm } from "./mcp-managed-form-author";
 
-const [, , projectId, phase, boundFormId, partialFormId] = process.argv;
-if (
-  projectId === undefined ||
-  (phase !== "initial" && phase !== "updated") ||
-  boundFormId === undefined ||
-  partialFormId === undefined
-) {
-  throw new Error("Expected a project ID, binding phase, and two Form IDs");
+const [, , projectId, phase, savedBoundFormId, savedPartialFormId] =
+  process.argv;
+if (projectId === undefined || (phase !== "initial" && phase !== "updated")) {
+  throw new Error("Expected a project ID and binding phase");
 }
+
+const boundFormId =
+  phase === "initial"
+    ? (await authorManagedForm(projectId, { mode: "email" })).formId
+    : savedBoundFormId;
+const partialFormId =
+  phase === "initial"
+    ? (await authorManagedForm(projectId, { mode: "email" })).formId
+    : savedPartialFormId;
+if (boundFormId === undefined || partialFormId === undefined) {
+  throw new Error("Expected two Form IDs");
+}
+expect(boundFormId).not.toBe(partialFormId);
 
 const commands = new Set([
   "list-instances",
@@ -410,3 +420,5 @@ for (const [mode, formId] of actions) {
     await server.close();
   }
 }
+
+process.stdout.write(`${JSON.stringify({ boundFormId, partialFormId })}\n`);

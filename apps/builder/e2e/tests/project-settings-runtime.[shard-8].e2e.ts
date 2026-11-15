@@ -3,7 +3,6 @@ import type { Page as WebstudioPage } from "@webstudio-is/sdk";
 import { parseProjectAuthRoutes } from "@webstudio-is/project-build/contracts";
 import { loadDevBuild, updateProject } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
-import { loginWithSecret } from "../flows/dashboard";
 import {
   createPageFromTemplate,
   openPage,
@@ -257,8 +256,6 @@ test("Project settings for site name, CSS, email, and redirects persist after re
     '"Team, West" <team@example.com>, Owner <owner@example.com>';
   const sender = "Project Team <sender@example.com>";
 
-  await loginWithSecret({ page, email, devPlan: e2eEmailPlanName });
-
   await measure("project settings runtime open builder", async () => {
     await openProjectBuilder({
       page,
@@ -314,26 +311,24 @@ test("Project settings for site name, CSS, email, and redirects persist after re
   ) {
     throw new Error("Expected atomic CSS setting to persist as disabled.");
   }
-  await measure(
-    "project settings runtime generated redirect response",
-    async () => {
-      await expectGeneratedAppRedirect({
+  await Promise.all([
+    measure("project settings runtime generated redirect response", () =>
+      expectGeneratedAppRedirect({
         projectId: fixture.projectId,
         path: redirect.from,
         status: 301,
         location: redirect.to,
+      })
+    ),
+    measure("project settings runtime reload with redirect", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
-    }
-  );
-
-  await measure("project settings runtime reload with redirect", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await waitForCanvasText({ page, text: "Initial content" });
-  });
+      await waitForCanvasText({ page, text: "Initial content" });
+    }),
+  ]);
   await openProjectSettings({ page });
   await page.getByRole("textbox", { name: "Site name", exact: true }).waitFor();
   const persistedSiteName = await page
@@ -378,27 +373,25 @@ test("Project settings for site name, CSS, email, and redirects persist after re
     projectId: fixture.projectId,
     siteName,
   });
-  await measure(
-    "project settings runtime generated redirects after delete",
-    async () => {
-      await expectGeneratedRedirects({
+  await Promise.all([
+    measure("project settings runtime generated redirects after delete", () =>
+      expectGeneratedRedirects({
         projectId: fixture.projectId,
         expectedRedirects: [],
-      });
-    }
-  );
-
-  await measure(
-    "project settings runtime reload after redirect delete",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-      await waitForCanvasText({ page, text: "Initial content" });
-    }
-  );
+      })
+    ),
+    measure(
+      "project settings runtime reload after redirect delete",
+      async () => {
+        await openProjectBuilder({
+          page,
+          projectId: fixture.projectId,
+          authToken: fixture.builderToken,
+        });
+        await waitForCanvasText({ page, text: "Initial content" });
+      }
+    ),
+  ]);
   await openProjectSettings({ page });
   await page.getByRole("option", { name: "Redirects" }).click();
   await page.getByText(redirect.from, { exact: true }).waitFor({
@@ -428,8 +421,6 @@ test("Marketplace page settings and project authentication routes persist after 
   await updateProject(fixture.projectId, {
     marketplaceApprovalStatus: "PENDING",
   });
-
-  await loginWithSecret({ page, email });
 
   await measure("marketplace page settings open builder", async () => {
     await openProjectBuilder({

@@ -1,7 +1,11 @@
 import type { Locator, Page } from "@playwright/test";
 import { expectLocatorHidden, expectTextHidden } from "./assertions";
 import { waitForCanvasText } from "./builder";
-import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
+import {
+  waitForChangeToBeSaved,
+  waitForSyncComplete,
+  waitForSyncStatus,
+} from "./sync-status";
 
 const getPageSettingsControl = ({
   page,
@@ -41,9 +45,7 @@ export const fillAllowedPageSettings = async ({
     content: string;
   };
 }) => {
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
+  await waitForSyncComplete({ page, timeout: 3_000 }).catch(() => undefined);
 
   let save = waitForChangeToBeSaved({ page });
   for (const field of [
@@ -65,7 +67,7 @@ export const fillAllowedPageSettings = async ({
   await socialImageInput.fill(socialImage);
   await socialImageInput.blur();
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await fillCustomMetadata({ page, metadata });
 };
@@ -80,9 +82,7 @@ export const fillCustomMetadata = async ({
     content: string;
   };
 }) => {
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
+  await waitForSyncComplete({ page, timeout: 3_000 }).catch(() => undefined);
   const metadataGroup = getCustomMetadataGroup(page);
   let save = waitForChangeToBeSaved({ page });
   await metadataGroup
@@ -90,7 +90,7 @@ export const fillCustomMetadata = async ({
     .first()
     .fill(metadata.content);
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   save = waitForChangeToBeSaved({ page });
   await metadataGroup
@@ -98,7 +98,7 @@ export const fillCustomMetadata = async ({
     .first()
     .fill(metadata.property);
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await expectCustomMetadataValue({
     page,
@@ -268,9 +268,7 @@ export const choosePageSettingsSocialImageAsset = async ({
   filename: string;
   label?: string;
 }) => {
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
+  await waitForSyncComplete({ page, timeout: 3_000 }).catch(() => undefined);
   await page.getByRole("button", { name: "Choose image from assets" }).click();
   const save = waitForChangeToBeSaved({ page });
   await page.getByAltText(label, { exact: true }).click();

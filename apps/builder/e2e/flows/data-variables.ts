@@ -50,8 +50,14 @@ const fillVariableName = async ({
   await getVariableForm(page).locator('input[name="name"]').fill(name);
 };
 
-export const selectContentInstance = async ({ page }: { page: Page }) => {
-  await selectCanvasTextInstance({ page, text: "Initial content" });
+export const selectContentInstance = async ({
+  page,
+  text = "Initial content",
+}: {
+  page: Page;
+  text?: string;
+}) => {
+  await selectCanvasTextInstance({ page, text });
   await page
     .getByText("No instance selected", { exact: true })
     .waitFor({ state: "hidden" });

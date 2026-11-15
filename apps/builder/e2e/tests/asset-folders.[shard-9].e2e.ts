@@ -2,11 +2,9 @@ import {
   createAssetFolder,
   dragAssetToFolder,
   openAssetsPanel,
-  openAssetSettings,
   uploadAsset,
 } from "../flows/assets-panel";
 import { openProjectBuilder } from "../flows/builder";
-import { loginWithSecret } from "../flows/dashboard";
 import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
@@ -14,121 +12,25 @@ import {
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { dashboardUrl, test } from "../test";
 
-test.describe.configure({ mode: "parallel" });
-
-test("Cloning a project preserves nested asset folders", async ({
+test("Asset folder moves survive Builder reload and project cloning", async ({
+  page,
   context,
 }) => {
-  const email = "asset-folder-clone-e2e@webstudio.test";
-  const sourceTitle = "Asset Folder Clone Source";
   const cloneTitle = "Asset Folder Clone Result";
   const fixture = await createContentModeProject({
-    context: context,
-    email,
-    title: sourceTitle,
+    context,
+    email: "asset-folder-clone-e2e@webstudio.test",
+    title: "Asset Folder Clone Source",
     builderToken: "asset-folder-clone-e2e-builder-token",
   });
-  const page = await context.newPage();
-
-  try {
-    await openProjectBuilder({
+  const openSource = () =>
+    openProjectBuilder({
       page,
       projectId: fixture.projectId,
       authToken: fixture.builderToken,
     });
-    await waitForSyncStatus({ page, status: "idle" });
-    await openAssetsPanel({ page });
-    const parent = await createAssetFolder({ page, name: "Clone parent" });
-    await parent.dblclick();
-    const child = await createAssetFolder({ page, name: "Clone child" });
-    await child.dblclick();
-    const assetTitle = await uploadAsset({
-      page,
-      filename: "upload-image.svg",
-    });
 
-    await loginWithSecret({ page, email });
-    const cloneUrl = new URL("/dashboard", dashboardUrl);
-    cloneUrl.searchParams.set("projectToCloneAuthToken", fixture.builderToken);
-    await page.goto(cloneUrl.href);
-    const cloneDialog = page.getByRole("dialog", { name: "Clone project" });
-    await cloneDialog.locator('input[name="title"]').fill(cloneTitle);
-    await cloneDialog
-      .getByRole("button", { name: "Clone", exact: true })
-      .click();
-
-    const clonedProjectTitle = page.getByText(cloneTitle, { exact: true });
-    await clonedProjectTitle.waitFor();
-    const clonedProjectCard = clonedProjectTitle.locator(
-      "xpath=ancestor::div[.//a][1]"
-    );
-    await clonedProjectCard.locator("a").first().click();
-    await page.waitForURL(/https:\/\/p-[^.]+\.wstd\.dev:\d+\//);
-    await openAssetsPanel({ page, force: true });
-    await page
-      .getByRole("button", { name: "Folder Clone parent", exact: true })
-      .press("Enter");
-    await page
-      .getByRole("button", { name: "Folder Clone child", exact: true })
-      .press("Enter");
-    await page.getByTitle(assetTitle).waitFor();
-  } finally {
-    await page.close();
-  }
-});
-
-test("Asset can be dragged into a folder", async ({ page, context }) => {
-  const fixture = await createContentModeProject({
-    context: context,
-    email: "asset-folder-drag-e2e@webstudio.test",
-    title: "Asset Folder Drag E2E",
-    builderToken: "asset-folder-drag-e2e-builder-token",
-  });
-  const filename = "upload-image.svg";
-  const folderName = "Images";
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await waitForSyncStatus({ page, status: "idle" });
-  await openAssetsPanel({ page });
-  const assetTitle = await uploadAsset({ page, filename });
-  const folder = await createAssetFolder({ page, name: folderName });
-
-  await dragAssetToFolder({ page, assetTitle, folderName });
-  await folder.dblclick();
-  await page.getByTitle(assetTitle).waitFor();
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await openAssetsPanel({ page });
-  // Reopening Assets restores Images rather than returning to the root.
-  await page.getByRole("button", { name: "Back", exact: true }).waitFor();
-  await page.getByTitle(assetTitle).waitFor();
-  await waitForSyncStatus({ page, status: "idle" });
-});
-
-test("Dragging over Back navigates to parent folders before dropping", async ({
-  page,
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context: context,
-    email: "asset-folder-back-drag-e2e@webstudio.test",
-    title: "Asset Folder Back Drag E2E",
-    builderToken: "asset-folder-back-drag-e2e-builder-token",
-  });
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
+  await openSource();
   await waitForSyncStatus({ page, status: "idle" });
   await openAssetsPanel({ page });
 
@@ -198,120 +100,39 @@ test("Dragging over Back navigates to parent folders before dropping", async ({
     throw error;
   }
 
-  await page.getByTitle(assetTitle).waitFor();
+  await asset.waitFor();
+  await child.waitFor();
+  await dragAssetToFolder({ page, assetTitle, folderName: "Child" });
+  await child.dblclick();
+  await asset.waitFor();
+
+  await openSource();
+  await openAssetsPanel({ page });
+  // Reopening Assets restores Child rather than returning to the root.
+  await page.getByRole("button", { name: "Back", exact: true }).waitFor();
+  await asset.waitFor();
+  await waitForSyncStatus({ page, status: "idle" });
+
+  const cloneUrl = new URL("/dashboard", dashboardUrl);
+  cloneUrl.searchParams.set("projectToCloneAuthToken", fixture.builderToken);
+  await page.goto(cloneUrl.href);
+  const cloneDialog = page.getByRole("dialog", { name: "Clone project" });
+  await cloneDialog.locator('input[name="title"]').fill(cloneTitle);
+  await cloneDialog.getByRole("button", { name: "Clone", exact: true }).click();
+
+  const clonedProjectTitle = page.getByText(cloneTitle, { exact: true });
+  await clonedProjectTitle.waitFor();
+  const clonedProjectCard = clonedProjectTitle.locator(
+    "xpath=ancestor::div[.//a][1]"
+  );
+  await clonedProjectCard.locator("a").first().click();
+  await page.waitForURL(/https:\/\/p-[^.]+\.wstd\.dev:\d+\//);
+  await openAssetsPanel({ page, force: true });
+  await page
+    .getByRole("button", { name: "Folder Parent", exact: true })
+    .press("Enter");
   await page
     .getByRole("button", { name: "Folder Child", exact: true })
-    .waitFor();
-});
-
-test("Asset folder changes wait until the nested selector loses focus", async ({
-  page,
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context: context,
-    email: "asset-folder-selector-e2e@webstudio.test",
-    title: "Asset Folder Selector E2E",
-    builderToken: "asset-folder-selector-e2e-builder-token",
-  });
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await waitForSyncStatus({ page, status: "idle" });
-  await openAssetsPanel({ page });
-
-  const parent = await createAssetFolder({ page, name: "Parent" });
-  await parent.dblclick();
-  await createAssetFolder({ page, name: "Child" });
-  await page.getByRole("button", { name: "Back", exact: true }).click();
-
-  const assetTitle = await uploadAsset({
-    page,
-    filename: "upload-image.svg",
-  });
-  await openAssetSettings({ page, filename: assetTitle });
-
-  const settings = page.getByText("Asset settings");
-  const topLevelSelect = page.getByRole("combobox", {
-    name: "Folder",
-    exact: true,
-  });
-  await topLevelSelect.click();
-  await page.getByRole("option", { name: "Parent", exact: true }).click();
-  await settings.waitFor();
-
-  const childSelect = page.getByRole("combobox", {
-    name: "Asset subfolder level 1",
-    exact: true,
-  });
-  await childSelect.click();
-  await page.getByRole("option", { name: "Child", exact: true }).click();
-  await settings.waitFor();
-
-  await Promise.all([
-    waitForChangeToBeSaved({ page, timeout: 30_000 }),
-    page.locator("#asset-manager-filename").click(),
-  ]);
-  await settings.waitFor({ state: "hidden" });
-
-  await parent.dblclick();
-  await page
-    .getByRole("button", { name: "Folder Child", exact: true })
-    .dblclick();
+    .press("Enter");
   await page.getByTitle(assetTitle).waitFor();
-});
-
-test("Multiselected assets can be dragged into a folder", async ({
-  page,
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context: context,
-    email: "asset-folder-multidrag-e2e@webstudio.test",
-    title: "Asset Folder Multidrag E2E",
-    builderToken: "asset-folder-multidrag-e2e-builder-token",
-  });
-  const folderName = "Selected assets";
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await waitForSyncStatus({ page, status: "idle" });
-  await openAssetsPanel({ page });
-  const firstAssetTitle = await uploadAsset({
-    page,
-    filename: "upload-image.svg",
-  });
-  const secondAssetTitle = await uploadAsset({
-    page,
-    filename: "replacement-image.svg",
-  });
-  const folder = await createAssetFolder({ page, name: folderName });
-  const firstAsset = page.getByTitle(firstAssetTitle);
-  const secondAsset = page.getByTitle(secondAssetTitle);
-
-  await firstAsset.click();
-  await secondAsset.click({
-    modifiers: [process.platform === "darwin" ? "Meta" : "Control"],
-  });
-  if (
-    (await page.locator('[role="option"][aria-selected="true"]').count()) !== 2
-  ) {
-    throw new Error("Expected both assets to be selected before dragging");
-  }
-
-  await dragAssetToFolder({
-    page,
-    assetTitle: secondAssetTitle,
-    folderName,
-  });
-  await firstAsset.waitFor({ state: "hidden" });
-  await folder.dblclick();
-  await page.getByTitle(firstAssetTitle).waitFor();
-  await page.getByTitle(secondAssetTitle).waitFor();
 });

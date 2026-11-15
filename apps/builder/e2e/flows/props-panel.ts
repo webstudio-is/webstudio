@@ -1,6 +1,10 @@
 import type { Page } from "@playwright/test";
 import { chooseAssetByFilename } from "./assets-panel";
-import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
+import {
+  waitForChangeToBeSaved,
+  waitForSyncComplete,
+  waitForSyncStatus,
+} from "./sync-status";
 
 const getPropertyLabel = ({ page, label }: { page: Page; label: string }) =>
   page.getByText(label, { exact: true }).first();
@@ -26,9 +30,7 @@ export const fillSelectedStringProperty = async ({
   const input = getPropertyInput({ page, control });
   await input.waitFor({ state: "visible", timeout: 10_000 });
 
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
+  await waitForSyncComplete({ page, timeout: 3_000 }).catch(() => undefined);
   const save = waitForProjectSync
     ? waitForChangeToBeSaved({ page })
     : Promise.resolve();

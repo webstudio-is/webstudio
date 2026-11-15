@@ -56,12 +56,7 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
     requiresConfirm: contract.requiresConfirm,
   }));
 
-const projectId = process.argv[2];
-if (projectId === undefined) {
-  throw new Error("Expected the disposable E2E project ID");
-}
-
-const author = async () => {
+export const authorManagedFormQuery = async (projectId: string) => {
   let build = await loadDevBuild({ projectId: projectId });
   const parse = <Value>(field: keyof typeof build) =>
     JSON.parse(String(build[field])) as Value;
@@ -309,13 +304,9 @@ const author = async () => {
         }),
       ])
     );
-    process.stdout.write(
-      `${JSON.stringify({ formId, resourceId: resource.resourceId })}\n`
-    );
+    return { formId, resourceId: resource.resourceId };
   } finally {
     await client.close();
     await server.close();
   }
 };
-
-await author();

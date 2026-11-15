@@ -1,9 +1,12 @@
 import { createServer } from "node:http";
 
-export const startLegacyFormQueryReceiver = async () => {
+export const startFormQueryReceiver = async () => {
   const deliveries: Array<{
     method: string;
+    pathname: string;
+    search: string;
     tag: string | null;
+    contentType: string;
     body: Record<string, unknown>;
   }> = [];
   const server = createServer(async (request, response) => {
@@ -11,14 +14,20 @@ export const startLegacyFormQueryReceiver = async () => {
     for await (const chunk of request) {
       chunks.push(Buffer.from(chunk));
     }
-    deliveries.push({
-      method: request.method ?? "",
-      tag: new URL(
-        request.url ?? "/",
-        "http://receiver.local"
-      ).searchParams.get("tag"),
-      body: JSON.parse(Buffer.concat(chunks).toString("utf8")),
-    });
+    const url = new URL(request.url ?? "/", "http://receiver.local");
+    try {
+      deliveries.push({
+        method: request.method ?? "",
+        pathname: url.pathname,
+        search: url.search,
+        tag: url.searchParams.get("tag"),
+        contentType: request.headers["content-type"] ?? "",
+        body: JSON.parse(Buffer.concat(chunks).toString("utf8")),
+      });
+    } catch {
+      response.writeHead(400).end();
+      return;
+    }
     response.writeHead(200, { "content-type": "application/json" });
     response.end(JSON.stringify({ delivered: true }));
   });
@@ -28,10 +37,10 @@ export const startLegacyFormQueryReceiver = async () => {
   });
   const address = server.address();
   if (address === null || typeof address === "string") {
-    throw new Error("Expected local legacy Form receiver port");
+    throw new Error("Expected local Form query receiver port");
   }
   return {
-    url: `http://127.0.0.1:${address.port}/submit`,
+    port: address.port,
     deliveries,
     close: () => new Promise<void>((resolve) => server.close(() => resolve())),
   };

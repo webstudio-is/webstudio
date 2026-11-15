@@ -4,7 +4,7 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { withGeneratedPreview } from "../flows/generated-app";
 import { runFormAuthor } from "../flows/mcp-form-author";
 import {
-  closePreviewFormMcpClient,
+  startPreviewFormMcpClient,
   submitPreviewFormViaMcp,
 } from "../flows/mcp-preview-submit";
 import { test } from "../test";
@@ -28,6 +28,7 @@ test("MCP-authored managed and native Forms validate and submit in generated Pre
     server.listen(0, "127.0.0.1", resolve);
   });
   try {
+    await startPreviewFormMcpClient();
     const address = server.address();
     if (address === null || typeof address === "string") {
       throw new Error("Expected local receiver port");
@@ -176,10 +177,6 @@ test("MCP-authored managed and native Forms validate and submit in generated Pre
       },
     });
   } finally {
-    try {
-      await closePreviewFormMcpClient();
-    } finally {
-      await new Promise<void>((resolve) => server.close(() => resolve()));
-    }
+    await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });

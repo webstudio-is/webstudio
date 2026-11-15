@@ -3,10 +3,7 @@ import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { waitForCanvasTextStyle } from "../flows/canvas-style";
 import { addCssDeclaration } from "../flows/css-declaration";
-import {
-  waitForChangeToBeSaved,
-  waitForSyncStatus,
-} from "../flows/sync-status";
+import { waitForChangeToBeSaved } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
 import { test } from "../test";
@@ -172,7 +169,6 @@ test("Builder CSS variables persist across create, bind, rename, delete, and rel
     const save = waitForChangeToBeSaved({ page });
     await dialog.getByRole("button", { name: "Rename" }).click();
     await save;
-    await waitForSyncStatus({ page, status: "idle" });
   });
 
   await waitForCanvasTextStyle({
@@ -223,7 +219,6 @@ test("Builder CSS variables persist across create, bind, rename, delete, and rel
       .getByRole("button", { name: "Delete" })
       .click();
     await save;
-    await waitForSyncStatus({ page, status: "idle" });
   });
 
   await expectBuildStylesNotToContain({

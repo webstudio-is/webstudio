@@ -16,7 +16,7 @@ import {
   openPage,
   openPageSettings,
 } from "../flows/pages-panel";
-import { waitForSyncStatus } from "../flows/sync-status";
+import { waitForSyncComplete } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
@@ -35,10 +35,42 @@ test.beforeEach(async ({ context }) => {
     email: `content-mode-pages-${randomUUID()}@webstudio.test`,
   });
 });
-test("Editor can create styled page from template in content mode", async ({
+test("Editor can create a styled page, edit allowed settings, and reload it in content mode", async ({
   page,
 }) => {
   const pageName = "Created content page";
+  const invalidPaths = ["/posts/:slug", "/docs/*", "https://x.com"];
+  const editedName = "Edited settings content page";
+  const editedPath = "/edited-settings-content-page";
+  const editedTitle = "Edited settings title";
+  const editedDescription = "Edited settings description";
+  const editedLanguage = "en-US";
+  const editedSocialImage = "https://example.com/content-mode-social.png";
+
+  const expectTemplatedCanvas = async () => {
+    await waitForCanvasTextStyle({
+      page,
+      text: fixture.pageTemplateText,
+      property: "font-size",
+      value: fixture.pageTemplateFontSize,
+    });
+    await waitForCanvasText({
+      page,
+      text: fixture.dataResourceStaticVariableVisibleValue,
+    });
+    await waitForCanvasText({
+      page,
+      text: "HTTP resource variable configured",
+    });
+    await waitForCanvasText({
+      page,
+      text: "GraphQL resource variable configured",
+    });
+    await waitForCanvasText({
+      page,
+      text: "2026",
+    });
+  };
 
   await measure(
     "content mode open editor for page template creation",
@@ -52,7 +84,7 @@ test("Editor can create styled page from template in content mode", async ({
     }
   );
   await waitForCanvasText({ page, text: "Initial link" });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await measure("content mode create page from template", async () => {
     await createPageFromTemplate({
@@ -62,30 +94,49 @@ test("Editor can create styled page from template in content mode", async ({
       canvasText: fixture.pageTemplateText,
     });
   });
-  await waitForCanvasTextStyle({
-    page,
-    text: fixture.pageTemplateText,
-    property: "font-size",
-    value: fixture.pageTemplateFontSize,
+  await expectTemplatedCanvas();
+  await openPageSettings({ page, pageName });
+
+  await test.step("Invalid paths and restricted settings are blocked", async () => {
+    for (const path of invalidPaths) {
+      const pathInput = getPageSettingsPathInput({ page });
+      await pathInput.fill(path);
+      await pathInput.blur();
+      await expectContentModePagePathError({ page });
+      await waitForSyncComplete({ page });
+    }
+    await expectContentModePageSettingsRestrictions({ page });
+    await waitForSyncComplete({ page });
   });
-  await waitForCanvasText({
-    page,
-    text: fixture.dataResourceStaticVariableVisibleValue,
-  });
-  await waitForCanvasText({
-    page,
-    text: "HTTP resource variable configured",
-  });
-  await waitForCanvasText({
-    page,
-    text: "GraphQL resource variable configured",
-  });
-  await waitForCanvasText({
-    page,
-    text: "2026",
+  await test.step("Allowed settings can be saved", async () => {
+    await fillAllowedPageSettings({
+      page,
+      name: editedName,
+      path: editedPath,
+      title: editedTitle,
+      description: editedDescription,
+      language: editedLanguage,
+      socialImage: editedSocialImage,
+      metadata: {
+        property: "content-mode",
+        content: "edited metadata",
+      },
+    });
+    await choosePageSettingsSocialImageAsset({
+      page,
+      filename: fixture.assetTemplateImageName,
+      label: fixture.assetTemplateImageAlt,
+    });
+    await fillCustomMetadata({
+      page,
+      metadata: {
+        property: "content-mode",
+        content: "edited metadata",
+      },
+    });
   });
 
-  await measure("content mode reload created page from template", async () => {
+  await measure("content mode reload created page and settings", async () => {
     await openProjectBuilder({
       page,
       projectId: fixture.projectId,
@@ -94,97 +145,11 @@ test("Editor can create styled page from template in content mode", async ({
     });
     await openPage({
       page,
-      pageName,
+      pageName: editedName,
       canvasText: fixture.pageTemplateText,
     });
   });
-  await waitForCanvasText({
-    page,
-    text: fixture.dataResourceStaticVariableVisibleValue,
-  });
-  await waitForCanvasText({
-    page,
-    text: "HTTP resource variable configured",
-  });
-  await waitForCanvasText({
-    page,
-    text: "GraphQL resource variable configured",
-  });
-  await waitForCanvasText({
-    page,
-    text: "2026",
-  });
-  await waitForSyncStatus({ page, status: "idle" });
-});
-
-test("Editor can edit allowed page settings", async ({ page }) => {
-  const pageName = "Settings content page";
-  const editedName = "Edited settings content page";
-  const editedPath = "/edited-settings-content-page";
-  const editedTitle = "Edited settings title";
-  const editedDescription = "Edited settings description";
-  const editedLanguage = "en-US";
-  const editedSocialImage = "https://example.com/content-mode-social.png";
-
-  await measure(
-    "content mode open editor for allowed page settings",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    }
-  );
-  await waitForCanvasText({ page, text: "Initial link" });
-  await waitForSyncStatus({ page, status: "idle" });
-
-  await createPageFromTemplate({
-    page,
-    templateName: fixture.pageTemplateName,
-    pageName,
-    canvasText: fixture.pageTemplateText,
-  });
-  await openPageSettings({ page, pageName });
-
-  await fillAllowedPageSettings({
-    page,
-    name: editedName,
-    path: editedPath,
-    title: editedTitle,
-    description: editedDescription,
-    language: editedLanguage,
-    socialImage: editedSocialImage,
-    metadata: {
-      property: "content-mode",
-      content: "edited metadata",
-    },
-  });
-  await choosePageSettingsSocialImageAsset({
-    page,
-    filename: fixture.assetTemplateImageName,
-    label: fixture.assetTemplateImageAlt,
-  });
-  await fillCustomMetadata({
-    page,
-    metadata: {
-      property: "content-mode",
-      content: "edited metadata",
-    },
-  });
-
-  await measure(
-    "content mode reload editor for allowed page settings",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    }
-  );
+  await expectTemplatedCanvas();
   await openPageSettings({ page, pageName: editedName });
   await page.getByLabel("Page name").waitFor();
   if ((await page.getByLabel("Page name").inputValue()) !== editedName) {
@@ -228,43 +193,7 @@ test("Editor can edit allowed page settings", async ({ page }) => {
     property: "content-mode",
     content: "edited metadata",
   });
-  await waitForSyncStatus({ page, status: "idle" });
-});
-
-test("Editor is blocked from invalid paths and restricted page settings", async ({
-  page,
-}) => {
-  const pageName = "Blocked settings content page";
-  const invalidPaths = ["/posts/:slug", "/docs/*", "https://x.com"];
-
-  await measure("content mode open editor for blocked page paths", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-  });
-  await waitForCanvasText({ page, text: "Initial link" });
-  await waitForSyncStatus({ page, status: "idle" });
-
-  await createPageFromTemplate({
-    page,
-    templateName: fixture.pageTemplateName,
-    pageName,
-    canvasText: fixture.pageTemplateText,
-  });
-  await openPageSettings({ page, pageName });
-
-  for (const path of invalidPaths) {
-    const pathInput = getPageSettingsPathInput({ page });
-    await pathInput.fill(path);
-    await pathInput.blur();
-    await expectContentModePagePathError({ page });
-    await waitForSyncStatus({ page, status: "idle" });
-  }
-  await expectContentModePageSettingsRestrictions({ page });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 });
 
 test("Edit-only and build-capable users can collaborate in content mode", async ({
@@ -291,8 +220,8 @@ test("Edit-only and build-capable users can collaborate in content mode", async 
     });
     await waitForCanvasText({ page: editor.page, text: "Initial content" });
     await waitForCanvasText({ page: builder.page, text: "Initial content" });
-    await waitForSyncStatus({ page: editor.page, status: "idle" });
-    await waitForSyncStatus({ page: builder.page, status: "idle" });
+    await waitForSyncComplete({ page: editor.page });
+    await waitForSyncComplete({ page: builder.page });
 
     await insertTemplateAfterCanvasText({
       page: editor.page,
@@ -303,7 +232,7 @@ test("Edit-only and build-capable users can collaborate in content mode", async 
       page: editor.page,
       text: fixture.collaborationTemplateText,
     });
-    await waitForSyncStatus({ page: editor.page, status: "idle" });
+    await waitForSyncComplete({ page: editor.page });
 
     await openProjectBuilder({
       page: builder.page,
@@ -320,7 +249,7 @@ test("Edit-only and build-capable users can collaborate in content mode", async 
       currentText: fixture.collaborationTemplateText,
       text: "Collaborative editor text",
     });
-    await waitForSyncStatus({ page: editor.page, status: "idle" });
+    await waitForSyncComplete({ page: editor.page });
 
     await selectCanvasTextInstance({
       page: editor.page,
@@ -349,8 +278,8 @@ test("Edit-only and build-capable users can collaborate in content mode", async 
     await builder.page
       .getByRole("tab", { name: "Style" })
       .waitFor({ state: "visible" });
-    await waitForSyncStatus({ page: editor.page, status: "idle" });
-    await waitForSyncStatus({ page: builder.page, status: "idle" });
+    await waitForSyncComplete({ page: editor.page });
+    await waitForSyncComplete({ page: builder.page });
   } finally {
     await editor.close();
     await builder.close();

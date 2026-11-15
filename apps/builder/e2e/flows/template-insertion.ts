@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { waitForCanvasFrame } from "./builder";
-import { waitForSyncStatus } from "./sync-status";
+import { waitForChangeToBeSaved, waitForSyncComplete } from "./sync-status";
 
 const getVisibleInsertBlockButton = async ({
   page,
@@ -44,6 +44,9 @@ export const insertTemplateAfterCanvasText = async ({
   const insertButton = await getVisibleInsertBlockButton({ page, anchorText });
   await insertButton.click();
 
-  await page.getByRole("menuitemradio", { name: templateName }).click();
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
+  await Promise.all([
+    waitForChangeToBeSaved({ page }),
+    page.getByRole("menuitemradio", { name: templateName }).click(),
+  ]);
 };

@@ -6,7 +6,7 @@ import { expectGeneratedAppBuild } from "../flows/generated-app";
 import { openNavigatorPanel } from "../flows/navigator";
 import {
   waitForChangeToBeSaved,
-  waitForSyncStatus,
+  waitForSyncComplete,
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { test } from "../test";
@@ -55,7 +55,7 @@ const wrapSelectedInstance = async ({
   const save = waitForChangeToBeSaved({ page });
   await selectCommandPanelItem({ page, text: option });
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 };
 
 const selectNavigatorItem = async ({
@@ -87,7 +87,7 @@ const addAnimationPreset = async ({
   await animationsTitle.waitFor();
   await page.getByRole("button", { name: "Add animation" }).click();
   await page.getByRole("menuitem", { name: presetName }).click();
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
   await page.getByText(presetName, { exact: true }).waitFor();
 };
 
