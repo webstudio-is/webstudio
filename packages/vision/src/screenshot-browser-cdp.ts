@@ -2561,6 +2561,13 @@ const submitFormWithBrowserRuntime = async (
       }
       const requestId = params.requestId;
       if (
+        dispatchStarted &&
+        mainFrameId !== undefined &&
+        "frameId" in params &&
+        params.frameId === mainFrameId &&
+        "networkId" in params &&
+        typeof params.networkId === "string" &&
+        submissionRequestIds.has(params.networkId) &&
         "responseStatusCode" in params &&
         typeof params.responseStatusCode === "number" &&
         "request" in params &&

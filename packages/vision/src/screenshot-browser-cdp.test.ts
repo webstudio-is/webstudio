@@ -956,6 +956,7 @@ const createManagedFormSocket = ({
   navigationGap = false,
   fastRedirect = false,
   interceptedBodyUnreadable = false,
+  interceptedChild = false,
   unrelated,
 }: {
   body?: string;
@@ -965,6 +966,7 @@ const createManagedFormSocket = ({
   navigationGap?: boolean | "stalled";
   fastRedirect?: boolean;
   interceptedBodyUnreadable?: boolean;
+  interceptedChild?: boolean;
   unrelated?: { method: string; url: string; frameId: string };
 } = {}) => {
   const url = "http://127.0.0.1:5173/contact";
@@ -1018,7 +1020,15 @@ const createManagedFormSocket = ({
               id: message.id,
               ...(interceptedBodyUnreadable
                 ? { error: { code: -32000, message: "Body unavailable" } }
-                : { result: { body, base64Encoded } }),
+                : {
+                    result: {
+                      body:
+                        message.params?.requestId === "intercepted-child"
+                          ? JSON.stringify({ results: [{ status: 418 }] })
+                          : body,
+                      base64Encoded,
+                    },
+                  }),
             }),
           }),
         0
@@ -1112,12 +1122,34 @@ const createManagedFormSocket = ({
         if (fastRedirect) {
           emit("Fetch.requestPaused", {
             requestId: "intercepted-managed",
+            networkId: "managed",
+            frameId: "main",
             responseStatusCode: 200,
             request: {
               method: "POST",
               url: "http://127.0.0.1:5173/__ws-form/contact",
             },
           });
+          if (interceptedChild) {
+            emit("Network.requestWillBeSent", {
+              requestId: "child",
+              frameId: "child",
+              request: {
+                method: "POST",
+                url: "http://127.0.0.1:5173/__ws-form/contact",
+              },
+            });
+            emit("Fetch.requestPaused", {
+              requestId: "intercepted-child",
+              networkId: "child",
+              frameId: "child",
+              responseStatusCode: 200,
+              request: {
+                method: "POST",
+                url: "http://127.0.0.1:5173/__ws-form/contact",
+              },
+            });
+          }
         } else {
           emit("Network.loadingFinished", { requestId: "managed" });
           navigated = true;
@@ -1206,6 +1238,27 @@ test("captures managed Form results before a fast redirect discards the network 
       continuedResponses: 1,
       reads: [],
     });
+  } finally {
+    await session.close();
+  }
+});
+
+test("ignores an intercepted child-frame Form response", async () => {
+  const { socket, counters } = createManagedFormSocket({
+    fastRedirect: true,
+    interceptedChild: true,
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result.results).toEqual([{ status: 201, resourceId: "action" }]);
+    expect(counters.interceptedReads).toBe(1);
+    expect(counters.continuedResponses).toBe(2);
   } finally {
     await session.close();
   }
