@@ -37,13 +37,38 @@ runs:
         '
         echo "value=$shards" >> "$GITHUB_OUTPUT"
 
+    - name: Identify Builder build inputs
+      id: build-key
+      shell: bash
+      run: |
+        echo "hash=$(git ls-files -s -- . ':!apps/builder/e2e/**' | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Builder build
+      id: build-cache
+      uses: actions/cache@v5
+      with:
+        path: |
+          apps/builder/build/server
+          apps/builder/build/client/assets
+          packages/*/lib
+        key: builder-e2e-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.build-key.outputs.hash }}
+
     - name: Build Builder
+      if: steps.build-cache.outputs.cache-hit != 'true'
       shell: bash
       run: pnpm --filter @webstudio-is/builder build
 
     - name: Build generated React Router components
+      if: steps.build-cache.outputs.cache-hit != 'true'
       shell: bash
       run: pnpm --filter @webstudio-is/sdk-components-react-router build
+
+    - name: Check Builder build
+      shell: bash
+      run: |
+        test -d apps/builder/build/server
+        test -d apps/builder/build/client/assets
+        test -f packages/sdk-components-react-router/lib/components.js
 
     - name: Identify schema snapshot
       id: schema
