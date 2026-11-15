@@ -434,8 +434,11 @@ const Publish = ({
   const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
     useState(false);
   const previousDomainsKey = useRef<string>();
+  const latestSitePublish = publishes.find(({ target }) => target === "site");
   const hasPendingState = project.latestBuildVirtual
-    ? getPublishStatusDisplay(project.latestBuildVirtual).status === "PENDING"
+    ? latestSitePublish?.buildId === project.latestBuildVirtual.buildId
+      ? latestSitePublish.status === "pending"
+      : getPublishStatusDisplay(project.latestBuildVirtual).status === "PENDING"
     : false;
   const isPublishInProgress = isPublishing || hasPendingState;
 
@@ -504,7 +507,6 @@ const Publish = ({
 
   const getForm = () => buttonRef.current?.closest("form");
   const findings = flow.siteFindings;
-  const latestSitePublish = publishes.find(({ target }) => target === "site");
   const hasSessionPublish = latestSitePublish !== undefined;
 
   return (
@@ -630,7 +632,12 @@ const PublishStatic = ({
             ? "PUBLISHED"
             : status;
 
-  const isPublishInProgress = status === "PENDING" || isPublishing;
+  const isPublishInProgress =
+    isPublishing ||
+    (latestPublish !== undefined &&
+    latestPublish.buildId === project.latestStaticBuild?.buildId
+      ? latestPublish.status === "pending"
+      : status === "PENDING");
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>

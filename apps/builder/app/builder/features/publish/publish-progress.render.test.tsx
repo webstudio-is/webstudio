@@ -558,6 +558,40 @@ test("closing publish hides its countdown while polling continues to completion"
   expect(toast.success).toHaveBeenCalledOnce();
 });
 
+test.each(["success", "failed"] as const)(
+  "a confirmed %s site publish clears controls despite a stale pending Build",
+  async (outcome) => {
+    publish = async () => {
+      project = makeProject("project", {
+        buildId: "accepted",
+        publishStatus: "PENDING",
+      });
+      return accept();
+    };
+    job = async () => ({ status: outcome, code: "runner_failed" });
+    await mount();
+    await click("Publish");
+    await waitFor(() =>
+      expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe(
+        "accepted"
+      )
+    );
+    await waitFor(() =>
+      expect(requests.some(({ route }) => route === "api.publish.getJob")).toBe(
+        true
+      )
+    );
+    await waitFor(() => expect(button("Publish")).toBeDefined());
+    expect(button("Publish")?.dataset.state).not.toBe("pending");
+    expect(button("Validate")?.disabled).toBe(false);
+    if (outcome === "success") {
+      await waitFor(() => expect(button("See logs")).toBeDefined());
+    } else {
+      await waitFor(() => expect(button("See issues")).toBeDefined());
+    }
+  }
+);
+
 test.each(["validation", "publish"] as const)(
   "%s diagnostics remain available after the popover reopens",
   async (action) => {

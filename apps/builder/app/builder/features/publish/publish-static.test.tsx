@@ -21,6 +21,7 @@ const acceptedResponse = {
 let staticResponse: unknown = acceptedResponse;
 let projectStore: (typeof import("~/shared/sync/data-stores"))["$project"];
 let getJobStatus: "pending" | "success" | "failed" = "pending";
+let buildStatus: "PENDING" | "PUBLISHED" = "PUBLISHED";
 let publishRequests = 0;
 let jobRequests = 0;
 const downloads = vi.fn();
@@ -65,7 +66,7 @@ beforeAll(async () => {
             : {
                 buildId: "static-1",
                 updatedAt: new Date().toISOString(),
-                publishStatus: "PUBLISHED",
+                publishStatus: buildStatus,
               },
       },
     }),
@@ -91,6 +92,7 @@ afterEach(async () => {
   projectStore.set(undefined);
   publishDialog.set("none");
   getJobStatus = "pending";
+  buildStatus = "PUBLISHED";
   staticResponse = acceptedResponse;
   publishRequests = 0;
   jobRequests = 0;
@@ -158,6 +160,7 @@ const render = async (open: boolean, projectId = "project-a") => {
 
 test("reopening an active static publish keeps one status owner and one download", async () => {
   vi.useFakeTimers();
+  buildStatus = "PENDING";
   projectStore.set(createProject());
   await render(true);
   const button = staticButton();
@@ -183,6 +186,8 @@ test("reopening an active static publish keeps one status owner and one download
   });
   expect(downloads).toHaveBeenCalledExactlyOnceWith("/cgi/static/ssg/site.zip");
   expect(staticButton()?.dataset.state).not.toBe("pending");
+  expect(staticButton()?.disabled).toBe(false);
+  expect(document.body.textContent).toContain("Downloaded");
   expect(publishRequests).toBe(1);
   expect(jobRequests).toBe(2);
 });
@@ -213,17 +218,37 @@ test("project navigation suppresses an old static download and error toast", asy
 });
 
 test("a failed static runner clears progress without starting a download", async () => {
+  vi.useFakeTimers();
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
-  getJobStatus = "failed";
   projectStore.set(createProject());
   await render(true);
   const button = staticButton();
   expect(button).toBeDefined();
   await act(async () => button?.click());
   await act(async () => vi.waitFor(() => expect(jobRequests).toBe(1)));
+  await act(async () =>
+    vi.waitFor(() =>
+      expect(projectStore.get()?.latestStaticBuild?.buildId).toBe("static-1")
+    )
+  );
+  act(() =>
+    projectStore.set({
+      ...projectStore.get()!,
+      latestStaticBuild: {
+        buildId: "static-1",
+        projectId: "project-a",
+        updatedAt: new Date().toISOString(),
+        publishStatus: "PENDING",
+      },
+    })
+  );
+  getJobStatus = "failed";
+  await act(async () => vi.advanceTimersByTimeAsync(15_100));
+  expect(jobRequests).toBe(2);
   expect(downloads).not.toHaveBeenCalled();
   expect(errorToast).toHaveBeenCalledOnce();
   expect(staticButton()?.dataset.state).not.toBe("pending");
+  expect(staticButton()?.disabled).toBe(false);
   await act(async () =>
     document.body
       .querySelector<HTMLButtonElement>(

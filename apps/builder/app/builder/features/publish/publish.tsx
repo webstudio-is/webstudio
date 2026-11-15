@@ -282,7 +282,8 @@ export const PublishButton = ({ projectId }: PublishProps) => {
       }
     } else {
       setPublishErrorState((current) =>
-        current?.source === "status" ||
+        (current?.source === "status" &&
+          (status !== "PENDING" || current.buildId !== build.buildId)) ||
         (isNewBuild && current?.source === "transport")
           ? undefined
           : current
