@@ -36,17 +36,24 @@ export const insertTemplateAfterCanvasText = async ({
   page,
   anchorText,
   templateName,
+  waitForProjectSync = true,
 }: {
   page: Page;
   anchorText: string;
   templateName: string;
+  waitForProjectSync?: boolean;
 }) => {
   const insertButton = await getVisibleInsertBlockButton({ page, anchorText });
   await insertButton.click();
+  const template = page.getByRole("menuitemradio", { name: templateName });
+  if (waitForProjectSync === false) {
+    await template.click();
+    return;
+  }
 
   await waitForSyncComplete({ page });
   await Promise.all([
     waitForChangeToBeSaved({ page }),
-    page.getByRole("menuitemradio", { name: templateName }).click(),
+    template.click(),
   ]);
 };

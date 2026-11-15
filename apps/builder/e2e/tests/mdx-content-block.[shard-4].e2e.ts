@@ -222,6 +222,7 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
     page,
     anchorText: sourceHeading,
     templateName: fixture.editableTextTemplateName,
+    waitForProjectSync: false,
   });
   await waitForCanvasText({
     page,
