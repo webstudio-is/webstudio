@@ -128,7 +128,7 @@ const createFixture = async (
     builderToken: `mcp-redirect-matrix-${name}-builder-token`,
   });
 
-for (const { name, redirect, expected } of [
+const redirects = [
   {
     name: "internal",
     redirect: "/?matrix=internal",
@@ -151,36 +151,49 @@ for (const { name, redirect, expected } of [
     redirect: "https://redirect.example/landing",
     expected: (url: URL) => url.href === "https://redirect.example/landing",
   },
-] as const) {
-  test(`MCP Form success redirect reaches ${name} destination`, async ({
-    page,
-    context,
-  }) => {
-    const fixture = await createFixture(context, name);
-    const { formId } = await authorForm(fixture.projectId, redirect);
-    const receiver = await startFormDeliveryReceiver();
-    try {
-      await withGeneratedFormDeliveryPreview({
-        projectId: fixture.projectId,
-        receiverPort: receiver.port,
-        callback: async ({ url }) => {
-          await openPreview(page, url);
-          const navigated = page.waitForURL((target) => expected(target));
-          await fillAndSubmit(page, formId);
-          await navigated;
-          expect(expected(new URL(page.url()))).toBe(true);
-          expect(receiver.deliveries).toHaveLength(1);
-          expect(receiver.deliveries[0]).toMatchObject({
-            pathname: "/submit",
-            method: "POST",
+] as const;
+
+test("MCP Form success redirects reach internal, relative, hash, and external destinations", async ({
+  page,
+  context,
+}) => {
+  const fixture = await createFixture(context, "destinations");
+  const forms: Array<(typeof redirects)[number] & { formId: string }> = [];
+  for (const redirect of redirects) {
+    forms.push({
+      ...redirect,
+      ...(await authorForm(fixture.projectId, redirect.redirect)),
+    });
+  }
+  const receiver = await startFormDeliveryReceiver();
+  try {
+    await withGeneratedFormDeliveryPreview({
+      projectId: fixture.projectId,
+      receiverPort: receiver.port,
+      callback: async ({ url }) => {
+        await openPreview(page, url);
+        for (const [index, { name, expected, formId }] of forms.entries()) {
+          await test.step(name, async () => {
+            if (index > 0) {
+              await page.goto(url);
+            }
+            const navigated = page.waitForURL((target) => expected(target));
+            await fillAndSubmit(page, formId);
+            await navigated;
+            expect(expected(new URL(page.url()))).toBe(true);
+            expect(receiver.deliveries).toHaveLength(index + 1);
+            expect(receiver.deliveries.at(-1)).toMatchObject({
+              pathname: "/submit",
+              method: "POST",
+            });
           });
-        },
-      });
-    } finally {
-      await receiver.close();
-    }
-  });
-}
+        }
+      },
+    });
+  } finally {
+    await receiver.close();
+  }
+});
 
 for (const { name, fail, message, behavior } of [
   {
