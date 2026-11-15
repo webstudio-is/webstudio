@@ -1,4 +1,4 @@
-import type { BrowserContext, Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import {
   bindSelectedTextContentToExpression,
@@ -10,189 +10,98 @@ import {
   startJsonResourceServer,
 } from "../flows/data-variables";
 import { loginWithSecret } from "../flows/dashboard";
-import { expectGeneratedAppToRender } from "../flows/generated-app";
+import { withGeneratedPreview } from "../flows/generated-app";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { test } from "../test";
 import { measure } from "../perf";
 
-test.describe.configure({ mode: "parallel" });
-
-const openGeneratedResourceProject = async ({
-  context,
-  page,
-  email,
-  title,
-  assetNamePrefix,
-}: {
-  context: BrowserContext;
-  page: Page;
-  email: string;
-  title: string;
-  assetNamePrefix: string;
-}) => {
-  const fixture = await createContentModeProject({
-    context,
-    email,
-    title,
-    assetNamePrefix,
-    editorToken: `${assetNamePrefix}editor-token`,
-    builderToken: `${assetNamePrefix}builder-token`,
-  });
-  await loginWithSecret({ page, email });
-  await measure(`${title} open builder`, async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await waitForCanvasText({ page, text: "Initial content" });
-  });
-  await selectContentInstance({ page });
-  return fixture;
-};
-
-const reloadAndSelectContent = async ({
-  page,
-  fixture,
-  phase,
-}: {
-  page: Page;
-  fixture: { projectId: string; builderToken: string };
-  phase: string;
-}) => {
-  await measure(phase, async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await waitForCanvasText({ page, text: "Initial content" });
-    await selectContentInstance({ page });
-  });
-};
-
-test("Generated app fetches and renders a Builder-created HTTP resource", async ({
+test("Generated app renders Builder-created HTTP, GraphQL, and system resources", async ({
   page,
   context,
 }) => {
-  const resource = await startJsonResourceServer({
+  const http = await startJsonResourceServer({
     title: "Rendered from local HTTP resource",
   });
-  const resourceName = "e2eGeneratedPosts";
-
-  try {
-    const fixture = await openGeneratedResourceProject({
-      context: context,
-      page,
-      email: "generated-resource@webstudio.test",
-      title: "Generated HTTP Resource",
-      assetNamePrefix: "generated-resource-",
-    });
-    await measure("generated HTTP resource create variable", async () => {
-      await createHttpResourceVariable({
-        page,
-        name: resourceName,
-        url: resource.url,
-      });
-    });
-    await reloadAndSelectContent({
-      page,
-      fixture,
-      phase: "generated HTTP resource reload Builder",
-    });
-    await bindSelectedTextContentToExpression({
-      page,
-      expression: `${resourceName}.data.title`,
-    });
-    await waitForCanvasText({
-      page,
-      text: "Rendered from local HTTP resource",
-    });
-    await expectGeneratedAppToRender({
-      projectId: fixture.projectId,
-      expectedText: "Rendered from local HTTP resource",
-    });
-  } finally {
-    await resource.close();
-  }
-});
-
-test("Generated app fetches and renders a Builder-created GraphQL resource", async ({
-  page,
-  context,
-}) => {
-  const resource = await startGraphqlResourceServer({
+  const graphql = await startGraphqlResourceServer({
     title: "Rendered from local GraphQL resource",
   });
-  const resourceName = "e2eGeneratedPost";
 
   try {
-    const fixture = await openGeneratedResourceProject({
-      context: context,
-      page,
-      email: "generated-graphql-resource@webstudio.test",
-      title: "Generated GraphQL Resource",
-      assetNamePrefix: "generated-graphql-resource-",
+    const fixture = await createContentModeProject({
+      context,
+      email: "generated-resources@webstudio.test",
+      title: "Generated resources",
+      assetNamePrefix: "generated-resources-",
+      editorToken: "generated-resources-editor-token",
+      builderToken: "generated-resources-builder-token",
     });
-    await createGraphqlResourceVariable({
+    await loginWithSecret({
       page,
-      name: resourceName,
-      url: resource.url,
-      query: "query Post { post { title } }",
+      email: "generated-resources@webstudio.test",
     });
-    await reloadAndSelectContent({
-      page,
-      fixture,
-      phase: "generated GraphQL resource reload Builder",
+    await measure("generated resources open Builder", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+      await waitForCanvasText({ page, text: "Initial content" });
     });
+    await selectContentInstance({ page });
+
+    await test.step("create HTTP resource through Builder", async () => {
+      await createHttpResourceVariable({
+        page,
+        name: "e2eGeneratedPosts",
+        url: http.url,
+      });
+    });
+    await test.step("create GraphQL resource through Builder", async () => {
+      await createGraphqlResourceVariable({
+        page,
+        name: "e2eGeneratedPost",
+        url: graphql.url,
+        query: "query Post { post { title } }",
+      });
+    });
+    await test.step("create system resource through Builder", async () => {
+      await createSystemResourceVariable({
+        page,
+        name: "e2eGeneratedCurrentDate",
+        resource: "Current date resource",
+      });
+    });
+
+    await measure("generated resources reload Builder", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+      await waitForCanvasText({ page, text: "Initial content" });
+      await selectContentInstance({ page });
+    });
+    const expectedYear = String(new Date().getUTCFullYear());
+    const expectedText = `Rendered from local HTTP resource | Rendered from local GraphQL resource | ${expectedYear}`;
     await bindSelectedTextContentToExpression({
       page,
-      expression: `${resourceName}.data.data.post.title`,
+      expression:
+        'e2eGeneratedPosts.data.title + " | " + e2eGeneratedPost.data.data.post.title + " | " + e2eGeneratedCurrentDate.data.year',
     });
     await waitForCanvasText({
       page,
-      text: "Rendered from local GraphQL resource",
+      text: expectedText,
     });
-    await expectGeneratedAppToRender({
-      projectId: fixture.projectId,
-      expectedText: "Rendered from local GraphQL resource",
+
+    await test.step("render all three resources in one generated Preview", async () => {
+      await withGeneratedPreview({
+        projectId: fixture.projectId,
+        callback: async ({ html }) => {
+          expect(html).toContain(expectedText);
+        },
+      });
     });
   } finally {
-    await resource.close();
+    await Promise.all([http.close(), graphql.close()]);
   }
-});
-
-test("Generated app renders a Builder-created current-date system resource", async ({
-  page,
-  context,
-}) => {
-  const resourceName = "e2eGeneratedCurrentDate";
-  const expectedYear = String(new Date().getUTCFullYear());
-
-  const fixture = await openGeneratedResourceProject({
-    context: context,
-    page,
-    email: "generated-system-resource@webstudio.test",
-    title: "Generated System Resource",
-    assetNamePrefix: "generated-system-resource-",
-  });
-  await createSystemResourceVariable({
-    page,
-    name: resourceName,
-    resource: "Current date resource",
-  });
-  await reloadAndSelectContent({
-    page,
-    fixture,
-    phase: "generated system resource reload Builder",
-  });
-  await bindSelectedTextContentToExpression({
-    page,
-    expression: `${resourceName}.data.year`,
-  });
-  await waitForCanvasText({ page, text: expectedYear });
-  await expectGeneratedAppToRender({
-    projectId: fixture.projectId,
-    expectedText: expectedYear,
-  });
 });

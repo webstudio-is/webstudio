@@ -10,8 +10,6 @@ import {
 import { test } from "../test";
 import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 
-test.describe.configure({ mode: "parallel" });
-
 // Both tests run two MCP authoring and generated preview phases.
 const twoPhaseTimeout = 240_000;
 
@@ -55,164 +53,125 @@ const author = async (
   return JSON.parse(stdout) as { formId: string };
 };
 
-test("MCP Email bindings deliver values and full reset restores project recipients and reply-to", async ({
+test("MCP Email binding changes share two production Preview phases", async ({
   context,
 }) => {
   test.setTimeout(twoPhaseTimeout);
   const fixture = await createContentModeProject({
     context,
-    email: "mcp-email-binding@webstudio.test",
-    title: "MCP Email binding and inheritance",
-    assetNamePrefix: "mcp-email-binding-",
-    builderToken: "mcp-email-binding-builder-token",
+    email: "mcp-email-binding-scenarios@webstudio.test",
+    title: "MCP Email binding scenarios",
+    assetNamePrefix: "mcp-email-binding-scenarios-",
+    builderToken: "mcp-email-binding-scenarios-builder-token",
   });
-  const { formId } = await author(
-    fixture.projectId,
-    initialAuthorPath,
-    "email"
-  );
-  await author(fixture.projectId, bindingAuthorPath, "bind", formId);
+  const bound = await author(fixture.projectId, initialAuthorPath, "email");
+  const partial = await author(fixture.projectId, initialAuthorPath, "email");
+  expect(bound.formId).not.toBe(partial.formId);
+  await author(fixture.projectId, bindingAuthorPath, "bind", bound.formId);
+  await author(fixture.projectId, bindingAuthorPath, "partial", partial.formId);
+
   const receiver = await startLocalEmailReceiver();
+  const submit = async (url: string, formId: string, withUpload: boolean) => {
+    const submission = await submitPreviewFormViaMcp({
+      url,
+      input: {
+        path: "/",
+        selector: '[data-ws-managed-form-id="' + formId + '"]',
+        values: [
+          { name: "name", value: "Ada Lovelace" },
+          { name: "email", value: "ada@example.test" },
+          { name: "subject", value: "Account question" },
+          {
+            name: "message",
+            value: withUpload ? "Hello" : "Please send the project details.",
+          },
+          ...(withUpload
+            ? [
+                {
+                  name: "upload",
+                  file: {
+                    name: "private-note.txt",
+                    type: "text/plain",
+                    base64: Buffer.from("Do not attach this file").toString(
+                      "base64"
+                    ),
+                  },
+                },
+              ]
+            : []),
+        ],
+        submitter: "button[type=submit]",
+        timeout: 30_000,
+      },
+    });
+    expect(submission.data).toMatchObject({
+      status: "submitted",
+      formState: "success",
+      errors: [],
+    });
+    expect(submission.data.results).toEqual([
+      expect.objectContaining({ status: 200 }),
+    ]);
+  };
+
   try {
-    const submit = async (url: string) => {
-      const submission = await submitPreviewFormViaMcp({
-        url,
-        input: {
-          path: "/",
-          selector: `[data-ws-managed-form-id="${formId}"]`,
-          values: [
-            { name: "name", value: "Ada Lovelace" },
-            { name: "email", value: "ada@example.test" },
-            { name: "subject", value: "Account question" },
-            { name: "message", value: "Please send the project details." },
-          ],
-          submitter: "button[type=submit]",
-          timeout: 30_000,
-        },
-      });
-      expect(submission.data).toMatchObject({
-        status: "submitted",
-        formState: "success",
-        errors: [],
-      });
-      expect(submission.data.results).toEqual([
-        expect.objectContaining({ status: 200 }),
-      ]);
-    };
-
     await withMcpEmailPreview({
       projectId: fixture.projectId,
       emailPort: receiver.port,
-      callback: async ({ url }) => submit(url),
-    });
-    await expect.poll(() => receiver.messages.length).toBe(1);
-    expect(receiver.messages[0]).toMatchObject({
-      to: [{ address: "ada@example.test" }],
-      subject: expect.stringContaining("Bound: Account question"),
-      text: "Message from Ada Lovelace: Please send the project details.",
-      replyTo: { address: "ada@example.test" },
+      callback: async ({ url }) => {
+        await test.step("bound values and recipients", async () => {
+          await submit(url, bound.formId, false);
+          await expect.poll(() => receiver.messages.length).toBe(1);
+          expect(receiver.messages[0]).toMatchObject({
+            to: [{ address: "ada@example.test" }],
+            subject: expect.stringContaining("Bound: Account question"),
+            text: "Message from Ada Lovelace: Please send the project details.",
+            replyTo: { address: "ada@example.test" },
+          });
+        });
+        await test.step("partial body update keeps sender and attachment settings", async () => {
+          await submit(url, partial.formId, true);
+          await expect.poll(() => receiver.messages.length).toBe(2);
+          expect(receiver.messages[1]).toMatchObject({
+            to: [{ address: "ada@example.test" }],
+            text: "Custom confirmation",
+            replyTo: { address: "team@example.test", name: "Contact Team" },
+            fromName: "Contact Team",
+          });
+          expect(receiver.messages[1]?.attachments ?? []).toEqual([]);
+        });
+      },
     });
 
-    await author(fixture.projectId, bindingAuthorPath, "reset", formId);
+    await author(fixture.projectId, bindingAuthorPath, "reset", bound.formId);
+    await author(fixture.projectId, bindingAuthorPath, "empty", partial.formId);
     await withMcpEmailPreview({
       projectId: fixture.projectId,
       emailPort: receiver.port,
-      callback: async ({ url }) => submit(url),
+      callback: async ({ url }) => {
+        await test.step("full reset restores project recipient and reply-to", async () => {
+          await submit(url, bound.formId, false);
+          await expect.poll(() => receiver.messages.length).toBe(3);
+          expect(receiver.messages[2]).toMatchObject({
+            to: [{ address: "owner@mcp.test" }],
+            subject: expect.stringContaining("New form submission"),
+            text: expect.stringContaining("Form data:"),
+            replyTo: { address: "forms@mcp.test", name: "Contact Form" },
+          });
+        });
+        await test.step("empty body keeps recipient and sender settings", async () => {
+          await submit(url, partial.formId, true);
+          await expect.poll(() => receiver.messages.length).toBe(4);
+          expect(receiver.messages[3]).toMatchObject({
+            to: [{ address: "ada@example.test" }],
+            text: "",
+            replyTo: { address: "team@example.test", name: "Contact Team" },
+            fromName: "Contact Team",
+          });
+          expect(receiver.messages[3]?.attachments ?? []).toEqual([]);
+        });
+      },
     });
-    await expect.poll(() => receiver.messages.length).toBe(2);
-    expect(receiver.messages[1]).toMatchObject({
-      to: [{ address: "owner@mcp.test" }],
-      subject: expect.stringContaining("New form submission"),
-      text: expect.stringContaining("Form data:"),
-      replyTo: { address: "forms@mcp.test", name: "Contact Form" },
-    });
-  } finally {
-    await receiver.close();
-  }
-});
-
-test("MCP partial Email body updates preserve recipient, sender, and attachment settings", async ({
-  context,
-}) => {
-  test.setTimeout(twoPhaseTimeout);
-  const fixture = await createContentModeProject({
-    context,
-    email: "mcp-email-partial@webstudio.test",
-    title: "MCP partial Email update",
-    assetNamePrefix: "mcp-email-partial-",
-    builderToken: "mcp-email-partial-builder-token",
-  });
-  const { formId } = await author(
-    fixture.projectId,
-    initialAuthorPath,
-    "email"
-  );
-  await author(fixture.projectId, bindingAuthorPath, "partial", formId);
-  const receiver = await startLocalEmailReceiver();
-  try {
-    const submit = async (url: string) => {
-      const submission = await submitPreviewFormViaMcp({
-        url,
-        input: {
-          path: "/",
-          selector: `[data-ws-managed-form-id="${formId}"]`,
-          values: [
-            { name: "name", value: "Ada Lovelace" },
-            { name: "email", value: "ada@example.test" },
-            { name: "subject", value: "Account question" },
-            { name: "message", value: "Hello" },
-            {
-              name: "upload",
-              file: {
-                name: "private-note.txt",
-                type: "text/plain",
-                base64: Buffer.from("Do not attach this file").toString(
-                  "base64"
-                ),
-              },
-            },
-          ],
-          submitter: "button[type=submit]",
-          timeout: 30_000,
-        },
-      });
-      expect(submission.data).toMatchObject({
-        status: "submitted",
-        formState: "success",
-        errors: [],
-      });
-      expect(submission.data.results).toEqual([
-        expect.objectContaining({ status: 200 }),
-      ]);
-    };
-    await withMcpEmailPreview({
-      projectId: fixture.projectId,
-      emailPort: receiver.port,
-      callback: async ({ url }) => submit(url),
-    });
-    await expect.poll(() => receiver.messages.length).toBe(1);
-    expect(receiver.messages[0]).toMatchObject({
-      to: [{ address: "ada@example.test" }],
-      text: "Custom confirmation",
-      replyTo: { address: "team@example.test", name: "Contact Team" },
-      fromName: "Contact Team",
-    });
-    expect(receiver.messages[0]?.attachments ?? []).toEqual([]);
-
-    await author(fixture.projectId, bindingAuthorPath, "empty", formId);
-    await withMcpEmailPreview({
-      projectId: fixture.projectId,
-      emailPort: receiver.port,
-      callback: async ({ url }) => submit(url),
-    });
-    await expect.poll(() => receiver.messages.length).toBe(2);
-    expect(receiver.messages[1]).toMatchObject({
-      to: [{ address: "ada@example.test" }],
-      text: "",
-      replyTo: { address: "team@example.test", name: "Contact Team" },
-      fromName: "Contact Team",
-    });
-    expect(receiver.messages[1]?.attachments ?? []).toEqual([]);
   } finally {
     await receiver.close();
   }

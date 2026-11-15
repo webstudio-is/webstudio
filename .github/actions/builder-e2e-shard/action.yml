@@ -33,7 +33,24 @@ runs:
           ~/.cache/ms-playwright/ffmpeg-*
         key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
+    - name: Identify Builder build inputs
+      id: build-key
+      shell: bash
+      run: |
+        echo "hash=$(git ls-files -s -- . ':!apps/builder/e2e/**' | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+    - name: Restore Builder build
+      id: build-cache
+      uses: actions/cache/restore@v5
+      with:
+        path: |
+          apps/builder/build/server
+          apps/builder/build/client/assets
+          packages/*/lib
+        key: builder-e2e-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.build-key.outputs.hash }}
+
     - name: Wait for Builder E2E build
+      if: steps.build-cache.outputs.cache-hit != 'true'
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
@@ -49,10 +66,18 @@ runs:
         exit 1
 
     - name: Download Builder E2E build
+      if: steps.build-cache.outputs.cache-hit != 'true'
       uses: actions/download-artifact@v7
       with:
         name: builder-e2e-build
         path: .
+
+    - name: Check Builder build
+      shell: bash
+      run: |
+        test -d apps/builder/build/server
+        test -d apps/builder/build/client/assets
+        test -f packages/sdk-components-react-router/lib/components.js
 
     - name: Run Builder E2E
       shell: bash

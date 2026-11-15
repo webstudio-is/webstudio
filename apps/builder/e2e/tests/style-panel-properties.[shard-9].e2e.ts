@@ -33,17 +33,21 @@ const setCssValue = async ({
   page,
   property,
   value,
+  waitForSave = true,
 }: {
   page: Page;
   property: string;
   value: string;
+  waitForSave?: boolean;
 }) => {
   const input = page.getByLabel(property, { exact: true }).first();
   await input.fill(value);
-  const save = waitForChangeToBeSaved({ page });
+  const save = waitForSave ? waitForChangeToBeSaved({ page }) : undefined;
   await input.press("Enter");
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
+  if (waitForSave) {
+    await waitForSyncStatus({ page, status: "idle" });
+  }
 };
 
 const resetCssValue = async ({
@@ -129,11 +133,36 @@ test("Builder style panel edits representative styles and persists after reload"
   await page.getByRole("tab", { name: "Style" }).click();
 
   await measure("style panel runtime edit css values", async () => {
-    await setCssValue({ page, property: "font-size", value: "44px" });
-    await setCssValue({ page, property: "line-height", value: "1.25" });
-    await setCssValue({ page, property: "letter-spacing", value: "2px" });
-    await setCssValue({ page, property: "color", value: "#2255ff" });
-    await setCssValue({ page, property: "width", value: "420px" });
+    await setCssValue({
+      page,
+      property: "font-size",
+      value: "44px",
+      waitForSave: false,
+    });
+    await setCssValue({
+      page,
+      property: "line-height",
+      value: "1.25",
+      waitForSave: false,
+    });
+    await setCssValue({
+      page,
+      property: "letter-spacing",
+      value: "2px",
+      waitForSave: false,
+    });
+    await setCssValue({
+      page,
+      property: "color",
+      value: "#2255ff",
+      waitForSave: false,
+    });
+    await setCssValue({
+      page,
+      property: "width",
+      value: "420px",
+      waitForSave: false,
+    });
     await selectStyleSourceState({ page, state: ":hover" });
     await setCssValue({ page, property: "color", value: "#ca126b" });
     await selectStyleSourceState({ page, state: ":hover" });
