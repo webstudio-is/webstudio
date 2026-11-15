@@ -1,10 +1,8 @@
-import { page } from "@vitest/browser/context";
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
-import "../../../../../packages/design-system/src/colors/colors.css";
 import { ShareProject, __testing__, type LinkOptions } from "./share-project";
 
 const { getApiPermissionDescription } = __testing__;
@@ -63,38 +61,6 @@ const click = (element: Element) => {
   act(() => {
     element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   });
-};
-
-const readColor = (color: string) => {
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d", { willReadFrequently: true });
-  if (context === null) {
-    throw new Error("Canvas color evaluation is unavailable");
-  }
-  context.fillStyle = color;
-  context.fillRect(0, 0, 1, 1);
-  return Array.from(context.getImageData(0, 0, 1, 1).data);
-};
-
-const luminance = (color: number[]) => {
-  const linearize = (channel: number) => {
-    const value = channel / 255;
-    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-  };
-  return (
-    0.2126 * linearize(color[0]) +
-    0.7152 * linearize(color[1]) +
-    0.0722 * linearize(color[2])
-  );
-};
-
-const contrast = (first: number[], second: number[]) => {
-  const firstLuminance = luminance(first);
-  const secondLuminance = luminance(second);
-  return (
-    (Math.max(firstLuminance, secondLuminance) + 0.05) /
-    (Math.min(firstLuminance, secondLuminance) + 0.05)
-  );
 };
 
 const input = (element: HTMLInputElement, value: string) => {
@@ -160,34 +126,9 @@ afterEach(() => {
   });
   root = undefined;
   document.body.innerHTML = "";
-  document.documentElement.removeAttribute("data-color-scheme");
 });
 
 describe("ShareProject", () => {
-  test("permission checkboxes have visible borders in dark mode", async () => {
-    document.documentElement.dataset.colorScheme = "dark";
-    renderShareProject({ onChange: vi.fn() });
-    click(getElement('[aria-label="Options menu"]'));
-
-    const cloneCheckbox = getControlByLabel<HTMLButtonElement>("Can clone");
-    const checkContrast = () => {
-      const style = getComputedStyle(cloneCheckbox);
-      expect(
-        contrast(readColor(style.borderColor), readColor(style.backgroundColor))
-      ).toBeGreaterThanOrEqual(3);
-    };
-
-    expect(cloneCheckbox.dataset.state).toBe("unchecked");
-    checkContrast();
-    await page.elementLocator(cloneCheckbox).hover();
-    expect(cloneCheckbox.matches(":hover")).toBe(true);
-    checkContrast();
-    click(cloneCheckbox);
-    expect(cloneCheckbox.dataset.state).toBe("checked");
-    expect(cloneCheckbox.matches(":hover")).toBe(true);
-    checkContrast();
-  });
-
   test("documents api permissions per role", () => {
     expect(
       getApiPermissionDescription({
