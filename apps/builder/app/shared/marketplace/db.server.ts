@@ -55,28 +55,33 @@ export const getItems = async (
       ...parsedProduct.data,
     });
   }
-  const assetIds = items
-    .map((item) => item.thumbnailAssetId)
-    .filter((value): value is string => value != null);
-
   const assets = new Map<string, string>();
-  if (assetIds.length > 0) {
+  if (items.length > 0) {
     const data = await context.postgrest.client
       .from("Asset")
-      .select()
-      .in("id", assetIds);
+      .select("id,projectId,name")
+      .or(
+        items
+          .map(
+            (item) =>
+              `and(id.eq.${JSON.stringify(item.thumbnailAssetId)},projectId.eq.${JSON.stringify(item.projectId)})`
+          )
+          .join(",")
+      );
     if (data.error) {
       throw data.error;
     }
     for (const asset of data.data) {
-      assets.set(asset.id, asset.name);
+      assets.set(`${asset.projectId}:${asset.id}`, asset.name);
     }
   }
 
   return items.map((item) => {
     return {
       ...item,
-      thumbnailAssetName: assets.get(item.thumbnailAssetId),
+      thumbnailAssetName: assets.get(
+        `${item.projectId}:${item.thumbnailAssetId}`
+      ),
     };
   });
 };

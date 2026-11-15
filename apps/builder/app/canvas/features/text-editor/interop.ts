@@ -113,7 +113,19 @@ const $writeUpdates = (
       );
     }
     if ($isLineBreakNode(child)) {
-      instanceChildren.push({ type: "text", value: "\n" });
+      const id = refs.get(child.getKey());
+      if (id === undefined) {
+        instanceChildren.push({ type: "text", value: "\n" });
+      } else {
+        instanceChildren.push({ type: "id", value: id });
+        instancesList.push({
+          type: "instance",
+          id,
+          component: elementComponent,
+          tag: "br",
+          children: [],
+        });
+      }
     }
     if ($isLinkNode(child)) {
       const { parentUpdates, formats } = wrapFormats(child);
@@ -227,6 +239,13 @@ const $writeLexical = (
 
     const instance = instances.get(child.value);
     if (instance === undefined) {
+      continue;
+    }
+
+    if (instance.component === elementComponent && instance.tag === "br") {
+      const lineBreakNode = $createLineBreakNode();
+      refs.set(lineBreakNode.getKey(), instance.id);
+      parent.append(lineBreakNode);
       continue;
     }
 
