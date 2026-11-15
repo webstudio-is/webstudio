@@ -1066,6 +1066,13 @@ export const PublishButton = ({ projectId }: PublishProps) => {
               ...findings,
               ...getServerPublishFindings(publishResult.auditFindings),
             ]);
+            if ($publishDialog.get() !== "export") {
+              toast.error(
+                publishResult.auditFindings
+                  .find((finding) => finding.severity === "error")
+                  ?.message.slice(0, 200) ?? "Publish failed"
+              );
+            }
             return;
           }
           diagnostics.finish((findings) => [

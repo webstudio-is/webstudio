@@ -331,6 +331,27 @@ test.each([
   }
 );
 
+test("static audit rejection notifies after Export closes", async () => {
+  await mount("static");
+  await clickPublish("static");
+  await completeChecks(false);
+  await act(async () => publishDialog.set("none"));
+  await act(async () => {
+    dispatch.resolve({
+      success: false,
+      auditFindings: [{ severity: "error", message: "server rejection" }],
+    });
+    await dispatch.promise;
+  });
+  await vi.waitFor(async () => {
+    await act(async () => {});
+    expect(toast.error).toHaveBeenCalledExactlyOnceWith("server rejection");
+  });
+  await mount("static");
+  const errors = await openErrors("static");
+  expect(errors?.textContent).toContain("server rejection");
+});
+
 test("closing Publish clears a completed validation", async () => {
   stores.$pages.set({
     pages: new Map(),
