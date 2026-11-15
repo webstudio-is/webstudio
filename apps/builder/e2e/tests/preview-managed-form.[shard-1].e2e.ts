@@ -9,6 +9,8 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { getCanvasFrame, waitForCanvasFrame } from "../flows/builder";
 import { getProjectBuilderUrl, test } from "../test";
 
+test.describe.configure({ mode: "parallel" });
+
 test("Preview Form posts to the authenticated Builder and sets error state without publishing", async ({
   page,
   context,

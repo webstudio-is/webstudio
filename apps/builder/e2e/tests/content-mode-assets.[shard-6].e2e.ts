@@ -1,4 +1,5 @@
 import { expect } from "@playwright/test";
+import { randomUUID } from "node:crypto";
 import {
   createAssetFolder,
   deleteSelectedAsset,
@@ -32,17 +33,21 @@ import {
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { test, withBrowserContext } from "../test";
+import { test } from "../test";
 import { measure } from "../perf";
 import { e2ePaidPlanName } from "../plans";
 import { loadDevBuild } from "../db";
 
 let fixture: SeededContentModeProject;
 
-test.beforeAll(async ({ browser }) => {
-  fixture = await withBrowserContext(browser, (context) =>
-    createContentModeProject({ context, devPlan: e2ePaidPlanName })
-  );
+test.describe.configure({ mode: "parallel" });
+
+test.beforeEach(async ({ context }) => {
+  fixture = await createContentModeProject({
+    context,
+    devPlan: e2ePaidPlanName,
+    email: `content-mode-assets-${randomUUID()}@webstudio.test`,
+  });
 });
 test("Editor can insert content templates with assets and styles", async ({
   page,
@@ -416,18 +421,7 @@ test("Editor can replace image source with asset in content mode", async ({
 
 test("Builder copy/paste preserves image asset references after reload", async ({
   page,
-  context,
 }) => {
-  const fixture = await createContentModeProject({
-    context: context,
-    devPlan: e2ePaidPlanName,
-    email: "asset-copy-e2e@webstudio.test",
-    title: "Asset Copy E2E",
-    assetNamePrefix: "asset-copy-",
-    editorToken: "asset-copy-e2e-editor-token",
-    builderToken: "asset-copy-e2e-builder-token",
-  });
-
   const getImageAssetReferenceCount = async () => {
     const build = await loadDevBuild({ projectId: fixture.projectId });
     const props = JSON.parse(build.props) as Array<{

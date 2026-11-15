@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { expectLocatorHidden } from "../flows/assertions";
@@ -19,16 +20,20 @@ import { waitForSyncStatus } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { newIsolatedPage, test, withBrowserContext } from "../test";
+import { newIsolatedPage, test } from "../test";
 import { measure } from "../perf";
 import { e2ePaidPlanName } from "../plans";
 
 let fixture: SeededContentModeProject;
 
-test.beforeAll(async ({ browser }) => {
-  fixture = await withBrowserContext(browser, (context) =>
-    createContentModeProject({ context, devPlan: e2ePaidPlanName })
-  );
+test.describe.configure({ mode: "parallel" });
+
+test.beforeEach(async ({ context }) => {
+  fixture = await createContentModeProject({
+    context,
+    devPlan: e2ePaidPlanName,
+    email: `content-mode-pages-${randomUUID()}@webstudio.test`,
+  });
 });
 test("Editor can create styled page from template in content mode", async ({
   page,
