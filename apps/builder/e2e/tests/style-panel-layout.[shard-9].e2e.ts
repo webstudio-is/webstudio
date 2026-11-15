@@ -14,6 +14,8 @@ import { test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
+test.describe.configure({ mode: "parallel" });
+
 const createStylePanelRuntimeProject = async (
   context: BrowserContext,
   name: string
