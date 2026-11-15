@@ -197,15 +197,15 @@ test("support descendant suffix", () => {
   });
   expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
     .toMatchInlineSnapshot(`
-"@media all {
-  .c143pt9k:hover {
-    display: block
-  }
-  .cpdl2lp img:hover {
-    display: block
-  }
-}"
-`);
+      "@media all {
+        .c143pt9k:hover {
+          display: block
+        }
+        :where(.cpdl2lp) img:hover {
+          display: block
+        }
+      }"
+    `);
 });
 
 test("generate prefixed and unprefixed in the same rule", () => {
@@ -269,15 +269,15 @@ test("generate merged properties as single rule", () => {
   });
   expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
     .toMatchInlineSnapshot(`
-"@media all {
-  .cdj9gv4 {
-    margin: auto
-  }
-  .c340vfr img {
-    margin: 10px
-  }
-}"
-`);
+      "@media all {
+        .cdj9gv4 {
+          margin: auto
+        }
+        :where(.c340vfr) img {
+          margin: 10px
+        }
+      }"
+    `);
 });
 
 test("convert :local-link to [aria-current=page] selector", () => {

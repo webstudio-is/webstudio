@@ -1,12 +1,12 @@
 import { createRoot, type Root } from "react-dom/client";
+import { FetchInterceptor } from "@mswjs/interceptors/fetch";
 import { act } from "react-dom/test-utils";
 import { userEvent } from "@vitest/browser/context";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { ROOT_INSTANCE_ID, type ResourceRequest } from "@webstudio-is/sdk";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 
-const { previewLoaderCalls, emailPreviewMockState } = vi.hoisted(() => ({
-  previewLoaderCalls: vi.fn(),
+const { emailPreviewMockState } = vi.hoisted(() => ({
   emailPreviewMockState: { fail: false },
 }));
 vi.mock("./variable-editors/email-request-preview", async (importOriginal) => {
@@ -23,18 +23,6 @@ vi.mock("./variable-editors/email-request-preview", async (importOriginal) => {
         throw new Error("Unable to evaluate Email expression");
       }
       return actual.buildEmailRequestPreviewFromEditor(...args);
-    },
-  };
-});
-vi.mock("~/shared/resources", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("~/shared/resources")>();
-  return {
-    ...actual,
-    loadResourcePreview: (
-      ...args: Parameters<typeof actual.loadResourcePreview>
-    ) => {
-      previewLoaderCalls(args[0]);
-      return actual.loadResourcePreview(...args);
     },
   };
 });
@@ -62,6 +50,32 @@ const initialDataSources = $dataSources.get();
 const initialResources = $resources.get();
 const initialProps = $props.get();
 const initialProjectSettings = $projectSettings.get();
+const interceptor = new FetchInterceptor();
+const loaderCalls: Request[] = [];
+let respond: ((response: Response) => void) | undefined;
+beforeAll(() => {
+  interceptor.on("request", async ({ request, controller }) => {
+    const url = new URL(request.url);
+    if (
+      url.origin !== location.origin ||
+      url.pathname !== "/rest/resources-loader"
+    ) {
+      return;
+    }
+    loaderCalls.push(request.clone());
+    if (request.method !== "POST") {
+      controller.respondWith(Response.error());
+      return;
+    }
+    controller.respondWith(
+      await new Promise<Response>((resolve) => {
+        respond = resolve;
+      })
+    );
+  });
+  interceptor.apply();
+});
+afterAll(() => interceptor.dispose());
 
 afterEach(async () => {
   act(() => root?.unmount());
@@ -79,31 +93,15 @@ afterEach(async () => {
   selectInstance(undefined);
   $livePreviewBrowserInfo.set(new Map());
   emailPreviewMockState.fail = false;
+  vi.restoreAllMocks();
   document.body.innerHTML = "";
-  vi.unstubAllGlobals();
+  respond?.(Response.error());
+  respond = undefined;
+  loaderCalls.length = 0;
 });
 
 test("loads an unsaved system resource while an unrelated page request is pending", async () => {
-  const nativeFetch = globalThis.fetch;
-  let respond: (response: Response) => void = () => {};
-  const loaderCalls: RequestInit[] = [];
-  const backend: typeof globalThis.fetch = (input, init) => {
-    if (String(input).startsWith("/rest/resources-loader")) {
-      loaderCalls.push(init ?? {});
-      return new Promise<Response>((resolve, reject) => {
-        const onAbort = () => reject(new DOMException("Aborted", "AbortError"));
-        init?.signal?.addEventListener("abort", onAbort, { once: true });
-        respond = (response) => {
-          init?.signal?.removeEventListener("abort", onAbort);
-          resolve(response);
-        };
-      });
-    }
-    return nativeFetch(input, init);
-  };
-  // fetch.client captures fetch at import time, so install the test backend
-  // before importing the dialog and resource loader.
-  vi.stubGlobal("fetch", backend);
+  // The suite interceptor stays active while fetch.client retains its fetch.
   const [
     { VariablePopoverTrigger },
     { __testing__, getResourceKey },
@@ -174,7 +172,7 @@ test("loads an unsaved system resource while an unrelated page request is pendin
     await userEvent.click(loadButton!);
   });
   await vi.waitFor(() => expect(loaderCalls).toHaveLength(1));
-  const requests = JSON.parse(String(loaderCalls[0].body)) as ResourceRequest[];
+  const requests = (await loaderCalls[0].json()) as ResourceRequest[];
   const preview = requests.find(
     (request) => request.url === "/$resources/current-date"
   );
@@ -184,7 +182,7 @@ test("loads an unsaved system resource while an unrelated page request is pendin
   expect(requests).toContainEqual(unrelated);
 
   queueResources([]);
-  respond(Response.json([[getResourceKey(preview), { data: "2026-09-23" }]]));
+  respond!(Response.json([[getResourceKey(preview), { data: "2026-09-23" }]]));
   await vi.waitFor(() => {
     expect(document.querySelector('[role="dialog"]')?.textContent).toContain(
       "2026-09-23"
@@ -200,9 +198,7 @@ test("loads an unsaved system resource while an unrelated page request is pendin
   expect(sitemapLoadButton).toBeDefined();
   await act(async () => userEvent.click(sitemapLoadButton!));
   await vi.waitFor(() => expect(loaderCalls).toHaveLength(2));
-  const sitemapRequests = JSON.parse(
-    String(loaderCalls[1].body)
-  ) as ResourceRequest[];
+  const sitemapRequests = (await loaderCalls[1].json()) as ResourceRequest[];
   const sitemapPreview = sitemapRequests.find(
     (request) => request.url === "/$resources/sitemap.xml"
   );
@@ -210,7 +206,7 @@ test("loads an unsaved system resource while an unrelated page request is pendin
 
   // A late response for the old subtype cannot replace the new subtype's UI.
   await selectOption("Sitemap resource", "Current date resource");
-  respond(
+  respond!(
     Response.json([
       [getResourceKey(sitemapPreview!), { data: "stale sitemap response" }],
     ])
@@ -409,9 +405,7 @@ test.each([
       dialog.querySelectorAll<HTMLButtonElement>("button")
     ).find((button) => button.textContent === "Load data");
     expect(loadButton).toBeDefined();
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-    const priorCalls = fetchSpy.mock.calls.length;
-    const priorPreviewLoads = previewLoaderCalls.mock.calls.length;
+    const priorCalls = loaderCalls.length;
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
@@ -434,10 +428,8 @@ test.each([
         expect(dialog.textContent).not.toContain('"preview"');
       });
     }
-    expect(fetchSpy.mock.calls.length).toBe(priorCalls);
-    expect(previewLoaderCalls.mock.calls.length).toBe(priorPreviewLoads);
+    expect(loaderCalls.length).toBe(priorCalls);
     expect($resourcePreviewExchanges.get().size).toBe(0);
-    fetchSpy.mockRestore();
     consoleErrorSpy.mockRestore();
   }
 );

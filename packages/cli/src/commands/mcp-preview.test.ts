@@ -15,6 +15,7 @@ import {
   resolveMcpScreenshotInput,
   startMcpPreview,
 } from "./mcp-preview";
+import { __testing__ as mcpTesting } from "./mcp";
 
 test("browser failure before Form dispatch is reported instead of an unknown submission", async () => {
   const submitForm = vi.fn(async () => {
@@ -1939,15 +1940,15 @@ test("reports an interior route HTTP failure instead of a wrong-site error", asy
   });
 });
 
-test("does not expose a page script URL in responsive capture errors", async () => {
+test("reports a safe script location and saved PNG through MCP error serialization", async () => {
   const capturePage = vi.fn().mockResolvedValueOnce([
     {
-      output: "builder.png",
+      output: "/tmp/builder.png",
       navigation: {
         generatedSiteRootPresent: true,
         javascriptErrorPresent: true,
         javascriptErrorLocation: {
-          pathname: "/private/customer-123.js",
+          pathname: "/assets/app.js",
           line: 42,
         },
       },
@@ -1978,14 +1979,30 @@ test("does not expose a page script URL in responsive capture errors", async () 
       viewport: { width: 1280, height: 720 },
     },
   ];
-  await expect(handlers.capturePageScreenshots(input)).rejects.toMatchObject({
-    code: "SCREENSHOT_JAVASCRIPT_ERROR",
-    message: "The page reported a JavaScript error during screenshot capture.",
-    issues: [
-      {
-        code: "screenshot_javascript_error",
-        constraint: "javascript_runtime_error",
-      },
-    ],
+  const error = await handlers
+    .capturePageScreenshots(input)
+    .catch((error) => error);
+  const serialized = mcpTesting.createMcpSingleOpCallErrorPayload({
+    error,
+    elapsedMs: 1,
+  });
+  expect(
+    serialized.error.message.startsWith(
+      "The page reported a JavaScript error during screenshot capture at /assets/app.js:42."
+    )
+  ).toBe(true);
+  expect(serialized).toMatchObject({
+    error: {
+      code: "SCREENSHOT_JAVASCRIPT_ERROR",
+      issues: [
+        {
+          code: "screenshot_javascript_error",
+          file: "/assets/app.js",
+          line: 42,
+          reference: "/tmp/builder.png",
+          constraint: "javascript_runtime_error",
+        },
+      ],
+    },
   });
 });

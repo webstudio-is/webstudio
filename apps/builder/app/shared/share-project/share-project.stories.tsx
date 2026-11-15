@@ -3,6 +3,7 @@ import {
   Flex,
   Popover,
   PopoverContent,
+  PopoverTitle,
   PopoverTrigger,
   StorySection,
 } from "@webstudio-is/design-system";
@@ -121,6 +122,7 @@ const ShareProjectPopover = ({
           isPending={false}
           builderUrl={builderUrl}
         />
+        <PopoverTitle>Share</PopoverTitle>
       </PopoverContent>
     </Popover>
   );

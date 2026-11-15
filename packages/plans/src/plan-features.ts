@@ -13,6 +13,7 @@ export const planFeatures = z.object({
   allowAuth: z.boolean(),
   allowContentMode: z.boolean(),
   allowStagingPublish: z.boolean(),
+  allowPublishLogs: z.boolean(),
   maxContactEmailsPerProject: z.number().nonnegative(),
   maxDomainsAllowedPerUser: z.number().nonnegative(),
   maxDailyPublishesPerUser: z.number().nonnegative(),
@@ -22,6 +23,18 @@ export const planFeatures = z.object({
   seatsIncluded: z.number().nonnegative(),
   maxSeatsPerWorkspace: z.number().nonnegative(),
 });
+
+/** Accept the previous feature name only where external plan data enters. */
+export const planFeatureOverrides = planFeatures
+  .partial()
+  .extend({ allowAdvancedPublishDiagnostics: z.boolean().optional() })
+  .transform(({ allowAdvancedPublishDiagnostics, ...features }) => ({
+    ...features,
+    ...(features.allowPublishLogs === undefined &&
+    allowAdvancedPublishDiagnostics !== undefined
+      ? { allowPublishLogs: allowAdvancedPublishDiagnostics }
+      : {}),
+  }));
 
 export type PlanFeatures = z.infer<typeof planFeatures>;
 
@@ -41,6 +54,7 @@ export const defaultPlanFeatures: PlanFeatures = {
   allowAuth: false,
   allowContentMode: false,
   allowStagingPublish: false,
+  allowPublishLogs: false,
   maxContactEmailsPerProject: 0,
   maxDomainsAllowedPerUser: 0,
   maxDailyPublishesPerUser: 10,
@@ -106,9 +120,9 @@ export const parsePlansEnv = (raw: string): Map<string, PlanConfig> => {
       console.error("Invalid PLANS entry (extends must be a string):", item);
       return [];
     }
-    const featuresResult = planFeatures
-      .partial()
-      .safeParse("features" in item ? item.features : {});
+    const featuresResult = planFeatureOverrides.safeParse(
+      "features" in item ? item.features : {}
+    );
     if (!featuresResult.success) {
       console.error(
         `Invalid PLANS entry "${item.name}" features:`,

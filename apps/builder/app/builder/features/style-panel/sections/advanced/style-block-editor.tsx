@@ -5,6 +5,9 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
 } from "react";
 import { createRoot } from "react-dom/client";
 import type { CompletionSource } from "@codemirror/autocomplete";
@@ -17,7 +20,12 @@ import {
   SearchQuery,
   setSearchQuery,
 } from "@codemirror/search";
-import { EditorState, StateEffect, StateField } from "@codemirror/state";
+import {
+  EditorState,
+  StateEffect,
+  StateField,
+  type Extension,
+} from "@codemirror/state";
 import {
   Decoration,
   EditorView,
@@ -31,10 +39,14 @@ import {
 } from "@codemirror/view";
 import {
   Box,
+  Button,
   Flex,
   Kbd,
   MenuList,
   PanelContent,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   rawTheme,
   SearchField,
   SmallIconButton,
@@ -45,7 +57,11 @@ import {
   tooltipContentCss,
   cssVar,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  SearchIcon,
+} from "@webstudio-is/icons";
 import {
   camelCaseProperty,
   propertyDescriptions,
@@ -78,20 +94,22 @@ import {
   type ApplyChanges,
 } from "~/builder/shared/css-editor/style-block-parse";
 import {
-  formatMixedStyleBlock,
-  getMixedStyleGroups,
-  getMixedPropertyRanges,
-  getProtectedMixedRanges,
-  parseMixedStyleBlock,
-} from "./mixed-style-block";
+  formatStyleSources,
+  getStyleSourceGroups,
+  getStyleSourcePropertyRanges,
+  getProtectedStyleSourceRanges,
+  parseLocalStyleGroup,
+} from "./style-block-sources";
 import { formatStyleBlock } from "~/builder/shared/css-editor/style-block-format";
 
 const blockedEditMessage =
   "This declaration comes from another source. Add a local declaration to override it.";
+const blockedHeadingMessage =
+  "This heading marks a style source and cannot be changed.";
 class ReadonlyDivider extends WidgetType {
   toDOM() {
     const element = document.createElement("div");
-    element.className = "cm-mixed-readonly-divider";
+    element.className = "cm-style-block-readonly-divider";
     return element;
   }
 }
@@ -103,8 +121,8 @@ const renderTooltip = (className: string, content: ReactNode) => {
   root.render(content);
   return { dom, destroy: () => root.unmount() };
 };
-const blockedEdit = StateEffect.define<number>();
-const sourceChanged = StateEffect.define<void>();
+const blockedEdit = StateEffect.define<{ pos: number; message: string }>();
+const sourceDeclarationsChanged = StateEffect.define<void>();
 const searchMatches = StateField.define({
   create: (state) => getSearchDecorations(state),
   update: (decorations, transaction) =>
@@ -144,15 +162,15 @@ const blockedEditTooltip = StateField.define<CodeMirrorTooltip | null>({
     );
     if (blocked) {
       return {
-        pos: blocked.value,
+        pos: blocked.value.pos,
         above: true,
         create: () =>
           renderTooltip(
-            "cm-mixed-blocked-tooltip",
+            "cm-style-block-blocked-tooltip",
             <Box
               className={tooltipContentCss({ variant: "wrapped" }).className}
             >
-              <Text>{blockedEditMessage}</Text>
+              <Text>{blocked.value.message}</Text>
             </Box>
           ),
       };
@@ -162,6 +180,55 @@ const blockedEditTooltip = StateField.define<CodeMirrorTooltip | null>({
   provide: (field) => showTooltip.from(field),
 });
 
+const protectedEditFilter = EditorState.transactionFilter.of((transaction) => {
+  if (!transaction.docChanged || transaction.annotation(ExternalChange)) {
+    return transaction;
+  }
+  const currentGroups = getStyleSourceGroups(
+    transaction.startState.doc.toString()
+  );
+  const nextGroups = getStyleSourceGroups(transaction.newDoc.toString());
+  const changedGroups =
+    currentGroups.length !== nextGroups.length ||
+    nextGroups[0]?.from !== 0 ||
+    currentGroups.some(
+      (group, index) => group.source !== nextGroups[index]?.source
+    );
+  const protectedRanges = getProtectedStyleSourceRanges(currentGroups);
+  let blocked = changedGroups;
+  let blockedHeading = changedGroups;
+  let blockedPos = transaction.startState.selection.main.head;
+  transaction.changes.iterChangedRanges((from, to) => {
+    if (
+      protectedRanges.some(
+        (range) =>
+          (from === to &&
+            (range.inclusive
+              ? from >= range.from && from <= range.to
+              : from > range.from && from < range.to)) ||
+          (from < to && from < range.to && to > range.from)
+      )
+    ) {
+      blocked = true;
+      blockedPos = from;
+      blockedHeading ||= currentGroups.some(
+        (group) =>
+          (from === to && from >= group.from && from < group.contentFrom) ||
+          (from < to && from < group.contentFrom && to > group.from)
+      );
+    }
+  });
+  const message = blockedHeading ? blockedHeadingMessage : blockedEditMessage;
+  return blocked
+    ? {
+        effects: [
+          blockedEdit.of({ pos: blockedPos, message }),
+          EditorView.announce.of(message),
+        ],
+      }
+    : transaction;
+});
+
 type Declaration = { property: CssProperty; value: StyleValue };
 type Props = {
   declarations: Declaration[];
@@ -169,32 +236,37 @@ type Props = {
   readonly: boolean;
   onApply: (changes: ApplyChanges) => CssStyleMap | void;
   onPreview?: (styles?: CssStyleMap) => void;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  inline?: boolean;
-  searchTerm?: string;
-  onEditorView?: (view: EditorView | undefined) => void;
-  onSearchUpdate?: (navigation: {
-    hasPrevious: boolean;
-    hasNext: boolean;
-  }) => void;
-  onMaximize?: () => void;
-};
+} & (
+  | {
+      inline: true;
+      searchStickyTop?: string;
+      onMaximize?: () => void;
+      open?: never;
+      onOpenChange?: never;
+    }
+  | {
+      inline?: false;
+      open: boolean;
+      onOpenChange: (open: boolean) => void;
+      searchStickyTop?: never;
+      onMaximize?: never;
+    }
+);
 
 const sourceColorTheme = EditorView.theme({
-  ".cm-mixed-local, .cm-mixed-local *": {
+  ".cm-style-block-local, .cm-style-block-local *": {
     color: `${styleSourceColor.local.foreground} !important`,
   },
-  ".cm-mixed-overwritten, .cm-mixed-overwritten *": {
+  ".cm-style-block-overwritten, .cm-style-block-overwritten *": {
     color: `${styleSourceColor.overwritten.foreground} !important`,
   },
-  ".cm-mixed-remote, .cm-mixed-remote *": {
+  ".cm-style-block-remote, .cm-style-block-remote *": {
     color: `${styleSourceColor.remote.foreground} !important`,
   },
-  ".cm-mixed-preset, .cm-mixed-preset *": {
+  ".cm-style-block-preset, .cm-style-block-preset *": {
     color: `${cssVar("--foreground-secondary")} !important`,
   },
-  ".cm-mixed-readonly-divider": {
+  ".cm-style-block-readonly-divider": {
     paddingBlock: rawTheme.spacing[5],
     "&::before": {
       content: '""',
@@ -202,7 +274,7 @@ const sourceColorTheme = EditorView.theme({
       borderTop: `1px solid ${cssVar("--border-default")}`,
     },
   },
-  ".cm-tooltip-hover:has(> .cm-mixed-property-tooltip), .cm-tooltip.cm-mixed-blocked-tooltip":
+  ".cm-tooltip-hover:has(> .cm-style-block-property-tooltip), .cm-tooltip.cm-style-block-blocked-tooltip":
     {
       border: 0,
       background: "transparent",
@@ -230,9 +302,9 @@ const getLocalStyles = (declarations: Declaration[]): CssStyleMap =>
     ])
   );
 
-const mixedCompletionSource: CompletionSource = (context) => {
+const styleBlockCompletionSource: CompletionSource = (context) => {
   const end = context.state.doc.length;
-  const group = getMixedStyleGroups(context.state.doc.toString()).find(
+  const group = getStyleSourceGroups(context.state.doc.toString()).find(
     ({ contentFrom, to }) =>
       context.pos >= contentFrom &&
       (context.pos < to || (to === end && context.pos === end))
@@ -245,141 +317,27 @@ const mixedCompletionSource: CompletionSource = (context) => {
     : null;
 };
 
-const MixedStyleBlockEditor = ({
-  declarations,
-  sourceDeclarations,
+type SearchNavigation = { hasPrevious: boolean; hasNext: boolean };
+
+const useStyleBlockExtensions = ({
+  inline,
   readonly,
-  onApply,
-  onPreview,
-  open,
-  onOpenChange,
-  inline = false,
-  searchTerm,
-  onEditorView,
-  onSearchUpdate,
-  onMaximize,
-}: Props) => {
-  const [code, setCode] = useState("");
-  const codeRef = useRef("");
-  const cleanCodeRef = useRef("");
-  const appliedCodeRef = useRef("");
-  const oldStylesRef = useRef<CssStyleMap>(new Map());
-  const initialParsedRef = useRef<CssStyleMap>(new Map());
-  const sourceSnapshotRef = useRef(sourceDeclarations);
-  const editorViewRef = useRef<EditorView>();
-  const wasOpenRef = useRef(false);
-  const applyRef = useRef<() => void>(() => {});
-  const onPreviewRef = useRef(onPreview);
-  onPreviewRef.current = onPreview;
-
-  useEffect(() => () => onPreviewRef.current?.(undefined), []);
-
-  useEffect(() => {
-    const view = editorViewRef.current;
-    if (view === undefined) {
-      return;
-    }
-    const query = new SearchQuery({ search: searchTerm ?? "", literal: true });
-    view.dispatch({ effects: setSearchQuery.of(query) });
-    if (query.valid) {
-      const first = query.getCursor(view.state).next();
-      if (!first.done) {
-        view.dispatch({
-          selection: { anchor: first.value.from, head: first.value.to },
-          effects: EditorView.scrollIntoView(first.value.from),
-        });
-      }
-    }
-  }, [searchTerm]);
-
-  const setInitialStyles = useCallback(
-    (localStyles: CssStyleMap, nextCode: string) => {
-      oldStylesRef.current = localStyles;
-      sourceSnapshotRef.current = sourceDeclarations;
-      initialParsedRef.current = parseBlock(
-        formatStyleBlock(localStyles, $cssVarsMap.get()),
-        $cssVarsMap.get()
-      ).styleMap;
-      codeRef.current = nextCode;
-      cleanCodeRef.current = nextCode;
-      appliedCodeRef.current = nextCode;
-      setCode(nextCode);
-    },
-    [sourceDeclarations]
-  );
-
-  useEffect(() => {
-    const wasOpen = wasOpenRef.current;
-    wasOpenRef.current = open;
-    if (
-      !open ||
-      (wasOpen && (!inline || codeRef.current !== cleanCodeRef.current))
-    ) {
-      return;
-    }
-    const localStyles = getLocalStyles(declarations);
-    const nextCode = formatMixedStyleBlock(
-      localStyles,
-      sourceDeclarations,
-      $cssVarsMap.get()
-    );
-    if (!wasOpen || nextCode !== cleanCodeRef.current) {
-      setInitialStyles(localStyles, nextCode);
-    } else {
-      oldStylesRef.current = localStyles;
-      sourceSnapshotRef.current = sourceDeclarations;
-      editorViewRef.current?.dispatch({ effects: sourceChanged.of() });
-    }
-  }, [open, inline, declarations, sourceDeclarations, setInitialStyles]);
-
-  const applyChanges = () => {
-    if (codeRef.current === appliedCodeRef.current) {
-      onPreview?.(undefined);
-      return;
-    }
-    const parsed = parseMixedStyleBlock(codeRef.current, $cssVarsMap.get());
-    const appliedStyles = onApply({
-      oldStyles: oldStylesRef.current,
-      initialParsedStyles: initialParsedRef.current,
-      newStyles: preserveAssetLayers(
-        oldStylesRef.current,
-        initialParsedRef.current,
-        parsed.styleMap
-      ),
-      mentionedProperties: parsed.mentionedProperties,
-      canDelete: parsed.canDelete,
-    });
-    if (appliedStyles !== undefined) {
-      oldStylesRef.current = appliedStyles;
-      initialParsedRef.current = parsed.styleMap;
-      appliedCodeRef.current = codeRef.current;
-      if (parsed.canDelete && parsed.diagnostics.length === 0) {
-        cleanCodeRef.current = codeRef.current;
-      }
-    }
-    onPreview?.(undefined);
-  };
-  applyRef.current = inline ? applyChanges : () => {};
-
-  const colorSwatches = useMemo(
-    () =>
-      createColorSwatches(() => applyRef.current(), {
-        getVariables: () => $cssVarsMap.get(),
-        subscribeVariables: (callback) => $cssVarsMap.listen(callback),
-        getEditableRange: (source) => {
-          const local = getMixedStyleGroups(source).find(
-            ({ source }) => source === "local"
-          );
-          return local && { from: local.contentFrom, to: local.to };
-        },
-      }),
-    []
-  );
-  const extensions = useMemo(() => {
+  colorSwatches,
+  sourceDeclarationsRef,
+  editorViewRef,
+  applyChangesRef,
+  setSearchNavigation,
+}: {
+  inline: boolean;
+  readonly: boolean;
+  colorSwatches: Extension;
+  sourceDeclarationsRef: MutableRefObject<ComputedStyleDecl[]>;
+  editorViewRef: MutableRefObject<EditorView | undefined>;
+  applyChangesRef: MutableRefObject<() => void>;
+  setSearchNavigation: Dispatch<SetStateAction<SearchNavigation>>;
+}) => {
+  return useMemo(() => {
     const notifySearchUpdate = (view: EditorView) => {
-      if (onSearchUpdate === undefined) {
-        return;
-      }
       const query = getSearchQuery(view.state);
       const { from, to } = view.state.selection.main;
       let hasPrevious = false;
@@ -394,12 +352,16 @@ const MixedStyleBlockEditor = ({
           }
         }
       }
-      onSearchUpdate({ hasPrevious, hasNext });
+      setSearchNavigation((previous) =>
+        previous.hasPrevious === hasPrevious && previous.hasNext === hasNext
+          ? previous
+          : { hasPrevious, hasNext }
+      );
     };
     const decorate = (value: string) =>
       Decoration.set(
         [
-          ...getMixedStyleGroups(value)
+          ...getStyleSourceGroups(value)
             .slice(1, 2)
             .map(({ from }) =>
               Decoration.widget({
@@ -408,7 +370,7 @@ const MixedStyleBlockEditor = ({
                 side: -1,
               }).range(from)
             ),
-          ...getMixedPropertyRanges(value).map((range) => {
+          ...getStyleSourcePropertyRanges(value).map((range) => {
             let source = range.source === "preset" ? "preset" : "remote";
             if (range.source === "local") {
               const parsed = parseBlock(
@@ -418,7 +380,7 @@ const MixedStyleBlockEditor = ({
               const properties = new Set(
                 parsed.size > 0 ? parsed.keys() : [range.property]
               );
-              source = sourceSnapshotRef.current.some(
+              source = sourceDeclarationsRef.current.some(
                 (declaration) =>
                   properties.has(declaration.property) &&
                   declaration.source.name === "overwritten"
@@ -426,12 +388,12 @@ const MixedStyleBlockEditor = ({
                 ? "overwritten"
                 : "local";
             }
-            return Decoration.mark({ class: `cm-mixed-${source}` }).range(
+            return Decoration.mark({ class: `cm-style-block-${source}` }).range(
               range.from,
               range.to
             );
           }),
-          ...parseMixedStyleBlock(
+          ...parseLocalStyleGroup(
             value,
             $cssVarsMap.get()
           ).overriddenRanges.map(({ from, to }) =>
@@ -447,7 +409,9 @@ const MixedStyleBlockEditor = ({
       create: (state) => decorate(state.doc.toString()),
       update: (decorations, transaction) =>
         transaction.docChanged ||
-        transaction.effects.some((effect) => effect.is(sourceChanged))
+        transaction.effects.some((effect) =>
+          effect.is(sourceDeclarationsChanged)
+        )
           ? decorate(transaction.state.doc.toString())
           : decorations,
       provide: (field) => EditorView.decorations.from(field),
@@ -461,7 +425,6 @@ const MixedStyleBlockEditor = ({
         class {
           constructor(view: EditorView) {
             editorViewRef.current = view;
-            onEditorView?.(view);
             notifySearchUpdate(view);
           }
           update(update: ViewUpdate) {
@@ -477,57 +440,16 @@ const MixedStyleBlockEditor = ({
           }
           destroy() {
             editorViewRef.current = undefined;
-            onEditorView?.(undefined);
           }
         }
       ),
       sourceColorTheme,
       blockedEditTooltip,
-      EditorState.transactionFilter.of((transaction) => {
-        if (!transaction.docChanged || transaction.annotation(ExternalChange)) {
-          return transaction;
-        }
-        const currentGroups = getMixedStyleGroups(
-          transaction.startState.doc.toString()
-        );
-        const nextGroups = getMixedStyleGroups(transaction.newDoc.toString());
-        const changedGroups =
-          currentGroups.length !== nextGroups.length ||
-          nextGroups[0]?.from !== 0 ||
-          currentGroups.some(
-            (group, index) => group.source !== nextGroups[index]?.source
-          );
-        const protectedRanges = getProtectedMixedRanges(currentGroups);
-        let blocked = changedGroups;
-        let blockedPos = transaction.startState.selection.main.head;
-        transaction.changes.iterChangedRanges((from, to) => {
-          if (
-            protectedRanges.some(
-              (range) =>
-                (from === to &&
-                  (range.inclusive
-                    ? from >= range.from && from <= range.to
-                    : from > range.from && from < range.to)) ||
-                (from < to && from < range.to && to > range.from)
-            )
-          ) {
-            blocked = true;
-            blockedPos = from;
-          }
-        });
-        return blocked
-          ? {
-              effects: [
-                blockedEdit.of(blockedPos),
-                EditorView.announce.of(blockedEditMessage),
-              ],
-            }
-          : transaction;
-      }),
+      protectedEditFilter,
       hoverTooltip((view, position) => {
-        const range = getMixedPropertyRanges(view.state.doc.toString()).find(
-          ({ from, to }) => position >= from && position <= to
-        );
+        const range = getStyleSourcePropertyRanges(
+          view.state.doc.toString()
+        ).find(({ from, to }) => position >= from && position <= to);
         if (range === undefined) {
           return null;
         }
@@ -536,7 +458,7 @@ const MixedStyleBlockEditor = ({
           range.declarationTo
         );
         const parsed = parseBlock(line, $cssVarsMap.get()).styleMap;
-        const source = sourceSnapshotRef.current.find(
+        const source = sourceDeclarationsRef.current.find(
           (declaration) => declaration.property === range.property
         );
         const value = parsed.values().next().value ?? source?.cascadedValue;
@@ -567,7 +489,7 @@ const MixedStyleBlockEditor = ({
           create: () => {
             const isLocal = range.source === "local";
             return renderTooltip(
-              "cm-mixed-property-tooltip",
+              "cm-style-block-property-tooltip",
               <ReadonlyProvider value={readonly}>
                 <MenuList
                   onPointerDown={(event) => event.preventDefault()}
@@ -608,7 +530,7 @@ const MixedStyleBlockEditor = ({
                               doc.sliceString(to, lastLine.to).trim() === ""
                             ) {
                               from = firstLine.from;
-                              const local = getMixedStyleGroups(
+                              const local = getStyleSourceGroups(
                                 doc.toString()
                               ).find((group) => group.source === "local");
                               const isLastLocalDeclaration =
@@ -622,7 +544,7 @@ const MixedStyleBlockEditor = ({
                             view.dispatch({
                               changes: { from, to },
                             });
-                            applyRef.current();
+                            applyChangesRef.current();
                           }
                         : undefined
                     }
@@ -635,14 +557,263 @@ const MixedStyleBlockEditor = ({
       }),
       linter(
         (view) =>
-          parseMixedStyleBlock(view.state.doc.toString(), $cssVarsMap.get())
+          parseLocalStyleGroup(view.state.doc.toString(), $cssVarsMap.get())
             .diagnostics
       ),
       linterTooltipTheme,
       declarationLineBreak,
       ...(inline ? [placeholder("Add local styles")] : []),
     ];
-  }, [colorSwatches, inline, readonly, onEditorView, onSearchUpdate]);
+  }, [
+    colorSwatches,
+    inline,
+    readonly,
+    sourceDeclarationsRef,
+    editorViewRef,
+    applyChangesRef,
+    setSearchNavigation,
+  ]);
+};
+
+export const StyleBlockEditor = ({
+  declarations,
+  sourceDeclarations,
+  readonly,
+  onApply,
+  onPreview,
+  open,
+  onOpenChange,
+  inline = false,
+  searchStickyTop,
+  onMaximize,
+}: Props) => {
+  const editorOpen = inline || open === true;
+  const [code, setCode] = useState("");
+  const [searchTerm, setSearchTerm] = useState<string>();
+  const [searchPopoverOpen, setSearchPopoverOpen] = useState(false);
+  const [searchNavigation, setSearchNavigation] = useState({
+    hasPrevious: false,
+    hasNext: false,
+  });
+  const codeRef = useRef("");
+  const lastValidCodeRef = useRef("");
+  const appliedCodeRef = useRef("");
+  const oldStylesRef = useRef<CssStyleMap>(new Map());
+  const initialParsedRef = useRef<CssStyleMap>(new Map());
+  const sourceDeclarationsRef = useRef(sourceDeclarations);
+  const editorViewRef = useRef<EditorView>();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const wasOpenRef = useRef(false);
+  const applyChangesRef = useRef<() => void>(() => {});
+  const onPreviewRef = useRef(onPreview);
+  onPreviewRef.current = onPreview;
+
+  useEffect(() => () => onPreviewRef.current?.(undefined), []);
+
+  useEffect(() => {
+    if (!inline && !editorOpen) {
+      setSearchTerm(undefined);
+      setSearchPopoverOpen(false);
+    }
+  }, [inline, editorOpen]);
+
+  useEffect(() => {
+    if (!editorOpen) {
+      return;
+    }
+    const handleSearchShortcut = (event: KeyboardEvent) => {
+      const editor = editorViewRef.current?.dom;
+      const scope = inline ? editor : editor?.closest("[data-floating-panel]");
+      if (
+        event.key.toLowerCase() !== "f" ||
+        (!event.metaKey && !event.ctrlKey) ||
+        event.altKey ||
+        event.shiftKey ||
+        !(event.target instanceof Node) ||
+        !scope?.contains(event.target)
+      ) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      if (inline) {
+        searchInputRef.current?.focus();
+      } else {
+        setSearchPopoverOpen(true);
+      }
+    };
+    document.addEventListener("keydown", handleSearchShortcut, true);
+    return () =>
+      document.removeEventListener("keydown", handleSearchShortcut, true);
+  }, [editorOpen, inline]);
+
+  const moveSearch = (direction: "previous" | "next") => {
+    const view = editorViewRef.current;
+    if (
+      view === undefined ||
+      (direction === "previous"
+        ? !searchNavigation.hasPrevious
+        : !searchNavigation.hasNext)
+    ) {
+      return;
+    }
+    (direction === "previous" ? findPrevious : findNext)(view);
+  };
+
+  useEffect(() => {
+    const view = editorViewRef.current;
+    if (view === undefined) {
+      return;
+    }
+    const query = new SearchQuery({ search: searchTerm ?? "", literal: true });
+    view.dispatch({ effects: setSearchQuery.of(query) });
+    if (query.valid) {
+      const first = query.getCursor(view.state).next();
+      if (!first.done) {
+        view.dispatch({
+          selection: { anchor: first.value.from, head: first.value.to },
+          effects: EditorView.scrollIntoView(first.value.from),
+        });
+      }
+    }
+  }, [searchTerm]);
+
+  const syncFromDeclarations = useCallback(
+    (localStyles: CssStyleMap, nextCode: string) => {
+      oldStylesRef.current = localStyles;
+      sourceDeclarationsRef.current = sourceDeclarations;
+      initialParsedRef.current = parseBlock(
+        formatStyleBlock(localStyles, $cssVarsMap.get()),
+        $cssVarsMap.get()
+      ).styleMap;
+      codeRef.current = nextCode;
+      lastValidCodeRef.current = nextCode;
+      appliedCodeRef.current = nextCode;
+      setCode(nextCode);
+    },
+    [sourceDeclarations]
+  );
+
+  useEffect(() => {
+    const wasOpen = wasOpenRef.current;
+    wasOpenRef.current = editorOpen;
+    if (
+      !editorOpen ||
+      (wasOpen && (!inline || codeRef.current !== lastValidCodeRef.current))
+    ) {
+      return;
+    }
+    const localStyles = getLocalStyles(declarations);
+    const nextCode = formatStyleSources(
+      localStyles,
+      sourceDeclarations,
+      $cssVarsMap.get()
+    );
+    if (!wasOpen || nextCode !== lastValidCodeRef.current) {
+      syncFromDeclarations(localStyles, nextCode);
+    } else {
+      oldStylesRef.current = localStyles;
+      sourceDeclarationsRef.current = sourceDeclarations;
+      editorViewRef.current?.dispatch({
+        effects: sourceDeclarationsChanged.of(),
+      });
+    }
+  }, [
+    editorOpen,
+    inline,
+    declarations,
+    sourceDeclarations,
+    syncFromDeclarations,
+  ]);
+
+  const applyChanges = () => {
+    if (codeRef.current === appliedCodeRef.current) {
+      onPreview?.(undefined);
+      return;
+    }
+    const parsed = parseLocalStyleGroup(codeRef.current, $cssVarsMap.get());
+    const appliedStyles = onApply({
+      oldStyles: oldStylesRef.current,
+      initialParsedStyles: initialParsedRef.current,
+      newStyles: preserveAssetLayers(
+        oldStylesRef.current,
+        initialParsedRef.current,
+        parsed.styleMap
+      ),
+      mentionedProperties: parsed.mentionedProperties,
+      canDelete: parsed.canDelete,
+    });
+    if (appliedStyles !== undefined) {
+      oldStylesRef.current = appliedStyles;
+      initialParsedRef.current = parsed.styleMap;
+      appliedCodeRef.current = codeRef.current;
+      if (parsed.canDelete && parsed.diagnostics.length === 0) {
+        lastValidCodeRef.current = codeRef.current;
+      }
+    }
+    onPreview?.(undefined);
+  };
+  applyChangesRef.current = inline ? applyChanges : () => {};
+
+  const colorSwatches = useMemo(
+    () =>
+      createColorSwatches(() => applyChangesRef.current(), {
+        getVariables: () => $cssVarsMap.get(),
+        subscribeVariables: (callback) => $cssVarsMap.listen(callback),
+        getEditableRange: (source) => {
+          const local = getStyleSourceGroups(source).find(
+            ({ source }) => source === "local"
+          );
+          return local && { from: local.contentFrom, to: local.to };
+        },
+      }),
+    []
+  );
+
+  const extensions = useStyleBlockExtensions({
+    inline,
+    readonly,
+    colorSwatches,
+    sourceDeclarationsRef,
+    editorViewRef,
+    applyChangesRef,
+    setSearchNavigation,
+  });
+
+  const searchControl = (
+    <SearchField
+      inputRef={searchInputRef}
+      value={searchTerm ?? ""}
+      suffix={
+        searchTerm ? (
+          <>
+            <SmallIconButton
+              aria-label="Previous match"
+              icon={<ChevronUpIcon />}
+              bleed={false}
+              disabled={!searchNavigation.hasPrevious}
+              onClick={() => moveSearch("previous")}
+            />
+            <SmallIconButton
+              aria-label="Next match"
+              icon={<ChevronDownIcon />}
+              bleed={false}
+              disabled={!searchNavigation.hasNext}
+              onClick={() => moveSearch("next")}
+            />
+          </>
+        ) : undefined
+      }
+      onChange={(event) => setSearchTerm(event.target.value || undefined)}
+      onAbort={() => setSearchTerm(undefined)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          moveSearch(event.shiftKey ? "previous" : "next");
+        }
+      }}
+    />
+  );
 
   const content = (
     <Box
@@ -666,9 +837,9 @@ const MixedStyleBlockEditor = ({
       <CssFragmentEditorContent
         ariaLabel="Styles"
         language={cssBlockLanguage}
-        completionSource={mixedCompletionSource}
+        completionSource={styleBlockCompletionSource}
         autoFocus={!inline}
-        initialSelection={getMixedStyleGroups(code)[0]?.contentFrom ?? 0}
+        initialSelection={getStyleSourceGroups(code)[0]?.contentFrom ?? 0}
         chromeless={inline}
         resetHistoryOnExternalChange
         showLineNumbers={!inline}
@@ -682,7 +853,7 @@ const MixedStyleBlockEditor = ({
             preserveAssetLayers(
               oldStylesRef.current,
               initialParsedRef.current,
-              parseMixedStyleBlock(value, $cssVarsMap.get()).styleMap
+              parseLocalStyleGroup(value, $cssVarsMap.get()).styleMap
             )
           );
         }}
@@ -691,7 +862,7 @@ const MixedStyleBlockEditor = ({
             applyChanges();
           } else if (event === undefined) {
             applyChanges();
-            onOpenChange(false);
+            onOpenChange?.(false);
           }
         }}
       />
@@ -700,130 +871,82 @@ const MixedStyleBlockEditor = ({
 
   if (inline) {
     return (
-      <EditorDialogControl>
-        {content}
-        {onMaximize && (
-          <Tooltip
-            content={
-              <Flex align="center" gap="1">
-                <Text>Edit local styles</Text>
-                <Kbd value={["alt", "shift", "x"]} color="moreSubtle" />
-              </Flex>
-            }
-          >
-            <EditorDialogButton
-              aria-label="Edit local styles"
-              disabled={readonly}
-              onClick={onMaximize}
-            />
-          </Tooltip>
-        )}
-      </EditorDialogControl>
+      <>
+        <PanelContent
+          css={{
+            position: searchStickyTop === undefined ? undefined : "sticky",
+            top: searchStickyTop,
+            zIndex: 1,
+            background: cssVar("--background-primary"),
+          }}
+        >
+          {searchControl}
+        </PanelContent>
+        <EditorDialogControl>
+          {content}
+          {onMaximize && (
+            <Tooltip
+              content={
+                <Flex align="center" gap="1">
+                  <Text>Edit local styles</Text>
+                  <Kbd value={["alt", "shift", "x"]} color="moreSubtle" />
+                </Flex>
+              }
+            >
+              <EditorDialogButton
+                aria-label="Edit local styles"
+                disabled={readonly}
+                onClick={onMaximize}
+              />
+            </Tooltip>
+          )}
+        </EditorDialogControl>
+      </>
     );
   }
   return (
     <EditorDialog
       title="Styles"
+      titleSuffix={
+        <Popover
+          open={searchPopoverOpen}
+          onOpenChange={(nextOpen) => {
+            setSearchPopoverOpen(nextOpen);
+            if (!nextOpen) {
+              setSearchTerm(undefined);
+            }
+          }}
+        >
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              color="ghost"
+              prefix={<SearchIcon />}
+              aria-label="Search styles"
+            />
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            side="bottom"
+            css={{ width: theme.sizes.sidebarWidth, maxWidth: "none" }}
+            onOpenAutoFocus={(event) => {
+              event.preventDefault();
+              searchInputRef.current?.focus();
+            }}
+          >
+            <PanelContent>{searchControl}</PanelContent>
+          </PopoverContent>
+        </Popover>
+      }
       modal
-      open={open}
+      open={editorOpen}
       onOpenChange={(nextOpen) => {
         if (!nextOpen) {
           applyChanges();
         }
-        onOpenChange(nextOpen);
+        onOpenChange?.(nextOpen);
       }}
       content={content}
     />
   );
 };
-
-export const InlineMixedStyleBlockEditor = ({
-  searchStickyTop,
-  ...props
-}: Omit<
-  Props,
-  | "inline"
-  | "open"
-  | "onOpenChange"
-  | "searchTerm"
-  | "onEditorView"
-  | "onSearchUpdate"
-> & { searchStickyTop?: string }) => {
-  const [searchTerm, setSearchTerm] = useState<string>();
-  const [searchNavigation, setSearchNavigation] = useState({
-    hasPrevious: false,
-    hasNext: false,
-  });
-  const editorRef = useRef<EditorView>();
-  const handleEditorView = useCallback((view: EditorView | undefined) => {
-    editorRef.current = view;
-  }, []);
-  const moveSearch = (direction: "previous" | "next") => {
-    const view = editorRef.current;
-    if (
-      view === undefined ||
-      (direction === "previous"
-        ? !searchNavigation.hasPrevious
-        : !searchNavigation.hasNext)
-    ) {
-      return;
-    }
-    (direction === "previous" ? findPrevious : findNext)(view);
-  };
-  return (
-    <>
-      <PanelContent
-        css={{
-          position: searchStickyTop === undefined ? undefined : "sticky",
-          top: searchStickyTop,
-          zIndex: 1,
-          background: cssVar("--background-primary"),
-        }}
-      >
-        <SearchField
-          suffix={
-            searchTerm ? (
-              <>
-                <SmallIconButton
-                  aria-label="Previous match"
-                  icon={<ChevronUpIcon />}
-                  bleed={false}
-                  disabled={!searchNavigation.hasPrevious}
-                  onClick={() => moveSearch("previous")}
-                />
-                <SmallIconButton
-                  aria-label="Next match"
-                  icon={<ChevronDownIcon />}
-                  bleed={false}
-                  disabled={!searchNavigation.hasNext}
-                  onClick={() => moveSearch("next")}
-                />
-              </>
-            ) : undefined
-          }
-          onChange={(event) => setSearchTerm(event.target.value || undefined)}
-          onAbort={() => setSearchTerm(undefined)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              moveSearch(event.shiftKey ? "previous" : "next");
-            }
-          }}
-        />
-      </PanelContent>
-      <MixedStyleBlockEditor
-        {...props}
-        inline
-        open
-        onOpenChange={() => {}}
-        searchTerm={searchTerm}
-        onEditorView={handleEditorView}
-        onSearchUpdate={setSearchNavigation}
-      />
-    </>
-  );
-};
-
-export const MixedStyleBlockDialog = (props: Omit<Props, "inline">) => (
-  <MixedStyleBlockEditor {...props} />
-);

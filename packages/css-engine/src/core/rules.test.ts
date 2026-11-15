@@ -2,6 +2,36 @@ import { describe, expect, test } from "vitest";
 import { MediaRule, PlaintextRule } from "./rules";
 
 describe("MediaRule with custom conditions", () => {
+  test.each([
+    [
+      "(prefers-reduced-motion: reduce)",
+      "@media (prefers-reduced-motion: reduce)",
+    ],
+    [
+      "(orientation: portrait) or (hover: hover)",
+      "@media (orientation: portrait) or (hover: hover)",
+    ],
+    [
+      "(orientation: portrait) and (hover: hover)",
+      "@media (orientation: portrait) and (hover: hover)",
+    ],
+  ])("groups media condition %s", (condition, expected) => {
+    const mediaRule = new MediaRule("breakpoint", { condition });
+    mediaRule.insertRule(new PlaintextRule("  .test { color: red; }"));
+    expect(mediaRule.cssText).toContain(expected);
+  });
+
+  test("keeps a negated condition grouped for screen media", () => {
+    const mediaRule = new MediaRule("breakpoint", {
+      mediaType: "screen",
+      condition: "not (prefers-reduced-motion: reduce)",
+    });
+    mediaRule.insertRule(new PlaintextRule("  .test { color: red; }"));
+    expect(mediaRule.cssText).toContain(
+      "@media screen and (not (prefers-reduced-motion: reduce))"
+    );
+  });
+
   test("generates media query with custom condition only", () => {
     const mediaRule = new MediaRule("breakpoint1", {
       condition: "orientation:portrait",

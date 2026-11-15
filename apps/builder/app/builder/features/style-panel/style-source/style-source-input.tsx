@@ -55,7 +55,7 @@ import {
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
-import { $styles } from "~/shared/sync/data-stores";
+import { $stylesIndex } from "~/shared/nano-states";
 import { StyleSourceMenu, type SelectorConfig } from "./style-source-menu";
 
 type IntermediateItem = {
@@ -153,15 +153,14 @@ const StyleSourceControlWithMenu = <Item extends IntermediateItem>({
   );
 };
 
-// Returns true if style source has defined styles including on the states.
+// Returns true if a style source has declarations on any state or breakpoint.
 const getHasStylesMap = <Item extends IntermediateItem>(
   styleSourceItems: Array<Item>,
-  styles: Iterable<{ styleSourceId: string }>
+  stylesByStyleSourceId: ReadonlyMap<string, readonly unknown[]>
 ) => {
-  const sourceIds = new Set(Array.from(styles, (style) => style.styleSourceId));
   const map = new Map<Item["id"], boolean>();
   for (const item of styleSourceItems) {
-    if (sourceIds.has(item.id)) {
+    if ((stylesByStyleSourceId.get(item.id)?.length ?? 0) > 0) {
       map.set(item.id, true);
     }
   }
@@ -200,17 +199,14 @@ const TextFieldBase: ForwardRefRenderFunction<
   const internalInputRef = useRef<HTMLInputElement>(null);
   const sourceButtonRefs = useRef(new Map<string, HTMLButtonElement>());
 
-  const { focusWithinProps } = useFocusWithin({
-    onFocusWithin: onFocus,
-    onBlurWithin: onBlur,
-  });
+  const { focusWithinProps } = useFocusWithin({ onBlurWithin: onBlur });
 
   const onClickCapture = useCallback(() => {
     internalInputRef.current?.focus();
   }, [internalInputRef]);
 
-  const styles = useStore($styles);
-  const hasStylesMap = getHasStylesMap(value, styles.values());
+  const { stylesByStyleSourceId } = useStore($stylesIndex);
+  const hasStylesMap = getHasStylesMap(value, stylesByStyleSourceId);
   const focusOrder = [
     ...value.filter((item) => item.source !== "local"),
     undefined,
@@ -289,6 +285,7 @@ const TextFieldBase: ForwardRefRenderFunction<
         size="1"
         value={label}
         onClick={onClick}
+        onFocus={onFocus}
         inputRef={mergeRefs(internalInputRef, inputRef)}
         onKeyDown={handleInputKeyDown}
         spellCheck={false}
@@ -440,6 +437,7 @@ export const StyleSourceInput = (
     getMenuProps,
     getItemProps,
     isOpen,
+    openMenu,
   } = useCombobox<IntermediateItem>({
     getItems: () => markAddedValues(props.items ?? [], value),
     value: {
@@ -467,6 +465,7 @@ export const StyleSourceInput = (
   });
 
   const inputProps = getInputProps({
+    onFocus: () => openMenu(),
     onKeyDown(event) {
       if (event.key === "Escape") {
         escapePressed.current = true;

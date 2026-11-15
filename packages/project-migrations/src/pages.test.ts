@@ -119,6 +119,133 @@ test("removes orphan folder children from current pages shape", () => {
   ).toEqual(["home"]);
 });
 
+test.each(["serialized", "current"])(
+  "repairs page-folder cycles in %s saved data without changing the input",
+  (shape) => {
+    const saved = {
+      homePageId: "home",
+      rootFolderId: "root",
+      pages: [
+        {
+          id: "home",
+          name: "Home",
+          path: "",
+          title: `"Home"`,
+          meta: {},
+          rootInstanceId: "homeRoot",
+        },
+      ],
+      folders: [
+        { id: "b", name: "B", slug: "b", children: ["a"] },
+        { id: "root", name: "Root", slug: "", children: ["home", "a"] },
+        { id: "a", name: "A", slug: "a", children: ["b"] },
+      ],
+    };
+    const input =
+      shape === "current"
+        ? {
+            ...saved,
+            pages: new Map(saved.pages.map((page) => [page.id, page])),
+            folders: new Map(
+              saved.folders.map((folder) => [folder.id, folder])
+            ),
+            pageTemplates: new Map(),
+          }
+        : saved;
+
+    const recovered = migratePages(input);
+
+    expect(recovered.folders.get("root")?.children).toEqual(["home", "a"]);
+    expect(recovered.folders.get("a")?.children).toEqual(["b"]);
+    expect(recovered.folders.get("b")?.children).toEqual([]);
+    expect(saved.folders[0].children).toEqual(["a"]);
+    expect(() => serializePages(recovered)).not.toThrow();
+  }
+);
+
+test("reattaches the root of a detached folder tree containing a cycle", () => {
+  const recovered = migratePages({
+    homePageId: "home",
+    rootFolderId: "root",
+    pages: [
+      {
+        id: "home",
+        name: "Home",
+        path: "",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "homeRoot",
+      },
+      {
+        id: "nested",
+        name: "Nested",
+        path: "/nested",
+        title: `"Nested"`,
+        meta: {},
+        rootInstanceId: "nestedRoot",
+      },
+    ],
+    folders: [
+      { id: "root", name: "Root", slug: "", children: ["home"] },
+      { id: "a", name: "A", slug: "a", children: ["b"] },
+      { id: "b", name: "B", slug: "b", children: ["c"] },
+      { id: "c", name: "C", slug: "c", children: ["b", "nested"] },
+    ],
+  });
+
+  expect(recovered.folders.get("root")?.children).toEqual(["home", "a"]);
+  expect(recovered.folders.get("a")?.children).toEqual(["b"]);
+  expect(recovered.folders.get("b")?.children).toEqual(["c"]);
+  expect(recovered.folders.get("c")?.children).toEqual(["nested"]);
+  expect(recovered.pages.has("nested")).toBe(true);
+  expect(() => serializePages(recovered)).not.toThrow();
+});
+
+test("still rejects new page-folder cycles when saving", () => {
+  const loaded = migratePages({
+    homePageId: "home",
+    rootFolderId: "root",
+    pages: [
+      {
+        id: "home",
+        name: "Home",
+        path: "",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "homeRoot",
+      },
+    ],
+    folders: [
+      { id: "root", name: "Root", slug: "", children: ["home", "a"] },
+      { id: "a", name: "A", slug: "a", children: [] },
+    ],
+  });
+  loaded.folders.get("a")?.children.push("a");
+
+  expect(() => serializePages(loaded)).toThrow();
+});
+
+test("repairs a self-referencing folder in legacy page data", () => {
+  const recovered = migratePages({
+    homePage: {
+      id: "home",
+      name: "Home",
+      path: "",
+      title: `"Home"`,
+      meta: {},
+      rootInstanceId: "homeRoot",
+    },
+    pages: [],
+    folders: [
+      { id: "root", name: "Root", slug: "", children: ["home", "a"] },
+      { id: "a", name: "A", slug: "a", children: ["a"] },
+    ],
+  });
+
+  expect(recovered.folders.get("a")?.children).toEqual([]);
+  expect(() => serializePages(recovered)).not.toThrow();
+});
+
 test("serializes map pages into arrays for JSON storage", () => {
   expect(
     serializePages({

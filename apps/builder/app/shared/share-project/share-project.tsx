@@ -464,7 +464,6 @@ const itemStyle = css({
   display: "flex",
   alignItems: "center",
   gap: theme.spacing[3],
-  backgroundColor: cssVar("--background-primary"),
 });
 
 export type LinkOptions = {

@@ -442,6 +442,36 @@ const getExecutionContextId = (params: unknown) =>
     ? params.executionContextId
     : undefined;
 
+const isGeneratedStaticScriptPath = (pathname: string) =>
+  /^\/assets\/[^/?#]+\.(?:js|mjs)$/.test(pathname);
+
+const getJavascriptErrorLocation = (params: unknown) => {
+  if (typeof params !== "object" || params === null) {
+    return;
+  }
+  const { url, lineNumber } = params as Record<string, unknown>;
+  if (
+    typeof url !== "string" ||
+    typeof lineNumber !== "number" ||
+    Number.isSafeInteger(lineNumber) === false ||
+    lineNumber < 0 ||
+    lineNumber === Number.MAX_SAFE_INTEGER
+  ) {
+    return;
+  }
+  try {
+    const scriptUrl = new URL(url);
+    if (
+      (scriptUrl.protocol === "http:" || scriptUrl.protocol === "https:") &&
+      isGeneratedStaticScriptPath(scriptUrl.pathname)
+    ) {
+      return { pathname: scriptUrl.pathname, line: lineNumber + 1 };
+    }
+  } catch {
+    return;
+  }
+};
+
 const navigateAndWaitForLifecycle = async (
   cdp: CdpSession,
   waitUntil: ScreenshotWaitUntil,
@@ -791,6 +821,7 @@ export type BrowserScreenshotNavigation = {
   redirects: string[];
   documentReadyState: string;
   javascriptErrorPresent?: boolean;
+  javascriptErrorLocation?: { pathname: string; line: number };
   pageMetadata?: BrowserScreenshotPageMetadata;
   layoutStable: boolean;
 };
@@ -1720,19 +1751,28 @@ const capturePageWithBrowserRuntime = async (
           }
         >();
         let javascriptErrorPresent = false;
+        let javascriptErrorLocation: BrowserScreenshotNavigation["javascriptErrorLocation"];
         let navigationFrameId: string | undefined;
         let navigationExecutionContextFrames: Map<number, string> | undefined;
-        const navigationErrorsByContextId = new Set<number>();
+        const navigationErrorsByContextId = new Map<
+          number,
+          BrowserScreenshotNavigation["javascriptErrorLocation"]
+        >();
         let activeExecutionContextIds = new Set<number>();
         const recordJavascriptError = (params: unknown) => {
           const executionContextId = getExecutionContextId(params);
           if (executionContextId === undefined) {
             return;
           }
+          const location = getJavascriptErrorLocation(params);
           if (navigationExecutionContextFrames !== undefined) {
-            navigationErrorsByContextId.add(executionContextId);
+            navigationErrorsByContextId.set(
+              executionContextId,
+              navigationErrorsByContextId.get(executionContextId) ?? location
+            );
           } else if (activeExecutionContextIds.has(executionContextId)) {
             javascriptErrorPresent = true;
+            javascriptErrorLocation ??= location;
           }
         };
         cdp.on("Runtime.executionContextCreated", (params) => {
@@ -1765,16 +1805,6 @@ const capturePageWithBrowserRuntime = async (
             "exceptionDetails" in params
           ) {
             recordJavascriptError(params.exceptionDetails);
-          }
-        });
-        cdp.on("Runtime.consoleAPICalled", (params) => {
-          if (
-            typeof params === "object" &&
-            params !== null &&
-            "type" in params &&
-            params.type === "error"
-          ) {
-            recordJavascriptError(params);
           }
         });
         cdp.on("Network.requestWillBeSent", (params) => {
@@ -1857,6 +1887,7 @@ const capturePageWithBrowserRuntime = async (
               activeExecutionContextIds
             );
             javascriptErrorPresent = false;
+            javascriptErrorLocation = undefined;
             navigationExecutionContextFrames = new Map();
             navigationErrorsByContextId.clear();
             activeExecutionContextIds = new Set();
@@ -1900,6 +1931,8 @@ const capturePageWithBrowserRuntime = async (
             for (const executionContextId of activeExecutionContextIds) {
               if (navigationErrorsByContextId.has(executionContextId)) {
                 javascriptErrorPresent = true;
+                javascriptErrorLocation ??=
+                  navigationErrorsByContextId.get(executionContextId);
               }
             }
             navigationExecutionContextFrames = undefined;
@@ -2123,6 +2156,9 @@ const capturePageWithBrowserRuntime = async (
             redirects,
             ...readiness,
             ...(javascriptErrorPresent ? { javascriptErrorPresent: true } : {}),
+            ...(javascriptErrorPresent && javascriptErrorLocation !== undefined
+              ? { javascriptErrorLocation }
+              : {}),
           };
           if (images === undefined) {
             delete layout.images;
@@ -2400,6 +2436,9 @@ const submitFormWithBrowserRuntime = async (
   let managedResponseBody:
     | Promise<{ body?: string; base64Encoded?: boolean } | undefined>
     | undefined;
+  let interceptedManagedResponseBody:
+    | Promise<{ body?: string; base64Encoded?: boolean } | undefined>
+    | undefined;
   const submissionRequestIds = new Set<string>();
   const completedRequestIds = new Set<string>();
   let navigationObserved = false;
@@ -2547,6 +2586,53 @@ const submitFormWithBrowserRuntime = async (
         }
       }
     });
+    cdp.on("Fetch.requestPaused", (params) => {
+      if (
+        typeof params !== "object" ||
+        params === null ||
+        !("requestId" in params) ||
+        typeof params.requestId !== "string"
+      ) {
+        return;
+      }
+      const requestId = params.requestId;
+      if (
+        dispatchStarted &&
+        mainFrameId !== undefined &&
+        "frameId" in params &&
+        params.frameId === mainFrameId &&
+        "networkId" in params &&
+        typeof params.networkId === "string" &&
+        submissionRequestIds.has(params.networkId) &&
+        "responseStatusCode" in params &&
+        typeof params.responseStatusCode === "number" &&
+        "request" in params &&
+        typeof params.request === "object" &&
+        params.request !== null &&
+        "url" in params.request &&
+        typeof params.request.url === "string" &&
+        "method" in params.request &&
+        params.request.method === "POST"
+      ) {
+        const responseUrl = new URL(params.request.url);
+        const initialUrl = new URL(initialPageUrl);
+        if (
+          responseUrl.origin === initialUrl.origin &&
+          responseUrl.pathname ===
+            `/__ws-form${initialUrl.pathname === "/" ? "" : initialUrl.pathname}`
+        ) {
+          // Read before releasing the response so a fast redirect cannot discard it.
+          interceptedManagedResponseBody = send<{
+            body?: string;
+            base64Encoded?: boolean;
+          }>("Fetch.getResponseBody", { requestId })
+            .finally(() => send("Fetch.continueResponse", { requestId }))
+            .catch(() => undefined);
+          return;
+        }
+      }
+      void send("Fetch.continueResponse", { requestId }).catch(() => undefined);
+    });
     await Promise.all([
       send("Page.enable"),
       send("Runtime.enable"),
@@ -2554,6 +2640,9 @@ const submitFormWithBrowserRuntime = async (
         enableDurableMessages: true,
         maxTotalBufferSize: 4_000_000,
         maxResourceBufferSize: 1_000_000,
+      }),
+      send("Fetch.enable", {
+        patterns: [{ urlPattern: "*__ws-form*", requestStage: "Response" }],
       }),
       send("Page.setLifecycleEventsEnabled", { enabled: true }),
     ]);
@@ -2680,8 +2769,13 @@ const submitFormWithBrowserRuntime = async (
       resourceName?: string;
     }[] = [];
     const errors: { status?: number; name?: string; message: string }[] = [];
-    if (managedResponseBody !== undefined) {
-      const body = await managedResponseBody;
+    if (
+      interceptedManagedResponseBody !== undefined ||
+      managedResponseBody !== undefined
+    ) {
+      const body =
+        (await interceptedManagedResponseBody?.catch(() => undefined)) ??
+        (await managedResponseBody);
       if (body?.body !== undefined && body.body.length < 1_000_000) {
         try {
           const parsed: unknown = JSON.parse(

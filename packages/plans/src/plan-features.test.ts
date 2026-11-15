@@ -173,4 +173,36 @@ describe("parsePlansEnv", () => {
       (result.get("Pro")!.features as Record<string, unknown>)["admin"]
     ).toBeUndefined();
   });
+
+  test("normalizes the legacy log flag and inherits the canonical value", () => {
+    const result = parsePlansEnv(
+      JSON.stringify([
+        { name: "Pro", features: { allowAdvancedPublishDiagnostics: true } },
+        { name: "Team", extends: "Pro", features: {} },
+      ])
+    );
+    expect(result.get("Pro")?.features.allowPublishLogs).toBe(true);
+    expect(result.get("Team")?.features.allowPublishLogs).toBe(true);
+    expect(result.get("Pro")?.features).not.toHaveProperty(
+      "allowAdvancedPublishDiagnostics"
+    );
+    const explicitFalse = parsePlansEnv(
+      JSON.stringify([
+        {
+          name: "Pro",
+          features: {
+            allowAdvancedPublishDiagnostics: true,
+            allowPublishLogs: false,
+          },
+        },
+      ])
+    );
+    expect(explicitFalse.get("Pro")?.features.allowPublishLogs).toBe(false);
+    expect(result.get("Team")?.features).not.toHaveProperty(
+      "publishLogRetentionDays"
+    );
+    expect(result.get("Team")?.features).not.toHaveProperty(
+      "publishActivityRetentionDays"
+    );
+  });
 });

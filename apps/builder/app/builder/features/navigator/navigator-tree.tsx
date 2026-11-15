@@ -1061,8 +1061,12 @@ export const NavigatorTree = () => {
     if (selectedInstanceSelector) {
       const newExpandedItems = new Set($expandedItems.get());
       let expanded = 0;
-      // do not expand the selected instance itself, start with parent
-      for (let index = 1; index < selectedInstanceSelector.length; index += 1) {
+      // Expand ancestors except the root, which is always expanded.
+      for (
+        let index = 1;
+        index < selectedInstanceSelector.length - 1;
+        index += 1
+      ) {
         const key = getSelectorKey(selectedInstanceSelector.slice(index));
         if (newExpandedItems.has(key) === false) {
           newExpandedItems.add(key);

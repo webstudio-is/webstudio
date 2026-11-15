@@ -113,7 +113,16 @@ export type HighImpactFixtureApi = {
 
 export const startHighImpactFixtureApi = async (
   fixture: HighImpactFixture,
-  { formReceiverPort }: { formReceiverPort?: number } = {}
+  {
+    formReceiverPort,
+    handleServerOperation,
+  }: {
+    formReceiverPort?: number;
+    handleServerOperation?: (
+      operationPath: string,
+      input: unknown
+    ) => Promise<{ result: unknown } | undefined>;
+  } = {}
 ): Promise<HighImpactFixtureApi> => {
   Object.assign(globalThis, { React });
   const [stateAdapters, runtime, projectSession, restorePoints] =
@@ -567,6 +576,13 @@ export const startHighImpactFixtureApi = async (
         };
         calls.push(call);
         try {
+          const serverOperation = await handleServerOperation?.(
+            operationPath,
+            input
+          );
+          if (serverOperation !== undefined) {
+            return serverOperation.result;
+          }
           const result = await executeBuilderRuntimeOperation({
             id: operationPath,
             state,

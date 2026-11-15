@@ -1,127 +1,213 @@
-import { useState } from "react";
-import { createRoot, type Root } from "react-dom/client";
-import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
-import { TooltipProvider, toast } from "@webstudio-is/design-system";
+import { toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { $publishDialog } from "~/builder/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
-import { __testing__ } from "./publish";
-import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
-import { PublishValidationResults } from "./publish-validation-results";
-
-const {
-  usePublishProgress,
+import {
   waitForPublishStatus,
-  refreshUntilSuccess,
-  useManualValidationFindings,
-  getRefreshedProject,
+  refreshProjectWithRetry,
+  fetchAndStoreProject,
   reportPublishResult,
-} = __testing__;
-
-let root: Root | undefined;
-let container: HTMLDivElement | undefined;
-
-(
-  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
+} from "./publish-progress";
 
 afterEach(() => {
-  act(() => root?.unmount());
-  root = undefined;
-  container?.remove();
-  container = undefined;
   $publishDialog.set("none");
   $project.set(undefined);
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
-test("closing publish hides the countdown while polling continues and completion clears pending", async () => {
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date("2026-10-20T12:00:00Z"));
-  $project.set({ id: "project" } as Project);
-
-  let status: "PENDING" | "PUBLISHED" = "PENDING";
-  let statusRequests = 0;
-
-  const Harness = () => {
-    const [isOpen, setIsOpen] = useState(true);
-    const [completedStatus, setCompletedStatus] = useState<string>();
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button
-          onClick={() =>
-            progress.start(async () => {
-              const result = await waitForPublishStatus(
-                async () => {
-                  statusRequests += 1;
-                  return {
-                    latestBuildVirtual: {
-                      createdAt: new Date().toISOString(),
-                      publishStatus: status,
-                    },
-                  } as Project;
-                },
-                () => true
-              );
-              setCompletedStatus(result?.status);
-            })
-          }
-        >
-          Start
-        </button>
-        <button
-          onClick={() => {
-            progress.dismissCountdown();
-            setIsOpen(false);
-          }}
-        >
-          Close
-        </button>
-        <button onClick={() => setIsOpen(true)}>Open</button>
-        {isOpen && (
-          <output>
-            {progress.isPublishing ? "pending" : "complete"}:
-            {progress.countdown ?? "no countdown"}:{completedStatus ?? "none"}
-          </output>
-        )}
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-
-  const [start, close, open] = container.querySelectorAll("button");
-  act(() => start.click());
-  expect(container.querySelector("output")?.textContent).toBe(
-    "pending:60:none"
+test("a verified runner failure finishes the existing status wait without a project refresh", async () => {
+  const refresh = vi.fn(async () => undefined);
+  const getJob = vi.fn(async () => ({
+    status: "failed",
+    code: "runner_failed",
+  }));
+  const result = await waitForPublishStatus(
+    refresh,
+    () => true,
+    undefined,
+    {
+      projectId: "project",
+      buildId: "build-1",
+      logHandle: "handle-1",
+    },
+    getJob
   );
-
-  await act(async () => vi.advanceTimersByTimeAsync(10_000));
-  expect(container.querySelector("output")?.textContent).toBe(
-    "pending:50:none"
-  );
-
-  act(() => close.click());
-  act(() => open.click());
-  expect(container.querySelector("output")?.textContent).toBe(
-    "pending:no countdown:none"
-  );
-
-  act(() => close.click());
-  status = "PUBLISHED";
-  await act(async () => vi.advanceTimersByTimeAsync(5_000));
-  act(() => open.click());
-  expect(container.querySelector("output")?.textContent).toBe(
-    "complete:no countdown:PUBLISHED"
-  );
-  expect(statusRequests).toBe(2);
+  expect(result?.status).toBe("FAILED");
+  expect(result?.code).toBe("runner_failed");
+  expect(refresh).not.toHaveBeenCalled();
+  expect(getJob).toHaveBeenCalledWith({
+    projectId: "project",
+    jobId: "build-1",
+    logHandle: "handle-1",
+  });
 });
+
+test("a pending runner cannot promote a refreshed Build to success", async () => {
+  vi.useFakeTimers();
+  const refresh = vi.fn(
+    async () =>
+      ({
+        latestBuildVirtual: {
+          buildId: "build-1",
+          createdAt: new Date().toISOString(),
+          publishStatus: "PUBLISHED",
+        },
+      }) as Project
+  );
+  const getJob = vi
+    .fn()
+    .mockResolvedValueOnce({ status: "pending" })
+    .mockResolvedValueOnce({ status: "failed", code: "runner_failed" });
+  const waiting = waitForPublishStatus(
+    refresh,
+    () => true,
+    undefined,
+    { projectId: "project", buildId: "build-1", logHandle: "handle-1" },
+    getJob
+  );
+  await vi.advanceTimersByTimeAsync(15_000);
+  expect((await waiting)?.status).toBe("FAILED");
+  expect(refresh).toHaveBeenCalledOnce();
+  expect(getJob).toHaveBeenCalledTimes(2);
+});
+
+test("a pending runner cannot turn a timed-out Build into failure", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-11-13T10:10:00Z"));
+  const refresh = vi.fn(
+    async () =>
+      ({
+        latestBuildVirtual: {
+          buildId: "build-1",
+          createdAt: "2026-11-13T10:00:00Z",
+          publishStatus: "PENDING",
+        },
+      }) as Project
+  );
+  const getJob = vi
+    .fn()
+    .mockResolvedValueOnce({ status: "pending" })
+    .mockResolvedValueOnce({ status: "failed", code: "runner_failed" });
+  const waiting = waitForPublishStatus(
+    refresh,
+    () => true,
+    undefined,
+    { projectId: "project", buildId: "build-1", logHandle: "handle-1" },
+    getJob
+  );
+  await vi.advanceTimersByTimeAsync(15_000);
+  expect((await waiting)?.code).toBe("runner_failed");
+  expect(getJob).toHaveBeenCalledTimes(2);
+});
+
+test("static status waits for the matching runner before download readiness", async () => {
+  vi.useFakeTimers();
+  const refresh = vi.fn(
+    async () =>
+      ({
+        latestStaticBuild: {
+          buildId: "static-1",
+          updatedAt: new Date().toISOString(),
+          publishStatus: "PUBLISHED",
+        },
+      }) as Project
+  );
+  const getJob = vi
+    .fn()
+    .mockResolvedValueOnce({ status: "pending" })
+    .mockResolvedValueOnce({ status: "success" });
+  const waiting = waitForPublishStatus(
+    refresh,
+    () => true,
+    undefined,
+    {
+      projectId: "project",
+      buildId: "static-1",
+      logHandle: "handle-1",
+      target: "static",
+    },
+    getJob
+  );
+  await vi.advanceTimersByTimeAsync(15_000);
+  expect((await waiting)?.status).toBe("PUBLISHED");
+  expect(getJob).toHaveBeenCalledTimes(2);
+});
+
+test.each(["site", "static"] as const)(
+  "finishes an accepted %s publish when a newer build becomes latest",
+  async (target) => {
+    vi.useFakeTimers();
+    const newerBuild = {
+      buildId: "build-2",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      publishStatus: "PUBLISHED",
+    };
+    const refresh = vi.fn(
+      async () =>
+        ({
+          latestBuildVirtual: target === "site" ? newerBuild : null,
+          latestStaticBuild: target === "static" ? newerBuild : null,
+        }) as Project
+    );
+    const getJob = vi.fn(async () => ({ status: "success" }));
+    const waiting = waitForPublishStatus(
+      refresh,
+      () => true,
+      undefined,
+      {
+        projectId: "project",
+        buildId: "build-1",
+        logHandle: "handle-1",
+        target,
+      },
+      getJob
+    );
+
+    await vi.runAllTimersAsync();
+    expect((await waiting)?.status).toBe("PUBLISHED");
+    expect(refresh).toHaveBeenCalledOnce();
+  }
+);
+
+test.each(["site", "static"] as const)(
+  "does not treat a stale %s pending build as failed after runner success",
+  async (target) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-13T10:10:00Z"));
+    const staleBuild = {
+      buildId: "build-1",
+      createdAt: "2026-11-13T10:00:00Z",
+      updatedAt: "2026-11-13T10:00:00Z",
+      publishStatus: "PENDING",
+    };
+    const refresh = vi.fn(
+      async () =>
+        ({
+          latestBuildVirtual: target === "site" ? staleBuild : null,
+          latestStaticBuild: target === "static" ? staleBuild : null,
+        }) as Project
+    );
+    const getJob = vi.fn(async () => ({ status: "success" }));
+    const result = await waitForPublishStatus(
+      refresh,
+      () => true,
+      undefined,
+      {
+        projectId: "project",
+        buildId: "build-1",
+        logHandle: "handle-1",
+        target,
+      },
+      getJob
+    );
+
+    expect(result?.status).toBe("PUBLISHED");
+    expect(refresh).toHaveBeenCalledOnce();
+  }
+);
 
 test("reopening refresh retries after a rejected status request", async () => {
   vi.useFakeTimers();
@@ -136,7 +222,7 @@ test("reopening refresh retries after a rejected status request", async () => {
   };
 
   try {
-    const done = refreshUntilSuccess(refresh, () => true);
+    const done = refreshProjectWithRetry(refresh, () => true);
     expect(attempts).toBe(1);
     await vi.advanceTimersByTimeAsync(5_000);
     await done;
@@ -144,6 +230,24 @@ test("reopening refresh retries after a rejected status request", async () => {
   } finally {
     errorLog.mockRestore();
   }
+});
+
+test("reopening resumes a retained pending session even after the Build is published", async () => {
+  const project = {
+    latestBuildVirtual: {
+      buildId: "build-1",
+      createdAt: new Date().toISOString(),
+      publishStatus: "PUBLISHED",
+    },
+  } as Project;
+  const onPending = vi.fn();
+  await refreshProjectWithRetry(
+    async () => project,
+    () => true,
+    onPending,
+    () => true
+  );
+  expect(onPending).toHaveBeenCalledWith(project);
 });
 
 test("reopening stops after three unsuccessful project refreshes and shows the error", async () => {
@@ -156,9 +260,9 @@ test("reopening stops after three unsuccessful project refreshes and shows the e
   }));
   let isOpen = true;
 
-  const done = refreshUntilSuccess(
+  const done = refreshProjectWithRetry(
     (showError) =>
-      getRefreshedProject({ projectId: "project", showError, query }),
+      fetchAndStoreProject({ projectId: "project", showError, query }),
     () => isOpen
   );
   await vi.advanceTimersByTimeAsync(15_000);
@@ -168,59 +272,6 @@ test("reopening stops after three unsuccessful project refreshes and shows the e
 
   expect(query).toHaveBeenCalledTimes(3);
   expect(errorToast).toHaveBeenCalledOnce();
-});
-
-test("a recovered pending build keeps polling after the popover closes", async () => {
-  vi.useFakeTimers();
-  $project.set({ id: "project" } as Project);
-  $publishDialog.set("publish");
-  const successToast = vi.spyOn(toast, "success").mockImplementation(() => "");
-  let status: "PENDING" | "PUBLISHED" = "PENDING";
-  let pollRequests = 0;
-  const refreshedProject = () =>
-    ({
-      id: "project",
-      latestBuildVirtual: {
-        buildId: "recovered",
-        createdAt: new Date().toISOString(),
-        publishStatus: status,
-      },
-    }) as Project;
-
-  const Harness = () => {
-    const progress = usePublishProgress("project");
-    return (
-      <button
-        onClick={() => {
-          void refreshUntilSuccess(
-            async () => refreshedProject(),
-            () => true,
-            () =>
-              progress.watchPendingPublish(async () => {
-                pollRequests += 1;
-                return refreshedProject();
-              })
-          );
-        }}
-      >
-        Recover
-      </button>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  await act(async () => container?.querySelector("button")?.click());
-  expect(pollRequests).toBe(1);
-
-  $publishDialog.set("none");
-  status = "PUBLISHED";
-  await act(async () => vi.advanceTimersByTimeAsync(15_000));
-
-  expect(pollRequests).toBe(2);
-  expect(successToast).toHaveBeenCalledOnce();
 });
 
 test("an in-flight status request cannot replace the project after navigation", async () => {
@@ -235,7 +286,7 @@ test("an in-flight status request cannot replace the project after navigation", 
   const query = new Promise<{ success: true; project: Project }>((resolve) => {
     finishQuery = resolve;
   });
-  const refresh = getRefreshedProject({
+  const refresh = fetchAndStoreProject({
     projectId: oldProject.id,
     showError: false,
     query: () => query,
@@ -260,7 +311,7 @@ test("an older popover refresh cannot overwrite a newer result", async () => {
     }
   );
   let isOpen = true;
-  const oldRefresh = getRefreshedProject({
+  const oldRefresh = fetchAndStoreProject({
     projectId: "project",
     showError: false,
     query: () => oldQuery,
@@ -269,7 +320,7 @@ test("an older popover refresh cannot overwrite a newer result", async () => {
 
   isOpen = false;
   const currentProject = { id: "project", domain: "new" } as Project;
-  await getRefreshedProject({
+  await fetchAndStoreProject({
     projectId: "project",
     showError: false,
     query: async () => ({ success: true, project: currentProject }),
@@ -279,54 +330,6 @@ test("an older popover refresh cannot overwrite a newer result", async () => {
     project: { id: "project", domain: "old" } as Project,
   });
   await oldRefresh;
-
-  expect($project.get()).toBe(currentProject);
-});
-
-test("an older recovered poll cannot overwrite a newer popover refresh", async () => {
-  $project.set({ id: "project" } as Project);
-  let progress: ReturnType<typeof usePublishProgress> | undefined;
-  const Harness = () => {
-    progress = usePublishProgress("project");
-    return null;
-  };
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-
-  let finishOldQuery: (result: {
-    success: true;
-    project: Project;
-  }) => void = () => {};
-  const oldQuery = new Promise<{ success: true; project: Project }>(
-    (resolve) => {
-      finishOldQuery = resolve;
-    }
-  );
-  const oldGeneration = progress!.beginPopoverRefresh();
-  const polling = progress!.watchPendingPublish(
-    () =>
-      getRefreshedProject({
-        projectId: "project",
-        query: () => oldQuery,
-        isCurrent: () => progress!.isRefreshCurrent(oldGeneration),
-      }),
-    oldGeneration
-  );
-
-  const newGeneration = progress!.beginPopoverRefresh();
-  const currentProject = { id: "project", domain: "new" } as Project;
-  await getRefreshedProject({
-    projectId: "project",
-    query: async () => ({ success: true, project: currentProject }),
-    isCurrent: () => progress!.isRefreshCurrent(newGeneration),
-  });
-  finishOldQuery({
-    success: true,
-    project: { id: "project", domain: "old" } as Project,
-  });
-  await polling;
 
   expect($project.get()).toBe(currentProject);
 });
@@ -357,50 +360,7 @@ test("publish polling stops after navigating to another project", async () => {
   expect($project.get()).toBe(newProject);
 });
 
-test("an old poll cannot update a newly mounted copy of the same project", async () => {
-  const firstProject = { id: "project" } as Project;
-  $project.set(firstProject);
-  let progress: ReturnType<typeof usePublishProgress> | undefined;
-  const Harness = () => {
-    progress = usePublishProgress("project");
-    return null;
-  };
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-
-  let finishQuery: (result: {
-    success: true;
-    project: Project;
-  }) => void = () => {};
-  const query = new Promise<{ success: true; project: Project }>((resolve) => {
-    finishQuery = resolve;
-  });
-  const polling = waitForPublishStatus(
-    () =>
-      getRefreshedProject({
-        projectId: "project",
-        isCurrent: progress!.isCurrentProject,
-        query: () => query,
-      }),
-    progress!.isCurrentProject
-  );
-
-  act(() => root?.unmount());
-  $project.set({ id: "another-project" } as Project);
-  const reopenedProject = { id: "project", domain: "new" } as Project;
-  $project.set(reopenedProject);
-  finishQuery({
-    success: true,
-    project: { id: "project", domain: "old" } as Project,
-  });
-
-  await expect(polling).resolves.toBeUndefined();
-  expect($project.get()).toBe(reopenedProject);
-});
-
-test("publish completion does not show a toast while the Publish panel is open", () => {
+test("publish failure updates the banner without a duplicate toast while Publish is open", () => {
   const successToast = vi.spyOn(toast, "success").mockImplementation(() => "");
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   const setPublishError = vi.fn();
@@ -409,13 +369,13 @@ test("publish completion does not show a toast while the Publish panel is open",
 
   $publishDialog.set("publish");
   reportPublishResult({
-    result: { status: "PUBLISHED", statusText: publishedStatusText },
+    result: { status: "PUBLISHED", statusContent: publishedStatusText },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
   });
   reportPublishResult({
-    result: { status: "FAILED", statusText: failedStatusText },
+    result: { status: "FAILED", statusContent: failedStatusText },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
@@ -431,7 +391,7 @@ test("an old project completion does not show a success toast over an open Publi
   $publishDialog.set("publish");
 
   reportPublishResult({
-    result: { status: "PUBLISHED", statusText: <>Published</> },
+    result: { status: "PUBLISHED", statusContent: <>Published</> },
     setPublishError: vi.fn(),
     isCurrentProject: () => false,
   });
@@ -446,13 +406,13 @@ test("publish completion does not show a success toast in the Export view", () =
   $publishDialog.set("export");
 
   reportPublishResult({
-    result: { status: "PUBLISHED", statusText: <>Published</> },
+    result: { status: "PUBLISHED", statusContent: <>Published</> },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
   });
   reportPublishResult({
-    result: { status: "FAILED", statusText: <>Publish failed</> },
+    result: { status: "FAILED", statusContent: <>Publish failed</> },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
@@ -471,13 +431,13 @@ test("publish completion shows a toast after the dialog closes", () => {
   $publishDialog.set("none");
 
   reportPublishResult({
-    result: { status: "PUBLISHED", statusText: publishedStatusText },
+    result: { status: "PUBLISHED", statusContent: publishedStatusText },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
   });
   reportPublishResult({
-    result: { status: "FAILED", statusText: failedStatusText },
+    result: { status: "FAILED", statusContent: failedStatusText },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
@@ -485,701 +445,5 @@ test("publish completion shows a toast after the dialog closes", () => {
 
   expect(successToast).toHaveBeenCalledOnce();
   expect(errorToast).toHaveBeenCalledOnce();
-  expect(setPublishError).toHaveBeenCalledWith(failedStatusText);
-});
-
-test("a rejected publish request shows an inline error while the dialog is open", async () => {
-  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
-  $publishDialog.set("publish");
-  $project.set({ id: "project" } as Project);
-
-  const Harness = () => {
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button
-          onClick={() =>
-            progress.start(() =>
-              Promise.reject(new Error("Network unavailable"))
-            )
-          }
-        >
-          Start
-        </button>
-        <output>{progress.publishError}</output>
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-
-  await act(async () => container?.querySelector("button")?.click());
-  expect(container.querySelector("output")?.textContent).toBe(
-    "Network unavailable"
-  );
-  expect(errorToast).not.toHaveBeenCalled();
-});
-
-test("starting validation clears a previous request failure", async () => {
-  $project.set({ id: "project" } as Project);
-  $publishDialog.set("publish");
-
-  const Harness = () => {
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button
-          onClick={() =>
-            progress.start(() =>
-              Promise.reject(new Error("Network unavailable"))
-            )
-          }
-        >
-          Publish
-        </button>
-        <button onClick={progress.clearErrors}>Validate</button>
-        <output>{progress.publishError}</output>
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  const [publish, validate] = container.querySelectorAll("button");
-  await act(async () => publish.click());
-  expect(container.querySelector("output")?.textContent).toBe(
-    "Network unavailable"
-  );
-  act(() => validate.click());
-  expect(container.querySelector("output")?.textContent).toBe("");
-});
-
-test("a rejected publish request shows a toast after the dialog closes", async () => {
-  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
-  $publishDialog.set("publish");
-  $project.set({ id: "project" } as Project);
-  let rejectPublish: (error: Error) => void = () => {};
-  const publish = new Promise<void>((_, reject) => {
-    rejectPublish = reject;
-  });
-
-  const Harness = () => {
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button onClick={() => progress.start(() => publish)}>Start</button>
-        <output>{progress.publishError}</output>
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  act(() => container?.querySelector("button")?.click());
-
-  $publishDialog.set("none");
-  await act(async () => rejectPublish(new Error("Network unavailable")));
-
-  expect(errorToast).toHaveBeenCalledOnce();
-  expect(container.querySelector("output")?.textContent).toBe(
-    "Network unavailable"
-  );
-});
-
-test("a rejected publish request appears in the panel reopened before rejection", async () => {
-  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
-  $publishDialog.set("publish");
-  $project.set({ id: "project" } as Project);
-  let rejectPublish: (error: Error) => void = () => {};
-  const publish = new Promise<void>((_, reject) => {
-    rejectPublish = reject;
-  });
-
-  const Harness = () => {
-    const [isOpen, setIsOpen] = useState(true);
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button onClick={() => progress.start(() => publish)}>Start</button>
-        <button
-          onClick={() => {
-            setIsOpen(false);
-            $publishDialog.set("none");
-          }}
-        >
-          Close
-        </button>
-        <button
-          onClick={() => {
-            setIsOpen(true);
-            $publishDialog.set("publish");
-          }}
-        >
-          Reopen
-        </button>
-        {isOpen && <output>{progress.publishError}</output>}
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  const [start, close, reopen] = container.querySelectorAll("button");
-  act(() => start.click());
-  act(() => close.click());
-  act(() => reopen.click());
-
-  await act(async () => rejectPublish(new Error("Network unavailable")));
-
-  expect(container.querySelector("output")?.textContent).toBe(
-    "Network unavailable"
-  );
-  expect(errorToast).not.toHaveBeenCalled();
-});
-
-test("a publish failure remains visible after the panel remounts", () => {
-  $project.set({ id: "project" } as Project);
-  $publishDialog.set("publish");
-  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
-
-  const Harness = () => {
-    const [isOpen, setIsOpen] = useState(true);
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button onClick={() => setIsOpen(false)}>Close</button>
-        <button onClick={() => setIsOpen(true)}>Reopen</button>
-        <button
-          onClick={() =>
-            reportPublishResult({
-              result: { status: "FAILED", statusText: <>Build failed</> },
-              timesLeft: 11,
-              maxDailyPublishesPerUser: 20,
-              setPublishError: progress.setPublishStatusError,
-            })
-          }
-        >
-          Finish
-        </button>
-        {isOpen && <output>{progress.publishError}</output>}
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  const [close, reopen, finish] = container.querySelectorAll("button");
-  act(() => close.click());
-  act(() => reopen.click());
-  act(() => finish.click());
-
-  expect(container.querySelector("output")?.textContent).toBe("Build failed");
-  expect(errorToast).not.toHaveBeenCalled();
-});
-
-test("a successful status refresh clears a persisted publish failure", () => {
-  $project.set({ id: "project" } as Project);
-  $publishDialog.set("publish");
-
-  const Harness = () => {
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button
-          onClick={() =>
-            reportPublishResult({
-              result: { status: "FAILED", statusText: <>Publish failed</> },
-              timesLeft: 11,
-              maxDailyPublishesPerUser: 20,
-              setPublishError: progress.setPublishStatusError,
-            })
-          }
-        >
-          Fail
-        </button>
-        <button
-          onClick={() =>
-            progress.reconcileRefreshedProject({
-              latestBuildVirtual: {
-                createdAt: new Date().toISOString(),
-                publishStatus: "PUBLISHED",
-              },
-            } as Project)
-          }
-        >
-          Refresh
-        </button>
-        <output>{progress.publishError}</output>
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  const [fail, refresh] = container.querySelectorAll("button");
-  act(() => fail.click());
-  expect(container.querySelector("output")?.textContent).toBe("Publish failed");
-  act(() => refresh.click());
-  expect(container.querySelector("output")?.textContent).toBe("");
-});
-
-test("refreshing a project without a build clears a status error but preserves a request error", () => {
-  $project.set({ id: "project" } as Project);
-
-  const Harness = () => {
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button
-          onClick={() => progress.setPublishStatusError("Publish failed")}
-        >
-          Fail
-        </button>
-        <button onClick={() => progress.setPublishError("Request rejected")}>
-          Reject
-        </button>
-        <button
-          onClick={() =>
-            progress.reconcileRefreshedProject({
-              latestBuildVirtual: null,
-            } as Project)
-          }
-        >
-          Refresh
-        </button>
-        <output>{progress.publishError}</output>
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  const [fail, reject, refresh] = container.querySelectorAll("button");
-
-  act(() => fail.click());
-  expect(container.querySelector("output")?.textContent).toBe("Publish failed");
-  act(() => refresh.click());
-  expect(container.querySelector("output")?.textContent).toBe("");
-
-  act(() => reject.click());
-  act(() => refresh.click());
-  expect(container.querySelector("output")?.textContent).toBe(
-    "Request rejected"
-  );
-});
-
-test("refreshing an older published build preserves a rejected request error", () => {
-  $project.set({ id: "project" } as Project);
-  const oldPublishedProject = {
-    id: "project",
-    latestBuildVirtual: {
-      createdAt: new Date().toISOString(),
-      publishStatus: "PUBLISHED",
-    },
-  } as Project;
-
-  const Harness = () => {
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button onClick={() => progress.setPublishError(<>Request rejected</>)}>
-          Reject
-        </button>
-        <button
-          onClick={() =>
-            progress.reconcileRefreshedProject(oldPublishedProject)
-          }
-        >
-          Refresh
-        </button>
-        <output>{progress.publishError}</output>
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  const [reject, refresh] = container.querySelectorAll("button");
-  act(() => reject.click());
-  act(() => refresh.click());
-
-  expect(container.querySelector("output")?.textContent).toBe(
-    "Request rejected"
-  );
-});
-
-test("a newer build clears a recovered transport error", async () => {
-  $project.set({
-    id: "project",
-    latestBuildVirtual: { buildId: "old" },
-  } as Project);
-  $publishDialog.set("publish");
-
-  const Harness = () => {
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button
-          onClick={() =>
-            progress.start(() =>
-              Promise.reject(new Error("Network unavailable"))
-            )
-          }
-        >
-          Publish
-        </button>
-        <button
-          onClick={() =>
-            progress.reconcileRefreshedProject({
-              latestBuildVirtual: {
-                buildId: "old",
-                createdAt: new Date().toISOString(),
-                publishStatus: "PUBLISHED",
-              },
-            } as Project)
-          }
-        >
-          Old build
-        </button>
-        <button
-          onClick={() =>
-            progress.reconcileRefreshedProject({
-              latestBuildVirtual: {
-                buildId: "new",
-                createdAt: new Date().toISOString(),
-                publishStatus: "PUBLISHED",
-              },
-            } as Project)
-          }
-        >
-          Refresh
-        </button>
-        <output>{progress.publishError}</output>
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  const [publish, oldBuild, refresh] = container.querySelectorAll("button");
-  await act(async () => publish.click());
-  expect(container.querySelector("output")?.textContent).toBe(
-    "Network unavailable"
-  );
-  act(() => oldBuild.click());
-  expect(container.querySelector("output")?.textContent).toBe(
-    "Network unavailable"
-  );
-  act(() => refresh.click());
-  expect(container.querySelector("output")?.textContent).toBe("");
-});
-
-test("a recovered failed build replaces a lost response error", async () => {
-  $project.set({
-    id: "project",
-    latestBuildVirtual: { buildId: "old" },
-  } as Project);
-  $publishDialog.set("publish");
-
-  const Harness = () => {
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button
-          onClick={() =>
-            progress.start(() =>
-              Promise.reject(new Error("Network unavailable"))
-            )
-          }
-        >
-          Publish
-        </button>
-        <button
-          onClick={() =>
-            progress.reconcileRefreshedProject({
-              latestBuildVirtual: {
-                buildId: "new",
-                createdAt: new Date().toISOString(),
-                publishStatus: "FAILED",
-              },
-            } as Project)
-          }
-        >
-          Refresh
-        </button>
-        <output>{progress.publishError}</output>
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  const [publish, refresh] = container.querySelectorAll("button");
-  await act(async () => publish.click());
-  expect(container.querySelector("output")?.textContent).toBe(
-    "Network unavailable"
-  );
-  act(() => refresh.click());
-  expect(container.querySelector("output")?.textContent).toContain(
-    "Publish failed"
-  );
-});
-
-test("publish diagnostics remain visible after the panel remounts", () => {
-  $project.set({ id: "project" } as Project);
-
-  const Harness = () => {
-    const [isOpen, setIsOpen] = useState(true);
-    const progress = usePublishProgress("project");
-    return (
-      <>
-        <button onClick={() => setIsOpen(false)}>Close</button>
-        <button onClick={() => setIsOpen(true)}>Reopen</button>
-        <button
-          onClick={() =>
-            progress.setPublishFindings([
-              {
-                severity: "warning",
-                title: "Check",
-                reportText: "Check",
-              },
-            ])
-          }
-        >
-          Finish diagnostics
-        </button>
-        {isOpen && <output>{progress.publishFindings.length}</output>}
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  const [close, reopen, finish] = container.querySelectorAll("button");
-  act(() => close.click());
-  act(() => reopen.click());
-  act(() => finish.click());
-
-  expect(container.querySelector("output")?.textContent).toBe("1");
-});
-
-test("an older validation cannot replace newer findings", () => {
-  const finish: ((title: string) => void)[] = [];
-
-  const Harness = () => {
-    const validation = useManualValidationFindings();
-    return (
-      <>
-        <button
-          onClick={() => {
-            const session = validation.begin();
-            finish.push((title) =>
-              validation.update(session, [
-                { severity: "warning", title, reportText: title },
-              ])
-            );
-          }}
-        >
-          Validate
-        </button>
-        <output>{validation.findings[0]?.title}</output>
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  const validate = container.querySelector("button")!;
-  act(() => validate.click());
-  act(() => validate.click());
-  act(() => finish[1]("new"));
-  act(() => finish[0]("old"));
-
-  expect(container.querySelector("output")?.textContent).toBe("new");
-});
-
-test("manual validation report stays available after the popover reopens", () => {
-  const Harness = () => {
-    const [isOpen, setIsOpen] = useState(true);
-    const { manualValidationFindings } = usePublishProgress("project");
-    return (
-      <>
-        <button onClick={() => setIsOpen(false)}>Close</button>
-        <button onClick={() => setIsOpen(true)}>Reopen</button>
-        <button
-          onClick={() => {
-            const session = manualValidationFindings.begin();
-            manualValidationFindings.update(session, [
-              { severity: "warning", title: "Check", reportText: "Check" },
-            ]);
-          }}
-        >
-          Validate
-        </button>
-        {isOpen && (
-          <PublishValidationResults
-            findings={manualValidationFindings.findings}
-          />
-        )}
-      </>
-    );
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  const [close, reopen, validate] = container.querySelectorAll("button");
-  act(() => validate.click());
-  expect(container.textContent).toContain("Publish check found 1 warning.");
-  act(() => close.click());
-  act(() => reopen.click());
-  expect(container.textContent).toContain("Publish check found 1 warning.");
-  expect(
-    [...container.querySelectorAll("button")].some(
-      (button) => button.textContent === "See issues"
-    )
-  ).toBe(true);
-});
-
-test("reopening shows the domains used by the validation report and submits only those domains", () => {
-  let validation: ReturnType<typeof useManualValidationFindings> | undefined;
-  const Harness = () => {
-    validation = useManualValidationFindings();
-    return null;
-  };
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  act(() => {
-    const session = validation!.begin(["custom.example"]);
-    validation!.update(session, [
-      { severity: "warning", title: "Check", reportText: "Check" },
-    ]);
-  });
-
-  act(() => root?.unmount());
-  $project.set({
-    id: "project",
-    domainsVirtual: [{ status: "ACTIVE", verified: true }],
-  } as Project);
-  root = createRoot(container);
-  const renderCheckboxes = (validatedDomains?: string[]) =>
-    act(() =>
-      root?.render(
-        <TooltipProvider>
-          <form>
-            <DomainCheckbox
-              domain="staging.example"
-              buildId={undefined}
-              defaultChecked
-              validatedDomains={validatedDomains}
-            />
-            <DomainCheckbox
-              domain="custom.example"
-              buildId={undefined}
-              defaultChecked={false}
-              validatedDomains={validatedDomains}
-            />
-          </form>
-        </TooltipProvider>
-      )
-    );
-  renderCheckboxes();
-
-  const form = container.querySelector("form")!;
-  const [staging, custom] = form.querySelectorAll('[role="checkbox"]');
-  expect(staging.getAttribute("aria-checked")).toBe("true");
-  expect(custom.getAttribute("aria-checked")).toBe("false");
-
-  renderCheckboxes(validation!.domains);
-  expect(staging.getAttribute("aria-checked")).toBe("false");
-  expect(custom.getAttribute("aria-checked")).toBe("true");
-  expect([...new FormData(form).getAll(domainToPublishName)]).toEqual([
-    "custom.example",
-  ]);
-  act(() => (custom as HTMLButtonElement).click());
-  renderCheckboxes();
-  expect(custom.getAttribute("aria-checked")).toBe("false");
-  expect([...new FormData(form).getAll(domainToPublishName)]).toEqual([]);
-});
-
-test("older publish diagnostics cannot replace a newer operation", () => {
-  let progress: ReturnType<typeof usePublishProgress> | undefined;
-  const Harness = () => {
-    progress = usePublishProgress("project");
-    return <output>{progress.publishFindings[0]?.title}</output>;
-  };
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-
-  const oldAttempt = progress!.beginPublishDiagnostics();
-  const currentAttempt = progress!.beginPublishDiagnostics();
-  act(() =>
-    currentAttempt.setFindings([
-      { severity: "warning", title: "New", reportText: "New" },
-    ])
-  );
-  act(() =>
-    oldAttempt.setFindings([
-      { severity: "warning", title: "Old", reportText: "Old" },
-    ])
-  );
-
-  expect(oldAttempt.isCurrent()).toBe(false);
-  expect(container.querySelector("output")?.textContent).toBe("New");
-});
-
-test("a rejected request after project navigation shows a toast", async () => {
-  $project.set({ id: "old-project" } as Project);
-  $publishDialog.set("publish");
-  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
-  let rejectPublish: (error: Error) => void = () => {};
-  const publish = new Promise<void>((_, reject) => {
-    rejectPublish = reject;
-  });
-
-  const Harness = () => {
-    const progress = usePublishProgress("old-project");
-    return <button onClick={() => progress.start(() => publish)}>Start</button>;
-  };
-
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(<Harness />));
-  act(() => container?.querySelector("button")?.click());
-  act(() => root?.unmount());
-  $project.set({ id: "new-project" } as Project);
-
-  await act(async () => rejectPublish(new Error("Network unavailable")));
-  expect(errorToast).toHaveBeenCalledOnce();
+  expect(setPublishError).toHaveBeenCalledWith(failedStatusText, undefined);
 });

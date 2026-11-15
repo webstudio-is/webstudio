@@ -6,6 +6,7 @@ import {
   type AssetFolder,
   type CustomResponseHeader,
   type ExpressionBindingMode,
+  type Templates,
 } from "@webstudio-is/sdk";
 import {
   assetContentDescriptor,
@@ -2451,17 +2452,33 @@ export const validatePublish = projectQueryInput<
 >("validate-publish");
 
 export const publish = projectMutationInput<
-  AuthProjectParams & {
-    target: "staging" | "production";
-    domains?: string[];
-    message?: string;
-    idempotencyKey?: string;
-  }
+  AuthProjectParams &
+    (
+      | {
+          target: "staging" | "production";
+          domains?: string[];
+          message?: string;
+          idempotencyKey?: string;
+        }
+      | {
+          target: "static";
+          templates?: Templates[];
+          idempotencyKey?: string;
+        }
+    )
 >("publish");
 
 export const getPublishJob = projectQueryInput<
-  AuthProjectParams & { jobId: string }
+  AuthProjectParams & { jobId: string; logHandle?: string }
 >("get-publish-job");
+
+export const getPublishLog = projectQueryInput<
+  AuthProjectParams & {
+    buildId: string;
+    logHandle: string;
+    cursor?: number;
+  }
+>("get-publish-log");
 
 export const unpublish = projectConfirmedMutationInput<
   AuthProjectParams & {

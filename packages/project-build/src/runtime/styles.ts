@@ -3489,17 +3489,6 @@ export const updateSelectedStyleDeclarations = (
       id: update.styleSourceId,
       tag: tag!,
     };
-    if (
-      styleSource.type === "tag" &&
-      update.state !== undefined &&
-      validateSelector(update.state, { allowDescendants: false }).success ===
-        false
-    ) {
-      return throwBuilderRuntimeError(
-        "BAD_REQUEST",
-        "Selector must be one state scoped to the current element"
-      );
-    }
     if (isStyleSourceLocked(styleSource)) {
       return throwBuilderRuntimeError("BAD_REQUEST", "Style source is locked");
     }

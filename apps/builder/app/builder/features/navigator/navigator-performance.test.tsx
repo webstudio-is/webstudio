@@ -15,7 +15,7 @@ import {
   selectInstance,
 } from "~/shared/nano-states";
 import { $instances, $pages } from "~/shared/sync/data-stores";
-import { NavigatorTree } from "./navigator-tree";
+import { $flatTree, NavigatorTree } from "./navigator-tree";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -79,9 +79,11 @@ test("large Navigator selection and reorder leave unchanged labels alone", async
       container.querySelectorAll("[data-tree-button]").length
     ).toBeGreaterThan(count);
     labelReads = 0;
+    const treeBeforeSelection = $flatTree.get();
     const startSelect = performance.now();
     act(() => selectInstance(["child-1000", "body"]));
     const selectMs = performance.now() - startSelect;
+    expect($flatTree.get()).toBe(treeBeforeSelection);
     const selectionLabelReads = labelReads;
     labelReads = 0;
     const startReorder = performance.now();

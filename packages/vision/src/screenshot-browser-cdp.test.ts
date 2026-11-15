@@ -66,6 +66,7 @@ class FakeWebSocket {
     | "exception-error"
     | "stale-outgoing-error"
     | "hash-navigation-error";
+  readonly exceptionUrl?: string;
   private navigationCount = 0;
   imageInspectionFinished = false;
   screenshotStartedBeforeImageInspectionFinished = false;
@@ -78,7 +79,8 @@ class FakeWebSocket {
     readinessWidths?: number[],
     lifecycleFrames = ["main"],
     pendingFonts = false,
-    runtimeErrorScenario?: FakeWebSocket["runtimeErrorScenario"]
+    runtimeErrorScenario?: FakeWebSocket["runtimeErrorScenario"],
+    exceptionUrl?: string
   ) {
     this.status = status;
     this.finalUrl = finalUrl;
@@ -87,6 +89,7 @@ class FakeWebSocket {
     this.lifecycleFrames = lifecycleFrames;
     this.pendingFonts = pendingFonts;
     this.runtimeErrorScenario = runtimeErrorScenario;
+    this.exceptionUrl = exceptionUrl;
     setTimeout(() => this.emit("open"), 0);
   }
 
@@ -448,36 +451,26 @@ class FakeWebSocket {
             sameDocumentNavigation) &&
             navigationNumber === 2);
         if (shouldLogError) {
+          const isException = this.runtimeErrorScenario !== "console-error";
           this.emit("message", {
             data: JSON.stringify({
-              method:
-                this.runtimeErrorScenario === "exception-error"
-                  ? "Runtime.exceptionThrown"
-                  : "Runtime.consoleAPICalled",
-              params:
-                this.runtimeErrorScenario === "exception-error"
-                  ? {
-                      exceptionDetails: {
-                        executionContextId,
-                        url: "https://example.com/assets/exception.js?token=private",
-                        lineNumber: 6,
-                      },
-                    }
-                  : {
-                      type: "error",
+              method: isException
+                ? "Runtime.exceptionThrown"
+                : "Runtime.consoleAPICalled",
+              params: isException
+                ? {
+                    exceptionDetails: {
                       executionContextId:
-                        this.runtimeErrorScenario === "console-error"
+                        this.runtimeErrorScenario === "exception-error"
                           ? executionContextId
                           : 1,
-                      stackTrace: {
-                        callFrames: [
-                          {
-                            url: "https://example.com/assets/app.js?token=private",
-                            lineNumber: 41,
-                          },
-                        ],
-                      },
+                      url:
+                        this.exceptionUrl ??
+                        "https://user:pass@example.com/assets/exception.js?token=private#fragment",
+                      lineNumber: 6,
                     },
+                  }
+                : { type: "error", executionContextId },
             }),
           });
         }
@@ -954,6 +947,9 @@ const createManagedFormSocket = ({
   bodyDelay = 0,
   unreadable = false,
   navigationGap = false,
+  fastRedirect = false,
+  interceptedBodyUnreadable = false,
+  interceptedChild = false,
   unrelated,
 }: {
   body?: string;
@@ -961,6 +957,9 @@ const createManagedFormSocket = ({
   bodyDelay?: number;
   unreadable?: boolean;
   navigationGap?: boolean | "stalled";
+  fastRedirect?: boolean;
+  interceptedBodyUnreadable?: boolean;
+  interceptedChild?: boolean;
   unrelated?: { method: string; url: string; frameId: string };
 } = {}) => {
   const url = "http://127.0.0.1:5173/contact";
@@ -974,6 +973,8 @@ const createManagedFormSocket = ({
     reads: [] as string[],
     lateReads: 0,
     gaps: 0,
+    interceptedReads: 0,
+    continuedResponses: 0,
   };
   const emit = (method: string, params: unknown) =>
     socket.emit("message", { data: JSON.stringify({ method, params }) });
@@ -1001,6 +1002,41 @@ const createManagedFormSocket = ({
           }),
         bodyDelay
       );
+      return;
+    }
+    if (message.method === "Fetch.getResponseBody") {
+      counters.interceptedReads += 1;
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              ...(interceptedBodyUnreadable
+                ? { error: { code: -32000, message: "Body unavailable" } }
+                : {
+                    result: {
+                      body:
+                        message.params?.requestId === "intercepted-child"
+                          ? JSON.stringify({ results: [{ status: 418 }] })
+                          : body,
+                      base64Encoded,
+                    },
+                  }),
+            }),
+          }),
+        0
+      );
+      return;
+    }
+    if (message.method === "Fetch.continueResponse") {
+      counters.continuedResponses += 1;
+      send(data);
+      setTimeout(() => {
+        navigated = true;
+        emit("Page.frameNavigated", {
+          frame: { id: "main", url: "http://127.0.0.1:5173/thanks" },
+        });
+      }, 0);
       return;
     }
     if (
@@ -1076,11 +1112,44 @@ const createManagedFormSocket = ({
           });
           emit("Network.loadingFinished", { requestId: "unrelated" });
         }
-        emit("Network.loadingFinished", { requestId: "managed" });
-        navigated = true;
-        emit("Page.frameNavigated", {
-          frame: { id: "main", url: "http://127.0.0.1:5173/thanks" },
-        });
+        if (fastRedirect) {
+          emit("Fetch.requestPaused", {
+            requestId: "intercepted-managed",
+            networkId: "managed",
+            frameId: "main",
+            responseStatusCode: 200,
+            request: {
+              method: "POST",
+              url: "http://127.0.0.1:5173/__ws-form/contact",
+            },
+          });
+          if (interceptedChild) {
+            emit("Network.requestWillBeSent", {
+              requestId: "child",
+              frameId: "child",
+              request: {
+                method: "POST",
+                url: "http://127.0.0.1:5173/__ws-form/contact",
+              },
+            });
+            emit("Fetch.requestPaused", {
+              requestId: "intercepted-child",
+              networkId: "child",
+              frameId: "child",
+              responseStatusCode: 200,
+              request: {
+                method: "POST",
+                url: "http://127.0.0.1:5173/__ws-form/contact",
+              },
+            });
+          }
+        } else {
+          emit("Network.loadingFinished", { requestId: "managed" });
+          navigated = true;
+          emit("Page.frameNavigated", {
+            frame: { id: "main", url: "http://127.0.0.1:5173/thanks" },
+          });
+        }
       }, 5);
     }
   };
@@ -1141,6 +1210,77 @@ test.each([false, true])(
     }
   }
 );
+
+test("captures managed Form results before a fast redirect discards the network body", async () => {
+  const { socket, counters } = createManagedFormSocket({ fastRedirect: true });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result).toMatchObject({
+      status: "submitted",
+      results: [{ status: 201, resourceId: "action" }],
+    });
+    expect(counters).toMatchObject({
+      submissions: 1,
+      interceptedReads: 1,
+      continuedResponses: 1,
+      reads: [],
+    });
+  } finally {
+    await session.close();
+  }
+});
+
+test("ignores an intercepted child-frame Form response", async () => {
+  const { socket, counters } = createManagedFormSocket({
+    fastRedirect: true,
+    interceptedChild: true,
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result.results).toEqual([{ status: 201, resourceId: "action" }]);
+    expect(counters.interceptedReads).toBe(1);
+    expect(counters.continuedResponses).toBe(2);
+  } finally {
+    await session.close();
+  }
+});
+
+test("continues a fast redirect when its intercepted response body cannot be read", async () => {
+  const { socket, counters } = createManagedFormSocket({
+    fastRedirect: true,
+    interceptedBodyUnreadable: true,
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result.status).toBe("submitted");
+    expect(result.results).toEqual([]);
+    expect(counters).toMatchObject({
+      submissions: 1,
+      interceptedReads: 1,
+      continuedResponses: 1,
+    });
+  } finally {
+    await session.close();
+  }
+});
 
 test("continues observing across a navigation execution-context gap without replaying the Form", async () => {
   const { socket, counters } = createManagedFormSocket({ navigationGap: true });
@@ -2412,7 +2552,7 @@ test("returns final URL, redirects, and HTTP error status", async () => {
   });
 });
 
-test("reports React error boundary errors logged by the page", async () => {
+test("does not treat console.error as an uncaught page exception", async () => {
   const layout = await captureBrowserScreenshot(
     {
       url: "https://example.com",
@@ -2437,11 +2577,11 @@ test("reports React error boundary errors logged by the page", async () => {
     })
   );
 
-  expect(layout.navigation?.javascriptErrorPresent).toBe(true);
+  expect(layout.navigation?.javascriptErrorPresent).toBeUndefined();
   expect(layout.navigation).not.toHaveProperty("javascriptErrorLocation");
 });
 
-test("does not expose a page exception URL", async () => {
+test("reports a page exception script path and one-based line without its URL query", async () => {
   const layout = await captureBrowserScreenshot(
     {
       url: "https://example.com",
@@ -2467,7 +2607,49 @@ test("does not expose a page exception URL", async () => {
   );
 
   expect(layout.navigation?.javascriptErrorPresent).toBe(true);
-  expect(layout.navigation).not.toHaveProperty("javascriptErrorLocation");
+  expect(layout.navigation?.javascriptErrorLocation).toEqual({
+    pathname: "/assets/exception.js",
+    line: 7,
+  });
+  expect(JSON.stringify(layout.navigation)).not.toContain("token=private");
+  expect(JSON.stringify(layout.navigation)).not.toContain("user:pass");
+  expect(JSON.stringify(layout.navigation)).not.toContain("fragment");
+});
+
+test.each([
+  "https://example.com/private/customer-123.js?token=private",
+  "https://example.com/assets/data.json",
+])("omits a non-script path from page exception results: %s", async (url) => {
+  const layout = await captureBrowserScreenshot(
+    {
+      url: "https://example.com",
+      output: "/tmp/private-exception.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "networkidle",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        "exception-error",
+        url
+      ),
+    })
+  );
+
+  expect(layout.navigation?.javascriptErrorPresent).toBe(true);
+  expect(layout.navigation?.javascriptErrorLocation).toBeUndefined();
+  expect(JSON.stringify(layout.navigation)).not.toContain(
+    new URL(url).pathname
+  );
 });
 
 test("does not attribute an outgoing page error to the next route", async () => {
@@ -2507,6 +2689,9 @@ test("does not attribute an outgoing page error to the next route", async () => 
 
   expect(
     layouts.map(({ navigation }) => navigation?.javascriptErrorPresent)
+  ).toEqual([undefined, undefined]);
+  expect(
+    layouts.map(({ navigation }) => navigation?.javascriptErrorLocation)
   ).toEqual([undefined, undefined]);
   await session.close();
 });
@@ -2549,6 +2734,10 @@ test("keeps tracking the document context across hash navigations", async () => 
   expect(
     layouts.map(({ navigation }) => navigation?.javascriptErrorPresent)
   ).toEqual([undefined, true]);
+  expect(layouts[1]?.navigation?.javascriptErrorLocation).toEqual({
+    pathname: "/assets/exception.js",
+    line: 7,
+  });
   await session.close();
 });
 

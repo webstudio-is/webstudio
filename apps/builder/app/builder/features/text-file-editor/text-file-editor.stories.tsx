@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FetchInterceptor } from "@mswjs/interceptors/fetch";
 import type { Asset } from "@webstudio-is/sdk";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import { AssetRevisionConflictError } from "@webstudio-is/content-engine/asset-content-repository";
@@ -53,28 +54,38 @@ const EditorStory = ({
   useEffect(() => {
     const previousAssets = $assets.get();
     const previousPermit = $authPermit.get();
-    const previousFetch = window.fetch;
+    const interceptor = new FetchInterceptor();
     const currentAsset = state.startsWith("markdown") ? markdownAsset : asset;
     $assets.set(new Map([[currentAsset.id, currentAsset]]));
     $authPermit.set("own");
-    window.fetch = async (input, init) => {
-      if (String(input).includes(`/cgi/asset/${currentAsset.name}`)) {
-        return state === "error"
-          ? new Response("", { status: 404 })
-          : new Response(
-              state.startsWith("markdown")
-                ? "# Article\n\nA Markdown preview.\n"
-                : "Text file preview\nSecond line\n"
-            );
+    interceptor.on("request", ({ request, controller }) => {
+      const url = new URL(request.url);
+      if (
+        url.origin === location.origin &&
+        url.pathname === `/cgi/asset/${currentAsset.name}`
+      ) {
+        if (request.method !== "GET") {
+          controller.respondWith(Response.error());
+          return;
+        }
+        controller.respondWith(
+          state === "error"
+            ? new Response("", { status: 404 })
+            : new Response(
+                state.startsWith("markdown")
+                  ? "# Article\n\nA Markdown preview.\n"
+                  : "Text file preview\nSecond line\n"
+              )
+        );
       }
-      return previousFetch(input, init);
-    };
+    });
+    interceptor.apply();
     setReady(true);
     return () => {
       setReady(false);
       $assets.set(previousAssets);
       $authPermit.set(previousPermit);
-      window.fetch = previousFetch;
+      interceptor.dispose();
     };
   }, [state]);
   return (

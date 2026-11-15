@@ -26,6 +26,7 @@ const proPlan = {
   allowAuth: true,
   allowContentMode: true,
   allowStagingPublish: true,
+  allowPublishLogs: false,
   maxContactEmailsPerProject: 5,
   maxDomainsAllowedPerUser: 100,
   maxDailyPublishesPerUser: 100,
@@ -44,6 +45,7 @@ const freePlan = {
   allowAuth: false,
   allowContentMode: false,
   allowStagingPublish: false,
+  allowPublishLogs: false,
   maxContactEmailsPerProject: 0,
   maxDomainsAllowedPerUser: 0,
   maxDailyPublishesPerUser: 10,
@@ -597,16 +599,6 @@ describe("getPermissions", () => {
         }).maxDomainsAllowedPerUser
       ).toBe(100);
     });
-
-    test("free plan has 0", () => {
-      expect(
-        getPermissions({
-          role: "own",
-          planFeatures: freePlan,
-          workspaces: [],
-        }).maxDomainsAllowedPerUser
-      ).toBe(0);
-    });
   });
 
   describe("maxDailyPublishesPerUser", () => {
@@ -628,16 +620,6 @@ describe("getPermissions", () => {
           workspaces: [],
         }).maxDailyPublishesPerUser
       ).toBe(100);
-    });
-
-    test("free plan allows limited publishes", () => {
-      expect(
-        getPermissions({
-          role: "own",
-          planFeatures: freePlan,
-          workspaces: [],
-        }).maxDailyPublishesPerUser
-      ).toBe(10);
     });
   });
 

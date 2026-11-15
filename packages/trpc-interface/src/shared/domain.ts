@@ -60,6 +60,14 @@ export const domainRouter = router({
     .mutation(async () => {
       return { success: true };
     }),
+  remove: procedure
+    .input(input)
+    .output(createOutput(z.optional(z.undefined())))
+    .mutation(async ({ input }) => {
+      domainStates.delete(input.domain);
+      dnsTxtEntries.delete(input.domain);
+      return { success: true };
+    }),
   /**
    * Get status of verified domain
    */

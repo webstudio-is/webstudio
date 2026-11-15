@@ -63,6 +63,7 @@ import {
   styleReplaceInput,
   styleUpdateDeclarationsInput,
   styleUpdateInput,
+  selectedStyleUpdateDeclarationsInput,
   defineCssVariables,
   deleteDesignTokenStyles,
   deleteSelectedStyleDeclarations,
@@ -1102,8 +1103,44 @@ describe("runtime style operations", () => {
     "body:hover",
     ":hover + .tooltip",
     ":hover ~ .tooltip",
-  ])(
-    "rejects state selectors that escape the styled element when writing: %s",
+  ])("rejects unsupported state selectors when writing: %s", (state) => {
+    expect(
+      styleUpdateInput.safeParse({
+        instanceId: "box",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+        state,
+      })
+    ).toMatchObject({ success: false });
+    expect(
+      designTokenCreateInput.safeParse({
+        name: "Primary",
+        declarations: [
+          {
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state,
+          },
+        ],
+      })
+    ).toMatchObject({ success: false });
+    expect(
+      selectedStyleUpdateDeclarationsInput.safeParse({
+        updates: [
+          {
+            instanceId: "box",
+            styleSourceId: "token",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state,
+          },
+        ],
+      })
+    ).toMatchObject({ success: false });
+  });
+
+  test.each([":hover .button", ":hover > .icon"])(
+    "accepts a state targeting descendants in shared style inputs: %s",
     (state) => {
       expect(
         styleUpdateInput.safeParse({
@@ -1111,8 +1148,8 @@ describe("runtime style operations", () => {
           property: "color",
           value: { type: "keyword", value: "red" },
           state,
-        })
-      ).toMatchObject({ success: false });
+        }).success
+      ).toBe(true);
       expect(
         designTokenCreateInput.safeParse({
           name: "Primary",
@@ -1123,8 +1160,21 @@ describe("runtime style operations", () => {
               state,
             },
           ],
-        })
-      ).toMatchObject({ success: false });
+        }).success
+      ).toBe(true);
+      expect(
+        selectedStyleUpdateDeclarationsInput.safeParse({
+          updates: [
+            {
+              instanceId: "box",
+              styleSourceId: "token",
+              property: "color",
+              value: { type: "keyword", value: "red" },
+              state,
+            },
+          ],
+        }).success
+      ).toBe(true);
     }
   );
 
@@ -1146,60 +1196,15 @@ describe("runtime style operations", () => {
       ".box[data-state=open] > [data-part=content]",
     ],
   ])(
-    "preserves an editable descendant state through mutation and generated CSS: %s",
+    "renders descendant states in generated CSS: %s",
     (state, generatedSelector) => {
-      expect(
-        styleUpdateInput.safeParse({
-          instanceId: "box",
-          property: "borderTopColor",
-          value: { type: "keyword", value: "currentcolor" },
-          state,
-        })
-      ).toMatchObject({ success: true });
-
-      const mutation = updateStyleDeclarations(
-        {
-          breakpoints: runtimeBreakpoints,
-          instances: toMap([instance("box")]),
-          styles: new Map(),
-          styleSources: sources([local("local")]),
-          styleSourceSelections: new Map([
-            ["box", { instanceId: "box", values: ["local"] }],
-          ]),
-        },
-        {
-          updates: [
-            {
-              instanceId: "box",
-              property: "borderTopColor",
-              value: { type: "keyword", value: "currentcolor" },
-              state,
-            },
-          ],
-        },
-        { createId }
-      );
-      const patch = mutation.payload
-        .find((change) => change.namespace === "styles")
-        ?.patches.at(0);
-      if (patch === undefined || patch.op === "remove") {
-        throw new Error("Expected a style declaration patch");
-      }
-      const declaration = patch.value as StyleDecl;
-
-      expect(declaration).toMatchObject({
-        property: "borderTopColor",
-        state,
-        breakpointId: "desktop",
-      });
-
       const sheet = createRegularStyleSheet();
       const rule = sheet.addNestingRule(".box");
       rule.setDeclaration({
-        breakpoint: declaration.breakpointId,
-        selector: declaration.state ?? "",
-        property: declaration.property,
-        value: declaration.value,
+        breakpoint: "desktop",
+        selector: state,
+        property: "borderTopColor",
+        value: { type: "keyword", value: "currentcolor" },
       });
       expect(rule.toString({ breakpoint: "desktop" })).toContain(
         `${generatedSelector} {\n  border-top-color: currentcolor\n}`
@@ -1680,30 +1685,34 @@ describe("runtime style operations", () => {
     ).toBe(false);
   });
 
-  test("rejects a descendant selector on a tag token", () => {
+  test("accepts a nested tag selector on a global Tag style", () => {
     const id = getTagStyleId("button");
-    expect(() =>
-      updateSelectedStyleDeclarations(
-        {
-          breakpoints: runtimeBreakpoints,
-          instances: toMap([instance("button-instance")]),
-          styles: new Map(),
-          styleSources: new Map(),
-          styleSourceSelections: new Map(),
-        },
-        {
-          updates: [
-            {
-              instanceId: "button-instance",
-              styleSourceId: id,
-              property: "color",
-              value: { type: "keyword", value: "red" },
-              state: " p",
-            },
-          ],
-        }
-      )
-    ).toThrow();
+    const mutation = updateSelectedStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: toMap([instance("button-instance")]),
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      {
+        updates: [
+          {
+            instanceId: "button-instance",
+            styleSourceId: id,
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state: " h2:hover",
+          },
+        ],
+      }
+    );
+    expect(mutation.payload).toContainEqual({
+      namespace: "styleSources",
+      patches: [
+        { op: "add", path: [id], value: { type: "tag", id, tag: "button" } },
+      ],
+    });
   });
 
   test("renames, locks, and deletes style sources", () => {

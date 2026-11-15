@@ -154,6 +154,63 @@ test("convert element instances to lexical", async () => {
   );
 });
 
+test("keeps explicit line break instances while editing", async () => {
+  const { instances } = renderData(
+    <ws.element ws:tag="h3" ws:id="heading">
+      JÄRKI <ws.element ws:tag="br" ws:id="firstBreak" />
+      myyntistrategian <ws.element ws:tag="br" ws:id="secondBreak" />
+      perustukset
+    </ws.element>
+  );
+  const refs: Refs = new Map();
+  const editor = createHeadlessEditor({ nodes: [LinkNode] });
+  await new Promise<void>((resolve) => {
+    editor.update(() => $convertToLexical(instances, "heading", refs), {
+      onUpdate: resolve,
+    });
+  });
+
+  expect(editor.getEditorState().read(() => $getRoot().getTextContent())).toBe(
+    "JÄRKI \nmyyntistrategian \nperustukset"
+  );
+  expect(
+    editor
+      .getEditorState()
+      .read(() =>
+        $convertToUpdates(
+          instances.get("heading")!,
+          refs,
+          new Map(),
+          () => "new"
+        )
+      )
+  ).toEqual(Array.from(instances.values()));
+
+  await new Promise<void>((resolve) => {
+    editor.update(
+      () => {
+        $getRoot()
+          .getAllTextNodes()
+          .find((node) => node.getTextContent() === "perustukset")!
+          .setTextContent("new foundations");
+      },
+      { onUpdate: resolve }
+    );
+  });
+  const updates = editor
+    .getEditorState()
+    .read(() =>
+      $convertToUpdates(instances.get("heading")!, refs, new Map(), () => "new")
+    );
+  expect(updates[0].children).toEqual([
+    { type: "text", value: "JÄRKI " },
+    { type: "id", value: "firstBreak" },
+    { type: "text", value: "myyntistrategian " },
+    { type: "id", value: "secondBreak" },
+    { type: "text", value: "new foundations" },
+  ]);
+});
+
 test("convert lexical to element instances updates", async () => {
   const refs: Refs = new Map();
   let nextId = 0;

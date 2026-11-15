@@ -54,7 +54,17 @@ export const withBrowserContext = async <Result>(
   }
 };
 
-export const test = base;
+export const test = base.extend<{}, { mcpClientCleanup: void }>({
+  mcpClientCleanup: [
+    async ({}, use) => {
+      await use();
+      const { closePreviewFormMcpClient } =
+        await import("./flows/mcp-preview-submit");
+      await closePreviewFormMcpClient();
+    },
+    { scope: "worker", auto: true },
+  ],
+});
 
 export const newIsolatedPage = async (browser: Browser) => {
   const context = await newBrowserContext(browser);

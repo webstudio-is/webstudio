@@ -15,6 +15,7 @@ import {
   $dataSourceVariables,
   $dragAndDropState,
   $selectedInstanceStates,
+  $selectedInstanceStatesByInstanceId,
   $canvasIframeState,
   $uploadingFilesDataStore,
   $memoryProps,
@@ -373,6 +374,10 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("dragAndDropState", $dragAndDropState),
     new NanostoresSyncObject("ephemeralStyles", $ephemeralStyles),
     new NanostoresSyncObject("selectedInstanceStates", $selectedInstanceStates),
+    new NanostoresSyncObject(
+      "selectedInstanceStatesByInstanceId",
+      $selectedInstanceStatesByInstanceId
+    ),
     new NanostoresSyncObject("canvasIframeState", $canvasIframeState),
     new NanostoresSyncObject(
       "uploadingFilesDataStore",

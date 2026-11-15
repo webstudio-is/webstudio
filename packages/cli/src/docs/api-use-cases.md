@@ -675,10 +675,12 @@ Notes:
 Commands:
 
 - MCP tool: update-selected-styles {"updates":[{"instanceId":"<buttonInstanceId>","styleSourceId":"tag-style:button","property":"color","value":{"type":"keyword","value":"red"}}]}
+- MCP tool: update-selected-styles {"updates":[{"instanceId":"<divInstanceId>","styleSourceId":"tag-style:div","state":" h2:hover","property":"color","value":{"type":"keyword","value":"red"}}]}
 
 Notes:
 
 - Use `tag-style:<tag>` to create or edit a Tag style. The first update creates its style source; no instance attachment is saved.
+- For a nested tag, set `state` to a space followed by the tag and optional condition, such as ` h2:hover`. The same selector forms work in Tag, Token, and Local styles.
 - Use `delete-selected-styles` with the same `instanceId`, `styleSourceId`, and `property` to remove a declaration.
 
 ## Update local styles
@@ -1109,6 +1111,13 @@ Commands:
 Commands:
 
 - webstudio publish deploy --target production --json
+- webstudio publish deploy --target production --json --wait
+
+The default CLI command returns when the job is accepted. Use `--wait` to
+receive status updates on stderr until publishing finishes, then read available
+logs before the command exits. `--wait` does not cancel a publish if waiting
+stops. Logs are available only on Pro and Team plans. In an MCP session, call
+`publish {"target":"production"}` to start a publish.
 
 ## List publishes
 
@@ -1121,6 +1130,20 @@ Commands:
 Commands:
 
 - webstudio publish status --job <buildId> --json
+
+## Inspect publish log
+
+Commands:
+
+- webstudio publish log --build-id <buildId> --log-handle <logHandle> --json
+- MCP tool: get-publish-log {}
+- MCP tool: get-publish-log {"buildId":"<buildId>","cursor":262144}
+
+An MCP server remembers at most ten publishes it started. Omit `buildId` to
+read the latest accepted publish, or pass the build ID returned by `publish`.
+Continue with `nextCursor` until the page says `complete`. Each page checks
+project access and the current plan. The MCP server forgets publishes when it
+stops; a separate one-shot CLI process cannot read its session memory.
 
 ## Unpublish
 

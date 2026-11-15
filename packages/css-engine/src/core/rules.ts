@@ -263,7 +263,14 @@ export class NestingRule {
       if (nestedSelector === ":local-link") {
         nestedSelector = "[aria-current=page]";
       }
-      const selector = this.#selector + this.#descendantSuffix + nestedSelector;
+      const isDescendant =
+        this.#descendantSuffix.startsWith(" ") ||
+        nestedSelector.startsWith(" ");
+      const baseSelector =
+        isDescendant && this.#selector
+          ? `:where(${this.#selector})`
+          : this.#selector;
+      const selector = baseSelector + this.#descendantSuffix + nestedSelector;
       let style = styleBySelector.get(selector);
       if (style === undefined) {
         style = new Map();
@@ -358,7 +365,8 @@ export class MediaRule {
     // If condition is set, use it exclusively (minWidth/maxWidth must be undefined)
     if (condition !== undefined) {
       query =
-        mediaType === "all" && condition.startsWith("not (")
+        mediaType === "all" &&
+        (condition.trimStart().startsWith("(") || condition.startsWith("not ("))
           ? condition
           : `${mediaType} and (${condition})`;
     } else {

@@ -181,8 +181,18 @@ export const $selectedInstanceRenderState = atom<
 >("notMounted");
 
 export const $selectedInstanceStatesByStyleSourceId = computed(
-  [$styles, $styleSourceSelections, $selectedInstance, $temporaryTagStyleId],
-  (styles, styleSourceSelections, selectedInstance, temporaryTagStyleId) => {
+  [
+    $stylesIndex,
+    $styleSourceSelections,
+    $selectedInstance,
+    $temporaryTagStyleId,
+  ],
+  (
+    { stylesByStyleSourceId },
+    styleSourceSelections,
+    selectedInstance,
+    temporaryTagStyleId
+  ) => {
     const statesByStyleSourceId = new Map<StyleSource["id"], string[]>();
     if (selectedInstance === undefined) {
       return statesByStyleSourceId;
@@ -193,20 +203,19 @@ export const $selectedInstanceStatesByStyleSourceId = computed(
     if (temporaryTagStyleId) {
       styleSourceIds.add(temporaryTagStyleId);
     }
-    for (const styleDecl of styles.values()) {
-      if (
-        styleDecl.state === undefined ||
-        styleSourceIds.has(styleDecl.styleSourceId) === false
-      ) {
-        continue;
-      }
-      let states = statesByStyleSourceId.get(styleDecl.styleSourceId);
-      if (states === undefined) {
-        states = [];
-        statesByStyleSourceId.set(styleDecl.styleSourceId, states);
-      }
-      if (states.includes(styleDecl.state) === false) {
-        states.push(styleDecl.state);
+    for (const sourceId of styleSourceIds) {
+      for (const styleDecl of stylesByStyleSourceId.get(sourceId) ?? []) {
+        if (styleDecl.state === undefined) {
+          continue;
+        }
+        let states = statesByStyleSourceId.get(sourceId);
+        if (states === undefined) {
+          states = [];
+          statesByStyleSourceId.set(sourceId, states);
+        }
+        if (states.includes(styleDecl.state) === false) {
+          states.push(styleDecl.state);
+        }
       }
     }
     return statesByStyleSourceId;
@@ -319,6 +328,9 @@ export const $selectedStyleSource = computed(
  * to display style values as remote
  */
 export const $selectedInstanceStates = atom(new Set<string>());
+export const $selectedInstanceStatesByInstanceId = atom(
+  new Map<string, Set<string>>()
+);
 
 export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
   undefined

@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
 import { useState, type ReactNode } from "react";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
 import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { propertiesData } from "@webstudio-is/css-data";
@@ -159,7 +160,12 @@ export const PropertyInfo = ({
     if (target === undefined) {
       return;
     }
-    selectInstance(target.instanceSelector);
+    const targetSelector = target.instanceSelector;
+    selectInstance(
+      targetSelector.length > 1 && targetSelector.at(-1) === ROOT_INSTANCE_ID
+        ? targetSelector.slice(0, -1)
+        : targetSelector
+    );
     if (source.styleSourceId) {
       if (styleSources.get(source.styleSourceId)?.type === "tag") {
         $temporaryTagStyleId.set(source.styleSourceId);
@@ -211,13 +217,15 @@ export const PropertyInfo = ({
     selectedInstanceId !== undefined &&
     (sourceColor === "remote" || sourceColor === "preset")
   ) {
-    const sourceInstances = styles
-      .filter((style) => style.source.name === sourceColor)
-      .map((style) => style.source.instanceId);
+    const matchingStyles = styles.filter(
+      (style) => style.source.name === sourceColor
+    );
     if (
-      sourceInstances.every(
-        (instanceId) =>
-          instanceId !== undefined && instanceId !== selectedInstanceId
+      matchingStyles.every(
+        ({ source }) =>
+          source.instanceId !== undefined &&
+          source.instanceId !== selectedInstanceId &&
+          source.state?.startsWith(" ") !== true
       )
     ) {
       sourceLabel = sourceColor === "remote" ? "Inherited" : "Preset";
@@ -227,7 +235,9 @@ export const PropertyInfo = ({
           : "Comes from a Webstudio component default on an ancestor element.";
     } else if (
       sourceColor === "remote" &&
-      sourceInstances.every((instanceId) => instanceId === selectedInstanceId)
+      matchingStyles.every(
+        ({ source }) => source.instanceId === selectedInstanceId
+      )
     ) {
       sourceDescription =
         "Comes from another style source, breakpoint, or state on this element.";

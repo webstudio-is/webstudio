@@ -6,14 +6,18 @@ import {
   createErrorResponse,
   authorizeProject,
   getProjectOwnerId,
+  getProjectPlanFeatures,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { publishedDeploymentDestination, templates } from "@webstudio-is/sdk";
+import { PrePublishAuditError } from "@webstudio-is/project-build/runtime";
 import { db } from "../db";
 import { isDomainUsingCloudflareNameservers } from "../rdap";
 import {
   getVerifiedPublishDomains,
+  listProjectPublishes,
   getPublishTargetForDomains,
+  getVisiblePublishFindings,
   createProjectDomainResult,
   deleteProjectDomainResult,
   publishProject,
@@ -23,10 +27,22 @@ import {
 } from "../project-domain-api.server";
 
 export const domainRouter = router({
+  publishActivity: procedure
+    .input(z.object({ projectId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      try {
+        await projectApi.loadById(input.projectId, ctx);
+        return {
+          success: true as const,
+          ...(await listProjectPublishes(input.projectId, ctx)),
+        };
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
   getEntriToken: procedure.query(async ({ ctx }) => {
     try {
       const result = await ctx.entri.entryApi.getEntriToken();
-
       return {
         success: true,
         token: result.token,
@@ -36,7 +52,6 @@ export const domainRouter = router({
       return createErrorResponse(error);
     }
   }),
-
   findDomainRegistrar: procedure
     .input(z.object({ domain: z.string() }))
     .query(async ({ input }) => {
@@ -48,17 +63,12 @@ export const domainRouter = router({
         cnameFlattening: isCloudflare === true,
       };
     }),
-
   project: procedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ input, ctx }) => {
       try {
         const project = await projectApi.loadById(input.projectId, ctx);
-
-        return {
-          success: true,
-          project,
-        } as const;
+        return { success: true, project } as const;
       } catch (error) {
         return createErrorResponse(error);
       }
@@ -79,11 +89,16 @@ export const domainRouter = router({
       ])
     )
     .mutation(async ({ input, ctx }) => {
+      let allowPublishLogs: boolean | undefined;
       try {
+        const project = await projectApi.loadById(input.projectId, ctx);
+        ({ allowPublishLogs } = await getProjectPlanFeatures(
+          input.projectId,
+          ctx
+        ));
         if (input.destination === publishedDeploymentDestination) {
-          const project = await projectApi.loadById(input.projectId, ctx);
           const domains = getVerifiedPublishDomains(project, input.domains);
-          await publishProject(
+          const result = await publishProject(
             {
               project,
               domains,
@@ -91,23 +106,43 @@ export const domainRouter = router({
             },
             ctx
           );
-          return { success: true as const };
+          return {
+            success: true as const,
+            buildId: result.build.id,
+            logHandle: result.logHandle,
+            findings: getVisiblePublishFindings(
+              result.findings,
+              allowPublishLogs
+            ),
+          };
         }
-
         const result = await publishStaticProject(
-          {
-            projectId: input.projectId,
-            templates: input.templates,
-          },
+          { projectId: input.projectId, templates: input.templates, project },
           ctx
         );
-
         if (result.success) {
-          return { success: true as const, name: result.name };
+          return {
+            success: true as const,
+            name: result.name,
+            buildId: result.build.id,
+            logHandle: result.logHandle,
+            findings: getVisiblePublishFindings(
+              result.findings,
+              allowPublishLogs
+            ),
+          };
         }
-
         return result;
       } catch (error) {
+        if (error instanceof PrePublishAuditError) {
+          return {
+            success: false as const,
+            auditFindings: getVisiblePublishFindings(
+              error.findings,
+              allowPublishLogs
+            ),
+          };
+        }
         return createErrorResponse(error);
       }
     }),

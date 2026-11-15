@@ -22,14 +22,14 @@ const sourceTitles: Record<StyleBlockEditorSource, string> = {
   globalVariables: "Global variables",
 };
 
-export type MixedStyleGroup = {
+export type StyleSourceGroup = {
   source: StyleBlockEditorSource;
   from: number;
   contentFrom: number;
   to: number;
 };
 
-export type MixedPropertyRange = {
+export type StyleSourcePropertyRange = {
   property: CssProperty;
   source: StyleBlockEditorSource;
   from: number;
@@ -45,7 +45,7 @@ const formatDeclarations = (declarations: ComputedStyleDecl[]) =>
     )
     .join("\n");
 
-export const formatMixedStyleBlock = (
+export const formatStyleSources = (
   localStyles: CssStyleMap,
   declarations: ComputedStyleDecl[],
   cssVars: Map<string, string>
@@ -73,8 +73,8 @@ export const formatMixedStyleBlock = (
   return [localGroup, readOnlyGroups.join("\n\n")].filter(Boolean).join("\n");
 };
 
-export const getMixedStyleGroups = (code: string): MixedStyleGroup[] => {
-  const groups: MixedStyleGroup[] = [];
+export const getStyleSourceGroups = (code: string): StyleSourceGroup[] => {
+  const groups: StyleSourceGroup[] = [];
   let offset = 0;
   for (const line of code.split("\n")) {
     const source = (
@@ -97,7 +97,7 @@ export const getMixedStyleGroups = (code: string): MixedStyleGroup[] => {
   return groups;
 };
 
-export const getProtectedMixedRanges = (groups: MixedStyleGroup[]) => {
+export const getProtectedStyleSourceRanges = (groups: StyleSourceGroup[]) => {
   return groups.map((group) => ({
     from: group.from,
     to: group.source === "local" ? group.contentFrom : group.to,
@@ -105,9 +105,11 @@ export const getProtectedMixedRanges = (groups: MixedStyleGroup[]) => {
   }));
 };
 
-export const getMixedPropertyRanges = (code: string): MixedPropertyRange[] => {
-  const ranges: MixedPropertyRange[] = [];
-  for (const group of getMixedStyleGroups(code)) {
+export const getStyleSourcePropertyRanges = (
+  code: string
+): StyleSourcePropertyRange[] => {
+  const ranges: StyleSourcePropertyRange[] = [];
+  for (const group of getStyleSourceGroups(code)) {
     let ast;
     try {
       ast = parse(code.slice(group.contentFrom, group.to), {
@@ -135,11 +137,11 @@ export const getMixedPropertyRanges = (code: string): MixedPropertyRange[] => {
   return ranges;
 };
 
-export const parseMixedStyleBlock = (
+export const parseLocalStyleGroup = (
   code: string,
   cssVars = new Map<string, string>()
 ) => {
-  const group = getMixedStyleGroups(code).find(
+  const group = getStyleSourceGroups(code).find(
     (group) => group.source === "local"
   );
   const parsed = parseBlock(

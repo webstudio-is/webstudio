@@ -753,16 +753,18 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "publish",
     description:
-      "Publish the configured project to staging or production. Uses the project domain by default and, for production, active verified custom domains. If local development cannot contact the deployment backend, the JSON response includes warning while still returning the local publish job id.",
+      "Publish the configured project to staging or production, or prepare a static export. Uses the project domain by default and, for production, active verified custom domains. If local development cannot contact the deployment backend, the JSON response includes warning while still returning the local publish job id.",
     requiredOptions: ["target", "json"],
     examples: [
       "webstudio publish --target production --json",
       "webstudio publish --target production --domain example.com --json",
+      "webstudio publish --target static --template ssg --json",
     ],
   },
   {
     command: "list-publishes",
-    description: "List production publish builds for the configured project",
+    description:
+      "List recorded staging and production publishes for the configured project. Blocked audits and static exports do not appear in this list.",
     examples: ["webstudio list-publishes --json"],
   },
   {
@@ -771,6 +773,15 @@ const curatedPublicApiOperationDocumentation = [
       "Show the status and domains for a publish job returned by publish",
     requiredOptions: ["job", "json"],
     examples: ["webstudio get-publish-job --job build-id --json"],
+  },
+  {
+    command: "get-publish-log",
+    description:
+      "Read a build's publish log using the handle from this session. Full log pages require a Pro or Team plan and are not retained by Webstudio.",
+    requiredOptions: ["build-id", "log-handle", "json"],
+    examples: [
+      "webstudio publish log --build-id build-id --log-handle signed-handle --json",
+    ],
   },
   {
     command: "unpublish",

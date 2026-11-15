@@ -23,14 +23,12 @@ const cliTsconfigPath = fileURLToPath(
   new URL("../../../../packages/cli/tsconfig.local.json", import.meta.url)
 );
 
-export const withGeneratedFormDeliveryPreview = async <Result>({
+export const startGeneratedFormDeliveryPreview = async ({
   projectId,
   receiverPort,
-  callback,
 }: {
   projectId: string;
   receiverPort: number;
-  callback: ({ url }: { url: string }) => Promise<Result>;
 }) => {
   const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-form-delivery-"));
   let preview: ChildProcess | undefined;
@@ -80,12 +78,45 @@ export const withGeneratedFormDeliveryPreview = async <Result>({
       url,
       output: () => output.join(""),
     });
-    return await callback({ url });
-  } finally {
+    const runningPreview = preview;
+    return {
+      url,
+      close: async () => {
+        try {
+          await stopChildProcess(runningPreview, { killGroup: true });
+        } finally {
+          await rm(tempDir, { recursive: true, force: true });
+        }
+      },
+    };
+  } catch (error) {
     if (preview !== undefined) {
-      await stopChildProcess(preview, { killGroup: true });
+      await stopChildProcess(preview, { killGroup: true }).catch(
+        () => undefined
+      );
     }
     await rm(tempDir, { recursive: true, force: true });
+    throw error;
+  }
+};
+
+export const withGeneratedFormDeliveryPreview = async <Result>({
+  projectId,
+  receiverPort,
+  callback,
+}: {
+  projectId: string;
+  receiverPort: number;
+  callback: ({ url }: { url: string }) => Promise<Result>;
+}) => {
+  const preview = await startGeneratedFormDeliveryPreview({
+    projectId,
+    receiverPort,
+  });
+  try {
+    return await callback({ url: preview.url });
+  } finally {
+    await preview.close();
   }
 };
 

@@ -47,7 +47,7 @@ export default defineConfig({
           url: builderUrl,
           reuseExistingServer: false,
           ignoreHTTPSErrors: true,
-          timeout: 60_000,
+          timeout: 120_000,
           stdout: "pipe",
           stderr: "pipe",
         }

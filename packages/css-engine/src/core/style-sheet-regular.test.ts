@@ -265,6 +265,23 @@ describe("mixin rule", () => {
 `);
   });
 
+  test.each([' div[a="123"]', " div:hover", " div::before"])(
+    "keeps scoped tag selector specificity for %s",
+    (selector) => {
+      const sheet = createRegularStyleSheet();
+      const rule = sheet.addNestingRule(".container");
+      rule.setDeclaration({
+        breakpoint: "base",
+        selector,
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      });
+      expect(rule.toString({ breakpoint: "base" })).toContain(
+        `:where(.container)${selector} {`
+      );
+    }
+  );
+
   test("invalidate cache after applying mixins", () => {
     const sheet = createRegularStyleSheet();
     const rule = sheet.addNestingRule(".instance");
@@ -749,15 +766,15 @@ describe("Style Sheet Regular", () => {
       value: { type: "keyword", value: "auto" },
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
-"@media all {
-  .instance:hover {
-    width: auto
-  }
-  .instance img:hover {
-    width: auto
-  }
-}"
-`);
+      "@media all {
+        .instance:hover {
+          width: auto
+        }
+        :where(.instance) img:hover {
+          width: auto
+        }
+      }"
+    `);
   });
 });
 
@@ -800,15 +817,15 @@ test("generate merged properties as single rule", () => {
     unit: "px",
   });
   expect(sheet.cssText).toMatchInlineSnapshot(`
-"@media all {
-  instance {
-    margin: auto
-  }
-  instance img {
-    margin: 10px
-  }
-}"
-`);
+    "@media all {
+      instance {
+        margin: auto
+      }
+      :where(instance) img {
+        margin: 10px
+      }
+    }"
+  `);
 });
 
 test("convert :local-link to [aria-current=page] selector", () => {
