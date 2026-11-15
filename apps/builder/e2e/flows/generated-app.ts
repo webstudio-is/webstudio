@@ -10,6 +10,7 @@ import { bundleVersion } from "@webstudio-is/protocol";
 import { getStyleDeclKey, type Page } from "@webstudio-is/sdk";
 import type { ProjectSettings } from "@webstudio-is/project-build";
 import { loadDevBuild } from "../db";
+import { measure } from "../perf";
 import { stopChildProcess } from "../process";
 
 const execFileAsync = promisify(execFile);
@@ -153,14 +154,16 @@ export const expectGeneratedAppBuild = async ({
       `${JSON.stringify(createLocalBundleFromDevBuild(build), undefined, 2)}\n`
     );
 
-    await execFileAsync(
-      process.execPath,
-      [cliLocalPath, "build", "--assets", "false", "--template", "defaults"],
-      {
-        cwd: tempDir,
-        env: { ...process.env, PWD: tempDir },
-        maxBuffer: 1024 * 1024 * 10,
-      }
+    await measure("generated app build", () =>
+      execFileAsync(
+        process.execPath,
+        [cliLocalPath, "build", "--assets", "false", "--template", "defaults"],
+        {
+          cwd: tempDir,
+          env: { ...process.env, PWD: tempDir },
+          maxBuffer: 1024 * 1024 * 10,
+        }
+      )
     );
 
     if (expectedText !== undefined) {
@@ -241,12 +244,17 @@ export const withGeneratedPreview = async <Result>({
     preview.stderr?.on("data", appendOutput);
 
     const url = `http://127.0.0.1:${port}/`;
-    const html = await waitForGeneratedPreview({
-      process: preview,
-      url,
-      output: () => output.join(""),
-    });
-    return await callback({ url, html });
+    const runningPreview = preview;
+    const html = await measure("generated app preview startup", () =>
+      waitForGeneratedPreview({
+        process: runningPreview,
+        url,
+        output: () => output.join(""),
+      })
+    );
+    return await measure("generated app preview callback", () =>
+      callback({ url, html })
+    );
   } finally {
     if (preview !== undefined) {
       // The CLI starts npm and the generated server below it.
