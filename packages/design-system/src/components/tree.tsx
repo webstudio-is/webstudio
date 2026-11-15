@@ -496,7 +496,8 @@ export const TreeNode = ({
   isActionVisible?: boolean;
   onExpand?: (expanded: boolean, all: boolean) => void;
   nodeProps?: ComponentPropsWithoutRef<"div">;
-  buttonProps: ComponentPropsWithoutRef<"button">;
+  buttonProps: ComponentPropsWithoutRef<"button"> &
+    Record<`data-${string}`, string | number | undefined>;
   action: ReactNode;
   actionCount?: number;
   children: ReactNode;

@@ -926,6 +926,7 @@ const NavigatorRow = memo(
             },
           }}
           buttonProps={{
+            "data-navigator-instance-id": item.instance.id,
             onPointerDown: (event) => onPointerDown(item.selector, event),
             onMouseEnter: () => {
               $hoveredInstanceSelector.set(item.selector);

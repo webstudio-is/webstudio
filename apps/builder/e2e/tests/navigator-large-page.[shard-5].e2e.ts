@@ -11,6 +11,10 @@ import { waitForChangeToBeSaved } from "../flows/sync-status";
 import { measure } from "../perf";
 import { test } from "../test";
 
+// Playwright's trace snapshots traverse all 2,000 rows after each action.
+// Video and failure screenshots still capture this full Builder workflow.
+test.use({ trace: "off" });
+
 test("large-page Navigator selection, repeated reorder, drag, and reload", async ({
   page,
   context,
@@ -88,7 +92,7 @@ test("large-page Navigator selection, repeated reorder, drag, and reload", async
   await openNavigatorPanel({ page });
   const tree = page.locator("[data-navigator-tree]");
   const row = (index: number) =>
-    tree.getByRole("button", { name: `Row ${index}`, exact: true });
+    tree.locator(`[data-navigator-instance-id="row-${index}"]`);
   const order = () =>
     tree
       .locator("[data-tree-button]")
@@ -96,6 +100,7 @@ test("large-page Navigator selection, repeated reorder, drag, and reload", async
         buttons.slice(2, 5).map((button) => button.textContent)
       );
   await measure("large Navigator select row", async () => {
+    await expect(row(1)).toHaveText("Row 1");
     await row(1).click();
     await expect(row(1)).toHaveAttribute("aria-selected", "true");
   });
