@@ -23,11 +23,7 @@ const checkboxStyle = css({
   borderRadius: theme.borderRadius[3],
   color: cssVar("--foreground-primary"),
   background: cssVar("--background-secondary"),
-  border: "1px solid transparent",
-
-  "&:hover": {
-    borderColor: cssVar("--border-default"),
-  },
+  border: `1px solid ${cssVar("--foreground-secondary")}`,
 
   "&:focus-visible": {
     borderColor: cssVar("--border-focus"),

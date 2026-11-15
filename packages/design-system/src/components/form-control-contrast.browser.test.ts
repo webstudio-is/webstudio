@@ -1,3 +1,4 @@
+import { page, userEvent } from "@vitest/browser/context";
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
@@ -42,7 +43,38 @@ const readTokenColor = (name: string) => {
   return color;
 };
 
-test("compact form controls use their intended resting treatment", () => {
+const luminance = (color: number[]) => {
+  const linearize = (channel: number) => {
+    const value = channel / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  };
+  return (
+    0.2126 * linearize(color[0]) +
+    0.7152 * linearize(color[1]) +
+    0.0722 * linearize(color[2])
+  );
+};
+
+const contrast = (first: number[], second: number[]) => {
+  const firstLuminance = luminance(first);
+  const secondLuminance = luminance(second);
+  return (
+    (Math.max(firstLuminance, secondLuminance) + 0.05) /
+    (Math.min(firstLuminance, secondLuminance) + 0.05)
+  );
+};
+
+const expectCheckboxContrast = (checkbox: Element, state: string) => {
+  const style = getComputedStyle(checkbox);
+  const border = readColor(style.borderColor);
+  expect(border[3], `${state} border opacity`).toBe(255);
+  expect(
+    contrast(border, readColor(style.backgroundColor)),
+    `${state} border contrast`
+  ).toBeGreaterThanOrEqual(3);
+};
+
+test("compact form controls keep their intended contrast", async () => {
   const container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -59,6 +91,14 @@ test("compact form controls use their intended resting treatment", () => {
             { "data-control": "checkbox" },
             createElement(Checkbox, { "aria-label": "Checkbox" })
           ),
+          createElement(Checkbox, {
+            "aria-label": "Checked checkbox",
+            checked: true,
+          }),
+          createElement(Checkbox, {
+            "aria-label": "Disabled checkbox",
+            disabled: true,
+          }),
           createElement(
             "div",
             { "data-switch": true },
@@ -89,14 +129,37 @@ test("compact form controls use their intended resting treatment", () => {
       );
     });
 
-    const checkbox = container.querySelector("[data-control] > button");
+    const checkbox = container.querySelector<HTMLButtonElement>(
+      "[data-control] > button"
+    );
     if (checkbox === null) {
       throw new Error("Expected a checkbox");
     }
-    expect(
-      readColor(getComputedStyle(checkbox).borderColor)[3],
-      `${mode} checkbox resting border`
-    ).toBe(0);
+    act(() => checkbox.blur());
+    await page.getByText("Neutral").hover();
+    expect(checkbox.matches(":hover, :focus-visible")).toBe(false);
+    expectCheckboxContrast(checkbox, `${mode} resting checkbox`);
+    const checkedCheckbox = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Checked checkbox"]'
+    );
+    const disabledCheckbox = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Disabled checkbox"]'
+    );
+    if (checkedCheckbox === null || disabledCheckbox === null) {
+      throw new Error("Expected checked and disabled checkboxes");
+    }
+    expectCheckboxContrast(checkedCheckbox, `${mode} checked checkbox`);
+    expectCheckboxContrast(disabledCheckbox, `${mode} disabled checkbox`);
+    await page.elementLocator(checkbox).hover();
+    expect(checkbox.matches(":hover")).toBe(true);
+    expectCheckboxContrast(checkbox, `${mode} hovered checkbox`);
+    act(() => checkedCheckbox.focus());
+    await act(async () => userEvent.keyboard("{Shift>}{Tab}{/Shift}"));
+    expect(checkbox.matches(":focus-visible")).toBe(true);
+    expect(readColor(getComputedStyle(checkbox).borderColor)).toEqual(
+      readTokenColor("--border-focus")
+    );
+    expectCheckboxContrast(checkbox, `${mode} focused checkbox`);
 
     const switchControl = container.querySelector("[data-switch] > button");
     if (switchControl === null) {
