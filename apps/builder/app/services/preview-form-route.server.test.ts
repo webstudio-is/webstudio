@@ -2,7 +2,16 @@ import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import type { AddressInfo } from "node:net";
 import { build } from "esbuild";
-import { beforeEach, expect, test, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  expect,
+  test,
+  vi,
+} from "vitest";
+import { FetchInterceptor } from "@mswjs/interceptors/fetch";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
@@ -42,6 +51,31 @@ vi.mock("~/env/env.server", () => ({
 }));
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
+const interceptor = new FetchInterceptor();
+let sendEmail: typeof fetch | undefined;
+beforeAll(() => {
+  interceptor.on("request", async ({ request, controller }) => {
+    const endpoint = new URL(`${env.EMAIL_SERVICE_URL}/trpc/email.send`);
+    const url = new URL(request.url);
+    if (url.origin !== endpoint.origin || url.pathname !== endpoint.pathname) {
+      return;
+    }
+    try {
+      controller.respondWith(
+        request.method === "POST" && sendEmail !== undefined
+          ? await sendEmail(request)
+          : Response.error()
+      );
+    } catch (error) {
+      controller.errorWith(error);
+    }
+  });
+  interceptor.apply();
+});
+afterEach(() => {
+  sendEmail = undefined;
+});
+afterAll(() => interceptor.dispose());
 type EmailServiceEnvelope = {
   to: { address: string; name?: string }[];
   subject: string;
@@ -147,6 +181,15 @@ beforeEach(() => {
     resourceFetch as never
   );
   vi.mocked(loadDevBuildByProjectId).mockResolvedValue(draftBuild as never);
+});
+
+test("unconfigured Email Service requests fail without reaching the live service", async () => {
+  await expect(
+    fetch(`${env.EMAIL_SERVICE_URL}/trpc/email.send`, { method: "POST" })
+  ).rejects.toBeInstanceOf(TypeError);
+  await expect(
+    fetch("data:text/plain,unrelated").then((response) => response.text())
+  ).resolves.toBe("unrelated");
 });
 
 test("a user without project build permission cannot execute Preview actions", async () => {
@@ -269,7 +312,7 @@ test("server MCP simulation sends Email with Builder-held credentials", async ()
     expect(body.to).toEqual([{ address: "testing@webstudio.is" }]);
     return Response.json({ result: { data: { id: "sent" } } });
   });
-  vi.stubGlobal("fetch", send);
+  sendEmail = send;
   const result = await simulateFormSubmission({
     context: { authorization: { type: "token" } } as never,
     projectId,
@@ -616,7 +659,7 @@ test.each([false, true])(
       Response.json({ result: { data: { id: "sent" } } })
     );
     if (delayedSave) {
-      vi.stubGlobal("fetch", send);
+      sendEmail = send;
     }
     const requests: string[] = [];
     let receivedHeaders: { auth?: string; csrf?: string } | undefined;
@@ -801,7 +844,6 @@ test.each([false, true])(
         );
       }
     } finally {
-      vi.unstubAllGlobals();
       await browser?.close();
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
@@ -1181,7 +1223,7 @@ test.each([
         { headers: { "cache-control": "private, no-store" } }
       );
     });
-    vi.stubGlobal("fetch", send);
+    sendEmail = send;
     try {
       const response = await action({
         request: request(new File(["hello"], "hello.txt"), {
@@ -1255,7 +1297,6 @@ test.each([
     } finally {
       env.DEPLOYMENT_ENVIRONMENT = previousEnvironment;
       env.EMAIL_SERVICE_URL = previousEmailServiceUrl;
-      vi.unstubAllGlobals();
     }
   }
 );
@@ -1340,36 +1381,32 @@ test("two Email actions identify each credential failure in local Preview", asyn
       { status: 401 }
     )
   );
-  vi.stubGlobal("fetch", send);
-  try {
-    const response = await action({ request: request() } as never);
-    const result = (await response.json()) as unknown as {
-      errors: Array<{ resourceName: string; message: string }>;
-    };
-    expect(send).toHaveBeenCalledTimes(2);
-    expect(result.errors).toHaveLength(2);
-    expect(
-      result.errors.map(({ resourceName, message }) => ({
-        resourceName,
-        message,
-      }))
-    ).toEqual([
-      {
-        resourceName: "Email to owner",
-        message: expect.stringContaining(
-          "Email to owner: the email service rejected"
-        ),
-      },
-      {
-        resourceName: "Email to visitor",
-        message: expect.stringContaining(
-          "Email to visitor: the email service rejected"
-        ),
-      },
-    ]);
-  } finally {
-    vi.unstubAllGlobals();
-  }
+  sendEmail = send;
+  const response = await action({ request: request() } as never);
+  const result = (await response.json()) as unknown as {
+    errors: Array<{ resourceName: string; message: string }>;
+  };
+  expect(send).toHaveBeenCalledTimes(2);
+  expect(result.errors).toHaveLength(2);
+  expect(
+    result.errors.map(({ resourceName, message }) => ({
+      resourceName,
+      message,
+    }))
+  ).toEqual([
+    {
+      resourceName: "Email to owner",
+      message: expect.stringContaining(
+        "Email to owner: the email service rejected"
+      ),
+    },
+    {
+      resourceName: "Email to visitor",
+      message: expect.stringContaining(
+        "Email to visitor: the email service rejected"
+      ),
+    },
+  ]);
 });
 
 test("Email Service per-site limit fails the email action without HTTP egress", async () => {
@@ -1397,26 +1434,22 @@ test("Email Service per-site limit fails the email action without HTTP egress", 
       { status: 429 }
     )
   );
-  vi.stubGlobal("fetch", send);
-  try {
-    const response = await action({ request: request() } as never);
-    expect(await response.json()).toMatchObject({
-      success: false,
-      errors: [
-        {
-          resourceId: "webhook",
-          status: 429,
-          message: "Email sending limit reached",
-        },
-      ],
-    });
-    expect(send).toHaveBeenCalledOnce(); // a quota rejection is not retried
-    expect(
-      vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value
-    ).not.toHaveBeenCalled();
-  } finally {
-    vi.unstubAllGlobals();
-  }
+  sendEmail = send;
+  const response = await action({ request: request() } as never);
+  expect(await response.json()).toMatchObject({
+    success: false,
+    errors: [
+      {
+        resourceId: "webhook",
+        status: 429,
+        message: "Email sending limit reached",
+      },
+    ],
+  });
+  expect(send).toHaveBeenCalledOnce(); // a quota rejection is not retried
+  expect(
+    vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value
+  ).not.toHaveBeenCalled();
 });
 
 test("authenticated Preview returns bounded actual exchange metadata privately without replay", async () => {
@@ -1507,28 +1540,24 @@ test("Email Preview inspection retains user-authored Resource subject and body",
   const send = vi.fn(async () =>
     Response.json({ result: { data: { id: "sent" } } })
   );
-  vi.stubGlobal("fetch", send);
-  try {
-    const response = await action({ request: request() } as never);
-    const result = (await response.json()) as unknown as {
-      success: boolean;
-      previewExchanges: PreviewFormExchange[];
-    };
-    expect(result.success).toBe(true);
-    expect(result.previewExchanges[0].request.body).toMatchObject({
-      to: [{ address: "team@example.com" }],
-      subject: "Configured Email subject",
-      headers: { "X-Message-ID": expect.stringMatching(/^[a-f0-9]{16}$/) },
-      text: "Configured Email body [redacted] public-example-token",
-    });
-    expect(result.previewExchanges[0].response.body).toEqual({
-      result: { data: { id: "sent" } },
-    });
-    expect(JSON.stringify(result.previewExchanges)).not.toContain(
-      "server-only-test-token"
-    );
-    expect(send).toHaveBeenCalledOnce();
-  } finally {
-    vi.unstubAllGlobals();
-  }
+  sendEmail = send;
+  const response = await action({ request: request() } as never);
+  const result = (await response.json()) as unknown as {
+    success: boolean;
+    previewExchanges: PreviewFormExchange[];
+  };
+  expect(result.success).toBe(true);
+  expect(result.previewExchanges[0].request.body).toMatchObject({
+    to: [{ address: "team@example.com" }],
+    subject: "Configured Email subject",
+    headers: { "X-Message-ID": expect.stringMatching(/^[a-f0-9]{16}$/) },
+    text: "Configured Email body [redacted] public-example-token",
+  });
+  expect(result.previewExchanges[0].response.body).toEqual({
+    result: { data: { id: "sent" } },
+  });
+  expect(JSON.stringify(result.previewExchanges)).not.toContain(
+    "server-only-test-token"
+  );
+  expect(send).toHaveBeenCalledOnce();
 });
