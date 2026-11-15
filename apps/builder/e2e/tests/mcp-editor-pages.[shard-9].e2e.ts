@@ -43,6 +43,7 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
   const builderToken = `${fixture.projectId}-mcp-builder-token`;
   const directories = {
     editor: directory,
+    editorRead: freshDirectory,
     viewer: viewerDirectory,
     builder: builderDirectory,
   };
@@ -72,30 +73,19 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
   };
   const call = async (
     tool: string,
-    input: object,
-    {
-      fresh = false,
-      role = "editor",
-    }: { fresh?: boolean; role?: keyof typeof directories } = {}
+    input: Record<string, unknown>,
+    role: keyof typeof directories = "editor"
   ) => {
-    const client = fresh
-      ? await connect(freshDirectory, directories[role])
-      : (clients.get(role) ??
-        (await connect(directories[role], directories[role])));
-    if (fresh === false) {
+    let client = clients.get(role);
+    if (client === undefined) {
+      client = await connect(
+        directories[role],
+        role === "editorRead" ? directories.editor : directories[role]
+      );
       clients.set(role, client);
     }
-    try {
-      const result = await client.callTool({
-        name: tool,
-        arguments: input as Record<string, unknown>,
-      });
-      return JSON.parse(JSON.stringify(result.structuredContent));
-    } finally {
-      if (fresh) {
-        await client.close();
-      }
-    }
+    const result = await client.callTool({ name: tool, arguments: input });
+    return JSON.parse(JSON.stringify(result.structuredContent));
   };
 
   try {
@@ -155,7 +145,7 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
     expect(updated.ok, updated.error?.message).toBe(true);
     expect(updated.meta.session.commitStatus).toBe("committed");
 
-    const reloaded = await call("get-page", { pageId }, { fresh: true });
+    const reloaded = await call("get-page", { pageId }, "editorRead");
     expect(reloaded.ok).toBe(true);
     expect(reloaded.data).toMatchObject({
       id: pageId,
@@ -164,20 +154,6 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
       title: '"Edited MCP title"',
       meta: { description: '"Edited MCP description"' },
     });
-
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-    await openPage({
-      page,
-      pageName: "Edited MCP content page",
-      canvasText: fixture.pageTemplateText,
-    });
-    await openPageSettings({ page, pageName: "Edited MCP content page" });
-    await expect(page.getByLabel("Title")).toHaveValue("Edited MCP title");
 
     const beforeDenied = await loadDevBuild({ projectId: fixture.projectId });
     const denied = await call("update-page-settings", {
@@ -207,13 +183,20 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
     expect(uploaded.meta.session.commitStatus).toBe("committed");
     const assetId = uploaded.data.uploaded[0].id;
 
-    const asset = await call("get-asset", { assetId }, { fresh: true });
+    const refreshed = await call(
+      "refresh",
+      { namespaces: ["assets", "assetFolders"] },
+      "editorRead"
+    );
+    expect(refreshed.ok, refreshed.error?.message).toBe(true);
+
+    const asset = await call("get-asset", { assetId }, "editorRead");
     expect(asset.ok).toBe(true);
     expect(asset.data.asset).toMatchObject({
       id: assetId,
       folderId,
     });
-    const folders = await call("list-asset-folders", {}, { fresh: true });
+    const folders = await call("list-asset-folders", {}, "editorRead");
     expect(folders.ok).toBe(true);
     expect(folders.data.folders).toEqual(
       expect.arrayContaining([
@@ -227,6 +210,14 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
       authToken: fixture.editorToken,
       mode: "content",
     });
+    await openPage({
+      page,
+      pageName: "Edited MCP content page",
+      canvasText: fixture.pageTemplateText,
+    });
+    await openPageSettings({ page, pageName: "Edited MCP content page" });
+    await expect(page.getByLabel("Title")).toHaveValue("Edited MCP title");
+
     await openAssetsPanel({ page });
     await page
       .getByRole("button", { name: "Folder Editor MCP assets" })
@@ -236,7 +227,7 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
     const beforeViewerWrites = await loadDevBuild({
       projectId: fixture.projectId,
     });
-    expect((await call("list-pages", {}, { role: "viewer" })).ok).toBe(true);
+    expect((await call("list-pages", {}, "viewer")).ok).toBe(true);
     for (const [tool, input] of [
       [
         "create-page-from-template",
@@ -251,7 +242,7 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
         },
       ],
     ] as const) {
-      const denied = await call(tool, input, { role: "viewer" });
+      const denied = await call(tool, input, "viewer");
       expect(denied.ok, tool).toBe(false);
       expect(denied.error.code, `${tool}: ${denied.error.message}`).toBe(
         "FORBIDDEN"
@@ -266,10 +257,10 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
     const builderWrite = await call(
       "update-page-settings",
       { pageId, values: { status: "302" } },
-      { role: "builder" }
+      "builder"
     );
     expect(builderWrite.ok, builderWrite.error?.message).toBe(true);
-    const builderPage = await call("get-page", { pageId }, { role: "builder" });
+    const builderPage = await call("get-page", { pageId }, "builder");
     expect(builderPage.data.meta.status).toBe("302");
   } finally {
     await Promise.all(Array.from(clients.values(), (client) => client.close()));

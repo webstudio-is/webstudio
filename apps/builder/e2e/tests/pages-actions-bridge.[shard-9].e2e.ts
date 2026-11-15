@@ -6,10 +6,7 @@ import {
 } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { openNavigatorPanel } from "../flows/navigator";
-import {
-  waitForChangeToBeSaved,
-  waitForSyncStatus,
-} from "../flows/sync-status";
+import { waitForChangeToBeSaved } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
@@ -17,6 +14,8 @@ import { test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 import { e2ePaidPlanName } from "../plans";
 import { loadDevBuild } from "../db";
+
+test.describe.configure({ mode: "parallel" });
 
 let fixture: SeededContentModeProject;
 
@@ -65,29 +64,17 @@ const selectAppMenuItem = async ({
   await menuItem.click();
 };
 
-const undoShortcut = async ({
+const selectSavedAppMenuItem = async ({
   page,
-  waitForSave = true,
+  name,
 }: {
   page: Page;
-  waitForSave?: boolean;
+  name: "Undo" | "Redo";
 }) => {
-  await waitForSyncStatus({ page, status: "idle" });
-  const save =
-    waitForSave === true
-      ? waitForChangeToBeSaved({ page, timeout: 30_000 })
-      : undefined;
-  await selectAppMenuItem({ page, name: "Undo" });
-  await save;
-  await waitForSyncStatus({ page, status: "idle" });
-};
-
-const redoShortcut = async ({ page }: { page: Page }) => {
-  await waitForSyncStatus({ page, status: "idle" });
-  const save = waitForChangeToBeSaved({ page, timeout: 30_000 });
-  await selectAppMenuItem({ page, name: "Redo" });
-  await save;
-  await waitForSyncStatus({ page, status: "idle" });
+  await Promise.all([
+    waitForChangeToBeSaved({ page, timeout: 30_000 }),
+    selectAppMenuItem({ page, name }),
+  ]);
 };
 
 const openComponentsPanel = async ({ page }: { page: Page }) => {
@@ -127,8 +114,10 @@ const insertComponentPanelOption = async ({
   name: string;
 }) => {
   await searchComponentsPanel({ page, text: name });
-  await page.getByRole("option", { name, exact: true }).click();
-  await waitForSyncStatus({ page, status: "idle" });
+  await Promise.all([
+    waitForChangeToBeSaved({ page }),
+    page.getByRole("option", { name, exact: true }).click(),
+  ]);
 };
 
 const getNavigatorButtonSummary = async ({
@@ -190,11 +179,10 @@ const selectNavigatorContextAction = async ({
       `Expected Navigator ${action} action to be enabled. aria-disabled=${ariaDisabled}, data-disabled=${dataDisabled}`
     );
   }
-  await menuItem.click();
-  await waitForChangeToBeSaved({ page });
+  await Promise.all([waitForChangeToBeSaved({ page }), menuItem.click()]);
 };
 
-test.beforeAll(async ({ browser }) => {
+test.beforeEach(async ({ browser }) => {
   fixture = await withBrowserContext(browser, (context) =>
     createContentModeProject({
       context,
@@ -235,7 +223,7 @@ test("Builder can insert through the engine bridge, undo, redo, and reload", asy
   });
 
   await measure("pages actions undo bridge insert", async () => {
-    await undoShortcut({ page, waitForSave: false });
+    await selectSavedAppMenuItem({ page, name: "Undo" });
   });
   await waitForCanvasTextHidden({
     page,
@@ -243,7 +231,7 @@ test("Builder can insert through the engine bridge, undo, redo, and reload", asy
   });
 
   await measure("pages actions redo bridge insert", async () => {
-    await redoShortcut({ page });
+    await selectSavedAppMenuItem({ page, name: "Redo" });
   });
   await waitForCanvasText({
     page,
@@ -344,8 +332,10 @@ test("Builder can duplicate a component through the engine bridge, undo, redo, a
   }
 
   await measure("pages actions duplicate inserted component", async () => {
-    await page.keyboard.press("ControlOrMeta+D");
-    await waitForSyncStatus({ page, status: "idle" });
+    await Promise.all([
+      waitForChangeToBeSaved({ page }),
+      page.keyboard.press("ControlOrMeta+D"),
+    ]);
   });
   const duplicatedCount = await getInstanceComponentCount({
     fixture,
@@ -358,7 +348,7 @@ test("Builder can duplicate a component through the engine bridge, undo, redo, a
   }
 
   await measure("pages actions undo duplicate command", async () => {
-    await undoShortcut({ page });
+    await selectSavedAppMenuItem({ page, name: "Undo" });
   });
   const undoCount = await getInstanceComponentCount({
     fixture,
@@ -371,7 +361,7 @@ test("Builder can duplicate a component through the engine bridge, undo, redo, a
   }
 
   await measure("pages actions redo duplicate command", async () => {
-    await redoShortcut({ page });
+    await selectSavedAppMenuItem({ page, name: "Redo" });
   });
   const redoCount = await getInstanceComponentCount({
     fixture,
@@ -463,7 +453,7 @@ test("Builder can duplicate and delete a component from Navigator context menu",
   }
 
   await measure("pages actions undo navigator duplicate", async () => {
-    await undoShortcut({ page });
+    await selectSavedAppMenuItem({ page, name: "Undo" });
   });
   const undoDuplicateCount = await getInstanceComponentCount({
     fixture,
@@ -476,7 +466,7 @@ test("Builder can duplicate and delete a component from Navigator context menu",
   }
 
   await measure("pages actions redo navigator duplicate", async () => {
-    await redoShortcut({ page });
+    await selectSavedAppMenuItem({ page, name: "Redo" });
   });
   const redoDuplicateCount = await getInstanceComponentCount({
     fixture,
@@ -507,7 +497,7 @@ test("Builder can duplicate and delete a component from Navigator context menu",
   }
 
   await measure("pages actions undo navigator delete", async () => {
-    await undoShortcut({ page });
+    await selectSavedAppMenuItem({ page, name: "Undo" });
   });
   const undoDeleteCount = await getInstanceComponentCount({
     fixture,

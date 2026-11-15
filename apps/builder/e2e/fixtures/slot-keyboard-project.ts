@@ -25,21 +25,16 @@ const getBaseBreakpointId = (breakpoints: string) => {
 const createSlotKeyboardBuildData = ({
   pages,
   breakpoints,
+  additionalPairSuffixes,
 }: {
   pages: string;
   breakpoints: string;
+  additionalPairSuffixes: string[];
 }) => {
   const rootInstanceId = "slot-keyboard-body";
   const wrapperId = "slot-keyboard-wrapper";
-  const slotAId = "slot-keyboard-slot-a";
-  const slotBId = "slot-keyboard-slot-b";
-  const fragmentId = "slot-keyboard-fragment";
-  const divId = "slot-keyboard-div";
-  const headingId = "slot-keyboard-heading";
   const baseBreakpointId = getBaseBreakpointId(breakpoints);
   const wrapperStyleSourceId = "slot-keyboard-wrapper-style";
-  const divStyleSourceId = "slot-keyboard-div-style";
-  const headingStyleSourceId = "slot-keyboard-heading-style";
 
   const nextPages = JSON.parse(pages) as {
     homePageId: string;
@@ -52,6 +47,91 @@ const createSlotKeyboardBuildData = ({
     throw new Error("Expected existing build to have a home page");
   }
   homePage.rootInstanceId = rootInstanceId;
+
+  const slotPairs = ["", ...additionalPairSuffixes].map((suffix) => {
+    const slotAId = `slot-keyboard-slot-a${suffix}`;
+    const slotBId = `slot-keyboard-slot-b${suffix}`;
+    const fragmentId = `slot-keyboard-fragment${suffix}`;
+    const divId = `slot-keyboard-div${suffix}`;
+    const headingId = `slot-keyboard-heading${suffix}`;
+    const divStyleSourceId = `slot-keyboard-div-style${suffix}`;
+    const headingStyleSourceId = `slot-keyboard-heading-style${suffix}`;
+    return {
+      children: [
+        { type: "id", value: slotAId },
+        { type: "id", value: slotBId },
+      ],
+      instances: [
+        {
+          type: "instance",
+          id: slotAId,
+          component: "Slot",
+          label: "Slot A",
+          children: [{ type: "id", value: fragmentId }],
+        },
+        {
+          type: "instance",
+          id: slotBId,
+          component: "Slot",
+          label: "Slot B",
+          children: [{ type: "id", value: fragmentId }],
+        },
+        {
+          type: "instance",
+          id: fragmentId,
+          component: "Fragment",
+          children: [
+            { type: "id", value: divId },
+            { type: "id", value: headingId },
+          ],
+        },
+        {
+          type: "instance",
+          id: divId,
+          component: "ws:element",
+          tag: "div",
+          label: "Drop Div",
+          children: [{ type: "text", value: "Drop zone" }],
+        },
+        {
+          type: "instance",
+          id: headingId,
+          component: "ws:element",
+          tag: "h1",
+          label: "Slot Heading",
+          children: [{ type: "text", value: "Slot heading" }],
+        },
+      ],
+      styleSources: [
+        { type: "local", id: divStyleSourceId },
+        { type: "local", id: headingStyleSourceId },
+      ],
+      styleSourceSelections: [
+        { instanceId: divId, values: [divStyleSourceId] },
+        { instanceId: headingId, values: [headingStyleSourceId] },
+      ],
+      styles: [
+        {
+          styleSourceId: divStyleSourceId,
+          breakpointId: baseBreakpointId,
+          property: "minHeight",
+          value: { type: "unit", unit: "px", value: 120 },
+        },
+        {
+          styleSourceId: divStyleSourceId,
+          breakpointId: baseBreakpointId,
+          property: "padding",
+          value: { type: "unit", unit: "px", value: 24 },
+        },
+        {
+          styleSourceId: headingStyleSourceId,
+          breakpointId: baseBreakpointId,
+          property: "marginTop",
+          value: { type: "unit", unit: "px", value: 24 },
+        },
+      ],
+    };
+  });
 
   return {
     pages: JSON.stringify(nextPages),
@@ -69,61 +149,18 @@ const createSlotKeyboardBuildData = ({
         component: "ws:element",
         tag: "main",
         label: "Slot Keyboard Wrapper",
-        children: [
-          { type: "id", value: slotAId },
-          { type: "id", value: slotBId },
-        ],
+        children: slotPairs.flatMap((pair) => pair.children),
       },
-      {
-        type: "instance",
-        id: slotAId,
-        component: "Slot",
-        label: "Slot A",
-        children: [{ type: "id", value: fragmentId }],
-      },
-      {
-        type: "instance",
-        id: slotBId,
-        component: "Slot",
-        label: "Slot B",
-        children: [{ type: "id", value: fragmentId }],
-      },
-      {
-        type: "instance",
-        id: fragmentId,
-        component: "Fragment",
-        children: [
-          { type: "id", value: divId },
-          { type: "id", value: headingId },
-        ],
-      },
-      {
-        type: "instance",
-        id: divId,
-        component: "ws:element",
-        tag: "div",
-        label: "Drop Div",
-        children: [{ type: "text", value: "Drop zone" }],
-      },
-      {
-        type: "instance",
-        id: headingId,
-        component: "ws:element",
-        tag: "h1",
-        label: "Slot Heading",
-        children: [{ type: "text", value: "Slot heading" }],
-      },
+      ...slotPairs.flatMap((pair) => pair.instances),
     ]),
     props: JSON.stringify([]),
     styleSources: JSON.stringify([
       { type: "local", id: wrapperStyleSourceId },
-      { type: "local", id: divStyleSourceId },
-      { type: "local", id: headingStyleSourceId },
+      ...slotPairs.flatMap((pair) => pair.styleSources),
     ]),
     styleSourceSelections: JSON.stringify([
       { instanceId: wrapperId, values: [wrapperStyleSourceId] },
-      { instanceId: divId, values: [divStyleSourceId] },
-      { instanceId: headingId, values: [headingStyleSourceId] },
+      ...slotPairs.flatMap((pair) => pair.styleSourceSelections),
     ]),
     styles: JSON.stringify([
       {
@@ -138,24 +175,7 @@ const createSlotKeyboardBuildData = ({
         property: "gap",
         value: { type: "unit", unit: "px", value: 32 },
       },
-      {
-        styleSourceId: divStyleSourceId,
-        breakpointId: baseBreakpointId,
-        property: "minHeight",
-        value: { type: "unit", unit: "px", value: 120 },
-      },
-      {
-        styleSourceId: divStyleSourceId,
-        breakpointId: baseBreakpointId,
-        property: "padding",
-        value: { type: "unit", unit: "px", value: 24 },
-      },
-      {
-        styleSourceId: headingStyleSourceId,
-        breakpointId: baseBreakpointId,
-        property: "marginTop",
-        value: { type: "unit", unit: "px", value: 24 },
-      },
+      ...slotPairs.flatMap((pair) => pair.styles),
     ]),
     dataSources: JSON.stringify([]),
     resources: JSON.stringify([]),
@@ -168,11 +188,13 @@ export const createSlotKeyboardProject = async ({
   email = "slot-keyboard-e2e@webstudio.test",
   title = "Slot Keyboard E2E",
   builderToken = "slot-keyboard-e2e-builder-token",
+  additionalPairSuffixes = [],
 }: {
   context: BrowserContext;
   email?: string;
   title?: string;
   builderToken?: string;
+  additionalPairSuffixes?: string[];
 }): Promise<SeededSlotKeyboardProject> => {
   return await createSeededBuilderProject({
     context,
@@ -183,6 +205,7 @@ export const createSlotKeyboardProject = async ({
       createSlotKeyboardBuildData({
         pages: build.pages,
         breakpoints: build.breakpoints,
+        additionalPairSuffixes,
       }),
   });
 };

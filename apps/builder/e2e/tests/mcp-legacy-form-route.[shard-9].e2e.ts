@@ -5,7 +5,10 @@ import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { withGeneratedPreview } from "../flows/generated-app";
 import { startLegacyFormRouteReceiver } from "../flows/legacy-form-route-receiver";
-import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
+import {
+  startPreviewFormMcpClient,
+  submitPreviewFormViaMcp,
+} from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -16,6 +19,7 @@ test("MCP-edited saved deprecated Webhook Form action uses current dynamic route
 }) => {
   const receiver = await startLegacyFormRouteReceiver();
   try {
+    await startPreviewFormMcpClient();
     const fixture = await createContentModeProject({
       context,
       email: "mcp-legacy-form-route@webstudio.test",

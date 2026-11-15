@@ -9,10 +9,7 @@ import {
   openPage,
   openPageSettings,
 } from "../flows/pages-panel";
-import {
-  waitForChangeToBeSaved,
-  waitForSyncStatus,
-} from "../flows/sync-status";
+import { waitForChangeToBeSaved } from "../flows/sync-status";
 import {
   expectGeneratedAppRedirect,
   expectGeneratedRedirects,
@@ -90,7 +87,6 @@ const saveSiteName = async ({
     .getByRole("textbox", { name: "Site name", exact: true })
     .fill(siteName);
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const setAtomicStyles = async ({
@@ -108,7 +104,6 @@ const setAtomicStyles = async ({
     const save = waitForChangeToBeSaved({ page });
     await checkbox.click();
     await save;
-    await waitForSyncStatus({ page, status: "idle" });
   };
   if ((await checkbox.isChecked()) === checked) {
     await toggle();
@@ -130,33 +125,13 @@ const addRedirect = async ({
   await page.getByPlaceholder("/old-path or /old/*").fill(from);
   await page.getByPlaceholder("/to-path or URL").fill(to);
   await page.keyboard.press("Escape");
+  const save = waitForChangeToBeSaved({ page });
   await page
     .getByPlaceholder("/to-path or URL")
     .locator("xpath=following::button[2]")
     .click();
   await page.getByText(from, { exact: true }).waitFor();
-  await waitForSyncStatus({ page, status: "idle" });
-};
-
-const addBasicAuth = async ({
-  page,
-  route,
-  login,
-  password,
-}: {
-  page: PlaywrightPage;
-  route: string;
-  login: string;
-  password: string;
-}) => {
-  await page.getByRole("option", { name: "Authentication" }).click();
-  await page.getByPlaceholder("/private or /docs/*").fill(route);
-  await page.getByPlaceholder("Login").fill(login);
-  await page.getByPlaceholder("Password").fill(password);
-  const save = waitForChangeToBeSaved({ page });
-  await page.getByRole("button", { name: "Add" }).click();
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const deleteBasicAuth = async ({
@@ -173,7 +148,6 @@ const deleteBasicAuth = async ({
     .click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const expectPersistedBasicAuth = async ({
@@ -216,7 +190,6 @@ const deleteRedirect = async ({
     .getByRole("button", { name: `Delete redirect from ${from}` })
     .click();
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const expectPersistedProjectSettings = async ({
@@ -260,15 +233,16 @@ const expectPersistedProjectSettings = async ({
   }
 };
 
-test("Project settings site name and redirects persist after reload", async ({
+test("Project settings for site name, CSS, email, and redirects persist after reload", async ({
   page,
   context,
 }) => {
   const email = "project-settings-runtime@webstudio.test";
   const fixture = await createContentModeProject({
-    context: context,
+    context,
     email,
     title: "Project Settings Runtime",
+    devPlan: e2eEmailPlanName,
     assetNamePrefix: "project-settings-runtime-",
     editorToken: "project-settings-runtime-editor-token",
     builderToken: "project-settings-runtime-builder-token",
@@ -279,7 +253,11 @@ test("Project settings site name and redirects persist after reload", async ({
     to: "/",
   };
 
-  await loginWithSecret({ page, email });
+  const recipients =
+    '"Team, West" <team@example.com>, Owner <owner@example.com>';
+  const sender = "Project Team <sender@example.com>";
+
+  await loginWithSecret({ page, email, devPlan: e2eEmailPlanName });
 
   await measure("project settings runtime open builder", async () => {
     await openProjectBuilder({
@@ -299,6 +277,30 @@ test("Project settings site name and redirects persist after reload", async ({
       from: redirect.from,
       to: redirect.to,
     });
+  });
+
+  await test.step("Save named email recipients and Reply to", async () => {
+    await page.getByRole("option", { name: "Emails" }).click();
+
+    let save = waitForChangeToBeSaved({ page });
+    await page.getByRole("textbox", { name: "Recipients" }).fill(recipients);
+    await save;
+
+    save = waitForChangeToBeSaved({ page });
+    await page.getByRole("textbox", { name: "Reply to" }).fill(sender);
+    await save;
+
+    const persisted = await getPersistedProjectSettings({
+      projectId: fixture.projectId,
+    });
+    if (
+      persisted.meta.contactEmail !== recipients ||
+      persisted.meta.emailSender !== sender
+    ) {
+      throw new Error(
+        `Expected saved Project Emails settings, received ${JSON.stringify(persisted.meta)}.`
+      );
+    }
   });
 
   await expectPersistedProjectSettings({
@@ -356,6 +358,17 @@ test("Project settings site name and redirects persist after reload", async ({
       "Expected atomic CSS setting to remain disabled after reload."
     );
   }
+  await test.step("Verify email settings after reload", async () => {
+    await page.getByRole("option", { name: "Emails" }).click();
+    if (
+      (await page.getByRole("textbox", { name: "Recipients" }).inputValue()) !==
+        recipients ||
+      (await page.getByRole("textbox", { name: "Reply to" }).inputValue()) !==
+        sender
+    ) {
+      throw new Error("Expected Project Emails settings to survive reload.");
+    }
+  });
   await page.getByRole("option", { name: "Redirects" }).click();
 
   await measure("project settings runtime delete redirect", async () => {
@@ -393,81 +406,13 @@ test("Project settings site name and redirects persist after reload", async ({
   });
 });
 
-test("Project Emails Reply to and named recipients persist after reload", async ({
-  page,
-  context,
-}) => {
-  const email = "project-emails-runtime@webstudio.test";
-  const fixture = await createContentModeProject({
-    context,
-    email,
-    title: "Project Emails Runtime",
-    devPlan: e2eEmailPlanName,
-    assetNamePrefix: "project-emails-runtime-",
-    editorToken: "project-emails-runtime-editor-token",
-    builderToken: "project-emails-runtime-builder-token",
-  });
-  const recipients =
-    '"Team, West" <team@example.com>, Owner <owner@example.com>';
-  const sender = "Project Team <sender@example.com>";
-
-  await loginWithSecret({ page, email, devPlan: e2eEmailPlanName });
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await waitForCanvasText({ page, text: "Initial content" });
-  await openProjectSettings({ page });
-  await page.getByRole("option", { name: "Emails" }).click();
-
-  let save = waitForChangeToBeSaved({ page });
-  await page.getByRole("textbox", { name: "Recipients" }).fill(recipients);
-  await save;
-  await waitForSyncStatus({ page, status: "idle" });
-
-  save = waitForChangeToBeSaved({ page });
-  await page.getByRole("textbox", { name: "Reply to" }).fill(sender);
-  await save;
-  await waitForSyncStatus({ page, status: "idle" });
-
-  const persisted = await getPersistedProjectSettings({
-    projectId: fixture.projectId,
-  });
-  if (
-    persisted.meta.contactEmail !== recipients ||
-    persisted.meta.emailSender !== sender
-  ) {
-    throw new Error(
-      `Expected saved Project Emails settings, received ${JSON.stringify(persisted.meta)}.`
-    );
-  }
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await waitForCanvasText({ page, text: "Initial content" });
-  await openProjectSettings({ page });
-  await page.getByRole("option", { name: "Emails" }).click();
-  if (
-    (await page.getByRole("textbox", { name: "Recipients" }).inputValue()) !==
-      recipients ||
-    (await page.getByRole("textbox", { name: "Reply to" }).inputValue()) !==
-      sender
-  ) {
-    throw new Error("Expected Project Emails settings to survive reload.");
-  }
-});
-
-test("Marketplace page settings persist after reload", async ({
+test("Marketplace page settings and project authentication routes persist after reload", async ({
   page,
   context,
 }) => {
   const email = "marketplace-page-settings-runtime@webstudio.test";
   const fixture = await createContentModeProject({
-    context: context,
+    context,
     email,
     title: "Marketplace Page Settings Runtime",
     assetNamePrefix: "marketplace-page-settings-runtime-",
@@ -476,6 +421,9 @@ test("Marketplace page settings persist after reload", async ({
   });
   const pageName = "Marketplace Runtime Page";
   const category = "Runtime Examples";
+  const route = "/private";
+  const login = "editor";
+  const password = "e2e-secret";
 
   await updateProject(fixture.projectId, {
     marketplaceApprovalStatus: "PENDING",
@@ -491,6 +439,33 @@ test("Marketplace page settings persist after reload", async ({
     });
     await waitForCanvasText({ page, text: "Initial content" });
   });
+
+  await measure("project auth runtime add route", async () => {
+    await openProjectSettings({ page });
+    await page.getByRole("option", { name: "Authentication" }).click();
+    await page.getByPlaceholder("/private or /docs/*").fill("private");
+    await page.getByPlaceholder("Login").fill(login);
+    await page.getByPlaceholder("Password").fill(password);
+    if (
+      (await page.getByRole("button", { name: "Add" }).isDisabled()) === false
+    ) {
+      throw new Error("Expected invalid auth route to disable Add.");
+    }
+    await page.getByPlaceholder("/private or /docs/*").fill(route);
+    const save = waitForChangeToBeSaved({ page });
+    await page.getByRole("button", { name: "Add" }).click();
+    await save;
+  });
+  await expectPersistedBasicAuth({
+    projectId: fixture.projectId,
+    route,
+    login,
+    exists: true,
+  });
+  await page
+    .getByRole("dialog", { name: "Project settings" })
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
 
   await measure("marketplace page settings create page", async () => {
     await createPageFromTemplate({
@@ -508,13 +483,11 @@ test("Marketplace page settings persist after reload", async ({
       const includeSave = waitForChangeToBeSaved({ page });
       await page.getByLabel("Include in the marketplace").click();
       await includeSave;
-      await waitForSyncStatus({ page, status: "idle" });
 
       const categorySave = waitForChangeToBeSaved({ page });
       await page.getByLabel("Category").fill(category);
       await page.getByLabel("Category").blur();
       await categorySave;
-      await waitForSyncStatus({ page, status: "idle" });
     }
   );
 
@@ -571,61 +544,11 @@ test("Marketplace page settings persist after reload", async ({
       )}`
     );
   }
-});
 
-test("Project authentication routes persist after reload and deletion", async ({
-  page,
-  context,
-}) => {
-  const email = "project-auth-runtime@webstudio.test";
-  const fixture = await createContentModeProject({
-    context: context,
-    email,
-    title: "Project Auth Runtime",
-    assetNamePrefix: "project-auth-runtime-",
-    editorToken: "project-auth-runtime-editor-token",
-    builderToken: "project-auth-runtime-builder-token",
-  });
-  const route = "/private";
-  const login = "editor";
-  const password = "e2e-secret";
-
-  await loginWithSecret({ page, email });
-  await measure("project auth runtime open builder", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await waitForCanvasText({ page, text: "Initial content" });
-  });
-
-  await measure("project auth runtime add route", async () => {
-    await openProjectSettings({ page });
-    await page.getByRole("option", { name: "Authentication" }).click();
-    await page.getByPlaceholder("/private or /docs/*").fill("private");
-    if (
-      (await page.getByRole("button", { name: "Add" }).isDisabled()) === false
-    ) {
-      throw new Error("Expected invalid auth route to disable Add.");
-    }
-    await addBasicAuth({ page, route, login, password });
-  });
-  await expectPersistedBasicAuth({
-    projectId: fixture.projectId,
-    route,
-    login,
-    exists: true,
-  });
-
-  await measure("project auth runtime reload builder", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-    await waitForCanvasText({ page, text: "Initial content" });
-  });
+  await page
+    .getByRole("group", { name: `Page ${pageName}`, exact: true })
+    .getByRole("button", { name: "Close page settings" })
+    .click();
   await openProjectSettings({ page });
   await page.getByRole("option", { name: "Authentication" }).click();
   await page.getByText(route, { exact: true }).waitFor();

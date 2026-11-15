@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { insertAssetFolders } from "../db";
 import {
   createAssetFolder,
   openAssetsPanel,
@@ -150,6 +152,18 @@ test("Dragging an asset auto-scrolls a long folder list", async ({
     builderToken: "asset-folder-autoscroll-e2e-builder-token",
   });
 
+  // The long list is a precondition for the drag, so seed its filler folders together.
+  const createdAt = new Date().toISOString();
+  await insertAssetFolders(
+    Array.from({ length: 24 }, (_, index) => ({
+      id: randomUUID(),
+      projectId: fixture.projectId,
+      name: `Filler ${String(index).padStart(2, "0")}`,
+      parentId: null,
+      createdAt,
+    }))
+  );
+
   await openProjectBuilder({
     page,
     projectId: fixture.projectId,
@@ -162,18 +176,6 @@ test("Dragging an asset auto-scrolls a long folder list", async ({
     filename: "upload-image.svg",
   });
   const scrollArea = page.locator("[data-asset-manager-scroll-area]");
-  for (let index = 0; index < 24; index += 1) {
-    await createAssetFolder({
-      page,
-      name: `Filler ${String(index).padStart(2, "0")}`,
-    });
-    const overflows = await scrollArea.evaluate(
-      (element) => element.scrollHeight > element.clientHeight + 80
-    );
-    if (overflows) {
-      break;
-    }
-  }
   const destination = await createAssetFolder({
     page,
     name: "Destination",

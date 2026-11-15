@@ -1,54 +1,23 @@
-import { execFile } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
 import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { runFormAuthor } from "../flows/mcp-form-author";
 import {
   startLocalEmailReceiver,
   withMcpEmailPreview,
 } from "../flows/mcp-email-preview";
 import { test } from "../test";
-import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
+import {
+  startPreviewFormMcpClient,
+  submitPreviewFormViaMcp,
+} from "../flows/mcp-preview-submit";
 
-// Both tests run two MCP authoring and generated preview phases.
 const twoPhaseTimeout = 240_000;
 
-const execFileAsync = promisify(execFile);
-const reactGlobalPath = fileURLToPath(
-  new URL("../../../../scripts/register-react-global.ts", import.meta.url)
-);
-const cliTsconfigPath = fileURLToPath(
-  new URL("../../../../packages/cli/tsconfig.local.json", import.meta.url)
-);
-const initialAuthorPath = fileURLToPath(
-  new URL("../fixtures/mcp-managed-form-author.ts", import.meta.url)
-);
-const bindingAuthorPath = fileURLToPath(
-  new URL("../fixtures/mcp-email-binding-author.ts", import.meta.url)
-);
-const author = async (
-  projectId: string,
-  path: string,
-  mode: string,
-  formId?: string
-) => {
-  const { stdout } = await execFileAsync(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      "--import",
-      reactGlobalPath,
-      "--conditions=webstudio",
-      path,
-      projectId,
-      mode,
-      ...(formId === undefined ? [] : [formId]),
-    ],
-    {
-      timeout: 60_000,
-      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
-    }
+const createForm = async (projectId: string) => {
+  const { stdout } = await runFormAuthor(
+    "mcp-managed-form-author",
+    projectId,
+    "email"
   );
   return JSON.parse(stdout) as { formId: string };
 };
@@ -57,6 +26,7 @@ test("MCP Email binding changes share two production Preview phases", async ({
   context,
 }) => {
   test.setTimeout(twoPhaseTimeout);
+  await startPreviewFormMcpClient();
   const fixture = await createContentModeProject({
     context,
     email: "mcp-email-binding-scenarios@webstudio.test",
@@ -64,11 +34,16 @@ test("MCP Email binding changes share two production Preview phases", async ({
     assetNamePrefix: "mcp-email-binding-scenarios-",
     builderToken: "mcp-email-binding-scenarios-builder-token",
   });
-  const bound = await author(fixture.projectId, initialAuthorPath, "email");
-  const partial = await author(fixture.projectId, initialAuthorPath, "email");
+  const bound = await createForm(fixture.projectId);
+  const partial = await createForm(fixture.projectId);
   expect(bound.formId).not.toBe(partial.formId);
-  await author(fixture.projectId, bindingAuthorPath, "bind", bound.formId);
-  await author(fixture.projectId, bindingAuthorPath, "partial", partial.formId);
+  await runFormAuthor(
+    "mcp-email-binding-author",
+    fixture.projectId,
+    "initial",
+    bound.formId,
+    partial.formId
+  );
 
   const receiver = await startLocalEmailReceiver();
   const submit = async (url: string, formId: string, withUpload: boolean) => {
@@ -143,8 +118,13 @@ test("MCP Email binding changes share two production Preview phases", async ({
       },
     });
 
-    await author(fixture.projectId, bindingAuthorPath, "reset", bound.formId);
-    await author(fixture.projectId, bindingAuthorPath, "empty", partial.formId);
+    await runFormAuthor(
+      "mcp-email-binding-author",
+      fixture.projectId,
+      "updated",
+      bound.formId,
+      partial.formId
+    );
     await withMcpEmailPreview({
       projectId: fixture.projectId,
       emailPort: receiver.port,
