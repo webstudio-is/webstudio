@@ -193,6 +193,12 @@ const Capability = ({
       }}
     >
       <Checkbox
+        css={{
+          borderColor: cssVar("--foreground-secondary"),
+          "&:hover:not(:focus-visible)": {
+            borderColor: cssVar("--foreground-secondary"),
+          },
+        }}
         disabled={disabled}
         checked={checked}
         onCheckedChange={(value) => {
