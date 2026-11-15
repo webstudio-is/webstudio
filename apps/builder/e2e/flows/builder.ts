@@ -5,10 +5,6 @@ import { measure } from "../perf";
 const delay = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-const builderNetworkIdleTimeout =
-  Number.parseInt(process.env.E2E_BUILDER_NETWORK_IDLE_TIMEOUT_MS ?? "", 10) ||
-  5_000;
-
 export const getCanvasInstanceSelector = (instanceSelector: string[]) =>
   `[data-ws-selector="${instanceSelector.join(",")}"]`;
 
@@ -113,11 +109,6 @@ export const waitForCanvasTextHidden = async ({
 
 const openBuilderPage = async (page: Page, url: string): Promise<Frame> => {
   await measure("builder page navigation", () => page.goto(url));
-  await measure("builder network idle", () =>
-    page
-      .waitForLoadState("networkidle", { timeout: builderNetworkIdleTimeout })
-      .catch(() => undefined)
-  );
   const canvas = await measure("builder canvas ready", () =>
     waitForCanvasFrame({ page })
   );
