@@ -4,6 +4,7 @@ import {
   bindSelectedTextContentToExpression,
   createGraphqlResourceVariable,
   createHttpResourceVariable,
+  createStringVariable,
   createSystemResourceVariable,
   selectContentInstance,
 } from "../flows/data-variables";
@@ -13,7 +14,6 @@ import {
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { loginWithSecret } from "../flows/dashboard";
-import { expectGeneratedAppToRender } from "../flows/generated-app";
 import { test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
@@ -59,16 +59,6 @@ const getVariableForm = (page: Page) =>
     .filter({ has: page.locator('input[name="name"]') })
     .last();
 
-const fillVariableName = async ({
-  page,
-  name,
-}: {
-  page: Page;
-  name: string;
-}) => {
-  await getVariableForm(page).locator('input[name="name"]').fill(name);
-};
-
 const getVariableIdByName = async ({
   fixture,
   name,
@@ -92,27 +82,6 @@ const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
     .getByText("New variable", { exact: true })
     .waitFor({ state: "hidden" });
   await waitForSyncStatus({ page, status: "idle" });
-};
-
-const openNewVariablePanel = async ({ page }: { page: Page }) => {
-  await page.getByRole("tab", { name: "Settings" }).click();
-  await page.getByRole("button", { name: "Add variable" }).click();
-  await page.getByText("New variable", { exact: true }).waitFor();
-};
-
-const createStringVariable = async ({
-  page,
-  name,
-  value,
-}: {
-  page: Page;
-  name: string;
-  value: string;
-}) => {
-  await openNewVariablePanel({ page });
-  await fillVariableName({ page, name });
-  await page.getByLabel("Value").last().fill(value);
-  await closeVariablePanelAndWaitForSave({ page });
 };
 
 const editStringVariable = async ({
@@ -590,11 +559,4 @@ test("Text Content can bind to a Builder-created variable and persist after relo
     });
   });
   await waitForCanvasText({ page, text: staticValue });
-
-  await measure("text content binding generated app renders", async () => {
-    await expectGeneratedAppToRender({
-      projectId: fixture.projectId,
-      expectedText: staticValue,
-    });
-  });
 });

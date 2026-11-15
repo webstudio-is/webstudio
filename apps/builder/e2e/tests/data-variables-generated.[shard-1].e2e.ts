@@ -4,6 +4,7 @@ import {
   bindSelectedTextContentToExpression,
   createGraphqlResourceVariable,
   createHttpResourceVariable,
+  createStringVariable,
   createSystemResourceVariable,
   selectContentInstance,
   startGraphqlResourceServer,
@@ -15,7 +16,7 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { test } from "../test";
 import { measure } from "../perf";
 
-test("Generated app renders Builder-created HTTP, GraphQL, and system resources", async ({
+test("Generated app renders Builder-created static, HTTP, GraphQL, and system variables", async ({
   page,
   context,
 }) => {
@@ -49,6 +50,13 @@ test("Generated app renders Builder-created HTTP, GraphQL, and system resources"
     });
     await selectContentInstance({ page });
 
+    await test.step("create static variable through Builder", async () => {
+      await createStringVariable({
+        page,
+        name: "e2eGeneratedLabel",
+        value: "Rendered from local static variable",
+      });
+    });
     await test.step("create HTTP resource through Builder", async () => {
       await createHttpResourceVariable({
         page,
@@ -82,11 +90,11 @@ test("Generated app renders Builder-created HTTP, GraphQL, and system resources"
       await selectContentInstance({ page });
     });
     const expectedYear = String(new Date().getUTCFullYear());
-    const expectedText = `Rendered from local HTTP resource | Rendered from local GraphQL resource | ${expectedYear}`;
+    const expectedText = `Rendered from local static variable | Rendered from local HTTP resource | Rendered from local GraphQL resource | ${expectedYear}`;
     await bindSelectedTextContentToExpression({
       page,
       expression:
-        'e2eGeneratedPosts.data.title + " | " + e2eGeneratedPost.data.data.post.title + " | " + e2eGeneratedCurrentDate.data.year',
+        'e2eGeneratedLabel + " | " + e2eGeneratedPosts.data.title + " | " + e2eGeneratedPost.data.data.post.title + " | " + e2eGeneratedCurrentDate.data.year',
     });
     await waitForCanvasText({
       page,
