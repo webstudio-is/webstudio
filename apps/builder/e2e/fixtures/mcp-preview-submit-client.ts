@@ -14,11 +14,6 @@ const screenshotModuleUrl = new URL(
 const { createMcpPreviewHandlers } = await import(previewModuleUrl);
 const { createScreenshotCaptureSession } = await import(screenshotModuleUrl);
 
-const browserPath = process.env.WEBSTUDIO_BROWSER_PATH;
-if (browserPath === undefined) {
-  throw new Error("Expected the Playwright Chromium executable path");
-}
-
 let url = "";
 
 const previewHandlers = createMcpPreviewHandlers({
@@ -31,15 +26,7 @@ const previewHandlers = createMcpPreviewHandlers({
     stop: async () => ({ running: false, url, mode: "iterative" as const }),
   },
   isStale: () => false,
-  createCaptureSession: () => {
-    const session = createScreenshotCaptureSession();
-    return {
-      ...session,
-      // The test runner already picked the Playwright Chromium executable.
-      submitForm: (options: object) =>
-        session.submitForm({ ...options, browserPath }),
-    };
-  },
+  createCaptureSession: createScreenshotCaptureSession,
 });
 const server = await createProjectSessionMcpServer({
   operations: [],
