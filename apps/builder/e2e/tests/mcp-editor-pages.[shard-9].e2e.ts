@@ -1,9 +1,9 @@
-import { execFile } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { openProjectBuilder } from "../flows/builder";
@@ -13,7 +13,6 @@ import { insertAuthorizationToken, loadDevBuild } from "../db";
 import { e2ePaidPlanName } from "../plans";
 import { dashboardUrl, test } from "../test";
 
-const execFileAsync = promisify(execFile);
 const cliPath = fileURLToPath(
   new URL("../../../../packages/cli/local.js", import.meta.url)
 );
@@ -47,6 +46,30 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
     viewer: viewerDirectory,
     builder: builderDirectory,
   };
+  const clients = new Map<keyof typeof directories, Client>();
+  const connect = async (cwd: string, configDirectory: string) => {
+    const client = new Client({
+      name: "mcp-editor-pages-e2e",
+      version: "1.0.0",
+    });
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: [cliPath, "mcp", "--project", fixture.projectId],
+      cwd,
+      env: {
+        ...process.env,
+        WEBSTUDIO_CONFIG_DIR: configDirectory,
+      } as Record<string, string>,
+      stderr: "inherit",
+    });
+    try {
+      await client.connect(transport);
+    } catch (error) {
+      await client.close().catch(() => undefined);
+      throw error;
+    }
+    return client;
+  };
   const call = async (
     tool: string,
     input: object,
@@ -55,28 +78,23 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
       role = "editor",
     }: { fresh?: boolean; role?: keyof typeof directories } = {}
   ) => {
-    const args = [
-      cliPath,
-      "mcp",
-      "single-op-call",
-      tool,
-      JSON.stringify(input),
-      "--project",
-      fixture.projectId,
-    ];
+    const client = fresh
+      ? await connect(freshDirectory, directories[role])
+      : (clients.get(role) ??
+        (await connect(directories[role], directories[role])));
+    if (fresh === false) {
+      clients.set(role, client);
+    }
     try {
-      const { stdout } = await execFileAsync(process.execPath, args, {
-        cwd: fresh ? freshDirectory : directories[role],
-        timeout: 60_000,
-        env: { ...process.env, WEBSTUDIO_CONFIG_DIR: directories[role] },
+      const result = await client.callTool({
+        name: tool,
+        arguments: input as Record<string, unknown>,
       });
-      return JSON.parse(stdout);
-    } catch (error) {
-      const stdout = (error as Error & { stdout?: string }).stdout;
-      if (stdout === undefined) {
-        throw error;
+      return JSON.parse(JSON.stringify(result.structuredContent));
+    } finally {
+      if (fresh) {
+        await client.close();
       }
-      return JSON.parse(stdout);
     }
   };
 
@@ -254,6 +272,7 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
     const builderPage = await call("get-page", { pageId }, { role: "builder" });
     expect(builderPage.data.meta.status).toBe("302");
   } finally {
+    await Promise.all(Array.from(clients.values(), (client) => client.close()));
     await Promise.all([
       rm(directory, { recursive: true, force: true }),
       rm(freshDirectory, { recursive: true, force: true }),

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Frame, Page } from "@playwright/test";
 import {
   getCanvasInstance,
@@ -10,18 +11,12 @@ import {
   createSlotKeyboardProject,
   type SeededSlotKeyboardProject,
 } from "../fixtures/slot-keyboard-project";
-import { test, withBrowserContext } from "../test";
+import { test } from "../test";
 import { measure } from "../perf";
 
+test.describe.configure({ mode: "parallel" });
+
 let fixture: SeededSlotKeyboardProject;
-let detachFixture: SeededSlotKeyboardProject;
-let navigatorFixture: SeededSlotKeyboardProject;
-let navigatorOutdentFixture: SeededSlotKeyboardProject;
-let topChildFixture: SeededSlotKeyboardProject;
-let bottomChildFixture: SeededSlotKeyboardProject;
-let navigatorTopChildFixture: SeededSlotKeyboardProject;
-let navigatorBottomChildFixture: SeededSlotKeyboardProject;
-let multiSelectFixture: SeededSlotKeyboardProject;
 
 const slotASelector = getCanvasInstanceSelector([
   "slot-keyboard-slot-a",
@@ -42,57 +37,12 @@ const expectCanvasInstanceVisible = async ({
   });
 };
 
-test.beforeAll(async ({ browser }) => {
-  await withBrowserContext(browser, async (context) => {
-    fixture = await createSlotKeyboardProject({ context });
-    detachFixture = await createSlotKeyboardProject({
-      context,
-      email: "slot-keyboard-detach-e2e@webstudio.test",
-      title: "Slot Keyboard Detach E2E",
-      builderToken: "slot-keyboard-detach-e2e-builder-token",
-    });
-    navigatorFixture = await createSlotKeyboardProject({
-      context,
-      email: "slot-keyboard-navigator-e2e@webstudio.test",
-      title: "Slot Keyboard Navigator E2E",
-      builderToken: "slot-keyboard-navigator-e2e-builder-token",
-    });
-    navigatorOutdentFixture = await createSlotKeyboardProject({
-      context,
-      email: "slot-keyboard-navigator-outdent-e2e@webstudio.test",
-      title: "Slot Keyboard Navigator Outdent E2E",
-      builderToken: "slot-keyboard-navigator-outdent-e2e-builder-token",
-    });
-    topChildFixture = await createSlotKeyboardProject({
-      context,
-      email: "slot-keyboard-top-child-e2e@webstudio.test",
-      title: "Slot Keyboard Top Child E2E",
-      builderToken: "slot-keyboard-top-child-e2e-builder-token",
-    });
-    bottomChildFixture = await createSlotKeyboardProject({
-      context,
-      email: "slot-keyboard-bottom-child-e2e@webstudio.test",
-      title: "Slot Keyboard Bottom Child E2E",
-      builderToken: "slot-keyboard-bottom-child-e2e-builder-token",
-    });
-    navigatorTopChildFixture = await createSlotKeyboardProject({
-      context,
-      email: "slot-keyboard-navigator-top-child-e2e@webstudio.test",
-      title: "Slot Keyboard Navigator Top Child E2E",
-      builderToken: "slot-keyboard-navigator-top-child-e2e-builder-token",
-    });
-    navigatorBottomChildFixture = await createSlotKeyboardProject({
-      context,
-      email: "slot-keyboard-navigator-bottom-child-e2e@webstudio.test",
-      title: "Slot Keyboard Navigator Bottom Child E2E",
-      builderToken: "slot-keyboard-navigator-bottom-child-e2e-builder-token",
-    });
-    multiSelectFixture = await createSlotKeyboardProject({
-      context,
-      email: "slot-keyboard-navigator-multi-select-e2e@webstudio.test",
-      title: "Slot Keyboard Multi Select E2E",
-      builderToken: "slot-keyboard-navigator-multi-select-e2e-builder-token",
-    });
+test.beforeEach(async ({ context }) => {
+  const id = randomUUID();
+  fixture = await createSlotKeyboardProject({
+    context,
+    email: `slot-keyboard-${id}@webstudio.test`,
+    builderToken: `slot-keyboard-${id}-builder-token`,
   });
 });
 
@@ -238,8 +188,8 @@ test("Keyboard shortcut keeps Navigator arrows working after outdenting a row", 
     async () => {
       return await openProjectBuilder({
         page,
-        projectId: navigatorOutdentFixture.projectId,
-        authToken: navigatorOutdentFixture.builderToken,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
     }
   );
@@ -288,8 +238,8 @@ test("Shift+ArrowDown in Navigator selects exactly one additional row", async ({
     async () => {
       return await openProjectBuilder({
         page,
-        projectId: multiSelectFixture.projectId,
-        authToken: multiSelectFixture.builderToken,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
     }
   );
@@ -334,8 +284,8 @@ test("Control/Command+A after canvas selection selects sibling rows", async ({
     async () => {
       return await openProjectBuilder({
         page,
-        projectId: multiSelectFixture.projectId,
-        authToken: multiSelectFixture.builderToken,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
     }
   );
@@ -376,8 +326,8 @@ test("Keyboard shortcut moves a direct shared slot child out of all slot occurre
     async () => {
       return await openProjectBuilder({
         page,
-        projectId: detachFixture.projectId,
-        authToken: detachFixture.builderToken,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
     }
   );
@@ -434,8 +384,8 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
     async () => {
       return await openProjectBuilder({
         page,
-        projectId: navigatorTopChildFixture.projectId,
-        authToken: navigatorTopChildFixture.builderToken,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
     }
   );
@@ -509,8 +459,8 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
     async () => {
       return await openProjectBuilder({
         page,
-        projectId: navigatorBottomChildFixture.projectId,
-        authToken: navigatorBottomChildFixture.builderToken,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
     }
   );
@@ -584,8 +534,8 @@ test("Keyboard shortcut reorders a shared slot child from navigator focus", asyn
     async () => {
       return await openProjectBuilder({
         page,
-        projectId: navigatorFixture.projectId,
-        authToken: navigatorFixture.builderToken,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
     }
   );
@@ -648,8 +598,8 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
     async () => {
       return await openProjectBuilder({
         page,
-        projectId: topChildFixture.projectId,
-        authToken: topChildFixture.builderToken,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
     }
   );
@@ -721,8 +671,8 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
     async () => {
       return await openProjectBuilder({
         page,
-        projectId: bottomChildFixture.projectId,
-        authToken: bottomChildFixture.builderToken,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
     }
   );

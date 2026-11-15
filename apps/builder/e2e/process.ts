@@ -72,3 +72,31 @@ export const stopChildProcess = async (
     );
   }
 };
+
+export const closeChildProcessInput = async (
+  child: ChildProcess,
+  timeoutMs = 5_000
+) => {
+  if (hasExited(child)) {
+    return;
+  }
+  const stdin = child.stdin;
+  if (stdin === null) {
+    throw new Error("Child process stdin is unavailable");
+  }
+  const closed = new Promise<boolean>((resolve) => {
+    const onClose = () => {
+      clearTimeout(timer);
+      resolve(true);
+    };
+    const timer = setTimeout(() => {
+      child.off("close", onClose);
+      resolve(false);
+    }, timeoutMs);
+    child.once("close", onClose);
+  });
+  stdin.end();
+  if ((await closed) === false) {
+    await stopChildProcess(child, { timeoutMs: 1_000 });
+  }
+};

@@ -33,6 +33,21 @@ runs:
           ~/.cache/ms-playwright/ffmpeg-*
         key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
+    - name: Wait for Builder E2E build
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        for attempt in {1..84}; do
+          count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=builder-e2e-build" --jq '.total_count')
+          if [ "$count" -gt 0 ]; then
+            exit 0
+          fi
+          sleep 5
+        done
+        echo "Builder E2E build artifact was not uploaded within 7 minutes" >&2
+        exit 1
+
     - name: Download Builder E2E build
       uses: actions/download-artifact@v7
       with:
@@ -45,11 +60,16 @@ runs:
         E2E_TEST_SHARD: ${{ inputs.shard }}
         E2E_TEST_PARTITION: ${{ inputs.partition }}
       run: |
-        args=(--workers=2)
+        workers=3
+        if [ "$E2E_TEST_SHARD" = "shard-5" ]; then
+          workers=2
+        fi
+        args=(--workers="$workers")
         if [ -n "$E2E_TEST_PARTITION" ]; then
           args+=(--shard="$E2E_TEST_PARTITION")
         fi
-        pnpm --filter @webstudio-is/builder e2e:ci:shard -- "${args[@]}"
+        bash apps/builder/e2e/measure-resources.sh \
+          pnpm --filter @webstudio-is/builder e2e:ci:shard -- "${args[@]}"
 
     - name: Upload report
       if: failure()

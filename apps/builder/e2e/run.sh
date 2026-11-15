@@ -137,13 +137,15 @@ install_playwright_chromium() {
 
 build_e2e_apps() {
   pnpm --dir "$ROOT_DIR" e2e:builder:build
+  pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/sdk-components-react-router build
 }
 
 verify_e2e_apps_built() {
   local builder_server="$ROOT_DIR/apps/builder/build/server"
   local builder_assets="$ROOT_DIR/apps/builder/build/client/assets"
+  local router_components="$ROOT_DIR/packages/sdk-components-react-router/lib/components.js"
 
-  if [ ! -d "$builder_server" ] || [ ! -d "$builder_assets" ]; then
+  if [ ! -d "$builder_server" ] || [ ! -d "$builder_assets" ] || [ ! -f "$router_components" ]; then
     echo "E2E_SKIP_BUILDER_BUILD requires prebuilt Builder artifacts" >&2
     return 1
   fi

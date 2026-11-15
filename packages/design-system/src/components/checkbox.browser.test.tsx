@@ -1,3 +1,4 @@
+import { page } from "@vitest/browser/context";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test } from "vitest";
@@ -51,4 +52,29 @@ test("consent checkboxes keep their size beside wrapped labels", () => {
     expect({ width, height }).toEqual({ width: 14, height: 14 });
     expect(top).toBe(rowTop);
   }
+});
+
+test("checkbox keeps its size on hover", async () => {
+  const container = document.createElement("div");
+  container.style.padding = "20px";
+  document.body.append(container);
+  root = createRoot(container);
+
+  act(() => {
+    root?.render(<Checkbox aria-label="Selection" />);
+  });
+
+  const checkbox = container.querySelector<HTMLButtonElement>("button")!;
+  const restRect = checkbox.getBoundingClientRect();
+  expect({ width: restRect.width, height: restRect.height }).toEqual({
+    width: 14,
+    height: 14,
+  });
+
+  await page.elementLocator(checkbox).hover();
+  const hoverRect = checkbox.getBoundingClientRect();
+  expect({ width: hoverRect.width, height: hoverRect.height }).toEqual({
+    width: restRect.width,
+    height: restRect.height,
+  });
 });

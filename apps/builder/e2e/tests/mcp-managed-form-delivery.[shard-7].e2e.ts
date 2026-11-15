@@ -19,6 +19,8 @@ const reactGlobalPath = fileURLToPath(
   new URL("../../../../scripts/register-react-global.ts", import.meta.url)
 );
 
+test.describe.configure({ mode: "parallel" });
+
 test("MCP-authored Form uses query navigation when no Actions are connected", async ({
   page,
   context,

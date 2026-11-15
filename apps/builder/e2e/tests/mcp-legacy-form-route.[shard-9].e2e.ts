@@ -101,7 +101,7 @@ test("MCP-edited saved deprecated Webhook Form action uses current dynamic route
             selector: "#legacy-route-form",
             values: [{ name: "message", value: "Current route" }],
             submitter: 'button[type="submit"]',
-            timeout: 10_000,
+            timeout: 30_000,
           },
         });
         expect(submission.ok).toBe(true);

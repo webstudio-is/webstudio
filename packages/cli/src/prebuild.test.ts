@@ -2965,6 +2965,102 @@ sitemap.map((page) => page.path);`
     await expectGeneratedRedirectFallback("app/routes/$.tsx");
   });
 
+  test("omits the default canonical from a 404 response", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "post",
+            name: "Post",
+            title: "Post",
+            path: "/blog/:slug",
+            rootInstanceId: "root",
+            meta: { status: "404" },
+          },
+          {
+            id: "not-found",
+            name: "Not found",
+            title: "Not found",
+            path: "/*",
+            rootInstanceId: "root",
+            meta: { status: "404" },
+          },
+        ],
+      })
+    );
+    await prebuild({ assets: false, template: ["defaults"] });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    const viteConfig = await readFile("vite.config.ts", "utf8");
+    await writeFile(
+      "vite.config.ts",
+      viteConfig
+        .replaceAll(
+          'conditions: ["browser", "development|production"]',
+          'conditions: ["webstudio", "browser", "development|production"]'
+        )
+        .replaceAll(
+          'conditions: ["node", "development|production"]',
+          'conditions: ["webstudio", "node", "development|production"]'
+        )
+    );
+    await runGeneratedCommand("remix", ["vite:build"]);
+
+    const serverEntry = pathToFileURL(
+      join(tempDir, "build/server/index.js")
+    ).href;
+    const runner = `
+      import { createRequestHandler } from "@remix-run/server-runtime";
+      const serverBuild = await import(${JSON.stringify(serverEntry)});
+      const handleRequest = createRequestHandler(serverBuild, "production");
+      const responses = [];
+      for (const path of ["/", "/blog/missing", "/missing"]) {
+        const response = await handleRequest(new Request(
+          new URL(path, "https://example.com"),
+          { headers: { host: "example.com" } }
+        ));
+        responses.push({ status: response.status, html: await response.text() });
+      }
+      process.stdout.write(JSON.stringify(responses));
+    `;
+    const { stdout } = await execFileAsync(
+      process.execPath,
+      [
+        "--import",
+        pathToFileURL(
+          join(originalCwd, "../../node_modules/tsx/dist/loader.mjs")
+        ).href,
+        "--input-type=module",
+        "-e",
+        runner,
+      ],
+      {
+        cwd: tempDir,
+        env: { ...process.env, NODE_OPTIONS: "--conditions=webstudio" },
+      }
+    );
+    const responses = JSON.parse(stdout) as {
+      status: number;
+      html: string;
+    }[];
+    const canonicals = responses.map(({ html }) =>
+      findElementsByTagName(parseHtml(html), "link").filter((link) =>
+        link.attrs.some(
+          ({ name, value }) => name === "rel" && value === "canonical"
+        )
+      )
+    );
+    expect(responses.map(({ status }) => status)).toEqual([200, 404, 404]);
+    expect(canonicals.map((links) => links.length)).toEqual([1, 0, 0]);
+  }, 60_000);
+
   test("builds a generated dynamic route with the packaged React Router SDK", async () => {
     await writeSiteData(
       createSiteData({

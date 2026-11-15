@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import type { ChildProcess } from "node:child_process";
 import { expect, test, vi } from "vitest";
-import { stopChildProcess } from "./process";
+import { closeChildProcessInput, stopChildProcess } from "./process";
 
 const createChild = () => {
   const child = new EventEmitter() as ChildProcess;
@@ -27,6 +27,41 @@ test("stops a child gracefully without escalating", async () => {
   await stopChildProcess(child, { timeoutMs: 1 });
 
   expect(child.kill).toHaveBeenCalledTimes(1);
+  expect(child.kill).toHaveBeenCalledWith("SIGTERM");
+});
+
+test("closes child input and waits for cleanup", async () => {
+  const child = createChild();
+  const end = vi.fn(() => {
+    queueMicrotask(() => {
+      Object.defineProperty(child, "exitCode", { value: 0, writable: true });
+      child.emit("close", 0, null);
+    });
+  });
+  Object.defineProperty(child, "stdin", { value: { end } });
+
+  await closeChildProcessInput(child, 10);
+
+  expect(end).toHaveBeenCalledOnce();
+  expect(child.kill).not.toHaveBeenCalled();
+});
+
+test("forces a child to stop if closing input stalls", async () => {
+  const child = createChild();
+  const end = vi.fn();
+  Object.defineProperty(child, "stdin", { value: { end } });
+  vi.mocked(child.kill).mockImplementation((signal) => {
+    Object.defineProperty(child, "signalCode", {
+      value: signal,
+      writable: true,
+    });
+    child.emit("close", null, signal);
+    return true;
+  });
+
+  await closeChildProcessInput(child, 1);
+
+  expect(end).toHaveBeenCalledOnce();
   expect(child.kill).toHaveBeenCalledWith("SIGTERM");
 });
 

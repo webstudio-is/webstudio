@@ -412,7 +412,7 @@ const Outlet = () => {
         assetBaseUrl={constants.assetBaseUrl}
       />
       <PageSettingsTitle>{pageMeta.title}</PageSettingsTitle>
-      <PageSettingsCanonicalLink href={url} />
+      {pageMeta.status !== 404 && <PageSettingsCanonicalLink href={url} />}
     </ReactSdkContext.Provider>
   );
 };
