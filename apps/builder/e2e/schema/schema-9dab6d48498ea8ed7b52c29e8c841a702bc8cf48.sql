@@ -2,10 +2,8 @@
 -- PostgreSQL database dump
 --
 
-\restrict webstudioE2ESchema
-
--- Dumped from database version 15.19 (Debian 15.19-1.pgdg12+2)
--- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg12+2)
+-- Dumped from database version 15.8
+-- Dumped by pg_dump version 15.8
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -120,6 +118,7 @@ DROP TABLE IF EXISTS public."domainsVirtual";
 DROP FUNCTION IF EXISTS public.delete_stale_asset_file_metadata(p_project_id text, p_asset_ids text[]);
 DROP FUNCTION IF EXISTS public.delete_asset_file_metadata_if_matches(p_project_id text, p_asset_id text, p_revision text, p_document jsonb);
 DROP FUNCTION IF EXISTS public.database_cleanup(from_date timestamp without time zone, to_date timestamp without time zone);
+DROP FUNCTION IF EXISTS public.create_production_build_expected(project_id text, deployment text, expected_version integer);
 DROP FUNCTION IF EXISTS public.create_production_build(project_id text, deployment text);
 DROP FUNCTION IF EXISTS public.clone_project(project_id text, user_id text, title text, domain text);
 DROP TABLE IF EXISTS public."Project";
@@ -355,6 +354,38 @@ BEGIN
     create_production_build.deployment
   FROM "Build"
   WHERE "projectId" = project_id AND "Build".deployment IS NULL
+  RETURNING id INTO new_build_id;
+
+  RETURN new_build_id;
+END;
+$$;
+
+
+--
+-- Name: create_production_build_expected(text, text, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.create_production_build_expected(project_id text, deployment text, expected_version integer) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  new_build_id text;
+BEGIN
+  INSERT INTO "Build" (
+    version, "lastTransactionId", pages, breakpoints, styles, "styleSources",
+    "styleSourceSelections", props, "dataSources", resources, instances,
+    "marketplaceProduct", "projectSettings", "publishStatus", "projectId", id,
+    deployment
+  )
+  SELECT
+    version, "lastTransactionId", pages, breakpoints, styles, "styleSources",
+    "styleSourceSelections", props, "dataSources", resources, instances,
+    "marketplaceProduct", "projectSettings", "publishStatus", "projectId",
+    extensions.uuid_generate_v4(), create_production_build_expected.deployment
+  FROM "Build"
+  WHERE "projectId" = project_id
+    AND "Build".deployment IS NULL
+    AND version = expected_version
   RETURNING id INTO new_build_id;
 
   RETURN new_build_id;
@@ -1876,6 +1907,4 @@ ALTER TABLE ONLY public."latestBuildVirtual"
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict webstudioE2ESchema
 
