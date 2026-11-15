@@ -18,7 +18,9 @@ export const dragPointer = async ({
   page: Page;
   source: Locator;
   target: Locator;
-  targetPoint?: (bounds: Bounds) => { x: number; y: number };
+  targetPoint?: (
+    bounds: Bounds
+  ) => Promise<{ x: number; y: number }> | { x: number; y: number };
   ready: () => Promise<boolean>;
   attempts?: number;
   beforeAttempt?: () => Promise<void>;
@@ -45,7 +47,7 @@ export const dragPointer = async ({
         if (before === null) {
           throw new Error("Expected visible drag target");
         }
-        const to = targetPoint(before);
+        const to = await targetPoint(before);
         jiggle = jiggle === 0 ? 1 : 0;
         await page.mouse.move(to.x + jiggle, to.y, { steps: 3 });
         await page.waitForTimeout(120);
@@ -90,10 +92,17 @@ export const dragTreeRow = async (
       page,
       source,
       target,
-      targetPoint: ({ x, y, width, height }) => ({
-        x: x + width / 2,
-        y: y + height * (position === "above" ? 0.1 : 0.5),
-      }),
+      targetPoint: async (bounds) => {
+        const button = await target
+          .locator("[data-tree-button]")
+          .first()
+          .boundingBox();
+        const { x, y, width, height } = button ?? bounds;
+        return {
+          x: x + width / 2,
+          y: y + height * (position === "above" ? 0.1 : 0.5),
+        };
+      },
       ready: async () =>
         (await target.getAttribute("data-is-drop-over")) === "true" &&
         (position === "inside" ||

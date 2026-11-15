@@ -68,7 +68,8 @@ runs:
         if [ -n "$E2E_TEST_PARTITION" ]; then
           args+=(--shard="$E2E_TEST_PARTITION")
         fi
-        pnpm --filter @webstudio-is/builder e2e:ci:shard -- "${args[@]}"
+        bash apps/builder/e2e/measure-resources.sh \
+          pnpm --filter @webstudio-is/builder e2e:ci:shard -- "${args[@]}"
 
     - name: Upload report
       if: failure()

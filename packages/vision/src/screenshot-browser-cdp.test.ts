@@ -954,6 +954,7 @@ const createManagedFormSocket = ({
   bodyDelay = 0,
   unreadable = false,
   navigationGap = false,
+  fastRedirect = false,
   unrelated,
 }: {
   body?: string;
@@ -961,6 +962,7 @@ const createManagedFormSocket = ({
   bodyDelay?: number;
   unreadable?: boolean;
   navigationGap?: boolean | "stalled";
+  fastRedirect?: boolean;
   unrelated?: { method: string; url: string; frameId: string };
 } = {}) => {
   const url = "http://127.0.0.1:5173/contact";
@@ -974,6 +976,8 @@ const createManagedFormSocket = ({
     reads: [] as string[],
     lateReads: 0,
     gaps: 0,
+    interceptedReads: 0,
+    continuedResponses: 0,
   };
   const emit = (method: string, params: unknown) =>
     socket.emit("message", { data: JSON.stringify({ method, params }) });
@@ -1001,6 +1005,31 @@ const createManagedFormSocket = ({
           }),
         bodyDelay
       );
+      return;
+    }
+    if (message.method === "Fetch.getResponseBody") {
+      counters.interceptedReads += 1;
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              result: { body, base64Encoded },
+            }),
+          }),
+        0
+      );
+      return;
+    }
+    if (message.method === "Fetch.continueResponse") {
+      counters.continuedResponses += 1;
+      send(data);
+      setTimeout(() => {
+        navigated = true;
+        emit("Page.frameNavigated", {
+          frame: { id: "main", url: "http://127.0.0.1:5173/thanks" },
+        });
+      }, 0);
       return;
     }
     if (
@@ -1076,11 +1105,22 @@ const createManagedFormSocket = ({
           });
           emit("Network.loadingFinished", { requestId: "unrelated" });
         }
-        emit("Network.loadingFinished", { requestId: "managed" });
-        navigated = true;
-        emit("Page.frameNavigated", {
-          frame: { id: "main", url: "http://127.0.0.1:5173/thanks" },
-        });
+        if (fastRedirect) {
+          emit("Fetch.requestPaused", {
+            requestId: "intercepted-managed",
+            responseStatusCode: 200,
+            request: {
+              method: "POST",
+              url: "http://127.0.0.1:5173/__ws-form/contact",
+            },
+          });
+        } else {
+          emit("Network.loadingFinished", { requestId: "managed" });
+          navigated = true;
+          emit("Page.frameNavigated", {
+            frame: { id: "main", url: "http://127.0.0.1:5173/thanks" },
+          });
+        }
       }, 5);
     }
   };
@@ -1141,6 +1181,31 @@ test.each([false, true])(
     }
   }
 );
+
+test("captures managed Form results before a fast redirect discards the network body", async () => {
+  const { socket, counters } = createManagedFormSocket({ fastRedirect: true });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result).toMatchObject({
+      status: "submitted",
+      results: [{ status: 201, resourceId: "action" }],
+    });
+    expect(counters).toMatchObject({
+      submissions: 1,
+      interceptedReads: 1,
+      continuedResponses: 1,
+      reads: [],
+    });
+  } finally {
+    await session.close();
+  }
+});
 
 test("continues observing across a navigation execution-context gap without replaying the Form", async () => {
   const { socket, counters } = createManagedFormSocket({ navigationGap: true });
