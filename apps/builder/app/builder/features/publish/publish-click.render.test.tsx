@@ -1,5 +1,4 @@
 import { act } from "react-dom/test-utils";
-import { userEvent } from "@vitest/browser/context";
 import { createRoot, type Root } from "react-dom/client";
 import {
   afterAll,
@@ -22,7 +21,6 @@ const originalScrollIntoView = Object.getOwnPropertyDescriptor(
 );
 
 let root: Root | undefined;
-let resetStores: (() => void) | undefined;
 let publishModule: typeof import("./publish");
 let stores: typeof import("~/shared/sync/data-stores");
 let nanoStates: typeof import("~/shared/nano-states");
@@ -31,7 +29,6 @@ const requests: Array<{ path: string; input: unknown }> = [];
 let publishResponse: unknown = { success: false, error: "Publish blocked" };
 let jobStatus: "failed" | "success" = "failed";
 let didPublish = false;
-const logCursors: Array<number | undefined> = [];
 let interceptor: ReturnType<typeof createTrpcInterceptor>;
 
 beforeAll(async () => {
@@ -48,31 +45,6 @@ beforeAll(async () => {
       },
       "api.publish.getJob": () => {
         return { status: jobStatus, code: "BUILD_FAILED" };
-      },
-      "api.publish.getLog": (input) => {
-        const cursor = (input as { cursor?: number }).cursor;
-        logCursors.push(cursor);
-        return {
-          availability: "available",
-          startedAt: "2026-11-13T10:00:00.000Z",
-          completedAt: "2026-11-13T10:00:03.000Z",
-          log: {
-            encoding: "base64url",
-            chunk: btoa(
-              String.fromCharCode(
-                ...(cursor === undefined ? [0xe2] : [0x82, 0xac])
-              )
-            ),
-            complete: cursor !== undefined,
-            nextCursor: cursor === undefined ? 1 : undefined,
-            issues: [
-              {
-                severity: cursor === undefined ? "warning" : "error",
-                message: cursor === undefined ? "Early warning" : "Late error",
-              },
-            ],
-          },
-        };
       },
       "domain.project": () => {
         return {
@@ -118,21 +90,13 @@ beforeEach(() => {
   requests.length = 0;
   jobStatus = "failed";
   didPublish = false;
-  logCursors.length = 0;
   nanoStates.$planFeatures.set({
     ...nanoStates.$planFeatures.get(),
     allowPublishLogs: false,
   });
 });
 
-test("a successful site runner finishes the current publish and retains its report", async () => {
-  jobStatus = "success";
-  publishResponse = {
-    success: true,
-    buildId: "build-1",
-    logHandle: "log-handle",
-    findings: [],
-  };
+const mount = async (dialog: "publish" | "export" = "publish") => {
   stores.$project.set({
     id: "project-1",
     domain: "example",
@@ -144,11 +108,7 @@ test("a successful site runner finishes the current publish and retains its repo
     canCopy: true,
     canPublish: true,
   });
-  builderStates.$publishDialog.set("publish");
-  resetStores = () => {
-    stores.$project.set(undefined);
-    builderStates.$publishDialog.set("none");
-  };
+  builderStates.$publishDialog.set(dialog);
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -159,6 +119,17 @@ test("a successful site runner finishes the current publish and retains its repo
       </TooltipProvider>
     )
   );
+};
+
+test("a successful site runner finishes the current publish and retains its report", async () => {
+  jobStatus = "success";
+  publishResponse = {
+    success: true,
+    buildId: "build-1",
+    logHandle: "log-handle",
+    findings: [],
+  };
+  await mount();
   const domain = document.body.querySelector<HTMLInputElement>(
     'input[name="domainToPublish[]"]'
   )!;
@@ -167,6 +138,7 @@ test("a successful site runner finishes the current publish and retains its repo
       document.body.querySelector<HTMLElement>('[role="checkbox"]')?.click()
     );
   }
+
   const publish = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
   )
@@ -205,101 +177,21 @@ test("a successful site runner finishes the current publish and retains its repo
 afterEach(() => {
   act(() => {
     root?.unmount();
-    resetStores?.();
+    stores.$project.set(undefined);
+    builderStates.$publishDialog.set("none");
   });
   root = undefined;
-  resetStores = undefined;
   document.body.innerHTML = "";
+  nanoStates.$authTokenPermissions.set({
+    canClone: true,
+    canCopy: true,
+    canPublish: false,
+  });
   nanoStates.$planFeatures.set({
     ...nanoStates.$planFeatures.get(),
     allowPublishLogs: false,
   });
   vi.restoreAllMocks();
-});
-
-test("a paid publish loads every log page and hides it after downgrade", async () => {
-  jobStatus = "success";
-  publishResponse = {
-    success: true,
-    buildId: "build-1",
-    logHandle: "log-handle",
-    findings: [],
-  };
-  stores.$project.set({
-    id: "project-1",
-    domain: "example",
-    domainsVirtual: [],
-    latestStaticBuild: null,
-  } as unknown as Project);
-  nanoStates.$authTokenPermissions.set({
-    canClone: true,
-    canCopy: true,
-    canPublish: true,
-  });
-  nanoStates.$planFeatures.set({
-    ...nanoStates.$planFeatures.get(),
-    allowPublishLogs: true,
-  });
-  builderStates.$publishDialog.set("publish");
-  resetStores = () => {
-    stores.$project.set(undefined);
-    builderStates.$publishDialog.set("none");
-  };
-  const container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  await act(async () =>
-    root?.render(
-      <TooltipProvider>
-        <publishModule.PublishButton projectId="project-1" />
-      </TooltipProvider>
-    )
-  );
-  const domain = document.body.querySelector<HTMLInputElement>(
-    'input[name="domainToPublish[]"]'
-  )!;
-  if (!domain.checked) {
-    await act(async () =>
-      document.body.querySelector<HTMLElement>('[role="checkbox"]')?.click()
-    );
-  }
-  const publish = Array.from(
-    document.body.querySelectorAll<HTMLButtonElement>("button")
-  )
-    .filter((button) => button.textContent === "Publish")
-    .at(-1)!;
-  await act(async () => publish.click());
-  await act(async () =>
-    vi.waitFor(() => expect(logCursors).toEqual([undefined, 1]))
-  );
-  const report = document.body.querySelector<HTMLButtonElement>(
-    'button[aria-label^="Publish log:"]'
-  )!;
-  await act(async () => report.click());
-  expect(document.body.textContent).toContain("€");
-  const selectTab = async (name: string) => {
-    const tab = Array.from(
-      document.body.querySelectorAll<HTMLElement>('[role="tab"]')
-    ).find((candidate) => candidate.textContent?.startsWith(name));
-    expect(tab).toBeDefined();
-    await act(async () => userEvent.click(tab!));
-  };
-  await selectTab("Errors");
-  expect(document.body.textContent).toContain("Late error");
-  await selectTab("Warnings");
-  expect(document.body.textContent).toContain("Early warning");
-  await selectTab("Publish");
-
-  await act(async () =>
-    nanoStates.$planFeatures.set({
-      ...nanoStates.$planFeatures.get(),
-      allowPublishLogs: false,
-    })
-  );
-  expect(document.body.textContent).not.toContain("€");
-  expect(document.body.textContent).toContain(
-    "Upgrade to Pro to view publish logs."
-  );
 });
 
 afterAll(() => {
@@ -318,38 +210,7 @@ afterAll(() => {
 });
 
 test("static export reaches the server without waiting for diagnostics", async () => {
-  requests.length = 0;
-  stores.$project.set({
-    id: "project-1",
-    domain: "example",
-    domainsVirtual: [],
-    latestStaticBuild: null,
-  } as unknown as Project);
-  nanoStates.$authTokenPermissions.set({
-    canClone: true,
-    canCopy: true,
-    canPublish: true,
-  });
-  builderStates.$publishDialog.set("export");
-  resetStores = () => {
-    stores.$project.set(undefined);
-    nanoStates.$authTokenPermissions.set({
-      canClone: true,
-      canCopy: true,
-      canPublish: false,
-    });
-    builderStates.$publishDialog.set("none");
-  };
-  const container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  await act(async () => {
-    root?.render(
-      <TooltipProvider>
-        <publishModule.PublishButton projectId="project-1" />
-      </TooltipProvider>
-    );
-  });
+  await mount("export");
 
   const destination = document.body.querySelector<HTMLButtonElement>(
     'button[role="combobox"]'
@@ -400,32 +261,7 @@ test("static export reaches the server without waiting for diagnostics", async (
 }, 10_000);
 
 test("keeps Diagnostics visible but disabled before there is anything to show", async () => {
-  stores.$project.set({
-    id: "project-1",
-    domain: "example",
-    domainsVirtual: [],
-    latestStaticBuild: null,
-  } as unknown as Project);
-  nanoStates.$authTokenPermissions.set({
-    canClone: true,
-    canCopy: true,
-    canPublish: true,
-  });
-  builderStates.$publishDialog.set("publish");
-  resetStores = () => {
-    stores.$project.set(undefined);
-    builderStates.$publishDialog.set("none");
-  };
-  const container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  await act(async () => {
-    root?.render(
-      <TooltipProvider>
-        <publishModule.PublishButton projectId="project-1" />
-      </TooltipProvider>
-    );
-  });
+  await mount();
   const options = document.body.querySelector<HTMLButtonElement>(
     'button[aria-label="Publish options"]'
   );
@@ -461,32 +297,7 @@ test.each([
         findings: [],
       };
     }
-    stores.$project.set({
-      id: "project-1",
-      domain: "example",
-      domainsVirtual: [],
-      latestStaticBuild: null,
-    } as unknown as Project);
-    nanoStates.$authTokenPermissions.set({
-      canClone: true,
-      canCopy: true,
-      canPublish: true,
-    });
-    builderStates.$publishDialog.set("publish");
-    resetStores = () => {
-      stores.$project.set(undefined);
-      builderStates.$publishDialog.set("none");
-    };
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    root = createRoot(container);
-    await act(async () => {
-      root?.render(
-        <TooltipProvider>
-          <publishModule.PublishButton projectId="project-1" />
-        </TooltipProvider>
-      );
-    });
+    await mount();
 
     const domain = document.body.querySelector<HTMLInputElement>(
       'input[name="domainToPublish[]"]'

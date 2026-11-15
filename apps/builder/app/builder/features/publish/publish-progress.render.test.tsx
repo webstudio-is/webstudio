@@ -13,7 +13,11 @@ import {
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
-import { createTrpcInterceptor, deferred } from "./publish-test-utils";
+import {
+  createTrpcInterceptor,
+  deferred,
+  selectTab,
+} from "./publish-test-utils";
 
 const reactEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
 const originalActEnvironment = reactEnvironment.IS_REACT_ACT_ENVIRONMENT;
@@ -231,6 +235,7 @@ const toggle = async (value: "publish" | "none" | "export") => {
     }
   }
 };
+
 const waitFor = async (check: () => void) => {
   await vi.waitFor(async () => {
     await act(async () => {});
@@ -249,11 +254,7 @@ const openReport = async (tab: "Errors" | "Warnings") => {
   await waitFor(() =>
     expect(document.body.querySelector('[role="tablist"]')).not.toBeNull()
   );
-  const target = Array.from(
-    document.body.querySelectorAll<HTMLElement>('[role="tab"]')
-  ).find((item) => item.textContent?.startsWith(tab));
-  expect(target).toBeDefined();
-  await act(async () => userEvent.click(target!));
+  await selectTab(tab);
   const report = document.body.querySelector(
     '[role="tabpanel"][data-state="active"]'
   );

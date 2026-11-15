@@ -1,4 +1,15 @@
 import { FetchInterceptor } from "@mswjs/interceptors/fetch";
+import { userEvent } from "@vitest/browser/context";
+import { act } from "react-dom/test-utils";
+import { expect } from "vitest";
+
+export const selectTab = async (name: string) => {
+  const tab = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="tab"]')
+  ).find((candidate) => candidate.textContent?.startsWith(name));
+  expect(tab).toBeDefined();
+  await act(async () => userEvent.click(tab!));
+};
 
 export const deferred = <T>() => {
   let resolve!: (value: T) => void;

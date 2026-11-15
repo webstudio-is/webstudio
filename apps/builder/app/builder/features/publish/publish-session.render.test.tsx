@@ -1,6 +1,5 @@
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
-import { userEvent } from "@vitest/browser/context";
 import {
   afterAll,
   afterEach,
@@ -12,7 +11,11 @@ import {
 } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { createTrpcInterceptor, deferred } from "./publish-test-utils";
+import {
+  createTrpcInterceptor,
+  deferred,
+  selectTab,
+} from "./publish-test-utils";
 
 const encoded = (bytes: number[]) => btoa(String.fromCharCode(...bytes));
 const logRequests: Array<{
@@ -248,6 +251,7 @@ const panel = () =>
   document.body.querySelector<HTMLElement>(
     '[role="tabpanel"][data-state="active"]'
   )!;
+
 const waitFor = async (assertion: () => void) => {
   await vi.waitFor(async () => {
     await act(async () => {});
@@ -305,10 +309,7 @@ test("Free does not fetch logs; upgrading reads UTF-8 from byte zero and preserv
     ["Errors", "Late error"],
     ["Warnings", "Early warning"],
   ]) {
-    const tab = Array.from(
-      document.body.querySelectorAll<HTMLElement>('[role="tab"]')
-    ).find((candidate) => candidate.textContent?.startsWith(name))!;
-    await act(async () => userEvent.click(tab));
+    await selectTab(name);
     expect(panel().textContent).toContain(message);
     // Issue truncation is returned by the runner, not inferred from visible issues.
     expect(panel().textContent).toContain("1 more issues not shown.");

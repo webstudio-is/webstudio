@@ -14,7 +14,11 @@ import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import type { Project } from "@webstudio-is/project";
 import type { Pages } from "@webstudio-is/sdk";
-import { createTrpcInterceptor, deferred } from "./publish-test-utils";
+import {
+  createTrpcInterceptor,
+  deferred,
+  selectTab,
+} from "./publish-test-utils";
 
 let checks = deferred<unknown>();
 let dispatch = deferred<unknown>();
@@ -260,9 +264,7 @@ const openErrors = async (target: "site" | "static") => {
       document.body.querySelectorAll<HTMLElement>('[role="tab"]')
     ).find((tab) => tab.textContent?.startsWith("Errors"));
   await act(async () => vi.waitFor(() => expect(findErrors()).toBeDefined()));
-  const errors = findErrors();
-  expect(errors).toBeDefined();
-  await act(async () => userEvent.click(errors!));
+  await selectTab("Errors");
   return document.body.querySelector<HTMLElement>(
     '[role="tabpanel"][data-state="active"]'
   );
