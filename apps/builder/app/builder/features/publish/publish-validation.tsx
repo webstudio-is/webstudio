@@ -26,7 +26,7 @@ import { flushExternalContentProject } from "~/shared/external-content-roots";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import { getContentDatabasePublishFindings } from "./content-database-publish-warning";
 import { getPublishValidationErrorMessage } from "./publish-error";
-import type { PublishValidationFinding } from "./diagnostics";
+import type { DiagnosticFinding } from "./diagnostics";
 
 const getPrePublishInstanceTarget = (
   instanceId: string,
@@ -92,7 +92,7 @@ const PrePublishInstanceLink = ({
   );
 };
 
-const getPrePublishAuditFindings = (): PublishValidationFinding[] => {
+const getPrePublishAuditFindings = (): DiagnosticFinding[] => {
   const findings = runPrePublishAudit({
     pages: $pages.get(),
     instances: $instances.get(),
@@ -198,7 +198,7 @@ export const runPublishValidation = async (
 
 export const reportPublishValidationFailure = (
   error: unknown,
-  setFindings: (findings: PublishValidationFinding[]) => void,
+  setFindings: (findings: DiagnosticFinding[]) => void,
   {
     publishingContinues = false,
     showToast = true,
@@ -246,7 +246,7 @@ export const getServerPublishFindings = (
     severity: "error" | "warning" | "info";
     message: string;
   }[]
-): PublishValidationFinding[] =>
+): DiagnosticFinding[] =>
   findings.flatMap((finding) =>
     finding.severity === "info"
       ? []

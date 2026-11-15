@@ -1,7 +1,7 @@
 import { Flex, Text } from "@webstudio-is/design-system";
 import type { nativeClient } from "~/shared/trpc/trpc-client";
 import { ContentDatabasePublishWarning } from "./content-database-publish-warning-view";
-import type { PublishValidationFinding } from "./diagnostics";
+import type { DiagnosticFinding } from "./diagnostics";
 
 type ContentDatabasePublishDiagnostics = Awaited<
   ReturnType<typeof nativeClient.build.contentDatabasePublishDiagnostics.query>
@@ -28,7 +28,7 @@ const invalidMdxFixes = {
 export const getContentDatabasePublishFindings = (
   diagnostics: ContentDatabasePublishDiagnostics
 ) => {
-  const findings: PublishValidationFinding[] = diagnostics.mdxErrors.map(
+  const findings: DiagnosticFinding[] = diagnostics.mdxErrors.map(
     ({ filename, diagnostic }) => {
       const start =
         "sourceRange" in diagnostic ? diagnostic.sourceRange?.start : undefined;

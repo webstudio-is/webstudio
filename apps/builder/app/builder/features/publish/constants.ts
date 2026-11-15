@@ -1,6 +1,6 @@
 import { cssVar } from "@webstudio-is/design-system";
 import { AlertIcon, CheckCircleIcon, SpinnerIcon } from "@webstudio-is/icons";
-import type { PublishLog } from "./use-publish-logs";
+import type { SessionPublish } from "./use-session-publishes";
 
 export const publishLogStatus = {
   pending: {
@@ -19,7 +19,7 @@ export const publishLogStatus = {
     text: "Published",
   },
 } satisfies Record<
-  PublishLog["status"],
+  SessionPublish["status"],
   {
     Icon: typeof AlertIcon;
     color: string;

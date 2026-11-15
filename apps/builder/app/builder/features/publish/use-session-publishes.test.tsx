@@ -4,8 +4,8 @@ import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
-let sessionModule: typeof import("./use-publish-logs");
-let session: ReturnType<typeof sessionModule.usePublishLogs>;
+let sessionModule: typeof import("./use-session-publishes");
+let session: ReturnType<typeof sessionModule.useSessionPublishes>;
 let paid = false;
 let holdFirst = false;
 let releaseFirst: (() => void) | undefined;
@@ -25,7 +25,7 @@ const Harness = ({
   projectId: string;
   canViewPublishLogs: boolean;
 }) => {
-  session = sessionModule.usePublishLogs(projectId, canViewPublishLogs);
+  session = sessionModule.useSessionPublishes(projectId, canViewPublishLogs);
   return (
     <output>
       {session.items
@@ -92,7 +92,7 @@ beforeAll(async () => {
     }
     return response;
   });
-  sessionModule = await import("./use-publish-logs");
+  sessionModule = await import("./use-session-publishes");
   const { updateCsrfToken } = await import("~/shared/csrf.client");
   updateCsrfToken("test-token");
 });
@@ -298,17 +298,17 @@ test("session selection keeps repeated domain publishes separate from static exp
   ];
   expect(
     sessionModule
-      .selectPublishLogs(items, "site", "a.example")
+      .selectSessionPublishes(items, "site", "a.example")
       .map(({ buildId }) => buildId)
   ).toEqual(["site-1"]);
   expect(
     sessionModule
-      .selectPublishLogs(items, "site", "b.example")
+      .selectSessionPublishes(items, "site", "b.example")
       .map(({ buildId }) => buildId)
   ).toEqual(["site-1", "site-2"]);
   expect(
     sessionModule
-      .selectPublishLogs(items, "static")
+      .selectSessionPublishes(items, "static")
       .map(({ buildId }) => buildId)
   ).toEqual(["static-1"]);
 });

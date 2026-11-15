@@ -26,11 +26,11 @@ import {
 } from "@webstudio-is/design-system";
 import { CopyIcon } from "@webstudio-is/icons";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
-import type { PublishLog } from "./use-publish-logs";
-import { getPublishDuration } from "./use-publish-logs";
+import type { SessionPublish } from "./use-session-publishes";
+import { getPublishDuration } from "./use-session-publishes";
 import { publishLogStatus } from "./constants";
 
-export type PublishValidationFinding = {
+export type DiagnosticFinding = {
   severity: "error" | "warning";
   source?: "audit" | "build" | "publish";
   title: ReactNode;
@@ -42,7 +42,7 @@ export type PublishValidationFinding = {
   buildId?: string;
 };
 
-const shortFinding = (finding: PublishValidationFinding) =>
+const shortFinding = (finding: DiagnosticFinding) =>
   (
     finding.summary ?? (typeof finding.title === "string" ? finding.title : "")
   ).slice(0, 160);
@@ -52,7 +52,7 @@ export const PublishValidationBanner = ({
   passed = false,
   onOpen,
 }: {
-  findings: PublishValidationFinding[];
+  findings: DiagnosticFinding[];
   passed?: boolean;
   onOpen: () => void;
 }) => {
@@ -101,9 +101,9 @@ const FindingList = ({
   issuesOmitted = 0,
   publishBuildIds,
 }: {
-  findings: PublishValidationFinding[];
+  findings: DiagnosticFinding[];
   canViewPublishLogs: boolean;
-  onSelect: (finding: PublishValidationFinding) => void;
+  onSelect: (finding: DiagnosticFinding) => void;
   onOpenPublish?: () => void;
   issuesOmitted?: number;
   publishBuildIds: string[];
@@ -169,7 +169,7 @@ const FindingDetails = ({
   onBack,
   onNavigate,
 }: {
-  finding: PublishValidationFinding;
+  finding: DiagnosticFinding;
   onBack: () => void;
   onNavigate: () => void;
 }) => (
@@ -209,12 +209,12 @@ const FindingDetails = ({
   </PanelContent>
 );
 
-const PublishHistoryEntry = ({
+const SessionPublishEntry = ({
   item,
   defaultOpen,
   canViewPublishLogs,
 }: {
-  item: PublishLog;
+  item: SessionPublish;
   defaultOpen: boolean;
   canViewPublishLogs: boolean;
 }) => {
@@ -309,14 +309,14 @@ const PublishHistoryEntry = ({
   );
 };
 
-const PublishHistory = ({
+const SessionPublishList = ({
   items,
   canViewPublishLogs,
   onLoadLog,
 }: {
-  items: PublishLog[];
+  items: SessionPublish[];
   canViewPublishLogs: boolean;
-  onLoadLog?: (item: PublishLog) => void;
+  onLoadLog?: (item: SessionPublish) => void;
 }) => {
   useEffect(() => {
     if (!canViewPublishLogs) {
@@ -344,7 +344,7 @@ const PublishHistory = ({
           <Text color="subtle">No publishes in this session.</Text>
         )}
         {items.map((item, index) => (
-          <PublishHistoryEntry
+          <SessionPublishEntry
             key={item.buildId}
             item={item}
             defaultOpen={index === items.length - 1}
@@ -367,19 +367,18 @@ export const PublishDiagnosticsDialog = ({
   includeLatestPublishFindings = true,
   onLoadLog,
 }: {
-  findings: PublishValidationFinding[];
+  findings: DiagnosticFinding[];
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   target?: string;
   initialTab?: "warnings" | "errors" | "publish";
-  items?: PublishLog[];
+  items?: SessionPublish[];
   canViewPublishLogs?: boolean;
   includeLatestPublishFindings?: boolean;
-  onLoadLog?: (item: PublishLog) => void;
+  onLoadLog?: (item: SessionPublish) => void;
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
-  const [selectedFinding, setSelectedFinding] =
-    useState<PublishValidationFinding>();
+  const [selectedFinding, setSelectedFinding] = useState<DiagnosticFinding>();
   const isOpen = open ?? internalOpen;
   const setIsOpen = onOpenChange ?? setInternalOpen;
 
@@ -503,7 +502,7 @@ export const PublishDiagnosticsDialog = ({
                 value="publish"
                 css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
               >
-                <PublishHistory
+                <SessionPublishList
                   items={orderedItems}
                   canViewPublishLogs={canViewPublishLogs}
                   onLoadLog={onLoadLog}

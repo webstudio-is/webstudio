@@ -40,11 +40,11 @@ import { extractCname } from "./cname";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { DomainCheckbox } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
-import { getPublishStatusAndText } from "./publish-status";
+import { getPublishStatusDisplay } from "./publish-status";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
-import type { PublishLog } from "./use-publish-logs";
-import { DomainPublishStatus } from "./domain-publish-status";
+import type { SessionPublish } from "./use-session-publishes";
+import { DomainStatusButton } from "./domain-status-button";
 
 export type Domain = Project["domainsVirtual"][number];
 
@@ -88,11 +88,11 @@ const getStatusText = (props: {
       text = "Status: Active, not published";
 
       if (props.projectDomain.latestBuildVirtual !== null) {
-        const publishText = getPublishStatusAndText(
+        const publishText = getPublishStatusDisplay(
           props.projectDomain.latestBuildVirtual
         );
 
-        text = publishText.statusText;
+        text = publishText.statusContent;
         color = publishText.color;
         Icon = publishText.Icon;
       }
@@ -118,15 +118,15 @@ const getStatusText = (props: {
 const StatusIcon = (props: {
   projectDomain: Domain;
   isLoading: boolean;
-  latestLog?: PublishLog;
+  latestPublish?: SessionPublish;
   onOpenReport?: (domain: string) => void;
 }) => {
   const fallback = getStatusText(props);
   return (
-    <DomainPublishStatus
+    <DomainStatusButton
       domain={props.projectDomain.domain}
       buildId={props.projectDomain.latestBuildVirtual?.buildId}
-      latestLog={props.latestLog}
+      latestPublish={props.latestPublish}
       fallback={fallback}
       onOpenReport={() => props.onOpenReport?.(props.projectDomain.domain)}
     />
@@ -139,7 +139,7 @@ const DomainItem = ({
   refresh,
   validatedDomains,
   onOpenReport,
-  latestLog,
+  latestPublish,
 }: {
   initiallyOpen: boolean;
   projectDomain: Domain;
@@ -147,7 +147,7 @@ const DomainItem = ({
   refresh: () => Promise<void>;
   validatedDomains?: readonly string[];
   onOpenReport?: (domain: string) => void;
-  latestLog?: PublishLog;
+  latestPublish?: SessionPublish;
 }) => {
   const timeSinceLastUpdateMs =
     Date.now() - new Date(projectDomain.updatedAt).getTime();
@@ -323,7 +323,7 @@ const DomainItem = ({
             projectDomain={projectDomain}
             isLoading={isStatusLoading}
             onOpenReport={onOpenReport}
-            latestLog={latestLog}
+            latestPublish={latestPublish}
           />
 
           <CopyToClipboard
@@ -537,7 +537,7 @@ type DomainsProps = {
   project: Project;
   validatedDomains?: readonly string[];
   onOpenReport?: (domain: string) => void;
-  publishLogs?: PublishLog[];
+  sessionPublishes?: SessionPublish[];
 };
 
 export const Domains = ({
@@ -547,7 +547,7 @@ export const Domains = ({
   project,
   validatedDomains,
   onOpenReport,
-  publishLogs = [],
+  sessionPublishes = [],
 }: DomainsProps) => {
   return (
     <>
@@ -560,7 +560,7 @@ export const Domains = ({
           project={project}
           validatedDomains={validatedDomains}
           onOpenReport={onOpenReport}
-          latestLog={publishLogs.find(
+          latestPublish={sessionPublishes.find(
             (item) =>
               item.target === "site" &&
               item.domains.includes(projectDomain.domain)

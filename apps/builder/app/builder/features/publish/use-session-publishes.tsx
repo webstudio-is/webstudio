@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { nativeClient } from "~/shared/trpc/trpc-client";
-import type { PublishValidationFinding } from "./diagnostics";
+import type { DiagnosticFinding } from "./diagnostics";
 
-export type PublishLog = {
+export type SessionPublish = {
   buildId: string;
   domains: string[];
   target: "site" | "static";
   staticName?: string;
-  findings: PublishValidationFinding[];
+  findings: DiagnosticFinding[];
   logHandle?: string;
   status: "pending" | "success" | "failed";
   code?: string;
@@ -34,7 +34,7 @@ export const decodePublishLog = (chunks: string[]) => {
     .join("");
 };
 
-export const getPublishDuration = (item: PublishLog) => {
+export const getPublishDuration = (item: SessionPublish) => {
   if (item.startedAt === undefined || item.completedAt === undefined) {
     return;
   }
@@ -44,8 +44,8 @@ export const getPublishDuration = (item: PublishLog) => {
   }
 };
 
-export const selectPublishLogs = (
-  items: PublishLog[],
+export const selectSessionPublishes = (
+  items: SessionPublish[],
   target: "site" | "static",
   domain?: string
 ) =>
@@ -55,11 +55,11 @@ export const selectPublishLogs = (
       (domain === undefined || item.domains.includes(domain))
   );
 
-export const usePublishLogs = (
+export const useSessionPublishes = (
   projectId: string,
   canViewPublishLogs: boolean
 ) => {
-  const [items, setItems] = useState<PublishLog[]>([]);
+  const [items, setItems] = useState<SessionPublish[]>([]);
   const itemsProjectId = useRef(projectId);
   const currentProjectId = useRef(projectId);
   currentProjectId.current = projectId;
@@ -121,20 +121,23 @@ export const usePublishLogs = (
     }
   }, [canViewPublishLogs]);
 
-  const update = useCallback((buildId: string, change: Partial<PublishLog>) => {
-    setItems((current) =>
-      current.map((item) =>
-        item.buildId === buildId ? { ...item, ...change } : item
-      )
-    );
-  }, []);
+  const update = useCallback(
+    (buildId: string, change: Partial<SessionPublish>) => {
+      setItems((current) =>
+        current.map((item) =>
+          item.buildId === buildId ? { ...item, ...change } : item
+        )
+      );
+    },
+    []
+  );
 
   const record = useCallback(
-    (item: Omit<PublishLog, "status">) => {
+    (item: Omit<SessionPublish, "status">) => {
       if (isCurrent() === false) {
         return;
       }
-      const accepted: PublishLog = {
+      const accepted: SessionPublish = {
         ...item,
         status: "pending",
         startedAt: permission.current.allowed
@@ -171,7 +174,7 @@ export const usePublishLogs = (
   );
 
   const loadLog = useCallback(
-    async (item: PublishLog) => {
+    async (item: SessionPublish) => {
       if (
         isCurrent() === false ||
         retainedBuilds.current.has(item.buildId) === false ||
@@ -201,7 +204,7 @@ export const usePublishLogs = (
       try {
         let cursor: number | undefined;
         const chunks: string[] = [];
-        const issues: NonNullable<PublishLog["issues"]> = [];
+        const issues: NonNullable<SessionPublish["issues"]> = [];
         let issuesOmitted = 0;
         while (isReadCurrent()) {
           const result = await nativeClient.api.publish.getLog.query({

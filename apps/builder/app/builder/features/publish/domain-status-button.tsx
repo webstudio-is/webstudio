@@ -2,24 +2,27 @@ import type { ReactNode } from "react";
 import { IconButton, Tooltip } from "@webstudio-is/design-system";
 import type { AlertIcon } from "@webstudio-is/icons";
 import { publishLogStatus } from "./constants";
-import type { PublishLog } from "./use-publish-logs";
+import type { SessionPublish } from "./use-session-publishes";
 
-export const DomainPublishStatus = ({
+export const DomainStatusButton = ({
   domain,
   buildId,
-  latestLog,
+  latestPublish,
   fallback,
   onOpenReport,
 }: {
   domain: string;
   buildId?: string;
-  latestLog?: Pick<PublishLog, "buildId" | "status">;
+  latestPublish?: Pick<SessionPublish, "buildId" | "status">;
   fallback: { Icon: typeof AlertIcon; color: string; text: ReactNode };
   onOpenReport?: () => void;
 }) => {
-  const currentLog = latestLog?.buildId === buildId ? latestLog : undefined;
+  const currentPublish =
+    latestPublish?.buildId === buildId ? latestPublish : undefined;
   const { Icon, color, text } =
-    currentLog === undefined ? fallback : publishLogStatus[currentLog.status];
+    currentPublish === undefined
+      ? fallback
+      : publishLogStatus[currentPublish.status];
   return (
     <Tooltip content={text}>
       <IconButton

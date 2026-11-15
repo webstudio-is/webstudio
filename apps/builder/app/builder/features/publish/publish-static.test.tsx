@@ -102,8 +102,8 @@ const Harness = ({
   return (
     <TooltipProvider>
       <output>{flow.isPublishing ? "pending" : "idle"}</output>
-      <output data-log-status>{flow.logs[0]?.status}</output>
-      <output data-static-error>{flow.staticError?.severity}</output>
+      <output data-log-status>{flow.publishes[0]?.status}</output>
+      <output data-static-error>{flow.staticFailureFinding?.severity}</output>
       {open && (
         <publishModule.__testing__.PublishStatic
           templates={["ssg"]}
@@ -114,14 +114,14 @@ const Harness = ({
       <diagnosticsModule.PublishDiagnosticsDialog
         findings={flow.reportFindings}
         includeLatestPublishFindings={flow.includeLatestPublishFindings}
-        items={flow.reportItems}
-        open={flow.selectedReport !== undefined}
+        items={flow.reportPublishes}
+        open={flow.diagnosticsSelection !== undefined}
         onOpenChange={(open) => {
           if (!open) {
             flow.closeReport();
           }
         }}
-        initialTab={flow.selectedReport?.tab}
+        initialTab={flow.diagnosticsSelection?.tab}
         canViewPublishLogs={false}
       />
     </TooltipProvider>

@@ -269,14 +269,14 @@ test.each([
       await dispatch.promise.catch(() => {});
     });
     await waitForUpdate(() =>
-      expect(flow.staticError?.reportText).toBe(message)
+      expect(flow.staticFailureFinding?.reportText).toBe(message)
     );
     act(() => flow.openStaticReport());
     expect(flow.reportFindings.map(({ reportText }) => reportText)).toEqual([
       ...completed,
       message,
     ]);
-    expect(flow.selectedReport?.tab).toBe("errors");
+    expect(flow.diagnosticsSelection?.tab).toBe("errors");
     expect(toast.error).toHaveBeenCalledWith(message);
     if (order === "server-first") {
       await completeChecks();
@@ -402,7 +402,9 @@ test.each([
       );
       await dispatch.promise;
     });
-    await waitForUpdate(() => expect(flow.logs[0]?.logState).toBe("available"));
+    await waitForUpdate(() =>
+      expect(flow.publishes[0]?.logState).toBe("available")
+    );
     checks = deferred<Response>();
     dispatch = deferred<Response>();
     start(target);
@@ -436,7 +438,7 @@ test.each([
     const report = () =>
       getDiagnosticsReport({
         findings: flow.reportFindings,
-        items: flow.reportItems,
+        items: flow.reportPublishes,
         canViewPublishLogs: true,
         includeLatestPublishFindings: flow.includeLatestPublishFindings,
       });

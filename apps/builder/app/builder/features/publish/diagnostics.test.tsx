@@ -6,9 +6,9 @@ import { TooltipProvider } from "@webstudio-is/design-system";
 import {
   PublishDiagnosticsDialog,
   PublishValidationBanner,
-  type PublishValidationFinding,
+  type DiagnosticFinding,
 } from "./diagnostics";
-import type { PublishLog } from "./use-publish-logs";
+import type { SessionPublish } from "./use-session-publishes";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -25,10 +25,10 @@ afterEach(() => {
 });
 
 const render = (
-  findings: PublishValidationFinding[],
+  findings: DiagnosticFinding[],
   canViewPublishLogs = true,
-  items: PublishLog[] = [],
-  onLoadLog?: (item: PublishLog) => void,
+  items: SessionPublish[] = [],
+  onLoadLog?: (item: SessionPublish) => void,
   open?: boolean
 ) => {
   container = document.createElement("div");
@@ -51,9 +51,9 @@ const render = (
 };
 
 const createFinding = (
-  severity: PublishValidationFinding["severity"],
+  severity: DiagnosticFinding["severity"],
   index: number
-): PublishValidationFinding => ({
+): DiagnosticFinding => ({
   severity,
   title: `${severity}-${index}`,
   details: `details-${severity}-${index}`,
@@ -328,7 +328,7 @@ test("Free hides log-derived issues, stage, and code", async () => {
 });
 
 test("loads a completed publish when Publish opens and shows its log inline", async () => {
-  const item: PublishLog = {
+  const item: SessionPublish = {
     buildId: "build-1",
     logHandle: "log-handle-1",
     target: "site",

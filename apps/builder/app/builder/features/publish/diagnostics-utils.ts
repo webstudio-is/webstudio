@@ -1,5 +1,5 @@
-import type { PublishValidationFinding } from "./diagnostics";
-import type { PublishLog } from "./use-publish-logs";
+import type { DiagnosticFinding } from "./diagnostics";
+import type { SessionPublish } from "./use-session-publishes";
 import { publishLogStatus } from "./constants";
 
 export const getDiagnosticsReport = ({
@@ -8,8 +8,8 @@ export const getDiagnosticsReport = ({
   canViewPublishLogs,
   includeLatestPublishFindings = true,
 }: {
-  findings: PublishValidationFinding[];
-  items: PublishLog[];
+  findings: DiagnosticFinding[];
+  items: SessionPublish[];
   canViewPublishLogs: boolean;
   includeLatestPublishFindings?: boolean;
 }) => {
@@ -29,7 +29,7 @@ export const getDiagnosticsReport = ({
         ]
       : []),
     ...(canViewPublishLogs
-      ? (latestPublish?.issues?.map<PublishValidationFinding>((issue) => ({
+      ? (latestPublish?.issues?.map<DiagnosticFinding>((issue) => ({
           severity: issue.severity,
           source: "build" as const,
           title: issue.message,

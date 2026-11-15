@@ -6,7 +6,7 @@ import { RelativeTime } from "~/builder/shared/relative-time";
 export const PENDING_TIMEOUT =
   process.env.NODE_ENV === "production" ? 60 * 3 * 1000 : 35000;
 
-export const getPublishStatusAndText = ({
+export const getPublishStatusDisplay = ({
   createdAt,
   publishStatus,
 }: Pick<
@@ -22,16 +22,16 @@ export const getPublishStatusAndText = ({
     status = "FAILED";
   }
 
-  const textStart =
+  const statusLabel =
     status === "PUBLISHED"
       ? "Published"
       : status === "FAILED"
         ? "Publish failed"
         : "Publishing started";
 
-  const statusText = (
+  const statusContent = (
     <>
-      {textStart} <RelativeTime time={new Date(createdAt)} />
+      {statusLabel} <RelativeTime time={new Date(createdAt)} />
     </>
   );
 
@@ -48,10 +48,10 @@ export const getPublishStatusAndText = ({
         ? AlertIcon
         : SpinnerIcon;
 
-  return { statusText, status, color, Icon };
+  return { statusContent, status, color, Icon };
 };
 
-export const getStaticPublishStatusAndText = ({
+export const getStaticPublishStatusDisplay = ({
   updatedAt,
   publishStatus,
 }: {
@@ -67,18 +67,18 @@ export const getStaticPublishStatusAndText = ({
     status = "FAILED";
   }
 
-  const textStart =
+  const statusLabel =
     status === "PUBLISHED"
       ? "Downloaded"
       : status === "FAILED"
         ? "Download failed"
         : "Download started";
 
-  const statusText = (
+  const statusContent = (
     <>
-      {textStart} <RelativeTime time={new Date(updatedAt)} />
+      {statusLabel} <RelativeTime time={new Date(updatedAt)} />
     </>
   );
 
-  return { statusText, status };
+  return { statusContent, status };
 };

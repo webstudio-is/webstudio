@@ -105,22 +105,22 @@ import {
   PublishDiagnosticsDialog,
   PublishValidationBanner,
 } from "./diagnostics";
-import type { PublishLog } from "./use-publish-logs";
+import type { SessionPublish } from "./use-session-publishes";
 import { PublishActions } from "./publish-actions";
 import { usePublishFlow } from "./use-publish-flow";
-import { getRefreshedProject } from "./use-publish-progress";
+import { fetchAndStoreProject } from "./use-publish-progress";
 import {
-  getPublishStatusAndText,
-  getStaticPublishStatusAndText,
+  getPublishStatusDisplay,
+  getStaticPublishStatusDisplay,
 } from "./publish-status";
-import { DomainPublishStatus } from "./domain-publish-status";
+import { DomainStatusButton } from "./domain-status-button";
 
 type ChangeProjectDomainProps = {
   project: Project;
   refresh: () => Promise<void>;
   validatedDomains?: readonly string[];
   onOpenReport: (domain: string) => void;
-  latestLog?: PublishLog;
+  latestPublish?: SessionPublish;
 };
 
 const ChangeProjectDomain = ({
@@ -128,7 +128,7 @@ const ChangeProjectDomain = ({
   refresh,
   validatedDomains,
   onOpenReport,
-  latestLog,
+  latestPublish,
 }: ChangeProjectDomainProps) => {
   const id = useId();
   const currentSystem = useStore($currentSystem);
@@ -195,11 +195,11 @@ const ChangeProjectDomain = ({
       ? project.latestBuildVirtual
       : undefined;
 
-  const { statusText, color, Icon } =
+  const { statusContent, color, Icon } =
     latestProjectDomainBuild != null
-      ? getPublishStatusAndText(latestProjectDomainBuild)
+      ? getPublishStatusDisplay(latestProjectDomainBuild)
       : {
-          statusText: "Not published",
+          statusContent: "Not published",
           color: cssVar("--foreground-secondary"),
           Icon: InfoCircleIcon,
         };
@@ -219,15 +219,15 @@ const ChangeProjectDomain = ({
       }
       suffix={
         <Grid flow="column" align="center">
-          <DomainPublishStatus
+          <DomainStatusButton
             domain={pageUrl.host}
             buildId={latestProjectDomainBuild?.buildId}
-            latestLog={error === undefined ? latestLog : undefined}
+            latestPublish={error === undefined ? latestPublish : undefined}
             fallback={{
               Icon: error === undefined ? Icon : AlertIcon,
               color:
                 error === undefined ? color : cssVar("--foreground-negative"),
-              text: error ?? <Text>{statusText}</Text>,
+              text: error ?? <Text>{statusContent}</Text>,
             }}
             onOpenReport={() => onOpenReport(project.domain)}
           />
@@ -379,7 +379,7 @@ const Publish = ({
     validationState,
     validatedDomains,
     invalidateValidation,
-    logs,
+    publishes,
     siteError,
     siteErrorSource,
     openSiteReport: onOpenReport,
@@ -391,7 +391,7 @@ const Publish = ({
     useState(false);
   const previousDomainsKey = useRef<string>();
   const hasPendingState = project.latestBuildVirtual
-    ? getPublishStatusAndText(project.latestBuildVirtual).status === "PENDING"
+    ? getPublishStatusDisplay(project.latestBuildVirtual).status === "PENDING"
     : false;
   const isPublishInProgress = isPublishing || hasPendingState;
 
@@ -460,7 +460,7 @@ const Publish = ({
 
   const getForm = () => buttonRef.current?.closest("form");
   const findings = flow.siteFindings;
-  const hasSessionPublish = logs.some(({ target }) => target === "site");
+  const hasSessionPublish = publishes.some(({ target }) => target === "site");
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
@@ -555,8 +555,8 @@ const PublishStatic = ({
 }) => {
   const {
     isPublishing,
-    logs,
-    staticError,
+    publishes,
+    staticFailureFinding,
     openStaticReport: onOpenReport,
   } = flow;
   const project = useStore($project);
@@ -565,23 +565,23 @@ const PublishStatic = ({
     throw new Error("Project not found");
   }
 
-  const { status, statusText } =
+  const { status, statusContent } =
     project.latestStaticBuild == null
-      ? { status: "LOADED" as const, statusText: "Not published" }
-      : getStaticPublishStatusAndText(project.latestStaticBuild);
-  const latestLog = logs.find(
+      ? { status: "LOADED" as const, statusContent: "Not published" }
+      : getStaticPublishStatusDisplay(project.latestStaticBuild);
+  const latestPublish = publishes.find(
     (item) =>
       item.target === "static" &&
       item.buildId === project.latestStaticBuild?.buildId
   );
   const logStatus =
-    staticError !== undefined
+    staticFailureFinding !== undefined
       ? "FAILED"
-      : latestLog?.status === "pending"
+      : latestPublish?.status === "pending"
         ? "PENDING"
-        : latestLog?.status === "failed"
+        : latestPublish?.status === "failed"
           ? "FAILED"
-          : latestLog?.status === "success"
+          : latestPublish?.status === "success"
             ? "PUBLISHED"
             : status;
 
@@ -592,8 +592,10 @@ const PublishStatic = ({
       <Flex gap={2} align="center">
         <Tooltip
           content={
-            staticError?.title ??
-            (latestLog?.status === "failed" ? "Publish failed" : statusText)
+            staticFailureFinding?.title ??
+            (latestPublish?.status === "failed"
+              ? "Publish failed"
+              : statusContent)
           }
         >
           <IconButton
@@ -667,7 +669,7 @@ const useUserPublishCount = () => {
 };
 
 const refreshProject = async () => {
-  await getRefreshedProject({ projectId: $project.get()!.id });
+  await fetchAndStoreProject({ projectId: $project.get()!.id });
 };
 
 const buttonLinkClass = css({
@@ -816,7 +818,7 @@ const Content = (props: {
   const hasCustomDomains = project.domainsVirtual.some(
     (domain) => domain.status === "ACTIVE" && domain.verified
   );
-  const hasSitePublish = props.flow.logs.some(
+  const hasSitePublish = props.flow.publishes.some(
     ({ target }) => target === "site"
   );
   const diagnosticFindings = props.flow.siteFindings;
@@ -893,7 +895,7 @@ const Content = (props: {
               onOpenReport={(domain) =>
                 props.flow.openSiteReport(domain, "publish")
               }
-              latestLog={props.flow.logs.find(
+              latestPublish={props.flow.publishes.find(
                 (item) =>
                   item.target === "site" &&
                   item.domains.includes(project.domain)
@@ -909,7 +911,7 @@ const Content = (props: {
               onOpenReport={(domain) =>
                 props.flow.openSiteReport(domain, "publish")
               }
-              publishLogs={props.flow.logs}
+              sessionPublishes={props.flow.publishes}
             />
           </RadioGroup>
         </ScrollArea>
@@ -1174,7 +1176,8 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   const authTokenPermissions = useStore($authTokenPermissions);
   const { allowPublishLogs = false } = useStore($planFeatures);
   const flow = usePublishFlow(projectId, allowPublishLogs, publishDialog);
-  const { selectedReport, closeReport, reportFindings, reportItems } = flow;
+  const { diagnosticsSelection, closeReport, reportFindings, reportPublishes } =
+    flow;
   const { canPublishToStagingOnly } = useStore($permissions);
   const isPublishEnabled =
     authTokenPermissions.canPublish || canPublishToStagingOnly;
@@ -1236,19 +1239,19 @@ export const PublishButton = ({ projectId }: PublishProps) => {
       <PublishDiagnosticsDialog
         findings={reportFindings}
         includeLatestPublishFindings={flow.includeLatestPublishFindings}
-        open={selectedReport !== undefined}
+        open={diagnosticsSelection !== undefined}
         onOpenChange={(open) => {
           if (open === false) {
             closeReport();
           }
         }}
         target={
-          selectedReport?.target === "static"
+          diagnosticsSelection?.target === "static"
             ? "Static export"
-            : selectedReport?.domain
+            : diagnosticsSelection?.domain
         }
-        initialTab={selectedReport?.tab}
-        items={reportItems}
+        initialTab={diagnosticsSelection?.tab}
+        items={reportPublishes}
         canViewPublishLogs={allowPublishLogs}
         onLoadLog={flow.loadLog}
       />

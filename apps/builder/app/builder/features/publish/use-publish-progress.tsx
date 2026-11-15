@@ -12,10 +12,10 @@ import { $publishDialog } from "~/builder/shared/nano-states";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import {
   PENDING_TIMEOUT,
-  getPublishStatusAndText,
-  getStaticPublishStatusAndText,
+  getPublishStatusDisplay,
+  getStaticPublishStatusDisplay,
 } from "./publish-status";
-import type { PublishValidationFinding } from "./diagnostics";
+import type { DiagnosticFinding } from "./diagnostics";
 
 const COUNTDOWN_DURATION = 60_000;
 
@@ -46,7 +46,7 @@ export const usePublishProgress = (projectId: Project["id"]) => {
       "site" | "static",
       {
         domains: string[];
-        findings: PublishValidationFinding[];
+        findings: DiagnosticFinding[];
         rejected?: boolean;
       }
     >
@@ -136,9 +136,7 @@ export const usePublishProgress = (projectId: Project["id"]) => {
         ...current,
         [target]: { domains, findings: [] },
       }));
-      const setFindings = (
-        findings: SetStateAction<PublishValidationFinding[]>
-      ) => {
+      const setFindings = (findings: SetStateAction<DiagnosticFinding[]>) => {
         if (publishDiagnosticsSession.current[target] === session) {
           setPublishDiagnostics((current) => ({
             ...current,
@@ -155,7 +153,7 @@ export const usePublishProgress = (projectId: Project["id"]) => {
       return {
         isCurrent: () => publishDiagnosticsSession.current[target] === session,
         setFindings,
-        finish: (findings?: SetStateAction<PublishValidationFinding[]>) => {
+        finish: (findings?: SetStateAction<DiagnosticFinding[]>) => {
           if (findings !== undefined) {
             setFindings(findings);
           }
@@ -180,14 +178,14 @@ export const usePublishProgress = (projectId: Project["id"]) => {
       );
       return;
     }
-    const { status, statusText } = getPublishStatusAndText(build);
+    const { status, statusContent } = getPublishStatusDisplay(build);
     const isNewBuild =
       build.buildId !== undefined &&
       build.buildId !== requestBaselineBuildId.current;
     if (status === "FAILED") {
       if (hasStartedPublishRequest.current && isNewBuild) {
         setPublishErrorState({
-          value: statusText,
+          value: statusContent,
           source: "status",
           buildId: build.buildId,
         });
@@ -232,7 +230,7 @@ export const usePublishProgress = (projectId: Project["id"]) => {
               isCurrentProject,
             });
           } else if (result?.status === "FAILED") {
-            toast.error(result.statusText);
+            toast.error(result.statusContent);
           }
           onResult?.(result);
         })
@@ -368,7 +366,7 @@ export const waitForPublishStatus = async (
           if (job.status === "failed") {
             return {
               status: "FAILED" as const,
-              statusText: "Publish failed",
+              statusContent: "Publish failed",
               code: job.code,
             };
           }
@@ -390,19 +388,19 @@ export const waitForPublishStatus = async (
         (previousBuildId === undefined || buildId !== previousBuildId) &&
         (execution === undefined || buildId === execution.buildId)
       ) {
-        const { statusText, status } =
+        const { statusContent, status } =
           execution?.target === "static" &&
           refreshedProject.latestStaticBuild != null
-            ? getStaticPublishStatusAndText(refreshedProject.latestStaticBuild)
+            ? getStaticPublishStatusDisplay(refreshedProject.latestStaticBuild)
             : refreshedProject.latestBuildVirtual != null
-              ? getPublishStatusAndText(refreshedProject.latestBuildVirtual)
+              ? getPublishStatusDisplay(refreshedProject.latestBuildVirtual)
               : {
-                  statusText: "Not published",
+                  statusContent: "Not published",
                   status: "PENDING" as const,
                 };
 
         if (!runnerPending && (status === "PUBLISHED" || status === "FAILED")) {
-          return { status, statusText };
+          return { status, statusContent };
         }
       }
     } catch (error) {
@@ -418,7 +416,7 @@ export const waitForPublishStatus = async (
   }
 };
 
-export const refreshUntilSuccess = async (
+export const refreshProjectWithRetry = async (
   refresh: (showError: boolean) => Promise<Project | undefined>,
   isOpen: () => boolean,
   onPending: (project: Project) => void = () => {},
@@ -435,7 +433,7 @@ export const refreshUntilSuccess = async (
       if (refreshedProject !== undefined) {
         if (
           (refreshedProject.latestBuildVirtual != null &&
-            getPublishStatusAndText(refreshedProject.latestBuildVirtual)
+            getPublishStatusDisplay(refreshedProject.latestBuildVirtual)
               .status === "PENDING") ||
           hasSessionPending(refreshedProject)
         ) {
@@ -499,14 +497,14 @@ export const reportPublishResult = ({
 
   if (result?.status === "FAILED") {
     if ($publishDialog.get() !== "publish") {
-      toast.error(result.statusText);
+      toast.error(result.statusContent);
     }
-    setPublishError(result.statusText, buildId);
+    setPublishError(result.statusContent, buildId);
   }
 };
 
 const useManualValidationFindings = () => {
-  const [findings, setFindings] = useState<PublishValidationFinding[]>([]);
+  const [findings, setFindings] = useState<DiagnosticFinding[]>([]);
   const [domains, setDomains] = useState<string[]>();
   const session = useRef(0);
   const requestedDomains = useRef<string[]>([]);
@@ -533,7 +531,7 @@ const useManualValidationFindings = () => {
 
   const isCurrent = useCallback((id: number) => session.current === id, []);
 
-  const update = useCallback((id: number, next: PublishValidationFinding[]) => {
+  const update = useCallback((id: number, next: DiagnosticFinding[]) => {
     if (session.current === id) {
       setFindings(next);
       setDomains(next.length > 0 ? requestedDomains.current : undefined);
@@ -543,7 +541,7 @@ const useManualValidationFindings = () => {
   return { findings, domains, begin, invalidate, isCurrent, update };
 };
 
-export const getRefreshedProject = async ({
+export const fetchAndStoreProject = async ({
   projectId,
   showError = true,
   query = () => nativeClient.domain.project.query({ projectId }),
@@ -576,8 +574,8 @@ export const getRefreshedProject = async ({
 export const __testing__ = {
   usePublishProgress,
   waitForPublishStatus,
-  refreshUntilSuccess,
+  refreshProjectWithRetry,
   reportPublishResult,
   useManualValidationFindings,
-  getRefreshedProject,
+  fetchAndStoreProject,
 };

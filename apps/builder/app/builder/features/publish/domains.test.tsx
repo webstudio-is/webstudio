@@ -4,7 +4,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { __testing__, type Domain } from "./domains";
 import { PENDING_TIMEOUT } from "./publish-status";
-import type { PublishLog } from "./use-publish-logs";
+import type { SessionPublish } from "./use-session-publishes";
 
 const { StatusIcon } = __testing__;
 let root: Root | undefined;
@@ -26,13 +26,13 @@ const renderStatus = (
   {
     age = 0,
     isLoading = false,
-    latestLog,
+    latestPublish,
     onOpenReport,
     onSectionClick,
   }: {
     age?: number;
     isLoading?: boolean;
-    latestLog?: PublishLog;
+    latestPublish?: SessionPublish;
     onOpenReport?: (domain: string) => void;
     onSectionClick?: () => void;
   } = {}
@@ -66,7 +66,7 @@ const renderStatus = (
           <StatusIcon
             projectDomain={projectDomain}
             isLoading={isLoading}
-            latestLog={latestLog}
+            latestPublish={latestPublish}
             onOpenReport={onOpenReport}
           />
         </TooltipProvider>
@@ -113,7 +113,7 @@ test.each([
     expect(
       renderStatus(status === "failed" ? "PUBLISHED" : "PENDING", {
         age: PENDING_TIMEOUT + 1000,
-        latestLog: {
+        latestPublish: {
           buildId: "current-build",
           target: "site",
           domains: ["example.com"],
@@ -128,7 +128,7 @@ test.each([
 test("ignores a log for a different domain build", () => {
   expect(
     renderStatus("PUBLISHED", {
-      latestLog: {
+      latestPublish: {
         buildId: "old-build",
         target: "site",
         domains: ["example.com"],

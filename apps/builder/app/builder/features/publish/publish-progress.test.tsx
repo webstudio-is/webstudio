@@ -13,9 +13,9 @@ import { PublishDiagnosticsDialog } from "./diagnostics";
 const {
   usePublishProgress,
   waitForPublishStatus,
-  refreshUntilSuccess,
+  refreshProjectWithRetry,
   useManualValidationFindings,
-  getRefreshedProject,
+  fetchAndStoreProject,
   reportPublishResult,
 } = __testing__;
 
@@ -254,7 +254,7 @@ test("reopening refresh retries after a rejected status request", async () => {
   };
 
   try {
-    const done = refreshUntilSuccess(refresh, () => true);
+    const done = refreshProjectWithRetry(refresh, () => true);
     expect(attempts).toBe(1);
     await vi.advanceTimersByTimeAsync(5_000);
     await done;
@@ -273,7 +273,7 @@ test("reopening resumes a retained pending session even after the Build is publi
     },
   } as Project;
   const onPending = vi.fn();
-  await refreshUntilSuccess(
+  await refreshProjectWithRetry(
     async () => project,
     () => true,
     onPending,
@@ -319,9 +319,9 @@ test("reopening stops after three unsuccessful project refreshes and shows the e
   }));
   let isOpen = true;
 
-  const done = refreshUntilSuccess(
+  const done = refreshProjectWithRetry(
     (showError) =>
-      getRefreshedProject({ projectId: "project", showError, query }),
+      fetchAndStoreProject({ projectId: "project", showError, query }),
     () => isOpen
   );
   await vi.advanceTimersByTimeAsync(15_000);
@@ -355,7 +355,7 @@ test("a recovered pending build keeps polling after the popover closes", async (
     return (
       <button
         onClick={() => {
-          void refreshUntilSuccess(
+          void refreshProjectWithRetry(
             async () => refreshedProject(),
             () => true,
             () =>
@@ -398,7 +398,7 @@ test("an in-flight status request cannot replace the project after navigation", 
   const query = new Promise<{ success: true; project: Project }>((resolve) => {
     finishQuery = resolve;
   });
-  const refresh = getRefreshedProject({
+  const refresh = fetchAndStoreProject({
     projectId: oldProject.id,
     showError: false,
     query: () => query,
@@ -423,7 +423,7 @@ test("an older popover refresh cannot overwrite a newer result", async () => {
     }
   );
   let isOpen = true;
-  const oldRefresh = getRefreshedProject({
+  const oldRefresh = fetchAndStoreProject({
     projectId: "project",
     showError: false,
     query: () => oldQuery,
@@ -432,7 +432,7 @@ test("an older popover refresh cannot overwrite a newer result", async () => {
 
   isOpen = false;
   const currentProject = { id: "project", domain: "new" } as Project;
-  await getRefreshedProject({
+  await fetchAndStoreProject({
     projectId: "project",
     showError: false,
     query: async () => ({ success: true, project: currentProject }),
@@ -470,7 +470,7 @@ test("an older recovered poll cannot overwrite a newer popover refresh", async (
   const oldGeneration = progress!.beginPopoverRefresh();
   const polling = progress!.watchPendingPublish(
     () =>
-      getRefreshedProject({
+      fetchAndStoreProject({
         projectId: "project",
         query: () => oldQuery,
         isCurrent: () => progress!.isRefreshCurrent(oldGeneration),
@@ -480,7 +480,7 @@ test("an older recovered poll cannot overwrite a newer popover refresh", async (
 
   const newGeneration = progress!.beginPopoverRefresh();
   const currentProject = { id: "project", domain: "new" } as Project;
-  await getRefreshedProject({
+  await fetchAndStoreProject({
     projectId: "project",
     query: async () => ({ success: true, project: currentProject }),
     isCurrent: () => progress!.isRefreshCurrent(newGeneration),
@@ -542,7 +542,7 @@ test("an old poll cannot update a newly mounted copy of the same project", async
   });
   const polling = waitForPublishStatus(
     () =>
-      getRefreshedProject({
+      fetchAndStoreProject({
         projectId: "project",
         isCurrent: progress!.isCurrentProject,
         query: () => query,
@@ -572,13 +572,13 @@ test("publish failure updates the banner without a duplicate toast while Publish
 
   $publishDialog.set("publish");
   reportPublishResult({
-    result: { status: "PUBLISHED", statusText: publishedStatusText },
+    result: { status: "PUBLISHED", statusContent: publishedStatusText },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
   });
   reportPublishResult({
-    result: { status: "FAILED", statusText: failedStatusText },
+    result: { status: "FAILED", statusContent: failedStatusText },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
@@ -594,7 +594,7 @@ test("an old project completion does not show a success toast over an open Publi
   $publishDialog.set("publish");
 
   reportPublishResult({
-    result: { status: "PUBLISHED", statusText: <>Published</> },
+    result: { status: "PUBLISHED", statusContent: <>Published</> },
     setPublishError: vi.fn(),
     isCurrentProject: () => false,
   });
@@ -609,13 +609,13 @@ test("publish completion does not show a success toast in the Export view", () =
   $publishDialog.set("export");
 
   reportPublishResult({
-    result: { status: "PUBLISHED", statusText: <>Published</> },
+    result: { status: "PUBLISHED", statusContent: <>Published</> },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
   });
   reportPublishResult({
-    result: { status: "FAILED", statusText: <>Publish failed</> },
+    result: { status: "FAILED", statusContent: <>Publish failed</> },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
@@ -634,13 +634,13 @@ test("publish completion shows a toast after the dialog closes", () => {
   $publishDialog.set("none");
 
   reportPublishResult({
-    result: { status: "PUBLISHED", statusText: publishedStatusText },
+    result: { status: "PUBLISHED", statusContent: publishedStatusText },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
   });
   reportPublishResult({
-    result: { status: "FAILED", statusText: failedStatusText },
+    result: { status: "FAILED", statusContent: failedStatusText },
     timesLeft: 11,
     maxDailyPublishesPerUser: 20,
     setPublishError,
@@ -824,7 +824,7 @@ test("a publish failure remains available after the panel remounts", () => {
         <button
           onClick={() =>
             reportPublishResult({
-              result: { status: "FAILED", statusText: <>Build failed</> },
+              result: { status: "FAILED", statusContent: <>Build failed</> },
               timesLeft: 11,
               maxDailyPublishesPerUser: 20,
               setPublishError: progress.setPublishStatusError,
@@ -862,7 +862,7 @@ test("a successful status refresh clears a persisted publish failure", () => {
         <button
           onClick={() =>
             reportPublishResult({
-              result: { status: "FAILED", statusText: <>Publish failed</> },
+              result: { status: "FAILED", statusContent: <>Publish failed</> },
               timesLeft: 11,
               maxDailyPublishesPerUser: 20,
               setPublishError: progress.setPublishStatusError,

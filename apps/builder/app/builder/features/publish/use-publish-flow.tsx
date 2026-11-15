@@ -12,15 +12,15 @@ import { usePublishValidationState } from "./publish-actions";
 import {
   usePublishProgress,
   waitForPublishStatus,
-  refreshUntilSuccess,
-  getRefreshedProject,
+  refreshProjectWithRetry,
+  fetchAndStoreProject,
   reportPublishResult,
 } from "./use-publish-progress";
 import {
-  selectPublishLogs,
-  usePublishLogs,
-  type PublishLog,
-} from "./use-publish-logs";
+  selectSessionPublishes,
+  useSessionPublishes,
+  type SessionPublish,
+} from "./use-session-publishes";
 import {
   runPublishDiagnostics,
   runPublishValidation,
@@ -28,7 +28,7 @@ import {
   getServerPublishFindings,
 } from "./publish-validation";
 import { runPublishAfterBestEffortChecks } from "./publish-preflight";
-import type { PublishValidationFinding } from "./diagnostics";
+import type { DiagnosticFinding } from "./diagnostics";
 
 const downloadStatic = (name: string) => {
   window.location.href = `/cgi/static/ssg/${name}`;
@@ -37,7 +37,7 @@ const downloadStatic = (name: string) => {
 const getPublishErrorFinding = (
   error: JSX.Element | string,
   buildId?: string
-): PublishValidationFinding => ({
+): DiagnosticFinding => ({
   severity: "error",
   source: "publish",
   buildId,
@@ -51,16 +51,16 @@ export const usePublishFlow = (
   allowPublishLogs: boolean,
   publishDialog: "none" | "publish" | "export"
 ) => {
-  const publishLogs = usePublishLogs(projectId, allowPublishLogs);
-  const pendingLogs = useRef(publishLogs.items);
-  pendingLogs.current = publishLogs.items;
-  const [selectedReport, setSelectedReport] = useState<{
+  const sessionPublishes = useSessionPublishes(projectId, allowPublishLogs);
+  const sessionPublishesRef = useRef(sessionPublishes.items);
+  sessionPublishesRef.current = sessionPublishes.items;
+  const [diagnosticsSelection, setDiagnosticsSelection] = useState<{
     target: "static" | "site";
     domain?: string;
     tab: "warnings" | "errors" | "publish";
   }>();
   useEffect(() => {
-    setSelectedReport(undefined);
+    setDiagnosticsSelection(undefined);
   }, [projectId]);
   const validation = usePublishValidationState(publishDialog);
   const progress = usePublishProgress(projectId);
@@ -80,7 +80,7 @@ export const usePublishFlow = (
     complete: completePublishLog,
     loadLog: loadPublishLog,
     isCurrent,
-  } = publishLogs;
+  } = sessionPublishes;
   const validationFindings = progress.manualValidationFindings;
   const { invalidate: invalidateValidationFindings } = validationFindings;
   const { update: onValidationStateChange } = validation;
@@ -92,7 +92,7 @@ export const usePublishFlow = (
 
   const finishPublish = useCallback(
     (
-      item: PublishLog | undefined,
+      item: SessionPublish | undefined,
       result: Awaited<ReturnType<typeof waitForPublishStatus>>,
       onDownload = downloadStatic
     ) => {
@@ -118,7 +118,7 @@ export const usePublishFlow = (
   );
 
   const waitForCompletion = async (
-    item: PublishLog | undefined,
+    item: SessionPublish | undefined,
     previousBuildId?: string,
     onDownload = downloadStatic
   ) => {
@@ -126,7 +126,7 @@ export const usePublishFlow = (
       return;
     }
     const result = await waitForPublishStatus(
-      () => getRefreshedProject({ projectId, isCurrent }),
+      () => fetchAndStoreProject({ projectId, isCurrent }),
       isCurrent,
       previousBuildId,
       {
@@ -145,9 +145,9 @@ export const usePublishFlow = (
     if (publishDialog !== "none" && progress.isPublishing === false) {
       let isOpen = true;
       const generation = beginPopoverRefresh();
-      void refreshUntilSuccess(
+      void refreshProjectWithRetry(
         async (showError) => {
-          const refreshedProject = await getRefreshedProject({
+          const refreshedProject = await fetchAndStoreProject({
             projectId,
             showError,
             isCurrent: () => isOpen && isRefreshCurrent(generation),
@@ -164,7 +164,7 @@ export const usePublishFlow = (
         () => isOpen,
         () => {
           const target = publishDialog === "export" ? "static" : "site";
-          const pending = pendingLogs.current.find(
+          const pending = sessionPublishesRef.current.find(
             (item) => item.target === target && item.status === "pending"
           );
           if (target === "static" && pending === undefined) {
@@ -172,7 +172,7 @@ export const usePublishFlow = (
           }
           void watchPendingPublish(
             () =>
-              getRefreshedProject({
+              fetchAndStoreProject({
                 projectId,
                 showError: false,
                 isCurrent: () => isRefreshCurrent(generation),
@@ -190,7 +190,7 @@ export const usePublishFlow = (
           );
         },
         () =>
-          pendingLogs.current.some(
+          sessionPublishesRef.current.some(
             (item) =>
               item.target ===
                 (publishDialog === "export" ? "static" : "site") &&
@@ -216,41 +216,41 @@ export const usePublishFlow = (
     tab: "warnings" | "errors" | "publish"
   ) => {
     $publishDialog.set("none");
-    setSelectedReport({ target: "site", domain, tab });
+    setDiagnosticsSelection({ target: "site", domain, tab });
   };
   const openStaticReport = (
-    tab: "warnings" | "errors" | "publish" = staticError === undefined
+    tab: "warnings" | "errors" | "publish" = staticFailureFinding === undefined
       ? "publish"
       : "errors"
   ) => {
     $publishDialog.set("none");
-    setSelectedReport({ target: "static", tab });
+    setDiagnosticsSelection({ target: "static", tab });
   };
-  const reportItems = selectPublishLogs(
-    publishLogs.items,
-    selectedReport?.target ?? "site",
-    selectedReport?.domain
+  const reportPublishes = selectSessionPublishes(
+    sessionPublishes.items,
+    diagnosticsSelection?.target ?? "site",
+    diagnosticsSelection?.domain
   );
-  const domain = selectedReport?.domain;
+  const domain = diagnosticsSelection?.domain;
   const siteFindings = [
     ...validationFindings.findings,
     ...progress.publishFindings,
   ];
   const staticDiagnostics = progress.publishDiagnostics.static;
-  const staticError = staticDiagnostics.rejected
+  const staticFailureFinding = staticDiagnostics.rejected
     ? staticDiagnostics.findings
         .filter(({ severity }) => severity === "error")
         .at(-1)
     : undefined;
-  const findings: PublishValidationFinding[] = [];
+  const findings: DiagnosticFinding[] = [];
   const diagnostics =
-    progress.publishDiagnostics[selectedReport?.target ?? "site"];
-  const isReportForDiagnostics =
+    progress.publishDiagnostics[diagnosticsSelection?.target ?? "site"];
+  const includesSelectedDomain =
     domain === undefined || diagnostics.domains.includes(domain);
-  if (isReportForDiagnostics) {
+  if (includesSelectedDomain) {
     findings.push(...diagnostics.findings);
   }
-  if (selectedReport?.target !== "static") {
+  if (diagnosticsSelection?.target !== "static") {
     if (domain === undefined || validationFindings.domains?.includes(domain)) {
       findings.push(...validationFindings.findings);
     }
@@ -426,13 +426,13 @@ export const usePublishFlow = (
 
           if (process.env.NODE_ENV === "development") {
             // Refresh locally as it's always an error
-            await getRefreshedProject({ projectId, isCurrent });
+            await fetchAndStoreProject({ projectId, isCurrent });
           }
 
           return;
         }
 
-        const accepted = publishLogs.record({
+        const accepted = sessionPublishes.record({
           buildId: publishResult.buildId,
           logHandle: publishResult.logHandle,
           target: request.target,
@@ -458,7 +458,7 @@ export const usePublishFlow = (
             isCurrentProject,
           });
         } else if (isCurrent() && outcome?.status === "FAILED") {
-          toast.error(outcome.statusText);
+          toast.error(outcome.statusContent);
         }
       },
       {
@@ -481,15 +481,15 @@ export const usePublishFlow = (
     siteError: progress.publishError,
     siteErrorSource: progress.publishErrorSource,
     siteFindings,
-    staticError,
-    logs: publishLogs.items,
-    loadLog: publishLogs.loadLog,
-    selectedReport,
-    closeReport: () => setSelectedReport(undefined),
-    reportItems,
+    staticFailureFinding,
+    publishes: sessionPublishes.items,
+    loadLog: sessionPublishes.loadLog,
+    diagnosticsSelection,
+    closeReport: () => setDiagnosticsSelection(undefined),
+    reportPublishes,
     reportFindings: findings,
     includeLatestPublishFindings: !(
-      diagnostics.rejected && isReportForDiagnostics
+      diagnostics.rejected && includesSelectedDomain
     ),
     openSiteReport,
     openStaticReport,
