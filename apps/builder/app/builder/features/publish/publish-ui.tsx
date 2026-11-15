@@ -615,13 +615,15 @@ const PublishStatic = ({
     throw new Error("Project not found");
   }
 
-  const { status } =
+  const { status, statusContent } =
     project.latestStaticBuild == null
-      ? { status: "LOADED" as const }
+      ? { status: "LOADED" as const, statusContent: undefined }
       : getStaticPublishStatusDisplay(project.latestStaticBuild);
   const latestPublish = publishes.find((item) => item.target === "static");
-  const hasFailed =
+  const hasSessionFailure =
     staticFailureFinding !== undefined || latestPublish?.status === "failed";
+  const persistedFailure = latestPublish === undefined && status === "FAILED";
+  const hasFailed = hasSessionFailure || persistedFailure;
 
   const isPublishInProgress =
     isPublishing ||
@@ -636,16 +638,19 @@ const PublishStatic = ({
         <PanelBanner variant="error" role="alert">
           <Flex align="center" justify="between" gap={2}>
             <Text css={{ flex: 1, minWidth: 0 }}>
-              {staticFailureFinding?.title ?? "Publish failed"}
+              {staticFailureFinding?.title ??
+                (persistedFailure ? statusContent : "Publish failed")}
             </Text>
-            <Button
-              type="button"
-              color="ghost"
-              css={{ flexShrink: 0 }}
-              onClick={() => onOpenReport("errors")}
-            >
-              See issues
-            </Button>
+            {hasSessionFailure && (
+              <Button
+                type="button"
+                color="ghost"
+                css={{ flexShrink: 0 }}
+                onClick={() => onOpenReport("errors")}
+              >
+                See issues
+              </Button>
+            )}
           </Flex>
         </PanelBanner>
       )}

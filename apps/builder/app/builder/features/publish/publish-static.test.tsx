@@ -62,7 +62,7 @@ beforeAll(async () => {
         ...projectStore.get(),
         latestStaticBuild:
           publishRequests === 0
-            ? null
+            ? (projectStore.get()?.latestStaticBuild ?? null)
             : {
                 buildId: "static-1",
                 updatedAt: new Date().toISOString(),
@@ -191,6 +191,26 @@ test("reopening an active static publish keeps one status owner and one download
   expect(document.body.textContent).toContain("Downloaded");
   expect(publishRequests).toBe(1);
   expect(jobRequests).toBe(2);
+});
+
+test("a persisted static failure remains visible without session diagnostics", async () => {
+  projectStore.set({
+    ...createProject(),
+    latestStaticBuild: {
+      buildId: "previous-static-build",
+      projectId: "project-a",
+      updatedAt: new Date().toISOString(),
+      publishStatus: "FAILED",
+    },
+  });
+  await render(true);
+  expect(document.body.querySelector('[role="alert"]')).not.toBeNull();
+  expect(document.body.textContent).toContain("Download failed");
+  expect(
+    Array.from(document.body.querySelectorAll("button")).some(
+      (button) => button.textContent === "See issues"
+    )
+  ).toBe(false);
 });
 
 test("project navigation suppresses an old static download and error toast", async () => {
