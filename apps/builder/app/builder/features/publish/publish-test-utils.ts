@@ -26,33 +26,72 @@ export const createTrpcInterceptor = (
   onRequest?: (route: string, input: unknown) => void
 ) => {
   const interceptor = new FetchInterceptor();
+  const unexpectedRequests: string[] = [];
   interceptor.on("request", async ({ request, controller }) => {
     const url = new URL(request.url);
     if (url.origin !== location.origin || !url.pathname.startsWith("/trpc/")) {
       return;
     }
+    if (request.method !== "GET" && request.method !== "POST") {
+      const message = `Unexpected request method: ${request.method} ${url.pathname}`;
+      unexpectedRequests.push(message);
+      controller.errorWith(new Error(message));
+      return;
+    }
+    let input: Record<string, unknown>;
     try {
-      const input = JSON.parse(
+      const parsedInput: unknown = JSON.parse(
         request.method === "GET"
           ? (url.searchParams.get("input") ?? "{}")
           : await request.clone().text()
       );
-      const routes = url.pathname.slice("/trpc/".length).split(",");
+      if (
+        parsedInput === null ||
+        typeof parsedInput !== "object" ||
+        Array.isArray(parsedInput)
+      ) {
+        throw new Error("Invalid tRPC batch envelope");
+      }
+      input = parsedInput as Record<string, unknown>;
+    } catch (error) {
+      unexpectedRequests.push(`Unexpected request input: ${url.pathname}`);
+      controller.errorWith(error);
+      return;
+    }
+    const routes = url.pathname.slice("/trpc/".length).split(",");
+    const missingRoute = routes.find((route) => handlers[route] === undefined);
+    if (missingRoute !== undefined) {
+      const message = `Unexpected request: ${missingRoute}`;
+      unexpectedRequests.push(message);
+      controller.errorWith(new Error(message));
+      return;
+    }
+    try {
       const results = await Promise.all(
         routes.map(async (route, index) => {
-          const handler = handlers[route];
-          if (handler === undefined) {
-            throw new Error(`Unexpected request: ${route}`);
-          }
           const value = input[String(index)];
           onRequest?.(route, value);
-          return { result: { data: await handler(value) } };
+          return handlers[route](value);
         })
       );
+      const response = results.find((result) => result instanceof Response);
+      if (response !== undefined) {
+        if (results.length !== 1) {
+          const message = `Unexpected batched HTTP response: ${url.pathname}`;
+          unexpectedRequests.push(message);
+          controller.errorWith(new Error(message));
+          return;
+        }
+        controller.respondWith(response);
+        return;
+      }
       controller.respondWith(
-        new Response(JSON.stringify(results), {
-          headers: { "Content-Type": "application/json" },
-        })
+        new Response(
+          JSON.stringify(results.map((data) => ({ result: { data } }))),
+          {
+            headers: { "Content-Type": "application/json" },
+          }
+        )
       );
     } catch (error) {
       controller.errorWith(error);
@@ -60,6 +99,11 @@ export const createTrpcInterceptor = (
   });
   return {
     start: () => interceptor.apply(),
-    stop: () => interceptor.dispose(),
+    stop: () => {
+      interceptor.dispose();
+      if (unexpectedRequests.length > 0) {
+        throw new Error(unexpectedRequests.join("\n"));
+      }
+    },
   };
 };

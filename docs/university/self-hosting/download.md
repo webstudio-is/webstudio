@@ -30,6 +30,9 @@ See [export types](./#export-types) for more information about JavaScript applic
 
 5. Wait while Webstudio builds and downloads the project.
 
+After the download succeeds, choose **See logs** in the success notice to open
+the **Publish** tab. Free plans can open the tab but cannot view its logs.
+
 The export contains a static site consisting of HTML, CSS, JS, and images ready to be uploaded to another platform.
 
 To check an export, open **Publish**, choose **Export**, and click the status

@@ -128,6 +128,37 @@ type PublishUiState = {
   exportStatic: (templates: readonly Templates[]) => void;
 };
 
+type StaticPublishUiState = Pick<
+  PublishUiState,
+  | "isPublishing"
+  | "publishes"
+  | "staticFailureFinding"
+  | "openStaticReport"
+  | "exportStatic"
+>;
+
+const PublishSuccessBanner = ({
+  message,
+  onOpen,
+}: {
+  message: string;
+  onOpen: () => void;
+}) => (
+  <PanelBanner variant="success" role="status">
+    <Flex align="center" justify="between" gap={2}>
+      <Text css={{ flex: 1, minWidth: 0 }}>{message}</Text>
+      <Button
+        type="button"
+        color="ghost"
+        css={{ flexShrink: 0 }}
+        onClick={onOpen}
+      >
+        See logs
+      </Button>
+    </Flex>
+  </PanelBanner>
+);
+
 type ChangeProjectDomainProps = {
   project: Project;
   refresh: () => Promise<void>;
@@ -473,7 +504,8 @@ const Publish = ({
 
   const getForm = () => buttonRef.current?.closest("form");
   const findings = flow.siteFindings;
-  const hasSessionPublish = publishes.some(({ target }) => target === "site");
+  const latestSitePublish = publishes.find(({ target }) => target === "site");
+  const hasSessionPublish = latestSitePublish !== undefined;
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
@@ -502,6 +534,11 @@ const Publish = ({
             </Button>
           </Flex>
         </PanelBanner>
+      ) : latestSitePublish?.status === "success" && !isPublishInProgress ? (
+        <PublishSuccessBanner
+          message="Published successfully."
+          onOpen={() => onOpenReport(undefined, "publish")}
+        />
       ) : (
         <PublishValidationBanner
           findings={findings}
@@ -561,7 +598,7 @@ const PublishStatic = ({
   flow,
 }: {
   templates: readonly Templates[];
-  flow: PublishUiState;
+  flow: StaticPublishUiState;
 }) => {
   const {
     isPublishing,
@@ -579,11 +616,7 @@ const PublishStatic = ({
     project.latestStaticBuild == null
       ? { status: "LOADED" as const, statusContent: "Not published" }
       : getStaticPublishStatusDisplay(project.latestStaticBuild);
-  const latestPublish = publishes.find(
-    (item) =>
-      item.target === "static" &&
-      item.buildId === project.latestStaticBuild?.buildId
-  );
+  const latestPublish = publishes.find((item) => item.target === "static");
   const logStatus =
     staticFailureFinding !== undefined
       ? "FAILED"
@@ -599,6 +632,15 @@ const PublishStatic = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
+      {latestPublish?.status === "success" &&
+        latestPublish.staticName !== undefined &&
+        !isPublishInProgress &&
+        staticFailureFinding === undefined && (
+          <PublishSuccessBanner
+            message="Downloaded"
+            onOpen={() => onOpenReport("publish")}
+          />
+        )}
       <Flex gap={2} align="center">
         <Tooltip
           content={
@@ -991,7 +1033,7 @@ type DeployTargets = keyof typeof deployTargets;
 const isDeployTargets = (value: string): value is DeployTargets =>
   Object.keys(deployTargets).includes(value);
 
-export const ExportContent = (props: { flow: PublishUiState }) => {
+export const ExportContent = (props: { flow: StaticPublishUiState }) => {
   const npxCommand = "npx webstudio@latest";
   const [deployTarget, setDeployTarget] = useState<DeployTargets>("docker");
 

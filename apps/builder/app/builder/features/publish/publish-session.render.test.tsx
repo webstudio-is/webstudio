@@ -121,6 +121,10 @@ beforeAll(async () => {
       mdxErrors: [],
       mdxOmissions: [],
     }),
+    "api.publish.validate": () => ({
+      diagnostics: { mdxErrors: [], mdxOmissions: [] },
+      cssValid: true,
+    }),
   });
   interceptor.start();
   PublishButton = (await import("./publish")).PublishButton;

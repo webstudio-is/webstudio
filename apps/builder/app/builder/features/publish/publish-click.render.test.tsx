@@ -71,6 +71,14 @@ beforeAll(async () => {
         data: 0,
         limit: 100,
       }),
+      "api.publish.validate": () => ({
+        diagnostics: { mdxErrors: [], mdxOmissions: [] },
+        cssValid: true,
+      }),
+      "build.contentDatabasePublishDiagnostics": () => ({
+        mdxErrors: [],
+        mdxOmissions: [],
+      }),
     },
     (route, input) =>
       requests.push({ path: `/trpc/${route}`, input: { "0": input } })
@@ -121,6 +129,23 @@ const mount = async (dialog: "publish" | "export" = "publish") => {
   );
 };
 
+const selectStaticDestination = async () => {
+  const destination = document.body.querySelector<HTMLButtonElement>(
+    'button[role="combobox"]'
+  );
+  expect(destination).not.toBeNull();
+  await act(async () => {
+    destination?.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+    );
+  });
+  const staticOption = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="option"]')
+  ).find((option) => option.textContent?.trim() === "Static");
+  expect(staticOption).toBeDefined();
+  await act(async () => staticOption?.click());
+};
+
 test("a successful site runner finishes the current publish and retains its report", async () => {
   jobStatus = "success";
   publishResponse = {
@@ -154,6 +179,24 @@ test("a successful site runner finishes the current publish and retains its repo
     "/trpc/api.publish.getJob"
   );
   expect(publish.disabled).toBe(false);
+  const seeLogs = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent?.trim() === "See logs");
+  expect(seeLogs).toBeDefined();
+  expect(seeLogs?.parentElement?.textContent).toContain(
+    "Published successfully."
+  );
+  await act(async () => seeLogs?.click());
+  expect(builderStates.$publishDialog.get()).toBe("none");
+  expect(
+    document.body.querySelector('[role="tab"][aria-selected="true"]')
+      ?.textContent
+  ).toBe("Publish");
+  expect(
+    document.body.querySelector('[role="tabpanel"][data-state="active"]')
+      ?.textContent
+  ).toContain("Upgrade to Pro to view publish logs.");
+  await act(async () => builderStates.$publishDialog.set("publish"));
   const report = document.body.querySelector<HTMLButtonElement>(
     'button[aria-label^="Publish log:"]'
   )!;
@@ -172,6 +215,107 @@ test("a successful site runner finishes the current publish and retains its repo
     document.body.querySelector('[role="tabpanel"][data-state="active"]')
       ?.textContent
   ).toContain("Published");
+});
+
+test("a successful static export links to its publish report until another export starts", async () => {
+  const { ExportContent } = await import("./publish-ui");
+  const onOpenReport = vi.fn();
+  const flow = {
+    isPublishing: false,
+    publishes: [
+      {
+        buildId: "build-1",
+        target: "static" as const,
+        domains: [],
+        findings: [],
+        status: "success" as const,
+        staticName: "site.zip",
+      },
+    ],
+    openStaticReport: onOpenReport,
+    exportStatic: () => {},
+  } satisfies Parameters<typeof ExportContent>[0]["flow"];
+  stores.$project.set({
+    id: "project-1",
+    domain: "example",
+    domainsVirtual: [],
+    latestStaticBuild: {
+      buildId: "build-1",
+      updatedAt: new Date().toISOString(),
+      publishStatus: "PUBLISHED",
+    },
+  } as unknown as Project);
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <ExportContent flow={flow} />
+      </TooltipProvider>
+    )
+  );
+  await selectStaticDestination();
+  const seeLogs = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent?.trim() === "See logs");
+  expect(seeLogs).toBeDefined();
+  expect(seeLogs?.parentElement?.textContent).toContain("Downloaded");
+  await act(async () => seeLogs?.click());
+  expect(onOpenReport).toHaveBeenCalledWith("publish");
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <ExportContent
+          flow={{
+            ...flow,
+            publishes: [{ ...flow.publishes[0], staticName: undefined }],
+          }}
+        />
+      </TooltipProvider>
+    )
+  );
+  expect(
+    Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent?.trim() === "See logs")
+  ).toBeUndefined();
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <ExportContent flow={{ ...flow, isPublishing: true }} />
+      </TooltipProvider>
+    )
+  );
+  expect(
+    Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent?.trim() === "See logs")
+  ).toBeUndefined();
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <ExportContent
+          flow={{
+            ...flow,
+            publishes: [
+              {
+                ...flow.publishes[0],
+                buildId: "build-2",
+                status: "failed",
+              },
+              ...flow.publishes,
+            ],
+          }}
+        />
+      </TooltipProvider>
+    )
+  );
+  expect(
+    Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent?.trim() === "See logs")
+  ).toBeUndefined();
 });
 
 afterEach(() => {
@@ -211,23 +355,7 @@ afterAll(() => {
 
 test("static export reaches the server without waiting for diagnostics", async () => {
   await mount("export");
-
-  const destination = document.body.querySelector<HTMLButtonElement>(
-    'button[role="combobox"]'
-  );
-  expect(destination).not.toBeNull();
-  await act(async () => {
-    destination?.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
-    );
-  });
-  const staticOption = Array.from(
-    document.body.querySelectorAll<HTMLElement>('[role="option"]')
-  ).find((option) => option.textContent?.trim() === "Static");
-  expect(staticOption).toBeDefined();
-  await act(async () => {
-    staticOption?.click();
-  });
+  await selectStaticDestination();
   const buildButton = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
   ).find(

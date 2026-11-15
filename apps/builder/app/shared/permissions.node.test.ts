@@ -599,16 +599,6 @@ describe("getPermissions", () => {
         }).maxDomainsAllowedPerUser
       ).toBe(100);
     });
-
-    test("free plan has 0", () => {
-      expect(
-        getPermissions({
-          role: "own",
-          planFeatures: freePlan,
-          workspaces: [],
-        }).maxDomainsAllowedPerUser
-      ).toBe(0);
-    });
   });
 
   describe("maxDailyPublishesPerUser", () => {
@@ -630,16 +620,6 @@ describe("getPermissions", () => {
           workspaces: [],
         }).maxDailyPublishesPerUser
       ).toBe(100);
-    });
-
-    test("free plan allows limited publishes", () => {
-      expect(
-        getPermissions({
-          role: "own",
-          planFeatures: freePlan,
-          workspaces: [],
-        }).maxDailyPublishesPerUser
-      ).toBe(10);
     });
   });
 

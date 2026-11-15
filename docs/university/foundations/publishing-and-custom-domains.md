@@ -33,6 +33,8 @@ When validation passes with no issues, the popover says it is ready to publish.
 If publishing fails, the popover shows the failure and a **See issues** button.
 It opens **Publish** for a publish that started, or **Errors** if the request
 failed before a publish started.
+After a successful publish, choose **See logs** in the success notice to open
+the **Publish** tab. Free plans can open the tab but cannot view its logs.
 Click the status icon beside a domain to open the same dialog on the
 **Publish** tab for that domain. For a static export, click its status icon.
 If a static export fails before a build starts, open its status icon to see the
