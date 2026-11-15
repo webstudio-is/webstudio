@@ -547,10 +547,15 @@ test("an accepted site failure links to its own publish log", async () => {
     await dispatch.promise;
   });
   const errors = await openErrors("site");
-  const showLogs = Array.from(
-    errors?.querySelectorAll<HTMLButtonElement>("button") ?? []
-  ).find((button) => button.textContent?.trim() === "show logs");
-  expect(showLogs).toBeDefined();
+  const findShowLogs = () =>
+    Array.from(
+      errors?.querySelectorAll<HTMLButtonElement>("button") ?? []
+    ).find((button) => button.textContent?.trim() === "show logs");
+  await vi.waitFor(async () => {
+    await act(async () => {});
+    expect(findShowLogs()).toBeDefined();
+  });
+  const showLogs = findShowLogs();
   await act(async () => showLogs?.click());
   expect(
     document.body.querySelector('[role="tab"][aria-selected="true"]')

@@ -180,7 +180,7 @@ const click = async (label: string) => {
   const target = button(label);
   expect(target).toBeDefined();
   expect(target?.disabled).toBe(false);
-  await act(async () => target?.click());
+  await act(async () => userEvent.click(target!));
 };
 const mount = async (projectId = "project") => {
   await act(async () =>
