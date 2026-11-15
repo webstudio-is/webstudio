@@ -423,4 +423,8 @@ export const sync = async (
       ? `Project bundle synchronized; AGENTS.md blocked by user-owned file at ${agents.path}. Next: webstudio build`
       : `Project bundle synchronized successfully (AGENTS.md: ${agents.status}). Next: webstudio build`
   );
+
+  return project.build.deployment?.destination === "static"
+    ? project.build.deployment.templates
+    : undefined;
 };

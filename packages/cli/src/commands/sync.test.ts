@@ -361,13 +361,17 @@ test.each([
       );
     });
 
-    await sync(
+    const syncedTemplates = await sync(
       {
         authToken: "token-1",
         buildId: "build-1",
         origin: "https://example.com",
       },
       dependencies
+    );
+
+    expect(syncedTemplates).toEqual(
+      deployment.destination === "static" ? ["ssg"] : undefined
     );
 
     const data = JSON.parse(await readFile(".webstudio/data.json", "utf8"));

@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -95,3 +95,34 @@ test("local launcher restores shell cwd when pnpm starts from package directory"
     await rm(projectRoot, { recursive: true, force: true });
   }
 }, 15_000);
+
+test("build without a template keeps its existing CLI error", async () => {
+  const projectRoot = await mkdtemp(
+    join(tmpdir(), "webstudio-bin-build-test-")
+  );
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    PWD: projectRoot,
+    WEBSTUDIO_CONFIG_DIR: join(projectRoot, "config"),
+  };
+  delete env.NODE_OPTIONS;
+  delete env.WEBSTUDIO_LOCAL_CLI_BOOTSTRAPPED;
+
+  try {
+    await mkdir(join(projectRoot, ".webstudio"));
+    await writeFile(join(projectRoot, ".webstudio", "data.json"), "{}");
+    const result = spawnSync(process.execPath, [localPath, "build"], {
+      cwd: packageRoot,
+      env,
+      encoding: "utf-8",
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stdout + result.stderr).toContain("Template is not provided");
+    expect(result.stdout + result.stderr).toContain(
+      "Please check webstudio --help for more details"
+    );
+  } finally {
+    await rm(projectRoot, { recursive: true, force: true });
+  }
+}, 30_000);

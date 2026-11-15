@@ -6,6 +6,7 @@ import {
   cliCommandMetadata,
 } from "./commands/api-command-metadata";
 import {
+  buildCommandOptions,
   getTopLevelMcpToolForwardArgs,
   getTopLevelMcpToolHint,
   handleOutputStreamError,
@@ -101,6 +102,31 @@ const getHelpOutput = async (args: string[]) => {
 };
 
 describe("registerCommands", () => {
+  test("build accepts sync flags without requiring a template", async () => {
+    const output = await getHelpOutput(["build", "--help"]);
+
+    expect(output).toContain("--buildId");
+    expect(output).toContain("--origin");
+    expect(output).toContain("--authToken");
+    expect(output).toContain("--template");
+  });
+
+  test("build requires a template without a build id", async () => {
+    const cli = (makeCLI() as CommonYargsArgv)
+      .exitProcess(false)
+      .command("build", "", buildCommandOptions, () => undefined)
+      .fail((message, error) => {
+        throw error ?? new Error(message);
+      });
+
+    await expect(async () => cli.parseAsync(["build"])).rejects.toThrow(
+      "Template is not provided\nPlease check webstudio --help for more details"
+    );
+    await expect(
+      cli.parseAsync(["build", "--buildId", "build-1"])
+    ).resolves.toMatchObject({ buildId: "build-1", template: [] });
+  });
+
   test("exits successfully on broken pipe output errors", () => {
     const exitProcess = vi.fn((code?: number) => {
       throw new Error(`exit ${code}`);

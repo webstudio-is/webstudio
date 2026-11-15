@@ -178,20 +178,20 @@ export const rootCliEpilogue = [
   "MCP tool shortcuts are forwarded to mcp single-op-call for shell-driven agents.",
 ].join("\n");
 
+export const buildCommandOptions = (yargs: CommonYargsArgv) =>
+  buildOptions(syncOptions(yargs)).check((options) => {
+    if (options.buildId === undefined && options.template.length === 0) {
+      return "Template is not provided\nPlease check webstudio --help for more details";
+    }
+    return true;
+  });
+
 export const registerCommands = (cmd: CommonYargsArgv) => {
-  cmd.command(
-    ["build"],
-    "Build the project",
-    (yargs: CommonYargsArgv) => {
-      return buildOptions(yargs).demandOption(
-        "template",
-        "Please specify a template to use for the build"
-      );
-    },
-    build
-  );
+  cmd.command(["build"], "Build the project", buildCommandOptions, build);
   cmd.command(["link"], "Link the project with the cloud", linkOptions, link);
-  cmd.command(["sync"], "Sync your project", syncOptions, sync);
+  cmd.command(["sync"], "Sync your project", syncOptions, async (options) => {
+    await sync(options);
+  });
   cmd.command(
     ["import"],
     "Import the synced project bundle into another project",
