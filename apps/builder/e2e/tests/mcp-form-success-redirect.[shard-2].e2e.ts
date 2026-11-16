@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { expect } from "@playwright/test";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { createProjectThroughApi } from "../fixtures/create-project";
 import {
   startFormDeliveryReceiver,
   withGeneratedFormDeliveryPreview,
@@ -197,16 +197,14 @@ test("MCP Forms preserve action order, redirect, and feedback in generated Previ
 }) => {
   test.setTimeout(240_000);
   await startPreviewFormMcpClient();
-  const fixture = await createContentModeProject({
+  const projectId = await createProjectThroughApi({
     context,
     email: "mcp-form-redirect-combined@webstudio.test",
     title: "MCP Form redirect outcomes",
-    assetNamePrefix: "mcp-form-redirect-combined-",
-    builderToken: "mcp-form-redirect-combined-builder-token",
   });
   const { successful, failed, feedback, combination } = await measure(
     "MCP author Form outcomes",
-    () => authorForms(fixture.projectId)
+    () => authorForms(projectId)
   );
   const { formId, graphqlResourceId, middleResourceId, httpResourceId } =
     combination;
@@ -217,7 +215,7 @@ test("MCP Forms preserve action order, redirect, and feedback in generated Previ
   const receiver = await startFormDeliveryReceiver();
   try {
     await withGeneratedFormDeliveryPreview({
-      projectId: fixture.projectId,
+      projectId,
       receiverPort: receiver.port,
       callback: async ({ url }) => {
         await test.step("MCP Form dispatches Actions in configured result order", async () => {

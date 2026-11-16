@@ -9,16 +9,18 @@ import { openNavigatorPanel } from "../flows/navigator";
 import { openPage } from "../flows/pages-panel";
 import {
   waitForChangeToBeSaved,
-  waitForSyncStatus,
+  waitForSyncComplete,
 } from "../flows/sync-status";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
-import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { test, withBrowserContext } from "../test";
+import {
+  createBuilderEditingProject,
+  pageTemplateName,
+  pageTemplateText,
+} from "../fixtures/builder-editing-project";
+import { test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
-let fixture: SeededContentModeProject;
-let navigatorStructuralFixture: SeededContentModeProject;
+type Project = Awaited<ReturnType<typeof createBuilderEditingProject>>;
 
 test.describe.configure({ mode: "parallel" });
 
@@ -64,7 +66,7 @@ const createInstanceTransfer = ({ id, text }: { id: string; text: string }) =>
     },
   });
 
-const loadBuildInstances = async (fixture: SeededContentModeProject) => {
+const loadBuildInstances = async (fixture: Project) => {
   const build = await loadDevBuild({ projectId: fixture.projectId });
   return JSON.parse(build.instances) as BuildInstance[];
 };
@@ -197,14 +199,14 @@ const createBuildInspector = (instances: BuildInstance[]) => {
   };
 };
 
-const inspectBuild = async (fixture: SeededContentModeProject) =>
+const inspectBuild = async (fixture: Project) =>
   createBuildInspector(await loadBuildInstances(fixture));
 
 const getElementTagCount = async ({
   fixture,
   tag,
 }: {
-  fixture: SeededContentModeProject;
+  fixture: Project;
   tag: string;
 }) => {
   return (await inspectBuild(fixture)).countElementTag(tag);
@@ -215,7 +217,7 @@ const getElementTagWithTextCount = async ({
   tag,
   text,
 }: {
-  fixture: SeededContentModeProject;
+  fixture: Project;
   tag: string;
   text: string;
 }) => {
@@ -226,7 +228,7 @@ const getExactTextChildCount = async ({
   fixture,
   text,
 }: {
-  fixture: SeededContentModeProject;
+  fixture: Project;
   text: string;
 }) => {
   return (await inspectBuild(fixture)).countExactTextChildren(text);
@@ -237,7 +239,7 @@ const getElementWithTextParentTag = async ({
   tag,
   text,
 }: {
-  fixture: SeededContentModeProject;
+  fixture: Project;
   tag: string;
   text: string;
 }) => {
@@ -252,7 +254,7 @@ const getDirectChildTextOrder = async ({
   parentTag,
   texts,
 }: {
-  fixture: SeededContentModeProject;
+  fixture: Project;
   parentTag: string;
   texts: string[];
 }) => {
@@ -266,7 +268,7 @@ const getInstanceLabelCount = async ({
   fixture,
   label,
 }: {
-  fixture: SeededContentModeProject;
+  fixture: Project;
   label: string;
 }) => {
   return (await inspectBuild(fixture)).countLabel(label);
@@ -285,21 +287,18 @@ const pastePlainTextFromClipboardShortcut = async ({
   const save = waitForChangeToBeSaved({ page });
   await page.keyboard.press("ControlOrMeta+V");
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const pasteFromClipboardShortcut = async ({ page }: { page: Page }) => {
-  const save = waitForChangeToBeSaved({ page }).catch(() => undefined);
+  const save = waitForChangeToBeSaved({ page });
   await page.keyboard.press("ControlOrMeta+V");
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const cutSelectedInstanceShortcut = async ({ page }: { page: Page }) => {
   const save = waitForChangeToBeSaved({ page });
   await page.keyboard.press("ControlOrMeta+X");
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const pasteTextFromClipboardShortcutWithoutSave = async ({
@@ -313,7 +312,7 @@ const pasteTextFromClipboardShortcutWithoutSave = async ({
     await navigator.clipboard.writeText(text);
   }, text);
   await page.keyboard.press("ControlOrMeta+V");
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 };
 
 const waitForClipboardTextIncludes = async ({
@@ -335,13 +334,11 @@ const waitForClipboardTextIncludes = async ({
 const pasteClipboardData = async ({
   page,
   data,
-  waitForSave = true,
 }: {
   page: Page;
   data: Record<string, string>;
-  waitForSave?: boolean;
 }) => {
-  const save = waitForSave ? waitForChangeToBeSaved({ page }) : undefined;
+  const save = waitForChangeToBeSaved({ page });
   await page.evaluate((data) => {
     const clipboardData = new DataTransfer();
     for (const [mimeType, value] of Object.entries(data)) {
@@ -356,7 +353,6 @@ const pasteClipboardData = async ({
     );
   }, data);
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const moveSelectedNavigatorInstance = async ({
@@ -369,7 +365,6 @@ const moveSelectedNavigatorInstance = async ({
   const save = waitForChangeToBeSaved({ page });
   await page.keyboard.press(shortcut);
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const openComponentsPanel = async ({ page }: { page: Page }) => {
@@ -396,8 +391,9 @@ const insertComponentPanelOption = async ({
   name: string;
 }) => {
   await searchComponentsPanel({ page, text: name });
+  const save = waitForChangeToBeSaved({ page });
   await page.getByRole("option", { name, exact: true }).click();
-  await waitForSyncStatus({ page, status: "idle" });
+  await save;
 };
 
 const openCommandPanel = async ({ page }: { page: Page }) => {
@@ -520,31 +516,14 @@ const editSelectedNavigatorLabel = async ({
   await waitForChangeToBeSaved({ page });
 };
 
-test.beforeAll(async ({ browser }, workerInfo) => {
-  const workerSuffix = `worker-${workerInfo.parallelIndex}`;
-  await withBrowserContext(browser, async (context) => {
-    fixture = await createContentModeProject({
-      context,
-      email: `pages-actions-${workerSuffix}@webstudio.test`,
-      title: "Pages Actions E2E",
-      assetNamePrefix: `pages-actions-${workerSuffix}-`,
-      editorToken: `pages-actions-${workerSuffix}-editor-token`,
-      builderToken: `pages-actions-${workerSuffix}-builder-token`,
-    });
-    navigatorStructuralFixture = await createContentModeProject({
-      context,
-      email: `pages-actions-navigator-structural-${workerSuffix}@webstudio.test`,
-      title: "Pages Actions Navigator Structural E2E",
-      assetNamePrefix: `pages-actions-navigator-structural-${workerSuffix}-`,
-      editorToken: `pages-actions-navigator-structural-${workerSuffix}-editor-token`,
-      builderToken: `pages-actions-navigator-structural-${workerSuffix}-builder-token`,
-    });
-  });
-});
-
 test("Builder Navigator keyboard move, reparent, and reorder persist after reload", async ({
   page,
+  context,
 }) => {
+  const fixture = await createBuilderEditingProject({
+    context,
+    name: "navigator-keyboard",
+  });
   const sectionText = "Navigator move section";
   const asideText = "Navigator move aside";
   const html = `
@@ -561,8 +540,8 @@ test("Builder Navigator keyboard move, reparent, and reorder persist after reloa
     async () => {
       await openProjectBuilder({
         page,
-        projectId: navigatorStructuralFixture.projectId,
-        authToken: navigatorStructuralFixture.builderToken,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
     }
   );
@@ -588,7 +567,7 @@ test("Builder Navigator keyboard move, reparent, and reorder persist after reloa
     }
   );
   const reparentedParentTag = await getElementWithTextParentTag({
-    fixture: navigatorStructuralFixture,
+    fixture,
     tag: "aside",
     text: asideText,
   });
@@ -607,7 +586,7 @@ test("Builder Navigator keyboard move, reparent, and reorder persist after reloa
     });
   });
   const outdentedParentTag = await getElementWithTextParentTag({
-    fixture: navigatorStructuralFixture,
+    fixture,
     tag: "aside",
     text: asideText,
   });
@@ -629,7 +608,7 @@ test("Builder Navigator keyboard move, reparent, and reorder persist after reloa
     }
   );
   const reorderedTextOrder = await getDirectChildTextOrder({
-    fixture: navigatorStructuralFixture,
+    fixture,
     parentTag: "body",
     texts: [sectionText, asideText],
   });
@@ -642,19 +621,19 @@ test("Builder Navigator keyboard move, reparent, and reorder persist after reloa
   await measure("pages actions reload navigator keyboard moves", async () => {
     await openProjectBuilder({
       page,
-      projectId: navigatorStructuralFixture.projectId,
-      authToken: navigatorStructuralFixture.builderToken,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
     });
   });
   await waitForCanvasText({ page, text: sectionText });
   await waitForCanvasText({ page, text: asideText });
   const reloadedParentTag = await getElementWithTextParentTag({
-    fixture: navigatorStructuralFixture,
+    fixture,
     tag: "aside",
     text: asideText,
   });
   const reloadedTextOrder = await getDirectChildTextOrder({
-    fixture: navigatorStructuralFixture,
+    fixture,
     parentTag: "body",
     texts: [sectionText, asideText],
   });
@@ -672,7 +651,12 @@ test("Builder Navigator keyboard move, reparent, and reorder persist after reloa
 
 test("Builder Navigator and command panel edits persist after reload", async ({
   page,
+  context,
 }) => {
+  const fixture = await createBuilderEditingProject({
+    context,
+    name: "navigator-commands",
+  });
   const anchorText = "Initial content";
   const componentName = "Image";
   const renamedLabel = "Hero media";
@@ -768,7 +752,13 @@ test("Builder Navigator and command panel edits persist after reload", async ({
 
 test("Builder clipboard shortcuts and paste targets preserve saved content", async ({
   page,
+  context,
 }) => {
+  const fixture = await createBuilderEditingProject({
+    context,
+    name: "builder-clipboard",
+    includePageTemplate: true,
+  });
   await measure("pages actions open builder for clipboard cases", async () => {
     await openProjectBuilder({
       page,
@@ -811,13 +801,7 @@ test("Builder clipboard shortcuts and paste targets preserve saved content", asy
       await navigator.clipboard.writeText(text);
     }, pastedText);
     await page.keyboard.press("ControlOrMeta+V");
-    await commandInput.waitFor();
-    const value = await commandInput.inputValue();
-    if (value !== pastedText) {
-      throw new Error(
-        `Expected native input paste to preserve text "${pastedText}", got "${value}"`
-      );
-    }
+    await expect(commandInput).toHaveValue(pastedText);
     await page.keyboard.press("Escape");
     await waitForCanvasTextHidden({ page, text: pastedText });
   });
@@ -826,7 +810,7 @@ test("Builder clipboard shortcuts and paste targets preserve saved content", asy
     const text = "Initial content";
 
     await waitForCanvasText({ page, text });
-    await waitForSyncStatus({ page, status: "idle" });
+    await waitForSyncComplete({ page });
 
     const initialTextCount = await getExactTextChildCount({ fixture, text });
     await selectCanvasTextInstance({ page, text });
@@ -941,8 +925,8 @@ test("Builder clipboard shortcuts and paste targets preserve saved content", asy
 
     await openPage({
       page,
-      pageName: fixture.pageTemplateName,
-      canvasText: fixture.pageTemplateText,
+      pageName: pageTemplateName,
+      canvasText: pageTemplateText,
     });
 
     await selectBodyInNavigator({ page });

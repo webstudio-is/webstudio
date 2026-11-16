@@ -1,6 +1,9 @@
 import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { startFormCallbackReceiver } from "../flows/form-callback-receiver";
+import {
+  concurrencyPath,
+  startFormCallbackReceiver,
+} from "../flows/form-callback-receiver";
 import { withGeneratedPreview } from "../flows/generated-app";
 import { runFormAuthor } from "../flows/mcp-form-author";
 import {
@@ -11,7 +14,7 @@ import { test } from "../test";
 
 const managedPath = "/managed-callbacks";
 
-test("Generated Preview runs legacy and managed Form callbacks and preserves query values", async ({
+test("Generated Preview runs Form callbacks, concurrent Actions, and query navigation", async ({
   page,
   context,
 }) => {
@@ -24,13 +27,19 @@ test("Generated Preview runs legacy and managed Form callbacks and preserves que
   });
   const receiver = await startFormCallbackReceiver();
   try {
-    await runFormAuthor(
-      "mcp-form-callbacks-author",
+    const { stdout } = await runFormAuthor(
+      "mcp-form-callbacks-and-actions-author",
       fixture.projectId,
-      "legacy-and-managed",
-      "https://mcp-delivery.example/submit",
-      managedPath
+      managedPath,
+      concurrencyPath
     );
+    const { formId, graphqlResourceId, httpResourceId, middleResourceId } =
+      JSON.parse(stdout) as {
+        formId: string;
+        graphqlResourceId: string;
+        httpResourceId: string;
+        middleResourceId: string;
+      };
     await withGeneratedPreview({
       projectId: fixture.projectId,
       evaluationReceiverPort: String(receiver.port),
@@ -205,6 +214,65 @@ test("Generated Preview runs legacy and managed Form callbacks and preserves que
               )
             )
             .toBe(documentMarker);
+        });
+
+        await test.step("managed Form starts the connected Actions concurrently and runs all three", async () => {
+          const submission = (
+            await submitPreviewFormViaMcp({
+              url,
+              input: {
+                path: "/",
+                selector: `[data-ws-managed-form-id="${formId}"]`,
+                values: [
+                  { name: "name", value: "Ada" },
+                  { name: "email", value: "ada@example.com" },
+                  { name: "subject", value: "Parallel Actions" },
+                  { name: "message", value: "Both receivers" },
+                ],
+                submitter: "button[type=submit]",
+                timeout: 30_000,
+              },
+            })
+          ).data;
+          expect(receiver.barrierReached).toBe(true);
+          expect(submission).toMatchObject({
+            status: "submitted",
+            formState: "success",
+            errors: [],
+          });
+          expect(submission.exchanges).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                status: 200,
+                url: expect.stringContaining("/__ws-form"),
+              }),
+            ])
+          );
+          expect(submission.results).toEqual([
+            expect.objectContaining({
+              resourceId: graphqlResourceId,
+              status: 200,
+            }),
+            expect.objectContaining({
+              resourceId: middleResourceId,
+              status: 200,
+            }),
+            expect.objectContaining({
+              resourceId: httpResourceId,
+              status: 200,
+            }),
+          ]);
+          expect(receiver.actionDeliveries).toHaveLength(3);
+          expect(
+            receiver.actionDeliveries.some((body) =>
+              body.includes("mutation Record")
+            )
+          ).toBe(true);
+          expect(
+            receiver.actionDeliveries.some((body) =>
+              body.includes('"subject":"Parallel Actions"')
+            )
+          ).toBe(true);
         });
       },
     });

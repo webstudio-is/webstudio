@@ -119,9 +119,11 @@ test("Project redirects and MCP-authored Forms run in the same generated product
     try {
       const receiver = await startFormDeliveryReceiver();
       try {
-        const verifyPreview = (redirect: { from: string; to: string }) =>
+        const verifyPreview: Parameters<
+          typeof withSavedProjectRedirect
+        >[0]["verifyPreview"] = ({ redirect, build }) =>
           withMcpEmailHttpPreview({
-            projectId: fixture.projectId,
+            build,
             emailPort: emailReceiver.port,
             httpPort: receiver.port,
             callback: async ({ url }) => {

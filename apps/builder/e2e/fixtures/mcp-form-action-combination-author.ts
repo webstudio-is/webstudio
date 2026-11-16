@@ -62,7 +62,8 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
 
 export const authorFormActionCombination = async (
   projectId: string,
-  mode?: string
+  mode?: string,
+  deliveryPath = "/submit"
 ) => {
   let build = await loadDevBuild({ projectId: projectId });
   const parse = <Value>(field: keyof typeof build) =>
@@ -338,12 +339,12 @@ export const authorFormActionCombination = async (
     }
     const graphql = await createAction(
       "First GraphQL action",
-      "/submit",
+      deliveryPath,
       "graphql",
       `{ query: "mutation Record($name: String!) { record(name: $name) }", variables: { name: ${formData}.name } }`
     );
-    const middle = await createAction("Middle HTTP action", "/submit");
-    const http = await createAction("Last HTTP action", "/submit");
+    const middle = await createAction("Middle HTTP action", deliveryPath);
+    const http = await createAction("Last HTTP action", deliveryPath);
     const actions = [
       { dataSourceId: graphql.dataSourceId },
       { dataSourceId: middle.dataSourceId },

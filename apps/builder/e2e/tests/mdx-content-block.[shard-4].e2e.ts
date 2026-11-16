@@ -8,7 +8,11 @@ import {
   prepareMdxEditorPages,
 } from "../fixtures/mdx-content-block-project";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { openAssetsPanel, uploadAsset } from "../flows/assets-panel";
+import {
+  openAssetsPanel,
+  uploadAsset,
+  uploadAssets,
+} from "../flows/assets-panel";
 import {
   openProjectBuilder,
   waitForCanvasFrame,
@@ -35,7 +39,7 @@ import { openNavigatorPanel } from "../flows/navigator";
 import { openPage } from "../flows/pages-panel";
 import { selectCanvasTextInstanceForProps } from "../flows/canvas-selection";
 import { fillSelectedStringProperty } from "../flows/props-panel";
-import { getProjectBuilderUrl, test } from "../test";
+import { getProjectBuilderUrl, newIsolatedPage, test } from "../test";
 import { e2ePaidPlanName } from "../plans";
 
 test.describe.configure({ mode: "parallel" });
@@ -188,9 +192,18 @@ const openFixture = async ({
   await waitForSyncComplete({ page });
 };
 
+const openMdxEditor = async (page: Page) => {
+  await selectContentBlock({ page });
+  await page.getByRole("button", { name: "Open", exact: true }).click();
+  const editor = page.getByRole("dialog").locator(".cm-content");
+  await editor.waitFor({ state: "visible" });
+  return editor;
+};
+
 test("Content Block MDX source lifecycle persists edits and resets to empty", async ({
   page,
   context,
+  browser,
 }) => {
   // This full lifecycle repeatedly reloads Builder across two roles. CI can
   // exhaust the default two-minute budget at the final reload assertion.
@@ -209,8 +222,7 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
     authToken: fixture.builderToken,
   });
   await openAssetsPanel({ page });
-  await uploadAsset({ page, filename: sourceFilename });
-  await uploadAsset({ page, filename: alternateFilename });
+  await uploadAssets({ page, filenames: [sourceFilename, alternateFilename] });
 
   await selectContentBlock({ page });
   await chooseContentBlockSource({ page, filename: sourceFilename });
@@ -292,37 +304,25 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
       "Editing a plain Content Block template must persist as Markdown"
     );
   }
-  await openFixture({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await selectContentBlock({ page });
-  await page.getByRole("button", { name: "Open", exact: true }).click();
-  const fileEditor = page.getByRole("dialog").locator(".cm-content");
-  await fileEditor.waitFor({ state: "visible" });
-  if ((await fileEditor.textContent())?.includes(editedTemplateText) !== true) {
-    throw new Error(
-      "Opening an MDX Asset after a canvas save must show the latest content"
-    );
-  }
-  const rawEditorHeading = "Raw editor heading";
-  const rawEditorWrite = waitForAssetWrite(page, (source) =>
-    source.includes(`## ${rawEditorHeading}`)
-  );
-  await fileEditor.click();
-  await page.keyboard.press("ControlOrMeta+End");
-  await page.keyboard.press("Enter");
-  await page.keyboard.press("Enter");
-  await page.keyboard.type(`## ${rawEditorHeading}`);
-  await page.keyboard.press("Escape");
-  await waitForCanvasText({ page, text: rawEditorHeading });
-  await rawEditorWrite;
-  await openFixture({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.editorToken,
-    mode: "content",
+  await test.step("A fresh Builder reads the saved template edit", async () => {
+    const { page: builderPage, close } = await newIsolatedPage(browser);
+    try {
+      await openFixture({
+        page: builderPage,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+      const fileEditor = await openMdxEditor(builderPage);
+      if (
+        (await fileEditor.textContent())?.includes(editedTemplateText) !== true
+      ) {
+        throw new Error(
+          "Opening an MDX asset after a canvas save must show the saved template edit"
+        );
+      }
+    } finally {
+      await close();
+    }
   });
   await Promise.all([
     waitForAssetWrite(page),
@@ -425,8 +425,31 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
   });
   await waitForCanvasText({ page, text: editedHeading });
   await waitForCanvasTextHidden({ page, text: editedTemplateText });
-  await selectContentBlock({ page });
 
+  const fileEditor = await openMdxEditor(page);
+  const savedSource = await fileEditor.textContent();
+  if (savedSource?.includes(editedHeading) !== true) {
+    throw new Error(
+      "Opening an MDX Asset after a canvas save must show the latest content"
+    );
+  }
+  if (savedSource.includes(editedTemplateText)) {
+    throw new Error("Opening the MDX asset must omit the deleted template");
+  }
+  const rawEditorHeading = "Raw editor heading";
+  const rawEditorWrite = waitForAssetWrite(page, (source) =>
+    source.includes(`## ${rawEditorHeading}`)
+  );
+  await fileEditor.click();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type(`## ${rawEditorHeading}`);
+  await page.keyboard.press("Escape");
+  await waitForCanvasText({ page, text: rawEditorHeading });
+  await rawEditorWrite;
+
+  await selectContentBlock({ page });
   await chooseContentBlockSource({
     page,
     filename: alternateFilename,
@@ -436,10 +459,7 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
   await waitForCanvasText({ page, text: alternateHeading });
   await waitForCanvasTextHidden({ page, text: editedHeading });
 
-  await selectContentBlock({ page });
-  await page.getByRole("button", { name: "Open", exact: true }).click();
-  const alternateEditor = page.getByRole("dialog").locator(".cm-content");
-  await alternateEditor.waitFor({ state: "visible" });
+  const alternateEditor = await openMdxEditor(page);
   if (
     (await alternateEditor.textContent())?.includes(alternateHeading) !== true
   ) {
@@ -812,7 +832,7 @@ test("MDX template warnings and renamed templates resolve in the right modes", a
   await chooseContentBlockSource({ page, filename: namedTemplateFilename });
   await confirmContentBlockConnection({ page });
   await waitForCanvasText({ page, text: "Authored lifecycle card" });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await waitForCanvasText({ page, text: "Valid MDX sibling" });
   await waitForCanvasText({

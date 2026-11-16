@@ -1,10 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-  expect,
-  type BrowserContext,
-  type Frame,
-  type Page,
-} from "@playwright/test";
+import { expect, type BrowserContext, type Frame } from "@playwright/test";
 import {
   getCanvasInstance,
   getCanvasInstanceSelector,
@@ -12,7 +7,7 @@ import {
   waitForCanvasFrame,
 } from "../flows/builder";
 import { openNavigatorPanel } from "../flows/navigator";
-import { waitForChangeToBeSaved } from "../flows/sync-status";
+import { waitForSyncComplete } from "../flows/sync-status";
 import { createSlotKeyboardProject } from "../fixtures/slot-keyboard-project";
 import { test } from "../test";
 
@@ -58,13 +53,6 @@ const expectInstanceOrder = async (
     "data-ws-selector",
     after.join(",")
   );
-};
-
-const saveShortcut = async (page: Page, key: string) => {
-  await Promise.all([
-    waitForChangeToBeSaved({ page, timeout: 30_000 }),
-    page.keyboard.press(`Control+${key}`),
-  ]);
 };
 
 const createFixture = async (
@@ -155,7 +143,7 @@ test("Canvas shortcuts select shared Slot siblings and persist keyboard moves", 
 
   // Refocus the canvas and select just the heading before moving it.
   await canvasHeading.click();
-  await saveShortcut(page, "ArrowRight");
+  await page.keyboard.press("Control+ArrowRight");
   await expectIndented(canvas);
 
   for (const move of canvasDetachMoves) {
@@ -165,11 +153,12 @@ test("Canvas shortcuts select shared Slot siblings and persist keyboard moves", 
         canvas,
         instanceSelector: [`${move.id}${move.suffix}`, ...fragmentA],
       }).click();
-      await saveShortcut(page, move.key);
+      await page.keyboard.press(`Control+${move.key}`);
       await expectDetached(canvas, move);
     });
   }
 
+  await waitForSyncComplete({ page, timeout: 30_000 });
   await page.reload();
   const reloadedCanvas = await waitForCanvasFrame({ page });
   await expectIndented(reloadedCanvas);
@@ -199,7 +188,7 @@ test("Navigator shortcuts reorder and outdent shared Slot children while keeping
     .getByRole("button", { name: "Slot Heading", exact: true })
     .first();
   await row.click();
-  await saveShortcut(page, "ArrowUp");
+  await page.keyboard.press("Control+ArrowUp");
   for (const fragment of [fragmentA, fragmentB]) {
     const headingSelector = [heading, ...fragment];
     const boxSelector = [box, ...fragment];
@@ -213,7 +202,7 @@ test("Navigator shortcuts reorder and outdent shared Slot children while keeping
   }
   await expect(row).toBeFocused();
 
-  await saveShortcut(page, "ArrowLeft");
+  await page.keyboard.press("Control+ArrowLeft");
   await expectDetached(canvas, { id: heading, position: "before" });
   await expect(row).toBeFocused();
   await page.keyboard.press("ArrowUp");
@@ -224,6 +213,7 @@ test("Navigator shortcuts reorder and outdent shared Slot children while keeping
     })
   ).toBeFocused();
 
+  await waitForSyncComplete({ page, timeout: 30_000 });
   await page.reload();
   await expectDetached(await waitForCanvasFrame({ page }), {
     id: heading,

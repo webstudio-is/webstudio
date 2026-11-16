@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { expect } from "@playwright/test";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { createBuilderEditingProject } from "../fixtures/builder-editing-project";
 import { loadDevBuild } from "../db";
 import { startFormDeliveryReceiver } from "../flows/generated-form-delivery";
 import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
@@ -23,12 +23,9 @@ test("Builder and MCP Form actions deliver from generated Preview", async ({
 }) => {
   test.setTimeout(240_000);
   await startPreviewFormMcpClient();
-  const fixture = await createContentModeProject({
+  const fixture = await createBuilderEditingProject({
     context,
-    email: "mcp-email-scenarios@webstudio.test",
-    title: "MCP Email scenarios",
-    assetNamePrefix: "mcp-email-scenarios-",
-    builderToken: "mcp-email-scenarios-builder-token",
+    name: "mcp-email-scenarios",
   });
   await test.step("save the legacy Webhook Form action through Builder", async () => {
     await configureSavedWebhookForm({ page, fixture });

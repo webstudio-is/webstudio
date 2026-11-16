@@ -3,7 +3,7 @@ import { insertAssetFolders } from "../db";
 import {
   createAssetFolder,
   openAssetsPanel,
-  uploadAsset,
+  uploadAssets,
 } from "../flows/assets-panel";
 import { openProjectBuilder } from "../flows/builder";
 import {
@@ -45,13 +45,9 @@ test("Asset selection and drag work across a long folder list", async ({
   });
   await waitForSyncStatus({ page, status: "idle" });
   await openAssetsPanel({ page });
-  const firstAssetTitle = await uploadAsset({
+  const [firstAssetTitle, secondAssetTitle] = await uploadAssets({
     page,
-    filename: "upload-image.svg",
-  });
-  const secondAssetTitle = await uploadAsset({
-    page,
-    filename: "replacement-image.svg",
+    filenames: ["upload-image.svg", "replacement-image.svg"],
   });
   const firstAsset = page.getByTitle(firstAssetTitle);
   const secondAsset = page.getByTitle(secondAssetTitle);

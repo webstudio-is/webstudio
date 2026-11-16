@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { Page } from "@playwright/test";
-import { waitForChangeToBeSaved } from "./sync-status";
+import { waitForChangeToBeSaved, waitForSyncComplete } from "./sync-status";
 import { dragPointer } from "./drag";
 
 const assetFixturePath = (filename: string) =>
@@ -93,23 +93,35 @@ export const dragAssetToFolder = async ({
   await asset.waitFor({ state: "hidden" });
 };
 
-export const uploadAsset = async ({
+export const uploadAssets = async ({
   page,
-  filename,
+  filenames,
 }: {
   page: Page;
-  filename: string;
+  filenames: [string, ...string[]];
 }) => {
   const fileChooserPromise = page.waitForEvent("filechooser");
   await openAddAssetMenu(page);
   await page.getByRole("menuitem", { name: "Upload", exact: true }).click();
   const fileChooser = await fileChooserPromise;
   const save = waitForChangeToBeSaved({ page });
-  await fileChooser.setFiles(assetFixturePath(filename));
-  const title = await waitForAsset({ page, filename });
+  await fileChooser.setFiles(filenames.map(assetFixturePath));
+  const titles = await Promise.all(
+    filenames.map((filename) => waitForAsset({ page, filename }))
+  );
   await save;
-  return title;
+  // A slow upload can enqueue another save after the first one completes.
+  await waitForSyncComplete({ page });
+  return titles;
 };
+
+export const uploadAsset = async ({
+  page,
+  filename,
+}: {
+  page: Page;
+  filename: string;
+}) => (await uploadAssets({ page, filenames: [filename] }))[0]!;
 
 export const openAssetSettings = async ({
   page,

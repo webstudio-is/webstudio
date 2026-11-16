@@ -1,3 +1,4 @@
+import { createReadStream } from "node:fs";
 import { expect } from "@playwright/test";
 import {
   blockBodyComponent,
@@ -11,18 +12,14 @@ import type {
   StyleSource,
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
-import { loadDevBuild, updateBuild } from "../db";
+import { createAssetClient } from "../../app/shared/asset-client";
+import { insertAsset, insertFile, loadDevBuild, updateBuild } from "../db";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import {
   openProjectBuilder,
   waitForCanvasFrame,
   waitForCanvasText,
 } from "../flows/builder";
-import {
-  getAssetIdByFilename,
-  openAssetsPanel,
-  uploadAsset,
-} from "../flows/assets-panel";
 import { selectCanvasImage } from "../flows/canvas-media";
 import { replaceCanvasText } from "../flows/content-editing";
 import { fillSelectedStringProperty } from "../flows/props-panel";
@@ -231,31 +228,40 @@ test("Editor can edit legacy document bindings before a Builder visits", async (
   browser,
 }) => {
   const filename = "content-source.mdx";
-  const { fixture, assetId } = await withBrowserContext(
-    browser,
-    async (context) => {
-      const fixture = await createContentModeProject({
-        context,
-        devPlan: e2ePaidPlanName,
-        email: "legacy-bindings@webstudio.test",
-        title: "Legacy document bindings",
-      });
-      const setupPage = await context.newPage();
-      await openProjectBuilder({
-        page: setupPage,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-      await openAssetsPanel({ page: setupPage });
-      await uploadAsset({ page: setupPage, filename });
-      return {
-        fixture,
-        assetId: await getAssetIdByFilename({ page: setupPage, filename }),
-      };
-    }
+  const fixture = await withBrowserContext(browser, (context) =>
+    createContentModeProject({
+      context,
+      devPlan: e2ePaidPlanName,
+      email: "legacy-bindings@webstudio.test",
+      title: "Legacy document bindings",
+    })
   );
-  // Seed the old representation only after the setup browser has closed.
-  const build = await loadDevBuild({ projectId: fixture.projectId });
+  // Seed the document before opening Builder so the Editor is its first reader.
+  const name = `${fixture.projectId}-${filename}`;
+  const [assetData, build] = await Promise.all([
+    createAssetClient().uploadFile(
+      name,
+      "file",
+      createReadStream(
+        new URL(`../fixtures/assets/${filename}`, import.meta.url)
+      ),
+      undefined
+    ),
+    loadDevBuild({ projectId: fixture.projectId }),
+  ]);
+  await insertFile({
+    name,
+    ...assetData,
+    meta: JSON.stringify(assetData.meta),
+    status: "UPLOADED",
+    uploaderProjectId: fixture.projectId,
+  });
+  const { id: assetId } = await insertAsset({
+    id: `${fixture.projectId}-legacy-document`,
+    projectId: fixture.projectId,
+    name,
+    filename,
+  });
   const instances: Instance[] = JSON.parse(build.instances);
   const props: Prop[] = JSON.parse(build.props);
   const dataSources: DataSource[] = JSON.parse(build.dataSources);

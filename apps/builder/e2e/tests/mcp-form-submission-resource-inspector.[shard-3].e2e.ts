@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { expect } from "@playwright/test";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { createBuilderEditingProject } from "../fixtures/builder-editing-project";
 import { waitForCanvasFrame } from "../flows/builder";
 import { startFormDeliveryReceiver } from "../flows/generated-form-delivery";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
@@ -52,12 +52,9 @@ test("MCP-authored Form submission exposes its saved HTTP exchange without anoth
   page,
   context,
 }) => {
-  const fixture = await createContentModeProject({
+  const fixture = await createBuilderEditingProject({
     context,
-    email: "mcp-form-resource-snapshot@webstudio.test",
-    title: "MCP Form Resource submission snapshot",
-    assetNamePrefix: "mcp-form-resource-snapshot-",
-    builderToken: "mcp-form-resource-snapshot-builder-token",
+    name: "mcp-form-resource-snapshot",
   });
   const receiver = await startFormDeliveryReceiver();
   const actionUrl = `http://127.0.0.1:${receiver.port}/submit`;

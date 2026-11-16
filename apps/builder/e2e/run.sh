@@ -192,7 +192,7 @@ configure_database_urls() {
   export DIRECT_URL="${E2E_DIRECT_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${db_port}/${POSTGRES_DB}}"
 }
 
-if [ "$E2E_RUN_TESTS" = "true" ] && [ "$mode" != "ci-shard-prepare" ]; then
+if [ "$E2E_RUN_TESTS" = "true" ] && [[ "$mode" != ci-shard-* ]]; then
   run_step "validate builder e2e test selection" \
     "$E2E_TEST_SELECTION_TIMEOUT_SECONDS" validate_builder_e2e_selection
 fi

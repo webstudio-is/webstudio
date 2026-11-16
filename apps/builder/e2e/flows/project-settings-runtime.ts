@@ -5,7 +5,7 @@ import { measure } from "../perf";
 import { test } from "../test";
 import { openProjectBuilder, waitForCanvasText } from "./builder";
 import { expectGeneratedRedirects } from "./generated-app";
-import { waitForChangeToBeSaved } from "./sync-status";
+import { waitForChangeToBeSaved, waitForSyncComplete } from "./sync-status";
 
 type PersistedPages = {
   redirects?: Array<{
@@ -54,20 +54,6 @@ export const openProjectSettings = async ({
   await page.getByRole("dialog", { name: "Project settings" }).waitFor();
 };
 
-const saveSiteName = async ({
-  page,
-  siteName,
-}: {
-  page: PlaywrightPage;
-  siteName: string;
-}) => {
-  const save = waitForChangeToBeSaved({ page });
-  await page
-    .getByRole("textbox", { name: "Site name", exact: true })
-    .fill(siteName);
-  await save;
-};
-
 const setAtomicStyles = async ({
   page,
   checked,
@@ -79,15 +65,10 @@ const setAtomicStyles = async ({
   const checkbox = page.getByRole("checkbox", {
     name: "Generate atomic CSS when publishing",
   });
-  const toggle = async () => {
-    const save = waitForChangeToBeSaved({ page });
-    await checkbox.click();
-    await save;
-  };
   if ((await checkbox.isChecked()) === checked) {
-    await toggle();
+    await checkbox.click();
   }
-  await toggle();
+  await checkbox.click();
 };
 
 const addRedirect = async ({
@@ -104,13 +85,11 @@ const addRedirect = async ({
   await page.getByPlaceholder("/old-path or /old/*").fill(from);
   await page.getByPlaceholder("/to-path or URL").fill(to);
   await page.keyboard.press("Escape");
-  const save = waitForChangeToBeSaved({ page });
   await page
     .getByPlaceholder("/to-path or URL")
     .locator("xpath=following::button[2]")
     .click();
   await page.getByText(from, { exact: true }).waitFor();
-  await save;
 };
 
 const deleteRedirect = async ({
@@ -128,17 +107,19 @@ const deleteRedirect = async ({
   await save;
 };
 
-const expectPersistedProjectSettings = async ({
-  projectId,
+const expectPersistedProjectSettings = ({
+  build,
   siteName,
   redirect,
 }: {
-  projectId: string;
+  build: Awaited<ReturnType<typeof loadDevBuild>>;
   siteName: string;
   redirect?: { from: string; to: string; status?: string };
 }) => {
-  const pages = await getPersistedPages({ projectId });
-  const settings = await getPersistedProjectSettings({ projectId });
+  const pages = JSON.parse(build.pages) as PersistedPages;
+  const settings = JSON.parse(
+    build.projectSettings
+  ) as PersistedProjectSettings;
   if (settings.meta.siteName !== siteName) {
     throw new Error(
       `Expected siteName "${siteName}", received ${JSON.stringify(settings.meta)}.`
@@ -176,7 +157,10 @@ export const withSavedProjectRedirect = async ({
 }: {
   page: PlaywrightPage;
   fixture: { projectId: string; builderToken: string };
-  verifyPreview: (redirect: { from: string; to: string }) => Promise<void>;
+  verifyPreview: (options: {
+    redirect: { from: string; to: string };
+    build: Awaited<ReturnType<typeof loadDevBuild>>;
+  }) => Promise<void>;
 }) => {
   const siteName = "Runtime Settings Site";
   const redirect = {
@@ -198,7 +182,9 @@ export const withSavedProjectRedirect = async ({
 
   await measure("project settings runtime update settings", async () => {
     await openProjectSettings({ page });
-    await saveSiteName({ page, siteName });
+    await page
+      .getByRole("textbox", { name: "Site name", exact: true })
+      .fill(siteName);
     await setAtomicStyles({ page, checked: false });
     await addRedirect({
       page,
@@ -210,120 +196,127 @@ export const withSavedProjectRedirect = async ({
   await test.step("Save named email recipients and Reply to", async () => {
     await page.getByRole("option", { name: "Emails" }).click();
 
-    let save = waitForChangeToBeSaved({ page });
     await page.getByRole("textbox", { name: "Recipients" }).fill(recipients);
-    await save;
-
-    save = waitForChangeToBeSaved({ page });
     await page.getByRole("textbox", { name: "Reply to" }).fill(sender);
-    await save;
-
-    const persisted = await getPersistedProjectSettings({
-      projectId: fixture.projectId,
-    });
-    if (
-      persisted.meta.contactEmail !== recipients ||
-      persisted.meta.emailSender !== sender
-    ) {
-      throw new Error(
-        `Expected saved Project Emails settings, received ${JSON.stringify(persisted.meta)}.`
-      );
-    }
+    await waitForSyncComplete({ page });
   });
 
-  await expectPersistedProjectSettings({
-    projectId: fixture.projectId,
-    siteName,
-    redirect,
-  });
-  if (
-    (await getPersistedProjectSettings({ projectId: fixture.projectId }))
-      .compiler.atomicStyles !== false
-  ) {
+  const savedBuild = await loadDevBuild({ projectId: fixture.projectId });
+  expectPersistedProjectSettings({ build: savedBuild, siteName, redirect });
+  const settings = JSON.parse(
+    savedBuild.projectSettings
+  ) as PersistedProjectSettings;
+  if (settings.compiler.atomicStyles !== false) {
     throw new Error("Expected atomic CSS setting to persist as disabled.");
   }
-  const reloadAndPreview = await Promise.allSettled([
-    verifyPreview(redirect),
-    measure("project settings runtime reload with redirect", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
+  if (
+    settings.meta.contactEmail !== recipients ||
+    settings.meta.emailSender !== sender
+  ) {
+    throw new Error(
+      `Expected saved Project Emails settings, received ${JSON.stringify(settings.meta)}.`
+    );
+  }
+
+  // Preview uses this saved version while Builder verifies and deletes the
+  // redirect. The export after deletion still reads a fresh build from storage.
+  const checks = await Promise.allSettled([
+    measure("project settings runtime production Preview", () =>
+      verifyPreview({ redirect, build: savedBuild })
+    ),
+    test.step("Verify saved settings and delete redirect in Builder", async () => {
+      await measure(
+        "project settings runtime reload with redirect",
+        async () => {
+          await openProjectBuilder({
+            page,
+            projectId: fixture.projectId,
+            authToken: fixture.builderToken,
+          });
+          await waitForCanvasText({ page, text: "Initial content" });
+        }
+      );
+      await openProjectSettings({ page });
+      await page
+        .getByRole("textbox", { name: "Site name", exact: true })
+        .waitFor();
+      const persistedSiteName = await page
+        .getByRole("textbox", { name: "Site name", exact: true })
+        .inputValue();
+      if (persistedSiteName !== siteName) {
+        throw new Error(
+          `Expected project settings site name "${siteName}", received "${persistedSiteName}".`
+        );
+      }
+      await page.getByRole("option", { name: "Redirects" }).click();
+      await page.getByText(redirect.from, { exact: true }).waitFor();
+      await page.getByRole("option", { name: "Publish" }).click();
+      if (
+        await page
+          .getByRole("checkbox", {
+            name: "Generate atomic CSS when publishing",
+          })
+          .isChecked()
+      ) {
+        throw new Error(
+          "Expected atomic CSS setting to remain disabled after reload."
+        );
+      }
+      await test.step("Verify email settings after reload", async () => {
+        await page.getByRole("option", { name: "Emails" }).click();
+        if (
+          (await page
+            .getByRole("textbox", { name: "Recipients" })
+            .inputValue()) !== recipients ||
+          (await page
+            .getByRole("textbox", { name: "Reply to" })
+            .inputValue()) !== sender
+        ) {
+          throw new Error(
+            "Expected Project Emails settings to survive reload."
+          );
+        }
       });
-      await waitForCanvasText({ page, text: "Initial content" });
+      await page.getByRole("option", { name: "Redirects" }).click();
+
+      await measure("project settings runtime delete redirect", async () => {
+        await deleteRedirect({ page, from: redirect.from });
+      });
+      expectPersistedProjectSettings({
+        build: await loadDevBuild({ projectId: fixture.projectId }),
+        siteName,
+      });
+      await Promise.all([
+        measure(
+          "project settings runtime generated redirects after delete",
+          () =>
+            expectGeneratedRedirects({
+              projectId: fixture.projectId,
+              expectedRedirects: [],
+            })
+        ),
+        measure(
+          "project settings runtime reload after redirect delete",
+          async () => {
+            await openProjectBuilder({
+              page,
+              projectId: fixture.projectId,
+              authToken: fixture.builderToken,
+            });
+            await waitForCanvasText({ page, text: "Initial content" });
+          }
+        ),
+      ]);
+      await openProjectSettings({ page });
+      await page.getByRole("option", { name: "Redirects" }).click();
+      await page.getByText(redirect.from, { exact: true }).waitFor({
+        state: "hidden",
+      });
     }),
   ]);
-  for (const check of reloadAndPreview) {
+  for (const check of checks) {
     if (check.status === "rejected") {
       throw check.reason;
     }
   }
-  await openProjectSettings({ page });
-  await page.getByRole("textbox", { name: "Site name", exact: true }).waitFor();
-  const persistedSiteName = await page
-    .getByRole("textbox", { name: "Site name", exact: true })
-    .inputValue();
-  if (persistedSiteName !== siteName) {
-    throw new Error(
-      `Expected project settings site name "${siteName}", received "${persistedSiteName}".`
-    );
-  }
-  await page.getByRole("option", { name: "Redirects" }).click();
-  await page.getByText(redirect.from, { exact: true }).waitFor();
-  await page.getByRole("option", { name: "Publish" }).click();
-  if (
-    await page
-      .getByRole("checkbox", {
-        name: "Generate atomic CSS when publishing",
-      })
-      .isChecked()
-  ) {
-    throw new Error(
-      "Expected atomic CSS setting to remain disabled after reload."
-    );
-  }
-  await test.step("Verify email settings after reload", async () => {
-    await page.getByRole("option", { name: "Emails" }).click();
-    if (
-      (await page.getByRole("textbox", { name: "Recipients" }).inputValue()) !==
-        recipients ||
-      (await page.getByRole("textbox", { name: "Reply to" }).inputValue()) !==
-        sender
-    ) {
-      throw new Error("Expected Project Emails settings to survive reload.");
-    }
-  });
-  await page.getByRole("option", { name: "Redirects" }).click();
-
-  await measure("project settings runtime delete redirect", async () => {
-    await deleteRedirect({ page, from: redirect.from });
-  });
-  await expectPersistedProjectSettings({
-    projectId: fixture.projectId,
-    siteName,
-  });
-  await Promise.all([
-    measure("project settings runtime generated redirects after delete", () =>
-      expectGeneratedRedirects({
-        projectId: fixture.projectId,
-        expectedRedirects: [],
-      })
-    ),
-    measure(
-      "project settings runtime reload after redirect delete",
-      async () => {
-        await openProjectBuilder({
-          page,
-          projectId: fixture.projectId,
-          authToken: fixture.builderToken,
-        });
-        await waitForCanvasText({ page, text: "Initial content" });
-      }
-    ),
-  ]);
-  await openProjectSettings({ page });
-  await page.getByRole("option", { name: "Redirects" }).click();
-  await page.getByText(redirect.from, { exact: true }).waitFor({
-    state: "hidden",
-  });
 };

@@ -8,7 +8,7 @@ import { loadDevBuild, updateBuild } from "../db";
 import { measure } from "../perf";
 import { openProjectBuilder, waitForCanvasText } from "./builder";
 import { selectNavigatorItem } from "./navigator";
-import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
+import { waitForChangeToBeSaved } from "./sync-status";
 
 const seedSavedWebhookForm = async (projectId: string) => {
   const build = await loadDevBuild({ projectId });
@@ -253,7 +253,6 @@ const updateResourceActionUrl = async ({
   const save = waitForChangeToBeSaved({ page });
   await input.press("Enter");
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const expectPersistedActionResource = async ({

@@ -7,11 +7,8 @@ import {
   setSelectedBooleanProperty,
   waitForSelectedBooleanPropertyValue,
 } from "../flows/props-panel";
-import {
-  waitForChangeToBeSaved,
-  waitForSyncStatus,
-} from "../flows/sync-status";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { waitForChangeToBeSaved } from "../flows/sync-status";
+import { createBuilderEditingProject } from "../fixtures/builder-editing-project";
 import { test } from "../test";
 import { measure } from "../perf";
 
@@ -35,8 +32,9 @@ const insertComponentPanelOption = async ({
     component === undefined
       ? page.getByRole("option", { name, exact: true })
       : page.locator(`[data-drag-component="${component}"]`);
+  const save = waitForChangeToBeSaved({ page });
   await option.click();
-  await waitForSyncStatus({ page, status: "idle" });
+  await save;
 };
 
 const selectNavigatorItem = async ({
@@ -96,7 +94,6 @@ const pastePlainTextFromClipboardShortcut = async ({
     );
   }, text);
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const bindSelectedPropertyToExpression = async ({
@@ -129,7 +126,6 @@ const bindSelectedPropertyToExpression = async ({
   const save = waitForChangeToBeSaved({ page });
   await page.keyboard.press("ControlOrMeta+Enter");
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
   await page.keyboard.press("Escape");
 };
 
@@ -279,13 +275,9 @@ test("Props panel expression bindings and checkbox state persist after reload", 
   page,
   context,
 }) => {
-  const fixture = await createContentModeProject({
-    context: context,
-    email: "props-runtime@webstudio.test",
-    title: "Props Runtime",
-    assetNamePrefix: "props-runtime-",
-    editorToken: "props-runtime-editor-token",
-    builderToken: "props-runtime-builder-token",
+  const fixture = await createBuilderEditingProject({
+    context,
+    name: "props-runtime",
   });
   const anchorText = "Expression-bound link";
   const expression = '"/props-expression-link"';

@@ -23,22 +23,27 @@ const cliTsconfigPath = fileURLToPath(
 );
 
 export const withMcpEmailHttpPreview = async <Result>({
-  projectId,
   emailPort,
   httpPort,
   callback,
+  ...source
 }: {
-  projectId: string;
   emailPort: number;
   httpPort: number;
   callback: ({ url }: { url: string }) => Promise<Result>;
-}) => {
+} & (
+  | { projectId: string }
+  | { build: Awaited<ReturnType<typeof loadDevBuild>> }
+)) => {
   const tempDir = await mkdtemp(
     join(tmpdir(), "webstudio-e2e-mcp-email-http-")
   );
   let preview: ChildProcess | undefined;
   try {
-    const build = await loadDevBuild({ projectId });
+    const build =
+      "build" in source
+        ? source.build
+        : await loadDevBuild({ projectId: source.projectId });
     await mkdir(join(tempDir, ".webstudio"), { recursive: true });
     await writeFile(
       join(tempDir, ".webstudio", "data.json"),

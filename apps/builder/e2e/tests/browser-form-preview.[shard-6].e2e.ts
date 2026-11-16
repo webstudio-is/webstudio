@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { expect } from "@playwright/test";
 import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 import { formDataParameterName } from "@webstudio-is/sdk/runtime";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { createProjectThroughApi } from "../fixtures/create-project";
 import { loadDevBuild } from "../db";
 import type { CapturedEmail } from "../flows/mcp-email-preview";
 import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
@@ -62,12 +62,10 @@ test("Generated Preview delivers MCP-authored forms with readable email and brow
   page,
 }) => {
   await startPreviewFormMcpClient();
-  const fixture = await createContentModeProject({
+  const projectId = await createProjectThroughApi({
     context,
     email: "mcp-default-contact@webstudio.test",
     title: "MCP default contact Form",
-    assetNamePrefix: "mcp-default-contact-",
-    builderToken: "mcp-default-contact-builder-token",
   });
   const {
     formData: {
@@ -77,9 +75,9 @@ test("Generated Preview delivers MCP-authored forms with readable email and brow
     },
     contact: { formId, ownerResourceId, visitorResourceId },
     context: { formId: contextFormId },
-  } = await authorForms(fixture.projectId);
+  } = await authorForms(projectId);
   expect(formDataExpression).toContain(".toString()");
-  const build = await loadDevBuild({ projectId: fixture.projectId });
+  const build = await loadDevBuild({ projectId });
   const resources = JSON.parse(build.resources) as Array<{
     id: string;
     email?: Record<string, unknown>;
@@ -164,7 +162,7 @@ test("Generated Preview delivers MCP-authored forms with readable email and brow
   const receiver = await startFormContextReceiver();
   try {
     await withMcpEmailHttpPreview({
-      projectId: fixture.projectId,
+      projectId,
       emailPort: address.port,
       httpPort: receiver.port,
       callback: async ({ url }) => {

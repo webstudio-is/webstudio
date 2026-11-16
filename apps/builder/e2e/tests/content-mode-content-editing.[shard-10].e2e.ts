@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { deleteContentBlockChildAfterCanvasText } from "../flows/block-outline";
 import {
   openProjectBuilder,
@@ -144,19 +144,6 @@ const getElementHrefWithText = async ({
   return href.value;
 };
 
-const applyHistoryShortcut = async ({
-  page,
-  shortcut,
-}: {
-  page: Page;
-  shortcut: "ControlOrMeta+Z" | "ControlOrMeta+Shift+Z";
-}) => {
-  const save = waitForChangeToBeSaved({ page });
-  save.catch(() => undefined);
-  await page.keyboard.press(shortcut);
-  await save;
-};
-
 let fixture: SeededContentModeProject;
 
 test.describe.configure({ mode: "parallel" });
@@ -188,6 +175,7 @@ test("Editor can paste, format and delete text while protected content remains",
       page,
       anchorText: "Initial content",
       templateName: fixture.deletableTemplateName,
+      waitForProjectSync: false,
     });
   });
   await waitForCanvasText({
@@ -247,14 +235,18 @@ test("Editor can paste, format and delete text while protected content remains",
   }
 
   await measure("content mode undo rich text formatting", async () => {
-    await applyHistoryShortcut({ page, shortcut: "ControlOrMeta+Z" });
+    await Promise.all([
+      waitForChangeToBeSaved({ page }),
+      page.keyboard.press("ControlOrMeta+Z"),
+    ]);
+    await waitForCanvasTextHidden({ page, text: formattedText });
+    await waitForCanvasText({ page, text: fixture.shareLinkEditableText });
   });
-  await waitForCanvasTextHidden({ page, text: formattedText });
 
   await measure("content mode redo rich text formatting", async () => {
-    await applyHistoryShortcut({ page, shortcut: "ControlOrMeta+Shift+Z" });
+    await page.keyboard.press("ControlOrMeta+Shift+Z");
+    await waitForCanvasText({ page, text: formattedText });
   });
-  await waitForCanvasText({ page, text: formattedText });
 
   await selectCanvasTextInstanceForProps({
     page,
@@ -369,14 +361,13 @@ test("Editor can paste, format and delete text while protected content remains",
       page,
       anchorText: "Initial content",
       templateName: fixture.nestedTemplateName,
+      waitForProjectSync: false,
     });
   });
   await waitForCanvasText({
     page,
     text: fixture.nestedTemplateText,
   });
-  await waitForSyncComplete({ page });
-
   await measure("content mode try nested delete", async () => {
     const canvas = await waitForCanvasFrame({ page });
     await page.keyboard.down("Alt");
@@ -433,6 +424,7 @@ test("Editor can edit text and content props but not design props", async ({
     page,
     anchorText: "Initial content",
     templateName: fixture.styledHeadingTemplateName,
+    waitForProjectSync: false,
   });
   const styledTemplateHeading = canvas
     .locator("h2")
@@ -463,13 +455,13 @@ test("Editor can edit text and content props but not design props", async ({
   });
   await page.keyboard.press("Enter");
   await expect(canvas.locator("[contenteditable]")).toHaveCount(0);
-  await waitForSyncComplete({ page });
   await expect(protectedImage).toBeVisible();
 
   await insertTemplateAfterCanvasText({
     page,
     anchorText: "Initial content",
     templateName: fixture.editableTextTemplateName,
+    waitForProjectSync: false,
   });
   await waitForCanvasText({
     page,
@@ -480,6 +472,7 @@ test("Editor can edit text and content props but not design props", async ({
     page,
     anchorText: fixture.editableTextTemplateText,
     templateName: fixture.contentPropsTemplateName,
+    waitForProjectSync: false,
   });
   await waitForCanvasText({
     page,
@@ -502,6 +495,7 @@ test("Editor can edit text and content props but not design props", async ({
       page,
       currentText: fixture.editableTextTemplateText,
       text: editedContent,
+      waitForProjectSync: false,
     });
   });
 
@@ -529,41 +523,33 @@ test("Editor can edit text and content props but not design props", async ({
     text: fixture.contentPropsTemplateLinkText,
     propertyLabel: "Href",
   });
-  await fillSelectedStringProperty({
-    page,
-    label: "Href",
-    control: "url",
-    value: editedHref,
-  });
+  const urlInput = page.getByPlaceholder("https://www.url.com").first();
+  await urlInput.fill(editedHref);
+  await urlInput.blur();
 
   await selectCanvasImage({
     page,
     alt: fixture.contentPropsTemplateImageAlt,
   });
-  await fillSelectedStringProperty({
-    page,
-    label: "Source",
-    control: "url",
-    value: editedImageSrc,
-  });
-  await fillSelectedStringProperty({
-    page,
-    label: "Alt",
-    control: "text",
-    value: editedImageAlt,
-  });
+  await expect(page.getByText("Source", { exact: true }).first()).toBeVisible();
+  await urlInput.fill(editedImageSrc);
+  await urlInput.blur();
+  await expect(page.getByText("Alt", { exact: true }).first()).toBeVisible();
+  const altInput = page.locator("textarea").first();
+  await altInput.fill(editedImageAlt);
+  await altInput.blur();
   await expectTextHidden({ page, text: "Width" });
 
   await selectCanvasVideoSource({
     page,
     sourceName: fixture.contentPropsTemplateVideoName,
   });
-  await fillSelectedStringProperty({
-    page,
-    label: "Source",
-    control: "url",
-    value: editedVideoSrc,
-  });
+  await expect(page.getByText("Source", { exact: true }).first()).toBeVisible();
+  await urlInput.fill(editedVideoSrc);
+  await urlInput.blur();
+
+  // Verify each edit after a single save barrier and reload.
+  await waitForSyncComplete({ page });
 
   await measure("content mode reload editor for props", async () => {
     await openProjectBuilder({

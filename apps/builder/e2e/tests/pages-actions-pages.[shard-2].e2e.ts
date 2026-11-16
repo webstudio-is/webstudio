@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Browser, type Page } from "@playwright/test";
 import { expectTextHidden } from "../flows/assertions";
 import {
   getCanvasFrame,
@@ -15,15 +15,15 @@ import {
   openPagesPanel,
   openTemplateSettings,
 } from "../flows/pages-panel";
-import { waitForChangeToBeSaved } from "../flows/sync-status";
+import {
+  waitForChangeToBeSaved,
+  waitForSyncComplete,
+} from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
 import { test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild, updateBuild } from "../db";
-
-let fixture: SeededContentModeProject;
-let pasteFixture: SeededContentModeProject;
 
 test.describe.configure({ mode: "parallel" });
 
@@ -79,14 +79,26 @@ const waitForTemplate = async ({
   await getTreeButton({ page, itemName: templateName }).waitFor();
 };
 
-const waitForCopiedPageTransferData = async ({ page }: { page: Page }) => {
-  await page.waitForFunction(async (marker) => {
-    try {
-      return (await navigator.clipboard.readText()).includes(marker as string);
-    } catch {
-      return false;
-    }
-  }, copiedPageTransferMarker);
+const waitForCopiedPageTransferData = async ({
+  page,
+  type,
+  name,
+}: {
+  page: Page;
+  type: "page" | "folder" | "template";
+  name: string;
+}) => {
+  await page.waitForFunction(
+    async ({ marker, type, name }) => {
+      try {
+        const data = JSON.parse(await navigator.clipboard.readText())[marker];
+        return data?.type === type && data[type]?.name === name;
+      } catch {
+        return false;
+      }
+    },
+    { marker: copiedPageTransferMarker, type, name }
+  );
 };
 
 const getDataResourceCounts = async (fixture: SeededContentModeProject) => {
@@ -205,27 +217,15 @@ const confirmDialogAction = async ({
   await button.waitFor({ state: "hidden" });
 };
 
-test.beforeAll(async ({ browser }, workerInfo) => {
-  const workerSuffix = `worker-${workerInfo.parallelIndex}`;
-  await withBrowserContext(browser, async (context) => {
-    fixture = await createContentModeProject({
+const createPagesFixture = (browser: Browser, scenario: string) =>
+  withBrowserContext(browser, (context) =>
+    createContentModeProject({
       context,
-      email: `pages-actions-pages-${workerSuffix}@webstudio.test`,
+      email: `pages-actions-${scenario}@webstudio.test`,
       title: "Pages Actions E2E",
-      assetNamePrefix: `pages-actions-pages-${workerSuffix}-`,
-      editorToken: `pages-actions-pages-${workerSuffix}-editor-token`,
-      builderToken: `pages-actions-pages-${workerSuffix}-builder-token`,
-    });
-    pasteFixture = await createContentModeProject({
-      context,
-      email: `pages-actions-pages-paste-${workerSuffix}@webstudio.test`,
-      title: "Pages Actions Paste E2E",
-      assetNamePrefix: `pages-actions-pages-paste-${workerSuffix}-`,
-      editorToken: `pages-actions-pages-paste-${workerSuffix}-editor-token`,
-      builderToken: `pages-actions-pages-paste-${workerSuffix}-builder-token`,
-    });
-  });
-});
+      assetNamePrefix: `pages-actions-${scenario}-`,
+    })
+  );
 
 test("Canvas switches away from an AnimateText page without reloading", async ({
   browser,
@@ -322,8 +322,10 @@ test("Canvas switches away from an AnimateText page without reloading", async ({
 });
 
 test("Builder can draft, stage, copy, duplicate, and delete a page from the header menu", async ({
+  browser,
   page,
 }) => {
+  const fixture = await createPagesFixture(browser, "page");
   const pageName = "Actions Menu Page";
   const renamedPageName = "Renamed Actions Menu Page";
   const copiedPageName = `${renamedPageName} (1)`;
@@ -404,7 +406,11 @@ test("Builder can draft, stage, copy, duplicate, and delete a page from the head
     menuLabel: "Page actions",
     action: "Copy",
   });
-  await waitForCopiedPageTransferData({ page });
+  await waitForCopiedPageTransferData({
+    page,
+    type: "page",
+    name: renamedPageName,
+  });
   await pasteFromClipboardShortcut({ page });
   await waitForPageRow({ page, pageName: copiedPageName });
 
@@ -479,148 +485,124 @@ test("Builder can draft, stage, copy, duplicate, and delete a page from the head
   await expectDataResourceCopies(fixture, dataResourceCountsBefore);
 });
 
-test("Builder can copy, duplicate, and delete a folder from the context menu", async ({
+test("Builder can rename, copy, duplicate, and delete folders and page templates", async ({
+  browser,
   page,
 }) => {
+  const fixture = await createPagesFixture(browser, "folder-template");
   const folderName = "Actions Menu Folder";
   const renamedFolderName = "Renamed Actions Menu Folder";
   const copiedFolderName = `${renamedFolderName} (1)`;
   const duplicatedFolderName = `${renamedFolderName} (2)`;
 
-  await measure("pages actions open builder for folder actions", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-
-  await createFolder({ page, folderName });
-
-  await openFolderSettings({ page, folderName });
-  const renameSave = waitForChangeToBeSaved({ page });
-  await page.getByLabel("Folder name", { exact: true }).fill(renamedFolderName);
-  await page.getByLabel("Folder name", { exact: true }).blur();
-  await renameSave;
-  await waitForFolderRow({ page, folderName: renamedFolderName });
-  await expectTextHidden({ page, text: folderName });
-
-  await selectContextAction({
-    page,
-    itemName: renamedFolderName,
-    action: "Copy",
-  });
-  await waitForCopiedPageTransferData({ page });
-  const pasteSave = waitForChangeToBeSaved({ page });
-  await selectContextAction({ page, itemName: "Home", action: "Paste" });
-  await pasteSave;
-  await waitForFolderRow({ page, folderName: copiedFolderName });
-
-  const duplicateSave = waitForChangeToBeSaved({ page });
-  await selectContextAction({
-    page,
-    itemName: renamedFolderName,
-    action: "Duplicate",
-  });
-  await duplicateSave;
-  await waitForFolderRow({ page, folderName: duplicatedFolderName });
-
-  await selectContextAction({
-    page,
-    itemName: duplicatedFolderName,
-    action: "Delete",
-  });
-  const deleteSave = waitForChangeToBeSaved({ page });
-  await confirmDialogAction({ page, action: "Delete" });
-  await deleteSave;
-  await expectTextHidden({ page, text: duplicatedFolderName });
-
-  await measure(
-    "pages actions reload for folder action persistence",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    }
-  );
-  await openPagesPanel({ page });
-  await waitForFolderRow({ page, folderName: renamedFolderName });
-  await expectTextHidden({ page, text: folderName });
-  await waitForFolderRow({ page, folderName: copiedFolderName });
-  await openFolderSettings({ page, folderName: copiedFolderName });
-  await expectTextHidden({ page, text: duplicatedFolderName });
-});
-
-test("Builder can copy, duplicate, and delete a page template from actions menus", async ({
-  page,
-}) => {
   const templateName = fixture.pageTemplateName;
   const renamedTemplateName = "Renamed Content Page Template";
   const copiedTemplateName = `${renamedTemplateName} (1)`;
   const duplicatedTemplateName = `${renamedTemplateName} (2)`;
 
-  await measure("pages actions open builder for template actions", async () => {
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+
+  await test.step("Folder context menu actions", async () => {
+    await createFolder({ page, folderName });
+
+    await openFolderSettings({ page, folderName });
+    await page
+      .getByLabel("Folder name", { exact: true })
+      .fill(renamedFolderName);
+    await page.getByLabel("Folder name", { exact: true }).blur();
+    await waitForFolderRow({ page, folderName: renamedFolderName });
+    await expectTextHidden({ page, text: folderName });
+
+    await selectContextAction({
+      page,
+      itemName: renamedFolderName,
+      action: "Copy",
+    });
+    await waitForCopiedPageTransferData({
+      page,
+      type: "folder",
+      name: renamedFolderName,
+    });
+    await selectContextAction({ page, itemName: "Home", action: "Paste" });
+    await waitForFolderRow({ page, folderName: copiedFolderName });
+
+    await selectContextAction({
+      page,
+      itemName: renamedFolderName,
+      action: "Duplicate",
+    });
+    await waitForFolderRow({ page, folderName: duplicatedFolderName });
+
+    await selectContextAction({
+      page,
+      itemName: duplicatedFolderName,
+      action: "Delete",
+    });
+    await confirmDialogAction({ page, action: "Delete" });
+    await expectTextHidden({ page, text: duplicatedFolderName });
+  });
+
+  await test.step("Template header and context menu actions", async () => {
+    await openTemplateSettings({ page, templateName });
+    await page
+      .getByLabel("Template name", { exact: true })
+      .fill(renamedTemplateName);
+    await page.getByLabel("Template name", { exact: true }).blur();
+    await waitForTemplate({ page, templateName: renamedTemplateName });
+
+    await openTemplateSettings({ page, templateName: renamedTemplateName });
+    await selectHeaderAction({
+      page,
+      menuLabel: "Template actions",
+      action: "Copy",
+    });
+    await waitForCopiedPageTransferData({
+      page,
+      type: "template",
+      name: renamedTemplateName,
+    });
+    await page.keyboard.press("ControlOrMeta+V");
+    await waitForTemplate({ page, templateName: copiedTemplateName });
+
+    await openTemplateSettings({ page, templateName: renamedTemplateName });
+    await selectHeaderAction({
+      page,
+      menuLabel: "Template actions",
+      action: "Duplicate",
+    });
+    await waitForTemplate({ page, templateName: duplicatedTemplateName });
+
+    await selectContextAction({
+      page,
+      itemName: duplicatedTemplateName,
+      action: "Delete",
+    });
+    const save = waitForChangeToBeSaved({ page });
+    await confirmDialogAction({ page, action: "Delete Template" });
+    await save;
+    await expectTextHidden({ page, text: duplicatedTemplateName });
+  });
+
+  await test.step("Folder and template changes persist after reopening Builder", async () => {
     await openProjectBuilder({
       page,
       projectId: fixture.projectId,
       authToken: fixture.builderToken,
     });
+    await openPagesPanel({ page });
+    await waitForFolderRow({ page, folderName: renamedFolderName });
+    await expectTextHidden({ page, text: folderName });
+    await waitForFolderRow({ page, folderName: copiedFolderName });
+    await openFolderSettings({ page, folderName: copiedFolderName });
+    await expectTextHidden({ page, text: duplicatedFolderName });
+    await waitForTemplate({ page, templateName: renamedTemplateName });
+    await waitForTemplate({ page, templateName: copiedTemplateName });
+    await expectTextHidden({ page, text: duplicatedTemplateName });
   });
-  await openPagesPanel({ page });
-
-  await openTemplateSettings({ page, templateName });
-  const renameSave = waitForChangeToBeSaved({ page });
-  await page
-    .getByLabel("Template name", { exact: true })
-    .fill(renamedTemplateName);
-  await page.getByLabel("Template name", { exact: true }).blur();
-  await renameSave;
-  await waitForTemplate({ page, templateName: renamedTemplateName });
-
-  await openTemplateSettings({ page, templateName: renamedTemplateName });
-  await selectHeaderAction({
-    page,
-    menuLabel: "Template actions",
-    action: "Copy",
-  });
-  await waitForCopiedPageTransferData({ page });
-  await pasteFromClipboardShortcut({ page });
-  await waitForTemplate({ page, templateName: copiedTemplateName });
-
-  await openTemplateSettings({ page, templateName: renamedTemplateName });
-  await selectHeaderAction({
-    page,
-    menuLabel: "Template actions",
-    action: "Duplicate",
-  });
-  await waitForTemplate({ page, templateName: duplicatedTemplateName });
-
-  await selectContextAction({
-    page,
-    itemName: duplicatedTemplateName,
-    action: "Delete",
-  });
-  const deleteSave = waitForChangeToBeSaved({ page });
-  await confirmDialogAction({ page, action: "Delete Template" });
-  await deleteSave;
-  await expectTextHidden({ page, text: duplicatedTemplateName });
-
-  await measure(
-    "pages actions reload for template action persistence",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    }
-  );
-  await openPagesPanel({ page });
-  await waitForTemplate({ page, templateName: renamedTemplateName });
-  await waitForTemplate({ page, templateName: copiedTemplateName });
-  await expectTextHidden({ page, text: duplicatedTemplateName });
 });
 
 const createInstanceTransfer = ({ id, text }: { id: string; text: string }) =>
@@ -667,7 +649,6 @@ const pasteClipboardData = async ({
   page: Page;
   data: Record<string, string>;
 }) => {
-  const save = waitForChangeToBeSaved({ page });
   await page.evaluate((data) => {
     const clipboardData = new DataTransfer();
     for (const [mimeType, value] of Object.entries(data)) {
@@ -681,59 +662,13 @@ const pasteClipboardData = async ({
       })
     );
   }, data);
-  await save;
-};
-
-const countPastedElements = async ({
-  tag,
-  text,
-}: {
-  tag: string;
-  text: string;
-}) => {
-  const build = await loadDevBuild({ projectId: pasteFixture.projectId });
-  const instances = JSON.parse(build.instances) as Array<{
-    component?: string;
-    tag?: string;
-    children?: Array<{ type: string; value?: string }>;
-  }>;
-  return instances.filter(
-    (instance) =>
-      instance.component === "ws:element" &&
-      instance.tag === tag &&
-      instance.children?.some(
-        (child) => child.type === "text" && child.value?.includes(text)
-      )
-  ).length;
-};
-
-const countBuildInstancesWithText = async (text: string) => {
-  const build = await loadDevBuild({ projectId: pasteFixture.projectId });
-  const instances = JSON.parse(build.instances) as Array<{
-    id: string;
-    children?: Array<{ type: string; value?: string }>;
-  }>;
-  const instancesById = new Map(
-    instances.map((instance) => [instance.id, instance])
-  );
-  const containsText = (instanceId: string): boolean => {
-    const instance = instancesById.get(instanceId);
-    return (
-      instance?.children?.some(
-        (child) =>
-          (child.type === "text" && child.value?.includes(text)) ||
-          (child.type === "id" &&
-            child.value !== undefined &&
-            containsText(child.value))
-      ) ?? false
-    );
-  };
-  return instances.filter((instance) => containsText(instance.id)).length;
 };
 
 test("Builder runs paste plugins through generic browser paste events", async ({
+  browser,
   page,
 }) => {
+  const fixture = await createPagesFixture(browser, "paste");
   const entries = [
     [
       "application/json",
@@ -791,29 +726,38 @@ test("Builder runs paste plugins through generic browser paste events", async ({
 
   await openProjectBuilder({
     page,
-    projectId: pasteFixture.projectId,
-    authToken: pasteFixture.builderToken,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
   });
   await waitForCanvasText({ page, text: "Initial content" });
 
-  for (const [mimeType, value, text, tag] of entries) {
+  for (const [mimeType, value, text] of entries) {
     await selectPasteBody({ page });
     await pasteClipboardData({ page, data: { [mimeType]: value } });
     await waitForCanvasText({ page, text });
+  }
+  await waitForSyncComplete({ page });
+
+  const build = await loadDevBuild({ projectId: fixture.projectId });
+  const instances = JSON.parse(build.instances) as Array<{
+    component: string;
+    tag?: string;
+    children: Array<{ type: string; value: string }>;
+  }>;
+  for (const [, , text, tag] of entries) {
+    // The Webflow plugin can wrap its text in a generated instance.
+    const matches = instances.filter(
+      (instance) =>
+        (tag === undefined ||
+          (instance.component === "ws:element" && instance.tag === tag)) &&
+        instance.children.some(
+          (child) => child.type === "text" && child.value.includes(text)
+        )
+    );
     if (tag === undefined) {
-      const count = await countBuildInstancesWithText(text);
-      if (count === 0) {
-        throw new Error(
-          `Expected generic Webflow paste to persist ${JSON.stringify(text)}`
-        );
-      }
-      continue;
-    }
-    const count = await countPastedElements({ tag, text });
-    if (count !== 1) {
-      throw new Error(
-        `Expected one ${tag} containing ${JSON.stringify(text)}, found ${count}`
-      );
+      expect(matches.length, text).toBeGreaterThan(0);
+    } else {
+      expect(matches, text).toHaveLength(1);
     }
   }
 });

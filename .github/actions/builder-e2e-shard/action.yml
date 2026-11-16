@@ -106,7 +106,8 @@ runs:
         E2E_TEST_SHARD: ${{ inputs.shard }}
         E2E_TEST_PARTITION: ${{ inputs.partition }}
       run: |
-        args=(--workers=3)
+        # Select only the E2E test files. Playwright runs setup as a dependency.
+        args=(--workers=3 'e2e/tests/')
         if [ -n "$E2E_TEST_PARTITION" ]; then
           args+=(--shard="$E2E_TEST_PARTITION")
         fi

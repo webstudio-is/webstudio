@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import {
   openProjectBuilder,
   waitForCanvasText,
@@ -6,7 +6,10 @@ import {
 } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { openNavigatorPanel } from "../flows/navigator";
-import { waitForChangeToBeSaved } from "../flows/sync-status";
+import {
+  waitForChangeToBeSaved,
+  waitForSyncComplete,
+} from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
@@ -114,10 +117,7 @@ const insertComponentPanelOption = async ({
   name: string;
 }) => {
   await searchComponentsPanel({ page, text: name });
-  await Promise.all([
-    waitForChangeToBeSaved({ page }),
-    page.getByRole("option", { name, exact: true }).click(),
-  ]);
+  await page.getByRole("option", { name, exact: true }).click();
 };
 
 const getNavigatorButtonSummary = async ({
@@ -179,7 +179,7 @@ const selectNavigatorContextAction = async ({
       `Expected Navigator ${action} action to be enabled. aria-disabled=${ariaDisabled}, data-disabled=${dataDisabled}`
     );
   }
-  await Promise.all([waitForChangeToBeSaved({ page }), menuItem.click()]);
+  await menuItem.click();
 };
 
 test.beforeEach(async ({ browser }) => {
@@ -276,69 +276,42 @@ test("Builder filters the catalog and persists component actions from shortcuts 
   });
   await selectCanvasTextInstance({ page, text: "Initial content" });
 
-  const initialCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
+  const readComponentCount = () =>
+    getInstanceComponentCount({ fixture, component: componentName });
+  const initialCount = await readComponentCount();
+  // The persisted count is available before the sync indicator returns to idle.
+  const expectSavedComponentCount = (count: number, action: string) =>
+    expect
+      .poll(readComponentCount, {
+        message: action,
+        intervals: [100, 250],
+        timeout: 10_000,
+      })
+      .toBe(count);
 
   await measure(
     "pages actions insert component before command duplicate",
     async () => {
       await openComponentsPanel({ page });
       await insertComponentPanelOption({ page, name: componentName });
+      await expectSavedComponentCount(initialCount + 1, "Insert one Image");
     }
   );
-  const insertedCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (insertedCount !== initialCount + 1) {
-    throw new Error(
-      `Expected components panel to insert one ${componentName}. Before ${initialCount}, after ${insertedCount}`
-    );
-  }
 
   await measure("pages actions duplicate inserted component", async () => {
-    await Promise.all([
-      waitForChangeToBeSaved({ page }),
-      page.keyboard.press("ControlOrMeta+D"),
-    ]);
+    await page.keyboard.press("ControlOrMeta+D");
+    await expectSavedComponentCount(initialCount + 2, "Duplicate the Image");
   });
-  const duplicatedCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (duplicatedCount !== initialCount + 2) {
-    throw new Error(
-      `Expected duplicate command to add one ${componentName}. Before ${initialCount}, after ${duplicatedCount}`
-    );
-  }
 
   await measure("pages actions undo duplicate command", async () => {
-    await selectSavedAppMenuItem({ page, name: "Undo" });
+    await selectAppMenuItem({ page, name: "Undo" });
+    await expectSavedComponentCount(initialCount + 1, "Undo the shortcut");
   });
-  const undoCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (undoCount !== initialCount + 1) {
-    throw new Error(
-      `Expected undo to remove duplicated ${componentName}. Before ${initialCount}, after ${undoCount}`
-    );
-  }
 
   await measure("pages actions redo duplicate command", async () => {
-    await selectSavedAppMenuItem({ page, name: "Redo" });
+    await selectAppMenuItem({ page, name: "Redo" });
+    await expectSavedComponentCount(initialCount + 2, "Redo the shortcut");
   });
-  const redoCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (redoCount !== initialCount + 2) {
-    throw new Error(
-      `Expected redo to restore duplicated ${componentName}. Before ${initialCount}, after ${redoCount}`
-    );
-  }
 
   await measure(
     "pages actions duplicate component from navigator",
@@ -349,43 +322,35 @@ test("Builder filters the catalog and persists component actions from shortcuts 
         itemName: componentName,
         action: "Duplicate",
       });
+      try {
+        await expectSavedComponentCount(
+          initialCount + 3,
+          "Duplicate from Navigator"
+        );
+      } catch (error) {
+        throw new Error(
+          `Components: ${await getInstanceComponentCountSummary(fixture)}. Navigator: ${JSON.stringify(await getNavigatorButtonSummary({ page, text: componentName }))}`,
+          { cause: error }
+        );
+      }
     }
   );
-  const navigatorDuplicateCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (navigatorDuplicateCount !== redoCount + 1) {
-    throw new Error(
-      `Expected Navigator duplicate to add one ${componentName}. Before ${redoCount}, after ${navigatorDuplicateCount}. Components: ${await getInstanceComponentCountSummary(fixture)}. Navigator: ${JSON.stringify(await getNavigatorButtonSummary({ page, text: componentName }))}`
-    );
-  }
 
   await measure("pages actions undo navigator duplicate", async () => {
-    await selectSavedAppMenuItem({ page, name: "Undo" });
-  });
-  const undoDuplicateCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (undoDuplicateCount !== redoCount) {
-    throw new Error(
-      `Expected undo to remove Navigator duplicate ${componentName}. Before ${redoCount}, after ${undoDuplicateCount}`
+    await selectAppMenuItem({ page, name: "Undo" });
+    await expectSavedComponentCount(
+      initialCount + 2,
+      "Undo Navigator duplicate"
     );
-  }
+  });
 
   await measure("pages actions redo navigator duplicate", async () => {
-    await selectSavedAppMenuItem({ page, name: "Redo" });
-  });
-  const redoDuplicateCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (redoDuplicateCount !== redoCount + 1) {
-    throw new Error(
-      `Expected redo to restore Navigator duplicate ${componentName}. Before ${redoCount}, after ${redoDuplicateCount}`
+    await selectAppMenuItem({ page, name: "Redo" });
+    await expectSavedComponentCount(
+      initialCount + 3,
+      "Redo Navigator duplicate"
     );
-  }
+  });
 
   await measure("pages actions delete component from navigator", async () => {
     await openNavigatorPanel({ page });
@@ -394,29 +359,14 @@ test("Builder filters the catalog and persists component actions from shortcuts 
       itemName: componentName,
       action: "Delete",
     });
+    await expectSavedComponentCount(initialCount + 2, "Delete from Navigator");
   });
-  const deletedCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (deletedCount !== redoCount) {
-    throw new Error(
-      `Expected Navigator delete to remove one ${componentName}. Before ${redoCount}, after ${deletedCount}`
-    );
-  }
 
   await measure("pages actions undo navigator delete", async () => {
-    await selectSavedAppMenuItem({ page, name: "Undo" });
+    await selectAppMenuItem({ page, name: "Undo" });
+    await expectSavedComponentCount(initialCount + 3, "Undo Navigator delete");
+    await waitForSyncComplete({ page });
   });
-  const undoDeleteCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (undoDeleteCount !== redoCount + 1) {
-    throw new Error(
-      `Expected undo to restore Navigator-deleted ${componentName}. Before ${redoCount}, after ${undoDeleteCount}`
-    );
-  }
 
   await measure("pages actions reload component mutations", async () => {
     await openProjectBuilder({
@@ -426,13 +376,5 @@ test("Builder filters the catalog and persists component actions from shortcuts 
     });
   });
   await waitForCanvasText({ page, text: insertedButtonText });
-  const reloadedCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (reloadedCount !== initialCount + 3) {
-    throw new Error(
-      `Expected reload to preserve component actions for ${componentName}. Before ${initialCount}, after ${reloadedCount}`
-    );
-  }
+  expect(await readComponentCount()).toBe(initialCount + 3);
 });

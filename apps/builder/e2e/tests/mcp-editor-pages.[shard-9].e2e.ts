@@ -214,55 +214,66 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
       ])
     );
 
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-    await openPage({
-      page,
-      pageName: "Edited MCP content page",
-      canvasText: fixture.pageTemplateText,
-    });
-    await openPageSettings({ page, pageName: "Edited MCP content page" });
-    await expect(page.getByLabel("Title")).toHaveValue("Edited MCP title");
+    // Verify both read paths before the Builder role changes the saved page.
+    const readResults = await Promise.allSettled([
+      test.step("verify saved MCP edits in Builder", async () => {
+        await openProjectBuilder({
+          page,
+          projectId: fixture.projectId,
+          authToken: fixture.editorToken,
+          mode: "content",
+        });
+        await openPage({
+          page,
+          pageName: "Edited MCP content page",
+          canvasText: fixture.pageTemplateText,
+        });
+        await openPageSettings({ page, pageName: "Edited MCP content page" });
+        await expect(page.getByLabel("Title")).toHaveValue("Edited MCP title");
 
-    await openAssetsPanel({ page });
-    await page
-      .getByRole("button", { name: "Folder Editor MCP assets" })
-      .dblclick();
-    await waitForAsset({ page, filename });
-
-    const beforeViewerWrites = await loadDevBuild({
-      projectId: fixture.projectId,
-    });
-    expect((await call("list-pages", {}, "viewer")).ok).toBe(true);
-    for (const [tool, input] of [
-      [
-        "create-page-from-template",
-        { templateId: template.id, name: "Denied", path: "/denied" },
-      ],
-      ["create-asset-folder", { name: "Denied folder" }],
-      [
-        "upload-asset",
-        {
-          asset: { name: filename, type: "file", format: "txt" },
-          assetsDir: directory,
-        },
-      ],
-    ] as const) {
-      const denied = await call(tool, input, "viewer");
-      expect(denied.ok, tool).toBe(false);
-      expect(denied.error.code, `${tool}: ${denied.error.message}`).toBe(
-        "FORBIDDEN"
-      );
+        await openAssetsPanel({ page });
+        await page
+          .getByRole("button", { name: "Folder Editor MCP assets" })
+          .dblclick();
+        await waitForAsset({ page, filename });
+      }),
+      test.step("verify the MCP viewer cannot write", async () => {
+        const beforeViewerWrites = await loadDevBuild({
+          projectId: fixture.projectId,
+        });
+        expect((await call("list-pages", {}, "viewer")).ok).toBe(true);
+        for (const [tool, input] of [
+          [
+            "create-page-from-template",
+            { templateId: template.id, name: "Denied", path: "/denied" },
+          ],
+          ["create-asset-folder", { name: "Denied folder" }],
+          [
+            "upload-asset",
+            {
+              asset: { name: filename, type: "file", format: "txt" },
+              assetsDir: directory,
+            },
+          ],
+        ] as const) {
+          const denied = await call(tool, input, "viewer");
+          expect(denied.ok, tool).toBe(false);
+          expect(denied.error.code, `${tool}: ${denied.error.message}`).toBe(
+            "FORBIDDEN"
+          );
+        }
+        const afterViewerWrites = await loadDevBuild({
+          projectId: fixture.projectId,
+        });
+        expect(afterViewerWrites.version).toBe(beforeViewerWrites.version);
+        expect(afterViewerWrites.pages).toEqual(beforeViewerWrites.pages);
+      }),
+    ]);
+    for (const result of readResults) {
+      if (result.status === "rejected") {
+        throw result.reason;
+      }
     }
-    const afterViewerWrites = await loadDevBuild({
-      projectId: fixture.projectId,
-    });
-    expect(afterViewerWrites.version).toBe(beforeViewerWrites.version);
-    expect(afterViewerWrites.pages).toEqual(beforeViewerWrites.pages);
 
     const builderWrite = await call(
       "update-page-settings",

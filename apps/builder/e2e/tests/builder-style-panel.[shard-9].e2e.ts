@@ -1,8 +1,15 @@
 import { expect, type Page } from "@playwright/test";
-import type { StyleSource, StyleSourceSelection } from "@webstudio-is/sdk";
+import type {
+  StyleDecl,
+  StyleSource,
+  StyleSourceSelection,
+} from "@webstudio-is/sdk";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
-import { waitForCanvasTextStyle } from "../flows/canvas-style";
+import {
+  waitForCanvasTextStyle,
+  waitForHoveredCanvasTextStyle,
+} from "../flows/canvas-style";
 import { openNavigatorPanel } from "../flows/navigator";
 import { addCssDeclaration } from "../flows/css-declaration";
 import { waitForChangeToBeSaved } from "../flows/sync-status";
@@ -16,16 +23,50 @@ const setCssValue = async ({
   page,
   property,
   value,
+  waitForSave = true,
 }: {
   page: Page;
   property: string;
   value: string;
+  waitForSave?: boolean;
 }) => {
   const input = page.getByLabel(property, { exact: true }).first();
   await input.fill(value);
-  const save = waitForChangeToBeSaved({ page });
+  const save = waitForSave ? waitForChangeToBeSaved({ page }) : undefined;
   await input.press("Enter");
   await save;
+};
+
+const resetCssValue = async ({
+  page,
+  property,
+}: {
+  page: Page;
+  property: string;
+}) => {
+  const input = page.getByLabel(property, { exact: true }).first();
+  const labelText = `${property.slice(0, 1).toUpperCase()}${property.slice(1)}`;
+  const control = input.locator(
+    `xpath=ancestor::*[.//*[normalize-space()=${JSON.stringify(labelText)}]][1]`
+  );
+  const label = control.getByText(labelText, { exact: true });
+  await label.waitFor({ state: "visible", timeout: 10_000 });
+  const save = waitForChangeToBeSaved({ page });
+  await label.click({ modifiers: ["Alt"] });
+  await save;
+};
+
+const selectStyleSourceState = async ({
+  page,
+  state,
+}: {
+  page: Page;
+  state: string;
+}) => {
+  await page
+    .getByLabel("Style source menu Local", { exact: true })
+    .click({ force: true });
+  await page.getByRole("menuitem", { name: state, exact: true }).click();
 };
 
 const selectNavigatorItem = async ({
@@ -69,24 +110,24 @@ const getInstanceChildCount = async ({
   );
 };
 
-test("Builder grid, design tokens, and custom breakpoint styles persist", async ({
+test("Builder style properties, grid, tokens, and custom breakpoints persist", async ({
   page,
   context,
 }) => {
   const fixture = await createContentModeProject({
     context,
-    email: "style-panel-layout-e2e@webstudio.test",
-    title: "Style Panel Layout E2E",
-    assetNamePrefix: "style-panel-layout-e2e-",
+    email: "style-panel-e2e@webstudio.test",
+    title: "Style Panel E2E",
+    assetNamePrefix: "style-panel-e2e-",
   });
   const bodyInstanceId = "body";
-  const breakpointText = "Initial content";
+  const styledText = "Initial content";
   const tokenText = fixture.shareLinkEditableText;
   const tokenInstanceId = "share-link-editable-content";
   const breakpointName = "E2E Tablet";
   const updatedBreakpointName = "E2E Tablet Updated";
   const tokenName = "E2E Brand Token";
-  const openLayoutProject = () =>
+  const openStyleProject = () =>
     openProjectBuilder({
       page,
       projectId: fixture.projectId,
@@ -109,8 +150,50 @@ test("Builder grid, design tokens, and custom breakpoint styles persist", async 
     expect(selection?.values).toContain(token?.id);
   };
 
-  await openLayoutProject();
-  await waitForCanvasText({ page, text: breakpointText });
+  const representativeStyles = [
+    { property: "font-size", value: "44px", computed: "44px" },
+    { property: "line-height", value: "1.25", computed: "55px" },
+    { property: "letter-spacing", value: "2px", computed: "2px" },
+    { property: "color", value: "#2255ff", computed: "rgb(34, 85, 255)" },
+  ];
+  const expectRepresentativeCanvasStyles = async () => {
+    for (const { property, computed } of representativeStyles) {
+      await waitForCanvasTextStyle({
+        page,
+        text: styledText,
+        property,
+        value: computed,
+      });
+    }
+  };
+  const expectHoverCanvasStyle = () =>
+    waitForHoveredCanvasTextStyle({
+      page,
+      text: styledText,
+      property: "color",
+      value: "rgb(202, 18, 107)",
+    });
+  const readSavedInstanceStyles = async () => {
+    const build = await loadDevBuild({ projectId: fixture.projectId });
+    const styles: StyleDecl[] = JSON.parse(build.styles);
+    const selections: StyleSourceSelection[] = JSON.parse(
+      build.styleSourceSelections
+    );
+    const selection = selections.find(
+      ({ instanceId }) => instanceId === fixture.listItemInstanceId
+    );
+    return styles.filter(({ styleSourceId }) =>
+      selection?.values.includes(styleSourceId)
+    );
+  };
+  const hoverColor = expect.objectContaining({
+    state: ":hover",
+    property: "color",
+  });
+  const width = expect.objectContaining({ property: "width" });
+
+  await openStyleProject();
+  await waitForCanvasText({ page, text: styledText });
 
   const initialBodyChildCount = await getInstanceChildCount({
     fixture,
@@ -137,6 +220,37 @@ test("Builder grid, design tokens, and custom breakpoint styles persist", async 
       value: "rgb(180, 35, 76)",
     });
     await expectSavedToken();
+  });
+
+  await test.step("edit and reset representative style properties", async () => {
+    await selectCanvasTextInstance({ page, text: styledText });
+    await page.getByRole("tab", { name: "Style" }).click();
+    for (const { property, value } of representativeStyles) {
+      await setCssValue({ page, property, value, waitForSave: false });
+    }
+    await setCssValue({
+      page,
+      property: "width",
+      value: "420px",
+      waitForSave: false,
+    });
+    await selectStyleSourceState({ page, state: ":hover" });
+    await setCssValue({ page, property: "color", value: "#ca126b" });
+    await selectStyleSourceState({ page, state: ":hover" });
+
+    await expectRepresentativeCanvasStyles();
+    await waitForCanvasTextStyle({
+      page,
+      text: styledText,
+      property: "width",
+      value: "420px",
+    });
+    await expectHoverCanvasStyle();
+    expect(await readSavedInstanceStyles()).toContainEqual(hoverColor);
+
+    await page.getByRole("tab", { name: "Style" }).click();
+    await resetCssValue({ page, property: "width" });
+    expect(await readSavedInstanceStyles()).not.toContainEqual(width);
   });
 
   await test.step("fill the selected grid", async () => {
@@ -196,20 +310,20 @@ test("Builder grid, design tokens, and custom breakpoint styles persist", async 
       .click();
     await page.getByText(updatedBreakpointName, { exact: true }).click();
 
-    await selectCanvasTextInstance({ page, text: breakpointText });
+    await selectCanvasTextInstance({ page, text: styledText });
     await page.getByRole("tab", { name: "Style" }).click();
     await setCssValue({ page, property: "font-size", value: "31px" });
 
     await waitForCanvasTextStyle({
       page,
-      text: breakpointText,
+      text: styledText,
       property: "font-size",
       value: "31px",
     });
   });
 
-  await openLayoutProject();
-  await waitForCanvasText({ page, text: breakpointText });
+  await openStyleProject();
+  await waitForCanvasText({ page, text: styledText });
 
   await test.step("verify the reloaded design token and grid", async () => {
     await selectCanvasTextInstance({ page, text: tokenText });
@@ -245,7 +359,7 @@ test("Builder grid, design tokens, and custom breakpoint styles persist", async 
     await page.getByText(updatedBreakpointName, { exact: true }).click();
     await waitForCanvasTextStyle({
       page,
-      text: breakpointText,
+      text: styledText,
       property: "font-size",
       value: "31px",
     });
@@ -262,12 +376,24 @@ test("Builder grid, design tokens, and custom breakpoint styles persist", async 
     await deleteSave;
   });
 
-  await openLayoutProject();
+  await openStyleProject();
   await page
     .getByRole("button", { name: "Breakpoints with custom conditions" })
     .click();
   await page.getByRole("button", { name: "Edit breakpoints" }).waitFor();
   await page.getByText(updatedBreakpointName, { exact: true }).waitFor({
     state: "hidden",
+  });
+  await page.keyboard.press("Escape");
+
+  // The new breakpoint has a minimum width of 0. Check the base font size
+  // once its override has been removed.
+  await test.step("verify the reloaded style properties", async () => {
+    await expectRepresentativeCanvasStyles();
+    await expectHoverCanvasStyle();
+    await page.mouse.move(0, 0);
+    const styles = await readSavedInstanceStyles();
+    expect(styles).toContainEqual(hoverColor);
+    expect(styles).not.toContainEqual(width);
   });
 });

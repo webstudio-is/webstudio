@@ -231,6 +231,7 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
           page: editor.page,
           currentText: fixture.shareLinkEditableText,
           text: editedText,
+          waitForProjectSync: false,
         });
 
         await replaceCanvasText({
@@ -252,6 +253,10 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
           (async () => {
             await openBuilderUrl({ page: editor.page, url: editorUrl });
             await waitForCanvasText({ page: editor.page, text: editedText });
+            await waitForCanvasText({
+              page: editor.page,
+              text: collaborativeText,
+            });
             await waitForSyncComplete({ page: editor.page });
             await expectShareUnavailable({ page: editor.page });
 
