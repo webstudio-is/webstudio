@@ -145,20 +145,21 @@ const FindingList = ({
                 <Text variant="labels" userSelect="text">
                   {finding.title}
                 </Text>
-                {(finding.details !== undefined ||
-                  finding.link !== undefined) && (
-                  <Link
-                    as="button"
-                    type="button"
-                    variant="inherit"
-                    color="inherit"
-                    underline="always"
-                    css={{ border: 0, padding: 0, background: "none" }}
-                    onClick={() => onSelect(finding)}
-                  >
-                    Show more
-                  </Link>
-                )}
+                {finding.link}
+                {finding.severity !== "error" &&
+                  finding.details !== undefined && (
+                    <Link
+                      as="button"
+                      type="button"
+                      variant="inherit"
+                      color="inherit"
+                      underline="always"
+                      css={{ border: 0, padding: 0, background: "none" }}
+                      onClick={() => onSelect(finding)}
+                    >
+                      Show more
+                    </Link>
+                  )}
               </Flex>
             ) : (
               <Text variant="labels" userSelect="text">
