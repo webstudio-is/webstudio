@@ -1902,6 +1902,11 @@ const assertSupportedNamespaces = ({
             ? isKnownAsset(asset.id) === false
             : equal(original, asset) === false)
         ) {
+          console.info("MDX asset guard rejected a record", {
+            duplicate: assetIds.has(asset.id),
+            unknown: original === undefined && isKnownAsset(asset.id) === false,
+            changed: original !== undefined && equal(original, asset) === false,
+          });
           throw new Error(
             "Changes to assets cannot be represented losslessly in MDX"
           );
@@ -1914,6 +1919,7 @@ const assertSupportedNamespaces = ({
             assetIds.has(assetId) === false && isKnownAsset(assetId) === false
         )
       ) {
+        console.info("MDX asset guard rejected an asset prop reference");
         throw new Error(
           "Changes to assets cannot be represented losslessly in MDX"
         );
