@@ -1,6 +1,3 @@
-import { execFile } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
 import { expect, type Page } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import {
@@ -8,58 +5,9 @@ import {
   withGeneratedFormDeliveryPreview,
 } from "../flows/generated-form-delivery";
 import { test } from "../test";
-import { measure } from "../perf";
 
-const execFileAsync = promisify(execFile);
-const authorPath = fileURLToPath(
-  new URL("../fixtures/mcp-managed-form-author.ts", import.meta.url)
-);
-const reactGlobalPath = fileURLToPath(
-  new URL("../../../../scripts/register-react-global.ts", import.meta.url)
-);
 const successMessage = "Thanks for contacting us. Your message has been sent.";
 const errorMessage = "We could not send your message. Please try again.";
-
-const authorForms = async (
-  projectId: string,
-  scenarios: ReadonlyArray<{ redirect?: string; fail?: boolean }>
-) => {
-  const { stdout } = await execFileAsync(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      "--import",
-      reactGlobalPath,
-      "--conditions=webstudio",
-      authorPath,
-      projectId,
-      ...scenarios.map(({ redirect, fail }) =>
-        JSON.stringify({ mode: "redirect", successRedirect: redirect, fail })
-      ),
-    ],
-    {
-      timeout: 60_000,
-      env: {
-        ...process.env,
-        TSX_TSCONFIG_PATH: fileURLToPath(
-          new URL(
-            "../../../../packages/cli/tsconfig.local.json",
-            import.meta.url
-          )
-        ),
-      },
-    }
-  );
-  const forms = stdout
-    .trim()
-    .split("\n")
-    .map((line) => JSON.parse(line)) as Array<{
-    formId: string;
-  }>;
-  expect(forms).toHaveLength(scenarios.length);
-  return forms.map(({ formId }) => formId);
-};
 
 const openPreview = async (page: Page, url: string) => {
   await page.addInitScript(() => {
@@ -181,24 +129,37 @@ test("MCP Form redirect destinations and feedback share one generated Preview", 
       behavior: "instant",
     },
   ] as const;
-  const formIds = await measure("author redirect and feedback forms", () =>
-    authorForms(fixture.projectId, [...redirects, ...feedbackScenarios])
-  );
-  const forms = redirects.map((scenario, index) => ({
-    ...scenario,
-    formId: formIds[index],
-  }));
-  const feedbackForms = feedbackScenarios.map((scenario, index) => ({
-    ...scenario,
-    formId: formIds[redirects.length + index],
-  }));
+  const scenarios: ReadonlyArray<{ redirect?: string; fail?: boolean }> = [
+    ...redirects,
+    ...feedbackScenarios,
+  ];
 
   const receiver = await startFormDeliveryReceiver();
   try {
     await withGeneratedFormDeliveryPreview({
       projectId: fixture.projectId,
       receiverPort: receiver.port,
-      callback: async ({ url }) => {
+      prepare: {
+        moduleUrl: new URL(
+          "../fixtures/mcp-form-redirect-matrix-author.ts",
+          import.meta.url
+        ).href,
+        args: scenarios.map(({ redirect, fail }) =>
+          JSON.stringify({ mode: "redirect", successRedirect: redirect, fail })
+        ),
+      },
+      callback: async ({ url, prepared }) => {
+        const formIds = prepared as string[];
+        expect(formIds).toHaveLength(scenarios.length);
+        const forms = redirects.map((scenario, index) => ({
+          ...scenario,
+          formId: formIds[index],
+        }));
+        const feedbackForms = feedbackScenarios.map((scenario, index) => ({
+          ...scenario,
+          formId: formIds[redirects.length + index],
+        }));
+
         await openPreview(page, url);
         for (const [index, { name, expected, formId }] of forms.entries()) {
           await test.step(name + " redirect", async () => {

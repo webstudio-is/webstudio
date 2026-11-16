@@ -24,6 +24,13 @@ if (!Number.isInteger(port) || !Number.isInteger(receiverPort)) {
   throw new Error("Expected Preview and receiver ports");
 }
 
+const [, , , , prepareModuleUrl, projectId, ...prepareArgs] = process.argv;
+if (prepareModuleUrl !== undefined && projectId !== undefined) {
+  const { preparePreviewBundle } = await import(prepareModuleUrl);
+  const prepared = await preparePreviewBundle(projectId, ...prepareArgs);
+  await writeFile("preview-prepared.json", JSON.stringify(prepared));
+}
+
 const project = await preparePreviewProject({
   assets: false,
   template: ["defaults", "react-router"],

@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -24,22 +24,28 @@ const cliTsconfigPath = fileURLToPath(
   new URL("../../../../packages/cli/tsconfig.local.json", import.meta.url)
 );
 
+type PreparePreview = { moduleUrl: string; args: string[] };
+
 export const startGeneratedFormDeliveryPreview = async ({
   projectId,
   receiverPort,
+  prepare,
 }: {
   projectId: string;
   receiverPort: number;
+  prepare?: PreparePreview;
 }) => {
   const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-form-delivery-"));
   let preview: ChildProcess | undefined;
   try {
-    const build = await loadDevBuild({ projectId });
-    await mkdir(join(tempDir, ".webstudio"), { recursive: true });
-    await writeFile(
-      join(tempDir, ".webstudio", "data.json"),
-      `${JSON.stringify(createLocalBundleFromDevBuild(build))}\n`
-    );
+    if (prepare === undefined) {
+      const build = await loadDevBuild({ projectId });
+      await mkdir(join(tempDir, ".webstudio"), { recursive: true });
+      await writeFile(
+        join(tempDir, ".webstudio", "data.json"),
+        `${JSON.stringify(createLocalBundleFromDevBuild(build))}\n`
+      );
+    }
     const port = await getAvailablePort();
     const output: string[] = [];
     preview = spawn(
@@ -53,6 +59,9 @@ export const startGeneratedFormDeliveryPreview = async ({
         runnerPath,
         String(port),
         String(receiverPort),
+        ...(prepare === undefined
+          ? []
+          : [prepare.moduleUrl, projectId, ...prepare.args]),
       ],
       {
         cwd: tempDir,
@@ -80,10 +89,18 @@ export const startGeneratedFormDeliveryPreview = async ({
         process: runningPreview,
         url,
         output: () => output.join(""),
+        // A combined process includes the former 60-second authoring budget.
+        timeout: prepare === undefined ? undefined : 180_000,
       })
     );
     return {
       url,
+      prepared:
+        prepare === undefined
+          ? undefined
+          : (JSON.parse(
+              await readFile(join(tempDir, "preview-prepared.json"), "utf8")
+            ) as unknown),
       close: async () => {
         try {
           await stopChildProcess(runningPreview, { killGroup: true });
@@ -107,18 +124,21 @@ export const withGeneratedFormDeliveryPreview = async <Result>({
   projectId,
   receiverPort,
   callback,
+  prepare,
 }: {
   projectId: string;
   receiverPort: number;
-  callback: ({ url }: { url: string }) => Promise<Result>;
+  callback: (preview: { url: string; prepared?: unknown }) => Promise<Result>;
+  prepare?: PreparePreview;
 }) => {
   const preview = await startGeneratedFormDeliveryPreview({
     projectId,
     receiverPort,
+    prepare,
   });
   try {
     return await measure("generated form preview callback", () =>
-      callback({ url: preview.url })
+      callback({ url: preview.url, prepared: preview.prepared })
     );
   } finally {
     await preview.close();

@@ -1,4 +1,6 @@
 import { expect, type Browser, type Page } from "@playwright/test";
+import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
+import { isPageDraft } from "@webstudio-is/sdk";
 import { expectTextHidden } from "../flows/assertions";
 import {
   getCanvasFrame,
@@ -101,8 +103,10 @@ const waitForCopiedPageTransferData = async ({
   );
 };
 
-const getDataResourceCounts = async (fixture: SeededContentModeProject) => {
-  const build = await loadDevBuild({ projectId: fixture.projectId });
+const getDataResourceCounts = (
+  fixture: SeededContentModeProject,
+  build: Awaited<ReturnType<typeof loadDevBuild>>
+) => {
   const dataSources = JSON.parse(build.dataSources) as Array<{
     type: string;
     name: string;
@@ -153,11 +157,10 @@ const getDataResourceCounts = async (fixture: SeededContentModeProject) => {
   };
 };
 
-const expectDataResourceCopies = async (
-  fixture: SeededContentModeProject,
-  before: Awaited<ReturnType<typeof getDataResourceCounts>>
+const expectDataResourceCopies = (
+  before: ReturnType<typeof getDataResourceCounts>,
+  after: ReturnType<typeof getDataResourceCounts>
 ) => {
-  const after = await getDataResourceCounts(fixture);
   const entries = Object.entries(after) as Array<[keyof typeof after, number]>;
   for (const [key, count] of entries) {
     if (count <= before[key]) {
@@ -166,6 +169,28 @@ const expectDataResourceCopies = async (
       );
     }
   }
+};
+
+const expectSavedPage = async ({
+  projectId,
+  name,
+  draft,
+}: {
+  projectId: string;
+  name: string;
+  draft: boolean;
+}) => {
+  await expect
+    .poll(
+      async () => {
+        const build = await loadDevBuild({ projectId });
+        const { pages } = JSON.parse(build.pages) as SerializedPages;
+        const savedPage = pages.find((page) => page.name === name);
+        return savedPage === undefined ? undefined : isPageDraft(savedPage);
+      },
+      { message: `Expected saved page "${name}" with draft=${draft}` }
+    )
+    .toBe(draft);
 };
 
 const selectHeaderAction = async ({
@@ -338,7 +363,10 @@ test("Builder can draft, stage, copy, duplicate, and delete a page from the head
       authToken: fixture.builderToken,
     });
   });
-  const dataResourceCountsBefore = await getDataResourceCounts(fixture);
+  const dataResourceCountsBefore = getDataResourceCounts(
+    fixture,
+    await loadDevBuild({ projectId: fixture.projectId })
+  );
 
   await createPageFromTemplate({
     page,
@@ -359,130 +387,157 @@ test("Builder can draft, stage, copy, duplicate, and delete a page from the head
     text: "GraphQL resource variable configured",
   });
   await waitForCanvasText({ page, text: "2026" });
-  await expectDataResourceCopies(fixture, dataResourceCountsBefore);
-  await measure(
-    "pages actions generated app build for copied resources",
-    async () => {
-      await expectGeneratedAppBuild({ projectId: fixture.projectId });
-    }
+  const templateBuild = await loadDevBuild({ projectId: fixture.projectId });
+  expectDataResourceCopies(
+    dataResourceCountsBefore,
+    getDataResourceCounts(fixture, templateBuild)
   );
 
-  await openPageSettings({ page, pageName });
-  const renameSave = waitForChangeToBeSaved({ page });
-  await page.getByLabel("Page name", { exact: true }).fill(renamedPageName);
-  await page.getByLabel("Page name", { exact: true }).blur();
-  await renameSave;
-  await waitForPageRow({ page, pageName: renamedPageName });
-  await expectPageRowHidden({ page, pageName });
+  const results = await Promise.allSettled([
+    measure("pages actions generated app build for copied resources", () =>
+      expectGeneratedAppBuild({ build: templateBuild })
+    ),
+    test.step("Page actions and persistence", async () => {
+      await openPageSettings({ page, pageName });
+      await page.getByLabel("Page name", { exact: true }).fill(renamedPageName);
+      await page.getByLabel("Page name", { exact: true }).blur();
+      await waitForPageRow({ page, pageName: renamedPageName });
+      await expectPageRowHidden({ page, pageName });
 
-  const draftSave = waitForChangeToBeSaved({ page });
-  await selectHeaderAction({
-    page,
-    menuLabel: "Page actions",
-    action: "Mark as draft",
-  });
-  await draftSave;
-  await waitForPageRow({ page, pageName: `[Draft] ${renamedPageName}` });
-
-  await openPageSettings({
-    page,
-    pageName: `[Draft] ${renamedPageName}`,
-  });
-  await page
-    .getByText("Stage this page for publish before setting it as the home page")
-    .waitFor();
-  const stageSave = waitForChangeToBeSaved({ page });
-  await selectHeaderAction({
-    page,
-    menuLabel: "Page actions",
-    action: "Stage for publish",
-  });
-  await stageSave;
-  await waitForPageRow({ page, pageName: renamedPageName });
-
-  await openPageSettings({ page, pageName: renamedPageName });
-  await selectHeaderAction({
-    page,
-    menuLabel: "Page actions",
-    action: "Copy",
-  });
-  await waitForCopiedPageTransferData({
-    page,
-    type: "page",
-    name: renamedPageName,
-  });
-  await pasteFromClipboardShortcut({ page });
-  await waitForPageRow({ page, pageName: copiedPageName });
-
-  const previousCanvas = await getCanvasFrame(page);
-  if (previousCanvas === undefined) {
-    throw new Error("Expected canvas before switching pages");
-  }
-  // Reproduce a component changing React-owned DOM before page teardown.
-  await previousCanvas
-    .getByText(fixture.pageTemplateText, { exact: true })
-    .first()
-    .evaluate((element) => element.remove());
-  await openPage({
-    page,
-    pageName: copiedPageName,
-    canvasText: fixture.pageTemplateText,
-  });
-  expect(await getCanvasFrame(page)).toBe(previousCanvas);
-
-  await openPageSettings({ page, pageName: renamedPageName });
-  await selectHeaderAction({
-    page,
-    menuLabel: "Page actions",
-    action: "Duplicate",
-  });
-  await waitForPageRow({ page, pageName: duplicatedPageName });
-
-  await openPageSettings({ page, pageName: duplicatedPageName });
-  await selectHeaderAction({
-    page,
-    menuLabel: "Page actions",
-    action: "Delete",
-  });
-  const deleteSave = waitForChangeToBeSaved({ page });
-  await confirmDialogAction({ page, action: "Delete Page" });
-  await deleteSave;
-  await expectPageRowHidden({ page, pageName: duplicatedPageName });
-
-  await measure(
-    "pages actions reload for page action persistence",
-    async () => {
-      await openProjectBuilder({
-        page,
+      await expectSavedPage({
         projectId: fixture.projectId,
-        authToken: fixture.builderToken,
+        name: renamedPageName,
+        draft: false,
       });
+      await selectHeaderAction({
+        page,
+        menuLabel: "Page actions",
+        action: "Mark as draft",
+      });
+      await waitForPageRow({ page, pageName: `[Draft] ${renamedPageName}` });
+      await expectSavedPage({
+        projectId: fixture.projectId,
+        name: renamedPageName,
+        draft: true,
+      });
+
+      await openPageSettings({
+        page,
+        pageName: `[Draft] ${renamedPageName}`,
+      });
+      await page
+        .getByText(
+          "Stage this page for publish before setting it as the home page"
+        )
+        .waitFor();
+      await selectHeaderAction({
+        page,
+        menuLabel: "Page actions",
+        action: "Stage for publish",
+      });
+      await waitForPageRow({ page, pageName: renamedPageName });
+      await expectSavedPage({
+        projectId: fixture.projectId,
+        name: renamedPageName,
+        draft: false,
+      });
+
+      await openPageSettings({ page, pageName: renamedPageName });
+      await selectHeaderAction({
+        page,
+        menuLabel: "Page actions",
+        action: "Copy",
+      });
+      await waitForCopiedPageTransferData({
+        page,
+        type: "page",
+        name: renamedPageName,
+      });
+      await pasteFromClipboardShortcut({ page });
+      await waitForPageRow({ page, pageName: copiedPageName });
+
+      const previousCanvas = await getCanvasFrame(page);
+      if (previousCanvas === undefined) {
+        throw new Error("Expected canvas before switching pages");
+      }
+      // Reproduce a component changing React-owned DOM before page teardown.
+      await previousCanvas
+        .getByText(fixture.pageTemplateText, { exact: true })
+        .first()
+        .evaluate((element) => element.remove());
+      await openPage({
+        page,
+        pageName: copiedPageName,
+        canvasText: fixture.pageTemplateText,
+      });
+      expect(await getCanvasFrame(page)).toBe(previousCanvas);
+
+      await openPageSettings({ page, pageName: renamedPageName });
+      await selectHeaderAction({
+        page,
+        menuLabel: "Page actions",
+        action: "Duplicate",
+      });
+      await waitForPageRow({ page, pageName: duplicatedPageName });
+
+      await openPageSettings({ page, pageName: duplicatedPageName });
+      await selectHeaderAction({
+        page,
+        menuLabel: "Page actions",
+        action: "Delete",
+      });
+      const deleteSave = waitForChangeToBeSaved({ page });
+      await confirmDialogAction({ page, action: "Delete Page" });
+      await deleteSave;
+      await expectPageRowHidden({ page, pageName: duplicatedPageName });
+
+      await measure(
+        "pages actions reload for page action persistence",
+        async () => {
+          await openProjectBuilder({
+            page,
+            projectId: fixture.projectId,
+            authToken: fixture.builderToken,
+          });
+        }
+      );
+      await openPagesPanel({ page });
+      await waitForPageRow({ page, pageName: renamedPageName });
+      await expectPageRowHidden({ page, pageName });
+      await waitForPageRow({ page, pageName: copiedPageName });
+      await expectPageRowHidden({ page, pageName: duplicatedPageName });
+      await openPage({
+        page,
+        pageName: renamedPageName,
+        canvasText: fixture.pageTemplateText,
+      });
+      await waitForCanvasText({
+        page,
+        text: fixture.dataResourceStaticVariableVisibleValue,
+      });
+      await waitForCanvasText({
+        page,
+        text: "HTTP resource variable configured",
+      });
+      await waitForCanvasText({
+        page,
+        text: "GraphQL resource variable configured",
+      });
+      await waitForCanvasText({ page, text: "2026" });
+      expectDataResourceCopies(
+        dataResourceCountsBefore,
+        getDataResourceCounts(
+          fixture,
+          await loadDevBuild({ projectId: fixture.projectId })
+        )
+      );
+    }),
+  ]);
+  for (const result of results) {
+    if (result.status === "rejected") {
+      throw result.reason;
     }
-  );
-  await openPagesPanel({ page });
-  await waitForPageRow({ page, pageName: renamedPageName });
-  await expectPageRowHidden({ page, pageName });
-  await waitForPageRow({ page, pageName: copiedPageName });
-  await expectPageRowHidden({ page, pageName: duplicatedPageName });
-  await openPage({
-    page,
-    pageName: renamedPageName,
-    canvasText: fixture.pageTemplateText,
-  });
-  await waitForCanvasText({
-    page,
-    text: fixture.dataResourceStaticVariableVisibleValue,
-  });
-  await waitForCanvasText({
-    page,
-    text: "HTTP resource variable configured",
-  });
-  await waitForCanvasText({
-    page,
-    text: "GraphQL resource variable configured",
-  });
-  await waitForCanvasText({ page, text: "2026" });
-  await expectDataResourceCopies(fixture, dataResourceCountsBefore);
+  }
 });
 
 test("Builder can rename, copy, duplicate, and delete folders and page templates", async ({

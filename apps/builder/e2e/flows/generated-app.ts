@@ -39,13 +39,15 @@ export const waitForGeneratedPreview = async ({
   process,
   url,
   output,
+  timeout = 120_000,
 }: {
   process: ChildProcess;
   url: string;
   output: () => string;
+  timeout?: number;
 }) => {
   // Preview also compiles the production app while other E2E workers are active.
-  const deadline = Date.now() + 120_000;
+  const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     if (process.exitCode !== null || process.signalCode !== null) {
       throw new Error(
@@ -137,16 +139,18 @@ export const createLocalBundleFromDevBuild = (build: BuildRow) => {
   };
 };
 
-export const expectGeneratedAppBuild = async ({
-  projectId,
-  expectedText,
-}: {
-  projectId: string;
-  expectedText?: string;
-}) => {
+export const expectGeneratedAppBuild = async (
+  input: ({ projectId: string } | { build: BuildRow }) & {
+    expectedText?: string;
+  }
+) => {
+  const { expectedText } = input;
   const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-generated-"));
   try {
-    const build = await loadDevBuild({ projectId });
+    const build =
+      "build" in input
+        ? input.build
+        : await loadDevBuild({ projectId: input.projectId });
     await mkdir(join(tempDir, ".webstudio"), { recursive: true });
     await writeFile(
       join(tempDir, ".webstudio", "data.json"),
