@@ -120,7 +120,7 @@ test.each(["findings", "details", "publish"] as const)(
         ? []
         : [
             {
-              severity: "error",
+              severity: "warning",
               title: view === "details" ? "finding" : content,
               details: content,
               reportText: "report",
@@ -220,6 +220,10 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
     getComputedStyle(document.body.querySelector('[role="dialog"]')!).resize
   ).toBe("both");
   expect(document.body.querySelector('[draggable="true"]')).not.toBeNull();
+  const warningsTab = Array.from(
+    document.body.querySelectorAll('[role="tab"]')
+  ).find((tab) => tab.textContent === "Warnings");
+  await act(async () => userEvent.click(warningsTab as HTMLElement));
   const firstFinding = Array.from(
     document.body.querySelectorAll("button")
   ).find((button) => button.textContent === "Show more");
@@ -227,7 +231,7 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
   await act(async () => userEvent.click(firstFinding as HTMLElement));
   const selectableText = Array.from(document.body.querySelectorAll("*")).find(
     (candidate) =>
-      candidate.textContent === "details-error-0" &&
+      candidate.textContent === "details-warning-0" &&
       getComputedStyle(candidate).userSelect === "text"
   );
   expect(selectableText).toBeDefined();
@@ -791,13 +795,13 @@ test("Show element closes the diagnostics dialog on ordinary navigation", async 
     },
   ]);
   openDetails(element);
-  const finding = Array.from(document.body.querySelectorAll("button")).find(
-    (button) => button.textContent === "Show more"
-  );
-  await act(async () => userEvent.click(finding as HTMLElement));
   const link =
     document.body.querySelector<HTMLAnchorElement>('a[href="#element"]');
   expect(link).not.toBeNull();
-  await act(async () => userEvent.click(link as HTMLElement));
-  expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+  expect(document.body.textContent).toContain("Invalid element");
+  expect(
+    Array.from(document.body.querySelectorAll("button")).some(
+      (button) => button.textContent === "Show more"
+    )
+  ).toBe(false);
 });
