@@ -1900,7 +1900,10 @@ const assertSupportedNamespaces = ({
           assetIds.has(asset.id) ||
           (original === undefined
             ? isKnownAsset(asset.id) === false
-            : equal({ ...original }, { ...asset }) === false)
+            : equal(
+                JSON.parse(JSON.stringify(original)),
+                JSON.parse(JSON.stringify(asset))
+              ) === false)
         ) {
           const changedFields =
             original === undefined

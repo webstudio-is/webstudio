@@ -1989,6 +1989,7 @@ describe("MDX authored content", () => {
     root.fragment.assets.push(article);
     const next = structuredClone(root.fragment);
     next.assets[0] = Object.assign(Object.create(null), article);
+    next.assets[0]!.meta = Object.create(null);
     next.instances[0]!.children = [{ type: "text", value: "After" }];
 
     expect(
