@@ -10,26 +10,6 @@ class TimingReporter implements Reporter {
   }> = [];
 
   onTestEnd(test: TestCase, result: TestResult) {
-    if (
-      process.env.CI !== undefined &&
-      process.env.E2E_TEST_SHARD === "shard-6" &&
-      test.location.file.endsWith("browser-form-preview.[shard-6].e2e.ts")
-    ) {
-      for (const after of result.steps.filter(
-        ({ title }) => title === "After Hooks" || title === "Worker Cleanup"
-      )) {
-        console.info(
-          `[e2e:profile] shard 6 Preview ${after.title} duration=${after.duration}ms`
-        );
-        for (const step of after.steps.filter(
-          ({ category }) => category === "fixture"
-        )) {
-          console.info(
-            `[e2e:profile] shard 6 Preview ${step.title} duration=${step.duration}ms`
-          );
-        }
-      }
-    }
     this.tests.push({
       file: relative(process.cwd(), test.location.file),
       title: test.title,
