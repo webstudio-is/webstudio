@@ -2012,16 +2012,23 @@ describe("MDX authored content", () => {
     });
 
     const next = structuredClone(root.fragment);
-    next.assets.push(templateImage);
+    next.props.push({
+      id: "template-image-prop",
+      instanceId: heading.id,
+      name: "src",
+      type: "asset",
+      value: templateImage.id,
+    });
     next.instances[0]!.children = [{ type: "text", value: "After" }];
 
     expect(
       serializeMdxDocument(
         reconcileMdxAuthoredContent({ root, fragment: next })
       )
-    ).toBe("<h3>After</h3>\n");
+    ).toBe('<h3 src="./template-image.png">After</h3>\n');
 
-    next.assets[0] = { ...templateImage, id: "unknown-image" };
+    next.assets.push({ ...templateImage, id: "unknown-image" });
+    next.props[0]!.value = "unknown-image";
     expect(() => reconcileMdxAuthoredContent({ root, fragment: next })).toThrow(
       "Changes to assets cannot be represented losslessly in MDX"
     );

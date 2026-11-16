@@ -1892,7 +1892,7 @@ const assertSupportedNamespaces = ({
       }
       if (
         Array.from(referencedAssetIds).some(
-          (assetId) => assetIds.has(assetId) === false
+          (assetId) => root.assetReferenceValues?.has(assetId) !== true
         )
       ) {
         throw new Error(
