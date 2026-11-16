@@ -115,6 +115,7 @@ test("Content templates, assets, and collection entries persist across Builder m
     page,
     anchorText: "Initial content",
     templateName: fixture.imageReplacementTemplateName,
+    waitForProjectSync: false,
   });
   await waitForCanvasImage({
     page,

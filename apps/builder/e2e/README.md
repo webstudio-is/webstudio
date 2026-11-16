@@ -95,7 +95,7 @@ each invocation.
 - Keep tests in a file independent even though Playwright runs them in
   declaration order by default.
 
-CI runs five isolated Playwright shards with three workers each. Files have a
+CI runs five isolated Playwright shards with four workers each. Files have a
 fixed assignment based on measured CI duration to keep the slowest job short:
 
 ```txt
