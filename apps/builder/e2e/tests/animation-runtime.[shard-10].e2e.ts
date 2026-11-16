@@ -4,10 +4,7 @@ import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { expectGeneratedAppBuild } from "../flows/generated-app";
 import { openNavigatorPanel } from "../flows/navigator";
-import {
-  waitForChangeToBeSaved,
-  waitForSyncComplete,
-} from "../flows/sync-status";
+import { waitForSyncComplete } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { test } from "../test";
 import { measure } from "../perf";
@@ -52,10 +49,7 @@ const wrapSelectedInstance = async ({
   );
   await optionInput.waitFor();
   await optionInput.fill(option);
-  const save = waitForChangeToBeSaved({ page });
   await selectCommandPanelItem({ page, text: option });
-  await save;
-  await waitForSyncComplete({ page });
 };
 
 const selectNavigatorItem = async ({
@@ -186,23 +180,29 @@ test("Builder animation UI creates supported animation props that persist and bu
     presetName,
   });
 
-  await measure("animation runtime reload builder", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-  await waitForCanvasText({ page, text });
-  await expectPersistedAnimation({
-    projectId: fixture.projectId,
-    presetName,
-  });
-
-  await measure("animation runtime generated app build", async () => {
-    await expectGeneratedAppBuild({
-      projectId: fixture.projectId,
-      expectedText: text,
-    });
-  });
+  const results = await Promise.allSettled([
+    measure("animation runtime reload builder", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+      await waitForCanvasText({ page, text });
+      await expectPersistedAnimation({
+        projectId: fixture.projectId,
+        presetName,
+      });
+    }),
+    measure("animation runtime generated app build", () =>
+      expectGeneratedAppBuild({
+        projectId: fixture.projectId,
+        expectedText: text,
+      })
+    ),
+  ]);
+  for (const result of results) {
+    if (result.status === "rejected") {
+      throw result.reason;
+    }
+  }
 });

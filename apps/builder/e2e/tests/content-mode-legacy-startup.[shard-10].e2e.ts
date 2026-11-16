@@ -145,17 +145,14 @@ test("Editor can open and save legacy content before a Builder migrates the proj
   );
 
   const editedText = "Saved legacy Editor content";
+  const textSave = waitForChangeToBeSaved({ page });
+  textSave.catch(() => undefined);
   await replaceCanvasText({
     page,
     currentText: fixture.shareLinkEditableText,
     text: editedText,
+    waitForProjectSync: false,
   });
-  const editedBuild = await loadDevBuild({ projectId: fixture.projectId });
-  expect(JSON.parse(editedBuild.styles)).toEqual(styles);
-  expect(JSON.parse(editedBuild.styleSources)).toEqual(styleSources);
-  expect(JSON.parse(editedBuild.styleSourceSelections)).toEqual(selections);
-  expect(JSON.parse(editedBuild.props)).toEqual(props);
-  expect(unexpectedDialogs).toEqual([]);
 
   const canvas = await waitForCanvasFrame({ page });
   await canvas.getByText(readOnlyCode, { exact: true }).click();
@@ -165,6 +162,15 @@ test("Editor can open and save legacy content before a Builder migrates the proj
   await selectNavigatorItem({ page, name: "Legacy literal code" });
   await expect(textContent).toHaveText(code);
   await expect(textContent).toHaveAttribute("contenteditable", "true");
+
+  await textSave;
+  const editedBuild = await loadDevBuild({ projectId: fixture.projectId });
+  expect(JSON.parse(editedBuild.styles)).toEqual(styles);
+  expect(JSON.parse(editedBuild.styleSources)).toEqual(styleSources);
+  expect(JSON.parse(editedBuild.styleSourceSelections)).toEqual(selections);
+  expect(JSON.parse(editedBuild.props)).toEqual(props);
+  expect(unexpectedDialogs).toEqual([]);
+
   const editedCode = "const savedAnswer = 43;";
   const codeSave = waitForChangeToBeSaved({ page });
   codeSave.catch(() => undefined);
@@ -184,18 +190,15 @@ test("Editor can open and save legacy content before a Builder migrates the proj
   expect(unexpectedDialogs).toEqual([]);
 
   // Actual build permission still permits migration while using Content mode.
-  await withBrowserContext(browser, async (context) => {
-    const builderPage = await context.newPage();
-    await openProjectBuilder({
-      page: builderPage,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-      mode: "content",
-    });
-    await waitForCanvasText({ page: builderPage, text: editedText });
-    await waitForCanvasText({ page: builderPage, text: editedCode });
-    await waitForSyncComplete({ page: builderPage });
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+    mode: "content",
   });
+  await waitForCanvasText({ page, text: editedText });
+  await waitForCanvasText({ page, text: editedCode });
+  await waitForSyncComplete({ page });
   const migratedBuild = await loadDevBuild({ projectId: fixture.projectId });
   expect(
     JSON.parse(migratedBuild.styleSources) as StyleSource[]

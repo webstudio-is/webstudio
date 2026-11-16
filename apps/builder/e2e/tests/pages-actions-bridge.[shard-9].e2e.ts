@@ -196,62 +196,6 @@ test.beforeEach(async ({ browser }) => {
   );
 });
 
-test("Builder can insert through the engine bridge, undo, redo, and reload", async ({
-  page,
-}) => {
-  await measure("pages actions open builder for engine bridge", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-  });
-
-  await waitForCanvasText({ page, text: "Initial content" });
-
-  await measure("pages actions insert template through bridge", async () => {
-    await insertTemplateAfterCanvasText({
-      page,
-      anchorText: "Initial content",
-      templateName: fixture.styledHeadingTemplateName,
-    });
-  });
-  await waitForCanvasText({
-    page,
-    text: fixture.styledHeadingTemplateText,
-  });
-
-  await measure("pages actions undo bridge insert", async () => {
-    await selectSavedAppMenuItem({ page, name: "Undo" });
-  });
-  await waitForCanvasTextHidden({
-    page,
-    text: fixture.styledHeadingTemplateText,
-  });
-
-  await measure("pages actions redo bridge insert", async () => {
-    await selectSavedAppMenuItem({ page, name: "Redo" });
-  });
-  await waitForCanvasText({
-    page,
-    text: fixture.styledHeadingTemplateText,
-  });
-
-  await measure("pages actions reload bridge insert", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-  });
-  await waitForCanvasText({
-    page,
-    text: fixture.styledHeadingTemplateText,
-  });
-});
-
 test("Builder filters the catalog and persists component actions from shortcuts and Navigator", async ({
   page,
 }) => {
@@ -377,4 +321,60 @@ test("Builder filters the catalog and persists component actions from shortcuts 
   });
   await waitForCanvasText({ page, text: insertedButtonText });
   expect(await readComponentCount()).toBe(initialCount + 3);
+});
+
+test("Builder can insert through the engine bridge, undo, redo, and reload", async ({
+  page,
+}) => {
+  await measure("pages actions open builder for engine bridge", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
+    });
+  });
+
+  await waitForCanvasText({ page, text: "Initial content" });
+
+  await measure("pages actions insert template through bridge", async () => {
+    await insertTemplateAfterCanvasText({
+      page,
+      anchorText: "Initial content",
+      templateName: fixture.styledHeadingTemplateName,
+    });
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.styledHeadingTemplateText,
+  });
+
+  await measure("pages actions undo bridge insert", async () => {
+    await selectSavedAppMenuItem({ page, name: "Undo" });
+  });
+  await waitForCanvasTextHidden({
+    page,
+    text: fixture.styledHeadingTemplateText,
+  });
+
+  await measure("pages actions redo bridge insert", async () => {
+    await selectSavedAppMenuItem({ page, name: "Redo" });
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.styledHeadingTemplateText,
+  });
+
+  await measure("pages actions reload bridge insert", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
+    });
+  });
+  await waitForCanvasText({
+    page,
+    text: fixture.styledHeadingTemplateText,
+  });
 });

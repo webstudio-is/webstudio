@@ -1,5 +1,4 @@
 import { expect } from "@playwright/test";
-import { deleteContentBlockChildAfterCanvasText } from "../flows/block-outline";
 import {
   openProjectBuilder,
   waitForCanvasFrame,
@@ -193,10 +192,14 @@ test("Editor can paste, format and delete text while protected content remains",
   });
 
   await measure("content mode delete direct child", async () => {
-    await deleteContentBlockChildAfterCanvasText({
-      page,
-      text: pastedContent,
-    });
+    const canvas = await waitForCanvasFrame({ page });
+    await page.keyboard.down("Alt");
+    try {
+      await canvas.getByText(pastedContent, { exact: true }).hover();
+      await page.getByRole("button", { name: "Delete block" }).last().click();
+    } finally {
+      await page.keyboard.up("Alt");
+    }
   });
   await waitForCanvasTextHidden({
     page,
@@ -212,6 +215,8 @@ test("Editor can paste, format and delete text while protected content remains",
     });
   });
   await waitForCanvasText({ page, text: formattedText });
+  // The preceding deletion can finish while the formatting is being applied.
+  await waitForSyncComplete({ page });
 
   const boldCount = await getElementTagWithTextCount({
     projectId: fixture.projectId,

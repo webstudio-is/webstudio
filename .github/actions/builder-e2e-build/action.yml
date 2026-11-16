@@ -20,8 +20,6 @@ runs:
         submodules-ssh-key: ${{ inputs.submodules-ssh-key }}
 
     - uses: ./.github/actions/ci-setup
-      with:
-        run-scripts: "true"
 
     - name: Discover shards
       id: shards

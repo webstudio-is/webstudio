@@ -207,9 +207,7 @@ test("Builder style properties, grid, tokens, and custom breakpoints persist", a
 
     const styleSourceInput = page.getByLabel("New style source input");
     await styleSourceInput.fill(tokenName);
-    const createSave = waitForChangeToBeSaved({ page });
     await page.getByText(`Create ${tokenName}`, { exact: false }).click();
-    await createSave;
     await page.getByText(tokenName, { exact: true }).waitFor();
 
     await setCssValue({ page, property: "color", value: "#b4234c" });
@@ -257,28 +255,30 @@ test("Builder style properties, grid, tokens, and custom breakpoints persist", a
     await selectNavigatorItem({ page, itemName: "Body" });
     await page.getByRole("tab", { name: "Style" }).click();
 
-    await measure("style panel runtime enable body grid", async () => {
-      await addCssDeclaration({ page, property: "display", value: "grid" });
-    });
-    await page.getByRole("button", { name: /Grid layout:/ }).waitFor();
+    const gridLayout = page.getByRole("button", { name: /Grid layout:/ });
+    await expect(gridLayout).toBeHidden();
+    await Promise.all([
+      measure("style panel runtime enable body grid", () =>
+        addCssDeclaration({ page, property: "display", value: "grid" })
+      ),
+      measure("style panel runtime fill body grid", async () => {
+        await gridLayout.click();
+        await page.getByRole("button", { name: "Fill grid" }).click();
+        // The display declaration may save before the new children.
+        await expect
+          .poll(
+            () =>
+              getInstanceChildCount({
+                fixture,
+                instanceId: bodyInstanceId,
+              }),
+            { message: "Fill grid saves the new Body children" }
+          )
+          .toBe(expectedBodyChildCount);
+        await page.keyboard.press("Escape");
+      }),
+    ]);
 
-    await measure("style panel runtime fill body grid", async () => {
-      await page.getByRole("button", { name: /Grid layout:/ }).click();
-      const save = waitForChangeToBeSaved({ page });
-      await page.getByRole("button", { name: "Fill grid" }).click();
-      await save;
-      await page.keyboard.press("Escape");
-    });
-
-    const filledBodyChildCount = await getInstanceChildCount({
-      fixture,
-      instanceId: bodyInstanceId,
-    });
-    if (filledBodyChildCount !== expectedBodyChildCount) {
-      throw new Error(
-        `Expected Fill grid to grow Body children to ${expectedBodyChildCount}. Before ${initialBodyChildCount}, after ${filledBodyChildCount}`
-      );
-    }
     const styles = await readBuildStylesText(fixture);
     expect(styles).toContain('"display"');
     expect(styles).toContain('"grid"');
@@ -299,10 +299,8 @@ test("Builder style properties, grid, tokens, and custom breakpoints persist", a
     await nameInput.blur();
     await nameSave;
 
-    const renameSave = waitForChangeToBeSaved({ page });
     await nameInput.fill(updatedBreakpointName);
     await nameInput.blur();
-    await renameSave;
 
     await page.keyboard.press("Escape");
     await page

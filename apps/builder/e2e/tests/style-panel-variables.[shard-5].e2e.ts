@@ -1,8 +1,7 @@
-import type { BrowserContext, Page } from "@playwright/test";
+import { expect, type BrowserContext, type Page } from "@playwright/test";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { waitForCanvasTextStyle } from "../flows/canvas-style";
-import { addCssDeclaration } from "../flows/css-declaration";
 import { waitForChangeToBeSaved } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
@@ -113,16 +112,19 @@ test("Builder CSS variables persist across create, bind, rename, delete, and rel
   await measure(
     "style panel runtime create and bind css variable",
     async () => {
-      await addCssDeclaration({
-        page,
-        property: variableName,
-        value: "#126bca",
+      const editor = page.getByRole("textbox", {
+        name: "Styles",
+        exact: true,
       });
-      await addCssDeclaration({
-        page,
-        property: "color",
-        value: `var(${variableName})`,
-      });
+      await editor.click();
+      await editor.press("ControlOrMeta+Home");
+      await editor.press("ArrowDown");
+      await page.keyboard.insertText(
+        `${variableName}: #126bca;\ncolor: var(${variableName});\n`
+      );
+      const save = waitForChangeToBeSaved({ page });
+      await editor.press("ControlOrMeta+Enter");
+      await save;
     }
   );
 
@@ -226,18 +228,17 @@ test("Builder CSS variables persist across create, bind, rename, delete, and rel
     text: renamedVariableName,
   });
 
-  await measure(
+  const canvas = await measure(
     "style panel runtime reload builder after css variable delete",
-    async () => {
-      await openProjectBuilder({
+    () =>
+      openProjectBuilder({
         page,
         projectId: fixture.projectId,
         authToken: fixture.builderToken,
-      });
-    }
+      })
   );
-  await expectBuildStylesNotToContain({
-    fixture,
-    text: renamedVariableName,
-  });
+  await expect(canvas.getByText(text, { exact: true })).toHaveCSS(
+    renamedVariableName,
+    ""
+  );
 });
