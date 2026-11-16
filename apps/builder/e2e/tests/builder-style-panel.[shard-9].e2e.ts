@@ -23,18 +23,17 @@ const setCssValue = async ({
   page,
   property,
   value,
-  waitForSave = true,
+  verifyCanvas,
 }: {
   page: Page;
   property: string;
   value: string;
-  waitForSave?: boolean;
+  verifyCanvas?: () => Promise<void>;
 }) => {
   const input = page.getByLabel(property, { exact: true }).first();
   await input.fill(value);
-  const save = waitForSave ? waitForChangeToBeSaved({ page }) : undefined;
-  await input.press("Enter");
-  await save;
+  const save = verifyCanvas && waitForChangeToBeSaved({ page });
+  await Promise.all([save, input.press("Enter").then(verifyCanvas)]);
 };
 
 const resetCssValue = async ({
@@ -51,9 +50,7 @@ const resetCssValue = async ({
   );
   const label = control.getByText(labelText, { exact: true });
   await label.waitFor({ state: "visible", timeout: 10_000 });
-  const save = waitForChangeToBeSaved({ page });
   await label.click({ modifiers: ["Alt"] });
-  await save;
 };
 
 const selectStyleSourceState = async ({
@@ -116,6 +113,7 @@ test("Builder style properties, grid, tokens, and custom breakpoints persist", a
 }) => {
   const fixture = await createContentModeProject({
     context,
+    page,
     email: "style-panel-e2e@webstudio.test",
     title: "Style Panel E2E",
     assetNamePrefix: "style-panel-e2e-",
@@ -210,12 +208,17 @@ test("Builder style properties, grid, tokens, and custom breakpoints persist", a
     await page.getByText(`Create ${tokenName}`, { exact: false }).click();
     await page.getByText(tokenName, { exact: true }).waitFor();
 
-    await setCssValue({ page, property: "color", value: "#b4234c" });
-    await waitForCanvasTextStyle({
+    await setCssValue({
       page,
-      text: tokenText,
       property: "color",
-      value: "rgb(180, 35, 76)",
+      value: "#b4234c",
+      verifyCanvas: () =>
+        waitForCanvasTextStyle({
+          page,
+          text: tokenText,
+          property: "color",
+          value: "rgb(180, 35, 76)",
+        }),
     });
     await expectSavedToken();
   });
@@ -224,13 +227,12 @@ test("Builder style properties, grid, tokens, and custom breakpoints persist", a
     await selectCanvasTextInstance({ page, text: styledText });
     await page.getByRole("tab", { name: "Style" }).click();
     for (const { property, value } of representativeStyles) {
-      await setCssValue({ page, property, value, waitForSave: false });
+      await setCssValue({ page, property, value });
     }
     await setCssValue({
       page,
       property: "width",
       value: "420px",
-      waitForSave: false,
     });
     await selectStyleSourceState({ page, state: ":hover" });
     await setCssValue({ page, property: "color", value: "#ca126b" });
@@ -244,11 +246,12 @@ test("Builder style properties, grid, tokens, and custom breakpoints persist", a
       value: "420px",
     });
     await expectHoverCanvasStyle();
-    expect(await readSavedInstanceStyles()).toContainEqual(hoverColor);
+    await expect
+      .poll(readSavedInstanceStyles)
+      .toEqual(expect.arrayContaining([hoverColor, width]));
 
     await page.getByRole("tab", { name: "Style" }).click();
     await resetCssValue({ page, property: "width" });
-    expect(await readSavedInstanceStyles()).not.toContainEqual(width);
   });
 
   await test.step("fill the selected grid", async () => {
@@ -284,6 +287,8 @@ test("Builder style properties, grid, tokens, and custom breakpoints persist", a
     expect(styles).toContain('"grid"');
     expect(styles).toContain('"flexDirection"');
     expect(styles).toContain('"column"');
+    // The saved grid changes also cover the width reset on the previous instance.
+    expect(await readSavedInstanceStyles()).not.toContainEqual(width);
   });
 
   await test.step("create, rename, and style a custom breakpoint", async () => {
@@ -310,13 +315,17 @@ test("Builder style properties, grid, tokens, and custom breakpoints persist", a
 
     await selectCanvasTextInstance({ page, text: styledText });
     await page.getByRole("tab", { name: "Style" }).click();
-    await setCssValue({ page, property: "font-size", value: "31px" });
-
-    await waitForCanvasTextStyle({
+    await setCssValue({
       page,
-      text: styledText,
       property: "font-size",
       value: "31px",
+      verifyCanvas: () =>
+        waitForCanvasTextStyle({
+          page,
+          text: styledText,
+          property: "font-size",
+          value: "31px",
+        }),
     });
   });
 

@@ -21,6 +21,7 @@ test("Asset folder moves survive Builder reload and project cloning", async ({
   const cloneTitle = "Asset Folder Clone Result";
   const projectId = await createProjectThroughApi({
     context,
+    page,
     email: "asset-folder-clone-e2e@webstudio.test",
     title: "Asset Folder Clone Source",
   });

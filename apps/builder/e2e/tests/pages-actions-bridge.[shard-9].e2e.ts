@@ -13,7 +13,7 @@ import {
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
-import { test, withBrowserContext } from "../test";
+import { test } from "../test";
 import { measure } from "../perf";
 import { e2ePaidPlanName } from "../plans";
 import { loadDevBuild } from "../db";
@@ -182,18 +182,18 @@ const selectNavigatorContextAction = async ({
   await menuItem.click();
 };
 
-test.beforeEach(async ({ browser }) => {
-  fixture = await withBrowserContext(browser, (context) =>
-    createContentModeProject({
-      context,
-      devPlan: e2ePaidPlanName,
-      email: "pages-actions-e2e@webstudio.test",
-      title: "Pages Actions E2E",
-      assetNamePrefix: "pages-actions-",
-      editorToken: "pages-actions-e2e-editor-token",
-      builderToken: "pages-actions-e2e-builder-token",
-    })
-  );
+test.beforeEach(async ({ context, page }) => {
+  fixture = await createContentModeProject({
+    context,
+    page,
+    devPlan: e2ePaidPlanName,
+    email: "pages-actions-e2e@webstudio.test",
+    title: "Pages Actions E2E",
+    assetNamePrefix: "pages-actions-",
+    editorToken: "pages-actions-e2e-editor-token",
+    builderToken: "pages-actions-e2e-builder-token",
+  });
+  await context.clearCookies();
 });
 
 test("Builder filters the catalog and persists component actions from shortcuts and Navigator", async ({

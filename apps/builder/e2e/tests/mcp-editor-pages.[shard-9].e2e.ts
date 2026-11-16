@@ -24,6 +24,7 @@ test("Editor MCP saves permitted pages, folders, and assets", async ({
   test.setTimeout(240_000);
   const fixture = await createContentModeProject({
     context,
+    page,
     email: "mcp-editor-pages@webstudio.test",
     title: "MCP Editor pages",
     devPlan: e2ePaidPlanName,

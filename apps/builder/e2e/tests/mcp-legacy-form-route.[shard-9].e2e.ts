@@ -19,6 +19,7 @@ test("MCP-edited saved deprecated Webhook Form action uses current dynamic route
     await startPreviewFormMcpClient();
     const projectId = await createProjectThroughApi({
       context,
+      page,
       email: "mcp-legacy-form-route@webstudio.test",
       title: "MCP legacy Form route",
     });
