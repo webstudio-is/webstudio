@@ -306,6 +306,21 @@ const emailForm = await authorManagedForm(projectId, {
   mode: "email-attachments",
 });
 const nativeFormId = await author();
+const successRedirect = "?mcp-e2e=success";
+const successful = await authorManagedForm(projectId, {
+  mode: "redirect",
+  successRedirect,
+  fail: false,
+});
+const failed = await authorManagedForm(projectId, {
+  mode: "redirect",
+  successRedirect,
+  fail: true,
+});
+const feedback = await authorManagedForm(projectId, {
+  mode: "redirect",
+  fail: false,
+});
 process.stdout.write(
-  `${JSON.stringify({ callbackForm, actionForm, blockedForm, emailForm, nativeFormId })}\n`
+  `${JSON.stringify({ callbackForm, actionForm, blockedForm, emailForm, nativeFormId, outcomes: { successful, failed, feedback } })}\n`
 );

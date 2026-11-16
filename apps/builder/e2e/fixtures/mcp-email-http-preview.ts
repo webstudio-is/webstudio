@@ -96,10 +96,14 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       return productionFetch(outgoing);
     }
     protectedFetch.validateDestination(destination);
-    if (destination.href !== "https://mcp-delivery.example/submit") {
+    if (
+      destination.href !== "https://mcp-delivery.example/submit" &&
+      destination.href !== "https://mcp-delivery.example/reject"
+    ) {
       throw new Error("Unexpected E2E HTTP destination");
     }
-    return fetch(new Request("http://127.0.0.1:${httpPort}/submit", outgoing));
+    const receiver = new URL(destination.pathname, "http://127.0.0.1:${httpPort}");
+    return fetch(new Request(receiver, outgoing));
   };
   return Object.assign(testFetch, {
     validateDestination: (url: URL) => url.hostname === previewHostname

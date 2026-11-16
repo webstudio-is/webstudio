@@ -5,6 +5,10 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { startFormDeliveryReceiver } from "../flows/generated-form-delivery";
 import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
 import { startLocalEmailReceiver } from "../flows/mcp-email-preview";
+import {
+  verifyFormOutcomes,
+  type FormOutcomes,
+} from "../flows/mcp-form-outcomes";
 import { runFormAuthor } from "../flows/mcp-form-author";
 import {
   startPreviewFormMcpClient,
@@ -52,18 +56,25 @@ test("Project redirects and MCP-authored Forms run in the same generated product
       fixture.projectId,
       receiverUrl
     );
-    const { callbackForm, actionForm, blockedForm, emailForm, nativeFormId } =
-      JSON.parse(stdout) as {
-        callbackForm: { formId: string };
-        actionForm: {
-          formId: string;
-          resourceIds: string[];
-          rejectedResourceId: string;
-        };
-        blockedForm: { formId: string; resourceId: string };
-        emailForm: { formId: string; emailResourceIds: string[] };
-        nativeFormId: string;
+    const {
+      callbackForm,
+      actionForm,
+      blockedForm,
+      emailForm,
+      nativeFormId,
+      outcomes,
+    } = JSON.parse(stdout) as {
+      callbackForm: { formId: string };
+      actionForm: {
+        formId: string;
+        resourceIds: string[];
+        rejectedResourceId: string;
       };
+      blockedForm: { formId: string; resourceId: string };
+      emailForm: { formId: string; emailResourceIds: string[] };
+      nativeFormId: string;
+      outcomes: FormOutcomes;
+    };
     const { formId: blockedFormId } = blockedForm;
     const { formId: emailFormId, emailResourceIds } = emailForm;
     expect(emailResourceIds).toHaveLength(2);
@@ -78,6 +89,9 @@ test("Project redirects and MCP-authored Forms run in the same generated product
       formId,
       callbackFormId,
       nativeFormId,
+      outcomes.successful.formId,
+      outcomes.failed.formId,
+      outcomes.feedback.formId,
     ];
     expect(new Set(formIds).size).toBe(formIds.length);
     expect(
@@ -407,6 +421,15 @@ test("Project redirects and MCP-authored Forms run in the same generated product
                 }
                 expect(visitor?.attachments).toBeUndefined();
               });
+
+              receiver.deliveries.length = 0;
+              await test.step("MCP-authored Forms redirect and show feedback in generated Preview", () =>
+                verifyFormOutcomes({
+                  page: previewPage,
+                  url,
+                  outcomes,
+                  deliveries: receiver.deliveries,
+                }));
             },
           });
         await withSavedProjectRedirect({ page, fixture, verifyPreview });
