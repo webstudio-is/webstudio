@@ -20,21 +20,76 @@ runs:
       with:
         submodules-ssh-key: ${{ inputs.submodules-ssh-key }}
 
+    - name: Start E2E image pull
+      shell: bash
+      run: |
+        # Elapsed pull time includes tool setup, pnpm cache restoration, and install.
+        pull_dir="$RUNNER_TEMP/builder-e2e-image-pull"
+        mkdir -p "$pull_dir"
+        rm -f "$pull_dir/status"
+        date +%s > "$pull_dir/started"
+        setsid bash -c '
+          timeout --kill-after=10s "${E2E_DOCKER_PULL_TIMEOUT_SECONDS:-300}s" \
+            bash apps/builder/backend/run.sh snapshot pull --policy missing db postgrest \
+            > "$1" 2>&1 &
+          pull=$!
+          trap '\''kill "$pull" 2>/dev/null || true; wait "$pull" 2>/dev/null || true; exit 143'\'' TERM INT
+          wait "$pull"
+          result=$?
+          printf "%s %s\n" "$result" "$(date +%s)" > "$2.tmp"
+          mv "$2.tmp" "$2"
+        ' bash "$pull_dir/log" "$pull_dir/status" </dev/null >/dev/null 2>&1 &
+        echo "$!" > "$pull_dir/pid"
+
     - uses: ./.github/actions/ci-setup
       with:
         install-dependencies: "false"
 
-    - name: Install dependencies and pull E2E images
+    - name: Install dependencies
+      id: install-dependencies
       shell: bash
-      run: |
-        timeout --kill-after=10s "${E2E_DOCKER_PULL_TIMEOUT_SECONDS:-300}s" \
-          bash apps/builder/backend/run.sh snapshot pull --policy missing db postgrest &
-        image_pull=$!
-        trap 'kill "$image_pull" 2>/dev/null || true' EXIT
+      run: pnpm install --frozen-lockfile
 
-        pnpm install --frozen-lockfile
-        wait "$image_pull"
-        trap - EXIT
+    - name: Finish E2E image pull
+      if: always()
+      shell: bash
+      env:
+        INSTALL_OUTCOME: ${{ steps.install-dependencies.outcome }}
+      run: |
+        pull_dir="$RUNNER_TEMP/builder-e2e-image-pull"
+        pull=$(cat "$pull_dir/pid")
+        stop_pull() {
+          kill "$pull" 2>/dev/null || true
+          for attempt in {1..12}; do
+            if ! kill -0 "$pull" 2>/dev/null; then
+              return
+            fi
+            sleep 1
+          done
+          kill -KILL "$pull" 2>/dev/null || true
+        }
+        trap stop_pull EXIT
+        trap 'stop_pull; exit 143' TERM INT
+        if [ "$INSTALL_OUTCOME" != success ]; then
+          exit 0
+        fi
+        wait_started=$SECONDS
+        while [ ! -f "$pull_dir/status" ]; do
+          if ! kill -0 "$pull" 2>/dev/null && [ ! -f "$pull_dir/status" ]; then
+            cat "$pull_dir/log"
+            echo "E2E image pull stopped without a result" >&2
+            exit 1
+          fi
+          sleep 1
+        done
+        trap - EXIT TERM INT
+        read -r pull_status pull_finished < "$pull_dir/status"
+        printf 'E2E image pull: total=%ss wait-after-install=%ss\n' \
+          "$(( pull_finished - $(cat "$pull_dir/started") ))" "$(( SECONDS - wait_started ))"
+        cat "$pull_dir/log"
+        if [ "$pull_status" != 0 ]; then
+          exit 1
+        fi
 
     - name: Cache Playwright Chromium
       uses: actions/cache@v5
