@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect } from "@playwright/test";
@@ -57,7 +58,7 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
     requiresConfirm: contract.requiresConfirm,
   }));
 
-const author = async ({
+export const authorFormCallbacks = async ({
   projectId,
   mode,
   receiverUrl,
@@ -483,35 +484,49 @@ const author = async ({
         }),
       ])
     );
-    process.stdout.write(
-      `${JSON.stringify({ formId, resourceId: resource.resourceId })}\n`
-    );
+    return { formId, resourceId: resource.resourceId };
   } finally {
     await client.close();
     await server.close();
   }
 };
 
-const [, , projectId, mode, receiverUrl, option] = process.argv;
-if (
-  projectId === undefined ||
-  (mode !== "legacy" && mode !== "managed" && mode !== "legacy-and-managed") ||
-  receiverUrl === undefined
-) {
-  throw new Error("Expected a project ID, callback mode and receiver URL");
-}
-if (mode === "legacy-and-managed") {
-  if (option === undefined) {
-    throw new Error("Expected the managed callback page path");
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const [, , projectId, mode, receiverUrl, option] = process.argv;
+  if (
+    projectId === undefined ||
+    (mode !== "legacy" &&
+      mode !== "managed" &&
+      mode !== "legacy-and-managed") ||
+    receiverUrl === undefined
+  ) {
+    throw new Error("Expected a project ID, callback mode and receiver URL");
   }
-  await author({ projectId, mode: "legacy", receiverUrl });
-  await author({ projectId, mode: "managed", receiverUrl, path: option });
-  await authorQuerySearch(projectId);
-} else {
-  await author({
-    projectId,
-    mode,
-    receiverUrl,
-    verifyFieldChange: option === "field-change",
-  });
+  if (mode === "legacy-and-managed") {
+    if (option === undefined) {
+      throw new Error("Expected the managed callback page path");
+    }
+    const legacy = await authorFormCallbacks({
+      projectId,
+      mode: "legacy",
+      receiverUrl,
+    });
+    process.stdout.write(`${JSON.stringify(legacy)}\n`);
+    const managed = await authorFormCallbacks({
+      projectId,
+      mode: "managed",
+      receiverUrl,
+      path: option,
+    });
+    process.stdout.write(`${JSON.stringify(managed)}\n`);
+    await authorQuerySearch(projectId);
+  } else {
+    const result = await authorFormCallbacks({
+      projectId,
+      mode,
+      receiverUrl,
+      verifyFieldChange: option === "field-change",
+    });
+    process.stdout.write(`${JSON.stringify(result)}\n`);
+  }
 }

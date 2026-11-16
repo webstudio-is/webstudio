@@ -166,21 +166,21 @@ test.beforeEach(async ({ browser }) => {
     createContentModeProject({ context, devPlan: e2ePaidPlanName })
   );
 });
-test("Editor can paste text and delete direct children but not protected containers", async ({
+test("Editor can paste, format and delete text while protected content remains", async ({
   page,
 }) => {
-  await measure(
-    "content mode open editor for direct child delete",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    }
-  );
-  await waitForCanvasText({ page, text: "Initial content" });
+  const formattedText = "Rich editor formatted copy";
+  const editedHref = "/rich-text-editor-link";
+
+  await measure("content mode open editor for text changes", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
+    });
+  });
+  await waitForCanvasText({ page, text: fixture.shareLinkEditableText });
   await waitForSyncComplete({ page });
 
   await measure("content mode insert deletable template", async () => {
@@ -215,17 +215,77 @@ test("Editor can paste text and delete direct children but not protected contain
     text: pastedContent,
   });
 
-  await measure(
-    "content mode reload editor for direct child delete",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    }
-  );
+  await measure("content mode apply rich text formatting", async () => {
+    await replaceCanvasTextAndApplyInlineFormats({
+      page,
+      currentText: fixture.shareLinkEditableText,
+      text: formattedText,
+      formats: ["Bold", "Italic", "Inline link"],
+    });
+  });
+  await waitForCanvasText({ page, text: formattedText });
+
+  const boldCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "b",
+    text: formattedText,
+  });
+  const italicCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "i",
+    text: formattedText,
+  });
+  const linkCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "a",
+    text: formattedText,
+  });
+  if (boldCount !== 1 || italicCount !== 1 || linkCount !== 1) {
+    throw new Error(
+      `Expected rich text editor to persist one bold, italic, and inline link subtree. bold=${boldCount}, italic=${italicCount}, link=${linkCount}`
+    );
+  }
+
+  await measure("content mode undo rich text formatting", async () => {
+    await applyHistoryShortcut({ page, shortcut: "ControlOrMeta+Z" });
+  });
+  await waitForCanvasTextHidden({ page, text: formattedText });
+
+  await measure("content mode redo rich text formatting", async () => {
+    await applyHistoryShortcut({ page, shortcut: "ControlOrMeta+Shift+Z" });
+  });
+  await waitForCanvasText({ page, text: formattedText });
+
+  await selectCanvasTextInstanceForProps({
+    page,
+    text: formattedText,
+    propertyLabel: "Href",
+  });
+  await fillSelectedStringProperty({
+    page,
+    label: "Href",
+    control: "url",
+    value: editedHref,
+  });
+  const savedHref = await getElementHrefWithText({
+    projectId: fixture.projectId,
+    text: formattedText,
+  });
+  if (savedHref !== editedHref) {
+    throw new Error(
+      `Expected rich-text link href to be saved as "${editedHref}", received "${savedHref}"`
+    );
+  }
+
+  await measure("content mode reload text changes", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
+    });
+  });
+  await waitForCanvasText({ page, text: formattedText });
   await waitForCanvasText({ page, text: "Initial content" });
   await waitForCanvasTextHidden({
     page,
@@ -236,6 +296,73 @@ test("Editor can paste text and delete direct children but not protected contain
     text: fixture.deletableTemplateText,
   });
   await waitForSyncComplete({ page });
+
+  const reloadedHref = await getElementHrefWithText({
+    projectId: fixture.projectId,
+    text: formattedText,
+  });
+  if (reloadedHref !== editedHref) {
+    throw new Error(
+      `Expected reloaded rich-text link href to be "${editedHref}", received "${reloadedHref}"`
+    );
+  }
+
+  const reloadedBoldCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "b",
+    text: formattedText,
+  });
+  const reloadedItalicCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "i",
+    text: formattedText,
+  });
+  const reloadedLinkCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "a",
+    text: formattedText,
+  });
+  if (
+    reloadedBoldCount !== 1 ||
+    reloadedItalicCount !== 1 ||
+    reloadedLinkCount !== 1
+  ) {
+    throw new Error(
+      `Expected reloaded rich text formatting to persist. bold=${reloadedBoldCount}, italic=${reloadedItalicCount}, link=${reloadedLinkCount}`
+    );
+  }
+
+  await removeCanvasInlineLink({ page, text: formattedText });
+  const removedLinkCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "a",
+    text: formattedText,
+  });
+  if (removedLinkCount !== 0) {
+    throw new Error(
+      `Expected rich-text link removal to delete the inline link subtree, received ${removedLinkCount} link instances`
+    );
+  }
+
+  await measure("content mode reload rich text link removal", async () => {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
+    });
+  });
+  await waitForCanvasText({ page, text: formattedText });
+  const reloadedRemovedLinkCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "a",
+    text: formattedText,
+  });
+  if (reloadedRemovedLinkCount !== 0) {
+    throw new Error(
+      `Expected rich-text link removal to persist after reload, received ${reloadedRemovedLinkCount} link instances`
+    );
+  }
 
   await measure("content mode insert nested template", async () => {
     await insertTemplateAfterCanvasText({
@@ -519,161 +646,4 @@ test("Editor can edit text and content props but not design props", async ({
     value: editedVideoSrc,
   });
   await waitForCanvasText({ page, text: editedContent });
-});
-
-test("Editor rich text formatting persists after reload", async ({ page }) => {
-  const formattedText = "Rich editor formatted copy";
-  const editedHref = "/rich-text-editor-link";
-
-  await measure(
-    "content mode open editor for rich text formatting",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.editorToken,
-        mode: "content",
-      });
-    }
-  );
-  await waitForCanvasText({ page, text: fixture.shareLinkEditableText });
-  await waitForSyncComplete({ page });
-
-  await measure("content mode apply rich text formatting", async () => {
-    await replaceCanvasTextAndApplyInlineFormats({
-      page,
-      currentText: fixture.shareLinkEditableText,
-      text: formattedText,
-      formats: ["Bold", "Italic", "Inline link"],
-    });
-  });
-  await waitForCanvasText({ page, text: formattedText });
-
-  const boldCount = await getElementTagWithTextCount({
-    projectId: fixture.projectId,
-    tag: "b",
-    text: formattedText,
-  });
-  const italicCount = await getElementTagWithTextCount({
-    projectId: fixture.projectId,
-    tag: "i",
-    text: formattedText,
-  });
-  const linkCount = await getElementTagWithTextCount({
-    projectId: fixture.projectId,
-    tag: "a",
-    text: formattedText,
-  });
-  if (boldCount !== 1 || italicCount !== 1 || linkCount !== 1) {
-    throw new Error(
-      `Expected rich text editor to persist one bold, italic, and inline link subtree. bold=${boldCount}, italic=${italicCount}, link=${linkCount}`
-    );
-  }
-
-  await measure("content mode undo rich text formatting", async () => {
-    await applyHistoryShortcut({ page, shortcut: "ControlOrMeta+Z" });
-  });
-  await waitForCanvasTextHidden({ page, text: formattedText });
-
-  await measure("content mode redo rich text formatting", async () => {
-    await applyHistoryShortcut({ page, shortcut: "ControlOrMeta+Shift+Z" });
-  });
-  await waitForCanvasText({ page, text: formattedText });
-
-  await selectCanvasTextInstanceForProps({
-    page,
-    text: formattedText,
-    propertyLabel: "Href",
-  });
-  await fillSelectedStringProperty({
-    page,
-    label: "Href",
-    control: "url",
-    value: editedHref,
-  });
-  const savedHref = await getElementHrefWithText({
-    projectId: fixture.projectId,
-    text: formattedText,
-  });
-  if (savedHref !== editedHref) {
-    throw new Error(
-      `Expected rich-text link href to be saved as "${editedHref}", received "${savedHref}"`
-    );
-  }
-
-  await measure("content mode reload rich text formatting", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-  });
-  await waitForCanvasText({ page, text: formattedText });
-  const reloadedHref = await getElementHrefWithText({
-    projectId: fixture.projectId,
-    text: formattedText,
-  });
-  if (reloadedHref !== editedHref) {
-    throw new Error(
-      `Expected reloaded rich-text link href to be "${editedHref}", received "${reloadedHref}"`
-    );
-  }
-
-  const reloadedBoldCount = await getElementTagWithTextCount({
-    projectId: fixture.projectId,
-    tag: "b",
-    text: formattedText,
-  });
-  const reloadedItalicCount = await getElementTagWithTextCount({
-    projectId: fixture.projectId,
-    tag: "i",
-    text: formattedText,
-  });
-  const reloadedLinkCount = await getElementTagWithTextCount({
-    projectId: fixture.projectId,
-    tag: "a",
-    text: formattedText,
-  });
-  if (
-    reloadedBoldCount !== 1 ||
-    reloadedItalicCount !== 1 ||
-    reloadedLinkCount !== 1
-  ) {
-    throw new Error(
-      `Expected reloaded rich text formatting to persist. bold=${reloadedBoldCount}, italic=${reloadedItalicCount}, link=${reloadedLinkCount}`
-    );
-  }
-
-  await removeCanvasInlineLink({ page, text: formattedText });
-  const removedLinkCount = await getElementTagWithTextCount({
-    projectId: fixture.projectId,
-    tag: "a",
-    text: formattedText,
-  });
-  if (removedLinkCount !== 0) {
-    throw new Error(
-      `Expected rich-text link removal to delete the inline link subtree, received ${removedLinkCount} link instances`
-    );
-  }
-
-  await measure("content mode reload rich text link removal", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-  });
-  await waitForCanvasText({ page, text: formattedText });
-  const reloadedRemovedLinkCount = await getElementTagWithTextCount({
-    projectId: fixture.projectId,
-    tag: "a",
-    text: formattedText,
-  });
-  if (reloadedRemovedLinkCount !== 0) {
-    throw new Error(
-      `Expected rich-text link removal to persist after reload, received ${reloadedRemovedLinkCount} link instances`
-    );
-  }
 });

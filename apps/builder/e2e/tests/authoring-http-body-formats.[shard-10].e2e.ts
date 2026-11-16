@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { expect } from "@playwright/test";
@@ -17,7 +18,7 @@ test.describe.configure({ mode: "default" });
 
 const execFileAsync = promisify(execFile);
 const authorPath = fileURLToPath(
-  new URL("../fixtures/mcp-managed-form-author.ts", import.meta.url)
+  new URL("../fixtures/mcp-navigation-form-author.ts", import.meta.url)
 );
 const reactGlobalPath = fileURLToPath(
   new URL("../../../../scripts/register-react-global.ts", import.meta.url)
@@ -31,7 +32,33 @@ const formats = [
   ["format-text", "text/plain"],
 ] as const;
 
+const startSearchReceiver = async () => {
+  const tags: Array<string | null> = [];
+  const server = createServer((request, response) => {
+    const url = new URL(request.url ?? "/", "http://receiver.local");
+    const tag = url.searchParams.get("tag");
+    tags.push(tag);
+    response.writeHead(200, { "content-type": "application/json" });
+    response.end(JSON.stringify({ query: JSON.stringify({ tag }) }));
+  });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  if (address === null || typeof address === "string") {
+    throw new Error("Expected local search receiver port");
+  }
+  return {
+    url: `http://127.0.0.1:${address.port}/search`,
+    tags,
+    close: () => new Promise<void>((resolve) => server.close(() => resolve())),
+  };
+};
+
 const formIds = new Map<(typeof formats)[number][0], string>();
+let navigationFormId: string;
+let searchReceiver: Awaited<ReturnType<typeof startSearchReceiver>> | undefined;
 let receiver: Awaited<ReturnType<typeof startFormDeliveryReceiver>> | undefined;
 let preview:
   | Awaited<ReturnType<typeof startGeneratedFormDeliveryPreview>>
@@ -50,6 +77,7 @@ test.beforeAll(async ({ browser }) => {
     return fixture.projectId;
   });
 
+  searchReceiver = await startSearchReceiver();
   const { stdout } = await execFileAsync(
     process.execPath,
     [
@@ -60,6 +88,7 @@ test.beforeAll(async ({ browser }) => {
       "--conditions=webstudio",
       authorPath,
       projectId,
+      searchReceiver.url,
       ...formats.map(([mode]) => mode),
     ],
     {
@@ -67,12 +96,15 @@ test.beforeAll(async ({ browser }) => {
       env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
     }
   );
-  const authoredForms = stdout.trim().split("\n");
-  expect(authoredForms).toHaveLength(formats.length);
-  for (const [index, [mode]] of formats.entries()) {
-    const { formId } = JSON.parse(authoredForms[index]) as { formId: string };
+  const authored = JSON.parse(stdout) as {
+    formatForms: Array<{ mode: (typeof formats)[number][0]; formId: string }>;
+    navigationFormId: string;
+  };
+  expect(authored.formatForms).toHaveLength(formats.length);
+  for (const { mode, formId } of authored.formatForms) {
     formIds.set(mode, formId);
   }
+  navigationFormId = authored.navigationFormId;
 
   receiver = await startFormDeliveryReceiver();
   try {
@@ -91,7 +123,7 @@ test.afterAll(async () => {
   try {
     await preview?.close();
   } finally {
-    await receiver?.close();
+    await Promise.all([receiver?.close(), searchReceiver?.close()]);
   }
 });
 
@@ -177,3 +209,71 @@ for (const [mode, contentType] of formats) {
     }
   });
 }
+
+test.describe("Navigation without Form Actions", () => {
+  test("MCP removes Form Actions to enable client-side query navigation and refresh filtered page Resources", async ({
+    page,
+  }) => {
+    const activePreview = preview;
+    const activeSearchReceiver = searchReceiver;
+    if (activePreview === undefined || activeSearchReceiver === undefined) {
+      throw new Error("Expected the navigation Preview fixture");
+    }
+    await page.route("**/*", (route) =>
+      new URL(route.request().url()).hostname === "127.0.0.1"
+        ? route.continue()
+        : route.abort()
+    );
+    await page.goto(new URL("/search", activePreview.url).href);
+    const marker = await page.evaluate(() => {
+      const value = crypto.randomUUID();
+      (
+        window as Window & { navigationFormMarker?: string }
+      ).navigationFormMarker = value;
+      return value;
+    });
+    const form = page.locator(
+      `[data-ws-managed-form-id="${navigationFormId}"]`
+    );
+    await expect(form).toHaveAttribute("action", "?__webstudio__=navigate");
+    let resourceSubmissions = 0;
+    page.on("request", (request) => {
+      if (
+        new URL(request.url()).pathname.startsWith("/__ws-form") &&
+        request.method() === "POST"
+      ) {
+        resourceSubmissions += 1;
+      }
+    });
+    for (const tags of [["second", "first"], ["first"]]) {
+      await form.locator('input[name="name"]').fill("Ada");
+      await form.locator('input[name="email"]').fill("ada@example.com");
+      await form.locator('input[name="subject"]').fill("Search");
+      await form.locator('textarea[name="message"]').fill("Filter results");
+      await form.locator('select[name="tag"]').selectOption(tags);
+      await form.getByRole("button", { name: "Submit" }).click();
+      await expect
+        .poll(() => new URL(page.url()).searchParams.getAll("tag"))
+        .toEqual(tags);
+      expect(new URL(page.url()).searchParams.has("__webstudio__")).toBe(false);
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () =>
+              (window as Window & { navigationFormMarker?: string })
+                .navigationFormMarker
+          )
+        )
+        .toBe(marker);
+      const expectedTag = tags.join("|");
+      await expect
+        .poll(() => activeSearchReceiver.tags.at(-1))
+        .toEqual(expectedTag);
+      await expect(page.locator("#navigation-search-results")).toContainText(
+        JSON.stringify(expectedTag)
+      );
+      await expect(form).toHaveAttribute("action", "?__webstudio__=navigate");
+    }
+    expect(resourceSubmissions).toBe(0);
+  });
+});

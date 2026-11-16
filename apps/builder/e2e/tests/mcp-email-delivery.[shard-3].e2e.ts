@@ -6,6 +6,7 @@ import { startFormDeliveryReceiver } from "../flows/generated-form-delivery";
 import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
 import type { CapturedEmail } from "../flows/mcp-email-preview";
 import { runFormAuthor } from "../flows/mcp-form-author";
+import { configureSavedWebhookForm } from "../flows/webhook-form-action";
 import { test } from "../test";
 import {
   startPreviewFormMcpClient,
@@ -16,8 +17,9 @@ type CapturedMessage = CapturedEmail & {
   headers: { "X-Message-ID": string };
 };
 
-test("MCP Email and HTTP Actions deliver from generated Preview", async ({
+test("Builder and MCP Form actions deliver from generated Preview", async ({
   context,
+  page,
 }) => {
   test.setTimeout(240_000);
   await startPreviewFormMcpClient();
@@ -27,6 +29,9 @@ test("MCP Email and HTTP Actions deliver from generated Preview", async ({
     title: "MCP Email scenarios",
     assetNamePrefix: "mcp-email-scenarios-",
     builderToken: "mcp-email-scenarios-builder-token",
+  });
+  await test.step("save the legacy Webhook Form action through Builder", async () => {
+    await configureSavedWebhookForm({ page, fixture });
   });
   const { stdout } = await runFormAuthor(
     "mcp-managed-form-author",
@@ -134,6 +139,28 @@ test("MCP Email and HTTP Actions deliver from generated Preview", async ({
       emailPort: address.port,
       httpPort: httpReceiver.port,
       callback: async ({ url }) => {
+        await test.step("saved Webhook Form submits once in generated Preview", async () => {
+          await page.goto(url);
+          expect(httpReceiver.deliveries).toHaveLength(0);
+          const webhook = page.locator("form:not([data-ws-managed-form-id])");
+          await webhook.locator('input[name="name"]').fill("Ada");
+          await webhook.locator('input[name="email"]').fill("ada@example.com");
+          await webhook.getByRole("button", { name: "Submit" }).click();
+          await expect(
+            webhook.getByText("Thank you for getting in touch!", {
+              exact: true,
+            })
+          ).toBeVisible();
+          expect(httpReceiver.deliveries).toHaveLength(1);
+          expect(httpReceiver.deliveries[0]?.method).toBe("POST");
+          expect(
+            JSON.parse(httpReceiver.deliveries[0]?.body ?? "null")
+          ).toEqual({
+            name: "Ada",
+            email: "ada@example.com",
+          });
+          httpReceiver.deliveries.length = 0;
+        });
         await test.step("customized owner and visitor Email", async () => {
           const submission = await submitPreviewFormViaMcp({
             url,

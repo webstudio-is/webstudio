@@ -9,13 +9,20 @@ const getVariableForm = (page: Page) =>
     .filter({ has: page.locator('input[name="name"]') })
     .last();
 
-const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
-  const save = waitForChangeToBeSaved({ page });
+const closeNewVariablePanel = async ({
+  page,
+  name,
+}: {
+  page: Page;
+  name: string;
+}) => {
   await page.getByRole("button", { name: "Close" }).last().click();
-  await save;
   await page
     .getByText("New variable", { exact: true })
     .waitFor({ state: "hidden" });
+  await page
+    .getByRole("button", { name: `Variable ${name}`, exact: true })
+    .waitFor({ state: "visible" });
 };
 
 const openNewVariablePanel = async ({ page }: { page: Page }) => {
@@ -115,7 +122,7 @@ export const createStringVariable = async ({
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
   await page.getByLabel("Value").last().fill(value);
-  await closeVariablePanelAndWaitForSave({ page });
+  await closeNewVariablePanel({ page, name });
 };
 
 export const createHttpResourceVariable = async ({
@@ -131,7 +138,7 @@ export const createHttpResourceVariable = async ({
   await fillVariableName({ page, name });
   await selectVariableType({ page, next: "REST resource" });
   await page.getByRole("textbox", { name: "URL" }).fill(url);
-  await closeVariablePanelAndWaitForSave({ page });
+  await closeNewVariablePanel({ page, name });
 };
 
 export const createGraphqlResourceVariable = async ({
@@ -150,7 +157,7 @@ export const createGraphqlResourceVariable = async ({
   await selectVariableType({ page, next: "GraphQL resource" });
   await page.getByRole("textbox", { name: "URL" }).fill(url);
   await page.getByRole("textbox", { name: "Query" }).fill(query);
-  await closeVariablePanelAndWaitForSave({ page });
+  await closeNewVariablePanel({ page, name });
 };
 
 export const createSystemResourceVariable = async ({
@@ -165,7 +172,7 @@ export const createSystemResourceVariable = async ({
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
   await selectVariableType({ page, next: resource });
-  await closeVariablePanelAndWaitForSave({ page });
+  await closeNewVariablePanel({ page, name });
 };
 
 export const startJsonResourceServer = async ({ title }: { title: string }) => {

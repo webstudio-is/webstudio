@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import {
   openProjectBuilder,
   waitForCanvasText,
@@ -199,16 +199,6 @@ const createBuildInspector = (instances: BuildInstance[]) => {
 
 const inspectBuild = async (fixture: SeededContentModeProject) =>
   createBuildInspector(await loadBuildInstances(fixture));
-
-const getInstanceComponentCount = async ({
-  fixture,
-  component,
-}: {
-  fixture: SeededContentModeProject;
-  component: string;
-}) => {
-  return (await inspectBuild(fixture)).countComponent(component);
-};
 
 const getElementTagCount = async ({
   fixture,
@@ -680,132 +670,14 @@ test("Builder Navigator keyboard move, reparent, and reorder persist after reloa
   }
 });
 
-test("Builder command panel structural mutations persist after reload", async ({
-  page,
-}) => {
-  const anchorText = "Initial content";
-  const componentName = "Image";
-
-  await measure(
-    "pages actions open builder for command structural actions",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    }
-  );
-  await waitForCanvasText({ page, text: anchorText });
-  await selectCanvasTextInstance({ page, text: anchorText });
-
-  await measure(
-    "pages actions insert component before structural actions",
-    async () => {
-      await openComponentsPanel({ page });
-      await insertComponentPanelOption({ page, name: componentName });
-    }
-  );
-  const insertedImageCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-
-  const initialDivCount = await getElementTagCount({
-    fixture,
-    tag: "div",
-  });
-  const initialSectionCount = await getElementTagCount({
-    fixture,
-    tag: "section",
-  });
-
-  await measure(
-    "pages actions wrap selected instance from command panel",
-    async () => {
-      await runCommandPanelStructuralAction({
-        page,
-        command: "Wrap",
-        option: "div",
-      });
-    }
-  );
-  const wrappedDivCount = await getElementTagCount({
-    fixture,
-    tag: "div",
-  });
-  if (wrappedDivCount !== initialDivCount + 1) {
-    throw new Error(
-      `Expected command panel Wrap to add one div. Before ${initialDivCount}, after ${wrappedDivCount}`
-    );
-  }
-  await openNavigatorPanel({ page });
-  await selectNavigatorItem({ page, itemName: "div" });
-
-  await measure(
-    "pages actions convert wrapper from command panel",
-    async () => {
-      await runCommandPanelStructuralAction({
-        page,
-        command: "Convert",
-        option: "section",
-      });
-    }
-  );
-  const convertedDivCount = await getElementTagCount({
-    fixture,
-    tag: "div",
-  });
-  const convertedSectionCount = await getElementTagCount({
-    fixture,
-    tag: "section",
-  });
-  if (convertedDivCount !== initialDivCount) {
-    throw new Error(
-      `Expected command panel Convert to replace the wrapper div. Before ${initialDivCount}, after ${convertedDivCount}`
-    );
-  }
-  if (convertedSectionCount !== initialSectionCount + 1) {
-    throw new Error(
-      `Expected command panel Convert to add one section. Before ${initialSectionCount}, after ${convertedSectionCount}`
-    );
-  }
-  await measure("pages actions reload command structural actions", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-  await waitForCanvasText({ page, text: anchorText });
-  const reloadedSectionCount = await getElementTagCount({
-    fixture,
-    tag: "section",
-  });
-  const reloadedImageCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (reloadedSectionCount !== initialSectionCount + 1) {
-    throw new Error(
-      `Expected reload to preserve command panel converted section wrapper. Before ${initialSectionCount}, after ${reloadedSectionCount}`
-    );
-  }
-  if (reloadedImageCount !== insertedImageCount) {
-    throw new Error(
-      `Expected reload to preserve command panel target ${componentName}. Before ${insertedImageCount}, after ${reloadedImageCount}`
-    );
-  }
-});
-
-test("Builder Navigator label and command unwrap persist after reload", async ({
+test("Builder Navigator and command panel edits persist after reload", async ({
   page,
 }) => {
   const anchorText = "Initial content";
   const componentName = "Image";
   const renamedLabel = "Hero media";
 
-  await measure("pages actions open builder for label and unwrap", async () => {
+  await measure("pages actions open builder for structural edits", async () => {
     await openProjectBuilder({
       page,
       projectId: fixture.projectId,
@@ -815,182 +687,83 @@ test("Builder Navigator label and command unwrap persist after reload", async ({
   await waitForCanvasText({ page, text: anchorText });
   await selectCanvasTextInstance({ page, text: anchorText });
 
-  await measure(
-    "pages actions insert component before label and unwrap",
-    async () => {
-      await openComponentsPanel({ page });
-      await insertComponentPanelOption({ page, name: componentName });
-    }
-  );
-  const insertedImageCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  const initialDivCount = await getElementTagCount({
-    fixture,
-    tag: "div",
-  });
+  await openComponentsPanel({ page });
+  await insertComponentPanelOption({ page, name: componentName });
+  const initial = await inspectBuild(fixture);
+  const imageCount = initial.countComponent(componentName);
+  const divCount = initial.countElementTag("div");
+  const sectionCount = initial.countElementTag("section");
+  const asideCount = initial.countElementTag("aside");
 
-  await measure("pages actions edit navigator label", async () => {
+  await test.step("rename, wrap, and unwrap the Image", async () => {
     await openNavigatorPanel({ page });
     await selectNavigatorItem({ page, itemName: componentName });
     await editSelectedNavigatorLabel({ page, label: renamedLabel });
-  });
-  const renamedCount = await getInstanceLabelCount({
-    fixture,
-    label: renamedLabel,
-  });
-  if (renamedCount !== 1) {
-    throw new Error(
-      `Expected one Navigator label "${renamedLabel}" after rename, found ${renamedCount}`
+    expect(await getInstanceLabelCount({ fixture, label: renamedLabel })).toBe(
+      1
     );
-  }
 
-  await measure(
-    "pages actions wrap renamed component before unwrap",
-    async () => {
-      await runCommandPanelStructuralAction({
-        page,
-        command: "Wrap",
-        option: "div",
-      });
-    }
-  );
-  const wrappedDivCount = await getElementTagCount({
-    fixture,
-    tag: "div",
-  });
-  if (wrappedDivCount !== initialDivCount + 1) {
-    throw new Error(
-      `Expected wrap before unwrap to add one div. Before ${initialDivCount}, after ${wrappedDivCount}`
+    await runCommandPanelStructuralAction({
+      page,
+      command: "Wrap",
+      option: "div",
+    });
+    expect(await getElementTagCount({ fixture, tag: "div" })).toBe(
+      divCount + 1
     );
-  }
 
-  await measure(
-    "pages actions unwrap renamed component from command panel",
-    async () => {
-      await selectCommandPanelInstance({ page, label: renamedLabel });
-      await runCommandPanelStructuralAction({
-        page,
-        command: "Unwrap",
-      });
-    }
-  );
-  const unwrappedDivCount = await getElementTagCount({
-    fixture,
-    tag: "div",
+    await selectCommandPanelInstance({ page, label: renamedLabel });
+    await runCommandPanelStructuralAction({ page, command: "Unwrap" });
+    const unwrapped = await inspectBuild(fixture);
+    expect(unwrapped.countElementTag("div")).toBe(divCount);
+    expect(unwrapped.countComponent(componentName)).toBe(imageCount);
   });
-  const unwrappedImageCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (unwrappedDivCount !== initialDivCount) {
-    throw new Error(
-      `Expected unwrap to remove the wrapper div. Before ${initialDivCount}, after ${unwrappedDivCount}`
-    );
-  }
-  if (unwrappedImageCount !== insertedImageCount) {
-    throw new Error(
-      `Expected unwrap to preserve ${componentName}. Before ${insertedImageCount}, after ${unwrappedImageCount}`
-    );
-  }
 
-  await measure("pages actions reload label and unwrap", async () => {
+  await test.step("convert a new wrapper to a section", async () => {
+    await selectCommandPanelInstance({ page, label: renamedLabel });
+    await runCommandPanelStructuralAction({
+      page,
+      command: "Wrap",
+      option: "div",
+    });
+    expect(await getElementTagCount({ fixture, tag: "div" })).toBe(
+      divCount + 1
+    );
+
+    await openNavigatorPanel({ page });
+    await selectNavigatorItem({ page, itemName: "div" });
+    await runCommandPanelStructuralAction({
+      page,
+      command: "Convert",
+      option: "section",
+    });
+    const converted = await inspectBuild(fixture);
+    expect(converted.countElementTag("div")).toBe(divCount);
+    expect(converted.countElementTag("section")).toBe(sectionCount + 1);
+  });
+
+  await test.step("insert an aside using the command panel", async () => {
+    await selectBodyInNavigator({ page });
+    await runCommandPanelTagInsertion({ page, tag: "aside" });
+    expect(await getElementTagCount({ fixture, tag: "aside" })).toBe(
+      asideCount + 1
+    );
+  });
+
+  await measure("pages actions reload structural edits", async () => {
     await openProjectBuilder({
       page,
       projectId: fixture.projectId,
       authToken: fixture.builderToken,
     });
   });
-  const reloadedLabelCount = await getInstanceLabelCount({
-    fixture,
-    label: renamedLabel,
-  });
-  const reloadedDivCount = await getElementTagCount({
-    fixture,
-    tag: "div",
-  });
-  const reloadedImageCount = await getInstanceComponentCount({
-    fixture,
-    component: componentName,
-  });
-  if (reloadedLabelCount !== 1) {
-    throw new Error(
-      `Expected reload to preserve Navigator label "${renamedLabel}", found ${reloadedLabelCount}`
-    );
-  }
-  if (reloadedDivCount !== initialDivCount) {
-    throw new Error(
-      `Expected reload to preserve unwrapped tree. Before ${initialDivCount}, after ${reloadedDivCount}`
-    );
-  }
-  if (reloadedImageCount !== insertedImageCount) {
-    throw new Error(
-      `Expected reload to preserve unwrapped ${componentName}. Before ${insertedImageCount}, after ${reloadedImageCount}`
-    );
-  }
-});
-
-test("Builder command panel tag insertion persists after reload", async ({
-  page,
-}) => {
-  const anchorText = "Initial content";
-  const tag = "aside";
-
-  await measure(
-    "pages actions open builder for command tag insertion",
-    async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-    }
-  );
   await waitForCanvasText({ page, text: anchorText });
-
-  const initialAsideCount = await getElementTagCount({
-    fixture,
-    tag,
-  });
-
-  await measure(
-    "pages actions select body before command tag insertion",
-    async () => {
-      await openNavigatorPanel({ page });
-      await selectNavigatorItem({ page, itemName: "Body" });
-    }
-  );
-
-  await measure("pages actions insert tag from command panel", async () => {
-    await runCommandPanelTagInsertion({ page, tag });
-  });
-  const insertedAsideCount = await getElementTagCount({
-    fixture,
-    tag,
-  });
-  if (insertedAsideCount !== initialAsideCount + 1) {
-    throw new Error(
-      `Expected command panel tag insertion to add one ${tag}. Before ${initialAsideCount}, after ${insertedAsideCount}`
-    );
-  }
-
-  await measure("pages actions reload command tag insertion", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
-    });
-  });
-  const reloadedAsideCount = await getElementTagCount({
-    fixture,
-    tag,
-  });
-  if (reloadedAsideCount !== initialAsideCount + 1) {
-    throw new Error(
-      `Expected reload to preserve command panel ${tag} insertion. Before ${initialAsideCount}, after ${reloadedAsideCount}`
-    );
-  }
+  const reloaded = await inspectBuild(fixture);
+  expect(reloaded.countLabel(renamedLabel)).toBe(1);
+  expect(reloaded.countComponent(componentName)).toBe(imageCount);
+  expect(reloaded.countElementTag("div")).toBe(divCount);
+  expect(reloaded.countElementTag("section")).toBe(sectionCount + 1);
+  expect(reloaded.countElementTag("aside")).toBe(asideCount + 1);
 });
 
 test("Builder clipboard shortcuts and paste targets preserve saved content", async ({

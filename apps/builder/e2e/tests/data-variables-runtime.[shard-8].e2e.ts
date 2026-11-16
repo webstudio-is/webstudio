@@ -8,7 +8,10 @@ import {
   createSystemResourceVariable,
   selectContentInstance,
 } from "../flows/data-variables";
-import { waitForChangeToBeSaved } from "../flows/sync-status";
+import {
+  waitForChangeToBeSaved,
+  waitForSyncComplete,
+} from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { test } from "../test";
 import { measure } from "../perf";
@@ -356,6 +359,7 @@ test("Builder-created variables, resources, and Text Content binding persist aft
         query: graphqlQuery,
       });
       await createSystemResourceVariable({ page, name: systemName });
+      await waitForSyncComplete({ page });
     }
   );
 

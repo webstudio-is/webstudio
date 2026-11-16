@@ -44,8 +44,11 @@ export default defineConfig({
   webServer:
     process.env.E2E_BUILDER_URL === undefined
       ? {
-          command:
-            "pnpm exec tsx --conditions=webstudio ./e2e/serve-built-remix.ts",
+          // The server loads prebuilt JavaScript bundles. Use Node's type
+          // stripping for the launcher when available.
+          command: process.features.typescript
+            ? "node --enable-source-maps --conditions=webstudio ./e2e/serve-built-remix.ts"
+            : "pnpm exec tsx --conditions=webstudio ./e2e/serve-built-remix.ts",
           url: builderUrl,
           reuseExistingServer: false,
           ignoreHTTPSErrors: true,

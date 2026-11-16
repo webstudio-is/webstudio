@@ -26,26 +26,21 @@ import {
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
+import { createLocalBundleFromDevBuild } from "../flows/generated-app";
 import { authorFormQueries } from "./mcp-form-query-author";
 import { authorManagedForm } from "./mcp-managed-form-author";
 
-const [, , projectId, phase, savedBoundFormId, savedPartialFormId] =
-  process.argv;
-if (projectId === undefined || (phase !== "initial" && phase !== "updated")) {
-  throw new Error("Expected a project ID and binding phase");
+const projectId = process.argv[2];
+if (projectId === undefined) {
+  throw new Error("Expected a project ID");
 }
 
-const boundFormId =
-  phase === "initial"
-    ? (await authorManagedForm(projectId, { mode: "email" })).formId
-    : savedBoundFormId;
-const partialFormId =
-  phase === "initial"
-    ? (await authorManagedForm(projectId, { mode: "email" })).formId
-    : savedPartialFormId;
-if (boundFormId === undefined || partialFormId === undefined) {
-  throw new Error("Expected two Form IDs");
-}
+const { formId: boundFormId } = await authorManagedForm(projectId, {
+  mode: "email",
+});
+const { formId: partialFormId } = await authorManagedForm(projectId, {
+  mode: "email",
+});
 expect(boundFormId).not.toBe(partialFormId);
 
 const commands = new Set([
@@ -76,18 +71,10 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
     requiresConfirm: contract.requiresConfirm,
   }));
 
-const actions =
-  phase === "initial"
-    ? ([
-        ["bind", boundFormId],
-        ["partial", partialFormId],
-      ] as const)
-    : ([
-        ["reset", boundFormId],
-        ["empty", partialFormId],
-      ] as const);
-
-for (const [mode, formId] of actions) {
+const configureBinding = async (
+  mode: "bind" | "partial" | "reset" | "empty",
+  formId: string
+) => {
   let build = await loadDevBuild({ projectId });
   const parse = <Value>(field: keyof typeof build) =>
     JSON.parse(String(build[field])) as Value;
@@ -420,11 +407,19 @@ for (const [mode, formId] of actions) {
     await client.close();
     await server.close();
   }
-}
+};
 
-if (phase === "initial") {
-  const query = await authorFormQueries(projectId);
-  process.stdout.write(
-    `${JSON.stringify({ boundFormId, partialFormId, query })}\n`
+await configureBinding("bind", boundFormId);
+await configureBinding("partial", partialFormId);
+const query = await authorFormQueries(projectId);
+const readPreviewBundle = async () =>
+  JSON.stringify(
+    createLocalBundleFromDevBuild(await loadDevBuild({ projectId }))
   );
-}
+const initialBundle = await readPreviewBundle();
+await configureBinding("reset", boundFormId);
+await configureBinding("empty", partialFormId);
+const updatedBundle = await readPreviewBundle();
+process.stdout.write(
+  `${JSON.stringify({ boundFormId, partialFormId, query, initialBundle, updatedBundle })}\n`
+);

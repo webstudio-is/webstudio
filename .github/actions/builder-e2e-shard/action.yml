@@ -50,6 +50,13 @@ runs:
           packages/*/lib
         key: builder-e2e-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.build-key.outputs.hash }}
 
+    - name: Prepare Builder E2E
+      shell: bash
+      run: |
+        # Prepare services and Chromium while a missing build is still running.
+        TIMEFORMAT='[e2e:prepare] elapsed=%3Rs'
+        time bash apps/builder/e2e/run.sh ci-shard-prepare
+
     - name: Wait for Builder E2E build
       if: steps.build-cache.outputs.cache-hit != 'true'
       shell: bash
@@ -104,7 +111,7 @@ runs:
           args+=(--shard="$E2E_TEST_PARTITION")
         fi
         bash apps/builder/e2e/measure-resources.sh \
-          pnpm --filter @webstudio-is/builder e2e:ci:shard -- "${args[@]}"
+          bash apps/builder/e2e/run.sh ci-shard-test "${args[@]}"
 
     - name: Upload report
       if: failure()

@@ -34,7 +34,7 @@ case "$mode" in
     export E2E_DB_BOOTSTRAP=migrations
     export E2E_RUN_TESTS=false
     ;;
-  ci-shard)
+  ci-shard|ci-shard-prepare|ci-shard-test)
     export E2E_BACKEND_MODE=snapshot
     export E2E_BUILD_DATABASE_IMAGE=false
     export E2E_SKIP_BUILDER_BUILD=true
@@ -66,7 +66,6 @@ export E2E_BACKEND_MODE="${E2E_BACKEND_MODE:-test}"
 source "$ROOT_DIR/apps/builder/backend/lib.sh"
 source "$ROOT_DIR/apps/builder/e2e/run-step.sh"
 builder_backend_init "$E2E_BACKEND_MODE"
-builder_backend_init_schema_snapshot
 
 export E2E_DB_BOOTSTRAP="${E2E_DB_BOOTSTRAP:-auto}"
 export E2E_BUILD_DATABASE_IMAGE="${E2E_BUILD_DATABASE_IMAGE:-true}"
@@ -183,37 +182,46 @@ prepare_e2e_database_image() {
   builder_backend_pull_db
 }
 
-if [ "$E2E_RUN_TESTS" = "true" ]; then
+configure_database_urls() {
+  local db_port="$PGPORT"
+  if [ "$db_port" = 0 ]; then
+    db_port="$(builder_compose port db 5432)"
+    db_port="${db_port##*:}"
+  fi
+  export DATABASE_URL="${E2E_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${db_port}/${POSTGRES_DB}?pgbouncer=true}"
+  export DIRECT_URL="${E2E_DIRECT_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${db_port}/${POSTGRES_DB}}"
+}
+
+if [ "$E2E_RUN_TESTS" = "true" ] && [ "$mode" != "ci-shard-prepare" ]; then
   run_step "validate builder e2e test selection" \
     "$E2E_TEST_SELECTION_TIMEOUT_SECONDS" validate_builder_e2e_selection
 fi
 
-run_step "prepare e2e database image" "$E2E_DOCKER_PULL_TIMEOUT_SECONDS" \
-  prepare_e2e_database_image
+if [ "$mode" = "ci-shard-test" ]; then
+  # The preparation step left these services running on Compose-assigned ports.
+  configure_database_urls
+else
+  builder_backend_init_schema_snapshot
+  run_step "prepare e2e database image" "$E2E_DOCKER_PULL_TIMEOUT_SECONDS" \
+    prepare_e2e_database_image
 
-run_step "start e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
-  builder_backend_start_db
+  run_step "start e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
+    builder_backend_start_db
+  configure_database_urls
 
-db_port="$PGPORT"
-if [ "$db_port" = 0 ]; then
-  db_port="$(builder_compose port db 5432)"
-  db_port="${db_port##*:}"
-fi
-export DATABASE_URL="${E2E_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${db_port}/${POSTGRES_DB}?pgbouncer=true}"
-export DIRECT_URL="${E2E_DIRECT_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${db_port}/${POSTGRES_DB}}"
+  run_step "generate prisma client" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
+    builder_generate_prisma_client "$E2E_GENERATE_PRISMA"
 
-run_step "generate prisma client" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
-  builder_generate_prisma_client "$E2E_GENERATE_PRISMA"
+  run_step "wait for e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
+    builder_backend_wait_for_db "$E2E_DOCKER_TIMEOUT_SECONDS"
 
-run_step "wait for e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
-  builder_backend_wait_for_db "$E2E_DOCKER_TIMEOUT_SECONDS"
+  run_step "bootstrap database schema" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
+    bootstrap_database
 
-run_step "bootstrap database schema" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
-  bootstrap_database
-
-if [ "$E2E_START_POSTGREST" = "true" ]; then
-  run_step "start e2e postgrest" "$E2E_DOCKER_TIMEOUT_SECONDS" \
-    builder_backend_start_postgrest
+  if [ "$E2E_START_POSTGREST" = "true" ]; then
+    run_step "start e2e postgrest" "$E2E_DOCKER_TIMEOUT_SECONDS" \
+      builder_backend_start_postgrest
+  fi
 fi
 postgrest_port="$POSTGREST_PORT"
 if [ "$E2E_START_POSTGREST" = "true" ] && [ "$postgrest_port" = 0 ]; then
@@ -223,8 +231,14 @@ fi
 export POSTGREST_URL="${E2E_POSTGREST_URL:-http://localhost:${postgrest_port}}"
 
 if [ "$E2E_RUN_TESTS" = "true" ]; then
-  run_step "install playwright chromium" "$E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS" \
-    install_playwright_chromium
+  if [ "$mode" != "ci-shard-test" ]; then
+    run_step "install playwright chromium" "$E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS" \
+      install_playwright_chromium
+  fi
+
+  if [ "$mode" = "ci-shard-prepare" ]; then
+    exit 0
+  fi
 
   if [ "${E2E_BUILDER_URL:-}" = "" ]; then
     if [ "${E2E_SKIP_BUILDER_BUILD:-false}" = "true" ]; then

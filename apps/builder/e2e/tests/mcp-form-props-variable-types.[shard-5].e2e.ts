@@ -106,7 +106,7 @@ test("MCP-authored new Form exposes Form controls and hides native rendered-tag 
     "Current date resource",
   ]);
   await page.keyboard.press("Escape");
-  await dialog.getByRole("button", { name: "Close" }).last().click();
+  const closeDialog = dialog.getByRole("button", { name: "Close" }).last();
 
   for (const resourceType of [
     "GraphQL resource",
@@ -115,20 +115,19 @@ test("MCP-authored new Form exposes Form controls and hides native rendered-tag 
     "Sitemap resource",
     "Current date resource",
   ]) {
-    await resourceRow.click();
     const currentType = dialog.locator('button[role="combobox"]').filter({
       hasText: /resource/i,
     });
     await currentType.click();
     await page.getByRole("option", { name: resourceType }).click();
     await expect(currentType).toContainText(resourceType);
-    await dialog.getByRole("button", { name: "Close" }).last().click();
+    await closeDialog.click();
     await resourceRow.click();
     await expect(
       dialog
         .locator('button[role="combobox"]')
         .filter({ hasText: resourceType })
     ).toBeVisible();
-    await dialog.getByRole("button", { name: "Close" }).last().click();
   }
+  await closeDialog.click();
 });

@@ -25,6 +25,8 @@ import {
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
+import { authorFormActionCombination } from "./mcp-form-action-combination-author";
+import { authorFormCallbacks } from "./mcp-form-callbacks-author";
 import { authorManagedForm } from "./mcp-managed-form-author";
 
 const commands = new Set([
@@ -292,11 +294,18 @@ const author = async () => {
   }
 };
 
+const callbackForm = await authorFormCallbacks({
+  projectId,
+  mode: "managed",
+  receiverUrl: "https://mcp-delivery.example/submit",
+  verifyFieldChange: true,
+});
+const actionForm = await authorFormActionCombination(projectId, "ten-actions");
 const blockedForm = await authorManagedForm(projectId, { mode: "default" });
 const emailForm = await authorManagedForm(projectId, {
   mode: "email-attachments",
 });
 const nativeFormId = await author();
 process.stdout.write(
-  `${JSON.stringify({ blockedForm, emailForm, nativeFormId })}\n`
+  `${JSON.stringify({ callbackForm, actionForm, blockedForm, emailForm, nativeFormId })}\n`
 );

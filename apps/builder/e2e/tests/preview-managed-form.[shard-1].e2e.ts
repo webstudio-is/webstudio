@@ -175,14 +175,21 @@ test("Preview Form success redirects navigate matched pages and keep feedback fo
   if (!body) {
     throw new Error("Expected the fixture's home body instance");
   }
-  const formId = createId("nano");
-  const buttonId = createId("nano");
+  const forms = ["thanks", "/missing", "/thanks#done"].map((redirect) => ({
+    redirect,
+    formId: createId("nano"),
+    buttonId: createId("nano"),
+    variableId: createId("nano"),
+  }));
+  const [matched, missing, hashed] = forms;
   const thanksBodyId = createId("nano");
   const targetId = createId("nano");
-  const variableId = createId("nano");
+  const homeLinkId = createId("nano");
   const resourceId = createId("nano");
   const thanksPageId = createId("nano");
-  body.children.push({ type: "id", value: formId });
+  for (const { formId } of forms) {
+    body.children.push({ type: "id", value: formId });
+  }
   pages.pages.push({
     id: thanksPageId,
     name: "Thanks",
@@ -198,25 +205,30 @@ test("Preview Form success redirects navigate matched pages and keep feedback fo
     pages: JSON.stringify(pages),
     instances: JSON.stringify([
       ...instances,
-      {
-        type: "instance",
-        id: formId,
-        component: "ResourceForm",
-        children: [{ type: "id", value: buttonId }],
-      },
-      {
-        type: "instance",
-        id: buttonId,
-        component: "ws:element",
-        tag: "button",
-        children: [{ type: "text", value: "Send" }],
-      },
+      ...forms.flatMap(({ formId, buttonId }) => [
+        {
+          type: "instance",
+          id: formId,
+          component: "ResourceForm",
+          children: [{ type: "id", value: buttonId }],
+        },
+        {
+          type: "instance",
+          id: buttonId,
+          component: "ws:element",
+          tag: "button",
+          children: [{ type: "text", value: "Send" }],
+        },
+      ]),
       {
         type: "instance",
         id: thanksBodyId,
         component: "ws:element",
         tag: "body",
-        children: [{ type: "id", value: targetId }],
+        children: [targetId, homeLinkId].map((value) => ({
+          type: "id",
+          value,
+        })),
       },
       {
         type: "instance",
@@ -225,15 +237,37 @@ test("Preview Form success redirects navigate matched pages and keep feedback fo
         tag: "div",
         children: [{ type: "text", value: "Redirect target" }],
       },
+      {
+        type: "instance",
+        id: homeLinkId,
+        component: "Link",
+        children: [{ type: "text", value: "Back to forms" }],
+      },
     ]),
     props: JSON.stringify([
       ...JSON.parse(build.props),
+      ...forms.flatMap(({ formId, variableId, redirect }) => [
+        {
+          id: `${formId}:action`,
+          instanceId: formId,
+          name: "action",
+          type: "json",
+          value: [{ dataSourceId: variableId }],
+        },
+        {
+          id: `${formId}:successRedirect`,
+          instanceId: formId,
+          name: "successRedirect",
+          type: "string",
+          value: redirect,
+        },
+      ]),
       {
-        id: `${formId}:action`,
-        instanceId: formId,
-        name: "action",
-        type: "json",
-        value: [{ dataSourceId: variableId }],
+        id: `${homeLinkId}:href`,
+        instanceId: homeLinkId,
+        name: "href",
+        type: "string",
+        value: "/",
       },
       {
         id: `${targetId}:id`,
@@ -245,13 +279,13 @@ test("Preview Form success redirects navigate matched pages and keep feedback fo
     ]),
     dataSources: JSON.stringify([
       ...JSON.parse(build.dataSources),
-      {
+      ...forms.map(({ formId, variableId }) => ({
         id: variableId,
         type: "resource",
         name: "Preview destination",
         scopeInstanceId: formId,
         resourceId,
-      },
+      })),
     ]),
     resources: JSON.stringify([
       ...JSON.parse(build.resources),
@@ -281,65 +315,23 @@ test("Preview Form success redirects navigate matched pages and keep feedback fo
       }),
     });
   });
-  const submitWithRedirect = async (redirect: string) => {
-    const current = await loadDevBuild({ projectId: fixture.projectId });
-    const props = JSON.parse(current.props) as Array<{
-      instanceId: string;
-      name: string;
-    }>;
-    await updateBuild(current.id, {
-      props: JSON.stringify([
-        ...props.filter(
-          (prop) =>
-            prop.instanceId !== formId || prop.name !== "successRedirect"
-        ),
-        {
-          id: `${formId}:successRedirect`,
-          instanceId: formId,
-          name: "successRedirect",
-          type: "string",
-          value: redirect,
-        },
-      ]),
-    });
-    await page.goto(builderUrl);
-    const canvas = await waitForCanvasFrame({ page });
-    const form = canvas.locator(`[data-ws-managed-form-id="${formId}"]`);
-    await form.getByRole("button", { name: "Send" }).click();
-    return { canvas, form };
-  };
-
-  const matched = await submitWithRedirect("thanks");
-  await expect(matched.canvas.getByText("Redirect target")).toBeVisible();
-  await expect(
-    matched.canvas.locator(`[data-ws-managed-form-id="${formId}"]`)
-  ).toHaveCount(0);
-
-  const missing = await submitWithRedirect("/missing");
-  await expect(missing.form).toHaveAttribute("data-state", "success");
-  await expect(missing.canvas.getByText("Redirect target")).toHaveCount(0);
-
-  const current = await loadDevBuild({ projectId: fixture.projectId });
-  const props = JSON.parse(current.props) as Array<{
-    instanceId: string;
-    name: string;
-  }>;
-  await updateBuild(current.id, {
-    props: JSON.stringify([
-      ...props.filter(
-        (prop) => prop.instanceId !== formId || prop.name !== "successRedirect"
-      ),
-      {
-        id: `${formId}:successRedirect`,
-        instanceId: formId,
-        name: "successRedirect",
-        type: "string",
-        value: "/thanks#done",
-      },
-    ]),
-  });
   await page.goto(builderUrl);
   const canvas = await waitForCanvasFrame({ page });
+  const getForm = (formId: string) =>
+    canvas.locator(`[data-ws-managed-form-id="${formId}"]`);
+
+  await getForm(matched.formId).getByRole("button", { name: "Send" }).click();
+  await expect(canvas.getByText("Redirect target")).toBeVisible();
+  await expect(getForm(matched.formId)).toHaveCount(0);
+  await canvas.getByRole("link", { name: "Back to forms" }).click();
+
+  await getForm(missing.formId).getByRole("button", { name: "Send" }).click();
+  await expect(getForm(missing.formId)).toHaveAttribute(
+    "data-state",
+    "success"
+  );
+  await expect(canvas.getByText("Redirect target")).toHaveCount(0);
+
   await canvas.evaluate(() => {
     (window as Window & { __scrolledIds?: string[] }).__scrolledIds = [];
     Element.prototype.scrollIntoView = function () {
@@ -348,10 +340,7 @@ test("Preview Form success redirects navigate matched pages and keep feedback fo
       );
     };
   });
-  await canvas
-    .locator(`[data-ws-managed-form-id="${formId}"]`)
-    .getByRole("button", { name: "Send" })
-    .click();
+  await getForm(hashed.formId).getByRole("button", { name: "Send" }).click();
   await expect(canvas.getByText("Redirect target")).toBeVisible();
   await expect
     .poll(() =>

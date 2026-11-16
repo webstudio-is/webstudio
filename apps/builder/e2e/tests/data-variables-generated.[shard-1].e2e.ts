@@ -10,13 +10,17 @@ import {
   startGraphqlResourceServer,
   startJsonResourceServer,
 } from "../flows/data-variables";
-import { loginWithSecret } from "../flows/dashboard";
 import { withGeneratedPreview } from "../flows/generated-app";
+import { waitForSyncComplete } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
+import {
+  preparePreviewLinksProject,
+  previewLinkText,
+} from "../fixtures/preview-links-project";
 import { test } from "../test";
 import { measure } from "../perf";
 
-test("Generated app renders Builder-created static, HTTP, GraphQL, and system variables", async ({
+test("Generated app renders Builder-created variables and navigates linked routes", async ({
   page,
   context,
 }) => {
@@ -36,10 +40,7 @@ test("Generated app renders Builder-created static, HTTP, GraphQL, and system va
       editorToken: "generated-resources-editor-token",
       builderToken: "generated-resources-builder-token",
     });
-    await loginWithSecret({
-      page,
-      email: "generated-resources@webstudio.test",
-    });
+    await preparePreviewLinksProject(fixture.projectId);
     await measure("generated resources open Builder", async () => {
       await openProjectBuilder({
         page,
@@ -80,15 +81,6 @@ test("Generated app renders Builder-created static, HTTP, GraphQL, and system va
       });
     });
 
-    await measure("generated resources reload Builder", async () => {
-      await openProjectBuilder({
-        page,
-        projectId: fixture.projectId,
-        authToken: fixture.builderToken,
-      });
-      await waitForCanvasText({ page, text: "Initial content" });
-      await selectContentInstance({ page });
-    });
     const expectedYear = String(new Date().getUTCFullYear());
     const expectedText = `Rendered from local static variable | Rendered from local HTTP resource | Rendered from local GraphQL resource | ${expectedYear}`;
     await bindSelectedTextContentToExpression({
@@ -96,19 +88,56 @@ test("Generated app renders Builder-created static, HTTP, GraphQL, and system va
       expression:
         'e2eGeneratedLabel + " | " + e2eGeneratedPosts.data.title + " | " + e2eGeneratedPost.data.data.post.title + " | " + e2eGeneratedCurrentDate.data.year',
     });
-    await waitForCanvasText({
-      page,
-      text: expectedText,
-    });
+    await waitForCanvasText({ page, text: expectedText });
+    await waitForSyncComplete({ page });
 
-    await test.step("render all three resources in one generated Preview", async () => {
-      await withGeneratedPreview({
-        projectId: fixture.projectId,
-        callback: async ({ html }) => {
-          expect(html).toContain(expectedText);
-        },
+    const reloadBuilder = measure(
+      "generated resources reload Builder",
+      async () => {
+        await openProjectBuilder({
+          page,
+          projectId: fixture.projectId,
+          authToken: fixture.builderToken,
+        });
+        await waitForCanvasText({ page, text: expectedText });
+      }
+    );
+    const verifyPreview =
+      test.step("verify variables and links in the generated Preview", async () => {
+        await withGeneratedPreview({
+          projectId: fixture.projectId,
+          callback: async ({ url, html }) => {
+            await test.step("render static, HTTP, GraphQL, and system variables", () => {
+              expect(html).toContain(expectedText);
+            });
+            await test.step("render and navigate the linked route", async () => {
+              await reloadBuilder;
+              const target = new URL("/my-page", url).href;
+              const response = await fetch(target, { redirect: "manual" });
+              expect(response.ok).toBe(true);
+              expect(await response.text()).toContain(previewLinkText.pageLink);
+
+              await page.goto(url);
+              const link = page.getByRole("link", {
+                name: previewLinkText.pageLink,
+                exact: true,
+              });
+              await link.click();
+              await expect(page).toHaveURL(target);
+              await expect(link).toBeVisible();
+              await expect(link).toHaveAttribute("aria-current", "page");
+            });
+          },
+        });
       });
-    });
+
+    // Both checks use the resource receivers until Preview and Builder finish.
+    const results = await Promise.allSettled([reloadBuilder, verifyPreview]);
+    for (const result of results) {
+      if (result.status === "rejected") {
+        throw result.reason;
+      }
+    }
   } finally {
     await Promise.all([http.close(), graphql.close()]);
   }

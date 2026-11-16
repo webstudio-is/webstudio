@@ -4,14 +4,9 @@ import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadDevBuild } from "../db";
 import { measure } from "../perf";
 import { stopChildProcess } from "../process";
-import {
-  createLocalBundleFromDevBuild,
-  getAvailablePort,
-  waitForGeneratedPreview,
-} from "./generated-app";
+import { getAvailablePort, waitForGeneratedPreview } from "./generated-app";
 
 const runnerPath = fileURLToPath(
   new URL("../fixtures/mcp-email-preview.ts", import.meta.url)
@@ -80,12 +75,12 @@ export const startLocalEmailReceiver = async () => {
 };
 
 export const withMcpEmailPreview = async <Result>({
-  projectId,
+  bundle,
   emailPort,
   queryPort,
   callback,
 }: {
-  projectId: string;
+  bundle: string;
   emailPort: number;
   queryPort?: number;
   callback: ({ url }: { url: string }) => Promise<Result>;
@@ -93,12 +88,8 @@ export const withMcpEmailPreview = async <Result>({
   const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-mcp-email-"));
   let preview: ChildProcess | undefined;
   try {
-    const build = await loadDevBuild({ projectId });
     await mkdir(join(tempDir, ".webstudio"), { recursive: true });
-    await writeFile(
-      join(tempDir, ".webstudio", "data.json"),
-      `${JSON.stringify(createLocalBundleFromDevBuild(build))}\n`
-    );
+    await writeFile(join(tempDir, ".webstudio", "data.json"), `${bundle}\n`);
     const port = await getAvailablePort();
     const output: string[] = [];
     preview = spawn(

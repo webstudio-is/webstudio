@@ -8,6 +8,7 @@ import {
   withGeneratedFormDeliveryPreview,
 } from "../flows/generated-form-delivery";
 import { test } from "../test";
+import { measure } from "../perf";
 
 const execFileAsync = promisify(execFile);
 const authorPath = fileURLToPath(
@@ -19,10 +20,9 @@ const reactGlobalPath = fileURLToPath(
 const successMessage = "Thanks for contacting us. Your message has been sent.";
 const errorMessage = "We could not send your message. Please try again.";
 
-const authorForm = async (
+const authorForms = async (
   projectId: string,
-  redirect: string | undefined,
-  fail = false
+  scenarios: ReadonlyArray<{ redirect?: string; fail?: boolean }>
 ) => {
   const { stdout } = await execFileAsync(
     process.execPath,
@@ -34,7 +34,9 @@ const authorForm = async (
       "--conditions=webstudio",
       authorPath,
       projectId,
-      JSON.stringify({ mode: "redirect", successRedirect: redirect, fail }),
+      ...scenarios.map(({ redirect, fail }) =>
+        JSON.stringify({ mode: "redirect", successRedirect: redirect, fail })
+      ),
     ],
     {
       timeout: 60_000,
@@ -49,7 +51,14 @@ const authorForm = async (
       },
     }
   );
-  return JSON.parse(stdout) as { formId: string };
+  const forms = stdout
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line)) as Array<{
+    formId: string;
+  }>;
+  expect(forms).toHaveLength(scenarios.length);
+  return forms.map(({ formId }) => formId);
 };
 
 const openPreview = async (page: Page, url: string) => {
@@ -157,13 +166,6 @@ test("MCP Form redirect destinations and feedback share one generated Preview", 
 }) => {
   test.setTimeout(180_000);
   const fixture = await createFixture(context, "destinations");
-  const forms: Array<(typeof redirects)[number] & { formId: string }> = [];
-  for (const redirect of redirects) {
-    forms.push({
-      ...redirect,
-      ...(await authorForm(fixture.projectId, redirect.redirect)),
-    });
-  }
   const feedbackScenarios = [
     {
       name: "success",
@@ -174,25 +176,22 @@ test("MCP Form redirect destinations and feedback share one generated Preview", 
     {
       name: "failure",
       fail: true,
+      redirect: "/?matrix=must-not-redirect",
       message: errorMessage,
       behavior: "instant",
     },
   ] as const;
-  const feedbackForms: Array<{
-    name: string;
-    fail: boolean;
-    message: string;
-    behavior: "smooth" | "instant";
-    formId: string;
-  }> = [];
-  for (const { name, fail, message, behavior } of feedbackScenarios) {
-    const { formId } = await authorForm(
-      fixture.projectId,
-      fail ? "/?matrix=must-not-redirect" : undefined,
-      fail
-    );
-    feedbackForms.push({ name, fail, message, behavior, formId });
-  }
+  const formIds = await measure("author redirect and feedback forms", () =>
+    authorForms(fixture.projectId, [...redirects, ...feedbackScenarios])
+  );
+  const forms = redirects.map((scenario, index) => ({
+    ...scenario,
+    formId: formIds[index],
+  }));
+  const feedbackForms = feedbackScenarios.map((scenario, index) => ({
+    ...scenario,
+    formId: formIds[redirects.length + index],
+  }));
 
   const receiver = await startFormDeliveryReceiver();
   try {
