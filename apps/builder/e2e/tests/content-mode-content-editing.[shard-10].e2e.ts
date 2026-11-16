@@ -1,4 +1,5 @@
 import { expect } from "@playwright/test";
+import type { Instance, Prop } from "@webstudio-is/sdk";
 import {
   openProjectBuilder,
   waitForCanvasFrame,
@@ -38,7 +39,7 @@ import type { SeededContentModeProject } from "../fixtures/content-mode-project"
 import { test, withBrowserContext } from "../test";
 import { measure } from "../perf";
 import { e2ePaidPlanName } from "../plans";
-import { loadDevBuild } from "../db";
+import { loadDevBuild, updateBuild } from "../db";
 
 const getElementTagWithTextCount = async ({
   projectId,
@@ -157,6 +158,50 @@ test("Editor can paste, format and delete text while protected content remains",
 }) => {
   const formattedText = "Rich editor formatted copy";
   const editedHref = "/rich-text-editor-link";
+  const existingLinkText = "Preexisting inline link";
+  const build = await loadDevBuild({ projectId: fixture.projectId });
+  const instances: Instance[] = JSON.parse(build.instances);
+  const props: Prop[] = JSON.parse(build.props);
+  const contentBlock = instances.find(({ id }) => id === "content-block");
+  if (contentBlock === undefined) {
+    throw new Error("Expected the fixture Content Block");
+  }
+  // Keep a second link so adding and removing links can share one reload.
+  contentBlock.children.push({ type: "id", value: "existing-link-paragraph" });
+  instances.push(
+    {
+      type: "instance",
+      id: "existing-link-paragraph",
+      component: "ws:element",
+      tag: "p",
+      children: [{ type: "id", value: "existing-inline-link" }],
+    },
+    {
+      type: "instance",
+      id: "existing-inline-link",
+      component: "ws:element",
+      tag: "a",
+      children: [{ type: "id", value: "existing-inline-link-text" }],
+    },
+    {
+      type: "instance",
+      id: "existing-inline-link-text",
+      component: "ws:element",
+      tag: "b",
+      children: [{ type: "text", value: existingLinkText }],
+    }
+  );
+  props.push({
+    id: "existing-inline-link-href",
+    instanceId: "existing-inline-link",
+    name: "href",
+    type: "string",
+    value: "/existing-inline-link",
+  });
+  await updateBuild(build.id, {
+    instances: JSON.stringify(instances),
+    props: JSON.stringify(props),
+  });
 
   await measure("content mode open editor for text changes", async () => {
     await openProjectBuilder({
@@ -274,6 +319,18 @@ test("Editor can paste, format and delete text while protected content remains",
     );
   }
 
+  const canvas = await waitForCanvasFrame({ page });
+  await expect(
+    canvas.getByRole("link", { name: existingLinkText })
+  ).toBeVisible();
+  await removeCanvasInlineLink({ page, text: existingLinkText });
+  const removedLinkCount = await getElementTagWithTextCount({
+    projectId: fixture.projectId,
+    tag: "a",
+    text: existingLinkText,
+  });
+  expect(removedLinkCount).toBe(0);
+
   await measure("content mode reload text changes", async () => {
     await openProjectBuilder({
       page,
@@ -329,37 +386,20 @@ test("Editor can paste, format and delete text while protected content remains",
     );
   }
 
-  await removeCanvasInlineLink({ page, text: formattedText });
-  const removedLinkCount = await getElementTagWithTextCount({
-    projectId: fixture.projectId,
-    tag: "a",
-    text: formattedText,
-  });
-  if (removedLinkCount !== 0) {
-    throw new Error(
-      `Expected rich-text link removal to delete the inline link subtree, received ${removedLinkCount} link instances`
-    );
-  }
-
-  await measure("content mode reload rich text link removal", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.editorToken,
-      mode: "content",
-    });
-  });
-  await waitForCanvasText({ page, text: formattedText });
+  const reloadedCanvas = await waitForCanvasFrame({ page });
+  await expect(
+    reloadedCanvas.getByRole("link", { name: formattedText })
+  ).toHaveAttribute("href", editedHref);
+  await expect(reloadedCanvas.getByText(existingLinkText)).toBeVisible();
+  await expect(
+    reloadedCanvas.getByRole("link", { name: existingLinkText })
+  ).toHaveCount(0);
   const reloadedRemovedLinkCount = await getElementTagWithTextCount({
     projectId: fixture.projectId,
     tag: "a",
-    text: formattedText,
+    text: existingLinkText,
   });
-  if (reloadedRemovedLinkCount !== 0) {
-    throw new Error(
-      `Expected rich-text link removal to persist after reload, received ${reloadedRemovedLinkCount} link instances`
-    );
-  }
+  expect(reloadedRemovedLinkCount).toBe(0);
 
   await measure("content mode insert nested template", async () => {
     await insertTemplateAfterCanvasText({

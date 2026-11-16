@@ -22,6 +22,7 @@ test("MCP Email inspector loads Request without sending and shows the captured s
 }) => {
   const fixture = await createContentModeProject({
     context,
+    page,
     email: "mcp-email-inspector@webstudio.test",
     title: "MCP Email inspector",
     assetNamePrefix: "mcp-email-inspector-",

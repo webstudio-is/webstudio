@@ -5,7 +5,7 @@ import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { expectGeneratedAppBuild } from "../flows/generated-app";
 import { openNavigatorPanel } from "../flows/navigator";
 import { waitForSyncComplete } from "../flows/sync-status";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { createBuilderEditingProject } from "../fixtures/builder-editing-project";
 import { test } from "../test";
 import { measure } from "../perf";
 
@@ -144,14 +144,10 @@ test("Builder animation UI creates supported animation props that persist and bu
   // Includes two Builder loads and a generated app build on shared CI CPUs.
   test.setTimeout(180_000);
 
-  const email = "animation-runtime@webstudio.test";
-  const fixture = await createContentModeProject({
-    context: context,
-    email,
-    title: "Animation Runtime",
-    assetNamePrefix: "animation-runtime-",
-    editorToken: "animation-runtime-editor-token",
-    builderToken: "animation-runtime-builder-token",
+  const fixture = await createBuilderEditingProject({
+    context,
+    page,
+    name: "animation-runtime",
   });
   const text = "Initial content";
   const wrapperName = "Animation Group";
