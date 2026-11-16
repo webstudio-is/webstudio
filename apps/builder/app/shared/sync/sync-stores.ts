@@ -88,7 +88,10 @@ import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
-import { $externalContentRoots } from "../external-content-mutations";
+import {
+  $externalContentRoots,
+  $externalContentAssetStatuses,
+} from "../external-content-mutations";
 import { $externalContentHistory } from "../external-content-history";
 
 enableMapSet();
@@ -417,6 +420,10 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),
     new NanostoresSyncObject("systemDataByPage", $systemDataByPage),
     new NanostoresSyncObject("externalContentRoots", $externalContentRoots),
+    new NanostoresSyncObject(
+      "externalContentAssetStatuses",
+      $externalContentAssetStatuses
+    ),
     new NanostoresSyncObject("externalContentHistory", $externalContentHistory),
   ]);
 };
