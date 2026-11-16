@@ -1,5 +1,6 @@
 import { authorFormActionCombination } from "./mcp-form-action-combination-author";
 import { authorFormCallbacks } from "./mcp-form-callbacks-author";
+import { authorLegacyFormRoute } from "./mcp-legacy-form-route-author";
 import { authorQuerySearch } from "./mcp-query-search-author";
 
 const [, , projectId, managedPath, concurrencyPath] = process.argv;
@@ -22,6 +23,7 @@ await authorFormCallbacks({
   path: managedPath,
 });
 await authorQuerySearch(projectId);
+await authorLegacyFormRoute(projectId, receiverUrl);
 const actions = await authorFormActionCombination(
   projectId,
   undefined,

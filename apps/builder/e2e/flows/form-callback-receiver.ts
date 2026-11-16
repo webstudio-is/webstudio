@@ -5,7 +5,14 @@ export const concurrencyPath = "/submit?tag=concurrency";
 export const startFormCallbackReceiver = async () => {
   const deliveries: Array<Record<string, unknown>> = [];
   const actionDeliveries: string[] = [];
+  const legacyRouteDeliveries: Array<{
+    method: string;
+    slug: string | null;
+    routeHeader: string | null;
+    body: Record<string, unknown>;
+  }> = [];
   const pending: ServerResponse[] = [];
+  let requestCount = 0;
   let barrierReached = false;
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const respond = (response: ServerResponse, success: boolean) => {
@@ -15,10 +22,9 @@ export const startFormCallbackReceiver = async () => {
     response.end(JSON.stringify({ delivered: success }));
   };
   const server = createServer(async (request, response) => {
-    if (
-      request.method !== "POST" ||
-      (request.url !== "/submit" && request.url !== concurrencyPath)
-    ) {
+    requestCount += 1;
+    const url = new URL(request.url ?? "/", "http://receiver.local");
+    if (request.method !== "POST" || url.pathname !== "/submit") {
       response.writeHead(404).end();
       return;
     }
@@ -31,6 +37,21 @@ export const startFormCallbackReceiver = async () => {
       const callback = JSON.parse(body);
       deliveries.push(callback);
       respond(response, callback.outcome !== "failure");
+      return;
+    }
+
+    if (url.searchParams.has("slug")) {
+      legacyRouteDeliveries.push({
+        method: request.method,
+        slug: url.searchParams.get("slug"),
+        routeHeader: request.headers["x-route-slug"]?.toString() ?? null,
+        body: JSON.parse(body),
+      });
+      respond(response, true);
+      return;
+    }
+    if (request.url !== concurrencyPath) {
+      response.writeHead(404).end();
       return;
     }
 
@@ -71,6 +92,10 @@ export const startFormCallbackReceiver = async () => {
     port: address.port,
     deliveries,
     actionDeliveries,
+    legacyRouteDeliveries,
+    get requestCount() {
+      return requestCount;
+    },
     get barrierReached() {
       return barrierReached;
     },

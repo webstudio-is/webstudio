@@ -185,15 +185,24 @@ export const expectGeneratedAppBuild = async (
   }
 };
 
-export const withGeneratedPreview = async <Result>(
+export const startGeneratedPreview = async (
   input: ({ projectId: string } | { build: BuildRow }) & {
-    callback: ({ url, html }: { url: string; html: string }) => Promise<Result>;
     evaluationReceiverPort?: string;
   }
 ) => {
-  const { callback, evaluationReceiverPort } = input;
+  const { evaluationReceiverPort } = input;
   const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-generated-"));
   let preview: ChildProcess | undefined;
+  const close = async () => {
+    try {
+      if (preview !== undefined) {
+        // The CLI starts npm and the generated server below it.
+        await stopChildProcess(preview, { killGroup: true });
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  };
   try {
     const build =
       "build" in input
@@ -256,15 +265,26 @@ export const withGeneratedPreview = async <Result>(
         output: () => output.join(""),
       })
     );
+    return { url, html, close };
+  } catch (error) {
+    await close();
+    throw error;
+  }
+};
+
+export const withGeneratedPreview = async <Result>({
+  callback,
+  ...input
+}: Parameters<typeof startGeneratedPreview>[0] & {
+  callback: (preview: { url: string; html: string }) => Promise<Result>;
+}) => {
+  const { url, html, close } = await startGeneratedPreview(input);
+  try {
     return await measure("generated app preview callback", () =>
       callback({ url, html })
     );
   } finally {
-    if (preview !== undefined) {
-      // The CLI starts npm and the generated server below it.
-      await stopChildProcess(preview, { killGroup: true });
-    }
-    await rm(tempDir, { recursive: true, force: true });
+    await close();
   }
 };
 
