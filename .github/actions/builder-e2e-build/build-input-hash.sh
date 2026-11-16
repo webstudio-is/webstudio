@@ -4,6 +4,7 @@ set -euo pipefail
 {
   # Keep test exclusions scoped so Remix routes and public assets are still hashed.
   git ls-files -s -- . ':!apps/builder/e2e/**' \
+    ':(exclude,glob).github/actions/builder-e2e-shard/**' \
     ':(exclude,glob)apps/builder/app/'{builder,canvas,dashboard,services,shared}'/**/*.'{test,spec}.{ts,tsx} \
     ':(exclude,glob)apps/builder/backend/**/*.'{test,spec}.{ts,tsx} \
     ':(exclude,glob)packages/*/'{src,scripts,evaluations,migrations-cli}'/**/*.'{test,spec}.{ts,tsx} \
