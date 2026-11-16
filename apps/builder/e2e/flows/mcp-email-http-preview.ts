@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadDevBuild } from "../db";
 import { stopChildProcess } from "../process";
+import { logPerf } from "../perf";
 import {
   createLocalBundleFromDevBuild,
   getAvailablePort,
@@ -21,6 +22,10 @@ const tsxPath = fileURLToPath(import.meta.resolve("tsx"));
 const cliTsconfigPath = fileURLToPath(
   new URL("../../../../packages/cli/tsconfig.local.json", import.meta.url)
 );
+
+// Temporary markers for the shard 6 Linux timing run.
+const profileShard6Preview =
+  process.env.CI !== undefined && process.env.E2E_TEST_SHARD === "shard-6";
 
 export const withMcpEmailHttpPreview = async <Result>({
   emailPort,
@@ -51,6 +56,7 @@ export const withMcpEmailHttpPreview = async <Result>({
     );
     const port = await getAvailablePort();
     const output: string[] = [];
+    const previewStartedAt = Date.now();
     preview = spawn(
       process.execPath,
       [
@@ -89,11 +95,25 @@ export const withMcpEmailHttpPreview = async <Result>({
       url,
       output: () => output.join(""),
     });
+    if (profileShard6Preview) {
+      logPerf("shard 6 Preview build and startup", previewStartedAt);
+    }
     return await callback({ url });
   } finally {
     if (preview !== undefined) {
-      await stopChildProcess(preview, { killGroup: true });
+      const shutdownStartedAt = Date.now();
+      try {
+        await stopChildProcess(preview, { killGroup: true });
+      } finally {
+        if (profileShard6Preview) {
+          logPerf("shard 6 Preview process group shutdown", shutdownStartedAt);
+        }
+      }
     }
+    const removeStartedAt = Date.now();
     await rm(tempDir, { recursive: true, force: true });
+    if (profileShard6Preview) {
+      logPerf("shard 6 Preview temporary directory removal", removeStartedAt);
+    }
   }
 };

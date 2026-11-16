@@ -9,10 +9,13 @@ import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
 import { startFormContextReceiver } from "../flows/form-context-receiver";
 import { runFormAuthor } from "../flows/mcp-form-author";
 import { test } from "../test";
+import { logPerf } from "../perf";
 import {
   startPreviewFormMcpClient,
   submitPreviewFormViaMcp,
 } from "../flows/mcp-preview-submit";
+
+const profileCi = process.env.CI !== undefined;
 
 const authorForms = async (projectId: string) => {
   const { stdout } = await runFormAuthor(
@@ -67,6 +70,7 @@ test("Generated Preview delivers MCP-authored forms with readable email and brow
     email: "mcp-default-contact@webstudio.test",
     title: "MCP default contact Form",
   });
+  const authorStartedAt = Date.now();
   const {
     formData: {
       formId: formDataFormId,
@@ -76,6 +80,9 @@ test("Generated Preview delivers MCP-authored forms with readable email and brow
     contact: { formId, ownerResourceId, visitorResourceId },
     context: { formId: contextFormId },
   } = await authorForms(projectId);
+  if (profileCi) {
+    logPerf("shard 6 Preview form authoring", authorStartedAt);
+  }
   expect(formDataExpression).toContain(".toString()");
   const build = await loadDevBuild({ projectId });
   const resources = JSON.parse(build.resources) as Array<{
@@ -160,6 +167,7 @@ test("Generated Preview delivers MCP-authored forms with readable email and brow
     throw new Error("Expected a local Email receiver port");
   }
   const receiver = await startFormContextReceiver();
+  let assertionsFinishedAt: number | undefined;
   try {
     await withMcpEmailHttpPreview({
       projectId,
@@ -402,12 +410,26 @@ test("Generated Preview delivers MCP-authored forms with readable email and brow
             },
           });
         });
+        if (profileCi) {
+          assertionsFinishedAt = Date.now();
+          console.info("[e2e:profile] shard 6 Preview assertions finished");
+        }
       },
     });
   } finally {
+    const receiversCloseStartedAt = Date.now();
     await Promise.all([
       receiver.close(),
       new Promise<void>((resolve) => server.close(() => resolve())),
     ]);
+    if (profileCi) {
+      logPerf("shard 6 Preview receivers close", receiversCloseStartedAt);
+      if (assertionsFinishedAt !== undefined) {
+        logPerf(
+          "shard 6 Preview assertions to test body end",
+          assertionsFinishedAt
+        );
+      }
+    }
   }
 });
