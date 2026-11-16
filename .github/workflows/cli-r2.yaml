@@ -56,12 +56,9 @@ jobs:
       - name: pnpm build
         run: pnpm --filter 'webstudio-cloudflare-template^...' run build
 
-      # Ideally, execute 'pnpm deploy --prod', but @remix-run/dev doesn't support this flag.
-      # Despite being listed as a dependency, @remix-run/dev does not install the remix cli.
-      # TODO: Minimize artefact size due to frequent downloads on each publish.
       - name: pnpm deploy
         run: |
-          pnpm --filter 'webstudio-cloudflare-template' deploy "${{ github.workspace }}/../cloudflare-template"
+          pnpm --filter 'webstudio-cloudflare-template' deploy --prod "${{ github.workspace }}/../cloudflare-template"
           touch "${{ github.workspace }}/../cloudflare-template/.webstudio-cli-sync-build-v1"
 
       - name: Verify optional Assets build dependency is omitted

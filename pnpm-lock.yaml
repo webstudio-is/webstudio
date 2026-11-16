@@ -1025,6 +1025,9 @@ importers:
       '@remix-run/cloudflare-pages':
         specifier: 2.16.5
         version: 2.16.5(@cloudflare/workers-types@4.20240701.0)(typescript@7.0.2)
+      '@remix-run/dev':
+        specifier: 2.16.5
+        version: 2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(typescript@7.0.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(wrangler@4.130.0(@cloudflare/workers-types@4.20240701.0))(yaml@2.9.0)
       '@remix-run/node':
         specifier: 2.16.5
         version: 2.16.5(typescript@7.0.2)
@@ -1067,6 +1070,9 @@ importers:
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
+      lightningcss:
+        specifier: 1.31.1
+        version: 1.31.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -1076,12 +1082,18 @@ importers:
       shiki:
         specifier: 4.4.1
         version: 4.4.1
+      vite:
+        specifier: 6.3.4
+        version: 6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
       worktop:
         specifier: 0.8.0-next.18
         version: 0.8.0-next.18
+      wrangler:
+        specifier: 4.130.0
+        version: 4.130.0(@cloudflare/workers-types@4.20240701.0)
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -1089,9 +1101,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20240620.0
         version: 4.20240701.0
-      '@remix-run/dev':
-        specifier: 2.16.5
-        version: 2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(typescript@7.0.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(wrangler@4.130.0(@cloudflare/workers-types@4.20240701.0))(yaml@2.9.0)
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -1101,18 +1110,9 @@ importers:
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.2
-      lightningcss:
-        specifier: 1.31.1
-        version: 1.31.1
       typescript:
         specifier: 7.0.2
         version: 7.0.2
-      vite:
-        specifier: 6.3.4
-        version: 6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0)
-      wrangler:
-        specifier: 4.130.0
-        version: 4.130.0(@cloudflare/workers-types@4.20240701.0)
 
   fixtures/webstudio-features:
     dependencies:
