@@ -3,6 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { measure } from "../perf";
 import { stopChildProcess } from "../process";
@@ -85,11 +86,27 @@ export const withMcpEmailPreview = async <Result>({
   queryPort?: number;
   callback: ({ url }: { url: string }) => Promise<Result>;
 }) => {
-  const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-mcp-email-"));
+  const tempDir = await measure(
+    "generated Email preview source preparation",
+    async () => {
+      const directory = await mkdtemp(
+        join(tmpdir(), "webstudio-e2e-mcp-email-")
+      );
+      try {
+        await mkdir(join(directory, ".webstudio"), { recursive: true });
+        await writeFile(
+          join(directory, ".webstudio", "data.json"),
+          `${bundle}\n`
+        );
+        return directory;
+      } catch (error) {
+        await rm(directory, { recursive: true, force: true });
+        throw error;
+      }
+    }
+  );
   let preview: ChildProcess | undefined;
   try {
-    await mkdir(join(tempDir, ".webstudio"), { recursive: true });
-    await writeFile(join(tempDir, ".webstudio", "data.json"), `${bundle}\n`);
     const port = await getAvailablePort();
     const output: string[] = [];
     preview = spawn(
@@ -124,6 +141,17 @@ export const withMcpEmailPreview = async <Result>({
     };
     preview.stdout?.on("data", appendOutput);
     preview.stderr?.on("data", appendOutput);
+    if (preview.stdout !== null) {
+      createInterface({ input: preview.stdout }).on("line", (line) => {
+        if (
+          /^\[e2e:perf\] phase="generated Email preview (project preparation|production build|server readiness)" duration=\d+ms$/.test(
+            line
+          )
+        ) {
+          console.info(line);
+        }
+      });
+    }
     const url = `http://127.0.0.1:${port}/`;
     const runningPreview = preview;
     await measure("generated Email preview startup", () =>

@@ -1,5 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { waitForGeneratedPreview } from "../flows/generated-app";
+import { measure } from "../perf";
 
 // Load the CLI in this isolated runner; Builder's tsconfig does not include
 // the CLI's import-attribute module setting.
@@ -30,12 +32,16 @@ if (
   throw new Error("Expected Preview and local email receiver ports");
 }
 
-const project = await preparePreviewProject({
-  assets: false,
-  template: ["defaults", "react-router"],
-  generate: true,
-  source: "local",
-});
+const project = await measure<{ cwd: string }>(
+  "generated Email preview project preparation",
+  () =>
+    preparePreviewProject({
+      assets: false,
+      template: ["defaults", "react-router"],
+      generate: true,
+      source: "local",
+    })
+);
 await writeFile(
   join(
     project.cwd,
@@ -98,10 +104,21 @@ export const createManagedFormResourceFetch = ({ request, projectDomain }: { req
 };
 `
 );
-await buildPreparedPreview(project);
+await measure("generated Email preview production build", () =>
+  buildPreparedPreview(project)
+);
 const preview = startPreviewServer({
   host: "127.0.0.1",
   port,
   cwd: project.cwd,
 });
-await waitForPreviewExit(preview.process);
+await Promise.all([
+  waitForPreviewExit(preview.process),
+  measure("generated Email preview server readiness", () =>
+    waitForGeneratedPreview({
+      process: preview.process,
+      url: `http://127.0.0.1:${port}/`,
+      output: () => "",
+    })
+  ),
+]);
