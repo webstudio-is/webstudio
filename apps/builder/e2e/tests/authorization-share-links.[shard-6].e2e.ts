@@ -126,69 +126,81 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
       return { viewerUrl, editorUrl, builderUrl, adminUrl };
     }
   );
-  const viewer = await newIsolatedPage(browser);
-  const editor = await newIsolatedPage(browser);
-  const builderPage = await newIsolatedPage(browser);
-  const admin = await newIsolatedPage(browser);
   const editedText = "Share-link editor text";
   const collaborativeText = "Collaborative editor text";
 
-  try {
-    expectLinkMode({ link: viewerUrl, mode: "preview" });
-    expectLinkMode({ link: editorUrl, mode: "content" });
-    expectLinkMode({ link: builderUrl, mode: "design" });
-    expectLinkMode({ link: adminUrl, mode: "design" });
+  expectLinkMode({ link: viewerUrl, mode: "preview" });
+  expectLinkMode({ link: editorUrl, mode: "content" });
+  expectLinkMode({ link: builderUrl, mode: "design" });
+  expectLinkMode({ link: adminUrl, mode: "design" });
 
-    await Promise.all([
-      test.step("Viewer can view and gains design controls after the owner changes the same link", async () => {
-        await openBuilderUrl({ page: viewer.page, url: viewerUrl });
-        await waitForCanvasText({ page: viewer.page, text: baselineText });
-        await expectShareUnavailable({ page: viewer.page });
-        await expectTextHidden({
-          page: viewer.page,
-          text: "No instance selected",
-        });
-        await expectLocatorHidden({
-          locator: viewer.page.getByRole("tab", { name: "Style" }),
-          message: "Expected Style tab to be unavailable for viewer link",
-        });
-        await updateShareLinkRole({
-          page: ownerPage,
-          name: "E2E Viewer link",
-          role: "Builder",
-        });
-        const updatedBuilderUrl = await copyShareLink({
-          page: ownerPage,
-          name: "E2E Viewer link",
-        });
-        expectLinkMode({ link: updatedBuilderUrl, mode: "design" });
+  await Promise.all([
+    (async () => {
+      // Check Viewer and Admin one at a time while the Editor workflow runs.
+      await test.step("Viewer can view and gains design controls after the owner changes the same link", async () => {
+        const viewer = await newIsolatedPage(browser);
+        try {
+          await openBuilderUrl({ page: viewer.page, url: viewerUrl });
+          await waitForCanvasText({ page: viewer.page, text: baselineText });
+          await expectShareUnavailable({ page: viewer.page });
+          await expectTextHidden({
+            page: viewer.page,
+            text: "No instance selected",
+          });
+          await expectLocatorHidden({
+            locator: viewer.page.getByRole("tab", { name: "Style" }),
+            message: "Expected Style tab to be unavailable for viewer link",
+          });
+          await updateShareLinkRole({
+            page: ownerPage,
+            name: "E2E Viewer link",
+            role: "Builder",
+          });
+          const updatedBuilderUrl = await copyShareLink({
+            page: ownerPage,
+            name: "E2E Viewer link",
+          });
+          expectLinkMode({ link: updatedBuilderUrl, mode: "design" });
+          await ownerPage.close();
 
-        await openBuilderUrl({ page: viewer.page, url: updatedBuilderUrl });
-        await waitForCanvasText({ page: viewer.page, text: baselineText });
-        await expectShareUnavailable({ page: viewer.page });
-        await selectCanvasTextInstance({
-          page: viewer.page,
-          text: baselineText,
-        });
-        await viewer.page
-          .getByRole("tab", { name: "Style" })
-          .waitFor({ state: "visible", timeout: 10_000 });
-      }),
-      test.step("Admin may publish", async () => {
-        await openBuilderUrl({ page: admin.page, url: adminUrl });
-        await waitForCanvasText({ page: admin.page, text: baselineText });
-        await waitForSyncComplete({ page: admin.page });
-        await expectShareUnavailable({ page: admin.page });
-
-        const publishButton = admin.page.getByRole("button", {
-          name: "Publish",
-        });
-        await publishButton.waitFor({ state: "visible", timeout: 10_000 });
-        if (await publishButton.isDisabled()) {
-          throw new Error("Expected admin share link to allow publishing");
+          await openBuilderUrl({ page: viewer.page, url: updatedBuilderUrl });
+          await waitForCanvasText({ page: viewer.page, text: baselineText });
+          await expectShareUnavailable({ page: viewer.page });
+          await selectCanvasTextInstance({
+            page: viewer.page,
+            text: baselineText,
+          });
+          await viewer.page
+            .getByRole("tab", { name: "Style" })
+            .waitFor({ state: "visible", timeout: 10_000 });
+        } finally {
+          await viewer.close();
         }
-      }),
-      test.step("Editor can save content and collaborate with a Builder", async () => {
+      });
+      await test.step("Admin may publish", async () => {
+        const admin = await newIsolatedPage(browser);
+        try {
+          await openBuilderUrl({ page: admin.page, url: adminUrl });
+          await waitForCanvasText({ page: admin.page, text: baselineText });
+          await waitForSyncComplete({ page: admin.page });
+          await expectShareUnavailable({ page: admin.page });
+
+          const publishButton = admin.page.getByRole("button", {
+            name: "Publish",
+          });
+          await publishButton.waitFor({ state: "visible", timeout: 10_000 });
+          if (await publishButton.isDisabled()) {
+            throw new Error("Expected admin share link to allow publishing");
+          }
+        } finally {
+          await admin.close();
+        }
+      });
+    })(),
+    test.step("Editor can save content and collaborate with a Builder", async () => {
+      const editor = await newIsolatedPage(browser);
+      const builderPage = await newIsolatedPage(browser);
+      try {
         await openBuilderUrl({ page: editor.page, url: editorUrl });
         await waitForCanvasText({ page: editor.page, text: baselineText });
         await waitForSyncComplete({ page: editor.page });
@@ -286,12 +298,9 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
             await waitForSyncComplete({ page: builderPage.page });
           })(),
         ]);
-      }),
-    ]);
-  } finally {
-    await viewer.close();
-    await editor.close();
-    await builderPage.close();
-    await admin.close();
-  }
+      } finally {
+        await Promise.all([editor.close(), builderPage.close()]);
+      }
+    }),
+  ]);
 });

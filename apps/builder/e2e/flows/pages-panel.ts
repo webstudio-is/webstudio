@@ -43,7 +43,7 @@ export const fillAllowedPageSettings = async ({
 }) => {
   await waitForSyncComplete({ page, timeout: 3_000 }).catch(() => undefined);
 
-  let save = waitForChangeToBeSaved({ page });
+  const save = waitForChangeToBeSaved({ page });
   for (const field of [
     { label: "Page name", value: name },
     { label: "Path", value: path },
@@ -62,37 +62,7 @@ export const fillAllowedPageSettings = async ({
   const socialImageInput = page.getByPlaceholder("https://www.url.com").first();
   await socialImageInput.fill(socialImage);
   await socialImageInput.blur();
-  await save;
-  await waitForSyncComplete({ page });
-
-  await fillCustomMetadata({ page, metadata });
-};
-
-export const fillCustomMetadata = async ({
-  page,
-  metadata,
-}: {
-  page: Page;
-  metadata: {
-    property: string;
-    content: string;
-  };
-}) => {
-  await waitForSyncComplete({ page, timeout: 3_000 }).catch(() => undefined);
-  const metadataGroup = getCustomMetadataGroup(page);
-  let save = waitForChangeToBeSaved({ page });
-  await metadataGroup
-    .getByLabel("Content", { exact: true })
-    .first()
-    .fill(metadata.content);
-  await save;
-  await waitForSyncComplete({ page });
-
-  save = waitForChangeToBeSaved({ page });
-  await metadataGroup
-    .getByLabel("Property", { exact: true })
-    .first()
-    .fill(metadata.property);
+  await fillMetadataInputs({ page, ...metadata });
   await save;
   await waitForSyncComplete({ page });
 
@@ -101,6 +71,38 @@ export const fillCustomMetadata = async ({
     property: metadata.property,
     content: metadata.content,
   });
+};
+
+const fillMetadataInputs = async ({
+  page,
+  property,
+  content,
+}: {
+  page: Page;
+  property: string;
+  content: string;
+}) => {
+  const metadataGroup = getCustomMetadataGroup(page);
+  await metadataGroup
+    .getByLabel("Content", { exact: true })
+    .first()
+    .fill(content);
+  await metadataGroup
+    .getByLabel("Property", { exact: true })
+    .first()
+    .fill(property);
+};
+
+export const fillCustomMetadata = async (
+  values: Parameters<typeof fillMetadataInputs>[0]
+) => {
+  const { page } = values;
+  await waitForSyncComplete({ page });
+  const save = waitForChangeToBeSaved({ page });
+  await fillMetadataInputs(values);
+  await save;
+  await waitForSyncComplete({ page });
+  await expectCustomMetadataValue(values);
 };
 
 export const openPagesPanel = async ({ page }: { page: Page }) => {

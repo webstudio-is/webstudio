@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { Page } from "@playwright/test";
 import { insertAssetFolders } from "../db";
 import {
   createAssetFolder,
@@ -13,38 +14,7 @@ import {
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { test } from "../test";
 
-test.describe.configure({ mode: "parallel" });
-
-test("Asset selection and drag work across a long folder list", async ({
-  page,
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context: context,
-    email: "asset-folder-autoscroll-e2e@webstudio.test",
-    title: "Asset Folder Autoscroll E2E",
-    builderToken: "asset-folder-autoscroll-e2e-builder-token",
-  });
-
-  // The long list is a precondition for the drag, so seed its filler folders together.
-  const createdAt = new Date().toISOString();
-  await insertAssetFolders(
-    Array.from({ length: 24 }, (_, index) => ({
-      id: randomUUID(),
-      projectId: fixture.projectId,
-      name: `Filler ${String(index).padStart(2, "0")}`,
-      parentId: null,
-      createdAt,
-    }))
-  );
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await waitForSyncStatus({ page, status: "idle" });
-  await openAssetsPanel({ page });
+const selectAndDragAssets = async (page: Page) => {
   const [firstAssetTitle, secondAssetTitle] = await uploadAssets({
     page,
     filenames: ["upload-image.svg", "replacement-image.svg"],
@@ -173,37 +143,9 @@ test("Asset selection and drag work across a long folder list", async ({
   await asset.waitFor({ state: "hidden" });
   await destination.dblclick();
   await firstAsset.waitFor();
-});
+};
 
-test("Folders can be multiselected and deleted as one operation", async ({
-  page,
-  context,
-}) => {
-  const fixture = await createContentModeProject({
-    context: context,
-    email: "asset-folder-multiselect-e2e@webstudio.test",
-    title: "Asset Folder Multiselect E2E",
-    builderToken: "asset-folder-multiselect-e2e-builder-token",
-  });
-  const folderNames = ["Alpha", "Bravo", "Charlie"];
-  const createdAt = new Date().toISOString();
-  await insertAssetFolders(
-    folderNames.map((name) => ({
-      id: randomUUID(),
-      projectId: fixture.projectId,
-      name,
-      parentId: null,
-      createdAt,
-    }))
-  );
-
-  await openProjectBuilder({
-    page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
-  });
-  await waitForSyncStatus({ page, status: "idle" });
-  await openAssetsPanel({ page });
+const deleteSelectedFolders = async (page: Page, folderNames: string[]) => {
   const folders = folderNames.map((name) =>
     page.getByRole("button", { name: `Folder ${name}`, exact: true })
   );
@@ -246,11 +188,56 @@ test("Folders can be multiselected and deleted as one operation", async ({
   await folders[0]!.waitFor({ state: "hidden" });
   await folders[2]!.waitFor({ state: "hidden" });
   await folders[1]!.waitFor({ state: "visible" });
+};
+
+test("Assets can be selected and dragged and folders can be multiselected and deleted", async ({
+  page,
+  context,
+}) => {
+  const { projectId, builderToken } = await createContentModeProject({
+    context,
+    email: "asset-folder-autoscroll-e2e@webstudio.test",
+    title: "Asset Folder Autoscroll E2E",
+    builderToken: "asset-folder-autoscroll-e2e-builder-token",
+  });
+
+  // The long list is a precondition for the drag, so seed its filler folders together.
+  const createdAt = new Date().toISOString();
+  const folderNames = ["Alpha", "Bravo", "Charlie"];
+  const fillers = Array.from(
+    { length: 24 },
+    (_, index) => `Filler ${String(index).padStart(2, "0")}`
+  );
+  await insertAssetFolders(
+    [...folderNames, ...fillers].map((name) => ({
+      id: randomUUID(),
+      projectId,
+      name,
+      parentId: null,
+      createdAt,
+    }))
+  );
 
   await openProjectBuilder({
     page,
-    projectId: fixture.projectId,
-    authToken: fixture.builderToken,
+    projectId,
+    authToken: builderToken,
+  });
+  await waitForSyncStatus({ page, status: "idle" });
+  await openAssetsPanel({ page });
+  await test.step("Asset selection and drag work across a long folder list", async () => {
+    await selectAndDragAssets(page);
+  });
+
+  await test.step("Folders can be multiselected and deleted as one operation", async () => {
+    await page.getByRole("button", { name: "Back", exact: true }).click();
+    await deleteSelectedFolders(page, folderNames);
+  });
+
+  await openProjectBuilder({
+    page,
+    projectId,
+    authToken: builderToken,
   });
   await openAssetsPanel({ page });
   await page

@@ -124,6 +124,7 @@ export const createShareLink = async ({
   });
   const nameInput = customLinkOptions.getByLabel("Name");
   await nameInput.fill(name);
+  await selectRole({ options: customLinkOptions, role });
   await saveShareLinkOptions({
     page,
     closeOptions: () =>
@@ -144,18 +145,6 @@ export const createShareLink = async ({
       `Expected renamed share link "${name}" to be visible. aria-busy=${isBusy}; links=${shareLinkLabels.join(", ")}`,
       { cause: error }
     );
-  }
-  await renamedLink.getByRole("button", { name: "Options menu" }).click();
-  const renamedLinkOptions = getShareLinkOptions({ page, name });
-  const roleChanged = await selectRole({ options: renamedLinkOptions, role });
-  if (roleChanged) {
-    await saveShareLinkOptions({
-      page,
-      closeOptions: () =>
-        renamedLink.getByRole("button", { name: "Options menu" }).click(),
-    });
-  } else {
-    await renamedLink.getByRole("button", { name: "Options menu" }).click();
   }
   await waitForShareLinksReady({ page });
 };

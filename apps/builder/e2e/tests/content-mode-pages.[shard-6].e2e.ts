@@ -40,6 +40,10 @@ test("Editor can create a styled page, edit allowed settings, and reload it in c
   const editedDescription = "Edited settings description";
   const editedLanguage = "en-US";
   const editedSocialImage = "https://example.com/content-mode-social.png";
+  const metadata = {
+    property: "content-mode",
+    content: "edited metadata",
+  };
 
   const expectTemplatedCanvas = async () => {
     await waitForCanvasTextStyle({
@@ -111,23 +115,14 @@ test("Editor can create a styled page, edit allowed settings, and reload it in c
       description: editedDescription,
       language: editedLanguage,
       socialImage: editedSocialImage,
-      metadata: {
-        property: "content-mode",
-        content: "edited metadata",
-      },
+      metadata,
     });
     await choosePageSettingsSocialImageAsset({
       page,
       filename: fixture.assetTemplateImageName,
       label: fixture.assetTemplateImageAlt,
     });
-    await fillCustomMetadata({
-      page,
-      metadata: {
-        property: "content-mode",
-        content: "edited metadata",
-      },
-    });
+    await fillCustomMetadata({ page, ...metadata });
   });
 
   await measure("content mode reload created page and settings", async () => {
@@ -182,10 +177,6 @@ test("Editor can create a styled page, edit allowed settings, and reload it in c
       `Expected social image preview to render ${fixture.assetTemplateImageName}, received ${socialPreviewImageSrc}`
     );
   }
-  await expectCustomMetadataValue({
-    page,
-    property: "content-mode",
-    content: "edited metadata",
-  });
+  await expectCustomMetadataValue({ page, ...metadata });
   await waitForSyncComplete({ page });
 });

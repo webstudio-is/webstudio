@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { expect, type BrowserContext, type Frame } from "@playwright/test";
+import { expect, type Frame, type Page } from "@playwright/test";
 import {
   getCanvasInstance,
   getCanvasInstanceSelector,
@@ -10,8 +10,6 @@ import { openNavigatorPanel } from "../flows/navigator";
 import { waitForSyncComplete } from "../flows/sync-status";
 import { createSlotKeyboardProject } from "../fixtures/slot-keyboard-project";
 import { test } from "../test";
-
-test.describe.configure({ mode: "parallel" });
 
 const wrapper = ["slot-keyboard-wrapper", "slot-keyboard-body"];
 const box = "slot-keyboard-div";
@@ -28,6 +26,7 @@ const getSlotPair = (suffix = "") => {
 };
 
 const { fragmentA, fragmentB } = getSlotPair();
+const indentSuffix = "-indent";
 
 // Each move starts with the same two children in a separate shared fragment.
 const canvasDetachMoves = [
@@ -55,32 +54,20 @@ const expectInstanceOrder = async (
   );
 };
 
-const createFixture = async (
-  context: BrowserContext,
-  additionalPairSuffixes: string[] = []
-) => {
-  const id = randomUUID();
-  return await createSlotKeyboardProject({
-    context,
-    email: `slot-keyboard-${id}@webstudio.test`,
-    builderToken: `slot-keyboard-${id}-builder-token`,
-    additionalPairSuffixes,
-  });
-};
-
 const expectIndented = async (canvas: Frame) => {
-  await expect(
-    getCanvasInstance({
-      canvas,
-      instanceSelector: [heading, box, ...fragmentA],
-    })
-  ).toBeVisible();
-  await expect(
-    getCanvasInstance({
-      canvas,
-      instanceSelector: [heading, box, ...fragmentB],
-    })
-  ).toBeVisible();
+  const { fragmentA, fragmentB } = getSlotPair(indentSuffix);
+  for (const fragment of [fragmentA, fragmentB]) {
+    await expect(
+      getCanvasInstance({
+        canvas,
+        instanceSelector: [
+          `${heading}${indentSuffix}`,
+          `${box}${indentSuffix}`,
+          ...fragment,
+        ],
+      })
+    ).toBeVisible();
+  }
 };
 
 const expectDetached = async (
@@ -116,22 +103,11 @@ const expectDetached = async (
   await expectInstanceOrder(canvas, movedSelector, slotB);
 };
 
-test("Canvas shortcuts select shared Slot siblings and persist keyboard moves", async ({
-  page,
-  context,
-}) => {
-  const { projectId, builderToken } = await createFixture(
-    context,
-    canvasDetachMoves.map(({ suffix }) => suffix)
-  );
-  const canvas = await openProjectBuilder({
-    page,
-    projectId,
-    authToken: builderToken,
-  });
+const moveCanvasSlotChildren = async (page: Page, canvas: Frame) => {
+  const { fragmentA } = getSlotPair(indentSuffix);
   const canvasHeading = getCanvasInstance({
     canvas,
-    instanceSelector: [heading, ...fragmentA],
+    instanceSelector: [`${heading}${indentSuffix}`, ...fragmentA],
   });
 
   await canvasHeading.click();
@@ -157,26 +133,9 @@ test("Canvas shortcuts select shared Slot siblings and persist keyboard moves", 
       await expectDetached(canvas, move);
     });
   }
+};
 
-  await waitForSyncComplete({ page, timeout: 30_000 });
-  await page.reload();
-  const reloadedCanvas = await waitForCanvasFrame({ page });
-  await expectIndented(reloadedCanvas);
-  for (const move of canvasDetachMoves) {
-    await expectDetached(reloadedCanvas, move);
-  }
-});
-
-test("Navigator shortcuts reorder and outdent shared Slot children while keeping keyboard focus", async ({
-  page,
-  context,
-}) => {
-  const { projectId, builderToken } = await createFixture(context);
-  const canvas = await openProjectBuilder({
-    page,
-    projectId,
-    authToken: builderToken,
-  });
+const moveNavigatorSlotChildren = async (page: Page, canvas: Frame) => {
   await getCanvasInstance({
     canvas,
     instanceSelector: [heading, ...fragmentA],
@@ -186,6 +145,7 @@ test("Navigator shortcuts reorder and outdent shared Slot children while keeping
   const navigator = page.locator("[data-navigator-tree]");
   const row = navigator
     .getByRole("button", { name: "Slot Heading", exact: true })
+    .and(navigator.locator(`[data-navigator-instance-id="${heading}"]`))
     .first();
   await row.click();
   await page.keyboard.press("Control+ArrowUp");
@@ -212,11 +172,42 @@ test("Navigator shortcuts reorder and outdent shared Slot children while keeping
       exact: true,
     })
   ).toBeFocused();
+};
+
+test("Canvas and Navigator shortcuts move shared Slot children and persist changes", async ({
+  page,
+  context,
+}) => {
+  const id = randomUUID();
+  const { projectId, builderToken } = await createSlotKeyboardProject({
+    context,
+    email: `slot-keyboard-${id}@webstudio.test`,
+    builderToken: `slot-keyboard-${id}-builder-token`,
+    additionalPairSuffixes: [
+      indentSuffix,
+      ...canvasDetachMoves.map(({ suffix }) => suffix),
+    ],
+  });
+  const canvas = await openProjectBuilder({
+    page,
+    projectId,
+    authToken: builderToken,
+  });
+
+  await test.step("Canvas shortcuts select shared siblings and move children", async () => {
+    await moveCanvasSlotChildren(page, canvas);
+  });
+
+  await test.step("Navigator shortcuts reorder and outdent children and keep keyboard focus", async () => {
+    await moveNavigatorSlotChildren(page, canvas);
+  });
 
   await waitForSyncComplete({ page, timeout: 30_000 });
   await page.reload();
-  await expectDetached(await waitForCanvasFrame({ page }), {
-    id: heading,
-    position: "before",
-  });
+  const reloadedCanvas = await waitForCanvasFrame({ page });
+  await expectIndented(reloadedCanvas);
+  for (const move of canvasDetachMoves) {
+    await expectDetached(reloadedCanvas, move);
+  }
+  await expectDetached(reloadedCanvas, { id: heading, position: "before" });
 });
