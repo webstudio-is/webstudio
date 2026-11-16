@@ -4,6 +4,9 @@ description: |
   Sets up the CI environment for the project.
 
 inputs:
+  install-dependencies:
+    description: Install workspace dependencies after setting up the tools and cache.
+    default: "true"
   run-scripts:
     description: Run dependency lifecycle scripts during installation.
     default: "false"
@@ -23,4 +26,5 @@ runs:
           install_args+=(--ignore-scripts)
         fi
         pnpm install "${install_args[@]}"
+      if: inputs.install-dependencies == 'true'
       shell: bash

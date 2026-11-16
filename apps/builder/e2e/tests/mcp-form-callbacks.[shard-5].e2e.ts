@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { createProjectThroughApi } from "../fixtures/create-project";
 import {
   concurrencyPath,
   startFormCallbackReceiver,
@@ -19,17 +19,17 @@ test("Generated Preview runs Form callbacks, concurrent Actions, and query navig
   context,
 }) => {
   await startPreviewFormMcpClient();
-  const fixture = await createContentModeProject({
+  const projectId = await createProjectThroughApi({
     context,
+    page,
     email: "mcp-form-callbacks@webstudio.test",
     title: "MCP Form callbacks",
-    assetNamePrefix: "mcp-form-callbacks-",
   });
   const receiver = await startFormCallbackReceiver();
   try {
     const { stdout } = await runFormAuthor(
       "mcp-form-callbacks-and-actions-author",
-      fixture.projectId,
+      projectId,
       managedPath,
       concurrencyPath
     );
@@ -41,7 +41,7 @@ test("Generated Preview runs Form callbacks, concurrent Actions, and query navig
         middleResourceId: string;
       };
     await withGeneratedPreview({
-      projectId: fixture.projectId,
+      projectId,
       evaluationReceiverPort: String(receiver.port),
       callback: async ({ url }) => {
         await page.route("**/*", (route) =>

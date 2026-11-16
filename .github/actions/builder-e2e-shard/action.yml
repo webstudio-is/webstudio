@@ -22,7 +22,19 @@ runs:
 
     - uses: ./.github/actions/ci-setup
       with:
-        run-scripts: "true"
+        install-dependencies: "false"
+
+    - name: Install dependencies and pull E2E images
+      shell: bash
+      run: |
+        timeout --kill-after=10s "${E2E_DOCKER_PULL_TIMEOUT_SECONDS:-300}s" \
+          bash apps/builder/backend/run.sh snapshot pull --policy missing db postgrest &
+        image_pull=$!
+        trap 'kill "$image_pull" 2>/dev/null || true' EXIT
+
+        pnpm install --frozen-lockfile
+        wait "$image_pull"
+        trap - EXIT
 
     - name: Cache Playwright Chromium
       uses: actions/cache@v5
