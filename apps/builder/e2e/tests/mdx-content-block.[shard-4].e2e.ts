@@ -216,22 +216,24 @@ test("Nested MDX heading edits survive immediate Builder reload", async ({
   const canvas = await waitForCanvasFrame({ page });
   const heading = canvas.locator("h3", { hasText: "perustukset" });
   await heading.waitFor({ state: "visible" });
-  await heading.dblclick();
-  const editable = canvas.locator("h3[contenteditable]");
-  await editable.waitFor({ state: "visible" });
-  await page.keyboard.press("End");
   await page.route("**/rest/assets/*/content?*", async (route) => {
     if (route.request().method() === "PUT") {
       await new Promise((resolve) => setTimeout(resolve, 2_000));
     }
     await route.continue();
   });
-  await page.keyboard.type(" TEST");
-  await canvas.locator("body").click({ position: { x: 1, y: 1 } });
+  await replaceCanvasText({
+    page,
+    currentText: "perustukset",
+    text: "Edited nested heading",
+    waitForProjectSync: false,
+  });
   await waitForSyncStatus({ page, status: "idle" });
   await page.reload();
   const reopenedCanvas = await waitForCanvasFrame({ page });
-  await reopenedCanvas.locator("h3", { hasText: "perustukset TEST" }).waitFor();
+  await reopenedCanvas
+    .locator("h3", { hasText: "Edited nested heading" })
+    .waitFor();
 });
 
 test("Content Block MDX source lifecycle persists edits and resets to empty", async ({
