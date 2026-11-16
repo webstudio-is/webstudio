@@ -242,11 +242,7 @@ test("Assets can be selected and dragged and folders can be multiselected and de
     await deleteSelectedFolders(page, folderNames);
   });
 
-  await openProjectBuilder({
-    page,
-    projectId,
-    authToken: builderToken,
-  });
+  await page.reload();
   await openAssetsPanel({ page });
   await page
     .getByRole("button", { name: "Folder Bravo", exact: true })
