@@ -28,7 +28,7 @@ runs:
         shards=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)
         SHARDS="$shards" node -e '
           const shards = JSON.parse(process.env.SHARDS);
-          if (shards.length !== 8 || shards.some(({ shard, partition }, index) =>
+          if (shards.length !== 5 || shards.some(({ shard, partition }, index) =>
             shard !== `shard-${index + 1}` || partition !== "")) {
             throw new Error("Builder E2E shard matrix changed; update the workflow matrix before running CI.");
           }

@@ -17,7 +17,7 @@ used by Preview tests.
 
 In CI, the build job caches those compiled files. A later E2E-only change can
 restore them after dependency setup; changes outside `apps/builder/e2e` still
-compile Builder before the eight shards download the build artifact.
+compile Builder before the five shards download the build artifact.
 
 The schema snapshot is generated from the regular migration pipeline and
 committed at `e2e/schema/schema-<fingerprint>.sql`. When a migration or backend
@@ -95,15 +95,15 @@ each invocation.
 - Keep tests in a file independent even though Playwright runs them in
   declaration order by default.
 
-CI runs eight isolated Playwright shards with three workers each. Files are
-assigned by measured CI duration to keep the slowest job short:
+CI runs five isolated Playwright shards with three workers each. Files have a
+fixed assignment based on measured CI duration to keep the slowest job short:
 
 ```txt
-pages-actions.[shard-8].e2e.ts
+pages-actions.[shard-5].e2e.ts
 ```
 
 Every E2E filename in CI must contain one shard tag. The build job checks that
-the tags match the eight shards in the workflow. Rebalance by changing filename
+the tags match the five shards in the workflow. Rebalance by changing filename
 tags when measured job durations drift.
 
 Suites may opt into parallel mode only when every worker creates uniquely named
