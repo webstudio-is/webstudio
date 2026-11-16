@@ -1,11 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { insertAssetFolders } from "../db";
-import {
-  createAssetFolder,
-  openAssetsPanel,
-  uploadAssets,
-} from "../flows/assets-panel";
+import { openAssetsPanel, uploadAssets } from "../flows/assets-panel";
 import { openProjectBuilder } from "../flows/builder";
 import {
   waitForChangeToBeSaved,
@@ -64,9 +60,9 @@ const selectAndDragAssets = async (page: Page) => {
   }
   await page.keyboard.press("Escape");
   const scrollArea = page.locator("[data-asset-manager-scroll-area]");
-  const destination = await createAssetFolder({
-    page,
-    name: "Destination",
+  const destination = page.getByRole("button", {
+    name: "Folder Destination",
+    exact: true,
   });
   const asset = firstAsset;
   await asset.scrollIntoViewIfNeeded();
@@ -196,6 +192,7 @@ test("Assets can be selected and dragged and folders can be multiselected and de
 }) => {
   const { projectId, builderToken } = await createContentModeProject({
     context,
+    page,
     email: "asset-folder-autoscroll-e2e@webstudio.test",
     title: "Asset Folder Autoscroll E2E",
     builderToken: "asset-folder-autoscroll-e2e-builder-token",
@@ -209,7 +206,7 @@ test("Assets can be selected and dragged and folders can be multiselected and de
     (_, index) => `Filler ${String(index).padStart(2, "0")}`
   );
   await insertAssetFolders(
-    [...folderNames, ...fillers].map((name) => ({
+    [...folderNames, "Destination", ...fillers].map((name) => ({
       id: randomUUID(),
       projectId,
       name,

@@ -181,6 +181,7 @@ test("Canvas and Navigator shortcuts move shared Slot children and persist chang
   const id = randomUUID();
   const { projectId, builderToken } = await createSlotKeyboardProject({
     context,
+    page,
     email: `slot-keyboard-${id}@webstudio.test`,
     builderToken: `slot-keyboard-${id}-builder-token`,
     additionalPairSuffixes: [

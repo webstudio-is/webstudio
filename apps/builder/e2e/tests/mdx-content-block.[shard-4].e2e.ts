@@ -209,7 +209,8 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
   // exhaust the default two-minute budget at the final reload assertion.
   test.setTimeout(180_000);
   const fixture = await createContentModeProject({
-    context: context,
+    context,
+    page,
     devPlan: e2ePaidPlanName,
     email: "mdx-content-source-e2e@webstudio.test",
     title: "MDX Content Source E2E",
@@ -490,6 +491,7 @@ test("Content editors switch MDX sources, edit isolated scopes, and recover from
 }) => {
   const fixture = await createContentModeProject({
     context,
+    page,
     devPlan: e2ePaidPlanName,
     email: "mdx-content-editor-e2e@webstudio.test",
     title: "MDX Content Editor E2E",
@@ -816,6 +818,7 @@ test("MDX template warnings and renamed templates resolve in the right modes", a
 }) => {
   const fixture = await createContentModeProject({
     context,
+    page,
     email: "mdx-template-lifecycle-e2e@webstudio.test",
     title: "MDX Template Lifecycle E2E",
   });

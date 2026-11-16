@@ -1,4 +1,4 @@
-import type { BrowserContext } from "@playwright/test";
+import type { BrowserContext, Page } from "@playwright/test";
 import { createSeededBuilderProject } from "./builder-project";
 
 export type SeededSlotKeyboardProject = {
@@ -115,19 +115,19 @@ const createSlotKeyboardBuildData = ({
           styleSourceId: divStyleSourceId,
           breakpointId: baseBreakpointId,
           property: "minHeight",
-          value: { type: "unit", unit: "px", value: 120 },
+          value: { type: "unit", unit: "px", value: 36 },
         },
         {
           styleSourceId: divStyleSourceId,
           breakpointId: baseBreakpointId,
           property: "padding",
-          value: { type: "unit", unit: "px", value: 24 },
+          value: { type: "unit", unit: "px", value: 8 },
         },
         {
           styleSourceId: headingStyleSourceId,
           breakpointId: baseBreakpointId,
           property: "marginTop",
-          value: { type: "unit", unit: "px", value: 24 },
+          value: { type: "unit", unit: "px", value: 8 },
         },
       ],
     };
@@ -173,7 +173,7 @@ const createSlotKeyboardBuildData = ({
         styleSourceId: wrapperStyleSourceId,
         breakpointId: baseBreakpointId,
         property: "gap",
-        value: { type: "unit", unit: "px", value: 32 },
+        value: { type: "unit", unit: "px", value: 8 },
       },
       ...slotPairs.flatMap((pair) => pair.styles),
     ]),
@@ -185,12 +185,14 @@ const createSlotKeyboardBuildData = ({
 
 export const createSlotKeyboardProject = async ({
   context,
+  page,
   email = "slot-keyboard-e2e@webstudio.test",
   title = "Slot Keyboard E2E",
   builderToken = "slot-keyboard-e2e-builder-token",
   additionalPairSuffixes = [],
 }: {
   context: BrowserContext;
+  page: Page;
   email?: string;
   title?: string;
   builderToken?: string;
@@ -198,6 +200,7 @@ export const createSlotKeyboardProject = async ({
 }): Promise<SeededSlotKeyboardProject> => {
   return await createSeededBuilderProject({
     context,
+    page,
     email,
     title,
     builderToken,
