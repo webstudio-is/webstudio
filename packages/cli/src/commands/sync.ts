@@ -154,7 +154,11 @@ export const syncOptions = (yargs: CommonYargsArgv) =>
       describe: "[Experimental] Service token",
     });
 
-type SyncOptions = Partial<StrictYargsOptionsToInterface<typeof syncOptions>>;
+type SyncOptions = Partial<
+  StrictYargsOptionsToInterface<typeof syncOptions>
+> & {
+  assets?: boolean;
+};
 
 const unpublishedProjectBundleMessage = [
   "The selected build cannot be exported.",
@@ -308,11 +312,16 @@ export const sync = async (
       id.startsWith("__content-block-mdx__:")
     ) === true;
   const assetsToDownload =
-    options.buildId !== undefined && !isStaticBuild && !needsMdxCompilation
-      ? project.assets.filter(
-          (asset) => asset.format !== "md" && asset.format !== "mdx"
-        )
-      : project.assets;
+    options.assets === false &&
+    options.buildId !== undefined &&
+    project.build.deployment?.destination === "saas" &&
+    !needsMdxCompilation
+      ? []
+      : options.buildId !== undefined && !isStaticBuild && !needsMdxCompilation
+        ? project.assets.filter(
+            (asset) => asset.format !== "md" && asset.format !== "mdx"
+          )
+        : project.assets;
   if (assetsToDownload.length > 0) {
     syncing.message(`Downloading ${assetsToDownload.length} asset files`);
     if (project.origin === undefined) {
