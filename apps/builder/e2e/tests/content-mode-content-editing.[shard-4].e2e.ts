@@ -26,10 +26,7 @@ import {
   openPagesPanel,
 } from "../flows/pages-panel";
 import { selectNavigatorItem } from "../flows/navigator";
-import {
-  waitForChangeToBeSaved,
-  waitForSyncComplete,
-} from "../flows/sync-status";
+import { waitForSyncComplete } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
@@ -282,10 +279,7 @@ test("Editor can paste, format and delete text while protected content remains",
   }
 
   await measure("content mode undo rich text formatting", async () => {
-    await Promise.all([
-      waitForChangeToBeSaved({ page }),
-      page.keyboard.press("ControlOrMeta+Z"),
-    ]);
+    await page.keyboard.press("ControlOrMeta+Z");
     await waitForCanvasTextHidden({ page, text: formattedText });
     await waitForCanvasText({ page, text: fixture.shareLinkEditableText });
   });
