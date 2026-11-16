@@ -20,10 +20,7 @@ import {
   replaceCanvasText,
   replaceCanvasTextAndApplyInlineFormats,
 } from "../flows/content-editing";
-import {
-  fillSelectedStringProperty,
-  waitForSelectedStringPropertyValue,
-} from "../flows/props-panel";
+import { waitForSelectedStringPropertyValue } from "../flows/props-panel";
 import {
   expectContentModeTemplateActionsUnavailable,
   openPagesPanel,
@@ -303,12 +300,18 @@ test("Editor can paste, format and delete text while protected content remains",
     text: formattedText,
     propertyLabel: "Href",
   });
-  await fillSelectedStringProperty({
-    page,
-    label: "Href",
-    control: "url",
-    value: editedHref,
-  });
+  const urlInput = page.getByPlaceholder("https://www.url.com").first();
+  await urlInput.fill(editedHref);
+  await urlInput.blur();
+
+  const canvas = await waitForCanvasFrame({ page });
+  await expect(
+    canvas.getByRole("link", { name: existingLinkText })
+  ).toBeVisible();
+  // Save both link edits before checking the stored build and reloading.
+  await removeCanvasInlineLink({ page, text: existingLinkText });
+  await waitForSyncComplete({ page });
+
   const savedHref = await getElementHrefWithText({
     projectId: fixture.projectId,
     text: formattedText,
@@ -319,11 +322,6 @@ test("Editor can paste, format and delete text while protected content remains",
     );
   }
 
-  const canvas = await waitForCanvasFrame({ page });
-  await expect(
-    canvas.getByRole("link", { name: existingLinkText })
-  ).toBeVisible();
-  await removeCanvasInlineLink({ page, text: existingLinkText });
   const removedLinkCount = await getElementTagWithTextCount({
     projectId: fixture.projectId,
     tag: "a",

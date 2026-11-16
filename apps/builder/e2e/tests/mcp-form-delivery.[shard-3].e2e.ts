@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { expect } from "@playwright/test";
 import { loadDevBuild } from "../db";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { createBuilderEditingProject } from "../fixtures/builder-editing-project";
 import { startFormDeliveryReceiver } from "../flows/generated-form-delivery";
 import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
 import { startLocalEmailReceiver } from "../flows/mcp-email-preview";
@@ -25,13 +25,10 @@ test("Project redirects and MCP-authored Forms run in the same generated product
   test.setTimeout(240_000);
 
   await startPreviewFormMcpClient();
-  const fixture = await createContentModeProject({
+  const fixture = await createBuilderEditingProject({
     context,
-    email: "mcp-email-attachments@webstudio.test",
-    title: "MCP Form delivery and project settings",
+    name: "mcp-email-attachments",
     devPlan: e2eEmailPlanName,
-    assetNamePrefix: "mcp-email-attachments-",
-    builderToken: "mcp-email-attachments-builder-token",
   });
   const requests: Array<{ method: string; url: string }> = [];
   const server = createServer((request, response) => {

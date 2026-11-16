@@ -1,4 +1,4 @@
-import type { Page as PlaywrightPage } from "@playwright/test";
+import { expect, type Page as PlaywrightPage } from "@playwright/test";
 import { parseProjectAuthRoutes } from "@webstudio-is/project-build/contracts";
 import { updateProject } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
@@ -12,7 +12,10 @@ import {
   getPersistedProjectSettings,
   openProjectSettings,
 } from "../flows/project-settings-runtime";
-import { waitForChangeToBeSaved } from "../flows/sync-status";
+import {
+  waitForChangeToBeSaved,
+  waitForSyncComplete,
+} from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { test } from "../test";
 import { measure } from "../perf";
@@ -147,31 +150,25 @@ test("Marketplace page settings and project authentication routes persist after 
     "marketplace page settings update marketplace fields",
     async () => {
       await openPageSettings({ page, pageName });
-      const includeSave = waitForChangeToBeSaved({ page });
       await page.getByLabel("Include in the marketplace").click();
-      await includeSave;
-
-      const categorySave = waitForChangeToBeSaved({ page });
       await page.getByLabel("Category").fill(category);
       await page.getByLabel("Category").blur();
-      await categorySave;
+
+      await expect
+        .poll(
+          async () => {
+            const persistedPage = await getPersistedPageByName({
+              projectId: fixture.projectId,
+              name: pageName,
+            });
+            return persistedPage.marketplace;
+          },
+          { message: "Marketplace settings persist before reload" }
+        )
+        .toMatchObject({ include: true, category });
+      await waitForSyncComplete({ page });
     }
   );
-
-  let persistedPage = await getPersistedPageByName({
-    projectId: fixture.projectId,
-    name: pageName,
-  });
-  if (
-    persistedPage.marketplace?.include !== true ||
-    persistedPage.marketplace.category !== category
-  ) {
-    throw new Error(
-      `Expected marketplace settings to persist. Received ${JSON.stringify(
-        persistedPage.marketplace
-      )}`
-    );
-  }
 
   await measure("marketplace page settings reload builder", async () => {
     await openProjectBuilder({
@@ -197,7 +194,7 @@ test("Marketplace page settings and project authentication routes persist after 
       `Expected marketplace category "${category}", received "${categoryValue}"`
     );
   }
-  persistedPage = await getPersistedPageByName({
+  const persistedPage = await getPersistedPageByName({
     projectId: fixture.projectId,
     name: pageName,
   });

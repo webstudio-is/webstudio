@@ -10,6 +10,7 @@ export const createSeededBuilderProject = async ({
   page,
   email,
   title,
+  devPlan,
   builderToken,
   createBuildUpdate,
 }: {
@@ -17,6 +18,7 @@ export const createSeededBuilderProject = async ({
   page?: Page;
   email: string;
   title: string;
+  devPlan?: string;
   builderToken: string;
   createBuildUpdate: (build: Build) => BuildUpdate | Promise<BuildUpdate>;
 }) => {
@@ -25,6 +27,7 @@ export const createSeededBuilderProject = async ({
     page,
     email,
     title,
+    devPlan,
   });
   const build = await loadDevBuild({ projectId });
   await updateBuild(build.id, {

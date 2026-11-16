@@ -14,11 +14,13 @@ export const createBuilderEditingProject = ({
   context,
   page,
   name,
+  devPlan,
   includePageTemplate = false,
 }: {
   context: BrowserContext;
   page?: Page;
   name: string;
+  devPlan?: string;
   includePageTemplate?: boolean;
 }) =>
   createSeededBuilderProject({
@@ -26,6 +28,7 @@ export const createBuilderEditingProject = ({
     page,
     email: `${name}@webstudio.test`,
     title: name,
+    devPlan,
     builderToken: `${name}-${randomUUID()}-builder-token`,
     createBuildUpdate: (build) => {
       const pages = migratePages(JSON.parse(build.pages));
