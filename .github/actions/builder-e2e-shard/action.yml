@@ -63,12 +63,20 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        for attempt in {1..84}; do
+        wait_started_at=$SECONDS
+        deadline=$((wait_started_at + 7 * 60))
+        while (( SECONDS < deadline )); do
           available=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=builder-e2e-build" --jq '.artifacts | max_by(.id) | .expired == false')
           if [ "$available" = true ]; then
             exit 0
           fi
-          sleep 5
+          # Check more often during normal builds without increasing the
+          # maximum number of requests if the build never uploads.
+          if (( SECONDS - wait_started_at < 40 )); then
+            sleep 2
+          else
+            sleep 6
+          fi
         done
         echo "Builder E2E build artifact was not uploaded within 7 minutes" >&2
         exit 1

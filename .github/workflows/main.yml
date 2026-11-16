@@ -215,7 +215,6 @@ jobs:
           - shard-7
           - shard-8
           - shard-9
-          - shard-10
 
     permissions:
       contents: read
