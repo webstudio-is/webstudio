@@ -5,7 +5,7 @@ import { loadDevBuild } from "../db";
 import { startFormDeliveryReceiver } from "../flows/generated-form-delivery";
 import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
 import type { CapturedEmail } from "../flows/mcp-email-preview";
-import { runFormAuthor } from "../flows/mcp-form-author";
+import type { preparePreviewBundle } from "../fixtures/mcp-email-delivery-author";
 import { configureSavedWebhookForm } from "../flows/webhook-form-action";
 import { test } from "../test";
 import {
@@ -31,64 +31,6 @@ test("Builder and MCP Form actions deliver from generated Preview", async ({
   await test.step("save the legacy Webhook Form action through Builder", async () => {
     await configureSavedWebhookForm({ page, fixture });
   });
-  const { stdout } = await runFormAuthor(
-    "mcp-managed-form-author",
-    fixture.projectId,
-    "email",
-    "email-isolation",
-    "email-http-combination"
-  );
-  const [standard, isolated, combined] = stdout
-    .trim()
-    .split("\n")
-    .map((line) => JSON.parse(line)) as [
-    { formId: string; emailResourceIds?: string[] },
-    {
-      formId: string;
-      secondFormId?: string;
-      emailResourceIdsByForm?: [string, string];
-    },
-    { formId: string; emailResourceId: string; httpResourceId: string },
-  ];
-  const emailResourceIds = standard.emailResourceIds;
-  const isolatedResourceIds = isolated.emailResourceIdsByForm;
-  if (
-    emailResourceIds === undefined ||
-    isolatedResourceIds === undefined ||
-    isolated.secondFormId === undefined
-  ) {
-    throw new Error("Expected authored Email Forms and Resources");
-  }
-  expect(emailResourceIds).toHaveLength(2);
-  expect(isolated.secondFormId).toBeDefined();
-  expect(isolated.formId).not.toBe(isolated.secondFormId);
-  expect(isolatedResourceIds).toHaveLength(2);
-  expect(isolatedResourceIds[0]).not.toBe(isolatedResourceIds[1]);
-
-  const authoredBuild = await loadDevBuild({ projectId: fixture.projectId });
-  const authoredResources = JSON.parse(authoredBuild.resources) as Array<{
-    id: string;
-    name: string;
-    email?: Record<string, unknown>;
-  }>;
-  const authoredEmailResources = authoredResources.filter(({ id }) =>
-    emailResourceIds.includes(id)
-  );
-  expect(authoredEmailResources).toHaveLength(2);
-  expect(
-    authoredEmailResources.find(({ name }) => name === "Email to visitor")
-      ?.email
-  ).toMatchObject({
-    recipientMode: "visitor",
-    visitorEmailField: "email",
-  });
-  expect(JSON.parse(authoredBuild.projectSettings)).toMatchObject({
-    meta: {
-      contactEmail: "owner@mcp.test",
-      emailSender: "Contact Form <forms@mcp.test>",
-    },
-  });
-
   const messages: CapturedMessage[] = [];
   let rejectNext = false;
   const receiver = createServer(async (request, response) => {
@@ -134,9 +76,57 @@ test("Builder and MCP Form actions deliver from generated Preview", async ({
     }
     await withMcpEmailHttpPreview({
       projectId: fixture.projectId,
+      prepareModule: new URL(
+        "../fixtures/mcp-email-delivery-author.ts",
+        import.meta.url
+      ).href,
       emailPort: address.port,
       httpPort: httpReceiver.port,
-      callback: async ({ url }) => {
+      callback: async ({ url, prepared }) => {
+        const { standard, isolated, combined } = prepared as Awaited<
+          ReturnType<typeof preparePreviewBundle>
+        >;
+        const emailResourceIds = standard.emailResourceIds;
+        const isolatedResourceIds = isolated.emailResourceIdsByForm;
+        if (
+          emailResourceIds === undefined ||
+          isolatedResourceIds === undefined ||
+          isolated.secondFormId === undefined
+        ) {
+          throw new Error("Expected authored Email Forms and Resources");
+        }
+        expect(emailResourceIds).toHaveLength(2);
+        expect(isolated.secondFormId).toBeDefined();
+        expect(isolated.formId).not.toBe(isolated.secondFormId);
+        expect(isolatedResourceIds).toHaveLength(2);
+        expect(isolatedResourceIds[0]).not.toBe(isolatedResourceIds[1]);
+
+        const authoredBuild = await loadDevBuild({
+          projectId: fixture.projectId,
+        });
+        const authoredResources = JSON.parse(authoredBuild.resources) as Array<{
+          id: string;
+          name: string;
+          email?: Record<string, unknown>;
+        }>;
+        const authoredEmailResources = authoredResources.filter(({ id }) =>
+          emailResourceIds.includes(id)
+        );
+        expect(authoredEmailResources).toHaveLength(2);
+        expect(
+          authoredEmailResources.find(({ name }) => name === "Email to visitor")
+            ?.email
+        ).toMatchObject({
+          recipientMode: "visitor",
+          visitorEmailField: "email",
+        });
+        expect(JSON.parse(authoredBuild.projectSettings)).toMatchObject({
+          meta: {
+            contactEmail: "owner@mcp.test",
+            emailSender: "Contact Form <forms@mcp.test>",
+          },
+        });
+
         await test.step("saved Webhook Form submits once in generated Preview", async () => {
           await page.goto(url);
           expect(httpReceiver.deliveries).toHaveLength(0);

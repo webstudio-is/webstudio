@@ -185,19 +185,20 @@ export const expectGeneratedAppBuild = async (
   }
 };
 
-export const withGeneratedPreview = async <Result>({
-  projectId,
-  callback,
-  evaluationReceiverPort,
-}: {
-  projectId: string;
-  callback: ({ url, html }: { url: string; html: string }) => Promise<Result>;
-  evaluationReceiverPort?: string;
-}) => {
+export const withGeneratedPreview = async <Result>(
+  input: ({ projectId: string } | { build: BuildRow }) & {
+    callback: ({ url, html }: { url: string; html: string }) => Promise<Result>;
+    evaluationReceiverPort?: string;
+  }
+) => {
+  const { callback, evaluationReceiverPort } = input;
   const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-generated-"));
   let preview: ChildProcess | undefined;
   try {
-    const build = await loadDevBuild({ projectId });
+    const build =
+      "build" in input
+        ? input.build
+        : await loadDevBuild({ projectId: input.projectId });
     await mkdir(join(tempDir, ".webstudio"), { recursive: true });
     await writeFile(
       join(tempDir, ".webstudio", "data.json"),

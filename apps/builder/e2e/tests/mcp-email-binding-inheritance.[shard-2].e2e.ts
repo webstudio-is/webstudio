@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { createProjectThroughApi } from "../fixtures/create-project";
 import { expectFormQueryDelivery } from "../flows/form-query";
 import { startFormQueryReceiver } from "../flows/form-query-receiver";
 import { runFormAuthor } from "../flows/mcp-form-author";
@@ -21,17 +21,12 @@ test("MCP form query delivery and Email binding changes across two production Pr
 }) => {
   test.setTimeout(twoPhaseTimeout);
   await startPreviewFormMcpClient();
-  const fixture = await createContentModeProject({
+  const projectId = await createProjectThroughApi({
     context,
     email: "mcp-email-binding-scenarios@webstudio.test",
     title: "MCP Email binding scenarios",
-    assetNamePrefix: "mcp-email-binding-scenarios-",
-    builderToken: "mcp-email-binding-scenarios-builder-token",
   });
-  const { stdout } = await runFormAuthor(
-    "mcp-email-binding-author",
-    fixture.projectId
-  );
+  const { stdout } = await runFormAuthor("mcp-email-binding-author", projectId);
   const { boundFormId, partialFormId, query, initialBundle, updatedBundle } =
     JSON.parse(stdout) as {
       boundFormId: string;

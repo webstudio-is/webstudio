@@ -108,6 +108,8 @@ export const withMcpEmailHttpPreview = async <Result>({
       process: preview,
       url,
       output: () => output.join(""),
+      // Allow time for the author as well as the Preview build when combined.
+      timeout: prepareArgs.length === 0 ? undefined : 180_000,
     });
     if (prepareArgs.length === 0) {
       return await measure("MCP email HTTP Preview callback", () =>
