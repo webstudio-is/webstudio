@@ -1869,13 +1869,10 @@ const assertSupportedNamespaces = ({
       const originalById = new Map(
         root.fragment.assets.map((asset) => [asset.id, asset])
       );
-      const provenanceAssetIds = new Set(
+      const authoredAssetPropIds = new Set(
         root.provenance.nodes.flatMap((node) =>
           node.type === "template"
             ? [
-                ...node.namespaceKeys.flatMap((entry) =>
-                  entry.namespace === "assets" ? [entry.key] : []
-                ),
                 ...node.assetProps.map(({ assetId }) => assetId),
                 ...node.overlaidDescendants.flatMap((descendant) =>
                   descendant.assetProps.map(({ assetId }) => assetId)
@@ -1886,7 +1883,7 @@ const assertSupportedNamespaces = ({
       );
       const isKnownAsset = (assetId: string) =>
         root.assetReferenceValues?.has(assetId) === true ||
-        provenanceAssetIds.has(assetId);
+        authoredAssetPropIds.has(assetId);
       const referencedAssetIds = new Set(
         fragment.props.flatMap((prop) =>
           prop.type === "asset" ? [prop.value] : []
