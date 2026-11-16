@@ -4,6 +4,7 @@ import {
   configureDynamicDetailContentBlock,
   configureEmptyHeadingTemplate,
   configureNamedTemplateLifecycle,
+  configureNestedHeadingTemplates,
   configureRepresentableContentBlockBody,
   configureRepeatedContentBlock,
 } from "../fixtures/mdx-content-block-project";
@@ -46,6 +47,7 @@ const alternateFilename = "alternate-source.mdx";
 const unresolvedFilename = "unresolved-source.mdx";
 const namedTemplateFilename = "named-template-source.mdx";
 const emptyFilename = "empty-source.mdx";
+const nestedHeadingFilename = "nested-heading-source.mdx";
 
 const sourceHeading = "MDX source heading";
 const editedHeading = "Edited MDX source heading";
@@ -179,6 +181,60 @@ const openFixture = async ({
   await openProjectBuilder({ page, projectId, authToken, mode, pageId });
   await waitForSyncStatus({ page, status: "idle" });
 };
+
+test("Nested MDX heading edits survive immediate Builder reload", async ({
+  page,
+  context,
+}) => {
+  const fixture = await createContentModeProject({
+    context,
+    devPlan: e2ePaidPlanName,
+    email: "mdx-nested-heading-e2e@webstudio.test",
+    title: "MDX Nested Heading E2E",
+  });
+  await configureRepresentableContentBlockBody(fixture.projectId);
+  await configureNestedHeadingTemplates(fixture.projectId);
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await openAssetsPanel({ page });
+  await uploadAsset({ page, filename: nestedHeadingFilename });
+  await selectContentBlock({ page });
+  await chooseContentBlockSource({ page, filename: nestedHeadingFilename });
+  await confirmContentBlockConnection({ page });
+  await waitForSyncStatus({ page, status: "idle" });
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await waitForContentEditMode({ page });
+
+  const canvas = await waitForCanvasFrame({ page });
+  const heading = canvas.locator("h3", { hasText: "perustukset" });
+  await heading.waitFor({ state: "visible" });
+  await page.route("**/rest/assets/*/content?*", async (route) => {
+    if (route.request().method() === "PUT") {
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
+    await route.continue();
+  });
+  await replaceCanvasText({
+    page,
+    currentText: "perustukset",
+    text: "Edited nested heading",
+    waitForProjectSync: false,
+  });
+  await waitForSyncStatus({ page, status: "idle" });
+  await page.reload();
+  const reopenedCanvas = await waitForCanvasFrame({ page });
+  await reopenedCanvas
+    .locator("h3", { hasText: "Edited nested heading" })
+    .waitFor();
+});
 
 test("Content Block MDX source lifecycle persists edits and resets to empty", async ({
   page,

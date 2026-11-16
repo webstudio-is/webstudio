@@ -25,6 +25,7 @@ import type {
   MdxTemplateInsertion,
 } from "@webstudio-is/project-build/runtime";
 import type { MdxDocument } from "@webstudio-is/content-engine/mdx";
+import type { AssetContentSessionState } from "@webstudio-is/content-engine/asset-content-session";
 import { atom, type ReadableAtom } from "nanostores";
 import type { ExternalContentOwnership } from "./external-content-persistence";
 import type { FrontmatterSource } from "./content-block-document";
@@ -175,6 +176,9 @@ export const getExternalContentSourceSelector = ({
 
 export const $externalContentRoots = atom(
   new Map<string, ExternalContentRoot>()
+);
+export const $externalContentAssetStatuses = atom(
+  new Map<string, AssetContentSessionState["status"]>()
 );
 const mutationListeners = new Set<(rootKeys: readonly string[]) => void>();
 const templateMutationListeners = new Set<
