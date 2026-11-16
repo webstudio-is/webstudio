@@ -277,6 +277,7 @@ test("Props panel expression bindings and checkbox state persist after reload", 
 }) => {
   const fixture = await createBuilderEditingProject({
     context,
+    page,
     name: "props-runtime",
   });
   const anchorText = "Expression-bound link";

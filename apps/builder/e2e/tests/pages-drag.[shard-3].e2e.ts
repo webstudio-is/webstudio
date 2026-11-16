@@ -7,17 +7,14 @@ import {
 import { openProjectBuilder } from "../flows/builder";
 import { dragTreeRow, getTreeRowByButton } from "../flows/drag";
 import { openPagesPanel } from "../flows/pages-panel";
-import { test, withBrowserContext } from "../test";
+import { test } from "../test";
 
-let fixture: Awaited<ReturnType<typeof createDragProject>>;
-
-test.beforeAll(async ({ browser }) => {
-  fixture = await withBrowserContext(browser, (context) =>
-    createDragProject(context, "pages")
-  );
-});
-
-test("Pages panel pointer drag reorders and nests pages", async ({ page }) => {
+test("Pages panel pointer drag reorders and nests pages", async ({
+  page,
+  context,
+}) => {
+  const fixture = await createDragProject(context, "pages", page);
+  await context.clearCookies();
   await openProjectBuilder({
     page,
     projectId: fixture.projectId,

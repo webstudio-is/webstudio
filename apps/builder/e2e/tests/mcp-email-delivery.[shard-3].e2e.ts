@@ -25,6 +25,7 @@ test("Builder and MCP Form actions deliver from generated Preview", async ({
   await startPreviewFormMcpClient();
   const fixture = await createBuilderEditingProject({
     context,
+    page,
     name: "mcp-email-scenarios",
   });
   await test.step("save the legacy Webhook Form action through Builder", async () => {

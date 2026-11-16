@@ -54,6 +54,7 @@ test("MCP-authored Form submission exposes its saved HTTP exchange without anoth
 }) => {
   const fixture = await createBuilderEditingProject({
     context,
+    page,
     name: "mcp-form-resource-snapshot",
   });
   const receiver = await startFormDeliveryReceiver();

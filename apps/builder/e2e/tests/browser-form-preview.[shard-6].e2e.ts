@@ -59,15 +59,17 @@ const submitContactForm = async (url: string, formId: string) =>
 
 test("Generated Preview delivers MCP-authored forms with readable email and browser context", async ({
   context,
-  page,
 }) => {
   await startPreviewFormMcpClient();
+  const setupPage = await context.newPage();
   const projectId = await createProjectThroughApi({
     context,
-    page,
+    page: setupPage,
     email: "mcp-default-contact@webstudio.test",
     title: "MCP default contact Form",
   });
+  await setupPage.close();
+
   const {
     formData: {
       formId: formDataFormId,
@@ -322,6 +324,7 @@ test("Generated Preview delivers MCP-authored forms with readable email and brow
           ).toBe(true);
         });
         await test.step("dynamic route form delivers scoped submission and browser values", async () => {
+          const page = await context.newPage();
           await page.route("**/*", (route) =>
             new URL(route.request().url()).hostname === "127.0.0.1"
               ? route.continue()

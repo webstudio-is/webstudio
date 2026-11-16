@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { BrowserContext } from "@playwright/test";
+import type { BrowserContext, Page } from "@playwright/test";
 import {
   migratePages,
   serializePages,
@@ -12,15 +12,18 @@ export const pageTemplateText = "Content page template heading";
 
 export const createBuilderEditingProject = ({
   context,
+  page,
   name,
   includePageTemplate = false,
 }: {
   context: BrowserContext;
+  page?: Page;
   name: string;
   includePageTemplate?: boolean;
 }) =>
   createSeededBuilderProject({
     context,
+    page,
     email: `${name}@webstudio.test`,
     title: name,
     builderToken: `${name}-${randomUUID()}-builder-token`,

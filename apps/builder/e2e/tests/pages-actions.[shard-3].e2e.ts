@@ -391,9 +391,7 @@ const insertComponentPanelOption = async ({
   name: string;
 }) => {
   await searchComponentsPanel({ page, text: name });
-  const save = waitForChangeToBeSaved({ page });
   await page.getByRole("option", { name, exact: true }).click();
-  await save;
 };
 
 const openCommandPanel = async ({ page }: { page: Page }) => {
@@ -431,7 +429,6 @@ const runCommandPanelStructuralAction = async ({
   await commandInput.fill(command);
   await selectCommandPanelItem({ page, text: command });
   if (option === undefined) {
-    await waitForChangeToBeSaved({ page });
     return;
   }
 
@@ -446,7 +443,6 @@ const runCommandPanelStructuralAction = async ({
   await optionInput.waitFor();
   await optionInput.fill(option);
   await selectCommandPanelItem({ page, text: option });
-  await waitForChangeToBeSaved({ page });
 };
 
 const runCommandPanelTagInsertion = async ({
@@ -462,7 +458,6 @@ const runCommandPanelTagInsertion = async ({
   });
   await commandInput.fill(tag);
   await selectCommandPanelItem({ page, text: `<${tag}>` });
-  await waitForChangeToBeSaved({ page });
 };
 
 const selectCommandPanelInstance = async ({
@@ -513,7 +508,6 @@ const editSelectedNavigatorLabel = async ({
   await editableLabel.waitFor({ state: "visible" });
   await editableLabel.fill(label);
   await editableLabel.press("Enter");
-  await waitForChangeToBeSaved({ page });
 };
 
 test("Builder Navigator keyboard move, reparent, and reorder persist after reload", async ({
@@ -522,6 +516,7 @@ test("Builder Navigator keyboard move, reparent, and reorder persist after reloa
 }) => {
   const fixture = await createBuilderEditingProject({
     context,
+    page,
     name: "navigator-keyboard",
   });
   const sectionText = "Navigator move section";
@@ -655,6 +650,7 @@ test("Builder Navigator and command panel edits persist after reload", async ({
 }) => {
   const fixture = await createBuilderEditingProject({
     context,
+    page,
     name: "navigator-commands",
   });
   const anchorText = "Initial content";
@@ -671,36 +667,47 @@ test("Builder Navigator and command panel edits persist after reload", async ({
   await waitForCanvasText({ page, text: anchorText });
   await selectCanvasTextInstance({ page, text: anchorText });
 
-  await openComponentsPanel({ page });
-  await insertComponentPanelOption({ page, name: componentName });
   const initial = await inspectBuild(fixture);
-  const imageCount = initial.countComponent(componentName);
+  const imageCount = initial.countComponent(componentName) + 1;
   const divCount = initial.countElementTag("div");
   const sectionCount = initial.countElementTag("section");
   const asideCount = initial.countElementTag("aside");
+  await openComponentsPanel({ page });
+  await insertComponentPanelOption({ page, name: componentName });
+  await expect
+    .poll(async () =>
+      (await inspectBuild(fixture)).countComponent(componentName)
+    )
+    .toBe(imageCount);
 
   await test.step("rename, wrap, and unwrap the Image", async () => {
     await openNavigatorPanel({ page });
     await selectNavigatorItem({ page, itemName: componentName });
     await editSelectedNavigatorLabel({ page, label: renamedLabel });
-    expect(await getInstanceLabelCount({ fixture, label: renamedLabel })).toBe(
-      1
-    );
+    await expect
+      .poll(() => getInstanceLabelCount({ fixture, label: renamedLabel }))
+      .toBe(1);
 
     await runCommandPanelStructuralAction({
       page,
       command: "Wrap",
       option: "div",
     });
-    expect(await getElementTagCount({ fixture, tag: "div" })).toBe(
-      divCount + 1
-    );
+    await expect
+      .poll(() => getElementTagCount({ fixture, tag: "div" }))
+      .toBe(divCount + 1);
 
     await selectCommandPanelInstance({ page, label: renamedLabel });
     await runCommandPanelStructuralAction({ page, command: "Unwrap" });
-    const unwrapped = await inspectBuild(fixture);
-    expect(unwrapped.countElementTag("div")).toBe(divCount);
-    expect(unwrapped.countComponent(componentName)).toBe(imageCount);
+    await expect
+      .poll(async () => {
+        const unwrapped = await inspectBuild(fixture);
+        return {
+          divs: unwrapped.countElementTag("div"),
+          images: unwrapped.countComponent(componentName),
+        };
+      })
+      .toEqual({ divs: divCount, images: imageCount });
   });
 
   await test.step("convert a new wrapper to a section", async () => {
@@ -710,9 +717,9 @@ test("Builder Navigator and command panel edits persist after reload", async ({
       command: "Wrap",
       option: "div",
     });
-    expect(await getElementTagCount({ fixture, tag: "div" })).toBe(
-      divCount + 1
-    );
+    await expect
+      .poll(() => getElementTagCount({ fixture, tag: "div" }))
+      .toBe(divCount + 1);
 
     await openNavigatorPanel({ page });
     await selectNavigatorItem({ page, itemName: "div" });
@@ -721,19 +728,26 @@ test("Builder Navigator and command panel edits persist after reload", async ({
       command: "Convert",
       option: "section",
     });
-    const converted = await inspectBuild(fixture);
-    expect(converted.countElementTag("div")).toBe(divCount);
-    expect(converted.countElementTag("section")).toBe(sectionCount + 1);
+    await expect
+      .poll(async () => {
+        const converted = await inspectBuild(fixture);
+        return {
+          divs: converted.countElementTag("div"),
+          sections: converted.countElementTag("section"),
+        };
+      })
+      .toEqual({ divs: divCount, sections: sectionCount + 1 });
   });
 
   await test.step("insert an aside using the command panel", async () => {
     await selectBodyInNavigator({ page });
     await runCommandPanelTagInsertion({ page, tag: "aside" });
-    expect(await getElementTagCount({ fixture, tag: "aside" })).toBe(
-      asideCount + 1
-    );
+    await expect
+      .poll(() => getElementTagCount({ fixture, tag: "aside" }))
+      .toBe(asideCount + 1);
   });
 
+  await waitForSyncComplete({ page });
   await measure("pages actions reload structural edits", async () => {
     await openProjectBuilder({
       page,
@@ -756,6 +770,7 @@ test("Builder clipboard shortcuts and paste targets preserve saved content", asy
 }) => {
   const fixture = await createBuilderEditingProject({
     context,
+    page,
     name: "builder-clipboard",
     includePageTemplate: true,
   });

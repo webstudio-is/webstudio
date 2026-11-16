@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { BrowserContext, Page } from "@playwright/test";
 import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
 import type { Instance, Prop } from "@webstudio-is/sdk";
 import { loadDevBuild } from "../db";
@@ -111,10 +112,12 @@ const seedBuild = (serializedPages: string) => {
 
 export const createDragProject = async (
   context: BrowserContext,
-  name: string
+  name: string,
+  page?: Page
 ) => {
   return await createSeededBuilderProject({
     context,
+    page,
     email: `drag-${name}@webstudio.test`,
     title: `Drag ${name}`,
     builderToken: `drag-${name}-${randomUUID()}-builder-token`,
@@ -146,4 +149,3 @@ export const loadPages = async (projectId: string) => {
   const build = await loadDevBuild({ projectId });
   return JSON.parse(build.pages) as SerializedPages;
 };
-import type { BrowserContext } from "@playwright/test";
