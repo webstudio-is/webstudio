@@ -1865,10 +1865,28 @@ const assertSupportedNamespaces = ({
   deletedTemplateRootIds: ReadonlySet<string>;
 }) => {
   for (const namespace of unsupportedNamespaces) {
-    if (namespace === "assets" && root.assetReferenceValues !== undefined) {
+    if (namespace === "assets") {
       const originalById = new Map(
         root.fragment.assets.map((asset) => [asset.id, asset])
       );
+      const provenanceAssetIds = new Set(
+        root.provenance.nodes.flatMap((node) =>
+          node.type === "template"
+            ? [
+                ...node.namespaceKeys.flatMap((entry) =>
+                  entry.namespace === "assets" ? [entry.key] : []
+                ),
+                ...node.assetProps.map(({ assetId }) => assetId),
+                ...node.overlaidDescendants.flatMap((descendant) =>
+                  descendant.assetProps.map(({ assetId }) => assetId)
+                ),
+              ]
+            : node.assetProps.map(({ assetId }) => assetId)
+        )
+      );
+      const isKnownAsset = (assetId: string) =>
+        root.assetReferenceValues?.has(assetId) === true ||
+        provenanceAssetIds.has(assetId);
       const referencedAssetIds = new Set(
         fragment.props.flatMap((prop) =>
           prop.type === "asset" ? [prop.value] : []
@@ -1881,7 +1899,7 @@ const assertSupportedNamespaces = ({
         if (
           assetIds.has(asset.id) ||
           (original === undefined
-            ? root.assetReferenceValues.has(asset.id) === false
+            ? isKnownAsset(asset.id) === false
             : equal(original, asset) === false)
         ) {
           throw new Error(
@@ -1892,7 +1910,8 @@ const assertSupportedNamespaces = ({
       }
       if (
         Array.from(referencedAssetIds).some(
-          (assetId) => root.assetReferenceValues?.has(assetId) !== true
+          (assetId) =>
+            assetIds.has(assetId) === false && isKnownAsset(assetId) === false
         )
       ) {
         throw new Error(

@@ -1965,7 +1965,7 @@ describe("MDX authored content", () => {
     }
     changedAsset.value = "other-asset";
     expect(() => reconcileMdxAuthoredContent({ root, fragment: next })).toThrow(
-      'Asset prop "src" cannot be represented losslessly in MDX'
+      "Changes to assets cannot be represented losslessly in MDX"
     );
   });
 
@@ -2032,6 +2032,96 @@ describe("MDX authored content", () => {
     expect(() => reconcileMdxAuthoredContent({ root, fragment: next })).toThrow(
       "Changes to assets cannot be represented losslessly in MDX"
     );
+  });
+
+  test("preserves assets recorded in template provenance without path mappings", async () => {
+    const templateImage: Asset = {
+      id: "template-image",
+      projectId: "project",
+      name: "template-image.png",
+      type: "image",
+      format: "png",
+      size: 100,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      meta: { width: 100, height: 100 },
+    };
+    const document = await parseMdxDocument({
+      source: '<ws.element ws:name="Heading" />',
+    });
+    const authoredTemplate = document.children[0];
+    if (authoredTemplate?.type !== "template") {
+      throw new Error("Expected an authored template");
+    }
+    const templateFragment: WebstudioFragment = {
+      children: [{ type: "id", value: "template-heading" }],
+      instances: [
+        {
+          type: "instance",
+          id: "template-heading",
+          component: elementComponent,
+          tag: "h3",
+          children: [{ type: "text", value: "Before" }],
+        },
+      ],
+      props: [],
+      assets: [templateImage],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    };
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization: {
+        templates: [
+          {
+            type: "resolved-template",
+            reference: {
+              type: "resolved-template",
+              path: [0],
+              templateName: "Heading",
+              templateInstanceId: "heading-template",
+              props: authoredTemplate.props,
+            },
+            fragment: templateFragment,
+            editablePropNames: [],
+            jsxPropContext: htmlJsxPropContext,
+            propNameMappings: [],
+            ignoredJsxPropNames: [],
+          },
+        ],
+        diagnostics: [],
+        dependencies: { templateNames: ["Heading"], templates: [] },
+      },
+    });
+    const rootWithoutTemplateAssets = {
+      ...root,
+      fragment: { ...root.fragment, assets: [] as Asset[] },
+    };
+    const next = structuredClone(rootWithoutTemplateAssets.fragment);
+    next.assets.push(templateImage);
+    next.instances[0]!.children = [{ type: "text", value: "After" }];
+
+    expect(
+      serializeMdxDocument(
+        reconcileMdxAuthoredContent({
+          root: rootWithoutTemplateAssets,
+          fragment: next,
+        })
+      )
+    ).toBe("<Heading>After</Heading>\n");
+
+    next.assets[0] = { ...templateImage, id: "unknown-image" };
+    expect(() =>
+      reconcileMdxAuthoredContent({
+        root: rootWithoutTemplateAssets,
+        fragment: next,
+      })
+    ).toThrow("Changes to assets cannot be represented losslessly in MDX");
   });
 
   test.each([
