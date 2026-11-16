@@ -1,3 +1,4 @@
+import { mkdir, writeFile } from "node:fs/promises";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect } from "@playwright/test";
@@ -25,6 +26,7 @@ import {
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
+import { createLocalBundleFromDevBuild } from "../flows/generated-app";
 import { authorManagedForm } from "./mcp-managed-form-author";
 
 const commands = new Set([
@@ -58,12 +60,7 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
     requiresConfirm: contract.requiresConfirm,
   }));
 
-const [, , projectId, receiverUrl, ...formatModes] = process.argv;
-if (projectId === undefined || receiverUrl === undefined) {
-  throw new Error("Expected the disposable E2E project ID");
-}
-
-const author = async () => {
+const author = async (projectId: string, receiverUrl: string) => {
   let build = await loadDevBuild({ projectId: projectId });
   const parse = <Value>(field: keyof typeof build) =>
     JSON.parse(String(build[field])) as Value;
@@ -330,10 +327,22 @@ const author = async () => {
   }
 };
 
-const formatForms = [];
-for (const mode of formatModes) {
-  const { formId } = await authorManagedForm(projectId, { mode });
-  formatForms.push({ mode, formId });
-}
-const navigationFormId = await author();
-process.stdout.write(`${JSON.stringify({ formatForms, navigationFormId })}\n`);
+export const preparePreviewBundle = async (
+  projectId: string,
+  receiverUrl: string,
+  ...formatModes: string[]
+) => {
+  const formatForms = [];
+  for (const mode of formatModes) {
+    const { formId } = await authorManagedForm(projectId, { mode });
+    formatForms.push({ mode, formId });
+  }
+  const navigationFormId = await author(projectId, receiverUrl);
+  const build = await loadDevBuild({ projectId });
+  await mkdir(".webstudio", { recursive: true });
+  await writeFile(
+    ".webstudio/data.json",
+    `${JSON.stringify(createLocalBundleFromDevBuild(build))}\n`
+  );
+  return { formatForms, navigationFormId };
+};

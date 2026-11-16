@@ -1,9 +1,7 @@
-import { execFile } from "node:child_process";
 import { createServer } from "node:http";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
 import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
+import type { preparePreviewBundle } from "../fixtures/mcp-navigation-form-author";
 import {
   startFormDeliveryReceiver,
   startGeneratedFormDeliveryPreview,
@@ -16,16 +14,6 @@ import { test, withBrowserContext } from "../test";
 
 test.describe.configure({ mode: "default" });
 
-const execFileAsync = promisify(execFile);
-const authorPath = fileURLToPath(
-  new URL("../fixtures/mcp-navigation-form-author.ts", import.meta.url)
-);
-const reactGlobalPath = fileURLToPath(
-  new URL("../../../../scripts/register-react-global.ts", import.meta.url)
-);
-const cliTsconfigPath = fileURLToPath(
-  new URL("../../../../packages/cli/tsconfig.local.json", import.meta.url)
-);
 const formats = [
   ["format-json", "application/json"],
   ["format-multipart", "multipart/form-data"],
@@ -56,7 +44,7 @@ const startSearchReceiver = async () => {
   };
 };
 
-const formIds = new Map<(typeof formats)[number][0], string>();
+const formIds = new Map<string, string>();
 let navigationFormId: string;
 let searchReceiver: Awaited<ReturnType<typeof startSearchReceiver>> | undefined;
 let receiver: Awaited<ReturnType<typeof startFormDeliveryReceiver>> | undefined;
@@ -78,45 +66,33 @@ test.beforeAll(async ({ browser }) => {
   });
 
   searchReceiver = await startSearchReceiver();
-  const { stdout } = await execFileAsync(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      "--import",
-      reactGlobalPath,
-      "--conditions=webstudio",
-      authorPath,
-      projectId,
-      searchReceiver.url,
-      ...formats.map(([mode]) => mode),
-    ],
-    {
-      timeout: 60_000,
-      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
-    }
-  );
-  const authored = JSON.parse(stdout) as {
-    formatForms: Array<{ mode: (typeof formats)[number][0]; formId: string }>;
-    navigationFormId: string;
-  };
-  expect(authored.formatForms).toHaveLength(formats.length);
-  for (const { mode, formId } of authored.formatForms) {
-    formIds.set(mode, formId);
-  }
-  navigationFormId = authored.navigationFormId;
-
   receiver = await startFormDeliveryReceiver();
   try {
     preview = await startGeneratedFormDeliveryPreview({
       projectId,
       receiverPort: receiver.port,
+      prepare: {
+        moduleUrl: new URL(
+          "../fixtures/mcp-navigation-form-author.ts",
+          import.meta.url
+        ).href,
+        args: [searchReceiver.url, ...formats.map(([mode]) => mode)],
+      },
     });
   } catch (error) {
     await receiver.close();
     receiver = undefined;
     throw error;
   }
+
+  const authored = preview.prepared as Awaited<
+    ReturnType<typeof preparePreviewBundle>
+  >;
+  expect(authored.formatForms).toHaveLength(formats.length);
+  for (const { mode, formId } of authored.formatForms) {
+    formIds.set(mode, formId);
+  }
+  navigationFormId = authored.navigationFormId;
 });
 
 test.afterAll(async () => {
