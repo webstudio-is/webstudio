@@ -105,11 +105,11 @@ jobs:
         with:
           node-version: 22
 
-      - name: Download and extract artifact
-        run: |
-          set -o pipefail
-          curl --fail --show-error --silent "${{ secrets.ARTEFACT_BUCKET_URL }}/public/cloudflare-template/${{ github.ref_name }}.tar.zst" |
-            tar --use-compress-program="zstd -d" -xf - -C .
+      - name: Copy atrifact via http
+        run: curl -o cloudflare-template.tar.zst ${{ secrets.ARTEFACT_BUCKET_URL }}/public/cloudflare-template/${{ github.ref_name }}.tar.zst
+
+      - name: Extract archive
+        run: tar --use-compress-program="zstd -d" -xf cloudflare-template.tar.zst -C .
 
       - name: Webstudio Build
         run: pnpm webstudio build --template internal --template saas-helpers --template cloudflare --assets false
