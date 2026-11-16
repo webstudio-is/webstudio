@@ -577,8 +577,12 @@ const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
     };
-    for (const dependency of Object.keys(packageJson.dependencies ?? {})) {
-      delete packageJson.devDependencies?.[dependency];
+    for (const [dependency, specifier] of Object.entries(
+      packageJson.dependencies ?? {}
+    )) {
+      if (packageJson.devDependencies?.[dependency] === specifier) {
+        delete packageJson.devDependencies[dependency];
+      }
     }
   }
   const content = JSON.stringify(mergedJson, null, "  ");
