@@ -75,6 +75,14 @@ const selectAndDragAssets = async (page: Page) => {
   if (assetBounds === null || scrollBounds === null) {
     throw new Error("Expected visible asset and native scroll area");
   }
+  const initialDestinationBounds = await destination.boundingBox();
+  if (
+    initialDestinationBounds === null ||
+    initialDestinationBounds.y + initialDestinationBounds.height >
+      scrollBounds.y
+  ) {
+    throw new Error("Expected the destination folder above the scroll area");
+  }
   const from = {
     x: assetBounds.x + assetBounds.width / 2,
     y: assetBounds.y + assetBounds.height / 2,
@@ -198,20 +206,23 @@ test("Assets can be selected and dragged and folders can be multiselected and de
     builderToken: "asset-folder-autoscroll-e2e-builder-token",
   });
 
-  // The long list is a precondition for the drag, so seed its filler folders together.
-  const createdAt = new Date().toISOString();
+  // Seed a long list with the newest folder at the top, out of reach from the assets.
+  const now = Date.now();
+  const createdAt = new Date(now - 1_000).toISOString();
   const folderNames = ["Alpha", "Bravo", "Charlie"];
   const fillers = Array.from(
     { length: 24 },
     (_, index) => `Filler ${String(index).padStart(2, "0")}`
   );
   await insertAssetFolders(
-    [...folderNames, "Destination", ...fillers].map((name) => ({
+    [
+      ...[...folderNames, ...fillers].map((name) => ({ name, createdAt })),
+      { name: "Destination", createdAt: new Date(now).toISOString() },
+    ].map((folder) => ({
+      ...folder,
       id: randomUUID(),
       projectId,
-      name,
       parentId: null,
-      createdAt,
     }))
   );
 
