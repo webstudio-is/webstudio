@@ -1969,6 +1969,35 @@ describe("MDX authored content", () => {
     );
   });
 
+  test("compares existing Asset records by their fields", async () => {
+    const article: Asset = {
+      id: "article",
+      projectId: "project",
+      name: "article.md",
+      type: "file",
+      format: "md",
+      size: 7,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      meta: {},
+    };
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document: await parseMdxDocument({ source: "Before" }),
+      templateMaterialization: emptyTemplates,
+    });
+    root.fragment.assets.push(article);
+    const next = structuredClone(root.fragment);
+    next.assets[0] = Object.assign(Object.create(null), article);
+    next.instances[0]!.children = [{ type: "text", value: "After" }];
+
+    expect(
+      serializeMdxDocument(
+        reconcileMdxAuthoredContent({ root, fragment: next })
+      )
+    ).toBe("After\n");
+  });
+
   test("preserves template image assets while editing MDX text", async () => {
     const templateImage: Asset = {
       id: "template-image",
