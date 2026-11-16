@@ -1,4 +1,3 @@
-import { authorFormActionCombination } from "./mcp-form-action-combination-author";
 import { authorManagedForm } from "./mcp-managed-form-author";
 
 const [, , projectId] = process.argv;
@@ -21,7 +20,4 @@ const feedback = await authorManagedForm(projectId, {
   mode: "redirect",
   fail: false,
 });
-const combination = await authorFormActionCombination(projectId);
-process.stdout.write(
-  `${JSON.stringify({ successful, failed, feedback, combination })}\n`
-);
+process.stdout.write(`${JSON.stringify({ successful, failed, feedback })}\n`);

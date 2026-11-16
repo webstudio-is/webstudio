@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadDevBuild } from "../db";
+import { measure } from "../perf";
 import { stopChildProcess } from "../process";
 import {
   createLocalBundleFromDevBuild,
@@ -57,6 +58,7 @@ export const withMcpEmailHttpPreview = async <Result>({
     }
     const port = await getAvailablePort();
     const output: string[] = [];
+    let outputLineBuffer = "";
     preview = spawn(
       process.execPath,
       [
@@ -83,7 +85,18 @@ export const withMcpEmailHttpPreview = async <Result>({
       }
     );
     const appendOutput = (chunk: unknown) => {
-      output.push(String(chunk));
+      const value = String(chunk);
+      output.push(value);
+      outputLineBuffer += value;
+      let newlineIndex = outputLineBuffer.indexOf("\n");
+      while (newlineIndex !== -1) {
+        const line = outputLineBuffer.slice(0, newlineIndex).replace(/\r$/, "");
+        outputLineBuffer = outputLineBuffer.slice(newlineIndex + 1);
+        if (line.startsWith("[e2e:perf]")) {
+          console.info(line);
+        }
+        newlineIndex = outputLineBuffer.indexOf("\n");
+      }
       while (output.join("").length > 8_000) {
         output.shift();
       }
@@ -97,12 +110,16 @@ export const withMcpEmailHttpPreview = async <Result>({
       output: () => output.join(""),
     });
     if (prepareArgs.length === 0) {
-      return await callback({ url });
+      return await measure("MCP email HTTP Preview callback", () =>
+        callback({ url })
+      );
     }
     const prepared = JSON.parse(
       await readFile(join(tempDir, "preview-prepared.json"), "utf8")
     ) as unknown;
-    return await callback({ url, prepared });
+    return await measure("MCP email HTTP Preview callback", () =>
+      callback({ url, prepared })
+    );
   } finally {
     if (preview !== undefined) {
       await stopChildProcess(preview, { killGroup: true });

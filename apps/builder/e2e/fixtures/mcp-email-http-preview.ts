@@ -1,5 +1,6 @@
 import { rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { measure } from "../perf";
 
 // Load the CLI in this isolated runner; Builder's tsconfig does not include
 // the CLI's import-attribute module setting.
@@ -37,23 +38,28 @@ if (prepareModule !== undefined && authorProjectId !== undefined) {
   await writeFile("preview-prepared.json", JSON.stringify(prepared));
 }
 
-const project = await preparePreviewProject({
-  assets: false,
-  template: ["defaults", "react-router"],
-  generate: true,
-  source: "local",
-});
+const project = await measure<{ cwd: string }>(
+  "MCP email HTTP Preview project preparation",
+  () =>
+    preparePreviewProject({
+      assets: false,
+      template: ["defaults", "react-router"],
+      generate: true,
+      source: "local",
+    })
+);
 const adapterPath = join(
   project.cwd,
   "app/__generated__/$resources.managed-form-fetch.server.ts"
 );
-await rename(
-  adapterPath,
-  join(project.cwd, "app/__generated__/production-form-fetch.server.ts")
-);
-await writeFile(
-  adapterPath,
-  `import { createCloudflareManagedFormEmailSender, validateCloudflareManagedFormEmail } from "@webstudio-is/sdk/runtime";
+await measure("MCP email HTTP Preview test adapter setup", async () => {
+  await rename(
+    adapterPath,
+    join(project.cwd, "app/__generated__/production-form-fetch.server.ts")
+  );
+  await writeFile(
+    adapterPath,
+    `import { createCloudflareManagedFormEmailSender, validateCloudflareManagedFormEmail } from "@webstudio-is/sdk/runtime";
 import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";
 import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
 import { createManagedFormResourceFetch as createProductionFormFetch } from "./production-form-fetch.server";
@@ -102,11 +108,18 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
   });
 };
 `
-);
-await buildPreparedPreview(project);
-const preview = startPreviewServer({
-  host: "127.0.0.1",
-  port,
-  cwd: project.cwd,
+  );
 });
+await measure("MCP email HTTP Preview production build", () =>
+  buildPreparedPreview(project)
+);
+const preview = await measure(
+  "MCP email HTTP Preview server process start",
+  async () =>
+    startPreviewServer({
+      host: "127.0.0.1",
+      port,
+      cwd: project.cwd,
+    })
+);
 await waitForPreviewExit(preview.process);

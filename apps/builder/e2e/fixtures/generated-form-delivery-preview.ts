@@ -1,5 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { measure } from "../perf";
 
 // Load the CLI in this isolated runner; Builder's tsconfig does not include
 // the CLI's import-attribute module setting.
@@ -31,18 +32,23 @@ if (prepareModuleUrl !== undefined && projectId !== undefined) {
   await writeFile("preview-prepared.json", JSON.stringify(prepared));
 }
 
-const project = await preparePreviewProject({
-  assets: false,
-  template: ["defaults", "react-router"],
-  generate: true,
-  source: "local",
-});
-await writeFile(
-  join(
-    project.cwd,
-    "app/__generated__/$resources.managed-form-fetch.server.ts"
-  ),
-  `import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";
+const project = await measure<{ cwd: string }>(
+  "generated Form Preview project preparation",
+  () =>
+    preparePreviewProject({
+      assets: false,
+      template: ["defaults", "react-router"],
+      generate: true,
+      source: "local",
+    })
+);
+await measure("generated Form Preview test adapter setup", () =>
+  writeFile(
+    join(
+      project.cwd,
+      "app/__generated__/$resources.managed-form-fetch.server.ts"
+    ),
+    `import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";
 import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
 
 export const createManagedFormEmailSender = () => undefined;
@@ -70,11 +76,18 @@ export const createManagedFormResourceFetch = ({ request, projectDomain }: { req
   });
 };
 `
+  )
 );
-await buildPreparedPreview(project);
-const preview = startPreviewServer({
-  host: "127.0.0.1",
-  port,
-  cwd: project.cwd,
-});
+await measure("generated Form Preview production build", () =>
+  buildPreparedPreview(project)
+);
+const preview = await measure(
+  "generated Form Preview server process start",
+  async () =>
+    startPreviewServer({
+      host: "127.0.0.1",
+      port,
+      cwd: project.cwd,
+    })
+);
 await waitForPreviewExit(preview.process);

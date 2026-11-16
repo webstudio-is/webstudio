@@ -48,6 +48,7 @@ export const startGeneratedFormDeliveryPreview = async ({
     }
     const port = await getAvailablePort();
     const output: string[] = [];
+    let outputLineBuffer = "";
     preview = spawn(
       process.execPath,
       [
@@ -75,7 +76,18 @@ export const startGeneratedFormDeliveryPreview = async ({
       }
     );
     const appendOutput = (chunk: unknown) => {
-      output.push(String(chunk));
+      const value = String(chunk);
+      output.push(value);
+      outputLineBuffer += value;
+      let newlineIndex = outputLineBuffer.indexOf("\n");
+      while (newlineIndex !== -1) {
+        const line = outputLineBuffer.slice(0, newlineIndex).replace(/\r$/, "");
+        outputLineBuffer = outputLineBuffer.slice(newlineIndex + 1);
+        if (line.startsWith("[e2e:perf]")) {
+          console.info(line);
+        }
+        newlineIndex = outputLineBuffer.indexOf("\n");
+      }
       while (output.join("").length > 8_000) {
         output.shift();
       }

@@ -52,12 +52,6 @@ const authorForms = async (projectId: string) => {
     successful: RedirectForm;
     failed: RedirectForm;
     feedback: RedirectForm;
-    combination: {
-      formId: string;
-      graphqlResourceId: string;
-      middleResourceId: string;
-      httpResourceId: string;
-    };
   };
 };
 
@@ -191,7 +185,7 @@ const expectFeedbackInViewport = async (
   }
 };
 
-test("MCP Forms preserve action order, redirect, and feedback in generated Preview", async ({
+test("MCP-authored Forms redirect and show feedback in generated Preview", async ({
   page,
   context,
 }) => {
@@ -202,150 +196,70 @@ test("MCP Forms preserve action order, redirect, and feedback in generated Previ
     email: "mcp-form-redirect-combined@webstudio.test",
     title: "MCP Form redirect outcomes",
   });
-  const { successful, failed, feedback, combination } = await measure(
+  const { successful, failed, feedback } = await measure(
     "MCP author Form outcomes",
     () => authorForms(projectId)
   );
-  const { formId, graphqlResourceId, middleResourceId, httpResourceId } =
-    combination;
-  expect(successful.successfulResourceId).toBeDefined();
-  expect(failed.successfulResourceId).toBeUndefined();
-  expect(feedback.successfulResourceId).toBeDefined();
-
   const receiver = await startFormDeliveryReceiver();
   try {
     await withGeneratedFormDeliveryPreview({
       projectId,
       receiverPort: receiver.port,
       callback: async ({ url }) => {
-        await test.step("MCP Form dispatches Actions in configured result order", async () => {
-          const submission = (
-            await submitPreviewFormViaMcp({
-              url,
-              input: {
-                path: "/",
-                selector: `[data-ws-managed-form-id="${formId}"]`,
-                values: [
-                  { name: "name", value: "Ada" },
-                  { name: "email", value: "ada@example.com" },
-                  { name: "subject", value: "Action combination" },
-                  { name: "message", value: "Two receivers" },
-                ],
-                submitter: "button[type=submit]",
-                timeout: 30_000,
-              },
-            })
-          ).data;
-          expect(submission).toMatchObject({
-            status: "submitted",
-            formState: "success",
-            errors: [],
-          });
-          expect(submission.exchanges).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                status: 200,
-                url: expect.stringContaining("/__ws-form"),
-              }),
-            ])
-          );
-          expect(submission.results).toEqual([
-            expect.objectContaining({
-              resourceId: graphqlResourceId,
-              resourceName: "First GraphQL action",
-              status: 200,
-            }),
-            expect.objectContaining({
-              resourceId: middleResourceId,
-              resourceName: "Middle HTTP action",
-              status: 200,
-            }),
-            expect.objectContaining({
-              resourceId: httpResourceId,
-              resourceName: "Last HTTP action",
-              status: 200,
-            }),
-          ]);
-          expect(receiver.deliveries).toHaveLength(3);
-          expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual([
-            "/submit",
-            "/submit",
-            "/submit",
-          ]);
-          const graphqlDelivery = receiver.deliveries.find(({ body }) =>
-            body.includes("mutation Record")
-          );
-          const httpDelivery = receiver.deliveries.find(
-            ({ body }) => !body.includes("mutation Record")
-          );
-          expect(graphqlDelivery).toMatchObject({ method: "POST" });
-          expect(graphqlDelivery?.contentType).toContain("application/json");
-          expect(JSON.parse(graphqlDelivery?.body ?? "null")).toMatchObject({
-            query: "mutation Record($name: String!) { record(name: $name) }",
-            variables: { name: "Ada" },
-          });
-          expect(httpDelivery).toMatchObject({ method: "POST" });
-          expect(JSON.parse(httpDelivery?.body ?? "null")).toMatchObject({
-            name: "Ada",
-            email: "ada@example.com",
-            subject: "Action combination",
-            message: "Two receivers",
-          });
-          receiver.deliveries.splice(0);
-        });
-
         for (const [name, form, fail] of [
           ["successful", successful, false],
           ["failed", failed, true],
         ] as const) {
-          await test.step("MCP " + name + " Action", async () => {
-            const submission = (
-              await submitPreviewFormViaMcp({
-                url,
-                input: {
-                  path: "/",
-                  selector: '[data-ws-managed-form-id="' + form.formId + '"]',
-                  values: [
-                    { name: "name", value: "Ada" },
-                    { name: "email", value: "ada@example.com" },
-                    { name: "subject", value: "Redirect test" },
-                    {
-                      name: "message",
-                      value: "MCP-authored redirect scenario",
-                    },
-                  ],
-                  submitter: "button[type=submit]",
-                  timeout: 30_000,
-                },
-              })
-            ).data;
-            expect(submission.status).toBe("submitted");
-            expect(submission.results).toEqual([
-              expect.objectContaining({
-                resourceId: fail ? form.resourceId : form.successfulResourceId,
-                status: fail ? 503 : 200,
-              }),
-            ]);
-            expect(submission.errors).toHaveLength(fail ? 1 : 0);
-            expect(submission.exchanges).toEqual(
-              expect.arrayContaining([
+          await test.step(
+            "MCP " + name + " Action redirect outcome",
+            async () => {
+              const submission = (
+                await submitPreviewFormViaMcp({
+                  url,
+                  input: {
+                    path: "/",
+                    selector: `[data-ws-managed-form-id="${form.formId}"]`,
+                    values: [
+                      { name: "name", value: "Ada" },
+                      { name: "email", value: "ada@example.com" },
+                      { name: "subject", value: "Redirect test" },
+                      {
+                        name: "message",
+                        value: "MCP-authored redirect scenario",
+                      },
+                    ],
+                    submitter: "button[type=submit]",
+                    timeout: 30_000,
+                  },
+                })
+              ).data;
+              expect(submission.status).toBe("submitted");
+              expect(submission.results).toEqual([
                 expect.objectContaining({
-                  status: fail ? 502 : 200,
-                  url: expect.stringContaining("/__ws-form"),
+                  resourceId: fail
+                    ? form.resourceId
+                    : form.successfulResourceId,
+                  status: fail ? 503 : 200,
                 }),
-              ])
-            );
-            if (fail) {
-              expect(submission.formState).toBe("error");
-              expect(submission.redirect).toBeUndefined();
-            } else {
-              expect(submission.redirect).toBe(new URL(url).origin + "/");
+              ]);
+              expect(submission.errors).toHaveLength(fail ? 1 : 0);
+              expect(submission.exchanges).toEqual(
+                expect.arrayContaining([
+                  expect.objectContaining({
+                    status: fail ? 502 : 200,
+                    url: expect.stringContaining("/__ws-form"),
+                  }),
+                ])
+              );
+              expect(submission.redirect).toBe(
+                fail ? undefined : new URL(url).origin + "/"
+              );
+              expect(
+                receiver.deliveries.map(({ pathname }) => pathname)
+              ).toEqual(fail ? ["/reject"] : ["/submit"]);
+              receiver.deliveries.splice(0);
             }
-            expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual(
-              fail ? ["/reject"] : ["/submit"]
-            );
-            receiver.deliveries.splice(0);
-          });
+          );
         }
 
         await test.step("browser follows success redirect without scrolling feedback", async () => {

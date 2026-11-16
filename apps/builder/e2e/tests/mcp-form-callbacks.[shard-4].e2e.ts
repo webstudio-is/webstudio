@@ -251,23 +251,28 @@ test("Generated Preview runs Form callbacks, concurrent Actions, and query navig
           expect(submission.results).toEqual([
             expect.objectContaining({
               resourceId: graphqlResourceId,
+              resourceName: "First GraphQL action",
               status: 200,
             }),
             expect.objectContaining({
               resourceId: middleResourceId,
+              resourceName: "Middle HTTP action",
               status: 200,
             }),
             expect.objectContaining({
               resourceId: httpResourceId,
+              resourceName: "Last HTTP action",
               status: 200,
             }),
           ]);
           expect(receiver.actionDeliveries).toHaveLength(3);
-          expect(
-            receiver.actionDeliveries.some((body) =>
-              body.includes("mutation Record")
-            )
-          ).toBe(true);
+          const graphqlDelivery = receiver.actionDeliveries.find((body) =>
+            body.includes("mutation Record")
+          );
+          expect(JSON.parse(graphqlDelivery ?? "null")).toMatchObject({
+            query: "mutation Record($name: String!) { record(name: $name) }",
+            variables: { name: "Ada" },
+          });
           expect(
             receiver.actionDeliveries.some((body) =>
               body.includes('"subject":"Parallel Actions"')
