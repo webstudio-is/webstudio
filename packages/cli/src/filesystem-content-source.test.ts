@@ -29,7 +29,7 @@ afterEach(async () => {
   );
 });
 
-const createAsset = (name: string): Asset => ({
+const createAsset = (name: string): Extract<Asset, { type: "file" }> => ({
   id: "post",
   projectId: "project",
   type: "file",
@@ -78,6 +78,125 @@ const plan = createContentCompilationPlan([
 ]);
 
 describe("filesystem content source", () => {
+  test("indexes binary metadata without local bytes while reading JSON, Markdown, and MDX", async () => {
+    const directory = await createTemporaryDirectory();
+    const documents = [
+      { name: "data.json", format: "json", content: '{"title":"Data"}' },
+      { name: "article.md", format: "md", content: "# Markdown" },
+      { name: "article.mdx", format: "mdx", content: "# MDX" },
+    ];
+    const assets: Asset[] = [
+      ...documents.map(({ name, format, content }) => ({
+        ...createAsset(name),
+        id: name,
+        format,
+        size: new TextEncoder().encode(content).byteLength,
+      })),
+      {
+        ...createAsset("image.png"),
+        id: "image",
+        format: "png",
+        size: 123,
+      },
+    ];
+    for (const { name, content } of documents) {
+      await writeFile(join(directory, name), content);
+    }
+    const source = createFileSystemContentSource({
+      projectId: "project",
+      assets,
+      folders,
+      assetsDirectory: directory,
+      metadataOnlyNonDocumentAssets: true,
+    });
+    const snapshot = await source.openSnapshot();
+    expect(snapshot.files).toContainEqual(
+      expect.objectContaining({
+        id: "image",
+        size: 123,
+        contentType: "image/png",
+      })
+    );
+    const documentSources = await snapshot.loadDocumentSources?.();
+    expect(documentSources?.map(({ id }) => id)).toEqual(
+      documents.map(({ name }) => name)
+    );
+    for (const [index, { content }] of documents.entries()) {
+      expect(
+        new TextDecoder().decode(
+          await readBoundedBytes(documentSources?.[index].source ?? "", 100)
+        )
+      ).toBe(content);
+    }
+    const metadataPlan = createContentCompilationPlan([
+      createLiteralContentCompilationQuery({
+        id: "files",
+        query: {
+          where: { all: [] },
+          sort: [],
+          limit: 10,
+          offset: 0,
+          output: { mode: "all", includeMetadata: true },
+          content: { mode: "none" },
+        },
+      }),
+    ]);
+    const { artifact } = await compileContentSource({
+      projectId: "project",
+      source,
+      plan: metadataPlan,
+    });
+    expect(artifact.documents).toContainEqual(
+      expect.objectContaining({
+        _id: "image",
+        size: 123,
+        mimeType: "image/png",
+      })
+    );
+    const fullContentPlan = createContentCompilationPlan([
+      createLiteralContentCompilationQuery({
+        id: "documents",
+        query: {
+          where: {
+            any: ["application/json", "text/markdown", "text/mdx"].map(
+              (mimeType) => ({
+                field: ["mimeType"],
+                operator: "eq" as const,
+                value: mimeType,
+              })
+            ),
+          },
+          sort: [],
+          limit: 10,
+          offset: 0,
+          output: { mode: "all", includeMetadata: true },
+          content: { mode: "full" },
+        },
+      }),
+    ]);
+    const compiledDocuments = await compileContentSource({
+      projectId: "project",
+      source,
+      plan: fullContentPlan,
+    });
+    expect(Object.values(compiledDocuments.artifact.contents ?? {})).toEqual(
+      expect.arrayContaining(documents.map(({ content }) => content))
+    );
+  });
+
+  test("rejects unsafe metadata-only asset paths", async () => {
+    const directory = await createTemporaryDirectory();
+    await expect(
+      createFileSystemContentSource({
+        projectId: "project",
+        assets: [createAsset("../outside.png")],
+        folders,
+        assetsDirectory: directory,
+        metadataOnlyNonDocumentAssets: true,
+      }).openSnapshot()
+    ).rejects.toThrow("Asset path escapes");
+  });
+
   test("uses the shared parser and hydrates matching local content", async () => {
     const directory = await createTemporaryDirectory();
     const name = "hello_hash.md";

@@ -49,8 +49,12 @@ import {
 import {
   createReachableAssetContentCompilationPlan,
   getHomePage,
+  getMimeTypeByFilename,
 } from "@webstudio-is/sdk";
-import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
+import {
+  getDocumentFormatByContentType,
+  parseContentDatabaseMaxBytes,
+} from "@webstudio-is/content-engine";
 import {
   compileContentSource,
   compileContentUntilPlanIsStable,
@@ -279,13 +283,14 @@ export const sync = async (
     },
   });
 
-  const createContentSource = () =>
+  const createContentSource = (metadataOnlyNonDocumentAssets = false) =>
     createFileSystemContentSource({
       projectId: project.build.projectId,
       assets: project.assets,
       folders: new Map(
         (project.assetFolders ?? []).map((folder) => [folder.id, folder])
       ),
+      metadataOnlyNonDocumentAssets,
     });
 
   const isStaticBuild = project.build.deployment?.destination === "static";
@@ -311,17 +316,36 @@ export const sync = async (
     publicationPlan?.queries.some(({ id }) =>
       id.startsWith("__content-block-mdx__:")
     ) === true;
+  const metadataOnlyNonDocumentAssets =
+    options.assets === false &&
+    options.buildId !== undefined &&
+    project.build.deployment?.destination === "saas" &&
+    needsMdxCompilation &&
+    publicationPlan?.queries.some(
+      ({ id, content }) =>
+        !id.startsWith("__content-block-mdx__:") &&
+        (content.mode === "full" || content.mode === "range")
+    ) !== true;
   const assetsToDownload =
     options.assets === false &&
     options.buildId !== undefined &&
     project.build.deployment?.destination === "saas" &&
     !needsMdxCompilation
       ? []
-      : options.buildId !== undefined && !isStaticBuild && !needsMdxCompilation
+      : metadataOnlyNonDocumentAssets
         ? project.assets.filter(
-            (asset) => asset.format !== "md" && asset.format !== "mdx"
+            (asset) =>
+              getDocumentFormatByContentType(
+                getMimeTypeByFilename(asset.name)
+              ) !== undefined
           )
-        : project.assets;
+        : options.buildId !== undefined &&
+            !isStaticBuild &&
+            !needsMdxCompilation
+          ? project.assets.filter(
+              (asset) => asset.format !== "md" && asset.format !== "mdx"
+            )
+          : project.assets;
   if (assetsToDownload.length > 0) {
     syncing.message(`Downloading ${assetsToDownload.length} asset files`);
     if (project.origin === undefined) {
@@ -357,7 +381,7 @@ export const sync = async (
     const plan = candidateDiscoveryPlan ?? publicationPlan;
     if (plan !== undefined) {
       syncing.message("Preparing local content index");
-      const source = createContentSource();
+      const source = createContentSource(metadataOnlyNonDocumentAssets);
       const maxBytes = getPublishedMdxContentDatabaseMaxBytes({
         baseBytes: parseContentDatabaseMaxBytes(
           process.env.CONTENT_DATABASE_MAX_BYTES

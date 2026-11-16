@@ -18,6 +18,7 @@ import {
 } from "@webstudio-is/content-engine";
 import {
   createAssetFolderHierarchy,
+  createAssetContentRevision,
   formatAssetName,
   getFileNameParts,
   getMimeTypeByFilename,
@@ -149,28 +150,50 @@ export const createFileSystemContentSource = ({
   assets,
   folders,
   assetsDirectory = LOCAL_ASSETS_DIR,
+  metadataOnlyNonDocumentAssets = false,
 }: {
   projectId: string;
   assets: readonly Asset[];
   folders: AssetFolders;
   assetsDirectory?: string;
+  metadataOnlyNonDocumentAssets?: boolean;
 }): ContentSource => ({
   openSnapshot: async () => {
     const hierarchy = createAssetFolderHierarchy(folders);
     const requestedAssetsDirectoryPath = resolve(assetsDirectory);
+    const hasLocalFiles = assets.some(
+      (asset) =>
+        metadataOnlyNonDocumentAssets === false ||
+        getDocumentFormatByContentType(getMimeTypeByFilename(asset.name)) !==
+          undefined
+    );
     const assetsDirectoryPath =
-      assets.length === 0
+      hasLocalFiles === false
         ? requestedAssetsDirectoryPath
         : await realpath(requestedAssetsDirectoryPath);
     const captured = await Promise.all(
       assets.map(async (asset) => {
+        const mimeType = getMimeTypeByFilename(asset.name);
+        const metadataOnly =
+          metadataOnlyNonDocumentAssets &&
+          getDocumentFormatByContentType(mimeType) === undefined;
         const sourcePath = getLocalAssetPath(asset.name, assetsDirectory);
-        const filePath = await resolveContentFilePath({
-          assetsDirectoryPath,
-          filePath: sourcePath,
-        });
-        const identity = await getFileIdentity(filePath);
-        const revision = `fs:${serializeFileIdentity(identity)}`;
+        const filePath = metadataOnly
+          ? undefined
+          : await resolveContentFilePath({
+              assetsDirectoryPath,
+              filePath: sourcePath,
+            });
+        const identity =
+          filePath === undefined ? undefined : await getFileIdentity(filePath);
+        const revision =
+          identity === undefined
+            ? createAssetContentRevision({
+                storageName: asset.name,
+                updatedAt: asset.updatedAt ?? asset.createdAt,
+                size: asset.size,
+              })
+            : `fs:${serializeFileIdentity(identity)}`;
         const name = formatAssetName(asset);
         const extension = getFileNameParts(asset.name).extension.toLowerCase();
         const folderId = hierarchy.resolveFolderId(asset.folderId);
@@ -192,8 +215,8 @@ export const createFileSystemContentSource = ({
                 : { description: asset.description }),
               ...(extension === "" ? {} : { extension }),
               ...(folderId === undefined ? {} : { folderId, folderNames }),
-              mimeType: getMimeTypeByFilename(asset.name),
-              size: Number(identity.size),
+              mimeType,
+              size: identity === undefined ? asset.size : Number(identity.size),
               createdAt: asset.createdAt,
               revision,
               contentRef: asset.name,
@@ -215,28 +238,35 @@ export const createFileSystemContentSource = ({
       revision,
       files: captured.map(({ entry }) => createContentSourceFile(entry)),
       loadDocumentSources: async () =>
-        captured
-          .filter(
-            ({ entry }) =>
-              getDocumentFormatByContentType(entry.document.mimeType) !==
-              undefined
-          )
-          .map(({ entry, filePath, identity }) => ({
-            id: entry.assetId,
-            source: {
-              async *[Symbol.asyncIterator]() {
-                const bytes = await readSnapshotFile({
-                  path: filePath,
-                  identity,
-                  maximumBytes: entry.document.size,
-                });
-                if (bytes.byteLength !== entry.document.size) {
-                  throw new Error("Content source file size changed");
-                }
-                yield bytes;
+        captured.flatMap(({ entry, filePath, identity }) => {
+          if (
+            getDocumentFormatByContentType(entry.document.mimeType) ===
+            undefined
+          ) {
+            return [];
+          }
+          if (filePath === undefined || identity === undefined) {
+            throw new Error("Content source document is missing");
+          }
+          return [
+            {
+              id: entry.assetId,
+              source: {
+                async *[Symbol.asyncIterator]() {
+                  const bytes = await readSnapshotFile({
+                    path: filePath,
+                    identity,
+                    maximumBytes: entry.document.size,
+                  });
+                  if (bytes.byteLength !== entry.document.size) {
+                    throw new Error("Content source file size changed");
+                  }
+                  yield bytes;
+                },
               },
             },
-          })),
+          ];
+        }),
       loadEntries: async (
         plan?: ContentCompilationPlan,
         options?: { maximumContentBytes: number }
@@ -261,11 +291,15 @@ export const createFileSystemContentSource = ({
                   base: entry,
                   requirements,
                   readBytes: (maximumBytes) =>
-                    readSnapshotFile({
-                      path: filePath,
-                      identity,
-                      maximumBytes,
-                    }),
+                    filePath === undefined || identity === undefined
+                      ? Promise.reject(
+                          new Error("Content source file is missing")
+                        )
+                      : readSnapshotFile({
+                          path: filePath,
+                          identity,
+                          maximumBytes,
+                        }),
                 })
           )
         );
@@ -274,7 +308,10 @@ export const createFileSystemContentSource = ({
           plan,
           loadContent: async (entry) => {
             const capturedFile = capturedById.get(entry.assetId);
-            if (capturedFile === undefined) {
+            if (
+              capturedFile?.filePath === undefined ||
+              capturedFile.identity === undefined
+            ) {
               throw new Error("Content source snapshot is incomplete");
             }
             const bytes = await readSnapshotFile({
@@ -299,7 +336,7 @@ export const createFileSystemContentSource = ({
       isCurrent: async () => {
         try {
           if (
-            assets.length > 0 &&
+            hasLocalFiles &&
             (await realpath(requestedAssetsDirectoryPath)) !==
               assetsDirectoryPath
           ) {
@@ -309,8 +346,13 @@ export const createFileSystemContentSource = ({
             await Promise.all(
               captured.map(
                 async ({ sourcePath, filePath, identity }) =>
-                  (await realpath(sourcePath)) === filePath &&
-                  isSameFileIdentity(identity, await getFileIdentity(filePath))
+                  filePath === undefined ||
+                  identity === undefined ||
+                  ((await realpath(sourcePath)) === filePath &&
+                    isSameFileIdentity(
+                      identity,
+                      await getFileIdentity(filePath)
+                    ))
               )
             )
           ).every(Boolean);

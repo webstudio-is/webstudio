@@ -336,6 +336,7 @@ test.each([
   {
     name: "hosted",
     deployment: { destination: "saas" as const, domains: [] },
+    fullContentQuery: false,
   },
   {
     name: "SSG",
@@ -345,10 +346,21 @@ test.each([
       assetsDomain: "https://assets.example.com",
       templates: ["ssg" as const],
     },
+    fullContentQuery: false,
+  },
+  {
+    name: "build without a destination",
+    deployment: undefined,
+    fullContentQuery: false,
+  },
+  {
+    name: "hosted with a full-content text query",
+    deployment: { destination: "saas" as const, domains: [] },
+    fullContentQuery: true,
   },
 ])(
   "$name publish sync compiles required MDX articles",
-  async ({ deployment }) => {
+  async ({ deployment, fullContentQuery }) => {
     const source = "# Published from the runner";
     const article = {
       ...createImageAssetFixture(),
@@ -360,9 +372,19 @@ test.each([
       meta: {},
     };
     const image = createImageAssetFixture();
+    const textAsset = {
+      ...createImageAssetFixture(),
+      id: "text",
+      name: "note.txt",
+      type: "file" as const,
+      format: "txt",
+      size: new TextEncoder().encode("Important note").byteLength,
+      meta: {},
+    };
+    const assets = [article, image, ...(fullContentQuery ? [textAsset] : [])];
     loadProjectBundleByBuildId.mockResolvedValue(
       createProjectBundle({
-        assets: [article, image],
+        assets,
         build: {
           deployment,
           instances: [
@@ -405,7 +427,57 @@ test.each([
                 value: article.id,
               },
             ],
+            ...(fullContentQuery
+              ? [
+                  [
+                    "text-query-prop",
+                    {
+                      id: "text-query-prop",
+                      instanceId: "root",
+                      name: "text",
+                      type: "resource" as const,
+                      value: "text-query",
+                    },
+                  ] as [
+                    string,
+                    {
+                      id: string;
+                      instanceId: string;
+                      name: string;
+                      type: "resource";
+                      value: string;
+                    },
+                  ],
+                ]
+              : []),
           ],
+          resources: fullContentQuery
+            ? [
+                [
+                  "text-query",
+                  {
+                    id: "text-query",
+                    name: "Text",
+                    control: "system" as const,
+                    method: "post" as const,
+                    url: '"/$resources/assets"',
+                    headers: [],
+                    body: createStructuredAssetQueryResourceBody({
+                      where: {
+                        field: ["id"],
+                        operator: "eq",
+                        value: '"text"',
+                      },
+                      sort: [],
+                      limit: "1",
+                      offset: "0",
+                      output: { mode: "all", includeMetadata: true },
+                      content: { mode: "full" },
+                    }),
+                  },
+                ],
+              ]
+            : [],
         },
       })
     );
@@ -415,7 +487,11 @@ test.each([
         assets.map((asset: { id: string; name: string }) =>
           writeFile(
             `.webstudio/assets/${asset.name}`,
-            asset.id === article.id ? source : "image"
+            asset.id === article.id
+              ? source
+              : asset.id === textAsset.id
+                ? "Important note"
+                : "image"
           )
         )
       );
@@ -432,22 +508,31 @@ test.each([
     );
 
     expect(syncedTemplates).toEqual(
-      deployment.destination === "static" ? ["ssg"] : undefined
+      deployment?.destination === "static" ? ["ssg"] : undefined
     );
 
     const data = JSON.parse(await readFile(".webstudio/data.json", "utf8"));
     expect(downloadAssetFiles).toHaveBeenCalledWith({
-      assets: [article, image],
+      assets:
+        deployment?.destination === "saas" && !fullContentQuery
+          ? [article]
+          : assets,
       origin: "https://example.com",
     });
     expect(data.assetIndex.documents).toContainEqual(
       expect.objectContaining({ _id: article.id, extension: "mdx" })
     );
+    expect(data.assets).toEqual(assets);
     expect(Object.values(data.assetIndex.contents)).toContain(source);
+    if (fullContentQuery) {
+      expect(Object.values(data.assetIndex.contents)).toContain(
+        "Important note"
+      );
+    }
 
     await prebuild({
       assets: false,
-      template: [deployment.destination === "static" ? "ssg" : "react-router"],
+      template: [deployment?.destination === "static" ? "ssg" : "react-router"],
     });
     const generatedPage = await readFile(
       "app/__generated__/_index.tsx",
