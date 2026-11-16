@@ -25,7 +25,9 @@ import {
   executeBuilderRuntimeOperation,
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
+import { mkdir, writeFile } from "node:fs/promises";
 import { loadDevBuild, updateBuild } from "../db";
+import { createLocalBundleFromDevBuild } from "../flows/generated-app";
 
 const commands = new Set([
   "create-page",
@@ -59,11 +61,7 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
     requiresConfirm: contract.requiresConfirm,
   }));
 
-const projectId = process.argv[2];
-if (projectId === undefined) {
-  throw new Error("Expected the disposable E2E project ID");
-}
-const author = async () => {
+const author = async (projectId: string) => {
   let build = await loadDevBuild({ projectId: projectId });
   const parse = <Value>(field: keyof typeof build) =>
     JSON.parse(String(build[field])) as Value;
@@ -443,11 +441,20 @@ const author = async () => {
     const formData = await authorReadableFormData();
     const contact = await authorDefaultContact();
     const context = await authorFormContext();
-    process.stdout.write(`${JSON.stringify({ formData, contact, context })}\n`);
+    return { formData, contact, context };
   } finally {
     await client.close();
     await server.close();
   }
 };
 
-await author();
+export const preparePreviewBundle = async (projectId: string) => {
+  const authored = await author(projectId);
+  const build = await loadDevBuild({ projectId });
+  await mkdir(".webstudio", { recursive: true });
+  await writeFile(
+    ".webstudio/data.json",
+    `${JSON.stringify(createLocalBundleFromDevBuild(build))}\n`
+  );
+  return authored;
+};

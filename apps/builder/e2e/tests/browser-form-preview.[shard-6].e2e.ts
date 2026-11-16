@@ -7,28 +7,17 @@ import { loadDevBuild } from "../db";
 import type { CapturedEmail } from "../flows/mcp-email-preview";
 import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
 import { startFormContextReceiver } from "../flows/form-context-receiver";
-import { runFormAuthor } from "../flows/mcp-form-author";
+import type { preparePreviewBundle } from "../fixtures/mcp-default-contact-email-author";
 import { test } from "../test";
 import {
   startPreviewFormMcpClient,
   submitPreviewFormViaMcp,
 } from "../flows/mcp-preview-submit";
 
-const authorForms = async (projectId: string) => {
-  const { stdout } = await runFormAuthor(
-    "mcp-default-contact-email-author",
-    projectId
-  );
-  return JSON.parse(stdout) as {
-    contact: {
-      formId: string;
-      ownerResourceId: string;
-      visitorResourceId: string;
-    };
-    formData: { formId: string; ownerResourceId: string; expression: string };
-    context: { formId: string };
-  };
-};
+const prepareModule = new URL(
+  "../fixtures/mcp-default-contact-email-author.ts",
+  import.meta.url
+).href;
 
 const submitContactForm = async (url: string, formId: string) =>
   await submitPreviewFormViaMcp({
@@ -70,56 +59,6 @@ test("Generated Preview delivers MCP-authored forms with readable email and brow
   });
   await setupPage.close();
 
-  const {
-    formData: {
-      formId: formDataFormId,
-      ownerResourceId: formDataResourceId,
-      expression: formDataExpression,
-    },
-    contact: { formId, ownerResourceId, visitorResourceId },
-    context: { formId: contextFormId },
-  } = await authorForms(projectId);
-  expect(formDataExpression).toContain(".toString()");
-  const build = await loadDevBuild({ projectId });
-  const resources = JSON.parse(build.resources) as Array<{
-    id: string;
-    email?: Record<string, unknown>;
-  }>;
-  expect(
-    resources.find(({ id }) => id === formDataResourceId)?.email?.body
-  ).toBe(formDataExpression);
-  const dataSources = JSON.parse(build.dataSources) as Array<{
-    id: string;
-    name: string;
-    scopeInstanceId?: string;
-  }>;
-  const formData = dataSources.find(
-    ({ name, scopeInstanceId }) =>
-      name === formDataParameterName && scopeInstanceId === formId
-  );
-  expect(formData).toBeDefined();
-  expect(
-    resources.find(({ id }) => id === ownerResourceId)?.email
-  ).toMatchObject({
-    recipientMode: "project",
-    body: expect.stringContaining(encodeDataSourceVariable(formData!.id)),
-  });
-  expect(
-    resources.find(({ id }) => id === visitorResourceId)?.email
-  ).toMatchObject({
-    recipientMode: "visitor",
-    visitorEmailField: "email",
-    subject: expect.stringContaining(".subject"),
-    body: JSON.stringify(
-      "Thank you for your message.\n\nWe received it and will respond as soon as possible."
-    ),
-  });
-  expect(JSON.parse(build.projectSettings)).toMatchObject({
-    meta: {
-      contactEmail: "owner@mcp.test",
-      emailSender: "Contact Form <forms@mcp.test>",
-    },
-  });
   const messages: CapturedEmail[] = [];
   let rejectVisitor = false;
   const server = createServer(async (request, response) => {
@@ -166,9 +105,61 @@ test("Generated Preview delivers MCP-authored forms with readable email and brow
   try {
     await withMcpEmailHttpPreview({
       projectId,
+      prepareModule,
       emailPort: address.port,
       httpPort: receiver.port,
-      callback: async ({ url }) => {
+      callback: async ({ url, prepared }) => {
+        const {
+          formData: {
+            formId: formDataFormId,
+            ownerResourceId: formDataResourceId,
+            expression: formDataExpression,
+          },
+          contact: { formId, ownerResourceId, visitorResourceId },
+          context: { formId: contextFormId },
+        } = prepared as Awaited<ReturnType<typeof preparePreviewBundle>>;
+        expect(formDataExpression).toContain(".toString()");
+        const build = await loadDevBuild({ projectId });
+        const resources = JSON.parse(build.resources) as Array<{
+          id: string;
+          email?: Record<string, unknown>;
+        }>;
+        expect(
+          resources.find(({ id }) => id === formDataResourceId)?.email?.body
+        ).toBe(formDataExpression);
+        const dataSources = JSON.parse(build.dataSources) as Array<{
+          id: string;
+          name: string;
+          scopeInstanceId?: string;
+        }>;
+        const formData = dataSources.find(
+          ({ name, scopeInstanceId }) =>
+            name === formDataParameterName && scopeInstanceId === formId
+        );
+        expect(formData).toBeDefined();
+        expect(
+          resources.find(({ id }) => id === ownerResourceId)?.email
+        ).toMatchObject({
+          recipientMode: "project",
+          body: expect.stringContaining(encodeDataSourceVariable(formData!.id)),
+        });
+        expect(
+          resources.find(({ id }) => id === visitorResourceId)?.email
+        ).toMatchObject({
+          recipientMode: "visitor",
+          visitorEmailField: "email",
+          subject: expect.stringContaining(".subject"),
+          body: JSON.stringify(
+            "Thank you for your message.\n\nWe received it and will respond as soon as possible."
+          ),
+        });
+        expect(JSON.parse(build.projectSettings)).toMatchObject({
+          meta: {
+            contactEmail: "owner@mcp.test",
+            emailSender: "Contact Form <forms@mcp.test>",
+          },
+        });
+
         await test.step("Form data email has readable fields and no private values", async () => {
           const formDataSubmission = (
             await submitPreviewFormViaMcp({

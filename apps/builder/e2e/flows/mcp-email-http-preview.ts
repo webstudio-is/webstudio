@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,9 +30,9 @@ export const withMcpEmailHttpPreview = async <Result>({
 }: {
   emailPort: number;
   httpPort: number;
-  callback: ({ url }: { url: string }) => Promise<Result>;
+  callback: (preview: { url: string; prepared?: unknown }) => Promise<Result>;
 } & (
-  | { projectId: string }
+  | { projectId: string; prepareModule?: string }
   | { build: Awaited<ReturnType<typeof loadDevBuild>> }
 )) => {
   const tempDir = await mkdtemp(
@@ -40,15 +40,21 @@ export const withMcpEmailHttpPreview = async <Result>({
   );
   let preview: ChildProcess | undefined;
   try {
-    const build =
-      "build" in source
-        ? source.build
-        : await loadDevBuild({ projectId: source.projectId });
-    await mkdir(join(tempDir, ".webstudio"), { recursive: true });
-    await writeFile(
-      join(tempDir, ".webstudio", "data.json"),
-      `${JSON.stringify(createLocalBundleFromDevBuild(build))}\n`
-    );
+    const prepareArgs =
+      "projectId" in source && source.prepareModule !== undefined
+        ? [source.prepareModule, source.projectId]
+        : [];
+    if (prepareArgs.length === 0) {
+      const build =
+        "build" in source
+          ? source.build
+          : await loadDevBuild({ projectId: source.projectId });
+      await mkdir(join(tempDir, ".webstudio"), { recursive: true });
+      await writeFile(
+        join(tempDir, ".webstudio", "data.json"),
+        `${JSON.stringify(createLocalBundleFromDevBuild(build))}\n`
+      );
+    }
     const port = await getAvailablePort();
     const output: string[] = [];
     preview = spawn(
@@ -63,6 +69,7 @@ export const withMcpEmailHttpPreview = async <Result>({
         String(port),
         String(emailPort),
         String(httpPort),
+        ...prepareArgs,
       ],
       {
         cwd: tempDir,
@@ -89,7 +96,13 @@ export const withMcpEmailHttpPreview = async <Result>({
       url,
       output: () => output.join(""),
     });
-    return await callback({ url });
+    if (prepareArgs.length === 0) {
+      return await callback({ url });
+    }
+    const prepared = JSON.parse(
+      await readFile(join(tempDir, "preview-prepared.json"), "utf8")
+    ) as unknown;
+    return await callback({ url, prepared });
   } finally {
     if (preview !== undefined) {
       await stopChildProcess(preview, { killGroup: true });

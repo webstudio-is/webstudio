@@ -1,10 +1,6 @@
 import type { Page } from "@playwright/test";
 import { chooseAssetByFilename } from "./assets-panel";
-import {
-  waitForChangeToBeSaved,
-  waitForSyncComplete,
-  waitForSyncStatus,
-} from "./sync-status";
+import { waitForChangeToBeSaved, waitForSyncComplete } from "./sync-status";
 
 const getPropertyLabel = ({ page, label }: { page: Page; label: string }) =>
   page.getByText(label, { exact: true }).first();
@@ -77,9 +73,7 @@ export const chooseSelectedAssetProperty = async ({
     timeout: 10_000,
   });
 
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
+  await waitForSyncComplete({ page });
   await page.getByRole("button", { name: triggerName }).click();
   const save = waitForChangeToBeSaved({ page });
   if (assetFilename !== undefined) {

@@ -29,6 +29,14 @@ if (
   throw new Error("Expected Preview, email receiver, and HTTP receiver ports");
 }
 
+const prepareModule = process.argv[5];
+const authorProjectId = process.argv[6];
+if (prepareModule !== undefined && authorProjectId !== undefined) {
+  const { preparePreviewBundle } = await import(prepareModule);
+  const prepared = await preparePreviewBundle(authorProjectId);
+  await writeFile("preview-prepared.json", JSON.stringify(prepared));
+}
+
 const project = await preparePreviewProject({
   assets: false,
   template: ["defaults", "react-router"],
