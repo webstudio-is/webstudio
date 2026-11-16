@@ -1877,11 +1877,11 @@ const assertSupportedNamespaces = ({
       const assetIds = new Set<string>();
       for (const asset of fragment.assets) {
         const original = originalById.get(asset.id);
+        // Template assets can be referenced by styles or data sources too.
         if (
           assetIds.has(asset.id) ||
           (original === undefined
-            ? referencedAssetIds.has(asset.id) === false ||
-              root.assetReferenceValues.has(asset.id) === false
+            ? root.assetReferenceValues.has(asset.id) === false
             : equal(original, asset) === false)
         ) {
           throw new Error(
