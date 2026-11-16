@@ -12,6 +12,7 @@ import {
 } from "@webstudio-is/design-system";
 import { OfflineIcon } from "@webstudio-is/icons";
 import { $hasUnsavedSyncChanges, $syncStatus } from "@webstudio-is/sync-client";
+import { $externalContentAssetStatuses } from "~/shared/external-content-mutations";
 
 const syncStatusDotSavedDuration = 2000;
 const syncStatusDotPendingColor = cssVar("--foreground-warning");
@@ -55,13 +56,23 @@ const subscribeIsOnline = () => {
 export const SyncStatusDot = () => {
   const statusObject = useStore($syncStatus);
   const hasUnsavedSyncChanges = useStore($hasUnsavedSyncChanges);
+  const externalContentAssetStatuses = useStore($externalContentAssetStatuses);
+  const hasUnsavedChanges =
+    hasUnsavedSyncChanges || externalContentAssetStatuses.size > 0;
+  const hasExternalContentError = Array.from(
+    externalContentAssetStatuses.values()
+  ).some((status) => status === "failed" || status === "conflicting");
   const hadUnsavedSyncChangesRef = useRef(false);
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const [savedUntil, setSavedUntil] = useState(0);
   let visibleStatus: SyncStatusDotStatus = "idle";
-  if (statusObject.status === "failed" || statusObject.status === "fatal") {
+  if (
+    statusObject.status === "failed" ||
+    statusObject.status === "fatal" ||
+    hasExternalContentError
+  ) {
     visibleStatus = "error";
-  } else if (hasUnsavedSyncChanges) {
+  } else if (hasUnsavedChanges) {
     visibleStatus = "pending";
   } else if (Date.now() < savedUntil) {
     visibleStatus = "saved";
@@ -73,7 +84,7 @@ export const SyncStatusDot = () => {
       : statusConfig.label;
 
   useEffect(() => {
-    if (hasUnsavedSyncChanges) {
+    if (hasUnsavedChanges) {
       hadUnsavedSyncChangesRef.current = true;
       return;
     }
@@ -89,7 +100,7 @@ export const SyncStatusDot = () => {
         setSavedUntil(0);
       }, syncStatusDotSavedDuration);
     }
-  }, [hasUnsavedSyncChanges, statusObject.status]);
+  }, [hasUnsavedChanges, statusObject.status]);
 
   useEffect(() => {
     return () => clearTimeout(savedTimeoutRef.current);

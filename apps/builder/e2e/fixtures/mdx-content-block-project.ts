@@ -95,6 +95,33 @@ export const configureNamedTemplateLifecycle = async (projectId: string) => {
   await updateBuild(build.id, { instances: JSON.stringify(instances) });
 };
 
+export const configureNestedHeadingTemplates = async (projectId: string) => {
+  const { build, instances } = await getBuildData(projectId);
+  const templates = instances.find((instance) => instance.id === templateId);
+  if (templates === undefined) {
+    throw new Error("Expected the Content Block templates fixture instance");
+  }
+  const nestedTemplates = [
+    { id: "service-card-template", name: "ServiceCard", tag: "a" },
+    { id: "card-shell-template", name: "CardShell", tag: "div" },
+    { id: "card-text-template", name: "CardText", tag: "div" },
+  ];
+  templates.children.push(
+    ...nestedTemplates.map(({ id }) => ({ type: "id", value: id }))
+  );
+  instances.push(
+    ...nestedTemplates.map(({ id, name, tag }) => ({
+      type: "instance" as const,
+      id,
+      component: "ws:element",
+      tag,
+      name,
+      children: [{ type: "text", value: "Template default" }],
+    }))
+  );
+  await updateBuild(build.id, { instances: JSON.stringify(instances) });
+};
+
 const configureSourceBlock = ({
   instances,
   props,

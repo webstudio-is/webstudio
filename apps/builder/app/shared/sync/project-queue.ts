@@ -15,6 +15,7 @@ import {
   type SyncStatus,
 } from "@webstudio-is/sync-client";
 import { publicStaticEnv } from "~/env/env.static";
+import { $externalContentAssetStatuses } from "~/shared/external-content-mutations";
 import { createNativeClient, nativeClient } from "~/shared/trpc/trpc-client";
 import * as commandQueue from "./command-queue";
 import type { SyncStorage } from "~/shared/sync-client";
@@ -420,7 +421,10 @@ export const isSyncIdle = () => {
 export const usePreventUnload = () => {
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
-      if ($hasUnsavedSyncChanges.get() === false) {
+      if (
+        $hasUnsavedSyncChanges.get() === false &&
+        $externalContentAssetStatuses.get().size === 0
+      ) {
         return;
       }
       event.preventDefault();

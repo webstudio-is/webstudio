@@ -62,6 +62,7 @@ import type {
 import { getAssetContentBridge } from "./asset-content-bridge.client";
 import {
   $externalContentRoots,
+  $externalContentAssetStatuses,
   clearExternalContentTemplateInsertions,
   getAffectedExternalContentTemplateRootKeys,
   getExternalContentRoots,
@@ -195,6 +196,40 @@ const assetQueues = new Map<string, AssetQueue>();
 const subscribedSessions = new WeakSet<AssetContentSession>();
 const getAssetQueueKey = (projectId: string, assetId: string) =>
   JSON.stringify([projectId, assetId]);
+const publishAssetSaveStatus = ({
+  projectId,
+  assetId,
+  status,
+  queue,
+}: {
+  projectId: string;
+  assetId: string;
+  status: AssetContentSessionState["status"] | undefined;
+  queue?: AssetQueue;
+}) => {
+  const key = getAssetQueueKey(projectId, assetId);
+  const next = new Map($externalContentAssetStatuses.get());
+  const visibleStatus = queue?.error
+    ? "failed"
+    : status === "failed" || status === "conflicting"
+      ? status
+      : (queue?.pendingSnapshots ?? 0) > 0
+        ? "pending"
+        : status;
+  if (
+    (visibleStatus === "saved" || visibleStatus === undefined
+      ? undefined
+      : visibleStatus) === next.get(key)
+  ) {
+    return;
+  }
+  if (visibleStatus === "saved" || visibleStatus === undefined) {
+    next.delete(key);
+  } else {
+    next.set(key, visibleStatus);
+  }
+  $externalContentAssetStatuses.set(next);
+};
 const getRootKey = (
   projectId: string,
   sourceBlockInstanceId: string,
@@ -962,6 +997,13 @@ const getSession = (projectId: string) => {
     subscribedSessions.add(session);
     session.subscribe((assetId, state) => {
       const queueKey = getAssetQueueKey(projectId, assetId);
+      const queue = assetQueues.get(queueKey);
+      publishAssetSaveStatus({
+        projectId,
+        assetId,
+        status: state.status,
+        queue,
+      });
       if (state.status === "conflicting") {
         getAssetContentBridge().requireReload(
           state.error?.message ??
@@ -969,7 +1011,6 @@ const getSession = (projectId: string) => {
         );
         return;
       }
-      const queue = assetQueues.get(queueKey);
       if ((queue?.pendingSnapshots ?? 0) === 0 && queue?.error === undefined) {
         void rematerializeAsset(
           projectId,
@@ -1058,6 +1099,12 @@ const enqueueAssetUpdate = ({
   queue.pendingSnapshots += 1;
   queue.error = undefined;
   publishAssetQueueError(queue);
+  publishAssetSaveStatus({
+    projectId,
+    assetId,
+    status: session.get(assetId)?.status,
+    queue,
+  });
   const saving = queue.serialization.then(async () => {
     const state = session.get(assetId);
     if (state === undefined) {
@@ -1098,6 +1145,12 @@ const enqueueAssetUpdate = ({
       queue.failedPreservedRootKey = undefined;
       queue.error = undefined;
       publishAssetQueueError(queue);
+      publishAssetSaveStatus({
+        projectId,
+        assetId,
+        status: session.get(assetId)?.status,
+        queue,
+      });
     },
     (error) => {
       queue.failedUpdate = update;
@@ -1110,6 +1163,12 @@ const enqueueAssetUpdate = ({
         getAssetContentBridge().requireReload(queue.error.message);
       }
       publishAssetQueueError(queue);
+      publishAssetSaveStatus({
+        projectId,
+        assetId,
+        status: session.get(assetId)?.status,
+        queue,
+      });
       throw queue.error;
     }
   );
@@ -1117,6 +1176,12 @@ const enqueueAssetUpdate = ({
     .catch(() => {})
     .then(async () => {
       queue.pendingSnapshots -= 1;
+      publishAssetSaveStatus({
+        projectId,
+        assetId,
+        status: session.get(assetId)?.status,
+        queue,
+      });
       if (queue.pendingSnapshots === 0 && succeeded) {
         const state = session.get(assetId);
         if (state !== undefined) {
@@ -2210,6 +2275,13 @@ export const disposeExternalContentProject = async ({
     }
   }
   subscribedSessions.delete(session);
+  const assetStatuses = new Map($externalContentAssetStatuses.get());
+  for (const key of assetStatuses.keys()) {
+    if ((JSON.parse(key) as [string, string])[0] === projectId) {
+      assetStatuses.delete(key);
+    }
+  }
+  $externalContentAssetStatuses.set(assetStatuses);
   const history = new Map($externalContentHistory.get());
   history.delete(projectId);
   $externalContentHistory.set(history);
