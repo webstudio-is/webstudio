@@ -67,6 +67,7 @@ test("Generated Preview delivers MCP-authored forms with readable email and brow
   await startPreviewFormMcpClient();
   const projectId = await createProjectThroughApi({
     context,
+    page,
     email: "mcp-default-contact@webstudio.test",
     title: "MCP default contact Form",
   });

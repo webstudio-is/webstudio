@@ -64,6 +64,7 @@ test("Share links enforce viewer, editor, builder, admin, and owner permissions"
 }) => {
   const fixture = await createContentModeProject({
     context,
+    page: ownerPage,
     email: ownerEmail,
     title: "Share Link E2E",
     devPlan: e2ePaidPlanName,

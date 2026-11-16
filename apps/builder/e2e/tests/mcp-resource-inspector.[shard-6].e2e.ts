@@ -10,6 +10,7 @@ test("MCP-authored Resources show blocked HTTP failures and preview email withou
 }) => {
   const fixture = await createContentModeProject({
     context,
+    page,
     email: "mcp-resource-inspector@webstudio.test",
     title: "MCP Resource inspector",
     assetNamePrefix: "mcp-resource-inspector-",

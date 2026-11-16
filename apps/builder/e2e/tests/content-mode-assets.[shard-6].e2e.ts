@@ -43,6 +43,7 @@ test("Content templates, assets, and collection entries persist across Builder m
 }) => {
   const fixture = await createContentModeProject({
     context,
+    page,
     devPlan: e2ePaidPlanName,
     email: `content-mode-assets-${randomUUID()}@webstudio.test`,
   });

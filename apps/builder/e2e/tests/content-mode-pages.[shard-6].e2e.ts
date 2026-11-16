@@ -22,9 +22,10 @@ import { e2ePaidPlanName } from "../plans";
 
 let fixture: SeededContentModeProject;
 
-test.beforeEach(async ({ context }) => {
+test.beforeEach(async ({ context, page }) => {
   fixture = await createContentModeProject({
     context,
+    page,
     devPlan: e2ePaidPlanName,
     email: `content-mode-pages-${randomUUID()}@webstudio.test`,
   });
