@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import {
   bindSelectedTextContentToExpression,
@@ -7,12 +7,19 @@ import {
   createStringVariable,
   createSystemResourceVariable,
   selectContentInstance,
+  startGraphqlResourceServer,
+  startJsonResourceServer,
 } from "../flows/data-variables";
+import { withGeneratedPreview } from "../flows/generated-app";
 import {
   waitForChangeToBeSaved,
   waitForSyncComplete,
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
+import {
+  preparePreviewLinksProject,
+  previewLinkText,
+} from "../fixtures/preview-links-project";
 import { test } from "../test";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
@@ -173,6 +180,7 @@ const expectPersistedDataVariables = async ({
   graphqlUrl,
   graphqlQuery,
   systemName,
+  currentDateName,
   deletedName,
 }: {
   fixture: { projectId: string };
@@ -190,6 +198,7 @@ const expectPersistedDataVariables = async ({
   graphqlUrl: string;
   graphqlQuery: string;
   systemName: string;
+  currentDateName: string;
   deletedName?: string;
 }) => {
   const { dataSources, resources } = await getDataVariableRuntimeState(fixture);
@@ -292,6 +301,22 @@ const expectPersistedDataVariables = async ({
     throw new Error(`Expected system resource variable "${systemName}".`);
   }
 
+  const currentDateVariable = dataSources.find(
+    (dataSource) => dataSource.name === currentDateName
+  );
+  const currentDateResource = resources.find(
+    (resource) =>
+      currentDateVariable?.type === "resource" &&
+      resource.id === currentDateVariable.resourceId
+  );
+  if (
+    currentDateVariable?.type !== "resource" ||
+    currentDateResource?.control !== "system" ||
+    currentDateResource.method !== "get"
+  ) {
+    throw new Error(`Expected system resource variable "${currentDateName}".`);
+  }
+
   if (
     deletedName !== undefined &&
     dataSources.some((dataSource) => dataSource.name === deletedName)
@@ -300,208 +325,279 @@ const expectPersistedDataVariables = async ({
   }
 };
 
-test("Builder-created variables, resources, and Text Content binding persist after reload", async ({
+test("Builder variables render in generated Preview and persist after reload", async ({
   page,
   context,
 }) => {
-  const email = "data-variables-runtime@webstudio.test";
-  const fixture = await createContentModeProject({
-    context: context,
-    email,
-    title: "Data Variables Runtime",
-    assetNamePrefix: "data-variables-runtime-",
-    editorToken: "data-variables-runtime-editor-token",
-    builderToken: "data-variables-runtime-builder-token",
+  const http = await startJsonResourceServer({
+    title: "Rendered from local HTTP resource",
   });
-  const staticName = "e2eStaticLabel";
-  const staticValue = "Created from Builder UI";
-  const editedStaticValue = "Edited from Builder UI";
-  const httpName = "e2ePosts";
-  const httpUrl = "https://example.com/posts.json";
-  const httpCurlUrl = "https://example.com/api/posts";
-  const httpSearchParamName = "status";
-  const httpSearchParamValue = "published";
-  const httpHeaderName = "X-Test";
-  const httpHeaderValue = "resource-panel";
-  const httpBodyValue = "featured";
-  const graphqlName = "e2eGraphqlPosts";
-  const graphqlUrl = "https://example.com/graphql";
-  const graphqlQuery = "query Posts { posts { id title } }";
-  const systemName = "e2eSitemap";
+  const graphql = await startGraphqlResourceServer({
+    title: "Rendered from local GraphQL resource",
+  });
 
-  await measure("data variables runtime open builder", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
+  try {
+    const email = "data-variables-runtime@webstudio.test";
+    const fixture = await createContentModeProject({
+      context: context,
+      email,
+      title: "Data Variables Runtime",
+      assetNamePrefix: "data-variables-runtime-",
+      editorToken: "data-variables-runtime-editor-token",
+      builderToken: "data-variables-runtime-builder-token",
     });
-    await waitForCanvasText({ page, text: "Initial content" });
-  });
-  await selectContentInstance({ page });
+    const staticName = "e2eStaticLabel";
+    const staticValue = "Rendered from local static variable";
+    const editedStaticValue = "Edited from Builder UI";
+    const httpName = "e2ePosts";
+    const httpUrl = http.url;
+    const httpCurlUrl = new URL("/api/posts", http.url).href;
+    const httpSearchParamName = "status";
+    const httpSearchParamValue = "published";
+    const httpHeaderName = "X-Test";
+    const httpHeaderValue = "resource-panel";
+    const httpBodyValue = "featured";
+    const graphqlName = "e2eGraphqlPosts";
+    const graphqlUrl = graphql.url;
+    const graphqlQuery = "query Post { post { title } }";
+    const systemName = "e2eSitemap";
+    const currentDateName = "e2eCurrentDate";
+    const expectedYear = String(new Date().getUTCFullYear());
+    const expectedText = `${staticValue} | Rendered from local HTTP resource | Rendered from local GraphQL resource | ${expectedYear}`;
 
-  await measure(
-    "data variables runtime create variables through UI",
-    async () => {
-      await createStringVariable({
+    await preparePreviewLinksProject(fixture.projectId);
+
+    await measure("data variables runtime open builder", async () => {
+      await openProjectBuilder({
         page,
-        name: staticName,
-        value: staticValue,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
       });
-      await createHttpResourceVariable({
+      await waitForCanvasText({ page, text: "Initial content" });
+    });
+    await selectContentInstance({ page });
+
+    await measure(
+      "data variables runtime create variables through UI",
+      async () => {
+        await createStringVariable({
+          page,
+          name: staticName,
+          value: staticValue,
+        });
+        await createHttpResourceVariable({
+          page,
+          name: httpName,
+          url: httpUrl,
+        });
+        await createGraphqlResourceVariable({
+          page,
+          name: graphqlName,
+          url: graphqlUrl,
+          query: graphqlQuery,
+        });
+        await createSystemResourceVariable({ page, name: systemName });
+        await createSystemResourceVariable({
+          page,
+          name: currentDateName,
+          resource: "Current date resource",
+        });
+        await waitForSyncComplete({ page });
+      }
+    );
+
+    await test.step("Bind Text Content to all rendered variable types", async () => {
+      await bindSelectedTextContentToExpression({
         page,
-        name: httpName,
-        url: httpUrl,
+        expression:
+          'e2eStaticLabel + " | " + e2ePosts.data.title + " | " + e2eGraphqlPosts.data.data.post.title + " | " + e2eCurrentDate.data.year',
       });
-      await createGraphqlResourceVariable({
-        page,
-        name: graphqlName,
-        url: graphqlUrl,
-        query: graphqlQuery,
-      });
-      await createSystemResourceVariable({ page, name: systemName });
+      await waitForCanvasText({ page, text: expectedText });
       await waitForSyncComplete({ page });
-    }
-  );
-
-  await test.step("Bind Text Content to the new static variable", async () => {
-    await bindSelectedTextContentToExpression({ page, expression: staticName });
-    await waitForCanvasText({ page, text: staticValue });
-  });
-
-  await measure(
-    "data variables runtime edit resources and variables",
-    async () => {
-      await editStringVariable({
-        page,
-        fixture,
-        name: staticName,
-        value: editedStaticValue,
-      });
-      await editHttpResourceVariableWithCurl({
-        page,
-        fixture,
-        name: httpName,
-        curl: `curl '${httpCurlUrl}?${httpSearchParamName}=${httpSearchParamValue}' --request POST --header '${httpHeaderName}: ${httpHeaderValue}' --header 'Content-Type: application/json' --data '{"${httpBodyValue}":true}'`,
-      });
-    }
-  );
-
-  await expectPersistedDataVariables({
-    fixture,
-    staticName,
-    staticValue: editedStaticValue,
-    httpName,
-    httpUrl,
-    httpCurlUrl,
-    httpSearchParamName,
-    httpSearchParamValue,
-    httpHeaderName,
-    httpHeaderValue,
-    httpBodyValue,
-    graphqlName,
-    graphqlUrl,
-    graphqlQuery,
-    systemName,
-    deletedName: undefined,
-  });
-
-  await expectVariableListItem({
-    page,
-    name: staticName,
-    badge: "Static variable",
-  });
-  await expectVariableListItem({
-    page,
-    name: httpName,
-    badge: "Dynamic variable",
-  });
-  await expectVariableListItem({
-    page,
-    name: graphqlName,
-    badge: "Dynamic variable",
-  });
-  await expectVariableListItem({
-    page,
-    name: systemName,
-    badge: "Dynamic variable",
-  });
-
-  await measure("data variables runtime reload builder", async () => {
-    await openProjectBuilder({
-      page,
-      projectId: fixture.projectId,
-      authToken: fixture.builderToken,
     });
-  });
-  await waitForCanvasText({ page, text: editedStaticValue });
-  await selectContentInstance({ page, text: editedStaticValue });
 
-  await expectVariableListItem({
-    page,
-    name: staticName,
-    badge: "Static variable",
-  });
-  await expectVariableListItem({
-    page,
-    name: httpName,
-    badge: "Dynamic variable",
-  });
-  await expectVariableListItem({
-    page,
-    name: graphqlName,
-    badge: "Dynamic variable",
-  });
-  await expectVariableListItem({
-    page,
-    name: systemName,
-    badge: "Dynamic variable",
-  });
+    await test.step("Generated Preview renders variables and navigates linked routes", async () => {
+      await withGeneratedPreview({
+        projectId: fixture.projectId,
+        callback: async ({ url, html }) => {
+          expect(html).toContain(expectedText);
+          const target = new URL("/my-page", url).href;
+          const response = await fetch(target, { redirect: "manual" });
+          expect(response.ok).toBe(true);
+          expect(await response.text()).toContain(previewLinkText.pageLink);
 
-  await expectPersistedDataVariables({
-    fixture,
-    staticName,
-    staticValue: editedStaticValue,
-    httpName,
-    httpUrl,
-    httpCurlUrl,
-    httpSearchParamName,
-    httpSearchParamValue,
-    httpHeaderName,
-    httpHeaderValue,
-    httpBodyValue,
-    graphqlName,
-    graphqlUrl,
-    graphqlQuery,
-    systemName,
-    deletedName: undefined,
-  });
+          const previewPage = await context.newPage();
+          try {
+            await previewPage.goto(url);
+            const link = previewPage.getByRole("link", {
+              name: previewLinkText.pageLink,
+              exact: true,
+            });
+            await link.click();
+            await expect(previewPage).toHaveURL(target);
+            await expect(link).toBeVisible();
+            await expect(link).toHaveAttribute("aria-current", "page");
+          } finally {
+            await previewPage.close();
+          }
+        },
+      });
+    });
 
-  await measure("data variables runtime delete graphql variable", async () => {
-    await deleteVariable({
-      page,
+    await measure(
+      "data variables runtime edit resources and variables",
+      async () => {
+        await editStringVariable({
+          page,
+          fixture,
+          name: staticName,
+          value: editedStaticValue,
+        });
+        await editHttpResourceVariableWithCurl({
+          page,
+          fixture,
+          name: httpName,
+          curl: `curl '${httpCurlUrl}?${httpSearchParamName}=${httpSearchParamValue}' --request POST --header '${httpHeaderName}: ${httpHeaderValue}' --header 'Content-Type: application/json' --data '{"${httpBodyValue}":true}'`,
+        });
+      }
+    );
+
+    await expectPersistedDataVariables({
       fixture,
-      name: graphqlName,
+      staticName,
+      staticValue: editedStaticValue,
+      httpName,
+      httpUrl,
+      httpCurlUrl,
+      httpSearchParamName,
+      httpSearchParamValue,
+      httpHeaderName,
+      httpHeaderValue,
+      httpBodyValue,
+      graphqlName,
+      graphqlUrl,
+      graphqlQuery,
+      systemName,
+      currentDateName,
+      deletedName: undefined,
     });
-  });
-  await page.getByText(graphqlName, { exact: true }).waitFor({
-    state: "hidden",
-  });
-  await expectPersistedDataVariables({
-    fixture,
-    staticName,
-    staticValue: editedStaticValue,
-    httpName,
-    httpUrl,
-    httpCurlUrl,
-    httpSearchParamName,
-    httpSearchParamValue,
-    httpHeaderName,
-    httpHeaderValue,
-    httpBodyValue,
-    graphqlName,
-    graphqlUrl,
-    graphqlQuery,
-    systemName,
-    deletedName: graphqlName,
-  });
+
+    await expectVariableListItem({
+      page,
+      name: staticName,
+      badge: "Static variable",
+    });
+    await expectVariableListItem({
+      page,
+      name: httpName,
+      badge: "Dynamic variable",
+    });
+    await expectVariableListItem({
+      page,
+      name: graphqlName,
+      badge: "Dynamic variable",
+    });
+    await expectVariableListItem({
+      page,
+      name: systemName,
+      badge: "Dynamic variable",
+    });
+    await expectVariableListItem({
+      page,
+      name: currentDateName,
+      badge: "Dynamic variable",
+    });
+
+    await measure("data variables runtime reload builder", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    });
+    const editedText = expectedText.replace(staticValue, editedStaticValue);
+    await waitForCanvasText({ page, text: editedText });
+    await selectContentInstance({ page, text: editedText });
+
+    await expectVariableListItem({
+      page,
+      name: staticName,
+      badge: "Static variable",
+    });
+    await expectVariableListItem({
+      page,
+      name: httpName,
+      badge: "Dynamic variable",
+    });
+    await expectVariableListItem({
+      page,
+      name: graphqlName,
+      badge: "Dynamic variable",
+    });
+    await expectVariableListItem({
+      page,
+      name: systemName,
+      badge: "Dynamic variable",
+    });
+    await expectVariableListItem({
+      page,
+      name: currentDateName,
+      badge: "Dynamic variable",
+    });
+
+    await expectPersistedDataVariables({
+      fixture,
+      staticName,
+      staticValue: editedStaticValue,
+      httpName,
+      httpUrl,
+      httpCurlUrl,
+      httpSearchParamName,
+      httpSearchParamValue,
+      httpHeaderName,
+      httpHeaderValue,
+      httpBodyValue,
+      graphqlName,
+      graphqlUrl,
+      graphqlQuery,
+      systemName,
+      currentDateName,
+      deletedName: undefined,
+    });
+
+    await measure(
+      "data variables runtime delete graphql variable",
+      async () => {
+        await deleteVariable({
+          page,
+          fixture,
+          name: graphqlName,
+        });
+      }
+    );
+    await page.getByText(graphqlName, { exact: true }).waitFor({
+      state: "hidden",
+    });
+    await expectPersistedDataVariables({
+      fixture,
+      staticName,
+      staticValue: editedStaticValue,
+      httpName,
+      httpUrl,
+      httpCurlUrl,
+      httpSearchParamName,
+      httpSearchParamValue,
+      httpHeaderName,
+      httpHeaderValue,
+      httpBodyValue,
+      graphqlName,
+      graphqlUrl,
+      graphqlQuery,
+      systemName,
+      currentDateName,
+      deletedName: graphqlName,
+    });
+  } finally {
+    await Promise.all([http.close(), graphql.close()]);
+  }
 });
