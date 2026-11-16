@@ -804,4 +804,25 @@ test("Show element closes the diagnostics dialog on ordinary navigation", async 
       (button) => button.textContent === "Show more"
     )
   ).toBe(false);
+  await act(async () => userEvent.click(link as HTMLElement));
+  expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+});
+
+test("shows error details inline without a details screen", () => {
+  render(
+    [
+      {
+        severity: "error",
+        title: "article.mdx:2:3",
+        details: "Invalid MDX: replace the unsupported element.",
+        reportText: "Invalid MDX",
+      },
+    ],
+    { open: true }
+  );
+  expect(document.body.textContent).toContain(
+    "Invalid MDX: replace the unsupported element."
+  );
+  expect(document.body.textContent).not.toContain("Show more");
+  expect(document.body.textContent).not.toContain("Back");
 });

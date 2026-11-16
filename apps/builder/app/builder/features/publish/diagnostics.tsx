@@ -97,6 +97,7 @@ const FindingList = ({
   findings,
   canViewPublishLogs,
   onSelect,
+  onNavigate,
   onOpenPublish,
   issuesOmitted = 0,
   publishBuildIds,
@@ -104,6 +105,7 @@ const FindingList = ({
   findings: DiagnosticFinding[];
   canViewPublishLogs: boolean;
   onSelect: (finding: DiagnosticFinding) => void;
+  onNavigate: () => void;
   onOpenPublish?: () => void;
   issuesOmitted?: number;
   publishBuildIds: string[];
@@ -145,7 +147,24 @@ const FindingList = ({
                 <Text variant="labels" userSelect="text">
                   {finding.title}
                 </Text>
-                {finding.link}
+                {finding.link !== undefined && (
+                  <span
+                    onClick={(event) => {
+                      if (
+                        event.button !== 0 ||
+                        event.metaKey ||
+                        event.ctrlKey ||
+                        event.shiftKey ||
+                        event.altKey
+                      ) {
+                        return;
+                      }
+                      onNavigate();
+                    }}
+                  >
+                    {finding.link}
+                  </span>
+                )}
                 {finding.severity !== "error" &&
                   finding.details !== undefined && (
                     <Link
@@ -159,6 +178,10 @@ const FindingList = ({
                     >
                       Show more
                     </Link>
+                  )}
+                {finding.severity === "error" &&
+                  finding.details !== undefined && (
+                    <Text css={{ userSelect: "text" }}>{finding.details}</Text>
                   )}
               </Flex>
             ) : (
@@ -505,6 +528,7 @@ export const PublishDiagnosticsDialog = ({
                     issuesOmitted={issuesOmitted}
                     publishBuildIds={items.map(({ buildId }) => buildId)}
                     onSelect={setSelectedFinding}
+                    onNavigate={() => setIsOpen(false)}
                     onOpenPublish={
                       items.length > 0 ? () => setTab("publish") : undefined
                     }
