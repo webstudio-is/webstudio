@@ -473,11 +473,14 @@ test("Builder can draft, stage, copy, duplicate, and delete a page from the head
       expect(await getCanvasFrame(page)).toBe(previousCanvas);
 
       await openPageSettings({ page, pageName: renamedPageName });
-      await selectHeaderAction({
-        page,
-        menuLabel: "Page actions",
-        action: "Duplicate",
-      });
+      await Promise.all([
+        waitForChangeToBeSaved({ page }),
+        selectHeaderAction({
+          page,
+          menuLabel: "Page actions",
+          action: "Duplicate",
+        }),
+      ]);
       await waitForPageRow({ page, pageName: duplicatedPageName });
 
       await openPageSettings({ page, pageName: duplicatedPageName });
