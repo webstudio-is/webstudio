@@ -42,14 +42,14 @@ export const resolveLocalLinkUrl = (
 
 /**
  * Webstudio's local link styles target the concrete URL, not just the matched
- * route. Page links match the exact path and query regardless of the current
- * fragment. Section links also require the fragment to match.
+ * route. Without a current fragment, all links to the same path and query
+ * match. With a fragment, page links and links to that section match.
  */
 export const isLocalLinkActive = (current: UrlParts, target: UrlParts) => {
   return (
     current.pathname === target.pathname &&
     current.search === target.search &&
-    (target.hash === "" || current.hash === target.hash)
+    (current.hash === "" || target.hash === "" || current.hash === target.hash)
   );
 };
 
