@@ -280,7 +280,7 @@ test("generate merged properties as single rule", () => {
     `);
 });
 
-test("convert :local-link to its visual state marker", () => {
+test("convert :local-link to its aria-current polyfill", () => {
   const sheet = createRegularStyleSheet();
   const rule = sheet.addNestingRule(".instance");
   sheet.addMediaRule("x");
@@ -293,7 +293,7 @@ test("convert :local-link to its visual state marker", () => {
   expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
     .toMatchInlineSnapshot(`
     "@media all {
-      .c3mubaz:is([aria-current=page],[data-ws-local-link]) {
+      .c3mubaz[aria-current=page] {
         color: green
       }
     }"

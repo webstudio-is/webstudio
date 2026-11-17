@@ -158,11 +158,6 @@ test("only the matching section link is current", async () => {
     null,
   ]);
   expect(links.map((link) => link.className)).toEqual(["active", "active", ""]);
-  expect(links.map((link) => link.hasAttribute("data-ws-local-link"))).toEqual([
-    true,
-    true,
-    false,
-  ]);
 });
 
 test("route link with an encoded section is current on direct load", async () => {
@@ -294,9 +289,6 @@ test("all section links match when the current URL has no fragment", async () =>
     "active",
     "active",
   ]);
-  expect(links.every((link) => link.hasAttribute("data-ws-local-link"))).toBe(
-    true
-  );
 });
 
 test("external link renders as plain anchor without router context", async () => {

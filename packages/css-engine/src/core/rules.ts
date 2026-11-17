@@ -1,6 +1,6 @@
 /// <reference path="../../../../@types/css-tree.d.ts" />
 
-import { ident, parse, walk, type CssNode } from "css-tree";
+import { parse, walk, type CssNode } from "css-tree";
 import type { StyleValue } from "../schema";
 import { toValue, type TransformValue } from "./to-value";
 import { hyphenateProperty } from "./to-property";
@@ -104,11 +104,7 @@ const getDeclarationKey = (declaraionKey: DeclarationKey) => {
 const currentPageSelector = "[aria-current=page]";
 
 const polyfillLocalLink = (selector: string) => {
-  if (
-    !selector.includes("local-link") &&
-    !selector.toLowerCase().includes("aria-current") &&
-    !selector.includes("\\")
-  ) {
+  if (!selector.includes("local-link") && !selector.includes("\\")) {
     return [selector, selector];
   }
   let ast: CssNode;
@@ -122,36 +118,18 @@ const polyfillLocalLink = (selector: string) => {
   let rendered = "";
   let sortSelector = "";
   walk(ast, (node) => {
-    if (!node.loc) {
-      return;
-    }
-    let attribute = currentPageSelector;
-    if (node.type === "AttributeSelector") {
-      const value =
-        node.value?.type === "Identifier"
-          ? ident.decode(node.value.name)
-          : node.value?.value;
-      const ignoreCase = node.flags?.toLowerCase() === "i";
-      if (
-        ident.decode(node.name.name).toLowerCase() !== "aria-current" ||
-        node.matcher !== "=" ||
-        (node.flags !== null && !ignoreCase) ||
-        (ignoreCase ? value?.toLowerCase() : value) !== "page"
-      ) {
-        return;
-      }
-      attribute = selector.slice(node.loc.start.offset, node.loc.end.offset);
-    } else if (
+    if (
       node.type !== "PseudoClassSelector" ||
       node.name !== "local-link" ||
-      node.children !== null
+      node.children !== null ||
+      !node.loc
     ) {
       return;
     }
 
     const unmodified = selector.slice(end, node.loc.start.offset);
-    rendered += `${unmodified}:is(${attribute},[data-ws-local-link])`;
-    sortSelector += unmodified + attribute;
+    rendered += `${unmodified}${currentPageSelector}`;
+    sortSelector += `${unmodified}${currentPageSelector}`;
     end = node.loc.end.offset;
   });
   const rest = selector.slice(end);

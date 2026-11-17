@@ -64,6 +64,9 @@ test("local link is current when pathname and search match", () => {
   expect(links[1]?.hasAttribute("class")).toBe(false);
   expect(links[9]?.getAttribute("class")).toBe("custom active");
   expect(links[10]?.getAttribute("class")).toBe("custom");
+  expect(links[0]?.matches("[aria-current=page]")).toBe(true);
+  expect(links[11]?.matches("[aria-current=page]")).toBe(false);
+  expect(links[11]?.hasAttribute("data-ws-local-link")).toBe(false);
 });
 
 test("local link preserves exact pathname behavior", () => {
@@ -107,11 +110,6 @@ test("only the matching section link is current", () => {
     null,
   ]);
   expect(links.map((link) => link.className)).toEqual(["active", "active", ""]);
-  expect(links.map((link) => link.hasAttribute("data-ws-local-link"))).toEqual([
-    true,
-    true,
-    false,
-  ]);
 });
 
 test("all section links match when the current URL has no fragment", () => {
@@ -137,9 +135,6 @@ test("all section links match when the current URL has no fragment", () => {
     "active",
     "active",
   ]);
-  expect(links.every((link) => link.hasAttribute("data-ws-local-link"))).toBe(
-    true
-  );
 });
 
 test("external and asset links render as plain anchors", () => {

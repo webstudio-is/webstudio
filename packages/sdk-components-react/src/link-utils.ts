@@ -28,7 +28,6 @@ export const getCurrentLinkProps = <
   return {
     linkProps,
     currentLinkProps: {
-      "data-ws-local-link": isActive ? "" : undefined,
       ...(isActive ? { "aria-current": ariaCurrent ?? "page" } : {}),
       ...(classNameValue === "" ? {} : { className: classNameValue }),
     },
