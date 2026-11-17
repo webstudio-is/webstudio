@@ -5,10 +5,8 @@ import type {
 } from "@remix-run/server-runtime";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { Asset } from "@webstudio-is/sdk";
-import {
-  createPageCopyContentAction,
-  loader,
-} from "../routes/rest.page-copy.content";
+import { loader } from "../routes/rest.page-copy.content";
+import { createPageCopyContentAction } from "./page-copy-content-route.server";
 import {
   getGrantedAssetRevisions,
   isCurrentPageCopyGrant,
@@ -243,7 +241,7 @@ test("the Vite development server passes only the page-copy preflight to its rou
 
 test("renewal derives all 500 Asset IDs from the verified old grant", async () => {
   const { createPageCopyGrantAction } =
-    await import("../routes/rest.page-copy.grant");
+    await import("./page-copy-grant-route.server");
   const { createDefaultPages } = await import("@webstudio-is/project-build");
   const assets = Array.from(
     { length: 500 },

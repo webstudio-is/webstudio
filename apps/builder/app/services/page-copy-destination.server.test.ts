@@ -19,7 +19,7 @@ import {
 import { createPageCopyData } from "@webstudio-is/project-build/runtime";
 import { createBuilderStateFromCompactBuild } from "@webstudio-is/project-build/state";
 import type { WebstudioData } from "@webstudio-is/sdk";
-import { createPageCopyDestinationAction } from "../routes/rest.page-copy.destination";
+import { createPageCopyDestinationAction } from "./page-copy-destination-route.server";
 
 const timestamp = "2026-11-17T00:00:00.000Z";
 const sourceFolder: AssetFolder = {

@@ -7,7 +7,13 @@ const browserProject = (
   group: "core" | "app",
   name: string,
   include: string[],
-  exclude: string[] = []
+  {
+    exclude = [],
+    fileParallelism,
+  }: {
+    exclude?: string[];
+    fileParallelism?: boolean;
+  } = {}
 ) => ({
   extends: "./vitest.config.ts",
   test: {
@@ -18,6 +24,7 @@ const browserProject = (
       provider: "playwright" as const,
       enabled: true,
       headless: true,
+      fileParallelism,
       screenshotFailures: false,
       instances: [{ browser: "chromium" as const }],
     },
@@ -42,23 +49,28 @@ const projects = [
     "core",
     "builder-features",
     ["app/builder/features/**/*.{test,spec}.{ts,tsx}"],
-    [
-      "app/builder/features/{settings-panel,style-panel}/**/*.{test,spec}.{ts,tsx}",
-    ]
+    {
+      exclude: [
+        "app/builder/features/{settings-panel,style-panel}/**/*.{test,spec}.{ts,tsx}",
+      ],
+    }
   ),
   browserProject("app", "builder-shared", [
     "app/builder/shared/**/*.{test,spec}.{ts,tsx}",
     "app/builder/*.{test,spec}.{ts,tsx}",
   ]),
-  browserProject("app", "shared-heavy", [
-    "app/shared/{copy-paste,instance-utils,sync}/**/*.{test,spec}.{ts,tsx}",
-  ]),
   browserProject(
     "app",
-    "shared",
-    ["app/shared/**/*.{test,spec}.{ts,tsx}"],
-    ["app/shared/{copy-paste,instance-utils,sync}/**/*.{test,spec}.{ts,tsx}"]
+    "shared-heavy",
+    ["app/shared/{copy-paste,instance-utils,sync}/**/*.{test,spec}.{ts,tsx}"],
+    // Vitest 3.1's browser mock registry is shared by concurrent test files.
+    { fileParallelism: false }
   ),
+  browserProject("app", "shared", ["app/shared/**/*.{test,spec}.{ts,tsx}"], {
+    exclude: [
+      "app/shared/{copy-paste,instance-utils,sync}/**/*.{test,spec}.{ts,tsx}",
+    ],
+  }),
   browserProject("app", "canvas-dashboard", [
     "app/{canvas,dashboard}/**/*.{test,spec}.{ts,tsx}",
   ]),
@@ -66,7 +78,8 @@ const projects = [
 
 export default defineConfig({
   optimizeDeps: {
-    entries: ["app/**/*.{test,spec}.{ts,tsx}"],
+    // Browser dependency discovery must skip Node-only tests and their imports.
+    entries: ["app/**/*.{test,spec}.{ts,tsx}", `!app/${nodeTestGlob}`],
     include: [
       "react/jsx-dev-runtime",
       "react-router-dom",

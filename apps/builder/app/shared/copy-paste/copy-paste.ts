@@ -126,14 +126,16 @@ const isPasteHandled = (result: PasteResult) =>
   result.success === false || result.data.handled;
 
 const reportPasteResult = (result: PasteResult) => {
-  if (result.success === false) {
-    builderApi.toast.error(
-      result.error,
-      result.transfer === undefined
-        ? undefined
-        : { copyText: JSON.stringify(result.transfer) }
-    );
+  if (result.success) {
+    return;
   }
+  if (result.transfer === undefined) {
+    builderApi.toast.error(result.error);
+    return;
+  }
+  builderApi.toast.error(result.error, {
+    copyText: JSON.stringify(result.transfer),
+  });
 };
 
 const textMimeType = "text/plain";
