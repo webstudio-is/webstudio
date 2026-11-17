@@ -1,4 +1,7 @@
+import { serializedPages } from "@webstudio-is/project-migrations/pages";
 import { encodeDataSourceVariable } from "@webstudio-is/sdk";
+import { breakpoint } from "@webstudio-is/sdk/schema";
+import { z } from "zod";
 import {
   insertAsset,
   insertAuthorizationToken,
@@ -108,11 +111,7 @@ const pageTemplateFontSize = "38px";
 const inlineImageHeadingText = "Heading with protected image";
 
 const getBaseBreakpointId = (breakpoints: string) => {
-  const parsedBreakpoints = JSON.parse(breakpoints) as Array<{
-    id: string;
-    minWidth?: number;
-    maxWidth?: number;
-  }>;
+  const parsedBreakpoints = z.array(breakpoint).parse(JSON.parse(breakpoints));
   return (
     parsedBreakpoints.find(
       (breakpoint) =>
@@ -800,17 +799,9 @@ const createContentModeBuildData = ({
     },
   ];
 
-  const nextPages = JSON.parse(pages) as {
-    homePageId: string;
-    formComponentIdentityVersion?: number;
-    pages: Array<{ id: string; rootInstanceId: string }>;
-    pageTemplates?: Array<{
-      id: string;
-      name: string;
-      title: string;
-      rootInstanceId: string;
-      meta: Record<string, unknown>;
-    }>;
+  const nextPages = {
+    ...serializedPages.parse(JSON.parse(pages)),
+    formComponentIdentityVersion: 1,
   };
   const homePage = nextPages.pages.find(
     (page) => page.id === nextPages.homePageId
@@ -821,9 +812,12 @@ const createContentModeBuildData = ({
   homePage.rootInstanceId = rootInstanceId;
   // Tests insert canonical managed Forms later. The seeded resource examples
   // remain WebhookForms because their action props use the legacy format.
-  nextPages.formComponentIdentityVersion = 1;
+  const pageTemplates = nextPages.pageTemplates ?? [];
+  if (!Array.isArray(pageTemplates)) {
+    throw new Error("Expected page templates to be an array");
+  }
   nextPages.pageTemplates = [
-    ...(nextPages.pageTemplates ?? []),
+    ...pageTemplates,
     {
       id: pageTemplateId,
       name: pageTemplateName,

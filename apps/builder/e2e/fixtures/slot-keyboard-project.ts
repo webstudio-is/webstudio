@@ -1,4 +1,7 @@
 import type { BrowserContext, Page } from "@playwright/test";
+import { serializedPages } from "@webstudio-is/project-migrations/pages";
+import { breakpoint } from "@webstudio-is/sdk/schema";
+import { z } from "zod";
 import { createSeededBuilderProject } from "./builder-project";
 
 export type SeededSlotKeyboardProject = {
@@ -7,11 +10,7 @@ export type SeededSlotKeyboardProject = {
 };
 
 const getBaseBreakpointId = (breakpoints: string) => {
-  const parsedBreakpoints = JSON.parse(breakpoints) as Array<{
-    id: string;
-    minWidth?: number;
-    maxWidth?: number;
-  }>;
+  const parsedBreakpoints = z.array(breakpoint).parse(JSON.parse(breakpoints));
   return (
     parsedBreakpoints.find(
       (breakpoint) =>
@@ -36,10 +35,7 @@ const createSlotKeyboardBuildData = ({
   const baseBreakpointId = getBaseBreakpointId(breakpoints);
   const wrapperStyleSourceId = "slot-keyboard-wrapper-style";
 
-  const nextPages = JSON.parse(pages) as {
-    homePageId: string;
-    pages: Array<{ id: string; rootInstanceId: string }>;
-  };
+  const nextPages = serializedPages.parse(JSON.parse(pages));
   const homePage = nextPages.pages.find(
     (page) => page.id === nextPages.homePageId
   );

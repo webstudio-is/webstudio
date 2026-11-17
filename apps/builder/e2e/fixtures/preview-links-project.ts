@@ -1,37 +1,8 @@
+import type { Instance, Prop } from "@webstudio-is/sdk";
+import { instance, prop } from "@webstudio-is/sdk/schema";
+import { z } from "zod";
 import { loadDevBuild, updateBuild } from "../db";
-
-type PageData = {
-  id: string;
-  name: string;
-  title: string;
-  rootInstanceId: string;
-  path: string;
-  meta: Record<string, unknown>;
-};
-
-type PagesData = {
-  homePageId: string;
-  rootFolderId?: string;
-  pages: PageData[];
-  folders?: Array<{ id: string; children?: string[] }>;
-};
-
-type InstanceData = {
-  type: "instance";
-  id: string;
-  component: string;
-  tag?: string;
-  label?: string;
-  children: Array<{ type: "id" | "text"; value: string }>;
-};
-
-type PropData = {
-  id: string;
-  instanceId: string;
-  name: string;
-  type: "string";
-  value: string;
-};
+import { parsePreviewLinksPages } from "./preview-links-pages";
 
 export const previewLinkText = {
   homeLink: "Preview home link",
@@ -76,7 +47,7 @@ const previewLinks: PreviewLink[] = [
 ] as const;
 
 const appendChild = (
-  instances: InstanceData[],
+  instances: Instance[],
   parentId: string,
   childId: string
 ) => {
@@ -96,8 +67,8 @@ const addTextLink = ({
   text,
   href,
 }: {
-  instances: InstanceData[];
-  props: PropData[];
+  instances: Instance[];
+  props: Prop[];
   id: string;
   component?: string;
   tag?: string;
@@ -127,8 +98,8 @@ const addPreviewLinks = ({
   parentId,
   prefix,
 }: {
-  instances: InstanceData[];
-  props: PropData[];
+  instances: Instance[];
+  props: Prop[];
   parentId: string;
   prefix: string;
 }) => {
@@ -149,9 +120,9 @@ const addPreviewLinks = ({
 
 export const preparePreviewLinksProject = async (projectId: string) => {
   const build = await loadDevBuild({ projectId });
-  const pages = JSON.parse(build.pages) as PagesData;
-  const instances = JSON.parse(build.instances) as InstanceData[];
-  const props = JSON.parse(build.props) as PropData[];
+  const pages = parsePreviewLinksPages(JSON.parse(build.pages));
+  const instances = z.array(instance).parse(JSON.parse(build.instances));
+  const props = z.array(prop).parse(JSON.parse(build.props));
 
   const homePage = pages.pages.find((page) => page.id === pages.homePageId);
   if (homePage === undefined) {
@@ -179,8 +150,8 @@ export const preparePreviewLinksProject = async (projectId: string) => {
     meta: { description: JSON.stringify("") },
   });
   pages.folders
-    ?.find((folder) => folder.id === pages.rootFolderId)
-    ?.children?.push(previewPageId);
+    .find((folder) => folder.id === pages.rootFolderId)
+    ?.children.push(previewPageId);
 
   instances.push(
     {
