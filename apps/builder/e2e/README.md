@@ -95,11 +95,11 @@ each invocation.
 - Keep tests in a file independent even though Playwright runs them in
   declaration order by default.
 
-CI runs five isolated Playwright shards with three workers each. Files have a
+CI runs five isolated Playwright shards with five workers each. Files have a
 fixed assignment based on measured CI duration to keep the slowest job short:
 
 ```txt
-pages-actions.[shard-5].e2e.ts
+pages-actions.[shard-3].e2e.ts
 ```
 
 Every E2E filename in CI must contain one shard tag. The build job checks that
