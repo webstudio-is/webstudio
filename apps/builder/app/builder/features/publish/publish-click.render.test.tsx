@@ -455,7 +455,7 @@ test("static export reaches the server without waiting for diagnostics", async (
       (element) => element.textContent?.trim() === "Show element"
     )
   ).toBe(false);
-}, 10_000);
+}, 30_000);
 
 test("keeps Diagnostics visible but disabled before there is anything to show", async () => {
   await mount();

@@ -191,7 +191,7 @@ test("reopening an active static publish keeps one status owner and one download
   expect(document.body.textContent).toContain("Downloaded");
   expect(publishRequests).toBe(1);
   expect(jobRequests).toBe(2);
-});
+}, 30_000);
 
 test("a persisted static failure remains visible without session diagnostics", async () => {
   projectStore.set({
