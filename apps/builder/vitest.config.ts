@@ -47,11 +47,19 @@ const projects = [
   ]),
   browserProject(
     "core",
+    "publish",
+    ["app/builder/features/publish/**/*.{test,spec}.{ts,tsx}"],
+    // These tests share browser mocks across files in Vitest 3.1.
+    { fileParallelism: false }
+  ),
+  browserProject(
+    "core",
     "builder-features",
     ["app/builder/features/**/*.{test,spec}.{ts,tsx}"],
     {
       exclude: [
         "app/builder/features/{settings-panel,style-panel}/**/*.{test,spec}.{ts,tsx}",
+        "app/builder/features/publish/**/*.{test,spec}.{ts,tsx}",
       ],
     }
   ),
