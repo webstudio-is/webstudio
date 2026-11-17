@@ -1,5 +1,4 @@
 import { FetchInterceptor } from "@mswjs/interceptors/fetch";
-import { userEvent } from "@vitest/browser/context";
 import { act } from "react-dom/test-utils";
 import { expect, vi } from "vitest";
 
@@ -26,7 +25,17 @@ export const selectStaticDestination = async () => {
     },
     { timeout: 10_000 }
   );
-  await act(async () => userEvent.click(destination));
+  await act(async () => {
+    destination.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        pointerId: 1,
+        pointerType: "touch",
+      })
+    );
+    destination.click();
+  });
   const staticOption = await vi.waitFor(
     () => {
       const element = Array.from(
@@ -37,7 +46,17 @@ export const selectStaticDestination = async () => {
     },
     { timeout: 10_000 }
   );
-  await act(async () => userEvent.click(staticOption));
+  await act(async () => {
+    staticOption.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        pointerId: 1,
+        pointerType: "touch",
+      })
+    );
+    staticOption.click();
+  });
 };
 
 export const deferred = <T>() => {
