@@ -38,7 +38,15 @@ export const selectStaticDestination = async () => {
     },
     { timeout: 10_000 }
   );
-  await act(async () => destination.click());
+  await act(async () =>
+    destination.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        pointerType: "mouse",
+      })
+    )
+  );
   const staticOption = await vi.waitFor(
     () => {
       const element = Array.from(
