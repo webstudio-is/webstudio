@@ -40,39 +40,12 @@ export const selectStaticDestination = async (container: HTMLElement) => {
     },
     { timeout: 10_000 }
   );
-  await act(async () => {
+  // Typeahead selects from Radix's closed collection without a blur-sensitive menu.
+  await act(async () =>
     destination.dispatchEvent(
-      new PointerEvent("pointerdown", {
-        bubbles: true,
-        button: 0,
-        isPrimary: true,
-        pointerId: 1,
-        pointerType: "touch",
-      })
-    );
-    destination.click();
-  });
-  const staticOption = await vi.waitFor(
-    () => {
-      const contentId = destination.getAttribute("aria-controls");
-      const content =
-        contentId === null ? null : document.getElementById(contentId);
-      const element = Array.from(
-        content?.querySelectorAll<HTMLElement>('[role="option"]') ?? []
-      ).find(
-        (option) =>
-          option.textContent?.trim() === "Static" &&
-          option.getClientRects().length > 0
-      );
-      expect(
-        element,
-        `Expected the export destination menu to show Static; trigger state is ${destination.dataset.state}`
-      ).toBeDefined();
-      return element!;
-    },
-    { timeout: 10_000 }
+      new KeyboardEvent("keydown", { bubbles: true, key: "s" })
+    )
   );
-  await act(async () => staticOption.click());
 };
 
 export const deferred = <T>() => {

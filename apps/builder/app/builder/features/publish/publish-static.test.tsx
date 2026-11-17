@@ -237,10 +237,10 @@ test("project navigation suppresses an old static download and error toast", asy
 });
 
 test("a failed static runner clears progress without starting a download", async () => {
-  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   projectStore.set(createProject());
   await render(true);
+  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   const button = staticButton();
   expect(button).toBeDefined();
   await act(async () => button?.click());
