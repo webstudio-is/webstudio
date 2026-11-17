@@ -2,6 +2,7 @@ import * as React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import {
+  createBrowserRouter,
   createMemoryRouter,
   RouterProvider,
   useLoaderData,
@@ -44,7 +45,7 @@ const sdkContext = {
   onError: vi.fn(),
 };
 
-test("local link is current only when pathname, search, and hash match", async () => {
+test("local link is current when pathname and search match", async () => {
   const router = createMemoryRouter(
     [
       {
@@ -66,7 +67,7 @@ test("local link is current only when pathname, search, and hash match", async (
             <Link href="/path" className="custom">
               Inactive class
             </Link>
-            <Link href="/path?tag=bla#section" aria-current="location">
+            <Link href="/path?tag=bla#section" aria-current="step">
               Aria override
             </Link>
           </ReactSdkContext.Provider>
@@ -83,16 +84,16 @@ test("local link is current only when pathname, search, and hash match", async (
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
     "page",
     null,
-    null,
+    "page",
     null,
     null,
     "page",
-    null,
+    "page",
+    "page",
+    "page",
     "page",
     null,
-    "page",
-    null,
-    "location",
+    "step",
   ]);
 
   expect(links[0]?.getAttribute("class")).toBe("active");
@@ -128,6 +129,165 @@ test("local link preserves exact pathname behavior", async () => {
     "page",
     null,
     null,
+  ]);
+});
+
+test("only the matching section link is current", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/faq",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="/faq">Page</Link>
+            <Link href="/faq#one">Section one</Link>
+            <Link href="/faq#two">Section two</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/faq#one"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+  const links = Array.from(document.querySelectorAll("a"));
+
+  expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+    "page",
+    "page",
+    null,
+  ]);
+  expect(links.map((link) => link.className)).toEqual(["active", "active", ""]);
+});
+
+test("route link with an encoded section is current on direct load", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/faq",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="/faq#café">Section</Link>
+            <Link href="/faq#other">Other section</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/faq#caf%C3%A9"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  expect(
+    Array.from(document.querySelectorAll("a"), (link) =>
+      link.getAttribute("aria-current")
+    )
+  ).toEqual(["page", null]);
+});
+
+test("route links with Unicode are current on direct load and after navigation", async () => {
+  const initialUrl = window.location.href;
+  const initialState = window.history.state;
+  window.history.replaceState(null, "", "/faq/caf%C3%A9?q=pi%C3%B1ata");
+  const router = createBrowserRouter([
+    {
+      path: "/faq/:topic",
+      element: (
+        <ReactSdkContext.Provider value={sdkContext}>
+          <Link href="/faq/café?q=piñata">Coffee</Link>
+          <Link href="/faq/résumé?q=piñata" replace>
+            Résumé
+          </Link>
+        </ReactSdkContext.Provider>
+      ),
+    },
+  ]);
+
+  try {
+    await render(<RouterProvider router={router} />);
+    const links = Array.from(document.querySelectorAll("a"));
+
+    expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+      "page",
+      null,
+    ]);
+
+    await act(async () => {
+      links[1]?.click();
+    });
+
+    expect(window.location.pathname).toBe("/faq/r%C3%A9sum%C3%A9");
+    expect(window.location.search).toBe("?q=pi%C3%B1ata");
+    expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+      null,
+      "page",
+    ]);
+  } finally {
+    router.dispose();
+    window.history.replaceState(initialState, "", initialUrl);
+  }
+});
+
+test("current link matching uses the link's relative path mode", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/faq/:topic",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="../café" relative="path">
+              Path relative
+            </Link>
+            <Link href="../café">Route relative</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/faq/caf%C3%A9"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const links = Array.from(document.querySelectorAll("a"));
+  expect(links.map((link) => link.pathname)).toEqual([
+    "/faq/caf%C3%A9",
+    "/caf%C3%A9",
+  ]);
+  expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+    "page",
+    null,
+  ]);
+});
+
+test("all section links match when the current URL has no fragment", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/faq",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="/faq">Page</Link>
+            <Link href="/faq#one">Section one</Link>
+            <Link href="/faq#two">Section two</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/faq"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+  const links = Array.from(document.querySelectorAll("a"));
+
+  expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+    "page",
+    "page",
+    "page",
+  ]);
+  expect(links.map((link) => link.className)).toEqual([
+    "active",
+    "active",
+    "active",
   ]);
 });
 
@@ -292,7 +452,7 @@ test("bare hash link targets the current page without the current hash", async (
   const link = document.querySelector("a");
 
   expect(link?.getAttribute("href")).toBe("#");
-  expect(link?.getAttribute("aria-current")).toBeNull();
+  expect(link?.getAttribute("aria-current")).toBe("page");
 });
 
 test("empty local link preserves the current search and clears the hash", async () => {
@@ -319,7 +479,7 @@ test("empty local link preserves the current search and clears the hash", async 
   const link = document.querySelector("a");
 
   expect(link?.getAttribute("href")).toBe("/path?tag=bla");
-  expect(link?.getAttribute("aria-current")).toBeNull();
+  expect(link?.getAttribute("aria-current")).toBe("page");
 
   await act(async () => {
     link?.dispatchEvent(

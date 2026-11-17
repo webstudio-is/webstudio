@@ -28,7 +28,7 @@ test("empty asset base url does not exclude every root-relative href", () => {
   expect(isInternalHref("/assets/file.pdf", "")).toBe(true);
 });
 
-test("local link matches exact pathname, search, and hash", () => {
+test("local link matches exact pathname and search", () => {
   expect(
     isLocalLinkActive(
       { pathname: "/path", search: "?tag=bla", hash: "#section" },
@@ -37,7 +37,7 @@ test("local link matches exact pathname, search, and hash", () => {
   ).toBe(true);
 });
 
-test("local link does not match when pathname, search, or hash differ", () => {
+test("local link does not match when pathname or search differ", () => {
   const current = { pathname: "/path", search: "?tag=bla", hash: "#section" };
 
   expect(
@@ -54,6 +54,18 @@ test("local link does not match when pathname, search, or hash differ", () => {
       hash: "#section",
     })
   ).toBe(false);
+});
+
+test("links match the page without a fragment and only the current section with one", () => {
+  const current = { pathname: "/path", search: "?tag=bla", hash: "#section" };
+
+  expect(
+    isLocalLinkActive(current, {
+      pathname: "/path",
+      search: "?tag=bla",
+      hash: "",
+    })
+  ).toBe(true);
   expect(
     isLocalLinkActive(current, {
       pathname: "/path",
@@ -61,6 +73,12 @@ test("local link does not match when pathname, search, or hash differ", () => {
       hash: "#other",
     })
   ).toBe(false);
+  expect(
+    isLocalLinkActive(
+      { pathname: "/path", search: "?tag=bla", hash: "" },
+      current
+    )
+  ).toBe(true);
 });
 
 test("local link matching is case-sensitive like concrete URLs", () => {
@@ -111,6 +129,52 @@ test("hash local link resolves against current pathname and search", () => {
     search: "?tag=bla",
     hash: "#section",
   });
+});
+
+test("hash local link matches the browser-encoded fragment", () => {
+  const current = new URL("https://example.com/faq#caf%C3%A9");
+  const href = "#café";
+  const target = resolveLocalLinkUrl(href, current, new URL(href, current));
+
+  expect(target.hash).toBe(current.hash);
+  expect(isLocalLinkActive(current, target)).toBe(true);
+});
+
+test("local link matches encoded and unencoded forms of the same fragment", () => {
+  const browserUrl = new URL("https://example.com/faq#caf%C3%A9");
+  const routerUrl = { pathname: "/faq", search: "", hash: "#café" };
+
+  expect(isLocalLinkActive(browserUrl, routerUrl)).toBe(true);
+  expect(isLocalLinkActive(routerUrl, browserUrl)).toBe(true);
+});
+
+test("local link encodes Unicode without splitting escaped path segments", () => {
+  const browserUrl = new URL("https://example.com/faq/caf%C3%A9%2Fmenu");
+  const routerUrl = { pathname: "/faq/café%2Fmenu", search: "", hash: "" };
+
+  expect(isLocalLinkActive(browserUrl, routerUrl)).toBe(true);
+  expect(isLocalLinkActive(routerUrl, browserUrl)).toBe(true);
+  expect(
+    isLocalLinkActive(browserUrl, { ...routerUrl, pathname: "/faq/café/menu" })
+  ).toBe(false);
+});
+
+test("local link encodes Unicode without changing query order", () => {
+  const browserUrl = new URL("https://example.com/faq?q=caf%C3%A9&tag=menu");
+  const routerUrl = { pathname: "/faq", search: "?q=café&tag=menu", hash: "" };
+
+  expect(isLocalLinkActive(browserUrl, routerUrl)).toBe(true);
+  expect(isLocalLinkActive(routerUrl, browserUrl)).toBe(true);
+  expect(
+    isLocalLinkActive(browserUrl, { ...routerUrl, search: "?tag=menu&q=café" })
+  ).toBe(false);
+});
+
+test("local link preserves trailing spaces in router fragments", () => {
+  const browserUrl = new URL("https://example.com/faq#section%20");
+  const routerUrl = { pathname: "/faq", search: "", hash: "#section " };
+
+  expect(isLocalLinkActive(browserUrl, routerUrl)).toBe(true);
 });
 
 test("bare hash local link resolves to current pathname and search without hash", () => {

@@ -32,7 +32,7 @@ const renderLinks = (currentUrl: string) => {
         <Link href="/path" className="custom">
           Inactive class
         </Link>
-        <Link href="/path?tag=bla#section" aria-current="location">
+        <Link href="/path?tag=bla#section" aria-current="step">
           Aria override
         </Link>
       </LinkCurrentUrlContext.Provider>
@@ -42,28 +42,30 @@ const renderLinks = (currentUrl: string) => {
   return Array.from(document.querySelectorAll("a"));
 };
 
-test("local link is current only when pathname, search, and hash match", () => {
+test("local link is current when pathname and search match", () => {
   const links = renderLinks("https://example.com/path?tag=bla#section");
 
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
     "page",
     null,
-    null,
+    "page",
     null,
     null,
     "page",
-    null,
+    "page",
+    "page",
+    "page",
     "page",
     null,
-    "page",
-    null,
-    "location",
+    "step",
   ]);
 
   expect(links[0]?.getAttribute("class")).toBe("active");
   expect(links[1]?.hasAttribute("class")).toBe(false);
   expect(links[9]?.getAttribute("class")).toBe("custom active");
   expect(links[10]?.getAttribute("class")).toBe("custom");
+  expect(links[0]?.matches("[aria-current=page]")).toBe(true);
+  expect(links[11]?.matches("[aria-current=page]")).toBe(false);
 });
 
 test("local link preserves exact pathname behavior", () => {
@@ -85,6 +87,52 @@ test("local link preserves exact pathname behavior", () => {
     "page",
     null,
     null,
+  ]);
+});
+
+test("only the matching section link is current", () => {
+  const markup = renderToStaticMarkup(
+    <ReactSdkContext.Provider value={sdkContext}>
+      <LinkCurrentUrlContext.Provider value="https://example.com/faq#one">
+        <Link href="/faq">Page</Link>
+        <Link href="/faq#one">Section one</Link>
+        <Link href="/faq#two">Section two</Link>
+      </LinkCurrentUrlContext.Provider>
+    </ReactSdkContext.Provider>
+  );
+  document.body.innerHTML = markup;
+  const links = Array.from(document.querySelectorAll("a"));
+
+  expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+    "page",
+    "page",
+    null,
+  ]);
+  expect(links.map((link) => link.className)).toEqual(["active", "active", ""]);
+});
+
+test("all section links match when the current URL has no fragment", () => {
+  const markup = renderToStaticMarkup(
+    <ReactSdkContext.Provider value={sdkContext}>
+      <LinkCurrentUrlContext.Provider value="https://example.com/faq">
+        <Link href="/faq">Page</Link>
+        <Link href="/faq#one">Section one</Link>
+        <Link href="/faq#two">Section two</Link>
+      </LinkCurrentUrlContext.Provider>
+    </ReactSdkContext.Provider>
+  );
+  document.body.innerHTML = markup;
+  const links = Array.from(document.querySelectorAll("a"));
+
+  expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+    "page",
+    "page",
+    "page",
+  ]);
+  expect(links.map((link) => link.className)).toEqual([
+    "active",
+    "active",
+    "active",
   ]);
 });
 

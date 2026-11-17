@@ -5,7 +5,7 @@ import {
   PageSettingsTitle,
   ReactSdkContext,
 } from "@webstudio-is/react-sdk/runtime";
-import { LinkCurrentUrlContext } from "@webstudio-is/sdk-components-react";
+import { BrowserCurrentUrlProvider } from "@webstudio-is/sdk-components-react";
 import { assetBaseUrl, imageLoader } from "../../app/constants.mjs";
 import { assetUrlsByPath } from "../../app/__generated__/$resources.assets";
 import { Page, breakpoints, siteName } from "../../app/__generated__/_index";
@@ -43,9 +43,9 @@ const PageComponent = ({ data }: { data: PageContext["data"] }) => {
 
   return (
     <ReactSdkContext.Provider value={sdkContext}>
-      <LinkCurrentUrlContext.Provider value={url}>
+      <BrowserCurrentUrlProvider serverUrl={url}>
         <PageBoundary pageKey={pageKey} system={system} />
-      </LinkCurrentUrlContext.Provider>
+      </BrowserCurrentUrlProvider>
       <PageSettingsMeta
         url={url}
         pageMeta={pageMeta}

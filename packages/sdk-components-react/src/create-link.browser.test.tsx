@@ -11,7 +11,7 @@ import { createLink } from "./create-link";
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-test("fragment links keep server classes during hydration and become active afterward", async () => {
+test("page links stay active while section links hydrate with the fragment", async () => {
   let hash = "";
   const RouterLink = forwardRef<
     HTMLAnchorElement,
@@ -46,8 +46,10 @@ test("fragment links keep server classes during hydration and become active afte
         onError: vi.fn(),
       }}
     >
-      <Link href="/path#section">Route link</Link>
+      <Link href="/path">Page link</Link>
+      <Link href="/path#section">Route section link</Link>
       <Link href="#section">Hash link</Link>
+      <Link href="#other">Other section</Link>
     </ReactSdkContext.Provider>
   );
   const container = document.createElement("div");
@@ -55,12 +57,12 @@ test("fragment links keep server classes during hydration and become active afte
   document.body.append(container);
   expect(
     Array.from(container.querySelectorAll("a"), (link) => link.className)
-  ).toEqual(["", ""]);
+  ).toEqual(["active", "active", "active", "active"]);
   expect(
     Array.from(container.querySelectorAll("a"), (link) =>
       link.getAttribute("aria-current")
     )
-  ).toEqual([null, null]);
+  ).toEqual(["page", "page", "page", "page"]);
 
   hash = "#section";
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -72,12 +74,12 @@ test("fragment links keep server classes during hydration and become active afte
     expect(consoleError).not.toHaveBeenCalled();
     expect(
       Array.from(container.querySelectorAll("a"), (link) => link.className)
-    ).toEqual(["active", "active"]);
+    ).toEqual(["active", "active", "active", ""]);
     expect(
       Array.from(container.querySelectorAll("a"), (link) =>
         link.getAttribute("aria-current")
       )
-    ).toEqual(["page", "page"]);
+    ).toEqual(["page", "page", "page", null]);
   } finally {
     await act(async () => root?.unmount());
     consoleError.mockRestore();
