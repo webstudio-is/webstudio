@@ -40,6 +40,13 @@ export const resolveLocalLinkUrl = (
   return resolvedPath;
 };
 
+const serializeHash = (hash: string) => {
+  const url = new URL("https://webstudio.local/");
+  // Assigning preserves trailing spaces that URL parsing would trim.
+  url.hash = hash;
+  return url.hash;
+};
+
 /**
  * Webstudio's local link styles target the concrete URL, not just the matched
  * route. Without a current fragment, all links to the same path and query
@@ -49,7 +56,9 @@ export const isLocalLinkActive = (current: UrlParts, target: UrlParts) => {
   return (
     current.pathname === target.pathname &&
     current.search === target.search &&
-    (current.hash === "" || target.hash === "" || current.hash === target.hash)
+    (current.hash === "" ||
+      target.hash === "" ||
+      serializeHash(current.hash) === serializeHash(target.hash))
   );
 };
 

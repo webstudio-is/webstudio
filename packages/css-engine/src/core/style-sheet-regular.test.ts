@@ -866,6 +866,8 @@ test.each([":local-link", "[aria-current=page]"])(
     expect(css).toContain(
       ".instance:is([aria-current=page],[data-ws-local-link])"
     );
+    expect(css).toContain(".instance:visited");
+    expect(css).toContain("color: purple");
     expect(css.indexOf("color: purple")).toBeLessThan(
       css.indexOf("color: green")
     );

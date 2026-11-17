@@ -164,6 +164,31 @@ test("only the matching section link is current", async () => {
   ]);
 });
 
+test("route link with an encoded section is current on direct load", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/faq",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="/faq#café">Section</Link>
+            <Link href="/faq#other">Other section</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/faq#caf%C3%A9"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  expect(
+    Array.from(document.querySelectorAll("a"), (link) =>
+      link.getAttribute("aria-current")
+    )
+  ).toEqual(["page", null]);
+});
+
 test("all section links match when the current URL has no fragment", async () => {
   const router = createMemoryRouter(
     [

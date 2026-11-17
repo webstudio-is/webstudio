@@ -140,6 +140,21 @@ test("hash local link matches the browser-encoded fragment", () => {
   expect(isLocalLinkActive(current, target)).toBe(true);
 });
 
+test("local link matches encoded and unencoded forms of the same fragment", () => {
+  const browserUrl = new URL("https://example.com/faq#caf%C3%A9");
+  const routerUrl = { pathname: "/faq", search: "", hash: "#café" };
+
+  expect(isLocalLinkActive(browserUrl, routerUrl)).toBe(true);
+  expect(isLocalLinkActive(routerUrl, browserUrl)).toBe(true);
+});
+
+test("local link preserves trailing spaces in router fragments", () => {
+  const browserUrl = new URL("https://example.com/faq#section%20");
+  const routerUrl = { pathname: "/faq", search: "", hash: "#section " };
+
+  expect(isLocalLinkActive(browserUrl, routerUrl)).toBe(true);
+});
+
 test("bare hash local link resolves to current pathname and search without hash", () => {
   const current = { pathname: "/path", search: "?tag=bla", hash: "#section" };
 
