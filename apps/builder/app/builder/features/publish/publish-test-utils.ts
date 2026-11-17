@@ -38,12 +38,7 @@ export const selectStaticDestination = async () => {
     },
     { timeout: 10_000 }
   );
-  await act(async () => {
-    destination.focus();
-    destination.dispatchEvent(
-      new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
-    );
-  });
+  await act(async () => destination.click());
   const staticOption = await vi.waitFor(
     () => {
       const element = Array.from(
