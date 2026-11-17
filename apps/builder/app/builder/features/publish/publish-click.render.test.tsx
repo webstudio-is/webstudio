@@ -132,6 +132,16 @@ const mount = async (dialog: "publish" | "export" = "publish") => {
   );
 };
 
+const waitFor = async (assertion: () => void, timeout = 10_000) => {
+  await vi.waitFor(
+    async () => {
+      await act(async () => {});
+      assertion();
+    },
+    { timeout }
+  );
+};
+
 test("a successful site runner finishes the current publish and retains its report", async () => {
   jobStatus = "success";
   publishResponse = {
@@ -156,14 +166,8 @@ test("a successful site runner finishes the current publish and retains its repo
     .filter((button) => button.textContent === "Publish")
     .at(-1)!;
   await act(async () => publish.click());
-  await act(async () =>
-    vi.waitFor(
-      () =>
-        expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe(
-          "build-1"
-        ),
-      { timeout: 10_000 }
-    )
+  await waitFor(() =>
+    expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe("build-1")
   );
   expect(requests.map(({ path }) => path)).toContain(
     "/trpc/api.publish.getJob"
@@ -218,14 +222,12 @@ test("a successful site runner finishes the current publish and retains its repo
   ).find((button) => button.textContent?.trim() === "Validate");
   expect(validate).toBeDefined();
   await act(async () => validate?.click());
-  await act(async () =>
-    vi.waitFor(() =>
-      expect(
-        Array.from(
-          document.body.querySelectorAll<HTMLButtonElement>("button")
-        ).some((button) => button.textContent?.trim() === "See issues")
-      ).toBe(true)
-    )
+  await waitFor(() =>
+    expect(
+      Array.from(
+        document.body.querySelectorAll<HTMLButtonElement>("button")
+      ).some((button) => button.textContent?.trim() === "See issues")
+    ).toBe(true)
   );
   expect(document.body.textContent).not.toContain("Published successfully.");
 });
@@ -253,14 +255,8 @@ test("a rejected publish replaces an older success notice with its findings", as
     .filter((button) => button.textContent?.trim() === "Publish")
     .at(-1)!;
   await act(async () => publish.click());
-  await act(async () =>
-    vi.waitFor(
-      () =>
-        expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe(
-          "build-1"
-        ),
-      { timeout: 10_000 }
-    )
+  await waitFor(() =>
+    expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe("build-1")
   );
   expect(document.body.textContent).toContain("Published successfully.");
 
@@ -275,22 +271,16 @@ test("a rejected publish replaces an older success notice with its findings", as
     .at(-1)!;
   expect(publishAgain.disabled).toBe(false);
   await act(async () => publishAgain.click());
-  await act(async () =>
-    vi.waitFor(
-      () =>
-        expect(
-          requests.filter(({ path }) => path === "/trpc/domain.publish")
-        ).toHaveLength(2),
-      { timeout: 10_000 }
-    )
+  await waitFor(() =>
+    expect(
+      requests.filter(({ path }) => path === "/trpc/domain.publish")
+    ).toHaveLength(2)
   );
   const seeIssues = () =>
     Array.from(
       document.body.querySelectorAll<HTMLButtonElement>("button")
     ).find((button) => button.textContent?.trim() === "See issues");
-  await act(async () =>
-    vi.waitFor(() => expect(seeIssues()).toBeDefined(), { timeout: 10_000 })
-  );
+  await waitFor(() => expect(seeIssues()).toBeDefined());
   expect(document.body.textContent).not.toContain("Published successfully.");
   await act(async () => seeIssues()?.click());
   expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain(
@@ -443,14 +433,12 @@ test("static export reaches the server without waiting for diagnostics", async (
     (button) => button.textContent?.trim() === "Build and download static site"
   );
   expect(buildButton).toBeDefined();
-  await act(async () => {
-    buildButton?.click();
-    await vi.waitFor(() => {
-      expect(requests.some(({ path }) => path === "/trpc/domain.publish")).toBe(
-        true
-      );
-    });
-  });
+  await act(async () => buildButton?.click());
+  await waitFor(() =>
+    expect(requests.some(({ path }) => path === "/trpc/domain.publish")).toBe(
+      true
+    )
+  );
 
   expect(requests).toContainEqual({
     path: "/trpc/domain.publish",
