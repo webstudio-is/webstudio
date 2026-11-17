@@ -32,7 +32,7 @@ const renderLinks = (currentUrl: string) => {
         <Link href="/path" className="custom">
           Inactive class
         </Link>
-        <Link href="/path?tag=bla#section" aria-current="location">
+        <Link href="/path?tag=bla#section" aria-current="step">
           Aria override
         </Link>
       </LinkCurrentUrlContext.Provider>
@@ -46,18 +46,18 @@ test("local link is current when pathname and search match", () => {
   const links = renderLinks("https://example.com/path?tag=bla#section");
 
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
-    "page",
+    "location",
     null,
     "page",
     null,
-    null,
-    "page",
-    "page",
-    "page",
-    "page",
-    "page",
     null,
     "location",
+    "page",
+    "location",
+    "page",
+    "location",
+    null,
+    "step",
   ]);
 
   expect(links[0]?.getAttribute("class")).toBe("active");
@@ -103,10 +103,15 @@ test("only the matching section link is current", () => {
 
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
     "page",
-    "page",
+    "location",
     null,
   ]);
   expect(links.map((link) => link.className)).toEqual(["active", "active", ""]);
+  expect(links.map((link) => link.hasAttribute("data-ws-local-link"))).toEqual([
+    true,
+    true,
+    false,
+  ]);
 });
 
 test("all section links match when the current URL has no fragment", () => {
@@ -124,14 +129,17 @@ test("all section links match when the current URL has no fragment", () => {
 
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
     "page",
-    "page",
-    "page",
+    null,
+    null,
   ]);
   expect(links.map((link) => link.className)).toEqual([
     "active",
     "active",
     "active",
   ]);
+  expect(links.every((link) => link.hasAttribute("data-ws-local-link"))).toBe(
+    true
+  );
 });
 
 test("external and asset links render as plain anchors", () => {
@@ -220,6 +228,6 @@ test("current url context accepts relative paths", () => {
   document.body.innerHTML = markup;
   const link = document.querySelector("a");
 
-  expect(link?.getAttribute("aria-current")).toBe("page");
+  expect(link?.getAttribute("aria-current")).toBe("location");
   expect(link?.getAttribute("class")).toBe("active");
 });

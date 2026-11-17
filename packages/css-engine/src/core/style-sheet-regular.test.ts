@@ -828,7 +828,7 @@ test("generate merged properties as single rule", () => {
   `);
 });
 
-test("convert :local-link to [aria-current=page] selector", () => {
+test("convert :local-link to its visual state marker", () => {
   const sheet = createRegularStyleSheet();
   const rule = sheet.addNestingRule(".instance");
   rule.setDeclaration({
@@ -838,8 +838,22 @@ test("convert :local-link to [aria-current=page] selector", () => {
     value: { type: "keyword", value: "green" },
   });
   expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
-    ".instance[aria-current=page] {
+    ".instance:is([aria-current=page],[data-ws-local-link]) {
       color: green
     }"
   `);
+});
+
+test("preserve styles saved with the current page state selector", () => {
+  const sheet = createRegularStyleSheet();
+  const rule = sheet.addNestingRule(".instance");
+  rule.setDeclaration({
+    breakpoint: "base",
+    selector: "[aria-current=page]",
+    property: "color",
+    value: { type: "keyword", value: "green" },
+  });
+  expect(rule.toString({ breakpoint: "base" })).toContain(
+    ".instance:is([aria-current=page],[data-ws-local-link])"
+  );
 });

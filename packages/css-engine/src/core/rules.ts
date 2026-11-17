@@ -259,9 +259,12 @@ export class NestingRule {
         continue;
       }
       let nestedSelector = declaration.selector;
-      // polyfill :local-link with framework specific logic
-      if (nestedSelector === ":local-link") {
-        nestedSelector = "[aria-current=page]";
+      // Preserve explicit current-page styles alongside the computed local-link state.
+      if (
+        nestedSelector === ":local-link" ||
+        nestedSelector === "[aria-current=page]"
+      ) {
+        nestedSelector = ":is([aria-current=page],[data-ws-local-link])";
       }
       const isDescendant =
         this.#descendantSuffix.startsWith(" ") ||

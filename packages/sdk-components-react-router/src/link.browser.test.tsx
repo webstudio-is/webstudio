@@ -66,7 +66,7 @@ test("local link is current when pathname and search match", async () => {
             <Link href="/path" className="custom">
               Inactive class
             </Link>
-            <Link href="/path?tag=bla#section" aria-current="location">
+            <Link href="/path?tag=bla#section" aria-current="step">
               Aria override
             </Link>
           </ReactSdkContext.Provider>
@@ -81,18 +81,18 @@ test("local link is current when pathname and search match", async () => {
   const links = Array.from(document.querySelectorAll("a"));
 
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
-    "page",
+    "location",
     null,
     "page",
     null,
-    null,
-    "page",
-    "page",
-    "page",
-    "page",
-    "page",
     null,
     "location",
+    "page",
+    "location",
+    "page",
+    "location",
+    null,
+    "step",
   ]);
 
   expect(links[0]?.getAttribute("class")).toBe("active");
@@ -153,10 +153,15 @@ test("only the matching section link is current", async () => {
 
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
     "page",
-    "page",
+    "location",
     null,
   ]);
   expect(links.map((link) => link.className)).toEqual(["active", "active", ""]);
+  expect(links.map((link) => link.hasAttribute("data-ws-local-link"))).toEqual([
+    true,
+    true,
+    false,
+  ]);
 });
 
 test("all section links match when the current URL has no fragment", async () => {
@@ -181,14 +186,17 @@ test("all section links match when the current URL has no fragment", async () =>
 
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
     "page",
-    "page",
-    "page",
+    null,
+    null,
   ]);
   expect(links.map((link) => link.className)).toEqual([
     "active",
     "active",
     "active",
   ]);
+  expect(links.every((link) => link.hasAttribute("data-ws-local-link"))).toBe(
+    true
+  );
 });
 
 test("external link renders as plain anchor without router context", async () => {
@@ -310,7 +318,7 @@ test("hash-only link does not start router navigation", async () => {
   const link = document.querySelector("a");
 
   expect(link?.getAttribute("href")).toBe("#section");
-  expect(link?.getAttribute("aria-current")).toBe("page");
+  expect(link?.getAttribute("aria-current")).toBe("location");
   expect(link?.hasAttribute("prefetch")).toBe(false);
   expect(link?.hasAttribute("preventscrollreset")).toBe(false);
   expect(link?.hasAttribute("reloaddocument")).toBe(false);

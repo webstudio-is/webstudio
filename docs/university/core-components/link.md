@@ -72,12 +72,14 @@ When using links for navigation and wanting to highlight the current page, the l
 
 <figure><picture><source srcset="../../.gitbook/assets/link-local-link-state-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/link-local-link-state-light.png" alt="Style sources menu with the local-link state" width="240"></picture></figure>
 
-Webstudio marks matching links with `aria-current="page"` and applies the Local Link state. The link's path and query string must match the current URL. The part after `#` controls which links match:
+Webstudio applies the Local Link state when the link's path and query string match the current URL. The part after `#` controls which links match:
 
 - At `/faq`, links to `/faq`, `/faq#one`, and `/faq#two` all match.
 - At `/faq#one`, links to `/faq` and `/faq#one` match, but `/faq#two` does not.
 
 This differs from the [CSS `:local-link` definition](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/:local-link), which ignores the part after `#` in both URLs. Webstudio keeps it when the current URL points to a section, so a different section link does not get the Local Link state. When the current URL has no `#`, multiple section links can be highlighted at once.
+
+By default, Webstudio also marks a matching page link with `aria-current="page"`. A section link gets `aria-current="location"` only when its `#` matches the current URL. When the URL has no `#`, section links can share the Local Link style without being announced as the current section.
 
 ## Related
 

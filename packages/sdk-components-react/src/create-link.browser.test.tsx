@@ -62,7 +62,7 @@ test("page links stay active while section links hydrate with the fragment", asy
     Array.from(container.querySelectorAll("a"), (link) =>
       link.getAttribute("aria-current")
     )
-  ).toEqual(["page", "page", "page", "page"]);
+  ).toEqual(["page", null, null, null]);
 
   hash = "#section";
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -79,7 +79,7 @@ test("page links stay active while section links hydrate with the fragment", asy
       Array.from(container.querySelectorAll("a"), (link) =>
         link.getAttribute("aria-current")
       )
-    ).toEqual(["page", "page", "page", null]);
+    ).toEqual(["page", "location", "location", null]);
   } finally {
     await act(async () => root?.unmount());
     consoleError.mockRestore();
