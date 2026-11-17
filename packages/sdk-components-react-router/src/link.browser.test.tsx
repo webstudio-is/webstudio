@@ -44,7 +44,7 @@ const sdkContext = {
   onError: vi.fn(),
 };
 
-test("local link is current only when pathname, search, and hash match", async () => {
+test("local link is current when pathname and search match", async () => {
   const router = createMemoryRouter(
     [
       {
@@ -83,13 +83,13 @@ test("local link is current only when pathname, search, and hash match", async (
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
     "page",
     null,
-    null,
+    "page",
     null,
     null,
     "page",
-    null,
     "page",
-    null,
+    "page",
+    "page",
     "page",
     null,
     "location",
@@ -292,7 +292,7 @@ test("bare hash link targets the current page without the current hash", async (
   const link = document.querySelector("a");
 
   expect(link?.getAttribute("href")).toBe("#");
-  expect(link?.getAttribute("aria-current")).toBeNull();
+  expect(link?.getAttribute("aria-current")).toBe("page");
 });
 
 test("empty local link preserves the current search and clears the hash", async () => {
@@ -319,7 +319,7 @@ test("empty local link preserves the current search and clears the hash", async 
   const link = document.querySelector("a");
 
   expect(link?.getAttribute("href")).toBe("/path?tag=bla");
-  expect(link?.getAttribute("aria-current")).toBeNull();
+  expect(link?.getAttribute("aria-current")).toBe("page");
 
   await act(async () => {
     link?.dispatchEvent(

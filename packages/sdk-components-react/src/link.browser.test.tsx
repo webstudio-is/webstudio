@@ -42,19 +42,19 @@ const renderLinks = (currentUrl: string) => {
   return Array.from(document.querySelectorAll("a"));
 };
 
-test("local link is current only when pathname, search, and hash match", () => {
+test("local link is current when pathname and search match", () => {
   const links = renderLinks("https://example.com/path?tag=bla#section");
 
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
     "page",
     null,
-    null,
+    "page",
     null,
     null,
     "page",
-    null,
     "page",
-    null,
+    "page",
+    "page",
     "page",
     null,
     "location",

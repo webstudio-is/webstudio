@@ -11,7 +11,7 @@ import { createLink } from "./create-link";
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-test("fragment links keep server classes during hydration and become active afterward", async () => {
+test("fragment links are active before and after hydration", async () => {
   let hash = "";
   const RouterLink = forwardRef<
     HTMLAnchorElement,
@@ -55,12 +55,12 @@ test("fragment links keep server classes during hydration and become active afte
   document.body.append(container);
   expect(
     Array.from(container.querySelectorAll("a"), (link) => link.className)
-  ).toEqual(["", ""]);
+  ).toEqual(["active", "active"]);
   expect(
     Array.from(container.querySelectorAll("a"), (link) =>
       link.getAttribute("aria-current")
     )
-  ).toEqual([null, null]);
+  ).toEqual(["page", "page"]);
 
   hash = "#section";
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});

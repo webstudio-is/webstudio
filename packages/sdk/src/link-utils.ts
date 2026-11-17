@@ -42,14 +42,12 @@ export const resolveLocalLinkUrl = (
 
 /**
  * Webstudio's local link styles target the concrete URL, not just the matched
- * route. This intentionally preserves the old NavLink end/exact behavior while
- * also requiring query string and fragment equality.
+ * route. Match the exact path and query while ignoring fragments, which do not
+ * change the current page.
  */
 export const isLocalLinkActive = (current: UrlParts, target: UrlParts) => {
   return (
-    current.pathname === target.pathname &&
-    current.search === target.search &&
-    current.hash === target.hash
+    current.pathname === target.pathname && current.search === target.search
   );
 };
 

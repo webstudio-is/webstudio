@@ -28,7 +28,7 @@ test("empty asset base url does not exclude every root-relative href", () => {
   expect(isInternalHref("/assets/file.pdf", "")).toBe(true);
 });
 
-test("local link matches exact pathname, search, and hash", () => {
+test("local link matches exact pathname and search", () => {
   expect(
     isLocalLinkActive(
       { pathname: "/path", search: "?tag=bla", hash: "#section" },
@@ -37,7 +37,7 @@ test("local link matches exact pathname, search, and hash", () => {
   ).toBe(true);
 });
 
-test("local link does not match when pathname, search, or hash differ", () => {
+test("local link does not match when pathname or search differ", () => {
   const current = { pathname: "/path", search: "?tag=bla", hash: "#section" };
 
   expect(
@@ -54,13 +54,26 @@ test("local link does not match when pathname, search, or hash differ", () => {
       hash: "#section",
     })
   ).toBe(false);
+});
+
+test("local link ignores fragments on both URLs", () => {
+  const current = { pathname: "/path", search: "?tag=bla", hash: "#section" };
+
+  for (const hash of ["", "#other"]) {
+    expect(
+      isLocalLinkActive(current, {
+        pathname: "/path",
+        search: "?tag=bla",
+        hash,
+      })
+    ).toBe(true);
+  }
   expect(
-    isLocalLinkActive(current, {
-      pathname: "/path",
-      search: "?tag=bla",
-      hash: "#other",
-    })
-  ).toBe(false);
+    isLocalLinkActive(
+      { pathname: "/path", search: "?tag=bla", hash: "" },
+      current
+    )
+  ).toBe(true);
 });
 
 test("local link matching is case-sensitive like concrete URLs", () => {
