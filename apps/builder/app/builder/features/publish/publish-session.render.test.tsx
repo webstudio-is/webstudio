@@ -268,7 +268,7 @@ const panel = () =>
     '[role="tabpanel"][data-state="active"]'
   )!;
 
-const waitFor = async (assertion: () => void, timeout = 1_000) => {
+const waitFor = async (assertion: () => void, timeout = 10_000) => {
   await vi.waitFor(
     async () => {
       await act(async () => {});

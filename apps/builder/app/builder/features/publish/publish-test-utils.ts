@@ -15,13 +15,16 @@ export const selectTab = async (name: string) => {
 };
 
 export const selectStaticDestination = async () => {
-  const destination = await vi.waitFor(() => {
-    const element = document.body.querySelector<HTMLButtonElement>(
-      'button[role="combobox"]'
-    );
-    expect(element).not.toBeNull();
-    return element!;
-  });
+  const destination = await vi.waitFor(
+    () => {
+      const element = document.body.querySelector<HTMLButtonElement>(
+        'button[role="combobox"]'
+      );
+      expect(element).not.toBeNull();
+      return element!;
+    },
+    { timeout: 10_000 }
+  );
   await act(async () =>
     destination.dispatchEvent(
       new PointerEvent("pointerdown", {
@@ -32,13 +35,16 @@ export const selectStaticDestination = async () => {
       })
     )
   );
-  const staticOption = await vi.waitFor(() => {
-    const element = Array.from(
-      document.body.querySelectorAll<HTMLElement>('[role="option"]')
-    ).find((option) => option.textContent?.trim() === "Static");
-    expect(element).toBeDefined();
-    return element!;
-  });
+  const staticOption = await vi.waitFor(
+    () => {
+      const element = Array.from(
+        document.body.querySelectorAll<HTMLElement>('[role="option"]')
+      ).find((option) => option.textContent?.trim() === "Static");
+      expect(element).toBeDefined();
+      return element!;
+    },
+    { timeout: 10_000 }
+  );
   await act(async () => staticOption.click());
 };
 

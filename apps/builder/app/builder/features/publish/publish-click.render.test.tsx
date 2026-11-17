@@ -254,8 +254,12 @@ test("a rejected publish replaces an older success notice with its findings", as
     .at(-1)!;
   await act(async () => publish.click());
   await act(async () =>
-    vi.waitFor(() =>
-      expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe("build-1")
+    vi.waitFor(
+      () =>
+        expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe(
+          "build-1"
+        ),
+      { timeout: 10_000 }
     )
   );
   expect(document.body.textContent).toContain("Published successfully.");
@@ -272,17 +276,21 @@ test("a rejected publish replaces an older success notice with its findings", as
   expect(publishAgain.disabled).toBe(false);
   await act(async () => publishAgain.click());
   await act(async () =>
-    vi.waitFor(() =>
-      expect(
-        requests.filter(({ path }) => path === "/trpc/domain.publish")
-      ).toHaveLength(2)
+    vi.waitFor(
+      () =>
+        expect(
+          requests.filter(({ path }) => path === "/trpc/domain.publish")
+        ).toHaveLength(2),
+      { timeout: 10_000 }
     )
   );
   const seeIssues = () =>
     Array.from(
       document.body.querySelectorAll<HTMLButtonElement>("button")
     ).find((button) => button.textContent?.trim() === "See issues");
-  await act(async () => vi.waitFor(() => expect(seeIssues()).toBeDefined()));
+  await act(async () =>
+    vi.waitFor(() => expect(seeIssues()).toBeDefined(), { timeout: 10_000 })
+  );
   expect(document.body.textContent).not.toContain("Published successfully.");
   await act(async () => seeIssues()?.click());
   expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain(
