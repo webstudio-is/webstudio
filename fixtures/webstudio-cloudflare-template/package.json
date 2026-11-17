@@ -30,6 +30,7 @@
   "dependencies": {
     "@remix-run/cloudflare": "2.16.5",
     "@remix-run/cloudflare-pages": "2.16.5",
+    "@remix-run/dev": "2.16.5",
     "@remix-run/node": "2.16.5",
     "@remix-run/react": "2.16.5",
     "@remix-run/server-runtime": "2.16.5",
@@ -49,18 +50,17 @@
     "zod": "^4.4.3",
     "@shikijs/langs": "4.4.1",
     "@shikijs/themes": "4.4.1",
-    "shiki": "4.4.1"
+    "lightningcss": "1.31.1",
+    "shiki": "4.4.1",
+    "vite": "^6.3.4",
+    "wrangler": "4.130.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240620.0",
-    "@remix-run/dev": "2.16.5",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "fast-glob": "^3.3.2",
-    "typescript": "7.0.2",
-    "vite": "^6.3.4",
-    "wrangler": "4.130.0",
-    "lightningcss": "1.31.1"
+    "typescript": "7.0.2"
   },
   "devEngines": {
     "runtime": {
