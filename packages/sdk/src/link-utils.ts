@@ -40,11 +40,13 @@ export const resolveLocalLinkUrl = (
   return resolvedPath;
 };
 
-const serializeHash = (hash: string) => {
+const serializeUrl = ({ pathname, search, hash }: UrlParts) => {
   const url = new URL("https://webstudio.local/");
-  // Assigning preserves trailing spaces that URL parsing would trim.
+  // Assign the parts directly to preserve trailing spaces and query order.
+  url.pathname = pathname;
+  url.search = search;
   url.hash = hash;
-  return url.hash;
+  return url;
 };
 
 /**
@@ -53,12 +55,14 @@ const serializeHash = (hash: string) => {
  * match. With a fragment, page links and links to that section match.
  */
 export const isLocalLinkActive = (current: UrlParts, target: UrlParts) => {
+  const currentUrl = serializeUrl(current);
+  const targetUrl = serializeUrl(target);
   return (
-    current.pathname === target.pathname &&
-    current.search === target.search &&
-    (current.hash === "" ||
-      target.hash === "" ||
-      serializeHash(current.hash) === serializeHash(target.hash))
+    currentUrl.pathname === targetUrl.pathname &&
+    currentUrl.search === targetUrl.search &&
+    (currentUrl.hash === "" ||
+      targetUrl.hash === "" ||
+      currentUrl.hash === targetUrl.hash)
   );
 };
 

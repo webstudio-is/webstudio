@@ -148,6 +148,28 @@ test("local link matches encoded and unencoded forms of the same fragment", () =
   expect(isLocalLinkActive(routerUrl, browserUrl)).toBe(true);
 });
 
+test("local link encodes Unicode without splitting escaped path segments", () => {
+  const browserUrl = new URL("https://example.com/faq/caf%C3%A9%2Fmenu");
+  const routerUrl = { pathname: "/faq/café%2Fmenu", search: "", hash: "" };
+
+  expect(isLocalLinkActive(browserUrl, routerUrl)).toBe(true);
+  expect(isLocalLinkActive(routerUrl, browserUrl)).toBe(true);
+  expect(
+    isLocalLinkActive(browserUrl, { ...routerUrl, pathname: "/faq/café/menu" })
+  ).toBe(false);
+});
+
+test("local link encodes Unicode without changing query order", () => {
+  const browserUrl = new URL("https://example.com/faq?q=caf%C3%A9&tag=menu");
+  const routerUrl = { pathname: "/faq", search: "?q=café&tag=menu", hash: "" };
+
+  expect(isLocalLinkActive(browserUrl, routerUrl)).toBe(true);
+  expect(isLocalLinkActive(routerUrl, browserUrl)).toBe(true);
+  expect(
+    isLocalLinkActive(browserUrl, { ...routerUrl, search: "?tag=menu&q=café" })
+  ).toBe(false);
+});
+
 test("local link preserves trailing spaces in router fragments", () => {
   const browserUrl = new URL("https://example.com/faq#section%20");
   const routerUrl = { pathname: "/faq", search: "", hash: "#section " };

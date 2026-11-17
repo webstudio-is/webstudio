@@ -2,6 +2,7 @@ import * as React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import {
+  createBrowserRouter,
   createMemoryRouter,
   RouterProvider,
   useLoaderData,
@@ -187,6 +188,80 @@ test("route link with an encoded section is current on direct load", async () =>
       link.getAttribute("aria-current")
     )
   ).toEqual(["page", null]);
+});
+
+test("route links with Unicode are current on direct load and after navigation", async () => {
+  const initialUrl = window.location.href;
+  const initialState = window.history.state;
+  window.history.replaceState(null, "", "/faq/caf%C3%A9?q=pi%C3%B1ata");
+  const router = createBrowserRouter([
+    {
+      path: "/faq/:topic",
+      element: (
+        <ReactSdkContext.Provider value={sdkContext}>
+          <Link href="/faq/café?q=piñata">Coffee</Link>
+          <Link href="/faq/résumé?q=piñata" replace>
+            Résumé
+          </Link>
+        </ReactSdkContext.Provider>
+      ),
+    },
+  ]);
+
+  try {
+    await render(<RouterProvider router={router} />);
+    const links = Array.from(document.querySelectorAll("a"));
+
+    expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+      "page",
+      null,
+    ]);
+
+    await act(async () => {
+      links[1]?.click();
+    });
+
+    expect(window.location.pathname).toBe("/faq/r%C3%A9sum%C3%A9");
+    expect(window.location.search).toBe("?q=pi%C3%B1ata");
+    expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+      null,
+      "page",
+    ]);
+  } finally {
+    router.dispose();
+    window.history.replaceState(initialState, "", initialUrl);
+  }
+});
+
+test("current link matching uses the link's relative path mode", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/faq/:topic",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="../café" relative="path">
+              Path relative
+            </Link>
+            <Link href="../café">Route relative</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/faq/caf%C3%A9"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const links = Array.from(document.querySelectorAll("a"));
+  expect(links.map((link) => link.pathname)).toEqual([
+    "/faq/caf%C3%A9",
+    "/caf%C3%A9",
+  ]);
+  expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+    "page",
+    null,
+  ]);
 });
 
 test("all section links match when the current URL has no fragment", async () => {
