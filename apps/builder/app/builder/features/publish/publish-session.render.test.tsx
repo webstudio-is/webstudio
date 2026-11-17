@@ -251,9 +251,7 @@ const publish = async () => {
   await waitFor(() => expect(button.disabled).toBe(false));
   const previousRequests = publishRequests;
   await act(async () => button.click());
-  await act(async () =>
-    vi.waitFor(() => expect(publishRequests).toBe(previousRequests + 1))
-  );
+  await waitFor(() => expect(publishRequests).toBe(previousRequests + 1));
 };
 const openReport = async () => {
   await act(async () =>
@@ -318,9 +316,9 @@ test("retries pending and failed log reads before giving up on the session", asy
   await render();
   await publish();
   await openReport();
-  await act(async () => vi.waitFor(() => expect(logRequests).toHaveLength(1)));
+  await waitFor(() => expect(logRequests).toHaveLength(1));
   await act(async () => vi.advanceTimersByTimeAsync(5_000));
-  await act(async () => vi.waitFor(() => expect(logRequests).toHaveLength(2)));
+  await waitFor(() => expect(logRequests).toHaveLength(2));
   await act(async () => vi.advanceTimersByTimeAsync(5_000));
   await waitFor(
     () => expect(panel().querySelector("pre")?.textContent).toBe("€"),
@@ -376,7 +374,7 @@ test("a paid response after downgrade cannot restore logs; upgrading restarts fr
   holdLog = { cursor: 1, response: deferred<void>() };
   await render();
   await publish();
-  await act(async () => vi.waitFor(() => expect(logRequests).toHaveLength(2)));
+  await waitFor(() => expect(logRequests).toHaveLength(2));
   await openReport();
   await setPaid(false);
   await act(async () => holdLog?.response.resolve());
@@ -395,7 +393,7 @@ test("a log response from the previous project cannot populate the new project's
   holdLog = { response: deferred<void>() };
   await render();
   await publish();
-  await act(async () => vi.waitFor(() => expect(logRequests).toHaveLength(1)));
+  await waitFor(() => expect(logRequests).toHaveLength(1));
   await changeProject("project-2");
   await act(async () => holdLog?.response.resolve());
   await openReport();
@@ -426,7 +424,7 @@ test("keeping ten publishes evicts an older in-flight reader before its next pag
   holdLog = { response: deferred<void>() };
   await render();
   await publish();
-  await act(async () => vi.waitFor(() => expect(logRequests).toHaveLength(1)));
+  await waitFor(() => expect(logRequests).toHaveLength(1));
   for (let index = 0; index < 10; index++) {
     buildId = `new-build-${index}`;
     await publish();

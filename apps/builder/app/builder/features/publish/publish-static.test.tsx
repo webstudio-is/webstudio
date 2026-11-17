@@ -122,7 +122,13 @@ const staticButton = () =>
   );
 
 const waitFor = <T,>(assertion: () => T | Promise<T>) =>
-  vi.waitFor(assertion, { timeout: 10_000 });
+  vi.waitFor(
+    async () => {
+      await act(async () => {});
+      await assertion();
+    },
+    { timeout: 10_000 }
+  );
 
 const render = async (open: boolean, projectId = "project-a") => {
   nanoStates.$authTokenPermissions.set({
@@ -160,7 +166,7 @@ test("reopening an active static publish keeps one status owner and one download
   const button = staticButton();
   expect(button).toBeDefined();
   await act(async () => button?.click());
-  await act(async () => waitFor(() => expect(jobRequests).toBe(1)));
+  await waitFor(() => expect(jobRequests).toBe(1));
   expect(publishRequests).toBe(1);
   expect(jobRequests).toBe(1);
   expect(downloads).not.toHaveBeenCalled();
@@ -215,11 +221,9 @@ test("project navigation suppresses an old static download and error toast", asy
   const button = staticButton();
   expect(button).toBeDefined();
   await act(async () => button?.click());
-  await act(async () => waitFor(() => expect(jobRequests).toBe(1)));
-  await act(async () =>
-    waitFor(() =>
-      expect(projectStore.get()?.latestStaticBuild?.buildId).toBe("static-1")
-    )
+  await waitFor(() => expect(jobRequests).toBe(1));
+  await waitFor(() =>
+    expect(projectStore.get()?.latestStaticBuild?.buildId).toBe("static-1")
   );
   act(() => projectStore.set(createProject("project-b")));
   await render(false, "project-b");
@@ -240,11 +244,9 @@ test("a failed static runner clears progress without starting a download", async
   const button = staticButton();
   expect(button).toBeDefined();
   await act(async () => button?.click());
-  await act(async () => waitFor(() => expect(jobRequests).toBe(1)));
-  await act(async () =>
-    waitFor(() =>
-      expect(projectStore.get()?.latestStaticBuild?.buildId).toBe("static-1")
-    )
+  await waitFor(() => expect(jobRequests).toBe(1));
+  await waitFor(() =>
+    expect(projectStore.get()?.latestStaticBuild?.buildId).toBe("static-1")
   );
   act(() =>
     projectStore.set({
