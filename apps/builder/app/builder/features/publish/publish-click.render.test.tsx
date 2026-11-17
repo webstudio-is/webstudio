@@ -130,6 +130,7 @@ const mount = async (dialog: "publish" | "export" = "publish") => {
       </TooltipProvider>
     )
   );
+  return container;
 };
 
 const waitFor = async (assertion: () => void, timeout = 10_000) => {
@@ -326,7 +327,7 @@ test("a successful static export links to its publish report until another expor
       </TooltipProvider>
     )
   );
-  await selectStaticDestination();
+  await selectStaticDestination(container);
   const seeLogs = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
   ).find((button) => button.textContent?.trim() === "See logs");
@@ -425,8 +426,8 @@ afterAll(() => {
 });
 
 test("static export reaches the server without waiting for diagnostics", async () => {
-  await mount("export");
-  await selectStaticDestination();
+  const container = await mount("export");
+  await selectStaticDestination(container);
   const buildButton = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
   ).find(

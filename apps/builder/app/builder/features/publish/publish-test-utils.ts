@@ -14,25 +14,27 @@ export const selectTab = async (name: string) => {
   );
 };
 
-export const selectStaticDestination = async () => {
+export const selectStaticDestination = async (container: HTMLElement) => {
+  const popover = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      '[aria-controls][aria-expanded="true"]'
+    )
+  )
+    .map((trigger) => {
+      const contentId = trigger.getAttribute("aria-controls");
+      return contentId === null ? null : document.getElementById(contentId);
+    })
+    .find(
+      (content) =>
+        content !== null &&
+        content.querySelector('button[role="combobox"]') !== null
+    );
+  const scope = popover ?? container;
   const destination = await vi.waitFor(
     () => {
-      const label = Array.from(
-        document.body.querySelectorAll<HTMLElement>("div")
-      ).find((element) => {
-        const destination =
-          element.parentElement?.querySelector<HTMLButtonElement>(
-            'button[role="combobox"]'
-          );
-        return (
-          element.textContent?.trim() === "Destination" &&
-          element.getClientRects().length > 0 &&
-          (destination?.getClientRects().length ?? 0) > 0
-        );
-      });
-      const element = label?.parentElement?.querySelector<HTMLButtonElement>(
-        'button[role="combobox"]'
-      );
+      const element = Array.from(
+        scope.querySelectorAll<HTMLButtonElement>('button[role="combobox"]')
+      ).find((candidate) => candidate.getClientRects().length > 0);
       expect(element).toBeDefined();
       return element!;
     },
@@ -45,8 +47,11 @@ export const selectStaticDestination = async () => {
   );
   const staticOption = await vi.waitFor(
     () => {
+      const contentId = destination.getAttribute("aria-controls");
+      const content =
+        contentId === null ? null : document.getElementById(contentId);
       const element = Array.from(
-        document.body.querySelectorAll<HTMLElement>('[role="option"]')
+        content?.querySelectorAll<HTMLElement>('[role="option"]') ?? []
       ).find(
         (option) =>
           option.textContent?.trim() === "Static" &&

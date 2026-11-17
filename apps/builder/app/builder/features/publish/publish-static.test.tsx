@@ -154,7 +154,7 @@ const render = async (open: boolean, projectId = "project-a") => {
     );
   });
   if (open && staticButton() === undefined) {
-    await selectStaticDestination();
+    await selectStaticDestination(container);
   }
 };
 
