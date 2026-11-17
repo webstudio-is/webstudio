@@ -39,6 +39,18 @@ export const waitForSyncStatus = async ({
   await getSyncStatusDotByStatus({ page, status }).waitFor({ timeout });
 };
 
+export const waitForSyncComplete = async ({
+  page,
+  timeout = 10_000,
+}: {
+  page: Page;
+  timeout?: number;
+}) => {
+  await getSyncStatusDotByStatus({ page, status: "idle" })
+    .or(getSyncStatusDotByStatus({ page, status: "saved" }))
+    .waitFor({ timeout });
+};
+
 const waitForChangeToBeSavedUnmeasured = async ({
   page,
   timeout = 10_000,

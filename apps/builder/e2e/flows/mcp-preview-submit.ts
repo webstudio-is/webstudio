@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
@@ -86,6 +87,13 @@ const startClient = () => {
 
 let client: ReturnType<typeof startClient> | undefined;
 let queue = Promise.resolve();
+
+export const startPreviewFormMcpClient = async () => {
+  if (client === undefined) {
+    client = startClient();
+    await once(client.child, "spawn");
+  }
+};
 
 export const closePreviewFormMcpClient = async () => {
   await queue;

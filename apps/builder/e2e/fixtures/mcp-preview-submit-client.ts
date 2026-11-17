@@ -2,6 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createProjectSessionMcpServer } from "@webstudio-is/project-build/mcp";
 import { createInterface } from "node:readline";
+import { getMcpPreviewBrowserOptions } from "./mcp-preview-browser-options";
 
 const previewModuleUrl = new URL(
   "../../../../packages/cli/src/commands/mcp-preview.ts",
@@ -12,7 +13,8 @@ const screenshotModuleUrl = new URL(
   import.meta.url
 ).href;
 const { createMcpPreviewHandlers } = await import(previewModuleUrl);
-const { createScreenshotCaptureSession } = await import(screenshotModuleUrl);
+const { createScreenshotCaptureSession, defaultScreenshotDependencies } =
+  await import(screenshotModuleUrl);
 
 let url = "";
 
@@ -26,7 +28,18 @@ const previewHandlers = createMcpPreviewHandlers({
     stop: async () => ({ running: false, url, mode: "iterative" as const }),
   },
   isStale: () => false,
-  createCaptureSession: createScreenshotCaptureSession,
+  createCaptureSession: () =>
+    createScreenshotCaptureSession({
+      ...defaultScreenshotDependencies,
+      createBrowserScreenshotSession: (
+        options: { browserPath: string },
+        dependencies: unknown
+      ) =>
+        defaultScreenshotDependencies.createBrowserScreenshotSession(
+          getMcpPreviewBrowserOptions(options),
+          dependencies
+        ),
+    }),
 });
 const server = await createProjectSessionMcpServer({
   operations: [],

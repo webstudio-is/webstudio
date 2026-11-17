@@ -3,14 +3,11 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
-import { loadDevBuild } from "../db";
+import { measure } from "../perf";
 import { stopChildProcess } from "../process";
-import {
-  createLocalBundleFromDevBuild,
-  getAvailablePort,
-  waitForGeneratedPreview,
-} from "./generated-app";
+import { getAvailablePort, waitForGeneratedPreview } from "./generated-app";
 
 const runnerPath = fileURLToPath(
   new URL("../fixtures/mcp-email-preview.ts", import.meta.url)
@@ -79,23 +76,37 @@ export const startLocalEmailReceiver = async () => {
 };
 
 export const withMcpEmailPreview = async <Result>({
-  projectId,
+  bundle,
   emailPort,
+  queryPort,
   callback,
 }: {
-  projectId: string;
+  bundle: string;
   emailPort: number;
+  queryPort?: number;
   callback: ({ url }: { url: string }) => Promise<Result>;
 }) => {
-  const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-mcp-email-"));
+  const tempDir = await measure(
+    "generated Email preview source preparation",
+    async () => {
+      const directory = await mkdtemp(
+        join(tmpdir(), "webstudio-e2e-mcp-email-")
+      );
+      try {
+        await mkdir(join(directory, ".webstudio"), { recursive: true });
+        await writeFile(
+          join(directory, ".webstudio", "data.json"),
+          `${bundle}\n`
+        );
+        return directory;
+      } catch (error) {
+        await rm(directory, { recursive: true, force: true });
+        throw error;
+      }
+    }
+  );
   let preview: ChildProcess | undefined;
   try {
-    const build = await loadDevBuild({ projectId });
-    await mkdir(join(tempDir, ".webstudio"), { recursive: true });
-    await writeFile(
-      join(tempDir, ".webstudio", "data.json"),
-      `${JSON.stringify(createLocalBundleFromDevBuild(build))}\n`
-    );
     const port = await getAvailablePort();
     const output: string[] = [];
     preview = spawn(
@@ -109,6 +120,7 @@ export const withMcpEmailPreview = async <Result>({
         runnerPath,
         String(port),
         String(emailPort),
+        ...(queryPort === undefined ? [] : [String(queryPort)]),
       ],
       {
         cwd: tempDir,
@@ -129,12 +141,26 @@ export const withMcpEmailPreview = async <Result>({
     };
     preview.stdout?.on("data", appendOutput);
     preview.stderr?.on("data", appendOutput);
+    if (preview.stdout !== null) {
+      createInterface({ input: preview.stdout }).on("line", (line) => {
+        if (
+          /^\[e2e:perf\] phase="generated Email preview (project preparation|production build|server readiness)" duration=\d+ms$/.test(
+            line
+          )
+        ) {
+          console.info(line);
+        }
+      });
+    }
     const url = `http://127.0.0.1:${port}/`;
-    await waitForGeneratedPreview({
-      process: preview,
-      url,
-      output: () => output.join(""),
-    });
+    const runningPreview = preview;
+    await measure("generated Email preview startup", () =>
+      waitForGeneratedPreview({
+        process: runningPreview,
+        url,
+        output: () => output.join(""),
+      })
+    );
     return await callback({ url });
   } finally {
     if (preview !== undefined) {

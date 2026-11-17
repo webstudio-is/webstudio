@@ -107,6 +107,14 @@ export const insertAsset = async (row: Tables["Asset"]["Insert"]) => {
   );
 };
 
+export const insertAssetFolders = async (
+  rows: Tables["AssetFolder"]["Insert"][]
+) => {
+  return throwIfError(
+    await postgrest.from("AssetFolder").insert(rows).select()
+  );
+};
+
 export const loadDevBuild = async ({
   projectId,
 }: {

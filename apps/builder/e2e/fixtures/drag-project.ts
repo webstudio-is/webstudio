@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
-import type { Instance, Prop } from "@webstudio-is/sdk";
+import type { BrowserContext, Page } from "@playwright/test";
+import { serializedPages } from "@webstudio-is/project-migrations/pages";
+import type { Instance } from "@webstudio-is/sdk";
+import { instance, prop } from "@webstudio-is/sdk/schema";
+import { z } from "zod";
 import { loadDevBuild } from "../db";
 import { createSeededBuilderProject } from "./builder-project";
 
@@ -29,8 +32,8 @@ const element = (
   children,
 });
 
-const seedBuild = (serializedPages: string) => {
-  const pages = JSON.parse(serializedPages) as SerializedPages;
+const seedBuild = (pagesJson: string) => {
+  const pages = serializedPages.parse(JSON.parse(pagesJson));
   const home = pages.pages.find(({ id }) => id === pages.homePageId);
   const root = pages.folders.find(({ id }) => id === pages.rootFolderId);
   if (home === undefined || root === undefined) {
@@ -111,10 +114,12 @@ const seedBuild = (serializedPages: string) => {
 
 export const createDragProject = async (
   context: BrowserContext,
-  name: string
+  name: string,
+  page?: Page
 ) => {
   return await createSeededBuilderProject({
     context,
+    page,
     email: `drag-${name}@webstudio.test`,
     title: `Drag ${name}`,
     builderToken: `drag-${name}-${randomUUID()}-builder-token`,
@@ -125,8 +130,8 @@ export const createDragProject = async (
 export const loadDragProjectData = async (projectId: string) => {
   const build = await loadDevBuild({ projectId });
   return {
-    instances: JSON.parse(build.instances) as Instance[],
-    props: JSON.parse(build.props) as Prop[],
+    instances: z.array(instance).parse(JSON.parse(build.instances)),
+    props: z.array(prop).parse(JSON.parse(build.props)),
   };
 };
 
@@ -144,6 +149,5 @@ export const loadChildIds = async (projectId: string, parentId: string) =>
 
 export const loadPages = async (projectId: string) => {
   const build = await loadDevBuild({ projectId });
-  return JSON.parse(build.pages) as SerializedPages;
+  return serializedPages.parse(JSON.parse(build.pages));
 };
-import type { BrowserContext } from "@playwright/test";

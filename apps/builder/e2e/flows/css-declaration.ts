@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
+import { waitForChangeToBeSaved } from "./sync-status";
 
 export const addCssDeclaration = async ({
   page,
@@ -18,5 +18,4 @@ export const addCssDeclaration = async ({
   const save = waitForChangeToBeSaved({ page });
   await editor.press("ControlOrMeta+Enter");
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };

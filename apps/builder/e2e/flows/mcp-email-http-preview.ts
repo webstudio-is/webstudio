@@ -1,9 +1,10 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadDevBuild } from "../db";
+import { measure } from "../perf";
 import { stopChildProcess } from "../process";
 import {
   createLocalBundleFromDevBuild,
@@ -23,29 +24,41 @@ const cliTsconfigPath = fileURLToPath(
 );
 
 export const withMcpEmailHttpPreview = async <Result>({
-  projectId,
   emailPort,
   httpPort,
   callback,
+  ...source
 }: {
-  projectId: string;
   emailPort: number;
   httpPort: number;
-  callback: ({ url }: { url: string }) => Promise<Result>;
-}) => {
+  callback: (preview: { url: string; prepared?: unknown }) => Promise<Result>;
+} & (
+  | { projectId: string; prepareModule?: string }
+  | { build: Awaited<ReturnType<typeof loadDevBuild>> }
+)) => {
   const tempDir = await mkdtemp(
     join(tmpdir(), "webstudio-e2e-mcp-email-http-")
   );
   let preview: ChildProcess | undefined;
   try {
-    const build = await loadDevBuild({ projectId });
-    await mkdir(join(tempDir, ".webstudio"), { recursive: true });
-    await writeFile(
-      join(tempDir, ".webstudio", "data.json"),
-      `${JSON.stringify(createLocalBundleFromDevBuild(build))}\n`
-    );
+    const prepareArgs =
+      "projectId" in source && source.prepareModule !== undefined
+        ? [source.prepareModule, source.projectId]
+        : [];
+    if (prepareArgs.length === 0) {
+      const build =
+        "build" in source
+          ? source.build
+          : await loadDevBuild({ projectId: source.projectId });
+      await mkdir(join(tempDir, ".webstudio"), { recursive: true });
+      await writeFile(
+        join(tempDir, ".webstudio", "data.json"),
+        `${JSON.stringify(createLocalBundleFromDevBuild(build))}\n`
+      );
+    }
     const port = await getAvailablePort();
     const output: string[] = [];
+    let outputLineBuffer = "";
     preview = spawn(
       process.execPath,
       [
@@ -58,6 +71,7 @@ export const withMcpEmailHttpPreview = async <Result>({
         String(port),
         String(emailPort),
         String(httpPort),
+        ...prepareArgs,
       ],
       {
         cwd: tempDir,
@@ -71,7 +85,18 @@ export const withMcpEmailHttpPreview = async <Result>({
       }
     );
     const appendOutput = (chunk: unknown) => {
-      output.push(String(chunk));
+      const value = String(chunk);
+      output.push(value);
+      outputLineBuffer += value;
+      let newlineIndex = outputLineBuffer.indexOf("\n");
+      while (newlineIndex !== -1) {
+        const line = outputLineBuffer.slice(0, newlineIndex).replace(/\r$/, "");
+        outputLineBuffer = outputLineBuffer.slice(newlineIndex + 1);
+        if (line.startsWith("[e2e:perf]")) {
+          console.info(line);
+        }
+        newlineIndex = outputLineBuffer.indexOf("\n");
+      }
       while (output.join("").length > 8_000) {
         output.shift();
       }
@@ -83,8 +108,20 @@ export const withMcpEmailHttpPreview = async <Result>({
       process: preview,
       url,
       output: () => output.join(""),
+      // Allow time for the author as well as the Preview build when combined.
+      timeout: prepareArgs.length === 0 ? undefined : 180_000,
     });
-    return await callback({ url });
+    if (prepareArgs.length === 0) {
+      return await measure("MCP email HTTP Preview callback", () =>
+        callback({ url })
+      );
+    }
+    const prepared = JSON.parse(
+      await readFile(join(tempDir, "preview-prepared.json"), "utf8")
+    ) as unknown;
+    return await measure("MCP email HTTP Preview callback", () =>
+      callback({ url, prepared })
+    );
   } finally {
     if (preview !== undefined) {
       await stopChildProcess(preview, { killGroup: true });

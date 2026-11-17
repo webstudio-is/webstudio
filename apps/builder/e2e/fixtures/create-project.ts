@@ -1,7 +1,21 @@
-import type { BrowserContext, Page } from "@playwright/test";
+import type { BrowserContext, Page, Route } from "@playwright/test";
 import env from "../../app/env/env.server";
 import { getWorkerEmail } from "../flows/dashboard";
 import { dashboardUrl } from "../test";
+
+const openApiOrigin = async (page: Page, keepRoute: boolean) => {
+  const originUrl = `${dashboardUrl}/__e2e_origin`;
+  const fulfillOrigin = (route: Route) =>
+    route.fulfill({ contentType: "text/html", body: "<!doctype html>" });
+  await page.route(originUrl, fulfillOrigin);
+  try {
+    await page.goto(originUrl);
+  } finally {
+    if (keepRoute === false) {
+      await page.unroute(originUrl, fulfillOrigin);
+    }
+  }
+};
 
 const apiPages = new WeakMap<BrowserContext, Promise<Page>>();
 const getApiPage = (context: BrowserContext) => {
@@ -9,12 +23,8 @@ const getApiPage = (context: BrowserContext) => {
   if (page === undefined) {
     page = (async () => {
       const page = await context.newPage();
-      const originUrl = `${dashboardUrl}/__e2e_origin`;
       try {
-        await page.route(originUrl, (route) =>
-          route.fulfill({ contentType: "text/html", body: "<!doctype html>" })
-        );
-        await page.goto(originUrl);
+        await openApiOrigin(page, true);
         return page;
       } catch (error) {
         await page.close();
@@ -28,11 +38,13 @@ const getApiPage = (context: BrowserContext) => {
 
 export const createProjectThroughApi = async ({
   context,
+  page: workflowPage,
   email,
   title,
   devPlan,
 }: {
   context: BrowserContext;
+  page?: Page;
   email: string;
   title: string;
   devPlan?: string;
@@ -43,7 +55,10 @@ export const createProjectThroughApi = async ({
   if (devPlan !== undefined) {
     await context.clearCookies();
   }
-  const page = await getApiPage(context);
+  const page = workflowPage ?? (await getApiPage(context));
+  if (workflowPage !== undefined) {
+    await openApiOrigin(workflowPage, false);
+  }
   await page.evaluate(
     async ({ email, devPlan, secret }) => {
       const loginPage = await fetch("/login");

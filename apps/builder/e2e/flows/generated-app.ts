@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import type { Page as PlaywrightPage } from "@playwright/test";
 import { bundleVersion } from "@webstudio-is/protocol";
 import { getStyleDeclKey, type Page } from "@webstudio-is/sdk";
 import type { ProjectSettings } from "@webstudio-is/project-build";
@@ -40,13 +39,15 @@ export const waitForGeneratedPreview = async ({
   process,
   url,
   output,
+  timeout = 120_000,
 }: {
   process: ChildProcess;
   url: string;
   output: () => string;
+  timeout?: number;
 }) => {
   // Preview also compiles the production app while other E2E workers are active.
-  const deadline = Date.now() + 120_000;
+  const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     if (process.exitCode !== null || process.signalCode !== null) {
       throw new Error(
@@ -138,16 +139,18 @@ export const createLocalBundleFromDevBuild = (build: BuildRow) => {
   };
 };
 
-export const expectGeneratedAppBuild = async ({
-  projectId,
-  expectedText,
-}: {
-  projectId: string;
-  expectedText?: string;
-}) => {
+export const expectGeneratedAppBuild = async (
+  input: ({ projectId: string } | { build: BuildRow }) & {
+    expectedText?: string;
+  }
+) => {
+  const { expectedText } = input;
   const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-generated-"));
   try {
-    const build = await loadDevBuild({ projectId });
+    const build =
+      "build" in input
+        ? input.build
+        : await loadDevBuild({ projectId: input.projectId });
     await mkdir(join(tempDir, ".webstudio"), { recursive: true });
     await writeFile(
       join(tempDir, ".webstudio", "data.json"),
@@ -182,19 +185,29 @@ export const expectGeneratedAppBuild = async ({
   }
 };
 
-export const withGeneratedPreview = async <Result>({
-  projectId,
-  callback,
-  evaluationReceiverPort,
-}: {
-  projectId: string;
-  callback: ({ url, html }: { url: string; html: string }) => Promise<Result>;
-  evaluationReceiverPort?: string;
-}) => {
+export const startGeneratedPreview = async (
+  input: ({ projectId: string } | { build: BuildRow }) & {
+    evaluationReceiverPort?: string;
+  }
+) => {
+  const { evaluationReceiverPort } = input;
   const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-generated-"));
   let preview: ChildProcess | undefined;
+  const close = async () => {
+    try {
+      if (preview !== undefined) {
+        // The CLI starts npm and the generated server below it.
+        await stopChildProcess(preview, { killGroup: true });
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  };
   try {
-    const build = await loadDevBuild({ projectId });
+    const build =
+      "build" in input
+        ? input.build
+        : await loadDevBuild({ projectId: input.projectId });
     await mkdir(join(tempDir, ".webstudio"), { recursive: true });
     await writeFile(
       join(tempDir, ".webstudio", "data.json"),
@@ -252,15 +265,26 @@ export const withGeneratedPreview = async <Result>({
         output: () => output.join(""),
       })
     );
+    return { url, html, close };
+  } catch (error) {
+    await close();
+    throw error;
+  }
+};
+
+export const withGeneratedPreview = async <Result>({
+  callback,
+  ...input
+}: Parameters<typeof startGeneratedPreview>[0] & {
+  callback: (preview: { url: string; html: string }) => Promise<Result>;
+}) => {
+  const { url, html, close } = await startGeneratedPreview(input);
+  try {
     return await measure("generated app preview callback", () =>
       callback({ url, html })
     );
   } finally {
-    if (preview !== undefined) {
-      // The CLI starts npm and the generated server below it.
-      await stopChildProcess(preview, { killGroup: true });
-    }
-    await rm(tempDir, { recursive: true, force: true });
+    await close();
   }
 };
 
@@ -287,96 +311,6 @@ export const expectGeneratedAppToRender = async ({
       ) {
         throw new Error(
           `Expected generated preview route ${JSON.stringify(path)} at ${url} to render ${JSON.stringify(expectedText)}.`
-        );
-      }
-    },
-  });
-};
-
-export const expectGeneratedAppRedirect = async ({
-  projectId,
-  path,
-  status,
-  location,
-}: {
-  projectId: string;
-  path: string;
-  status: number;
-  location: string;
-}) => {
-  await withGeneratedPreview({
-    projectId,
-    callback: async ({ url }) => {
-      const response = await fetch(new URL(path, url), {
-        redirect: "manual",
-      });
-      const actualLocation = response.headers.get("location");
-      if (response.status !== status || actualLocation !== location) {
-        throw new Error(
-          `Expected generated preview redirect ${JSON.stringify(path)} to return ${status} with location ${JSON.stringify(location)}. Received ${response.status} with location ${JSON.stringify(actualLocation)}.`
-        );
-      }
-    },
-  });
-};
-
-export const expectGeneratedAppNavigation = async ({
-  projectId,
-  page,
-  linkText,
-  targetPath,
-  expectedRenderedText,
-  renderPath,
-}: {
-  projectId: string;
-  page: PlaywrightPage;
-  linkText: string;
-  targetPath: string;
-  expectedRenderedText?: string;
-  renderPath?: string;
-}) => {
-  await withGeneratedPreview({
-    projectId,
-    callback: async ({ url }) => {
-      if (expectedRenderedText !== undefined) {
-        const path = renderPath ?? "/";
-        const response = await fetch(new URL(path, url), {
-          redirect: "manual",
-        });
-        const html = await response.text();
-        if (
-          response.ok === false ||
-          html.includes(expectedRenderedText) === false
-        ) {
-          throw new Error(
-            `Expected generated preview route ${JSON.stringify(path)} at ${url} to render ${JSON.stringify(expectedRenderedText)}.`
-          );
-        }
-      }
-      const targetUrl = new URL(targetPath, url).toString();
-      await page.goto(url);
-      await page.getByRole("link", { name: linkText, exact: true }).click();
-      await page.waitForURL(targetUrl);
-      const activeLink = page.getByRole("link", {
-        name: linkText,
-        exact: true,
-      });
-      try {
-        await activeLink.waitFor({ state: "visible" });
-        await page.waitForFunction(
-          ({ linkText }) =>
-            Array.from(document.querySelectorAll("a")).some(
-              (link) =>
-                link.textContent?.trim() === linkText &&
-                link.getAttribute("aria-current") === "page"
-            ),
-          { linkText },
-          { timeout: 10_000 }
-        );
-      } catch {
-        const ariaCurrent = await activeLink.getAttribute("aria-current");
-        throw new Error(
-          `Expected generated preview link ${JSON.stringify(linkText)} to be active after navigating to ${JSON.stringify(targetPath)}. Received aria-current=${JSON.stringify(ariaCurrent)}.`
         );
       }
     },

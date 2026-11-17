@@ -5,6 +5,7 @@ on:
     types: [labeled]
 
 permissions:
+  actions: read
   contents: read
   deployments: write
   pull-requests: write

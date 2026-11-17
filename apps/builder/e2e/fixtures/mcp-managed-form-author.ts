@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect } from "@playwright/test";
@@ -60,38 +61,33 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
     requiresConfirm: contract.requiresConfirm,
   }));
 
-const projectId = process.argv[2];
-if (projectId === undefined) {
-  throw new Error("Expected the disposable E2E project ID");
-}
-const authorOptions = (() => {
-  const argument = process.argv[3];
-  if (argument === undefined || argument.startsWith("{") === false) {
-    return { mode: argument ?? "default" };
-  }
-  return JSON.parse(argument) as {
-    mode: string;
-    successRedirect?: string;
-    fail?: boolean;
-    actionUrl?: string;
-  };
-})();
-const deliveryMode = ["delivery", "multipart", "redirect"].includes(
-  authorOptions.mode
-);
-const emailAttachmentsMode = authorOptions.mode === "email-attachments";
-const emailMode = authorOptions.mode === "email" || emailAttachmentsMode;
-const emailIsolationMode = authorOptions.mode === "email-isolation";
-const redirectMode = authorOptions.mode === "redirect";
-const emptyActionMode = authorOptions.mode === "empty-action";
-const formatMode = ["format-json", "format-multipart", "format-text"].includes(
-  authorOptions.mode
-);
-const httpFailureUrl = deliveryMode
-  ? "https://mcp-delivery.example/reject"
-  : "http://127.0.0.1/preview-e2e-must-not-run";
+type AuthorOptions = {
+  mode: string;
+  successRedirect?: string;
+  fail?: boolean;
+  actionUrl?: string;
+};
 
-const author = async () => {
+export const authorManagedForm = async (
+  projectId: string,
+  authorOptions: AuthorOptions
+) => {
+  const deliveryMode = ["delivery", "multipart", "redirect"].includes(
+    authorOptions.mode
+  );
+  const emailAttachmentsMode = authorOptions.mode === "email-attachments";
+  const emailMode = authorOptions.mode === "email" || emailAttachmentsMode;
+  const emailIsolationMode = authorOptions.mode === "email-isolation";
+  const redirectMode = authorOptions.mode === "redirect";
+  const emptyActionMode = authorOptions.mode === "empty-action";
+  const formatMode = [
+    "format-json",
+    "format-multipart",
+    "format-text",
+  ].includes(authorOptions.mode);
+  const httpFailureUrl = deliveryMode
+    ? "https://mcp-delivery.example/reject"
+    : "http://127.0.0.1/preview-e2e-must-not-run";
   let build = await loadDevBuild({ projectId: projectId });
   const parse = <Value>(field: keyof typeof build) =>
     JSON.parse(String(build[field])) as Value;
@@ -289,6 +285,73 @@ const author = async () => {
       secondFormId = (insertedSecondForm.rootInstanceIds as string[])[0];
     }
     await call("refresh");
+    if (authorOptions.mode === "email-http-combination") {
+      await call("update-project-settings", {
+        meta: {
+          contactEmail: "owner@mcp.test",
+          emailSender: "Contact Form <forms@mcp.test>",
+        },
+      });
+      const resources = await call("list-resources", {
+        scopeInstanceId: formId,
+      });
+      const email = (
+        resources.resources as Array<{
+          id: string;
+          dataSourceId: string;
+          name: string;
+        }>
+      ).find(({ name }) => name === "Email to owner");
+      if (email === undefined) {
+        throw new Error("Expected the Form's Email to owner Email Action");
+      }
+      await call("update-resource", {
+        resourceId: email.id,
+        values: {
+          email: {
+            recipientMode: "custom",
+            recipients: "combined@mcp.test",
+            subject: JSON.stringify("Combined action subject"),
+            body: JSON.stringify("Combined action exact body."),
+          },
+        },
+      });
+      const http = await call("create-resource", {
+        resource: {
+          name: "Combined HTTP action",
+          method: "post",
+          url: "https://mcp-delivery.example/submit",
+          headers: [],
+        },
+        scopeInstanceId: formId,
+        dataSourceName: "Combined HTTP action",
+        exposeAsDataSource: true,
+      });
+      const actions = [
+        { dataSourceId: email.dataSourceId },
+        { dataSourceId: http.dataSourceId },
+      ];
+      await call("update-props", {
+        updates: [
+          { instanceId: formId, name: "action", type: "json", value: actions },
+        ],
+      });
+      await call("refresh");
+      const inspection = await call("inspect-instance", {
+        instanceId: formId,
+        include: ["props"],
+      });
+      expect(inspection.props).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "action", value: actions }),
+        ])
+      );
+      return {
+        formId,
+        emailResourceId: email.id,
+        httpResourceId: http.resourceId,
+      };
+    }
     if (emailIsolationMode && secondFormId === undefined) {
       throw new Error("Expected the second inserted Form ID");
     }
@@ -693,26 +756,36 @@ const author = async () => {
     expect(resultCallback?.value[0]?.code).toContain(
       `${variableId("errors")} = result.errors`
     );
-    process.stdout.write(
-      `${JSON.stringify({
-        formId: form.id,
-        secondFormId: secondForm?.id,
-        resourceId: http.resourceId,
-        successfulResourceId: successfulHttp?.resourceId,
-        emailResourceIds: emailMode
-          ? emails
-              .filter(({ name }) =>
-                ["Email to owner", "Email to visitor"].includes(name)
-              )
-              .map(({ id }) => id)
-          : undefined,
-        emailResourceIdsByForm,
-      })}\n`
-    );
+    return {
+      formId: form.id,
+      secondFormId: secondForm?.id,
+      resourceId: http.resourceId,
+      successfulResourceId: successfulHttp?.resourceId,
+      emailResourceIds: emailMode
+        ? emails
+            .filter(({ name }) =>
+              ["Email to owner", "Email to visitor"].includes(name)
+            )
+            .map(({ id }) => id)
+        : undefined,
+      emailResourceIdsByForm,
+    };
   } finally {
     await client.close();
     await server.close();
   }
 };
 
-await author();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const [, , projectId, ...args] = process.argv;
+  if (projectId === undefined) {
+    throw new Error("Expected the disposable E2E project ID");
+  }
+  for (const argument of args.length === 0 ? ["default"] : args) {
+    const options: AuthorOptions = argument.startsWith("{")
+      ? JSON.parse(argument)
+      : { mode: argument };
+    const result = await authorManagedForm(projectId, options);
+    process.stdout.write(`${JSON.stringify(result)}\n`);
+  }
+}
