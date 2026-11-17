@@ -39,6 +39,7 @@ export const selectStaticDestination = async () => {
     { timeout: 10_000 }
   );
   await act(async () => {
+    destination.focus();
     destination.dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
     );
@@ -52,7 +53,10 @@ export const selectStaticDestination = async () => {
           option.textContent?.trim() === "Static" &&
           option.getClientRects().length > 0
       );
-      expect(element).toBeDefined();
+      expect(
+        element,
+        `Expected the export destination menu to show Static; trigger state is ${destination.dataset.state}`
+      ).toBeDefined();
       return element!;
     },
     { timeout: 10_000 }
