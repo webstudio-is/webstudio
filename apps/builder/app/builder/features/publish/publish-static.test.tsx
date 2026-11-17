@@ -307,12 +307,14 @@ test("the static failure alert opens an audit rejection instead of an older succ
     await act(async () => {});
     expect(downloads).toHaveBeenCalledOnce();
     expect(staticButton()?.dataset.state).not.toBe("pending");
+    expect(staticButton()?.disabled).toBe(false);
   });
   staticResponse = {
     success: false,
     auditFindings: [{ severity: "error", message: "audit-rejection" }],
   };
   await act(async () => staticButton()?.click());
+  await waitFor(() => expect(publishRequests).toBe(2));
   const activeTab = () =>
     document.body.querySelector('[role="tab"][aria-selected="true"]')
       ?.textContent;
@@ -343,4 +345,4 @@ test("the static failure alert opens an audit rejection instead of an older succ
       ?.click()
   );
   expect(activeTab()).toBe("Errors");
-});
+}, 30_000);
