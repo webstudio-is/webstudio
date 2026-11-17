@@ -144,12 +144,6 @@ test.each(["findings", "details", "publish"] as const)(
         open: true,
       }
     );
-    if (view === "details") {
-      const finding = Array.from(document.body.querySelectorAll("button")).find(
-        (button) => button.textContent === "Show more"
-      );
-      await act(async () => userEvent.click(finding!));
-    }
     const contentElement = document.body.querySelector<HTMLElement>(
       view === "publish" ? "pre" : "[data-overflow-content]"
     );
@@ -224,41 +218,11 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
     document.body.querySelectorAll('[role="tab"]')
   ).find((tab) => tab.textContent === "Warnings");
   await act(async () => userEvent.click(warningsTab as HTMLElement));
-  const firstFinding = Array.from(
-    document.body.querySelectorAll("button")
-  ).find((button) => button.textContent === "Show more");
-  expect(firstFinding).toBeDefined();
-  await act(async () => userEvent.click(firstFinding as HTMLElement));
-  const selectableText = Array.from(document.body.querySelectorAll("*")).find(
-    (candidate) =>
-      candidate.textContent === "details-warning-0" &&
-      getComputedStyle(candidate).userSelect === "text"
-  );
-  expect(selectableText).toBeDefined();
-  const backButton = Array.from(document.body.querySelectorAll("button")).find(
-    (button) => button.textContent === "Back"
-  );
-  await act(async () => userEvent.click(backButton as HTMLElement));
-
-  const warningTab = Array.from(
-    document.body.querySelectorAll('[role="tab"]')
-  ).find((tab) => tab.textContent === "Warnings");
-  await act(async () => userEvent.click(warningTab as HTMLElement));
   expect(document.body.textContent).toContain("warning-10");
+  expect(document.body.textContent).toContain("details-warning-0");
+  expect(document.body.textContent).not.toContain("Show more");
+  expect(document.body.textContent).not.toContain("Back");
   expect(document.body.textContent).not.toContain("error-0");
-  const warningFinding = Array.from(
-    document.body.querySelectorAll("button")
-  ).find((button) => button.textContent === "Show more");
-  await act(async () => userEvent.click(warningFinding as HTMLElement));
-  const warningBack = Array.from(document.body.querySelectorAll("button")).find(
-    (button) => button.textContent === "Back"
-  );
-  await act(async () => userEvent.click(warningBack as HTMLElement));
-  expect(
-    Array.from(document.body.querySelectorAll('[role="tab"]'))
-      .find((tab) => tab.textContent === "Warnings")
-      ?.getAttribute("aria-selected")
-  ).toBe("true");
 
   const copyButton = document.body.querySelector<HTMLButtonElement>(
     'button[aria-label="Copy all reports"]'
@@ -286,7 +250,7 @@ test.each(["error", "warning"] as const)(
   }
 );
 
-test("warning text can be selected without opening its details", async () => {
+test("warning details appear inline without a details screen", async () => {
   render([createFinding("warning", 0)], { open: true });
   const warning = Array.from(
     document.body.querySelectorAll<HTMLElement>('[role="tabpanel"] div')
@@ -298,11 +262,8 @@ test("warning text can be selected without opening its details", async () => {
   expect(warning).toBeDefined();
   await act(async () => userEvent.click(warning!));
   expect(document.body.textContent).not.toContain("Back");
-  const showMore = Array.from(document.body.querySelectorAll("button")).find(
-    (button) => button.textContent === "Show more"
-  );
-  await act(async () => userEvent.click(showMore!));
   expect(document.body.textContent).toContain("details-warning-0");
+  expect(document.body.textContent).not.toContain("Show more");
 });
 
 test("Free shows the actual short error without details, navigation, or report copy", () => {
