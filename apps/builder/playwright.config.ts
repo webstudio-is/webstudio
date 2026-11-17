@@ -27,7 +27,7 @@ export default defineConfig({
     launchOptions: getBrowserLaunchOptions(),
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    video: process.env.CI !== undefined ? "off" : "retain-on-failure",
   },
   projects: [
     {
