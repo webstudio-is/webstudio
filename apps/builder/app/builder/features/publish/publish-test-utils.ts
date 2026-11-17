@@ -43,7 +43,13 @@ export const selectStaticDestination = async (container: HTMLElement) => {
   await act(async () => {
     destination.focus();
     destination.dispatchEvent(
-      new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "mouse",
+      })
     );
   });
   const staticOption = await vi.waitFor(

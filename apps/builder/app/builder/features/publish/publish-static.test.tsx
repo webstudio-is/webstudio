@@ -159,10 +159,10 @@ const render = async (open: boolean, projectId = "project-a") => {
 };
 
 test("reopening an active static publish keeps one status owner and one download", async () => {
-  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   buildStatus = "PENDING";
   projectStore.set(createProject());
   await render(true);
+  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   const button = staticButton();
   expect(button).toBeDefined();
   await act(async () => button?.click());
