@@ -40,7 +40,18 @@ export const selectStaticDestination = async (container: HTMLElement) => {
     },
     { timeout: 10_000 }
   );
-  await act(async () => destination.click());
+  await act(async () => {
+    destination.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "touch",
+      })
+    );
+    destination.click();
+  });
   const staticOption = await vi.waitFor(
     () => {
       const contentId = destination.getAttribute("aria-controls");
