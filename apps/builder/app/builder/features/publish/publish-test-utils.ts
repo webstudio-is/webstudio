@@ -19,7 +19,17 @@ export const selectStaticDestination = async () => {
     () => {
       const label = Array.from(
         document.body.querySelectorAll<HTMLElement>("div")
-      ).find((element) => element.textContent?.trim() === "Destination");
+      ).find((element) => {
+        const destination =
+          element.parentElement?.querySelector<HTMLButtonElement>(
+            'button[role="combobox"]'
+          );
+        return (
+          element.textContent?.trim() === "Destination" &&
+          element.getClientRects().length > 0 &&
+          (destination?.getClientRects().length ?? 0) > 0
+        );
+      });
       const element = label?.parentElement?.querySelector<HTMLButtonElement>(
         'button[role="combobox"]'
       );
@@ -37,7 +47,11 @@ export const selectStaticDestination = async () => {
     () => {
       const element = Array.from(
         document.body.querySelectorAll<HTMLElement>('[role="option"]')
-      ).find((option) => option.textContent?.trim() === "Static");
+      ).find(
+        (option) =>
+          option.textContent?.trim() === "Static" &&
+          option.getClientRects().length > 0
+      );
       expect(element).toBeDefined();
       return element!;
     },
