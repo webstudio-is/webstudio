@@ -26,15 +26,10 @@ export const selectStaticDestination = async () => {
     { timeout: 10_000 }
   );
   await act(async () => {
+    destination.focus();
     destination.dispatchEvent(
-      new PointerEvent("pointerdown", {
-        bubbles: true,
-        button: 0,
-        pointerId: 1,
-        pointerType: "touch",
-      })
+      new KeyboardEvent("keydown", { bubbles: true, key: "ArrowDown" })
     );
-    destination.click();
   });
   const staticOption = await vi.waitFor(
     () => {
@@ -47,15 +42,10 @@ export const selectStaticDestination = async () => {
     { timeout: 10_000 }
   );
   await act(async () => {
+    staticOption.focus();
     staticOption.dispatchEvent(
-      new PointerEvent("pointerdown", {
-        bubbles: true,
-        button: 0,
-        pointerId: 1,
-        pointerType: "touch",
-      })
+      new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
     );
-    staticOption.click();
   });
 };
 
