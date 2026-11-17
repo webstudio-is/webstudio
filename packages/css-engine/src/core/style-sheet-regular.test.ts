@@ -887,3 +887,68 @@ test("preserve styles saved with the current page state selector", () => {
     ".instance:is([aria-current=page],[data-ws-local-link])"
   );
 });
+
+test.each([
+  ["", "[aria-current=page]:hover", ".instance&:hover"],
+  ["", " a[aria-current=page]", ":where(.instance) a&"],
+  [" a[aria-current=page]", ":hover", ":where(.instance) a&:hover"],
+  ["", ":hover:local-link", ".instance:hover&"],
+  ["", "[ARIA-CURRENT=page]:hover", ".instance&:hover", "[ARIA-CURRENT=page]"],
+  [
+    "",
+    "[ari\\61 -current=page]:hover",
+    ".instance&:hover",
+    "[ari\\61 -current=page]",
+  ],
+  [
+    "",
+    "[aria-current=p\\61 ge]:hover",
+    ".instance&:hover",
+    "[aria-current=p\\61 ge]",
+  ],
+  [
+    "",
+    "[aria-current=PAGE i]:hover",
+    ".instance&:hover",
+    "[aria-current=PAGE i]",
+  ],
+  [
+    "",
+    ':is([aria-current="page"],[title=":local-link"])',
+    '.instance:is(&,[title=":local-link"])',
+    '[aria-current="page"]',
+  ],
+])(
+  "polyfill Local Link in %s%s",
+  (descendant, selector, expected, attribute = "[aria-current=page]") => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance", descendant);
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector,
+      property: "color",
+      value: { type: "keyword", value: "green" },
+    });
+
+    const current = `:is(${attribute},[data-ws-local-link])`;
+    expect(rule.toString({ breakpoint: "base" })).toBe(
+      `${expected.replace("&", current)} {\n  color: green\n}`
+    );
+  }
+);
+
+test("polyfill Local Link in a Builder preview selector", () => {
+  const sheet = createRegularStyleSheet();
+  const rule = sheet.addNestingRule(".instance");
+  rule.setSelector("[data-ws-id=menu] a[aria-current=page]:hover");
+  rule.setDeclaration({
+    breakpoint: "base",
+    selector: "",
+    property: "color",
+    value: { type: "keyword", value: "green" },
+  });
+
+  expect(rule.toString({ breakpoint: "base" })).toBe(
+    "[data-ws-id=menu] a:is([aria-current=page],[data-ws-local-link]):hover {\n  color: green\n}"
+  );
+});

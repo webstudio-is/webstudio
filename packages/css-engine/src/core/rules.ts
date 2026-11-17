@@ -1,3 +1,4 @@
+import { ident, parse, walk, type CssNode } from "css-tree";
 import type { StyleValue } from "../schema";
 import { toValue, type TransformValue } from "./to-value";
 import { hyphenateProperty } from "./to-property";
@@ -96,6 +97,63 @@ type DeclarationKey = Omit<Declaration, "value">;
 const getDeclarationKey = (declaraionKey: DeclarationKey) => {
   const { breakpoint, selector, property } = declaraionKey;
   return `${breakpoint}:${selector}:${property}`;
+};
+
+const currentPageSelector = "[aria-current=page]";
+
+const polyfillLocalLink = (selector: string) => {
+  if (
+    !selector.includes("local-link") &&
+    !selector.toLowerCase().includes("aria-current") &&
+    !selector.includes("\\")
+  ) {
+    return [selector, selector];
+  }
+  let ast: CssNode;
+  try {
+    ast = parse(selector, { context: "selectorList", positions: true });
+  } catch {
+    return [selector, selector];
+  }
+
+  let end = 0;
+  let rendered = "";
+  let sortSelector = "";
+  walk(ast, (node) => {
+    if (!node.loc) {
+      return;
+    }
+    let attribute = currentPageSelector;
+    if (node.type === "AttributeSelector") {
+      const value =
+        node.value?.type === "Identifier"
+          ? ident.decode(node.value.name)
+          : node.value?.value;
+      const ignoreCase = node.flags?.toLowerCase() === "i";
+      if (
+        ident.decode(node.name.name).toLowerCase() !== "aria-current" ||
+        node.matcher !== "=" ||
+        (node.flags !== null && !ignoreCase) ||
+        (ignoreCase ? value?.toLowerCase() : value) !== "page"
+      ) {
+        return;
+      }
+      attribute = selector.slice(node.loc.start.offset, node.loc.end.offset);
+    } else if (
+      node.type !== "PseudoClassSelector" ||
+      node.name !== "local-link" ||
+      node.children !== null
+    ) {
+      return;
+    }
+
+    const unmodified = selector.slice(end, node.loc.start.offset);
+    rendered += `${unmodified}:is(${attribute},[data-ws-local-link])`;
+    sortSelector += unmodified + attribute;
+    end = node.loc.end.offset;
+  });
+  const rest = selector.slice(end);
+  return [rendered + rest, sortSelector + rest];
 };
 
 /**
@@ -261,30 +319,21 @@ export class NestingRule {
       if (declaration.breakpoint !== breakpoint) {
         continue;
       }
-      let nestedSelector = declaration.selector;
-      let sortNestedSelector = nestedSelector;
-      // Preserve explicit current-page styles alongside the computed local-link state.
-      if (
-        nestedSelector === ":local-link" ||
-        nestedSelector === "[aria-current=page]"
-      ) {
-        nestedSelector = ":is([aria-current=page],[data-ws-local-link])";
-        sortNestedSelector = "[aria-current=page]";
-      }
       const isDescendant =
         this.#descendantSuffix.startsWith(" ") ||
-        nestedSelector.startsWith(" ");
+        declaration.selector.startsWith(" ");
       const baseSelector =
         isDescendant && this.#selector
           ? `:where(${this.#selector})`
           : this.#selector;
-      const selector = baseSelector + this.#descendantSuffix + nestedSelector;
+      const [selector, sortSelector] = polyfillLocalLink(
+        baseSelector + this.#descendantSuffix + declaration.selector
+      );
       let entry = styleBySelector.get(selector);
       if (entry === undefined) {
         entry = {
           style: new Map(),
-          sortSelector:
-            baseSelector + this.#descendantSuffix + sortNestedSelector,
+          sortSelector,
         };
         styleBySelector.set(selector, entry);
       }
