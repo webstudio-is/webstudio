@@ -363,22 +363,40 @@ export const copyPageData = async (
 ) => {
   const projectId = $project.get()?.id;
   const ready = projectId !== undefined && draftPersistence.isActive(projectId);
-  const awaitSourceDraft = async (projectId: string) => {
-    await draftPersistence.wait(projectId, {
-      signal: AbortSignal.timeout(30_000),
-    });
+  const waitForSourceDraft = async (projectId: string) => {
+    try {
+      await draftPersistence.wait(projectId, {
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch {
+      if ($project.get()?.id !== projectId) {
+        throw new Error("PAGE_COPY_SOURCE_STALE");
+      }
+      return false;
+    }
     if ($project.get()?.id !== projectId) {
       throw new Error("PAGE_COPY_SOURCE_STALE");
     }
+    return true;
   };
   let revision;
+  let canAuthorize = true;
   if (ready) {
-    await awaitSourceDraft(projectId);
-    revision = await getPageCopySource({
-      projectId,
-      origin: window.location.origin,
-      request,
-    });
+    canAuthorize = await waitForSourceDraft(projectId);
+    if (canAuthorize) {
+      try {
+        revision = await getPageCopySource({
+          projectId,
+          origin: window.location.origin,
+          request,
+        });
+      } catch {
+        if ($project.get()?.id !== projectId) {
+          throw new Error("PAGE_COPY_SOURCE_STALE");
+        }
+        canAuthorize = false;
+      }
+    }
   }
   const data = getWebstudioData();
   const pageData = getPageCopyData(data, pageId);
@@ -394,19 +412,24 @@ export const copyPageData = async (
   if (projectId === undefined || item.type !== "page") {
     return stringify(item, data.assetFolders);
   }
-  if (ready) {
-    await awaitSourceDraft(projectId);
+  if (ready && canAuthorize) {
+    canAuthorize = await waitForSourceDraft(projectId);
   }
-  const issue = getPageClipboardGrant(
-    projectId,
-    item,
-    undefined,
-    request,
-    revision === undefined
-      ? undefined
-      : { buildId: revision.buildId, version: revision.version }
-  );
-  const authorized = ready ? await issue : await issue.catch(() => undefined);
+  const authorized =
+    canAuthorize && projectId !== undefined
+      ? await getPageClipboardGrant(
+          projectId,
+          item,
+          undefined,
+          request,
+          revision === undefined
+            ? undefined
+            : { buildId: revision.buildId, version: revision.version }
+        ).catch(() => undefined)
+      : undefined;
+  if ($project.get()?.id !== projectId) {
+    throw new Error("PAGE_COPY_SOURCE_STALE");
+  }
   return stringify(item, data.assetFolders, {
     projectId,
     grant: authorized?.grant,

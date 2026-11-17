@@ -318,6 +318,31 @@ test("pastes a same-project page repeatedly without reusing its source grant", a
   expect(transferPage).not.toHaveBeenCalled();
 });
 
+test("copies local page data when draft persistence has failed", async () => {
+  setupProjectWithRootStyle({
+    projectId: "same-project",
+    pageId: "source-page",
+    rootInstanceId: "source-body",
+    styleSourceId: "source-local",
+    color: "red",
+  });
+  draftPersistence.reset("same-project");
+  draftPersistence.begin("same-project", "failed-save");
+  draftPersistence.complete("same-project", "failed-save", false);
+  const request = vi.fn<typeof fetch>();
+
+  try {
+    const clipboardData = await copyPageData("source-page", request);
+    expect(clipboardData).toBeDefined();
+    const data = JSON.parse(clipboardData ?? "")["@webstudio/page/v0.1"];
+    expect(data.sourceProjectId).toBe("same-project");
+    expect(data.sourceGrant).toBeUndefined();
+    expect(request).not.toHaveBeenCalled();
+  } finally {
+    draftPersistence.reset();
+  }
+});
+
 test("copies the edited folder from the copy plugin", async () => {
   $project.set({ id: "source-project" } as Project);
   resetBuildStores();
