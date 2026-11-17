@@ -240,7 +240,10 @@ test.each(["error", "warning"] as const)(
 test.each(["error", "warning"] as const)(
   "%s details appear inline without a details screen",
   (severity) => {
-    render([createFinding(severity, 0)], { open: true, initialTab: severity });
+    render([createFinding(severity, 0)], {
+      open: true,
+      initialTab: severity === "error" ? "errors" : "warnings",
+    });
     expect(document.body.textContent).toContain(`${severity}-0`);
     expect(document.body.textContent).toContain(`details-${severity}-0`);
     expect(document.body.textContent).not.toContain("Show more");
