@@ -438,13 +438,13 @@ test("collapses each complete publish and copies its full log from the header", 
   expect(document.body.textContent).not.toContain(
     "Complete second publish log"
   );
-  await act(async () => userEvent.click(triggers[0]!));
+  await act(async () => triggers[0]?.click());
   expect(document.body.textContent).toContain("Complete second publish log");
   const copyButtons = document.body.querySelectorAll<HTMLButtonElement>(
     'button[aria-label="Copy log"]'
   );
   expect(copyButtons).toHaveLength(2);
-  await act(async () => userEvent.click(copyButtons[0]!));
+  await act(async () => copyButtons[0]?.click());
   expect(writeText).toHaveBeenCalledWith("Complete second publish log");
   expect(triggers[0]?.getAttribute("aria-expanded")).toBe("true");
   const keyboardCopy = document.body.querySelector<HTMLButtonElement>(
@@ -497,9 +497,9 @@ test("can maximize Diagnostics and aligns publish content with its title", async
     'button[aria-label="Expand"]'
   );
   expect(maximize).not.toBeNull();
-  await act(async () => userEvent.click(maximize!));
+  await act(async () => maximize?.click());
   expect(dialog!.getBoundingClientRect().width).not.toBe(width);
-  await act(async () => userEvent.click(maximize!));
+  await act(async () => maximize?.click());
   expect(dialog!.getBoundingClientRect().width).toBe(width);
 });
 
@@ -544,7 +544,7 @@ test("publish failure is plain text and links to the Publish tab", async () => {
   expect(publishLink?.parentElement?.textContent).toContain(
     "Build failed before deployment"
   );
-  await act(async () => userEvent.click(publishLink!));
+  await act(async () => publishLink?.click());
   expect(
     Array.from(document.body.querySelectorAll('[role="tab"]'))
       .find((tab) => tab.textContent === "Publish")
@@ -584,7 +584,7 @@ test("Free publish failures link to a Publish upgrade banner without exposing lo
     (button) => button.textContent === "show logs"
   );
   expect(link).toBeDefined();
-  await act(async () => userEvent.click(link!));
+  await act(async () => link?.click());
   expect(
     document.body.querySelector('[role="tab"][aria-selected="true"]')
       ?.textContent
@@ -738,7 +738,7 @@ test("Show element closes the diagnostics dialog on ordinary navigation", async 
       (button) => button.textContent === "Show more"
     )
   ).toBe(false);
-  await act(async () => userEvent.click(link as HTMLElement));
+  await act(async () => link?.click());
   expect(onOpenChange).toHaveBeenCalledWith(false);
 });
 
