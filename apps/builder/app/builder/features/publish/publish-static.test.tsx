@@ -1,6 +1,5 @@
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
-import { userEvent } from "@vitest/browser/context";
 import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
@@ -146,9 +145,7 @@ const render = async (open: boolean, projectId = "project-a") => {
     await act(async () =>
       document.body
         .querySelector<HTMLButtonElement>('button[role="combobox"]')
-        ?.dispatchEvent(
-          new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
-        )
+        ?.click()
     );
     const option = Array.from(
       document.body.querySelectorAll<HTMLElement>('[role="option"]')
@@ -280,12 +277,16 @@ test("a failed static runner clears progress without starting a download", async
     document.body.querySelectorAll<HTMLElement>('[role="tab"]')
   ).find((tab) => tab.textContent === "Errors");
   expect(errors).toBeDefined();
-  await act(async () => userEvent.click(errors!));
+  await act(async () =>
+    errors?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    )
+  );
   const showLogs = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
   ).find((button) => button.textContent?.trim() === "show logs");
   expect(showLogs).toBeDefined();
-  await act(async () => userEvent.click(showLogs!));
+  await act(async () => showLogs?.click());
   expect(
     document.body.querySelector('[role="tab"][aria-selected="true"]')
       ?.textContent

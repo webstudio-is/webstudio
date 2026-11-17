@@ -134,11 +134,7 @@ const selectStaticDestination = async () => {
     'button[role="combobox"]'
   );
   expect(destination).not.toBeNull();
-  await act(async () => {
-    destination?.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
-    );
-  });
+  await act(async () => destination?.click());
   const staticOption = Array.from(
     document.body.querySelectorAll<HTMLElement>('[role="option"]')
   ).find((option) => option.textContent?.trim() === "Static");

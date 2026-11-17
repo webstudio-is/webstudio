@@ -1,5 +1,4 @@
 import { FetchInterceptor } from "@mswjs/interceptors/fetch";
-import { userEvent } from "@vitest/browser/context";
 import { act } from "react-dom/test-utils";
 import { expect } from "vitest";
 
@@ -8,7 +7,11 @@ export const selectTab = async (name: string) => {
     document.body.querySelectorAll<HTMLElement>('[role="tab"]')
   ).find((candidate) => candidate.textContent?.startsWith(name));
   expect(tab).toBeDefined();
-  await act(async () => userEvent.click(tab!));
+  await act(async () =>
+    tab?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    )
+  );
 };
 
 export const deferred = <T>() => {
