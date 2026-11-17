@@ -250,21 +250,24 @@ test.each(["error", "warning"] as const)(
   }
 );
 
-test("warning details appear inline without a details screen", async () => {
-  render([createFinding("warning", 0)], { open: true });
-  const warning = Array.from(
-    document.body.querySelectorAll<HTMLElement>('[role="tabpanel"] div')
-  ).find(
-    (element) =>
-      element.textContent === "warning-0" &&
-      getComputedStyle(element).userSelect === "text"
-  );
-  expect(warning).toBeDefined();
-  await act(async () => userEvent.click(warning!));
-  expect(document.body.textContent).not.toContain("Back");
-  expect(document.body.textContent).toContain("details-warning-0");
-  expect(document.body.textContent).not.toContain("Show more");
-});
+test.each(["error", "warning"] as const)(
+  "%s details appear inline without a details screen",
+  async (severity) => {
+    render([createFinding(severity, 0)], { open: true });
+    const finding = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="tabpanel"] div')
+    ).find(
+      (element) =>
+        element.textContent === `${severity}-0` &&
+        getComputedStyle(element).userSelect === "text"
+    );
+    expect(finding).toBeDefined();
+    await act(async () => userEvent.click(finding!));
+    expect(document.body.textContent).toContain(`details-${severity}-0`);
+    expect(document.body.textContent).not.toContain("Show more");
+    expect(document.body.textContent).not.toContain("Back");
+  }
+);
 
 test("Free shows the actual short error without details, navigation, or report copy", () => {
   const element = render(
@@ -769,21 +772,26 @@ test("Show element closes the diagnostics dialog on ordinary navigation", async 
   expect(document.body.querySelector('[role="dialog"]')).toBeNull();
 });
 
-test("shows error details inline without a details screen", () => {
-  render(
-    [
+test.each(["metaKey", "ctrlKey", "shiftKey", "altKey"] as const)(
+  "Show element leaves diagnostics open on %s-click",
+  (modifier) => {
+    const element = render([
       {
         severity: "error",
-        title: "article.mdx:2:3",
-        details: "Invalid MDX: replace the unsupported element.",
-        reportText: "Invalid MDX",
+        title: "Invalid element",
+        link: <a href="#element">Show element</a>,
+        reportText: "Invalid element",
       },
-    ],
-    { open: true }
-  );
-  expect(document.body.textContent).toContain(
-    "Invalid MDX: replace the unsupported element."
-  );
-  expect(document.body.textContent).not.toContain("Show more");
-  expect(document.body.textContent).not.toContain("Back");
-});
+    ]);
+    openDetails(element);
+    const link =
+      document.body.querySelector<HTMLAnchorElement>('a[href="#element"]');
+    expect(link).not.toBeNull();
+    act(() => {
+      link?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, [modifier]: true })
+      );
+    });
+    expect(document.body.querySelector('[role="dialog"]')).not.toBeNull();
+  }
+);
