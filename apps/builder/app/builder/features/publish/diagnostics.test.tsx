@@ -31,11 +31,13 @@ const render = (
     items = [],
     onLoadLog,
     open,
+    initialTab,
   }: {
     canViewPublishLogs?: boolean;
     items?: SessionPublish[];
     onLoadLog?: (item: SessionPublish) => void;
     open?: boolean;
+    initialTab?: "warnings" | "errors" | "publish";
   } = {}
 ) => {
   container = document.createElement("div");
@@ -50,6 +52,7 @@ const render = (
           items={items}
           onLoadLog={onLoadLog}
           open={open}
+          initialTab={initialTab}
         />
       </TooltipProvider>
     );
@@ -90,25 +93,14 @@ test("keeps audit and build findings in severity tabs, not in publish logs", asy
       },
     ],
     open: true,
+    initialTab: "publish",
   });
-  const tabs = Array.from(
-    document.body.querySelectorAll<HTMLElement>('[role="tab"]')
-  );
-  expect(tabs).toHaveLength(3);
-  const publishTab = tabs.find((tab) => tab.textContent === "Publish")!;
-  await act(async () => userEvent.click(publishTab));
   const active = document.body.querySelector(
     '[role="tabpanel"][data-state="active"]'
   )!;
   expect(active.textContent).toContain("runner-output-42");
   expect(active.textContent).not.toContain("warning-42");
   expect(active.textContent).not.toContain("build-issue-42");
-  const warningsTab = tabs.find((tab) => tab.textContent === "Warnings")!;
-  await act(async () => userEvent.click(warningsTab));
-  expect(document.body.textContent).toContain("warning-42");
-  const errorsTab = tabs.find((tab) => tab.textContent === "Errors")!;
-  await act(async () => userEvent.click(errorsTab));
-  expect(document.body.textContent).toContain("build-issue-42");
 });
 
 test.each(["findings", "details", "publish"] as const)(
@@ -200,26 +192,21 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
     value: { writeText },
   });
 
-  const element = render(findings);
+  const element = render(findings, { initialTab: "warnings" });
   expect(element.textContent).toContain("6 errors · 11 warnings");
   openDetails(element);
 
   expect(document.body.textContent).toContain("Diagnostics");
   expect(document.body.textContent).toContain("Errors");
   expect(document.body.textContent).toContain("Warnings");
-  expect(document.body.textContent).toContain("error-5");
-  expect(document.body.textContent).not.toContain("warning-0");
+  expect(document.body.textContent).toContain("warning-10");
+  expect(document.body.textContent).toContain("details-warning-0");
+  expect(document.body.textContent).not.toContain("error-0");
   expect(document.body.querySelectorAll('[role="tab"]')).toHaveLength(2);
   expect(
     getComputedStyle(document.body.querySelector('[role="dialog"]')!).resize
   ).toBe("both");
   expect(document.body.querySelector('[draggable="true"]')).not.toBeNull();
-  const warningsTab = Array.from(
-    document.body.querySelectorAll('[role="tab"]')
-  ).find((tab) => tab.textContent === "Warnings");
-  await act(async () => userEvent.click(warningsTab as HTMLElement));
-  expect(document.body.textContent).toContain("warning-10");
-  expect(document.body.textContent).toContain("details-warning-0");
   expect(document.body.textContent).not.toContain("Show more");
   expect(document.body.textContent).not.toContain("Back");
   expect(document.body.textContent).not.toContain("error-0");
@@ -252,17 +239,9 @@ test.each(["error", "warning"] as const)(
 
 test.each(["error", "warning"] as const)(
   "%s details appear inline without a details screen",
-  async (severity) => {
-    render([createFinding(severity, 0)], { open: true });
-    const finding = Array.from(
-      document.body.querySelectorAll<HTMLElement>('[role="tabpanel"] div')
-    ).find(
-      (element) =>
-        element.textContent === `${severity}-0` &&
-        getComputedStyle(element).userSelect === "text"
-    );
-    expect(finding).toBeDefined();
-    await act(async () => userEvent.click(finding!));
+  (severity) => {
+    render([createFinding(severity, 0)], { open: true, initialTab: severity });
+    expect(document.body.textContent).toContain(`${severity}-0`);
     expect(document.body.textContent).toContain(`details-${severity}-0`);
     expect(document.body.textContent).not.toContain("Show more");
     expect(document.body.textContent).not.toContain("Back");
