@@ -30,12 +30,14 @@ const render = (
     canViewPublishLogs = true,
     items = [],
     onLoadLog,
+    onOpenChange,
     open,
     initialTab,
   }: {
     canViewPublishLogs?: boolean;
     items?: SessionPublish[];
     onLoadLog?: (item: SessionPublish) => void;
+    onOpenChange?: (open: boolean) => void;
     open?: boolean;
     initialTab?: "warnings" | "errors" | "publish";
   } = {}
@@ -51,6 +53,7 @@ const render = (
           canViewPublishLogs={canViewPublishLogs}
           items={items}
           onLoadLog={onLoadLog}
+          onOpenChange={onOpenChange}
           open={open}
           initialTab={initialTab}
         />
@@ -69,14 +72,6 @@ const createFinding = (
   details: `details-${severity}-${index}`,
   reportText: `${severity.toUpperCase()} report-${index}`,
 });
-
-const openDetails = (element: HTMLElement) => {
-  const button = Array.from(element.querySelectorAll("button")).find(
-    (candidate) => candidate.textContent === "See issues"
-  );
-  expect(button).toBeDefined();
-  act(() => button?.click());
-};
 
 test("keeps audit and build findings in severity tabs, not in publish logs", async () => {
   render([], {
@@ -192,9 +187,7 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
     value: { writeText },
   });
 
-  const element = render(findings, { initialTab: "warnings" });
-  expect(element.textContent).toContain("6 errors · 11 warnings");
-  openDetails(element);
+  render(findings, { open: true, initialTab: "warnings" });
 
   expect(document.body.textContent).toContain("Diagnostics");
   expect(document.body.textContent).toContain("Errors");
@@ -227,8 +220,10 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
 test.each(["error", "warning"] as const)(
   "shows only the populated tab in the %s-only state",
   (severity) => {
-    const element = render([createFinding(severity, 0)]);
-    openDetails(element);
+    render([createFinding(severity, 0)], {
+      open: true,
+      initialTab: severity === "error" ? "errors" : "warnings",
+    });
     expect(
       Array.from(document.body.querySelectorAll('[role="tab"]')).map(
         (tab) => tab.textContent
@@ -252,7 +247,7 @@ test.each(["error", "warning"] as const)(
 );
 
 test("Free shows the actual short error without details, navigation, or report copy", () => {
-  const element = render(
+  render(
     [
       {
         severity: "error",
@@ -263,9 +258,8 @@ test("Free shows the actual short error without details, navigation, or report c
         reportText: "Private long diagnostic context",
       },
     ],
-    { canViewPublishLogs: false }
+    { canViewPublishLogs: false, open: true, initialTab: "errors" }
   );
-  openDetails(element);
   expect(document.body.textContent).toContain("Invalid MDX element nesting");
   expect(document.body.textContent).not.toContain("article.mdx");
   expect(document.body.textContent).not.toContain(
@@ -278,8 +272,10 @@ test("Free shows the actual short error without details, navigation, or report c
 });
 
 test("Free hides log-derived issues, stage, and code", async () => {
-  const element = render([createFinding("warning", 0)], {
+  render([createFinding("warning", 0)], {
     canViewPublishLogs: false,
+    open: true,
+    initialTab: "publish",
     items: [
       {
         buildId: "build-1",
@@ -293,11 +289,6 @@ test("Free hides log-derived issues, stage, and code", async () => {
       },
     ],
   });
-  openDetails(element);
-  const publishTab = Array.from(
-    document.body.querySelectorAll('[role="tab"]')
-  ).find((tab) => tab.textContent === "Publish");
-  await act(async () => userEvent.click(publishTab as HTMLElement));
   expect(document.body.textContent).toContain("Publish failed");
   expect(document.body.textContent).not.toContain("private-code");
   expect(document.body.textContent).not.toContain("private-stage");
@@ -314,16 +305,12 @@ test("loads a completed publish when Publish opens and shows its log inline", as
     status: "failed",
   };
   const onLoadLog = vi.fn();
-  const element = render([createFinding("warning", 0)], {
+  render([createFinding("warning", 0)], {
     items: [item],
     onLoadLog,
+    open: true,
+    initialTab: "publish",
   });
-  openDetails(element);
-  expect(onLoadLog).not.toHaveBeenCalled();
-  const publishTab = Array.from(
-    document.body.querySelectorAll('[role="tab"]')
-  ).find((tab) => tab.textContent === "Publish");
-  await act(async () => userEvent.click(publishTab as HTMLElement));
   expect(onLoadLog).toHaveBeenCalledWith(item);
 
   item.logState = "available";
@@ -335,6 +322,8 @@ test("loads a completed publish when Publish opens and shows its log inline", as
           findings={[createFinding("warning", 0)]}
           items={[item]}
           onLoadLog={onLoadLog}
+          open
+          initialTab="publish"
         />
       </TooltipProvider>
     );
@@ -345,7 +334,7 @@ test("loads a completed publish when Publish opens and shows its log inline", as
 
 test("shows unavailable instead of loading forever when a publish has no log handle", async () => {
   const onLoadLog = vi.fn();
-  const element = render([createFinding("warning", 0)], {
+  render([createFinding("warning", 0)], {
     items: [
       {
         buildId: "build-1",
@@ -356,12 +345,9 @@ test("shows unavailable instead of loading forever when a publish has no log han
       },
     ],
     onLoadLog,
+    open: true,
+    initialTab: "publish",
   });
-  openDetails(element);
-  const publishTab = Array.from(
-    document.body.querySelectorAll('[role="tab"]')
-  ).find((tab) => tab.textContent === "Publish");
-  await act(async () => userEvent.click(publishTab as HTMLElement));
   expect(onLoadLog).not.toHaveBeenCalled();
   expect(document.body.textContent).toContain("Publish logs are unavailable.");
 });
@@ -715,7 +701,7 @@ test.each([true, false])(
 
 test("Free audit summaries do not expose long cached details", () => {
   const longSummary = `Short reason ${"private context ".repeat(30)}`;
-  const element = render(
+  render(
     [
       {
         severity: "error",
@@ -724,23 +710,25 @@ test("Free audit summaries do not expose long cached details", () => {
         reportText: longSummary,
       },
     ],
-    { canViewPublishLogs: false }
+    { canViewPublishLogs: false, open: true, initialTab: "errors" }
   );
-  openDetails(element);
   expect(document.body.textContent).toContain("Short reason");
   expect(document.body.textContent).not.toContain(longSummary);
 });
 
 test("Show element closes the diagnostics dialog on ordinary navigation", async () => {
-  const element = render([
-    {
-      severity: "error",
-      title: "Invalid element",
-      link: <a href="#element">Show element</a>,
-      reportText: "Invalid element",
-    },
-  ]);
-  openDetails(element);
+  const onOpenChange = vi.fn();
+  render(
+    [
+      {
+        severity: "error",
+        title: "Invalid element",
+        link: <a href="#element">Show element</a>,
+        reportText: "Invalid element",
+      },
+    ],
+    { open: true, initialTab: "errors", onOpenChange }
+  );
   const link =
     document.body.querySelector<HTMLAnchorElement>('a[href="#element"]');
   expect(link).not.toBeNull();
@@ -751,21 +739,24 @@ test("Show element closes the diagnostics dialog on ordinary navigation", async 
     )
   ).toBe(false);
   await act(async () => userEvent.click(link as HTMLElement));
-  expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+  expect(onOpenChange).toHaveBeenCalledWith(false);
 });
 
 test.each(["metaKey", "ctrlKey", "shiftKey", "altKey"] as const)(
   "Show element leaves diagnostics open on %s-click",
   (modifier) => {
-    const element = render([
-      {
-        severity: "error",
-        title: "Invalid element",
-        link: <a href="#element">Show element</a>,
-        reportText: "Invalid element",
-      },
-    ]);
-    openDetails(element);
+    const onOpenChange = vi.fn();
+    render(
+      [
+        {
+          severity: "error",
+          title: "Invalid element",
+          link: <a href="#element">Show element</a>,
+          reportText: "Invalid element",
+        },
+      ],
+      { open: true, initialTab: "errors", onOpenChange }
+    );
     const link =
       document.body.querySelector<HTMLAnchorElement>('a[href="#element"]');
     expect(link).not.toBeNull();
@@ -774,6 +765,6 @@ test.each(["metaKey", "ctrlKey", "shiftKey", "altKey"] as const)(
         new MouseEvent("click", { bubbles: true, [modifier]: true })
       );
     });
-    expect(document.body.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(onOpenChange).not.toHaveBeenCalled();
   }
 );
