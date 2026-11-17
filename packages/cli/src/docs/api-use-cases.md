@@ -336,8 +336,13 @@ Notes:
 Link the source project in a separate directory using a share link with view and API access.
 Run the copy from the destination, which needs build and API access.
 
+Commands:
+
 - MCP tool: copy-page {"sourceProjectId":"<linkedSourceProjectId>","sourcePage":"/pricing","dryRun":true}
-- Omit `dryRun` to copy the page. Use `targetFolderId` to choose a destination folder.
+
+Notes:
+
+Omit `dryRun` to copy the page. Use `targetFolderId` to choose a destination folder.
 
 ## List page templates
 
