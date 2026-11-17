@@ -17,10 +17,12 @@ export const selectTab = async (name: string) => {
 export const selectStaticDestination = async () => {
   const destination = await vi.waitFor(
     () => {
-      const element = document.body.querySelector<HTMLButtonElement>(
-        'button[role="combobox"]'
-      );
-      expect(element).not.toBeNull();
+      const element = Array.from(
+        document.body.querySelectorAll<HTMLButtonElement>(
+          'button[role="combobox"]'
+        )
+      ).find((button) => button.textContent?.trim() === "Docker");
+      expect(element).toBeDefined();
       return element!;
     },
     { timeout: 10_000 }
