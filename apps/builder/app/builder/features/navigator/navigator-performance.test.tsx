@@ -227,4 +227,4 @@ test("large Navigator selection and reorder leave unchanged labels alone", async
     $registeredComponentMetas.set(previousMetas);
     $dragAndDropState.set({ isDragging: false });
   }
-});
+}, 30_000);

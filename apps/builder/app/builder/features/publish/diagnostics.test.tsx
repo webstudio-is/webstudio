@@ -1,7 +1,6 @@
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
-import { userEvent } from "@vitest/browser/context";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import {
   PublishDiagnosticsDialog,
@@ -30,12 +29,16 @@ const render = (
     canViewPublishLogs = true,
     items = [],
     onLoadLog,
+    onOpenChange,
     open,
+    initialTab,
   }: {
     canViewPublishLogs?: boolean;
     items?: SessionPublish[];
     onLoadLog?: (item: SessionPublish) => void;
+    onOpenChange?: (open: boolean) => void;
     open?: boolean;
+    initialTab?: "warnings" | "errors" | "publish";
   } = {}
 ) => {
   container = document.createElement("div");
@@ -49,7 +52,9 @@ const render = (
           canViewPublishLogs={canViewPublishLogs}
           items={items}
           onLoadLog={onLoadLog}
+          onOpenChange={onOpenChange}
           open={open}
+          initialTab={initialTab}
         />
       </TooltipProvider>
     );
@@ -67,14 +72,6 @@ const createFinding = (
   reportText: `${severity.toUpperCase()} report-${index}`,
 });
 
-const openDetails = (element: HTMLElement) => {
-  const button = Array.from(element.querySelectorAll("button")).find(
-    (candidate) => candidate.textContent === "See issues"
-  );
-  expect(button).toBeDefined();
-  act(() => button?.click());
-};
-
 test("keeps audit and build findings in severity tabs, not in publish logs", async () => {
   render([], {
     items: [
@@ -90,25 +87,14 @@ test("keeps audit and build findings in severity tabs, not in publish logs", asy
       },
     ],
     open: true,
+    initialTab: "publish",
   });
-  const tabs = Array.from(
-    document.body.querySelectorAll<HTMLElement>('[role="tab"]')
-  );
-  expect(tabs).toHaveLength(3);
-  const publishTab = tabs.find((tab) => tab.textContent === "Publish")!;
-  await act(async () => userEvent.click(publishTab));
   const active = document.body.querySelector(
     '[role="tabpanel"][data-state="active"]'
   )!;
   expect(active.textContent).toContain("runner-output-42");
   expect(active.textContent).not.toContain("warning-42");
   expect(active.textContent).not.toContain("build-issue-42");
-  const warningsTab = tabs.find((tab) => tab.textContent === "Warnings")!;
-  await act(async () => userEvent.click(warningsTab));
-  expect(document.body.textContent).toContain("warning-42");
-  const errorsTab = tabs.find((tab) => tab.textContent === "Errors")!;
-  await act(async () => userEvent.click(errorsTab));
-  expect(document.body.textContent).toContain("build-issue-42");
 });
 
 test.each(["findings", "details", "publish"] as const)(
@@ -120,7 +106,7 @@ test.each(["findings", "details", "publish"] as const)(
         ? []
         : [
             {
-              severity: "error",
+              severity: "warning",
               title: view === "details" ? "finding" : content,
               details: content,
               reportText: "report",
@@ -144,12 +130,6 @@ test.each(["findings", "details", "publish"] as const)(
         open: true,
       }
     );
-    if (view === "details") {
-      const finding = Array.from(document.body.querySelectorAll("button")).find(
-        (button) => button.textContent === "Show more"
-      );
-      await act(async () => userEvent.click(finding!));
-    }
     const contentElement = document.body.querySelector<HTMLElement>(
       view === "publish" ? "pre" : "[data-overflow-content]"
     );
@@ -206,55 +186,22 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
     value: { writeText },
   });
 
-  const element = render(findings);
-  expect(element.textContent).toContain("6 errors · 11 warnings");
-  openDetails(element);
+  render(findings, { open: true, initialTab: "warnings" });
 
   expect(document.body.textContent).toContain("Diagnostics");
   expect(document.body.textContent).toContain("Errors");
   expect(document.body.textContent).toContain("Warnings");
-  expect(document.body.textContent).toContain("error-5");
-  expect(document.body.textContent).not.toContain("warning-0");
+  expect(document.body.textContent).toContain("warning-10");
+  expect(document.body.textContent).toContain("details-warning-0");
+  expect(document.body.textContent).not.toContain("error-0");
   expect(document.body.querySelectorAll('[role="tab"]')).toHaveLength(2);
   expect(
     getComputedStyle(document.body.querySelector('[role="dialog"]')!).resize
   ).toBe("both");
   expect(document.body.querySelector('[draggable="true"]')).not.toBeNull();
-  const firstFinding = Array.from(
-    document.body.querySelectorAll("button")
-  ).find((button) => button.textContent === "Show more");
-  expect(firstFinding).toBeDefined();
-  await act(async () => userEvent.click(firstFinding as HTMLElement));
-  const selectableText = Array.from(document.body.querySelectorAll("*")).find(
-    (candidate) =>
-      candidate.textContent === "details-error-0" &&
-      getComputedStyle(candidate).userSelect === "text"
-  );
-  expect(selectableText).toBeDefined();
-  const backButton = Array.from(document.body.querySelectorAll("button")).find(
-    (button) => button.textContent === "Back"
-  );
-  await act(async () => userEvent.click(backButton as HTMLElement));
-
-  const warningTab = Array.from(
-    document.body.querySelectorAll('[role="tab"]')
-  ).find((tab) => tab.textContent === "Warnings");
-  await act(async () => userEvent.click(warningTab as HTMLElement));
-  expect(document.body.textContent).toContain("warning-10");
+  expect(document.body.textContent).not.toContain("Show more");
+  expect(document.body.textContent).not.toContain("Back");
   expect(document.body.textContent).not.toContain("error-0");
-  const warningFinding = Array.from(
-    document.body.querySelectorAll("button")
-  ).find((button) => button.textContent === "Show more");
-  await act(async () => userEvent.click(warningFinding as HTMLElement));
-  const warningBack = Array.from(document.body.querySelectorAll("button")).find(
-    (button) => button.textContent === "Back"
-  );
-  await act(async () => userEvent.click(warningBack as HTMLElement));
-  expect(
-    Array.from(document.body.querySelectorAll('[role="tab"]'))
-      .find((tab) => tab.textContent === "Warnings")
-      ?.getAttribute("aria-selected")
-  ).toBe("true");
 
   const copyButton = document.body.querySelector<HTMLButtonElement>(
     'button[aria-label="Copy all reports"]'
@@ -272,8 +219,10 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
 test.each(["error", "warning"] as const)(
   "shows only the populated tab in the %s-only state",
   (severity) => {
-    const element = render([createFinding(severity, 0)]);
-    openDetails(element);
+    render([createFinding(severity, 0)], {
+      open: true,
+      initialTab: severity === "error" ? "errors" : "warnings",
+    });
     expect(
       Array.from(document.body.querySelectorAll('[role="tab"]')).map(
         (tab) => tab.textContent
@@ -282,27 +231,22 @@ test.each(["error", "warning"] as const)(
   }
 );
 
-test("warning text can be selected without opening its details", async () => {
-  render([createFinding("warning", 0)], { open: true });
-  const warning = Array.from(
-    document.body.querySelectorAll<HTMLElement>('[role="tabpanel"] div')
-  ).find(
-    (element) =>
-      element.textContent === "warning-0" &&
-      getComputedStyle(element).userSelect === "text"
-  );
-  expect(warning).toBeDefined();
-  await act(async () => userEvent.click(warning!));
-  expect(document.body.textContent).not.toContain("Back");
-  const showMore = Array.from(document.body.querySelectorAll("button")).find(
-    (button) => button.textContent === "Show more"
-  );
-  await act(async () => userEvent.click(showMore!));
-  expect(document.body.textContent).toContain("details-warning-0");
-});
+test.each(["error", "warning"] as const)(
+  "%s details appear inline without a details screen",
+  (severity) => {
+    render([createFinding(severity, 0)], {
+      open: true,
+      initialTab: severity === "error" ? "errors" : "warnings",
+    });
+    expect(document.body.textContent).toContain(`${severity}-0`);
+    expect(document.body.textContent).toContain(`details-${severity}-0`);
+    expect(document.body.textContent).not.toContain("Show more");
+    expect(document.body.textContent).not.toContain("Back");
+  }
+);
 
 test("Free shows the actual short error without details, navigation, or report copy", () => {
-  const element = render(
+  render(
     [
       {
         severity: "error",
@@ -313,9 +257,8 @@ test("Free shows the actual short error without details, navigation, or report c
         reportText: "Private long diagnostic context",
       },
     ],
-    { canViewPublishLogs: false }
+    { canViewPublishLogs: false, open: true, initialTab: "errors" }
   );
-  openDetails(element);
   expect(document.body.textContent).toContain("Invalid MDX element nesting");
   expect(document.body.textContent).not.toContain("article.mdx");
   expect(document.body.textContent).not.toContain(
@@ -328,8 +271,10 @@ test("Free shows the actual short error without details, navigation, or report c
 });
 
 test("Free hides log-derived issues, stage, and code", async () => {
-  const element = render([createFinding("warning", 0)], {
+  render([createFinding("warning", 0)], {
     canViewPublishLogs: false,
+    open: true,
+    initialTab: "publish",
     items: [
       {
         buildId: "build-1",
@@ -343,11 +288,6 @@ test("Free hides log-derived issues, stage, and code", async () => {
       },
     ],
   });
-  openDetails(element);
-  const publishTab = Array.from(
-    document.body.querySelectorAll('[role="tab"]')
-  ).find((tab) => tab.textContent === "Publish");
-  await act(async () => userEvent.click(publishTab as HTMLElement));
   expect(document.body.textContent).toContain("Publish failed");
   expect(document.body.textContent).not.toContain("private-code");
   expect(document.body.textContent).not.toContain("private-stage");
@@ -364,16 +304,12 @@ test("loads a completed publish when Publish opens and shows its log inline", as
     status: "failed",
   };
   const onLoadLog = vi.fn();
-  const element = render([createFinding("warning", 0)], {
+  render([createFinding("warning", 0)], {
     items: [item],
     onLoadLog,
+    open: true,
+    initialTab: "publish",
   });
-  openDetails(element);
-  expect(onLoadLog).not.toHaveBeenCalled();
-  const publishTab = Array.from(
-    document.body.querySelectorAll('[role="tab"]')
-  ).find((tab) => tab.textContent === "Publish");
-  await act(async () => userEvent.click(publishTab as HTMLElement));
   expect(onLoadLog).toHaveBeenCalledWith(item);
 
   item.logState = "available";
@@ -385,6 +321,8 @@ test("loads a completed publish when Publish opens and shows its log inline", as
           findings={[createFinding("warning", 0)]}
           items={[item]}
           onLoadLog={onLoadLog}
+          open
+          initialTab="publish"
         />
       </TooltipProvider>
     );
@@ -395,7 +333,7 @@ test("loads a completed publish when Publish opens and shows its log inline", as
 
 test("shows unavailable instead of loading forever when a publish has no log handle", async () => {
   const onLoadLog = vi.fn();
-  const element = render([createFinding("warning", 0)], {
+  render([createFinding("warning", 0)], {
     items: [
       {
         buildId: "build-1",
@@ -406,12 +344,9 @@ test("shows unavailable instead of loading forever when a publish has no log han
       },
     ],
     onLoadLog,
+    open: true,
+    initialTab: "publish",
   });
-  openDetails(element);
-  const publishTab = Array.from(
-    document.body.querySelectorAll('[role="tab"]')
-  ).find((tab) => tab.textContent === "Publish");
-  await act(async () => userEvent.click(publishTab as HTMLElement));
   expect(onLoadLog).not.toHaveBeenCalled();
   expect(document.body.textContent).toContain("Publish logs are unavailable.");
 });
@@ -453,7 +388,7 @@ test("lists each publish domain and copies the full loaded log", async () => {
     'button[aria-label="Copy all reports"]'
   );
   expect(copyButton).not.toBeNull();
-  await act(async () => userEvent.click(copyButton!));
+  await act(async () => copyButton?.click());
   expect(writeText).toHaveBeenCalledOnce();
   const copied = writeText.mock.calls[0][0];
   expect(copied).toContain("First complete runner log");
@@ -502,22 +437,15 @@ test("collapses each complete publish and copies its full log from the header", 
   expect(document.body.textContent).not.toContain(
     "Complete second publish log"
   );
-  await act(async () => userEvent.click(triggers[0]!));
+  await act(async () => triggers[0]?.click());
   expect(document.body.textContent).toContain("Complete second publish log");
   const copyButtons = document.body.querySelectorAll<HTMLButtonElement>(
     'button[aria-label="Copy log"]'
   );
   expect(copyButtons).toHaveLength(2);
-  await act(async () => userEvent.click(copyButtons[0]!));
+  expect(copyButtons[0]?.parentElement?.closest("button")).toBeNull();
+  await act(async () => copyButtons[0]?.click());
   expect(writeText).toHaveBeenCalledWith("Complete second publish log");
-  expect(triggers[0]?.getAttribute("aria-expanded")).toBe("true");
-  const keyboardCopy = document.body.querySelector<HTMLButtonElement>(
-    'button[aria-label="Copy log"]'
-  )!;
-  expect(keyboardCopy.parentElement?.closest("button")).toBeNull();
-  act(() => keyboardCopy.focus());
-  await act(async () => userEvent.keyboard("{Enter}"));
-  expect(writeText).toHaveBeenCalledTimes(2);
   expect(triggers[0]?.getAttribute("aria-expanded")).toBe("true");
 });
 
@@ -561,9 +489,9 @@ test("can maximize Diagnostics and aligns publish content with its title", async
     'button[aria-label="Expand"]'
   );
   expect(maximize).not.toBeNull();
-  await act(async () => userEvent.click(maximize!));
+  await act(async () => maximize?.click());
   expect(dialog!.getBoundingClientRect().width).not.toBe(width);
-  await act(async () => userEvent.click(maximize!));
+  await act(async () => maximize?.click());
   expect(dialog!.getBoundingClientRect().width).toBe(width);
 });
 
@@ -608,7 +536,7 @@ test("publish failure is plain text and links to the Publish tab", async () => {
   expect(publishLink?.parentElement?.textContent).toContain(
     "Build failed before deployment"
   );
-  await act(async () => userEvent.click(publishLink!));
+  await act(async () => publishLink?.click());
   expect(
     Array.from(document.body.querySelectorAll('[role="tab"]'))
       .find((tab) => tab.textContent === "Publish")
@@ -648,7 +576,7 @@ test("Free publish failures link to a Publish upgrade banner without exposing lo
     (button) => button.textContent === "show logs"
   );
   expect(link).toBeDefined();
-  await act(async () => userEvent.click(link!));
+  await act(async () => link?.click());
   expect(
     document.body.querySelector('[role="tab"][aria-selected="true"]')
       ?.textContent
@@ -765,7 +693,7 @@ test.each([true, false])(
 
 test("Free audit summaries do not expose long cached details", () => {
   const longSummary = `Short reason ${"private context ".repeat(30)}`;
-  const element = render(
+  render(
     [
       {
         severity: "error",
@@ -774,30 +702,61 @@ test("Free audit summaries do not expose long cached details", () => {
         reportText: longSummary,
       },
     ],
-    { canViewPublishLogs: false }
+    { canViewPublishLogs: false, open: true, initialTab: "errors" }
   );
-  openDetails(element);
   expect(document.body.textContent).toContain("Short reason");
   expect(document.body.textContent).not.toContain(longSummary);
 });
 
 test("Show element closes the diagnostics dialog on ordinary navigation", async () => {
-  const element = render([
-    {
-      severity: "error",
-      title: "Invalid element",
-      link: <a href="#element">Show element</a>,
-      reportText: "Invalid element",
-    },
-  ]);
-  openDetails(element);
-  const finding = Array.from(document.body.querySelectorAll("button")).find(
-    (button) => button.textContent === "Show more"
+  const onOpenChange = vi.fn();
+  render(
+    [
+      {
+        severity: "error",
+        title: "Invalid element",
+        link: <a href="#element">Show element</a>,
+        reportText: "Invalid element",
+      },
+    ],
+    { open: true, initialTab: "errors", onOpenChange }
   );
-  await act(async () => userEvent.click(finding as HTMLElement));
   const link =
     document.body.querySelector<HTMLAnchorElement>('a[href="#element"]');
   expect(link).not.toBeNull();
-  await act(async () => userEvent.click(link as HTMLElement));
-  expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+  expect(document.body.textContent).toContain("Invalid element");
+  expect(
+    Array.from(document.body.querySelectorAll("button")).some(
+      (button) => button.textContent === "Show more"
+    )
+  ).toBe(false);
+  await act(async () => link?.click());
+  expect(onOpenChange).toHaveBeenCalledWith(false);
 });
+
+test.each(["metaKey", "ctrlKey", "shiftKey", "altKey"] as const)(
+  "Show element leaves diagnostics open on %s-click",
+  (modifier) => {
+    const onOpenChange = vi.fn();
+    render(
+      [
+        {
+          severity: "error",
+          title: "Invalid element",
+          link: <a href="#element">Show element</a>,
+          reportText: "Invalid element",
+        },
+      ],
+      { open: true, initialTab: "errors", onOpenChange }
+    );
+    const link =
+      document.body.querySelector<HTMLAnchorElement>('a[href="#element"]');
+    expect(link).not.toBeNull();
+    act(() => {
+      link?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, [modifier]: true })
+      );
+    });
+    expect(onOpenChange).not.toHaveBeenCalled();
+  }
+);

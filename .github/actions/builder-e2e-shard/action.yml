@@ -147,6 +147,8 @@ runs:
         while (( SECONDS < deadline )); do
           available=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=builder-e2e-build" --jq '.artifacts | max_by(.id) | .expired == false')
           if [ "$available" = true ]; then
+            # The artifact can appear in the list just before its archive is downloadable.
+            sleep 2
             exit 0
           fi
           # Check more often during normal builds without increasing the
