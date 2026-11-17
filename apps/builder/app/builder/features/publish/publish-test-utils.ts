@@ -1,5 +1,4 @@
 import { FetchInterceptor } from "@mswjs/interceptors/fetch";
-import { userEvent } from "@vitest/browser/context";
 import { act } from "react-dom/test-utils";
 import { expect, vi } from "vitest";
 
@@ -41,7 +40,15 @@ export const selectStaticDestination = async (container: HTMLElement) => {
     },
     { timeout: 10_000 }
   );
-  await act(async () => userEvent.click(destination));
+  await act(async () =>
+    destination.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        pointerType: "mouse",
+      })
+    )
+  );
   const staticOption = await vi.waitFor(
     () => {
       const contentId = destination.getAttribute("aria-controls");
@@ -62,7 +69,7 @@ export const selectStaticDestination = async (container: HTMLElement) => {
     },
     { timeout: 10_000 }
   );
-  await act(async () => userEvent.click(staticOption));
+  await act(async () => staticOption.click());
 };
 
 export const deferred = <T>() => {
