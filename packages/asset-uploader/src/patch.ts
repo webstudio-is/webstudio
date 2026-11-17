@@ -27,7 +27,7 @@ const assetChanged = (previous: Asset | undefined, next: Asset | undefined) =>
   previous?.description !== next?.description ||
   JSON.stringify(previous?.meta) !== JSON.stringify(next?.meta);
 
-const validateCollectionAssetPatch = async ({
+export const validateCollectionAssetPatch = async ({
   current,
   next,
   assetStore,

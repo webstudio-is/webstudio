@@ -1,3 +1,4 @@
+import { guardedPageCopyRollbacks } from "./page-copy-guards";
 import { draftPersistence } from "./draft-persistence";
 import {
   describe,
@@ -129,6 +130,55 @@ describe("project-queue", () => {
     stopPolling();
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+
+  test("rejects a guarded copy without pausing the queue or sending later edits with it", async () => {
+    mockBuildPatch.mockClear();
+    mockBuildPatch
+      .mockResolvedValueOnce({
+        status: "partial",
+        version: 3,
+        entries: [
+          {
+            transactionId: "guarded-copy",
+            status: "failed",
+            errors: "VERSION_CONFLICT",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ status: "ok", version: 4 });
+    const revert = vi.fn(() => true);
+    const complete = vi.fn();
+    guardedPageCopyRollbacks.set("guarded-copy", revert);
+    onTransactionComplete("guarded-copy", complete);
+    enqueueProjectDetails({
+      projectId: "project",
+      version: 3,
+      buildId: "build",
+      authPermit: "build",
+      authToken: undefined,
+    });
+    const storage = new ServerSyncStorage("project", initialState);
+    storage.sendTransaction({
+      ...makeTx("guarded-copy"),
+      pageCopyGuard: {
+        buildId: "build",
+        baseVersion: 3,
+        assetCatalogRevision: "0".repeat(64),
+      },
+    });
+    storage.sendTransaction(makeTx("ordinary-edit"));
+    await vi.advanceTimersByTimeAsync(3 * NEW_ENTRIES_INTERVAL);
+    expect(revert).toHaveBeenCalledOnce();
+    expect(complete).toHaveBeenCalledWith(false);
+    expect($syncStatus.get().status).toBe("idle");
+    expect(
+      mockBuildPatch.mock.calls.map(([request]) =>
+        request.entries.map(
+          ({ transaction }: { transaction: Transaction }) => transaction.id
+        )
+      )
+    ).toEqual([["guarded-copy"], ["ordinary-edit"]]);
   });
 
   //  unload protection

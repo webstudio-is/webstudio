@@ -343,6 +343,20 @@ type ImportProject = (
   input: ProjectSessionImportInput
 ) => Promise<ProjectSessionImportResult>;
 
+const copyPageInput = z.strictObject({
+  sourceProjectId: z.string().min(1),
+  sourcePage: z.string().min(1),
+  targetFolderId: z.string().min(1).optional(),
+  conflictResolution: z.enum(["ours", "theirs", "merge"]).optional(),
+  rootStyleConflictResolution: z.enum(["ours", "theirs"]).optional(),
+});
+
+export type ProjectSessionCopyPageInput = z.infer<typeof copyPageInput>;
+type CopyPage = (
+  input: ProjectSessionCopyPageInput,
+  options: { dryRun: boolean }
+) => Promise<unknown>;
+
 export type ProjectSessionDownloadAssetInput = {
   assetId: string;
   assetsDir?: string;
@@ -4013,6 +4027,42 @@ const importTool = createProjectSessionMcpTool({
   },
 });
 
+const copyPageTool = createProjectSessionMcpTool({
+  name: "copy-page",
+  description:
+    "Copy a page from an authenticated source project into the linked project. Dry-run checks conflicts and reads source document dependencies without writes or binary uploads.",
+  inputSchema: {
+    ...emptyInputSchema,
+    properties: {
+      sourceProjectId: {
+        type: "string",
+        description: "Source project already linked in this CLI installation.",
+      },
+      sourcePage: { type: "string", description: "Source page ID or path." },
+      targetFolderId: {
+        type: "string",
+        description: "Destination page folder ID. Defaults to the root.",
+      },
+      conflictResolution: { type: "string", enum: ["ours", "theirs", "merge"] },
+      rootStyleConflictResolution: { type: "string", enum: ["ours", "theirs"] },
+      dryRun: dryRunInputProperty,
+    },
+    required: ["sourceProjectId", "sourcePage"],
+  },
+  annotations: {
+    command: "copy-page",
+    operationId: "project.copyPage",
+    method: "mutation",
+    permit: "build",
+    localCapable: false,
+    serverOnly: true,
+    readNamespaces: [],
+    writeNamespaces: ["pages", "assets", "assetFolders"],
+    invalidatesNamespaces: ["pages", "assets", "assetFolders"],
+    retryOnConflict: false,
+  },
+});
+
 const downloadAssetTool = createProjectSessionMcpTool({
   name: "download-asset",
   description:
@@ -4255,6 +4305,7 @@ const simulateFormTool = createProjectSessionMcpTool({
 });
 
 type McpStructuredError = {
+  details?: unknown;
   code: string;
   message: string;
   issues?: readonly SemanticValidationIssue[];
@@ -4352,6 +4403,7 @@ export const listProjectSessionMcpTools = (
   operations: readonly PublicMcpOperation[],
   options: {
     includeImport?: boolean;
+    includeCopyPage?: boolean;
     includeDownloadAsset?: boolean;
     includeScreenshot?: boolean;
     includeResponsiveScreenshot?: boolean;
@@ -4429,6 +4481,7 @@ export const listProjectSessionMcpTools = (
     : []),
   ...(options.includeRestorePoints ? restorePointTools : []),
   ...(options.includeImport ? [importTool] : []),
+  ...(options.includeCopyPage ? [copyPageTool] : []),
   ...(options.includeDownloadAsset ? [downloadAssetTool] : []),
   ...(options.includeScreenshot ? [screenshotTool] : []),
   ...(options.includeResponsiveScreenshot ? [responsiveScreenshotTool] : []),
@@ -8819,6 +8872,7 @@ type ProjectSessionMcpCoreOptions<Command extends string> = {
   createProjectSession: CreateProjectSession;
   executeOperation: ExecuteMcpOperation<Command>;
   importProject?: ImportProject;
+  copyPage?: CopyPage;
   downloadAsset?: DownloadAsset;
   captureScreenshot?: CaptureScreenshot;
   capturePageScreenshots?: CapturePageScreenshots;
@@ -8855,6 +8909,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   createProjectSession,
   executeOperation,
   importProject,
+  copyPage,
   downloadAsset,
   captureScreenshot,
   capturePageScreenshots,
@@ -8885,6 +8940,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   );
   const tools = listProjectSessionMcpTools(operations, {
     includeImport: importProject !== undefined,
+    includeCopyPage: copyPage !== undefined,
     includeDownloadAsset: downloadAsset !== undefined,
     includeScreenshot: captureScreenshot !== undefined,
     includeResponsiveScreenshot: capturePageScreenshots !== undefined,
@@ -9361,6 +9417,36 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             }),
         });
         return response ?? toCallResult(envelope);
+      }
+      if (name === "copy-page" && copyPage !== undefined) {
+        const transport = getToolCallInput(input);
+        const result = await copyPage(copyPageInput.parse(transport.input), {
+          dryRun: dryRun || transport.dryRun,
+        });
+        if (
+          isPlainRecord(result) &&
+          (result.status === "failed" || result.status === "indeterminate") &&
+          typeof result.code === "string"
+        ) {
+          const structuredContent = {
+            ok: false as const,
+            data: result,
+            error: {
+              code: result.code,
+              message: result.code,
+              details: result,
+            },
+            meta: {},
+          };
+          return {
+            isError: true,
+            content: [
+              { type: "text", text: JSON.stringify(structuredContent) },
+            ],
+            structuredContent,
+          };
+        }
+        return toMetaResult(result);
       }
       if (name === "import" && importProject !== undefined) {
         return toMetaResult(await importProject(getImportInput(input)));
@@ -9971,6 +10057,7 @@ export const createProjectSessionMcpServer = async <
   createProjectSession,
   executeOperation,
   importProject,
+  copyPage,
   captureScreenshot,
   capturePageScreenshots,
   diffScreenshots,
@@ -10044,6 +10131,7 @@ export const createProjectSessionMcpServer = async <
     createProjectSession,
     executeOperation,
     importProject,
+    copyPage,
     captureScreenshot,
     capturePageScreenshots,
     diffScreenshots,

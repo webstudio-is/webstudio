@@ -78,6 +78,7 @@ const topLevelCommandNames: ReadonlySet<string> = new Set([
 const mcpOnlyToolNames = new Set(
   listProjectSessionMcpTools(publicApiOperations, {
     includeImport: true,
+    includeCopyPage: true,
     includeDownloadAsset: true,
     includeScreenshot: true,
     includeResponsiveScreenshot: true,

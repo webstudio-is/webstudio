@@ -7,6 +7,7 @@ import type { Database } from "@webstudio-is/postgrest/index.server";
 import type { AssetObjectReader } from "@webstudio-is/asset-uploader/server";
 import { loadAssetFoldersByProject } from "@webstudio-is/asset-uploader/server";
 import { createAssetClient } from "~/shared/asset-client";
+import { validatePageCopyGuard } from "../page-copy-guard.server";
 import {
   assertProjectPermit,
   authorizePatchEntries,
@@ -262,7 +263,10 @@ const applyAuthorizedEntries = async ({
     ({ context }) => context === applyContext
   );
 
-  if (hasSharedContext) {
+  const hasPageCopyGuard = authorized.some(
+    ({ entry }) => entry.transaction.pageCopyGuard !== undefined
+  );
+  if (hasSharedContext && hasPageCopyGuard === false) {
     const batchResult = await patchLoadedBuild(
       {
         build: currentBuild,
@@ -296,6 +300,26 @@ const applyAuthorizedEntries = async ({
     if (previousError !== undefined) {
       entries.push(failedResult(entry, previousError));
       continue;
+    }
+    if (entry.transaction.pageCopyGuard !== undefined) {
+      if (currentBuild.lastTransactionId === entry.transaction.id) {
+        currentVersion = currentBuild.version;
+        entries.push(acceptedResult(entry));
+        continue;
+      }
+      if (
+        (await validatePageCopyGuard({
+          guard: entry.transaction.pageCopyGuard,
+          context: entryContext,
+          projectId: patch.projectId,
+          buildId: patch.buildId,
+          version: currentBuild.version,
+        })) === false
+      ) {
+        previousError = "VERSION_CONFLICT";
+        entries.push(failedResult(entry, previousError));
+        continue;
+      }
     }
     const entryResult = await patchLoadedBuild(
       {

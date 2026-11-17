@@ -1,3 +1,5 @@
+import { rejectGuardedPageCopy } from "./page-copy-guards";
+import { reportTransactionCompletion } from "./project-queue";
 import { draftPersistence } from "./draft-persistence";
 import { createNanoEvents } from "nanoevents";
 import {
@@ -5,6 +7,8 @@ import {
   $syncStatus,
   createMultiplayerRetryTracker,
   type ApplyMessage,
+  type BroadcastMessage,
+  type Transaction,
   type ErrorMessage,
   type PresenceMessage,
   type ReloadMessage,
@@ -25,6 +29,11 @@ type MultiplayerSyncEmitterOptions = {
   url: string;
   onReload?: (message: ReloadMessage) => void;
   onUserMessage?: (message: string) => void;
+  refreshPageCopyCatalog?: (
+    catalog: NonNullable<
+      NonNullable<Transaction["pageCopyGuard"]>["stagedCatalog"]
+    >
+  ) => Promise<void>;
   createTransport?: (options: WebSocketEmitterOptions) => WebSocketSyncEmitter;
 };
 
@@ -60,6 +69,7 @@ export const createMultiplayerSyncEmitter = ({
   url,
   onReload,
   onUserMessage,
+  refreshPageCopyCatalog,
   createTransport = createWebSocketSyncEmitter,
 }: MultiplayerSyncEmitterOptions): MultiplayerSyncEmitter => {
   const events = createNanoEvents<{
@@ -70,6 +80,53 @@ export const createMultiplayerSyncEmitter = ({
   const remoteTransactions = new Map<string, number>();
   let tracker: ReturnType<typeof createMultiplayerRetryTracker>;
   let ws: WebSocketSyncEmitter | undefined;
+
+  const pendingBroadcasts: BroadcastMessage[] = [];
+  let broadcastGeneration = 0;
+  let flushingBroadcasts = false;
+  let retryBroadcasts: ReturnType<typeof setTimeout> | undefined;
+  const clearBroadcastRetry = () => {
+    clearTimeout(retryBroadcasts);
+    retryBroadcasts = undefined;
+  };
+
+  const flushBroadcasts = async () => {
+    if (flushingBroadcasts) {
+      return;
+    }
+    clearBroadcastRetry();
+    flushingBroadcasts = true;
+    const generation = broadcastGeneration;
+    try {
+      while (pendingBroadcasts.length > 0) {
+        const message = pendingBroadcasts[0];
+        const guard = message.transaction.pageCopyGuard;
+        if (guard !== undefined && message.seq > durableSeq) {
+          return;
+        }
+        if (guard?.stagedCatalog !== undefined) {
+          await refreshPageCopyCatalog?.(guard.stagedCatalog);
+          if (generation !== broadcastGeneration) {
+            return;
+          }
+        }
+        pendingBroadcasts.shift();
+        events.emit("message", {
+          type: "apply",
+          clientId: message.originClientId,
+          transaction: message.transaction,
+        });
+      }
+    } catch {
+      if (generation === broadcastGeneration) {
+        // Catalog refresh is a read. Preserve relay ordering and retry it
+        // independently of pending saves or later local edits.
+        retryBroadcasts = setTimeout(() => void flushBroadcasts(), 1_000);
+      }
+    } finally {
+      flushingBroadcasts = false;
+    }
+  };
 
   const updateUnsaved = () => {
     $syncStatus.set(
@@ -104,6 +161,7 @@ export const createMultiplayerSyncEmitter = ({
           }
         }
         tracker.handleAck({ type: "ack", seq, version });
+        void flushBroadcasts();
         updateUnsaved();
       },
       onApplied: (transactionId, seq, status, errors) => {
@@ -128,11 +186,10 @@ export const createMultiplayerSyncEmitter = ({
         }
         tracker.handleBroadcast(message);
         updateUnsaved();
-        events.emit("message", {
-          type: "apply",
-          clientId: message.originClientId,
-          transaction: message.transaction,
-        });
+        if (message.originClientId !== clientId) {
+          pendingBroadcasts.push(message);
+          void flushBroadcasts();
+        }
       },
       onClose: () => {},
       onErrorMessage: (message: ErrorMessage) => {
@@ -146,6 +203,9 @@ export const createMultiplayerSyncEmitter = ({
         updateCollaborator(presenceClientId, payload);
       },
       onReload: (message) => {
+        broadcastGeneration += 1;
+        clearBroadcastRetry();
+        pendingBroadcasts.length = 0;
         tracker.handleReload(message);
         updateUnsaved();
       },
@@ -154,12 +214,17 @@ export const createMultiplayerSyncEmitter = ({
 
   tracker = createMultiplayerRetryTracker({
     onDropped: ({ message }) => {
+      const reverted =
+        message.transaction.pageCopyGuard !== undefined &&
+        rejectGuardedPageCopy(message.transactionId);
+      reportTransactionCompletion(message.transactionId, false);
       if (projectId) {
-        draftPersistence.complete(projectId, message.transactionId, false);
+        draftPersistence.complete(projectId, message.transactionId, reverted);
       }
       updateUnsaved();
     },
     onDurable: ({ message }) => {
+      reportTransactionCompletion(message.transactionId, true);
       if (projectId) {
         draftPersistence.complete(projectId, message.transactionId, true);
       }
@@ -177,6 +242,9 @@ export const createMultiplayerSyncEmitter = ({
 
   return {
     close() {
+      broadcastGeneration += 1;
+      clearBroadcastRetry();
+      pendingBroadcasts.length = 0;
       tracker.destroy();
       updateUnsaved();
       ws?.close();

@@ -13,7 +13,10 @@ import {
   type Instance,
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
-import { registerContainers } from "../sync/sync-stores";
+import { registerContainers, serverSyncStore } from "../sync/sync-stores";
+import { reportTransactionCompletion } from "../sync/project-queue";
+import { draftPersistence } from "../sync/draft-persistence";
+import { transferBuilderPage } from "./transfer-page.client";
 import {
   $assets,
   $breakpoints,
@@ -399,7 +402,7 @@ test("copies page data across projects", async () => {
   expect($dataSources.get().has("source-variable")).toBe(false);
 });
 
-test("transfers assets copied from another deployment before inserting the page", async () => {
+test("requires a grant for cross-origin page assets and inserts after authenticated upload", async () => {
   $project.set({ id: "source-project" } as Project);
   resetBuildStores();
 
@@ -476,20 +479,7 @@ test("transfers assets copied from another deployment before inserting the page"
       ],
     ])
   );
-  const importAssets = vi
-    .spyOn(builderApiTesting.api, "importAssets")
-    .mockImplementation(async (projectId, sources) => {
-      expect(projectId).toBe("target-project");
-      expect(sources).toEqual([
-        {
-          asset: sourceAsset,
-          url: "https://source.example.com/cgi/image/hero.png?format=raw",
-        },
-      ]);
-      $assets.set(new Map([[importedAsset.id, importedAsset]]));
-      return new Map([[sourceAsset.id, importedAsset]]);
-    });
-
+  const importAssets = vi.spyOn(builderApiTesting.api, "importAssets");
   const incompleteClipboardData = structuredClone(clipboardData);
   incompleteClipboardData["@webstudio/page/v0.1"].bodyFragment.assets = [];
   expect(
@@ -506,13 +496,125 @@ test("transfers assets copied from another deployment before inserting the page"
 
   expect(
     await handlePastePage(JSON.stringify(clipboardData), ROOT_FOLDER_ID)
-  ).toEqual(pasteHandled);
+  ).toMatchObject({ success: false });
+  expect(importAssets).not.toHaveBeenCalled();
+
+  const sourceBuild = { buildId: "source-build", version: 4 };
+  const targetBuild = {
+    buildId: "target-build",
+    version: 9,
+    contractVersion: "copy-contract",
+    storageScope: "target-storage",
+  };
+  const transferData = clipboardData["@webstudio/page/v0.1"];
+  transferData.sourceGrant = "scoped-copy-grant";
+  transferData.sourceRevision = sourceBuild;
+  let uploaded: Asset | undefined;
+  let reservedId = "";
+  let reads = 0;
+  const stepOrder: string[] = [];
+  const readSourceRequest: typeof fetch = async (url, init) => {
+    expect(new URL(String(url)).origin).toBe("https://source.example.com");
+    expect(init?.credentials).toBe("omit");
+    expect(init?.redirect).toBe("error");
+    const body = JSON.parse(String(init?.body));
+    expect(body.grant).toBe("scoped-copy-grant");
+    if (body.kind === "manifest") {
+      return Response.json({
+        source: {
+          projectId: "source-project",
+          pageId: "source-page",
+          ...sourceBuild,
+        },
+        storageScope: "source-storage",
+        assets: [sourceAsset],
+        folders: [],
+      });
+    }
+    expect(body.assetId).toBe(sourceAsset.id);
+    expect(body.expectedName).toBe(sourceAsset.name);
+    reads += 1;
+    return new Response(new Uint8Array(sourceAsset.size));
+  };
+  const destinationOrigin =
+    "https://p-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.apps.webstudio.is";
+  const request: typeof fetch = async (url, init) => {
+    const requested = new URL(String(url));
+    expect(requested.origin).toBe(destinationOrigin);
+    const path = requested.pathname;
+    if (path === "/rest/assets") {
+      return Response.json({
+        assets: uploaded === undefined ? [] : [uploaded],
+      });
+    }
+    if (path === "/rest/assets/folders") {
+      return Response.json({ folders: [] });
+    }
+    if (path === "/rest/page-copy/destination" && init?.method !== "POST") {
+      return Response.json(targetBuild);
+    }
+    if (path === "/rest/page-copy/destination") {
+      const body = JSON.parse(String(init?.body));
+      expect(body.kind).toBe("reserve");
+      reservedId = body.assetId;
+      stepOrder.push("reserve");
+      return Response.json({
+        name: "reserved-hero.png",
+        assetId: reservedId,
+        deduplicated: false,
+      });
+    }
+    if (path === "/rest/assets/uploads/reserved-hero.png") {
+      uploaded = { ...importedAsset, id: reservedId };
+      stepOrder.push("upload");
+      return Response.json({ uploadedAssets: [uploaded] });
+    }
+    throw new Error(`Unexpected transfer request: ${path}`);
+  };
+
+  draftPersistence.reset("target-project");
+  const unsubscribe = serverSyncStore.subscribe((id, payload) => {
+    if (payload.some(({ namespace }) => namespace === "pages")) {
+      stepOrder.push("commit");
+      reportTransactionCompletion(id, true);
+    }
+  });
+  try {
+    const transfer = (input: Parameters<typeof transferBuilderPage>[0]) =>
+      transferBuilderPage({
+        ...input,
+        request,
+        readSourceRequest,
+        destinationOrigin,
+      });
+    transferData.sourceRevision = { ...sourceBuild, version: 3 };
+    expect(
+      await handlePastePage(
+        JSON.stringify(clipboardData),
+        ROOT_FOLDER_ID,
+        transfer
+      )
+    ).toMatchObject({ success: false });
+    expect(stepOrder).toEqual([]);
+    transferData.sourceRevision = sourceBuild;
+    expect(
+      await handlePastePage(
+        JSON.stringify(clipboardData),
+        ROOT_FOLDER_ID,
+        transfer
+      )
+    ).toEqual(pasteHandled);
+  } finally {
+    unsubscribe();
+    draftPersistence.reset();
+  }
   const pastedPage = Array.from($pages.get()?.pages.values() ?? []).find(
     (page) => page.id !== "target-page"
   );
-  expect(pastedPage?.meta.socialImageAssetId).toBe(importedAsset.id);
-  expect(pastedPage?.marketplace?.thumbnailAssetId).toBe(importedAsset.id);
-  expect(importAssets).toHaveBeenCalledOnce();
+  expect(pastedPage?.meta.socialImageAssetId).toBe(reservedId);
+  expect(pastedPage?.marketplace?.thumbnailAssetId).toBe(reservedId);
+  expect(stepOrder).toEqual(["reserve", "upload", "commit"]);
+  expect(reads).toBe(1);
   expect($assets.get().has(sourceAsset.id)).toBe(false);
 });
 
@@ -1087,6 +1189,7 @@ test("copies template data as a template", async () => {
 test.each(["page", "template", "folder"] as const)(
   "prepares connected MDX dependencies when copying a %s",
   async (type) => {
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
     const sourceAsset = {
       id: "article",
       projectId: "source-project",
@@ -1104,10 +1207,16 @@ test.each(["page", "template", "folder"] as const)(
       name: "hero.png",
       format: "png",
     } satisfies Asset;
+    const socialImage = {
+      ...dependency,
+      id: "social-image",
+      name: "social.png",
+    };
     $assets.set(
       new Map([
         [sourceAsset.id, sourceAsset],
         [dependency.id, dependency],
+        [socialImage.id, socialImage],
       ])
     );
     const emptyFragment = {
@@ -1163,7 +1272,7 @@ test.each(["page", "template", "folder"] as const)(
           value: sourceAsset.id,
         },
       ],
-      assets: [sourceAsset],
+      assets: [sourceAsset, socialImage],
     };
     const page = {
       type: "page" as const,
@@ -1173,7 +1282,7 @@ test.each(["page", "template", "folder"] as const)(
         path: "/page",
         title: "Page",
         rootInstanceId: "body",
-        meta: {},
+        meta: { socialImageAssetId: socialImage.id },
       },
       rootFragment: emptyFragment,
       bodyFragment,
@@ -1185,7 +1294,7 @@ test.each(["page", "template", "folder"] as const)(
         name: "Template",
         title: "Template",
         rootInstanceId: "body",
-        meta: {},
+        meta: { socialImageAssetId: socialImage.id },
       },
       rootFragment: emptyFragment,
       bodyFragment,
@@ -1226,9 +1335,247 @@ test.each(["page", "template", "folder"] as const)(
       throw new Error("Expected a prepared page-like item");
     }
 
-    expect(preparedItem.bodyFragment.assets).toEqual([sourceAsset, dependency]);
+    expect(preparedItem.bodyFragment.assets).toEqual([
+      sourceAsset,
+      socialImage,
+      dependency,
+    ]);
     expect(preparedItem.bodyFragment.instances).not.toContainEqual(
       expect.objectContaining({ id: "authored" })
     );
   }
 );
+
+test("renews an expired same-origin grant before pasting an unchanged assetless page", async () => {
+  resetBuildStores();
+  $project.set({ id: "destination" } as Project);
+  const pages = createDefaultPages({
+    homePageId: "target-home",
+    rootInstanceId: "body",
+  });
+  $pages.set(pages);
+  $instances.set(
+    new Map([
+      [
+        "body",
+        { id: "body", type: "instance", component: "Body", children: [] },
+      ],
+    ])
+  );
+  const copied = JSON.parse((await copyPageData("target-home")) ?? "");
+  const item = copied["@webstudio/page/v0.1"];
+  item.page.id = "source-home";
+  item.sourceProjectId = "source";
+  item.sourceGrant = "expired-grant";
+  item.sourceRevision = { buildId: "source-build", version: 4 };
+  const order: string[] = [];
+  const request: typeof fetch = async (url, init) => {
+    const parsed = new URL(String(url));
+    switch (parsed.pathname) {
+      case "/rest/page-copy/grant":
+        const renewal = JSON.parse(String(init?.body));
+        expect(renewal).not.toHaveProperty("assetIds");
+        expect(renewal).toMatchObject({
+          projectId: "source",
+          pageId: "source-home",
+          renewGrant: "expired-grant",
+        });
+        order.push("renew");
+        return Response.json({ grant: "fresh-grant", ...item.sourceRevision });
+      case "/rest/page-copy/content": {
+        const { grant } = JSON.parse(String(init?.body));
+        if (grant === "expired-grant") {
+          order.push("expired");
+          return new Response(null, { status: 403 });
+        }
+        expect(grant).toBe("fresh-grant");
+        return Response.json({
+          source: {
+            projectId: "source",
+            pageId: "source-home",
+            ...item.sourceRevision,
+          },
+          storageScope: "shared",
+          assets: [],
+          folders: [],
+        });
+      }
+      case "/rest/page-copy/destination":
+        return Response.json({
+          buildId: "target-build",
+          version: 7,
+          storageScope: "shared",
+          contractVersion: "copy",
+        });
+      case "/rest/assets":
+        return Response.json({ assets: [] });
+      case "/rest/assets/folders":
+        return Response.json({ folders: [] });
+      default:
+        throw new Error(`Unexpected copy request: ${parsed.pathname}`);
+    }
+  };
+  draftPersistence.reset("destination");
+  const unsubscribe = serverSyncStore.subscribe((id, payload) => {
+    if (payload.some(({ namespace }) => namespace === "pages")) {
+      order.push("commit");
+      reportTransactionCompletion(id, true);
+    }
+  });
+  try {
+    await expect(
+      handlePastePage(JSON.stringify(copied), ROOT_FOLDER_ID, (input) =>
+        transferBuilderPage({ ...input, request, readSourceRequest: request })
+      )
+    ).resolves.toEqual(pasteHandled);
+    expect(order).toEqual(["expired", "renew", "commit"]);
+    expect($pages.get()?.pages.size).toBe(2);
+  } finally {
+    unsubscribe();
+    draftPersistence.reset();
+  }
+});
+
+test("an immediate copy waits for the source edit to save before authorizing a cross-project paste", async () => {
+  resetBuildStores();
+  $project.set({ id: "source" } as Project);
+  const sourcePages = createDefaultPages({
+    homePageId: "source-home",
+    rootInstanceId: "source-body",
+  });
+  $pages.set(sourcePages);
+  $instances.set(
+    new Map([
+      [
+        "source-body",
+        {
+          id: "source-body",
+          type: "instance",
+          component: "Body",
+          children: [],
+        },
+      ],
+    ])
+  );
+  let persistedVersion = 3;
+  const order: string[] = [];
+  const sourceRequest: typeof fetch = async (url, init) => {
+    const path = new URL(String(url)).pathname;
+    if (path === "/rest/page-copy/grant" && init?.method !== "POST") {
+      order.push("read-source");
+      return Response.json({
+        buildId: "source-build",
+        version: persistedVersion,
+        contractVersion: "copy",
+        storageScope: "source-scope",
+      });
+    }
+    if (path === "/rest/page-copy/grant") {
+      order.push("grant");
+      expect(JSON.parse(String(init?.body))).toMatchObject({
+        expectedRevision: { buildId: "source-build", version: 4 },
+      });
+      return Response.json({
+        grant: "saved-grant",
+        buildId: "source-build",
+        version: persistedVersion,
+      });
+    }
+    if (path === "/rest/page-copy/content") {
+      expect(JSON.parse(String(init?.body)).grant).toBe("saved-grant");
+      return Response.json({
+        source: {
+          projectId: "source",
+          pageId: "source-home",
+          buildId: "source-build",
+          version: persistedVersion,
+        },
+        storageScope: "source-scope",
+        assets: [],
+        folders: [],
+      });
+    }
+    throw new Error(`Unexpected source request: ${path}`);
+  };
+  draftPersistence.reset("source");
+  draftPersistence.begin("source", "pending-edit");
+  const copying = copyPageData("source-home", sourceRequest);
+  await Promise.resolve();
+  expect(order).toEqual([]);
+  sourcePages.pages.set("source-home", {
+    ...sourcePages.pages.get("source-home")!,
+    name: "Saved name",
+  });
+  persistedVersion = 4;
+  draftPersistence.complete("source", "pending-edit", true);
+
+  const clipboard = JSON.parse((await copying) ?? "");
+  expect(order).toEqual(["read-source", "grant"]);
+  expect(clipboard["@webstudio/page/v0.1"]).toMatchObject({
+    page: { name: "Saved name" },
+    sourceRevision: { buildId: "source-build", version: 4 },
+  });
+  clipboard["@webstudio/page/v0.1"].sourceOrigin = "https://source.example";
+  resetBuildStores();
+  $project.set({ id: "destination" } as Project);
+  $pages.set(
+    createDefaultPages({
+      homePageId: "destination-home",
+      rootInstanceId: "destination-body",
+    })
+  );
+  $instances.set(
+    new Map([
+      [
+        "destination-body",
+        {
+          id: "destination-body",
+          type: "instance",
+          component: "Body",
+          children: [],
+        },
+      ],
+    ])
+  );
+  draftPersistence.reset("destination");
+  const destinationRequest: typeof fetch = async (url) => {
+    const path = new URL(String(url)).pathname;
+    if (path === "/rest/page-copy/destination") {
+      return Response.json({
+        buildId: "destination-build",
+        version: 8,
+        contractVersion: "copy",
+        storageScope: "destination-scope",
+      });
+    }
+    if (path === "/rest/assets") {
+      return Response.json({ assets: [] });
+    }
+    if (path === "/rest/assets/folders") {
+      return Response.json({ folders: [] });
+    }
+    throw new Error(`Unexpected destination request: ${path}`);
+  };
+  const unsubscribe = serverSyncStore.subscribe((id, changes) => {
+    if (changes.some(({ namespace }) => namespace === "pages")) {
+      reportTransactionCompletion(id, true);
+    }
+  });
+  try {
+    await expect(
+      handlePastePage(JSON.stringify(clipboard), ROOT_FOLDER_ID, (input) =>
+        transferBuilderPage({
+          ...input,
+          request: destinationRequest,
+          readSourceRequest: sourceRequest,
+        })
+      )
+    ).resolves.toEqual(pasteHandled);
+    expect([...$pages.get()!.pages.values()]).toContainEqual(
+      expect.objectContaining({ name: "Saved name" })
+    );
+  } finally {
+    unsubscribe();
+    draftPersistence.reset();
+  }
+});

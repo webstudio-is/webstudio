@@ -1345,6 +1345,7 @@ export const insertPageCopyFromFragmentsMutable = ({
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   createId = createNanoId,
+  createPageId = createId,
 }: {
   source: {
     page: Page;
@@ -1358,6 +1359,7 @@ export const insertPageCopyFromFragmentsMutable = ({
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   createId?: CreateId;
+  createPageId?: CreateId;
 }) => {
   const copied = copyPageFragmentsMutable({
     target: target.data,
@@ -1378,7 +1380,7 @@ export const insertPageCopyFromFragmentsMutable = ({
     page: source.page,
     copied,
     target,
-    createId,
+    createId: createPageId,
   });
 };
 
@@ -1613,7 +1615,7 @@ export const insertFolderCopyFromDataMutable = ({
 export const insertPageTransferItem = (
   state: BuilderState,
   input: z.infer<typeof pageTransferInsertInput>,
-  context: { createId: CreateId }
+  context: { createId: CreateId; createPageId?: CreateId }
 ) => {
   for (const item of collectPageTransferItems(input.item)) {
     assertNoAmbiguousFormInstance(item.rootFragment);
@@ -1648,6 +1650,7 @@ export const insertPageTransferItem = (
         rootStyleConflictResolution: input.rootStyleConflictResolution,
         onBreakpointLimitMerge,
         createId: context.createId,
+        createPageId: context.createPageId,
       });
     } else if (input.item.type === "template") {
       id = insertTemplateCopyFromFragmentsMutable({

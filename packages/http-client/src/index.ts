@@ -2,6 +2,8 @@ import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 import { Upload } from "tus-js-client";
 import {
   getAssetContentHash,
+  formatAssetName,
+  getAssetMime,
   type AssetQueryResourceConfigurationInput,
   type AssetFolder,
   type CustomResponseHeader,
@@ -1073,7 +1075,8 @@ export const deleteProjectAsset = async (
 };
 
 export const listProjectAssets = async (
-  params: AuthProjectParams & {
+  params: Omit<AuthProjectParams, "authToken"> & {
+    authToken?: string;
     request?: typeof fetch;
     requestOrigin?: string;
   }
@@ -1192,7 +1195,8 @@ export const createProjectAssetContentTransport = ({
 });
 
 export const listProjectAssetFolders = async (
-  params: AuthProjectParams & {
+  params: Omit<AuthProjectParams, "authToken"> & {
+    authToken?: string;
     request?: typeof fetch;
     requestOrigin?: string;
   }
@@ -1220,7 +1224,8 @@ export const getProjectAssetFolder = async (
   );
 
 export const createProjectAssetFolder = async (
-  params: AuthProjectParams & {
+  params: Omit<AuthProjectParams, "authToken"> & {
+    authToken?: string;
     name: string;
     parentId?: string;
     request?: typeof fetch;
@@ -2787,4 +2792,318 @@ export const importProjectBundleWithAssets = async (
   }
 
   throw new Error("Project import failed.");
+};
+
+type PageCopyConnection = Omit<AuthProjectParams, "authToken"> & {
+  authToken?: string;
+  request?: typeof fetch;
+};
+
+const pageCopyRequest = async (
+  origin: string,
+  pathname: string,
+  request: typeof fetch,
+  init: RequestInit
+) => {
+  let response: Response;
+  try {
+    response = await request(new URL(pathname, origin), {
+      ...init,
+      redirect: "error",
+      cache: "no-store",
+    });
+  } catch {
+    throw Object.assign(new Error("PAGE_COPY_REQUEST_UNKNOWN"), {
+      code: "PAGE_COPY_REQUEST_UNKNOWN",
+    });
+  }
+  if (!response.ok) {
+    const body = (await response.json().catch(() => undefined)) as
+      | { code?: unknown }
+      | undefined;
+    const code =
+      typeof body?.code === "string" && /^PAGE_COPY_[A-Z_]+$/.test(body.code)
+        ? body.code
+        : "PAGE_COPY_REQUEST_FAILED";
+    throw Object.assign(new Error(code), { code, status: response.status });
+  }
+  return response;
+};
+
+export const issuePageCopySourceGrant = async (
+  connection: PageCopyConnection,
+  input: { pageId: string } & (
+    | {
+        assetIds: string[];
+        expectedRevision?: { buildId: string; version: number };
+      }
+    | { renewGrant: string }
+  )
+): Promise<{
+  grant: string;
+  storageScope: string;
+  buildId: string;
+  version: number;
+}> =>
+  await (
+    await pageCopyRequest(
+      connection.origin,
+      "/rest/page-copy/grant",
+      connection.request ?? fetch,
+      {
+        method: "POST",
+        headers: createAssetRestHeaders(connection, "application/json"),
+        body: JSON.stringify({ projectId: connection.projectId, ...input }),
+      }
+    )
+  ).json();
+
+export const readPageCopySourceManifest = async (
+  origin: string,
+  grant: string,
+  request = fetch
+): Promise<{
+  source: {
+    projectId: string;
+    pageId: string;
+    buildId: string;
+    version: number;
+  };
+  storageScope: string;
+  assets: Asset[];
+  folders: AssetFolder[];
+}> =>
+  await (
+    await pageCopyRequest(origin, "/rest/page-copy/content", request, {
+      method: "POST",
+      credentials: "omit",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "manifest", grant }),
+    })
+  ).json();
+
+export const readPageCopySourceAsset = async (
+  origin: string,
+  grant: string,
+  asset: Asset,
+  request = fetch
+) =>
+  await pageCopyRequest(origin, "/rest/page-copy/content", request, {
+    method: "POST",
+    credentials: "omit",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      kind: "asset",
+      grant,
+      assetId: asset.id,
+      expectedName: asset.name,
+    }),
+  });
+
+const getPageCopyDestinationPath = (projectId: string) =>
+  "/rest/page-copy/destination?" + new URLSearchParams({ projectId });
+
+type PageCopyCapability = {
+  storageScope: string;
+  contractVersion: string;
+  buildId: string;
+  version: number;
+  pageExists?: boolean;
+};
+
+const readPageCopyCapability = async (
+  kind: "source" | "destination",
+  connection: PageCopyConnection,
+  pageId?: string
+): Promise<PageCopyCapability> => {
+  const params = new URLSearchParams({ projectId: connection.projectId });
+  if (pageId !== undefined) {
+    params.set("pageId", pageId);
+  }
+  const path =
+    kind === "source"
+      ? "/rest/page-copy/grant?"
+      : "/rest/page-copy/destination?";
+  const code =
+    kind === "source"
+      ? "PAGE_COPY_SOURCE_UNSUPPORTED"
+      : "PAGE_COPY_DESTINATION_UNSUPPORTED";
+  try {
+    const result = (await (
+      await pageCopyRequest(
+        connection.origin,
+        path + params,
+        connection.request ?? fetch,
+        { headers: createAssetRestHeaders(connection) }
+      )
+    ).json()) as Partial<PageCopyCapability>;
+    if (
+      typeof result.storageScope !== "string" ||
+      typeof result.contractVersion !== "string" ||
+      typeof result.buildId !== "string" ||
+      !Number.isSafeInteger(result.version)
+    ) {
+      throw Object.assign(new Error(code), { code });
+    }
+    return result as PageCopyCapability;
+  } catch (error) {
+    const status = getErrorStatus(error);
+    if (
+      status === 404 ||
+      status === 405 ||
+      status === 501 ||
+      error instanceof SyntaxError
+    ) {
+      throw Object.assign(new Error(code), { code });
+    }
+    throw error;
+  }
+};
+
+export const getPageCopySource = (connection: PageCopyConnection) =>
+  readPageCopyCapability("source", connection);
+
+export const getPageCopyDestination = (
+  connection: PageCopyConnection,
+  pageId?: string
+) => readPageCopyCapability("destination", connection, pageId);
+
+export const relinkPageCopyAssets = async (
+  connection: PageCopyConnection,
+  input: {
+    grant: string;
+    expectedVersion: number;
+    assets: {
+      sourceId: string;
+      expectedName: string;
+      targetId: string;
+      folderId?: string;
+    }[];
+  }
+): Promise<{ created: Asset[]; reused: Asset[] }> =>
+  await (
+    await pageCopyRequest(
+      connection.origin,
+      getPageCopyDestinationPath(connection.projectId),
+      connection.request ?? fetch,
+      {
+        method: "POST",
+        headers: createAssetRestHeaders(connection, "application/json"),
+        body: JSON.stringify({ kind: "relink", ...input }),
+      }
+    )
+  ).json();
+
+export const commitPageCopyPatch = async (
+  connection: PageCopyConnection,
+  input: {
+    transactionId: string;
+    pageId: string;
+    transfer: {
+      item: unknown;
+      targetFolderId: string;
+      conflictResolution?: "ours" | "theirs" | "merge";
+      rootStyleConflictResolution?: "ours" | "theirs";
+    };
+    guard: {
+      buildId: string;
+      baseVersion: number;
+      assetCatalogRevision: string;
+    };
+  }
+): Promise<{ version: number }> =>
+  await (
+    await pageCopyRequest(
+      connection.origin,
+      getPageCopyDestinationPath(connection.projectId),
+      connection.request ?? fetch,
+      {
+        method: "POST",
+        headers: createAssetRestHeaders(connection, "application/json"),
+        body: JSON.stringify({ kind: "commit", ...input }),
+      }
+    )
+  ).json();
+
+export const uploadPageCopyAsset = async ({
+  connection,
+  source,
+  target,
+  read,
+  document,
+  onReserved,
+  onReserveStarted,
+}: {
+  connection: PageCopyConnection;
+  source: Asset;
+  target: Asset;
+  read: (asset: Asset) => Promise<Response>;
+  document?: string;
+  onReserved: (reservation: { assetId: string; fileName: string }) => void;
+  onReserveStarted?: () => void;
+}) => {
+  const data =
+    document === undefined
+      ? await (await read(source)).blob()
+      : new Blob([document]);
+  const request = connection.request ?? fetch;
+  onReserveStarted?.();
+  const reservation = (await (
+    await pageCopyRequest(
+      connection.origin,
+      getPageCopyDestinationPath(connection.projectId),
+      request,
+      {
+        method: "POST",
+        headers: createAssetRestHeaders(connection, "application/json"),
+        body: JSON.stringify({
+          kind: "reserve",
+          assetId: target.id,
+          filename: formatAssetName(source),
+          type: source.type,
+          folderId: target.folderId,
+          description: source.description ?? undefined,
+        }),
+      }
+    )
+  ).json()) as { name: string; assetId: string; deduplicated: boolean };
+  if (reservation.assetId !== target.id || reservation.deduplicated) {
+    throw Object.assign(new Error("PAGE_COPY_DESTINATION_ASSET_MISMATCH"), {
+      code: "PAGE_COPY_DESTINATION_ASSET_MISMATCH",
+    });
+  }
+  onReserved({ assetId: reservation.assetId, fileName: reservation.name });
+  const dimensions =
+    source.type === "image" || source.type === "video"
+      ? new URLSearchParams({
+          width: String(source.meta.width),
+          height: String(source.meta.height),
+        })
+      : undefined;
+  const path =
+    getAssetUploadApiUrl(reservation.name) +
+    (dimensions === undefined ? "" : "?" + dimensions);
+  const { uploadedAssets } = (await (
+    await pageCopyRequest(connection.origin, path, request, {
+      method: "POST",
+      body: data,
+      headers: createAssetRestHeaders(
+        connection,
+        getAssetMime(source) ?? "application/octet-stream"
+      ),
+    })
+  ).json()) as { uploadedAssets: Asset[] };
+  const [asset] = uploadedAssets;
+  if (
+    asset === undefined ||
+    asset.id !== target.id ||
+    asset.type !== source.type ||
+    formatAssetName(asset) !== formatAssetName(source) ||
+    asset.folderId !== target.folderId
+  ) {
+    throw Object.assign(new Error("PAGE_COPY_DESTINATION_ASSET_MISMATCH"), {
+      code: "PAGE_COPY_DESTINATION_ASSET_MISMATCH",
+    });
+  }
+  return asset;
 };

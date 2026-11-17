@@ -280,6 +280,11 @@ export type BuilderPatchChange = {
 export type BuilderPatchTransaction = {
   id: string;
   payload: BuilderPatchChange[];
+  pageCopyGuard?: {
+    buildId: string;
+    baseVersion: number;
+    assetCatalogRevision: string;
+  };
 };
 
 export const hasGeneratedRecordWritePatch = (

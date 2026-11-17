@@ -294,7 +294,7 @@ const toPages = (snapshot: PublicBuildSnapshot) => {
   });
 };
 
-const toRemoteSnapshot = (
+export const toRemoteSnapshot = (
   snapshot: PublicBuildSnapshot
 ): ProjectSessionRemoteSnapshot => {
   if (

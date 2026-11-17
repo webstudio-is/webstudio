@@ -1,3 +1,7 @@
+import {
+  guardedPageCopyRollbacks,
+  rejectGuardedPageCopy,
+} from "./page-copy-guards";
 import { draftPersistence } from "./draft-persistence";
 import { useEffect } from "react";
 import { atom } from "nanostores";
@@ -48,6 +52,12 @@ const transactionCompletion = createTransactionCompletionStore();
 export const $lastTransactionId = transactionCompletion.$lastTransactionId;
 export const onTransactionComplete =
   transactionCompletion.onTransactionComplete;
+export const reportTransactionCompletion = (id: string, success: boolean) => {
+  if (success) {
+    guardedPageCopyRollbacks.delete(id);
+  }
+  transactionCompletion.completeTransaction(id, success);
+};
 export const onNextTransactionComplete =
   transactionCompletion.onNextTransactionComplete;
 
@@ -214,7 +224,7 @@ const pollQueue = async (signal: AbortSignal) => {
     const completeTransactions = (success: boolean) => {
       for (const transaction of transactions) {
         draftPersistence.complete(projectId, transaction.id, success);
-        transactionCompletion.completeTransaction(transaction.id, success);
+        reportTransactionCompletion(transaction.id, success);
       }
     };
     const details = detailsMap.get(projectId);
@@ -271,6 +281,26 @@ const pollQueue = async (signal: AbortSignal) => {
             // stop retrying and wait next transactions
             continue polling;
           }
+          if (result.status === "partial" && transactions.length === 1) {
+            const transaction = transactions[0];
+            if (
+              transaction.pageCopyGuard !== undefined &&
+              result.entries.some(
+                (entry) =>
+                  entry.transactionId === transaction.id &&
+                  (entry.status === "rejected" ||
+                    (entry.status === "failed" &&
+                      entry.errors === "VERSION_CONFLICT"))
+              ) &&
+              rejectGuardedPageCopy(transaction.id)
+            ) {
+              // The guard rejected this isolated transaction before writing.
+              // It is safe to remove it from the queue and keep later edits.
+              draftPersistence.complete(projectId, transaction.id, true);
+              reportTransactionCompletion(transaction.id, false);
+              continue polling;
+            }
+          }
           // when versions mismatched ask user to reload
           // user may cancel to copy own state before reloading
           if (
@@ -303,10 +333,7 @@ const pollQueue = async (signal: AbortSignal) => {
                   matchingEntries.length > 0 &&
                   matchingEntries.every(({ status }) => status === "accepted");
                 draftPersistence.complete(projectId, transaction.id, success);
-                transactionCompletion.completeTransaction(
-                  transaction.id,
-                  success
-                );
+                reportTransactionCompletion(transaction.id, success);
               }
             } else {
               completeTransactions(false);

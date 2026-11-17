@@ -87,6 +87,14 @@ export const pageTransferItemInput = z.union([
 const pageClipboardTransferItemInput = pageTransferItemInput.and(
   z.object({
     sourceOrigin: z.string().url().optional(),
+    sourceProjectId: z.string().optional(),
+    sourceGrant: z.string().optional(),
+    sourceRevision: z
+      .object({
+        buildId: z.string(),
+        version: z.number().int().nonnegative(),
+      })
+      .optional(),
     assetPaths: z.record(z.string(), z.string()).optional(),
   })
 );

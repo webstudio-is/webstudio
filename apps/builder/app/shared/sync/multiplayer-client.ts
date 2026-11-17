@@ -1,3 +1,5 @@
+import { fetch as builderFetch } from "../fetch.client";
+import { refreshPageCopyCatalog } from "./page-copy-catalog.client";
 import type { Project } from "@webstudio-is/project";
 import { createId } from "@webstudio-is/sdk";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
@@ -76,6 +78,20 @@ export const createMultiplayerSyncClient = ({
     }),
     clientId,
     url: relayUrl,
+    refreshPageCopyCatalog: (catalog) => {
+      const origin = window.location.origin;
+      return refreshPageCopyCatalog(
+        {
+          origin,
+          requestOrigin: origin,
+          projectId,
+          authToken,
+          request: builderFetch,
+        },
+        catalog,
+        signal
+      );
+    },
     onReload: async () => {
       try {
         const reloaded = await loadBuilderData({ projectId, signal });

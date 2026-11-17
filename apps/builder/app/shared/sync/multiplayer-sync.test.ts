@@ -1,4 +1,8 @@
 import { draftPersistence } from "./draft-persistence";
+import type { Asset } from "@webstudio-is/sdk";
+import { $assets, $assetFolders } from "./data-stores";
+import { refreshPageCopyCatalog } from "./page-copy-catalog.client";
+import { registerContainers } from "./sync-stores";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import type { WebSocketEmitterOptions } from "@webstudio-is/sync-client/websocket";
 import { $collaborators, $syncStatus } from "@webstudio-is/sync-client";
@@ -382,4 +386,237 @@ describe("startMultiplayerPresenceSync", () => {
 
     expect(emitter.sendPresence).not.toHaveBeenCalled();
   });
+});
+
+test("a peer waits for the guarded copy's durability and installs its Assets before applying the page", async () => {
+  const sender = createTransportFactory();
+  const receiver = createTransportFactory();
+  const output = vi.fn();
+  const order: string[] = [];
+  const makeEmitter = (
+    clientId: string,
+    transport: ReturnType<typeof createTransportFactory>
+  ) =>
+    createMultiplayerSyncEmitter({
+      clientId,
+      url: "localhost:1999",
+      createTransport: transport.createTransport,
+      refreshPageCopyCatalog: async ({ assetIds, folderIds }) => {
+        expect(assetIds).toEqual(["new-asset"]);
+        expect(folderIds).toEqual(["new-folder"]);
+        order.push("catalog");
+      },
+    });
+  const a = makeEmitter("sender", sender);
+  const b = makeEmitter("receiver", receiver);
+  try {
+    a.connect("build");
+    b.connect("build");
+    b.on((event) => {
+      if (event.type === "apply") {
+        order.push("page");
+        output(event.transaction);
+      }
+    });
+    a.emit({
+      type: "apply",
+      clientId: "sender",
+      transaction: {
+        id: "copy",
+        object: "server",
+        payload: [],
+        pageCopyGuard: {
+          buildId: "build",
+          baseVersion: 3,
+          assetCatalogRevision: "0".repeat(64),
+          stagedCatalog: { assetIds: ["new-asset"], folderIds: ["new-folder"] },
+        },
+      },
+    });
+    const { transaction } = sender.sendToRelay.mock.calls[0][0];
+    receiver.callbacks.onBroadcast({
+      type: "broadcast",
+      seq: 1,
+      originClientId: "sender",
+      actorId: "sender",
+      clientSeq: 1,
+      relayTs: 1,
+      transaction,
+    });
+    expect(order).toEqual([]);
+    receiver.callbacks.onAck(1, 4);
+    await Promise.resolve();
+    expect(order).toEqual(["catalog", "page"]);
+    expect(output).toHaveBeenCalledWith(transaction);
+    expect(receiver.sendToRelay).not.toHaveBeenCalled();
+  } finally {
+    a.close();
+    b.close();
+  }
+});
+
+test("a transient catalog read failure does not stop later peer or local edits", async () => {
+  const peer = createTransportFactory();
+  const received: string[] = [];
+  const refresh = vi
+    .fn<() => Promise<void>>()
+    .mockRejectedValueOnce(new Error("Network temporarily unavailable"))
+    .mockResolvedValueOnce(undefined);
+  const emitter = createMultiplayerSyncEmitter({
+    clientId: "local",
+    url: "localhost:1999",
+    createTransport: peer.createTransport,
+    refreshPageCopyCatalog: refresh,
+  });
+  const broadcast = (
+    id: string,
+    seq: number,
+    pageCopyGuard?: {
+      buildId: string;
+      baseVersion: number;
+      assetCatalogRevision: string;
+      stagedCatalog: { assetIds: string[]; folderIds: string[] };
+    }
+  ) =>
+    peer.callbacks.onBroadcast({
+      type: "broadcast",
+      seq,
+      originClientId: "remote",
+      actorId: "remote",
+      clientSeq: seq,
+      relayTs: 1,
+      transaction: { id, object: "server", payload: [], pageCopyGuard },
+    });
+  try {
+    emitter.connect("build");
+    emitter.on((message) => {
+      if (message.type === "apply" && message.clientId === "remote") {
+        received.push(message.transaction.id);
+      }
+    });
+    broadcast("copy", 1, {
+      buildId: "build",
+      baseVersion: 3,
+      assetCatalogRevision: "0".repeat(64),
+      stagedCatalog: { assetIds: ["new-asset"], folderIds: [] },
+    });
+    peer.callbacks.onAck(1, 4);
+    await Promise.resolve();
+    expect(received).toEqual([]);
+    emitter.emit({
+      type: "apply",
+      clientId: "local",
+      transaction: { id: "local-edit", object: "server", payload: [] },
+    });
+    expect(peer.sendToRelay).toHaveBeenCalledOnce();
+    broadcast("later-peer-edit", 2);
+    await Promise.resolve();
+    expect(received).toEqual(["copy", "later-peer-edit"]);
+    expect(refresh).toHaveBeenCalledTimes(2);
+  } finally {
+    emitter.close();
+  }
+});
+
+test("a deleted staged record does not block later peer edits or lose a pending local edit", async () => {
+  registerContainers();
+  const previousAssets = $assets.get();
+  const previousFolders = $assetFolders.get();
+  const staleAsset: Asset = {
+    id: "deleted-asset",
+    projectId: "project",
+    name: "deleted.png",
+    type: "image",
+    size: 128,
+    format: "png",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    description: null,
+    meta: { width: 1200, height: 800 },
+  };
+  const survivingAsset = { ...staleAsset, id: "live-asset", name: "live.png" };
+  $assets.set(new Map([[staleAsset.id, staleAsset]]));
+  $assetFolders.set(new Map());
+  const request = vi.fn<typeof fetch>(async (input) => {
+    const path = new URL(String(input)).pathname;
+    if (path === "/rest/assets") {
+      return Response.json({ assets: [survivingAsset] });
+    }
+    if (path === "/rest/assets/folders") {
+      return Response.json({ folders: [] });
+    }
+    throw new Error(`Unexpected catalog request ${path}`);
+  });
+  const relay = createTransportFactory();
+  const signal = new AbortController().signal;
+  const emitter = createMultiplayerSyncEmitter({
+    clientId: "local",
+    url: "localhost:1999",
+    createTransport: relay.createTransport,
+    refreshPageCopyCatalog: (catalog) =>
+      refreshPageCopyCatalog(
+        { origin: "https://example.com", projectId: "project", request },
+        catalog,
+        signal
+      ),
+  });
+  const received: string[] = [];
+  try {
+    emitter.connect("build");
+    emitter.on((message) => {
+      if (message.type === "apply" && message.clientId === "remote") {
+        received.push(message.transaction.id);
+      }
+    });
+    emitter.emit({
+      type: "apply",
+      clientId: "local",
+      transaction: { id: "local-edit", object: "server", payload: [] },
+    });
+    relay.callbacks.onBroadcast({
+      type: "broadcast",
+      seq: 1,
+      originClientId: "remote",
+      actorId: "remote",
+      clientSeq: 1,
+      relayTs: 1,
+      transaction: {
+        id: "copy",
+        object: "server",
+        payload: [],
+        pageCopyGuard: {
+          buildId: "build",
+          baseVersion: 3,
+          assetCatalogRevision: "0".repeat(64),
+          stagedCatalog: {
+            assetIds: [staleAsset.id, survivingAsset.id],
+            folderIds: ["deleted-folder"],
+          },
+        },
+      },
+    });
+    relay.callbacks.onAck(1, 4);
+    relay.callbacks.onBroadcast({
+      type: "broadcast",
+      seq: 2,
+      originClientId: "remote",
+      actorId: "remote",
+      clientSeq: 2,
+      relayTs: 2,
+      transaction: { id: "later-edit", object: "server", payload: [] },
+    });
+    await vi.waitFor(() => expect(received).toEqual(["copy", "later-edit"]));
+    expect($assets.get()).toEqual(
+      new Map([[survivingAsset.id, survivingAsset]])
+    );
+    expect($assetFolders.get().has("deleted-folder")).toBe(false);
+    expect(request).toHaveBeenCalledTimes(2);
+    expect($syncStatus.get()).toEqual({ status: "syncing" });
+    relay.callbacks.onApplied("local-edit", 3, "settled");
+    relay.callbacks.onAck(3, 6);
+    expect($syncStatus.get()).toEqual({ status: "idle" });
+  } finally {
+    emitter.close();
+    $assets.set(previousAssets);
+    $assetFolders.set(previousFolders);
+  }
 });

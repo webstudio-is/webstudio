@@ -50,7 +50,11 @@ const buildRow = {
   resources: configuredResources,
 };
 
-const createContext = () => {
+const createContext = (
+  row: Omit<typeof buildRow, "lastTransactionId"> & {
+    lastTransactionId: string | null;
+  } = buildRow
+) => {
   const selectedColumns: string[] = [];
   const context = {
     postgrest: {
@@ -75,7 +79,7 @@ const createContext = () => {
                         .split(", ")
                         .map((column) => [
                           column,
-                          buildRow[column as keyof typeof buildRow],
+                          row[column as keyof typeof row],
                         ])
                     ),
                   ],
@@ -83,7 +87,7 @@ const createContext = () => {
                 });
                 return Object.assign(result, {
                   single: async () => ({
-                    data: buildRow,
+                    data: row,
                     error: undefined,
                   }),
                 });
@@ -861,5 +865,104 @@ describe("loadAuthorizedPatchState", () => {
     });
 
     expect(createContentModeCapabilities).not.toHaveBeenCalled();
+  });
+});
+
+test("replayed relay batches cannot replace the original copy guard version", async () => {
+  patchLoadedBuild.mockReset();
+  patchLoadedBuild.mockResolvedValue({
+    status: "ok",
+    version: 4,
+    build: buildRow,
+  });
+  const context = createContext();
+  const entries = [
+    {
+      ...patch.entries[0],
+      transaction: {
+        ...transaction("copy-transaction"),
+        pageCopyGuard: {
+          buildId: "build-1",
+          baseVersion: 2,
+          assetCatalogRevision: "0".repeat(64),
+        },
+      } as never,
+    },
+  ];
+  authorizePatchEntries.mockResolvedValue({
+    authorized: [{ entry: entries[0], context }],
+    rejected: [],
+  });
+  await expect(
+    applyPatchRequest(context, { ...patch, clientVersion: 3, entries })
+  ).resolves.toMatchObject({
+    status: "partial",
+    entries: [
+      {
+        transactionId: "copy-transaction",
+        status: "failed",
+        errors: "VERSION_CONFLICT",
+      },
+    ],
+  });
+  expect(patchLoadedBuild).not.toHaveBeenCalled();
+});
+
+test("a guarded copy replay acknowledges the persisted version so the next edit can save", async () => {
+  patchLoadedBuild.mockReset();
+  const context = createContext({
+    ...buildRow,
+    version: 4,
+    lastTransactionId: "copy-transaction",
+  });
+  const copyEntry = {
+    ...patch.entries[0],
+    transaction: {
+      ...transaction("copy-transaction"),
+      pageCopyGuard: {
+        buildId: "build-1",
+        baseVersion: 3,
+        assetCatalogRevision: "0".repeat(64),
+      },
+    } as never,
+  };
+  authorizePatchEntries
+    .mockResolvedValueOnce({
+      authorized: [{ entry: copyEntry, context }],
+      rejected: [],
+    })
+    .mockResolvedValueOnce({
+      authorized: [{ entry: patch.entries[1], context }],
+      rejected: [],
+    });
+  patchLoadedBuild.mockImplementation(async ({ build, clientVersion }) =>
+    clientVersion === build.version
+      ? {
+          status: "ok",
+          version: build.version + 1,
+          build: { ...build, version: build.version + 1 },
+        }
+      : { status: "version_mismatched", errors: "Version has changed" }
+  );
+
+  const replay = await applyPatchRequest(context, {
+    ...patch,
+    clientVersion: 3,
+    entries: [copyEntry],
+  });
+  expect(patchLoadedBuild).not.toHaveBeenCalled();
+  if (replay.status !== "ok" || replay.version === undefined) {
+    throw new Error("Expected an acknowledged copy replay");
+  }
+  const next = await applyPatchRequest(context, {
+    ...patch,
+    clientVersion: replay.version,
+    entries: [patch.entries[1]],
+  });
+  expect(replay.version).toBe(4);
+  expect(next).toMatchObject({
+    status: "ok",
+    version: 5,
+    entries: [{ transactionId: "tx-2", status: "accepted" }],
   });
 });

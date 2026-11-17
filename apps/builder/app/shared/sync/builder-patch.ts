@@ -4,7 +4,10 @@ import type {
   BuilderPatch,
   BuilderPatchChange,
 } from "@webstudio-is/project-build/contracts";
-import type { WebstudioData } from "@webstudio-is/sdk";
+import { createId, type WebstudioData } from "@webstudio-is/sdk";
+import type { Transaction } from "@webstudio-is/sync-client";
+import { onTransactionComplete } from "./project-queue";
+import { guardedPageCopyRollbacks, pageCopyGuards } from "./page-copy-guards";
 import type {
   MarketplaceProduct,
   ProjectSettings,
@@ -149,4 +152,43 @@ export const createTransactionFromBuilderPatchPayload = ({
   serverSyncStore.createTransactionFromChanges(
     createSyncChangesFromBuilderPatchPayload({ data, payload })
   );
+};
+
+// Retain the ordinary Builder undo entry while the persistence adapter waits
+// for this particular transaction, in either sync mode.
+export const commitGuardedPageCopy = ({
+  data,
+  payload,
+  guard,
+  transactionId = createId("nano"),
+}: {
+  data: BuilderPatchData;
+  payload: BuilderPatchChange[];
+  guard: NonNullable<Transaction["pageCopyGuard"]>;
+  transactionId?: string;
+}) => {
+  const changes = createSyncChangesFromBuilderPatchPayload({ data, payload });
+  return new Promise<boolean | undefined>((resolve) => {
+    const timeout = setTimeout(() => {
+      resolve(undefined);
+    }, 30_000);
+    onTransactionComplete(transactionId, (success) => {
+      clearTimeout(timeout);
+      resolve(success);
+    });
+    guardedPageCopyRollbacks.set(transactionId, () => {
+      // Inverse patches with array indexes are safe only while this is the
+      // last optimistic edit. Leave later edits to the ordinary reload flow.
+      if (
+        serverSyncStore.transactionManager.currentStack.at(-1)?.id !==
+        transactionId
+      ) {
+        return false;
+      }
+      serverSyncStore.revertTransaction(transactionId);
+      return true;
+    });
+    pageCopyGuards.set(transactionId, guard);
+    serverSyncStore.addTransaction(transactionId, changes);
+  });
 };

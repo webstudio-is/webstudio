@@ -6,6 +6,12 @@ export type Transaction<Payload = unknown> = {
   id: string;
   object: string;
   payload: Payload;
+  pageCopyGuard?: {
+    buildId: string;
+    baseVersion: number;
+    assetCatalogRevision: string;
+    stagedCatalog?: { assetIds: string[]; folderIds: string[] };
+  };
 };
 
 export type RevertedTransaction = {

@@ -67,7 +67,11 @@ const getDeduplicatedAssetId = (
     .digest("base64url")
     .slice(0, 21);
 
-const assertAssetCapacity = async (projectId: string, context: AppContext) => {
+export const assertAssetCapacity = async (
+  projectId: string,
+  context: AppContext,
+  additionalAssets = 1
+) => {
   const { maxAssetsPerProject } = await getProjectPlanFeatures(
     projectId,
     context
@@ -87,8 +91,11 @@ const assertAssetCapacity = async (projectId: string, context: AppContext) => {
       "createdAt",
       new Date(Date.now() - UPLOADING_STALE_TIMEOUT).toISOString()
     );
+  if (assetCount.error || uploadingCount.error) {
+    throw assetCount.error ?? uploadingCount.error;
+  }
   const count = (assetCount.count ?? 0) + (uploadingCount.count ?? 0);
-  if (count >= maxAssetsPerProject) {
+  if (count + additionalAssets > maxAssetsPerProject) {
     throw new AssetUploadCountLimitError(maxAssetsPerProject);
   }
 };

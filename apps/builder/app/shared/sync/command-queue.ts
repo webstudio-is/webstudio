@@ -30,7 +30,13 @@ export const enqueue = (command: Command) => {
   const projectCommand = projectCommandsQueue.at(-1);
   if (
     projectCommand?.type === "transactions" &&
-    projectCommand.projectId === command.projectId
+    projectCommand.projectId === command.projectId &&
+    projectCommand.transactions.every(
+      (transaction) => transaction.pageCopyGuard === undefined
+    ) &&
+    command.transactions.every(
+      (transaction) => transaction.pageCopyGuard === undefined
+    )
   ) {
     projectCommand.transactions.push(...command.transactions);
     return;

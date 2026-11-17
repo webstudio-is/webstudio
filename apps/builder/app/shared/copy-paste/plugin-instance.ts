@@ -12,6 +12,8 @@ import {
   sortInstancePathsForChildMutation,
 } from "@webstudio-is/project-build/runtime";
 import {
+  createClipboardAssetPaths,
+  hasDynamicContentBlockSource,
   instanceTransferDataVersion,
   instancesTransferDataVersion,
   parseInstanceTransferData,
@@ -63,8 +65,6 @@ import {
 } from "../content-block-source-utils";
 import { rewriteTransferredDocumentAssetReferences } from "./mdx-asset-transfer";
 import {
-  createClipboardAssetPaths,
-  hasDynamicContentBlockSource,
   prepareConnectedContentBlockFragment,
   resolveRepeatedContentBlockSourcesForCopy,
 } from "./content-block-fragment";
