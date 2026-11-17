@@ -1,3 +1,5 @@
+/// <reference path="../../../../@types/css-tree.d.ts" />
+
 import { ident, parse, walk, type CssNode } from "css-tree";
 import type { StyleValue } from "../schema";
 import { toValue, type TransformValue } from "./to-value";
