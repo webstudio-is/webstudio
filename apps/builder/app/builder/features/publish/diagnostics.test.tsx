@@ -389,7 +389,7 @@ test("lists each publish domain and copies the full loaded log", async () => {
     'button[aria-label="Copy all reports"]'
   );
   expect(copyButton).not.toBeNull();
-  await act(async () => userEvent.click(copyButton!));
+  await act(async () => copyButton?.click());
   expect(writeText).toHaveBeenCalledOnce();
   const copied = writeText.mock.calls[0][0];
   expect(copied).toContain("First complete runner log");
