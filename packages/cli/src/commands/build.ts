@@ -12,6 +12,7 @@ import type {
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
 import { mapToTemplatesFromOptions } from "../build-utils";
+import { sync } from "./sync";
 
 export const buildOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -34,8 +35,22 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
 
 // @todo: use options.assets to define if we need to download assets
 export const build = async (
-  options: StrictYargsOptionsToInterface<typeof buildOptions>
+  options: StrictYargsOptionsToInterface<typeof buildOptions> & {
+    buildId?: string;
+    origin?: string;
+    authToken?: string;
+  },
+  dependencies = { sync, prebuild }
 ) => {
+  const syncedTemplates =
+    options.buildId === undefined
+      ? undefined
+      : await dependencies.sync(options);
+  const templates =
+    options.template.length > 0
+      ? options.template
+      : mapToTemplatesFromOptions(syncedTemplates ?? []);
+
   try {
     await access(LOCAL_DATA_FILE);
   } catch (error: unknown) {
@@ -49,5 +64,5 @@ export const build = async (
     throw error;
   }
 
-  await prebuild(options);
+  await dependencies.prebuild({ ...options, template: templates });
 };

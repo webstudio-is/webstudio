@@ -8473,6 +8473,11 @@ export const createManagedFormResourceFetch = () => {
         dependencies: {
           "local-package": "1.0.0",
         },
+        devDependencies: {
+          "local-package": "1.0.0",
+          "local-dev-package": "1.0.0",
+          existing: "2.0.0",
+        },
       }),
       "utf8"
     );
@@ -8523,6 +8528,9 @@ export const createManagedFormResourceFetch = () => {
     expect(packageJson.scripts.local).toEqual("echo local");
     expect(packageJson.dependencies.existing).toEqual("1.0.0");
     expect(packageJson.dependencies["local-package"]).toEqual("1.0.0");
+    expect(packageJson.devDependencies["local-package"]).toBeUndefined();
+    expect(packageJson.devDependencies["local-dev-package"]).toEqual("1.0.0");
+    expect(packageJson.devDependencies.existing).toEqual("2.0.0");
 
     const tsconfig = JSON.parse(await readFile("tsconfig.json", "utf8"));
     expect(tsconfig.compilerOptions.strict).toEqual(false);
