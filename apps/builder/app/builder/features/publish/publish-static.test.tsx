@@ -159,7 +159,7 @@ const render = async (open: boolean, projectId = "project-a") => {
 };
 
 test("reopening an active static publish keeps one status owner and one download", async () => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   buildStatus = "PENDING";
   projectStore.set(createProject());
   await render(true);
@@ -214,7 +214,7 @@ test("a persisted static failure remains visible without session diagnostics", a
 });
 
 test("project navigation suppresses an old static download and error toast", async () => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   projectStore.set(createProject());
   await render(true);
@@ -237,7 +237,7 @@ test("project navigation suppresses an old static download and error toast", asy
 });
 
 test("a failed static runner clears progress without starting a download", async () => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   projectStore.set(createProject());
   await render(true);
