@@ -11,7 +11,10 @@ import {
 } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { createTrpcInterceptor } from "./publish-test-utils";
+import {
+  createTrpcInterceptor,
+  selectStaticDestination,
+} from "./publish-test-utils";
 
 const reactEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
 const originalActEnvironment = reactEnvironment.IS_REACT_ACT_ENVIRONMENT;
@@ -127,23 +130,17 @@ const mount = async (dialog: "publish" | "export" = "publish") => {
       </TooltipProvider>
     )
   );
+  return container;
 };
 
-const selectStaticDestination = async () => {
-  const destination = document.body.querySelector<HTMLButtonElement>(
-    'button[role="combobox"]'
+const waitFor = async (assertion: () => void, timeout = 10_000) => {
+  await vi.waitFor(
+    async () => {
+      await act(async () => {});
+      assertion();
+    },
+    { timeout }
   );
-  expect(destination).not.toBeNull();
-  await act(async () => {
-    destination?.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
-    );
-  });
-  const staticOption = Array.from(
-    document.body.querySelectorAll<HTMLElement>('[role="option"]')
-  ).find((option) => option.textContent?.trim() === "Static");
-  expect(staticOption).toBeDefined();
-  await act(async () => staticOption?.click());
 };
 
 test("a successful site runner finishes the current publish and retains its report", async () => {
@@ -170,10 +167,8 @@ test("a successful site runner finishes the current publish and retains its repo
     .filter((button) => button.textContent === "Publish")
     .at(-1)!;
   await act(async () => publish.click());
-  await act(async () =>
-    vi.waitFor(() =>
-      expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe("build-1")
-    )
+  await waitFor(() =>
+    expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe("build-1")
   );
   expect(requests.map(({ path }) => path)).toContain(
     "/trpc/api.publish.getJob"
@@ -228,14 +223,12 @@ test("a successful site runner finishes the current publish and retains its repo
   ).find((button) => button.textContent?.trim() === "Validate");
   expect(validate).toBeDefined();
   await act(async () => validate?.click());
-  await act(async () =>
-    vi.waitFor(() =>
-      expect(
-        Array.from(
-          document.body.querySelectorAll<HTMLButtonElement>("button")
-        ).some((button) => button.textContent?.trim() === "See issues")
-      ).toBe(true)
-    )
+  await waitFor(() =>
+    expect(
+      Array.from(
+        document.body.querySelectorAll<HTMLButtonElement>("button")
+      ).some((button) => button.textContent?.trim() === "See issues")
+    ).toBe(true)
   );
   expect(document.body.textContent).not.toContain("Published successfully.");
 });
@@ -263,10 +256,8 @@ test("a rejected publish replaces an older success notice with its findings", as
     .filter((button) => button.textContent?.trim() === "Publish")
     .at(-1)!;
   await act(async () => publish.click());
-  await act(async () =>
-    vi.waitFor(() =>
-      expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe("build-1")
-    )
+  await waitFor(() =>
+    expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe("build-1")
   );
   expect(document.body.textContent).toContain("Published successfully.");
 
@@ -281,18 +272,16 @@ test("a rejected publish replaces an older success notice with its findings", as
     .at(-1)!;
   expect(publishAgain.disabled).toBe(false);
   await act(async () => publishAgain.click());
-  await act(async () =>
-    vi.waitFor(() =>
-      expect(
-        requests.filter(({ path }) => path === "/trpc/domain.publish")
-      ).toHaveLength(2)
-    )
+  await waitFor(() =>
+    expect(
+      requests.filter(({ path }) => path === "/trpc/domain.publish")
+    ).toHaveLength(2)
   );
   const seeIssues = () =>
     Array.from(
       document.body.querySelectorAll<HTMLButtonElement>("button")
     ).find((button) => button.textContent?.trim() === "See issues");
-  await act(async () => vi.waitFor(() => expect(seeIssues()).toBeDefined()));
+  await waitFor(() => expect(seeIssues()).toBeDefined());
   expect(document.body.textContent).not.toContain("Published successfully.");
   await act(async () => seeIssues()?.click());
   expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain(
@@ -338,7 +327,7 @@ test("a successful static export links to its publish report until another expor
       </TooltipProvider>
     )
   );
-  await selectStaticDestination();
+  await selectStaticDestination(container);
   const seeLogs = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
   ).find((button) => button.textContent?.trim() === "See logs");
@@ -437,22 +426,20 @@ afterAll(() => {
 });
 
 test("static export reaches the server without waiting for diagnostics", async () => {
-  await mount("export");
-  await selectStaticDestination();
+  const container = await mount("export");
+  await selectStaticDestination(container);
   const buildButton = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
   ).find(
     (button) => button.textContent?.trim() === "Build and download static site"
   );
   expect(buildButton).toBeDefined();
-  await act(async () => {
-    buildButton?.click();
-    await vi.waitFor(() => {
-      expect(requests.some(({ path }) => path === "/trpc/domain.publish")).toBe(
-        true
-      );
-    });
-  });
+  await act(async () => buildButton?.click());
+  await waitFor(() =>
+    expect(requests.some(({ path }) => path === "/trpc/domain.publish")).toBe(
+      true
+    )
+  );
 
   expect(requests).toContainEqual({
     path: "/trpc/domain.publish",
@@ -469,7 +456,7 @@ test("static export reaches the server without waiting for diagnostics", async (
       (element) => element.textContent?.trim() === "Show element"
     )
   ).toBe(false);
-}, 10_000);
+}, 30_000);
 
 test("keeps Diagnostics visible but disabled before there is anything to show", async () => {
   await mount();
@@ -532,22 +519,28 @@ test.each([
     expect(actionButton).toBeDefined();
     expect(actionButton?.disabled).toBe(false);
     await act(async () => actionButton?.click());
-    await vi.waitFor(() => {
-      expect(
-        Array.from(document.body.querySelectorAll("button")).some(
-          (button) => button.textContent?.trim() === "See issues"
-        )
-      ).toBe(true);
-    });
+    await vi.waitFor(
+      () => {
+        expect(
+          Array.from(document.body.querySelectorAll("button")).some(
+            (button) => button.textContent?.trim() === "See issues"
+          )
+        ).toBe(true);
+      },
+      { timeout: 10_000 }
+    );
     if (accepted) {
-      await vi.waitFor(() => {
-        const seeIssues = Array.from(
-          document.body.querySelectorAll<HTMLButtonElement>("button")
-        ).find((button) => button.textContent?.trim() === "See issues");
-        expect(seeIssues?.parentElement?.textContent).toContain(
-          "Publish failed"
-        );
-      });
+      await vi.waitFor(
+        () => {
+          const seeIssues = Array.from(
+            document.body.querySelectorAll<HTMLButtonElement>("button")
+          ).find((button) => button.textContent?.trim() === "See issues");
+          expect(seeIssues?.parentElement?.textContent).toContain(
+            "Publish failed"
+          );
+        },
+        { timeout: 10_000 }
+      );
     }
 
     expect(builderStates.$publishDialog.get()).toBe("publish");

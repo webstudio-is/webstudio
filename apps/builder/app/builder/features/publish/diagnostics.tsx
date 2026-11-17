@@ -96,14 +96,14 @@ export const PublishValidationBanner = ({
 const FindingList = ({
   findings,
   canViewPublishLogs,
-  onSelect,
+  onNavigate,
   onOpenPublish,
   issuesOmitted = 0,
   publishBuildIds,
 }: {
   findings: DiagnosticFinding[];
   canViewPublishLogs: boolean;
-  onSelect: (finding: DiagnosticFinding) => void;
+  onNavigate: () => void;
   onOpenPublish?: () => void;
   issuesOmitted?: number;
   publishBuildIds: string[];
@@ -145,19 +145,26 @@ const FindingList = ({
                 <Text variant="labels" userSelect="text">
                   {finding.title}
                 </Text>
-                {(finding.details !== undefined ||
-                  finding.link !== undefined) && (
-                  <Link
-                    as="button"
-                    type="button"
-                    variant="inherit"
-                    color="inherit"
-                    underline="always"
-                    css={{ border: 0, padding: 0, background: "none" }}
-                    onClick={() => onSelect(finding)}
+                {finding.link !== undefined && (
+                  <span
+                    onClick={(event) => {
+                      if (
+                        event.button !== 0 ||
+                        event.metaKey ||
+                        event.ctrlKey ||
+                        event.shiftKey ||
+                        event.altKey
+                      ) {
+                        return;
+                      }
+                      onNavigate();
+                    }}
                   >
-                    Show more
-                  </Link>
+                    {finding.link}
+                  </span>
+                )}
+                {finding.details !== undefined && (
+                  <Text css={{ userSelect: "text" }}>{finding.details}</Text>
                 )}
               </Flex>
             ) : (
@@ -174,51 +181,6 @@ const FindingList = ({
       )}
     </PanelContent>
   </ScrollAreaNative>
-);
-
-const FindingDetails = ({
-  finding,
-  onBack,
-  onNavigate,
-}: {
-  finding: DiagnosticFinding;
-  onBack: () => void;
-  onNavigate: () => void;
-}) => (
-  <PanelContent
-    as={Flex}
-    direction="column"
-    gap={3}
-    css={{ minHeight: 0, flex: 1 }}
-  >
-    <Button type="button" color="neutral" onClick={onBack}>
-      Back
-    </Button>
-    <Text variant="titles" userSelect="text">
-      {finding.title}
-    </Text>
-    {finding.details !== undefined && (
-      <ScrollAreaNative css={{ minHeight: 0, flex: 1 }}>
-        <Text css={{ userSelect: "text" }}>{finding.details}</Text>
-      </ScrollAreaNative>
-    )}
-    <div
-      onClick={(event) => {
-        if (
-          event.button !== 0 ||
-          event.metaKey ||
-          event.ctrlKey ||
-          event.shiftKey ||
-          event.altKey
-        ) {
-          return;
-        }
-        onNavigate();
-      }}
-    >
-      {finding.link}
-    </div>
-  </PanelContent>
 );
 
 const SessionPublishEntry = ({
@@ -390,7 +352,6 @@ export const PublishDiagnosticsDialog = ({
   onLoadLog?: (item: SessionPublish) => void;
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
-  const [selectedFinding, setSelectedFinding] = useState<DiagnosticFinding>();
   const isOpen = open ?? internalOpen;
   const setIsOpen = onOpenChange ?? setInternalOpen;
 
@@ -419,15 +380,8 @@ export const PublishDiagnosticsDialog = ({
   const copyText = activeTab === "publish" ? publishText : reportText;
 
   useEffect(() => {
-    setSelectedFinding(undefined);
     setTab(defaultTab);
   }, [target, isOpen, defaultTab]);
-
-  useEffect(() => {
-    if (canViewPublishLogs === false) {
-      setSelectedFinding(undefined);
-    }
-  }, [canViewPublishLogs]);
 
   if (open === undefined && reportFindings.length === 0 && items.length === 0) {
     return null;
@@ -470,58 +424,50 @@ export const PublishDiagnosticsDialog = ({
           >
             Diagnostics
           </DialogTitle>
-          {selectedFinding !== undefined && canViewPublishLogs ? (
-            <FindingDetails
-              finding={selectedFinding}
-              onBack={() => setSelectedFinding(undefined)}
-              onNavigate={() => setIsOpen(false)}
-            />
-          ) : (
-            <PanelTabs
-              value={activeTab}
-              onValueChange={(value) => setTab(value as typeof tab)}
-              css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
-            >
-              <PanelTabsList aria-label="Publish check severity">
-                {tabs.map(({ value, label }) => (
-                  <PanelTabsTrigger key={value} value={value}>
-                    {label}
-                  </PanelTabsTrigger>
-                ))}
-                {items.length > 0 && (
-                  <PanelTabsTrigger value="publish">Publish</PanelTabsTrigger>
-                )}
-              </PanelTabsList>
-              {tabs.map(({ value, findings }) => (
-                <PanelTabsContent
-                  key={value}
-                  value={value}
-                  css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
-                >
-                  <FindingList
-                    findings={findings}
-                    canViewPublishLogs={canViewPublishLogs}
-                    issuesOmitted={issuesOmitted}
-                    publishBuildIds={items.map(({ buildId }) => buildId)}
-                    onSelect={setSelectedFinding}
-                    onOpenPublish={
-                      items.length > 0 ? () => setTab("publish") : undefined
-                    }
-                  />
-                </PanelTabsContent>
+          <PanelTabs
+            value={activeTab}
+            onValueChange={(value) => setTab(value as typeof tab)}
+            css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
+          >
+            <PanelTabsList aria-label="Publish check severity">
+              {tabs.map(({ value, label }) => (
+                <PanelTabsTrigger key={value} value={value}>
+                  {label}
+                </PanelTabsTrigger>
               ))}
+              {items.length > 0 && (
+                <PanelTabsTrigger value="publish">Publish</PanelTabsTrigger>
+              )}
+            </PanelTabsList>
+            {tabs.map(({ value, findings }) => (
               <PanelTabsContent
-                value="publish"
+                key={value}
+                value={value}
                 css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
               >
-                <SessionPublishList
-                  items={orderedItems}
+                <FindingList
+                  findings={findings}
                   canViewPublishLogs={canViewPublishLogs}
-                  onLoadLog={onLoadLog}
+                  issuesOmitted={issuesOmitted}
+                  publishBuildIds={items.map(({ buildId }) => buildId)}
+                  onNavigate={() => setIsOpen(false)}
+                  onOpenPublish={
+                    items.length > 0 ? () => setTab("publish") : undefined
+                  }
                 />
               </PanelTabsContent>
-            </PanelTabs>
-          )}
+            ))}
+            <PanelTabsContent
+              value="publish"
+              css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
+            >
+              <SessionPublishList
+                items={orderedItems}
+                canViewPublishLogs={canViewPublishLogs}
+                onLoadLog={onLoadLog}
+              />
+            </PanelTabsContent>
+          </PanelTabs>
         </DialogContent>
       </Dialog>
     </>
