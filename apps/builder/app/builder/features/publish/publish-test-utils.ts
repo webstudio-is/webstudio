@@ -32,9 +32,11 @@ export const selectStaticDestination = async () => {
         button: 0,
         pointerId: 1,
         pointerType: "mouse",
+        cancelable: true,
       })
     )
   );
+  await act(async () => destination.click());
   const staticOption = await vi.waitFor(
     () => {
       const element = Array.from(
