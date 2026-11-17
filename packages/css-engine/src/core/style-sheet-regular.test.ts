@@ -844,6 +844,34 @@ test("convert :local-link to its visual state marker", () => {
   `);
 });
 
+test.each([":local-link", "[aria-current=page]"])(
+  "%s style wins over visited style on a visited current link",
+  (selector) => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector,
+      property: "color",
+      value: { type: "keyword", value: "green" },
+    });
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: ":visited",
+      property: "color",
+      value: { type: "keyword", value: "purple" },
+    });
+
+    const css = rule.toString({ breakpoint: "base" });
+    expect(css).toContain(
+      ".instance:is([aria-current=page],[data-ws-local-link])"
+    );
+    expect(css.indexOf("color: purple")).toBeLessThan(
+      css.indexOf("color: green")
+    );
+  }
+);
+
 test("preserve styles saved with the current page state selector", () => {
   const sheet = createRegularStyleSheet();
   const rule = sheet.addNestingRule(".instance");

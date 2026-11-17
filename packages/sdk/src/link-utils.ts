@@ -33,7 +33,7 @@ export const resolveLocalLinkUrl = (
     return {
       pathname: location.pathname,
       search: location.search,
-      hash: href === "#" ? "" : href,
+      hash: new URL(href, "https://webstudio.local/").hash,
     };
   }
 

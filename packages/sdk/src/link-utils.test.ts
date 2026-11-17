@@ -131,6 +131,15 @@ test("hash local link resolves against current pathname and search", () => {
   });
 });
 
+test("hash local link matches the browser-encoded fragment", () => {
+  const current = new URL("https://example.com/faq#caf%C3%A9");
+  const href = "#café";
+  const target = resolveLocalLinkUrl(href, current, new URL(href, current));
+
+  expect(target.hash).toBe(current.hash);
+  expect(isLocalLinkActive(current, target)).toBe(true);
+});
+
 test("bare hash local link resolves to current pathname and search without hash", () => {
   const current = { pathname: "/path", search: "?tag=bla", hash: "#section" };
 

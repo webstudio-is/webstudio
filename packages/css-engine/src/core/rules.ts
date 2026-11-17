@@ -252,19 +252,24 @@ export class NestingRule {
     ) {
       return cached.generated;
     }
-    const styleBySelector = new Map<string, StyleMap>();
+    const styleBySelector = new Map<
+      string,
+      { style: StyleMap; sortSelector: string }
+    >();
     for (const declaration of this.getMergedDeclarations()) {
       // generate declarations only for specified breakpoint
       if (declaration.breakpoint !== breakpoint) {
         continue;
       }
       let nestedSelector = declaration.selector;
+      let sortNestedSelector = nestedSelector;
       // Preserve explicit current-page styles alongside the computed local-link state.
       if (
         nestedSelector === ":local-link" ||
         nestedSelector === "[aria-current=page]"
       ) {
         nestedSelector = ":is([aria-current=page],[data-ws-local-link])";
+        sortNestedSelector = "[aria-current=page]";
       }
       const isDescendant =
         this.#descendantSuffix.startsWith(" ") ||
@@ -274,20 +279,24 @@ export class NestingRule {
           ? `:where(${this.#selector})`
           : this.#selector;
       const selector = baseSelector + this.#descendantSuffix + nestedSelector;
-      let style = styleBySelector.get(selector);
-      if (style === undefined) {
-        style = new Map();
-        styleBySelector.set(selector, style);
+      let entry = styleBySelector.get(selector);
+      if (entry === undefined) {
+        entry = {
+          style: new Map(),
+          sortSelector:
+            baseSelector + this.#descendantSuffix + sortNestedSelector,
+        };
+        styleBySelector.set(selector, entry);
       }
-      style.set(declaration.property, declaration.value);
+      entry.style.set(declaration.property, declaration.value);
     }
     const spaces = " ".repeat(indent);
     // sort by selector to put values without nested selector first
     const generated = Array.from(styleBySelector)
-      .sort(([leftSelector], [rightSelector]) =>
-        leftSelector.localeCompare(rightSelector)
+      .sort(([, left], [, right]) =>
+        left.sortSelector.localeCompare(right.sortSelector)
       )
-      .map(([selector, style]) => {
+      .map(([selector, { style }]) => {
         const content = generateStyleMap(prefixStyles(style), {
           indent: indent + 2,
           transformValue,
