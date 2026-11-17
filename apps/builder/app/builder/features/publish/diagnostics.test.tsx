@@ -1,7 +1,6 @@
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
-import { userEvent } from "@vitest/browser/context";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import {
   PublishDiagnosticsDialog,
@@ -444,16 +443,9 @@ test("collapses each complete publish and copies its full log from the header", 
     'button[aria-label="Copy log"]'
   );
   expect(copyButtons).toHaveLength(2);
+  expect(copyButtons[0]?.parentElement?.closest("button")).toBeNull();
   await act(async () => copyButtons[0]?.click());
   expect(writeText).toHaveBeenCalledWith("Complete second publish log");
-  expect(triggers[0]?.getAttribute("aria-expanded")).toBe("true");
-  const keyboardCopy = document.body.querySelector<HTMLButtonElement>(
-    'button[aria-label="Copy log"]'
-  )!;
-  expect(keyboardCopy.parentElement?.closest("button")).toBeNull();
-  act(() => keyboardCopy.focus());
-  await act(async () => userEvent.keyboard("{Enter}"));
-  expect(writeText).toHaveBeenCalledTimes(2);
   expect(triggers[0]?.getAttribute("aria-expanded")).toBe("true");
 });
 

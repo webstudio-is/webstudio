@@ -1,6 +1,6 @@
 import { FetchInterceptor } from "@mswjs/interceptors/fetch";
 import { act } from "react-dom/test-utils";
-import { expect } from "vitest";
+import { expect, vi } from "vitest";
 
 export const selectTab = async (name: string) => {
   const tab = Array.from(
@@ -12,6 +12,25 @@ export const selectTab = async (name: string) => {
       new MouseEvent("mousedown", { bubbles: true, button: 0 })
     )
   );
+};
+
+export const selectStaticDestination = async () => {
+  const destination = await vi.waitFor(() => {
+    const element = document.body.querySelector<HTMLButtonElement>(
+      'button[role="combobox"]'
+    );
+    expect(element).not.toBeNull();
+    return element!;
+  });
+  await act(async () => destination.click());
+  const staticOption = await vi.waitFor(() => {
+    const element = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="option"]')
+    ).find((option) => option.textContent?.trim() === "Static");
+    expect(element).toBeDefined();
+    return element!;
+  });
+  await act(async () => staticOption.click());
 };
 
 export const deferred = <T>() => {

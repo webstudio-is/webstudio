@@ -3,7 +3,10 @@ import { act } from "react-dom/test-utils";
 import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { createTrpcInterceptor } from "./publish-test-utils";
+import {
+  createTrpcInterceptor,
+  selectStaticDestination,
+} from "./publish-test-utils";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -142,16 +145,7 @@ const render = async (open: boolean, projectId = "project-a") => {
     );
   });
   if (open && staticButton() === undefined) {
-    await act(async () =>
-      document.body
-        .querySelector<HTMLButtonElement>('button[role="combobox"]')
-        ?.click()
-    );
-    const option = Array.from(
-      document.body.querySelectorAll<HTMLElement>('[role="option"]')
-    ).find((option) => option.textContent?.trim() === "Static");
-    expect(option).toBeDefined();
-    await act(async () => option?.click());
+    await selectStaticDestination();
   }
 };
 

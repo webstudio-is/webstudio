@@ -11,7 +11,10 @@ import {
 } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { createTrpcInterceptor } from "./publish-test-utils";
+import {
+  createTrpcInterceptor,
+  selectStaticDestination,
+} from "./publish-test-utils";
 
 const reactEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
 const originalActEnvironment = reactEnvironment.IS_REACT_ACT_ENVIRONMENT;
@@ -127,19 +130,6 @@ const mount = async (dialog: "publish" | "export" = "publish") => {
       </TooltipProvider>
     )
   );
-};
-
-const selectStaticDestination = async () => {
-  const destination = document.body.querySelector<HTMLButtonElement>(
-    'button[role="combobox"]'
-  );
-  expect(destination).not.toBeNull();
-  await act(async () => destination?.click());
-  const staticOption = Array.from(
-    document.body.querySelectorAll<HTMLElement>('[role="option"]')
-  ).find((option) => option.textContent?.trim() === "Static");
-  expect(staticOption).toBeDefined();
-  await act(async () => staticOption?.click());
 };
 
 test("a successful site runner finishes the current publish and retains its report", async () => {
