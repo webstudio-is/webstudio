@@ -20,6 +20,7 @@ import {
   $dataSources,
   $props,
   $resources,
+  $publisherHost,
 } from "../sync/data-stores";
 import {
   $propValuesByInstanceSelector,
@@ -39,7 +40,7 @@ import {
   ws,
 } from "@webstudio-is/template";
 import { $systemDataByPage, updateCurrentSystem } from "../system";
-import { registerContainers } from "../sync/sync-stores";
+import { createObjectPool, registerContainers } from "../sync/sync-stores";
 import { $resourcesCache, getResourceKey } from "../resources";
 import { $externalContentRoots } from "../external-content-mutations";
 
@@ -107,6 +108,7 @@ afterEach(() => {
   unsubscribeResourceRequestPlan?.();
   unsubscribeResourceRequestPlan = undefined;
   resourceRequests = [];
+  $publisherHost.set("wstd.work");
 });
 
 test("provides occurrence frontmatter to a repeated Content Block", async () => {
@@ -862,7 +864,7 @@ test("access parameter value from variables values", async () => {
   );
 });
 
-test("compute props bound to resource variables", async () => {
+test("compute props bound to resources using the synced published origin", async () => {
   $instances.set(
     toMap([{ id: "body", type: "instance", component: "Body", children: [] }])
   );
@@ -884,7 +886,7 @@ test("compute props bound to resource variables", async () => {
       {
         id: "resourceId",
         name: "my-resource",
-        url: `""`,
+        url: "$ws$system.origin",
         method: "get",
         headers: [],
       },
@@ -892,12 +894,17 @@ test("compute props bound to resource variables", async () => {
   );
   const key = getResourceKey({
     name: "my-resource",
-    url: "",
+    url: "https://undefined.wstd.io",
     method: "get",
     headers: [],
     searchParams: [],
   });
   $resourcesCache.set(new Map([[key, "my-value"]]));
+  createObjectPool().applyTransaction({
+    id: "published-host",
+    object: "publisherHost",
+    payload: "wstd.io",
+  });
   $props.set(
     toMap([
       {
