@@ -45,34 +45,24 @@ runs:
       with:
         install-dependencies: "false"
 
-    - name: Install dependencies
-      id: install-dependencies
+    - name: Install dependencies and prepare E2E backend
       shell: bash
-      run: pnpm install --frozen-lockfile
-
-    - name: Finish E2E image pull
-      if: always()
-      shell: bash
-      env:
-        INSTALL_OUTCOME: ${{ steps.install-dependencies.outcome }}
       run: |
+        pnpm install --frozen-lockfile &
+        install=$!
         pull_dir="$RUNNER_TEMP/builder-e2e-image-pull"
-        pull=$(cat "$pull_dir/pid")
-        stop_pull() {
-          kill "$pull" 2>/dev/null || true
-          for attempt in {1..12}; do
-            if ! kill -0 "$pull" 2>/dev/null; then
-              return
-            fi
-            sleep 1
-          done
-          kill -KILL "$pull" 2>/dev/null || true
+        cleanup() {
+          status=$?
+          trap - EXIT
+          if [ "$status" -ne 0 ]; then
+            kill "$install" 2>/dev/null || true
+          fi
+          wait "$install" 2>/dev/null || true
+          exit "$status"
         }
-        trap stop_pull EXIT
-        trap 'stop_pull; exit 143' TERM INT
-        if [ "$INSTALL_OUTCOME" != success ]; then
-          exit 0
-        fi
+        trap cleanup EXIT
+        trap 'exit 143' TERM INT
+        pull=$(cat "$pull_dir/pid")
         wait_started=$SECONDS
         while [ ! -f "$pull_dir/status" ]; do
           if ! kill -0 "$pull" 2>/dev/null && [ ! -f "$pull_dir/status" ]; then
@@ -82,14 +72,36 @@ runs:
           fi
           sleep 1
         done
-        trap - EXIT TERM INT
         read -r pull_status pull_finished < "$pull_dir/status"
-        printf 'E2E image pull: total=%ss wait-after-install=%ss\n' \
+        printf 'E2E image pull: total=%ss wait-after-starting-install=%ss\n' \
           "$(( pull_finished - $(cat "$pull_dir/started") ))" "$(( SECONDS - wait_started ))"
         cat "$pull_dir/log"
         if [ "$pull_status" != 0 ]; then
           exit 1
         fi
+
+        TIMEFORMAT='[e2e:backend] elapsed=%3Rs'
+        time bash apps/builder/e2e/run.sh ci-shard-backend
+        wait "$install"
+        trap - EXIT TERM INT
+
+    - name: Stop unfinished E2E image pull
+      if: always()
+      shell: bash
+      run: |
+        pull_dir="$RUNNER_TEMP/builder-e2e-image-pull"
+        if [ -f "$pull_dir/status" ] || [ ! -f "$pull_dir/pid" ]; then
+          exit 0
+        fi
+        pull=$(cat "$pull_dir/pid")
+        kill "$pull" 2>/dev/null || true
+        for attempt in {1..12}; do
+          if ! kill -0 "$pull" 2>/dev/null; then
+            exit 0
+          fi
+          sleep 1
+        done
+        kill -KILL "$pull" 2>/dev/null || true
 
     - name: Cache Playwright Chromium
       uses: actions/cache@v5
@@ -120,7 +132,7 @@ runs:
     - name: Prepare Builder E2E
       shell: bash
       run: |
-        # Prepare services and Chromium while a missing build is still running.
+        # Dependencies are installed, so Prisma and Playwright can run safely.
         TIMEFORMAT='[e2e:prepare] elapsed=%3Rs'
         time bash apps/builder/e2e/run.sh ci-shard-prepare
 

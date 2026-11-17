@@ -34,7 +34,7 @@ case "$mode" in
     export E2E_DB_BOOTSTRAP=migrations
     export E2E_RUN_TESTS=false
     ;;
-  ci-shard|ci-shard-prepare|ci-shard-test)
+  ci-shard|ci-shard-backend|ci-shard-prepare|ci-shard-test)
     export E2E_BACKEND_MODE=snapshot
     export E2E_BUILD_DATABASE_IMAGE=false
     export E2E_SKIP_BUILDER_BUILD=true
@@ -47,6 +47,13 @@ case "$mode" in
     exit 1
     ;;
 esac
+
+if [ "$mode" = "ci-shard-backend" ]; then
+  export E2E_DB_BOOTSTRAP=schema
+  export E2E_GENERATE_PRISMA=false
+  export E2E_START_POSTGREST=true
+  export E2E_RUN_TESTS=false
+fi
 
 PLAYWRIGHT_ARGS=("$@")
 if [ "${PLAYWRIGHT_ARGS[0]:-}" = "--" ]; then
@@ -197,6 +204,14 @@ if [ "$E2E_RUN_TESTS" = "true" ] && [[ "$mode" != ci-shard-* ]]; then
     "$E2E_TEST_SELECTION_TIMEOUT_SECONDS" validate_builder_e2e_selection
 fi
 
+if [ "$mode" = "ci-shard-prepare" ]; then
+  run_step "generate prisma client" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
+    builder_generate_prisma_client "$E2E_GENERATE_PRISMA"
+  run_step "install playwright chromium" "$E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS" \
+    install_playwright_chromium
+  exit 0
+fi
+
 if [ "$mode" = "ci-shard-test" ]; then
   # The preparation step left these services running on Compose-assigned ports.
   configure_database_urls
@@ -209,8 +224,10 @@ else
     builder_backend_start_db
   configure_database_urls
 
-  run_step "generate prisma client" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
-    builder_generate_prisma_client "$E2E_GENERATE_PRISMA"
+  if [ "$mode" != "ci-shard-backend" ]; then
+    run_step "generate prisma client" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
+      builder_generate_prisma_client "$E2E_GENERATE_PRISMA"
+  fi
 
   run_step "wait for e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
     builder_backend_wait_for_db "$E2E_DOCKER_TIMEOUT_SECONDS"
@@ -230,14 +247,15 @@ if [ "$E2E_START_POSTGREST" = "true" ] && [ "$postgrest_port" = 0 ]; then
 fi
 export POSTGREST_URL="${E2E_POSTGREST_URL:-http://localhost:${postgrest_port}}"
 
+if [ "$mode" = "ci-shard-backend" ]; then
+  run_step "wait for e2e postgrest" "$E2E_DOCKER_TIMEOUT_SECONDS" \
+    builder_backend_wait_for_postgrest "$E2E_DOCKER_TIMEOUT_SECONDS"
+fi
+
 if [ "$E2E_RUN_TESTS" = "true" ]; then
   if [ "$mode" != "ci-shard-test" ]; then
     run_step "install playwright chromium" "$E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS" \
       install_playwright_chromium
-  fi
-
-  if [ "$mode" = "ci-shard-prepare" ]; then
-    exit 0
   fi
 
   if [ "${E2E_BUILDER_URL:-}" = "" ]; then
