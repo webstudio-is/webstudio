@@ -3,7 +3,7 @@ import { enableMapSet, setAutoFreeze } from "immer";
 import { useEffect } from "react";
 import { batched } from "nanostores";
 import { createId } from "@webstudio-is/sdk";
-import { $project } from "./data-stores";
+import { $project, $publisherHost } from "./data-stores";
 import {
   $selectedPageHash,
   $selectedInstanceSizes,
@@ -345,6 +345,7 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("temporaryInstances", $temporaryInstances),
 
     new NanostoresSyncObject("project", $project),
+    new NanostoresSyncObject("publisherHost", $publisherHost),
     new NanostoresSyncObject("dataSourceVariables", $dataSourceVariables),
     new NanostoresSyncObject("resourcesCache", $resourcesCache),
     new NanostoresSyncObject("resourcesState", $resourcesState),

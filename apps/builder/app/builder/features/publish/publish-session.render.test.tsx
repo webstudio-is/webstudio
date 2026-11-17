@@ -245,12 +245,20 @@ const publish = async () => {
       document.body.querySelector<HTMLElement>('[role="checkbox"]')?.click()
     );
   }
-  const button = Array.from(
-    domain!.closest("form")!.querySelectorAll<HTMLButtonElement>("button")
-  ).at(-1)!;
-  await waitFor(() => expect(button.disabled).toBe(false));
+  const getButton = () =>
+    Array.from(
+      document.body
+        .querySelector<HTMLInputElement>('input[name="domainToPublish[]"]')
+        ?.closest("form")
+        ?.querySelectorAll<HTMLButtonElement>("button") ?? []
+    ).at(-1);
+  await waitFor(() => expect(getButton()?.disabled).toBe(false));
   const previousRequests = publishRequests;
-  await act(async () => button.click());
+  await act(async () => {
+    const button = getButton();
+    expect(button).toBeDefined();
+    button?.click();
+  });
   await waitFor(() => expect(publishRequests).toBe(previousRequests + 1));
 };
 const openReport = async () => {
