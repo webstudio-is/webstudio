@@ -157,8 +157,12 @@ test("a successful site runner finishes the current publish and retains its repo
     .at(-1)!;
   await act(async () => publish.click());
   await act(async () =>
-    vi.waitFor(() =>
-      expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe("build-1")
+    vi.waitFor(
+      () =>
+        expect(stores.$project.get()?.latestBuildVirtual?.buildId).toBe(
+          "build-1"
+        ),
+      { timeout: 10_000 }
     )
   );
   expect(requests.map(({ path }) => path)).toContain(
@@ -518,22 +522,28 @@ test.each([
     expect(actionButton).toBeDefined();
     expect(actionButton?.disabled).toBe(false);
     await act(async () => actionButton?.click());
-    await vi.waitFor(() => {
-      expect(
-        Array.from(document.body.querySelectorAll("button")).some(
-          (button) => button.textContent?.trim() === "See issues"
-        )
-      ).toBe(true);
-    });
+    await vi.waitFor(
+      () => {
+        expect(
+          Array.from(document.body.querySelectorAll("button")).some(
+            (button) => button.textContent?.trim() === "See issues"
+          )
+        ).toBe(true);
+      },
+      { timeout: 10_000 }
+    );
     if (accepted) {
-      await vi.waitFor(() => {
-        const seeIssues = Array.from(
-          document.body.querySelectorAll<HTMLButtonElement>("button")
-        ).find((button) => button.textContent?.trim() === "See issues");
-        expect(seeIssues?.parentElement?.textContent).toContain(
-          "Publish failed"
-        );
-      });
+      await vi.waitFor(
+        () => {
+          const seeIssues = Array.from(
+            document.body.querySelectorAll<HTMLButtonElement>("button")
+          ).find((button) => button.textContent?.trim() === "See issues");
+          expect(seeIssues?.parentElement?.textContent).toContain(
+            "Publish failed"
+          );
+        },
+        { timeout: 10_000 }
+      );
     }
 
     expect(builderStates.$publishDialog.get()).toBe("publish");

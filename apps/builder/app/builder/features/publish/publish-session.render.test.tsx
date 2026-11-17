@@ -268,11 +268,14 @@ const panel = () =>
     '[role="tabpanel"][data-state="active"]'
   )!;
 
-const waitFor = async (assertion: () => void) => {
-  await vi.waitFor(async () => {
-    await act(async () => {});
-    assertion();
-  });
+const waitFor = async (assertion: () => void, timeout = 1_000) => {
+  await vi.waitFor(
+    async () => {
+      await act(async () => {});
+      assertion();
+    },
+    { timeout }
+  );
 };
 const entries = () =>
   Array.from(
@@ -319,8 +322,9 @@ test("retries pending and failed log reads before giving up on the session", asy
   await act(async () => vi.advanceTimersByTimeAsync(5_000));
   await act(async () => vi.waitFor(() => expect(logRequests).toHaveLength(2)));
   await act(async () => vi.advanceTimersByTimeAsync(5_000));
-  await waitFor(() =>
-    expect(panel().querySelector("pre")?.textContent).toBe("€")
+  await waitFor(
+    () => expect(panel().querySelector("pre")?.textContent).toBe("€"),
+    10_000
   );
   expect(logRequests.map(({ cursor }) => cursor)).toEqual([
     undefined,

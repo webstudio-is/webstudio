@@ -22,7 +22,16 @@ export const selectStaticDestination = async () => {
     expect(element).not.toBeNull();
     return element!;
   });
-  await act(async () => destination.click());
+  await act(async () =>
+    destination.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        pointerId: 1,
+        pointerType: "mouse",
+      })
+    )
+  );
   const staticOption = await vi.waitFor(() => {
     const element = Array.from(
       document.body.querySelectorAll<HTMLElement>('[role="option"]')
