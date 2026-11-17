@@ -41,6 +41,11 @@ test("static links follow the browser fragment after hydration and navigation", 
     "active",
     "active",
   ]);
+  expect(getLinks().map((link) => link.getAttribute("aria-current"))).toEqual([
+    "page",
+    "page",
+    "page",
+  ]);
 
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
   let root: Root | undefined;
@@ -55,7 +60,7 @@ test("static links follow the browser fragment after hydration and navigation", 
       "",
     ]);
     expect(getLinks().map((link) => link.getAttribute("aria-current"))).toEqual(
-      ["page", "location", null]
+      ["page", "page", null]
     );
 
     await act(async () => {
@@ -68,7 +73,7 @@ test("static links follow the browser fragment after hydration and navigation", 
       "active",
     ]);
     expect(getLinks().map((link) => link.getAttribute("aria-current"))).toEqual(
-      ["page", null, "location"]
+      ["page", null, "page"]
     );
   } finally {
     await act(async () => root?.unmount());

@@ -81,16 +81,16 @@ test("local link is current when pathname and search match", async () => {
   const links = Array.from(document.querySelectorAll("a"));
 
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
-    "location",
+    "page",
     null,
     "page",
     null,
     null,
-    "location",
     "page",
-    "location",
     "page",
-    "location",
+    "page",
+    "page",
+    "page",
     null,
     "step",
   ]);
@@ -153,7 +153,7 @@ test("only the matching section link is current", async () => {
 
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
     "page",
-    "location",
+    "page",
     null,
   ]);
   expect(links.map((link) => link.className)).toEqual(["active", "active", ""]);
@@ -186,8 +186,8 @@ test("all section links match when the current URL has no fragment", async () =>
 
   expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
     "page",
-    null,
-    null,
+    "page",
+    "page",
   ]);
   expect(links.map((link) => link.className)).toEqual([
     "active",
@@ -318,7 +318,7 @@ test("hash-only link does not start router navigation", async () => {
   const link = document.querySelector("a");
 
   expect(link?.getAttribute("href")).toBe("#section");
-  expect(link?.getAttribute("aria-current")).toBe("location");
+  expect(link?.getAttribute("aria-current")).toBe("page");
   expect(link?.hasAttribute("prefetch")).toBe(false);
   expect(link?.hasAttribute("preventscrollreset")).toBe(false);
   expect(link?.hasAttribute("reloaddocument")).toBe(false);

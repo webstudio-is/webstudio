@@ -44,16 +44,14 @@ const expectActiveLink = async ({
   canvas,
   text,
   active,
-  ariaCurrent = active ? "page" : null,
 }: {
   canvas: Awaited<ReturnType<typeof waitForCanvasFrame>>;
   text: string;
   active: boolean;
-  ariaCurrent?: "page" | "location" | null;
 }) => {
   const link = canvas.getByRole("link", { name: text });
   await link.waitFor({ state: "visible" });
-  await expectLinkAttribute(link, "aria-current", ariaCurrent);
+  await expectLinkAttribute(link, "aria-current", active ? "page" : null);
   await expectLinkClass(link, active);
 };
 
@@ -162,7 +160,6 @@ test("Preview links expose current page state for components and element anchors
     canvas,
     text: previewLinkText.hashLink,
     active: true,
-    ariaCurrent: null,
   });
 
   await canvas
@@ -199,6 +196,5 @@ test("Preview links expose current page state for components and element anchors
     canvas,
     text: previewLinkText.hashLink,
     active: true,
-    ariaCurrent: "location",
   });
 });

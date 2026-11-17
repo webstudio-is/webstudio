@@ -79,7 +79,7 @@ Webstudio applies the Local Link state when the link's path and query string mat
 
 This differs from the [CSS `:local-link` definition](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/:local-link), which ignores the part after `#` in both URLs. Webstudio keeps it when the current URL points to a section, so a different section link does not get the Local Link state. When the current URL has no `#`, multiple section links can be highlighted at once.
 
-By default, Webstudio also marks a matching page link with `aria-current="page"`. A section link gets `aria-current="location"` only when its `#` matches the current URL. When the URL has no `#`, section links can share the Local Link style without being announced as the current section.
+By default, Webstudio marks every matching link with `aria-current="page"`, including section links. You can set a different `aria-current` value on a link when needed.
 
 ## Related
 

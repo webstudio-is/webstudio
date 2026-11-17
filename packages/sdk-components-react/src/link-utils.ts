@@ -21,10 +21,6 @@ export const getCurrentLinkProps = <
   const { href, "aria-current": ariaCurrent, className, ...linkProps } = props;
   const target = resolveLocalLinkUrl(href, location, resolvedPath);
   const isActive = isLocalLinkActive(location, target);
-  const isCurrent =
-    isActive &&
-    (target.hash === "" ||
-      (location.hash !== "" && location.hash === target.hash));
   const classNameValue = [className, isActive ? "active" : undefined]
     .filter(Boolean)
     .join(" ");
@@ -33,9 +29,7 @@ export const getCurrentLinkProps = <
     linkProps,
     currentLinkProps: {
       "data-ws-local-link": isActive ? "" : undefined,
-      ...(isCurrent
-        ? { "aria-current": ariaCurrent ?? (target.hash ? "location" : "page") }
-        : {}),
+      ...(isActive ? { "aria-current": ariaCurrent ?? "page" } : {}),
       ...(classNameValue === "" ? {} : { className: classNameValue }),
     },
   };
