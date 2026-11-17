@@ -56,24 +56,29 @@ test("local link does not match when pathname or search differ", () => {
   ).toBe(false);
 });
 
-test("local link ignores fragments on both URLs", () => {
+test("page links ignore the current fragment while section links match it", () => {
   const current = { pathname: "/path", search: "?tag=bla", hash: "#section" };
 
-  for (const hash of ["", "#other"]) {
-    expect(
-      isLocalLinkActive(current, {
-        pathname: "/path",
-        search: "?tag=bla",
-        hash,
-      })
-    ).toBe(true);
-  }
+  expect(
+    isLocalLinkActive(current, {
+      pathname: "/path",
+      search: "?tag=bla",
+      hash: "",
+    })
+  ).toBe(true);
+  expect(
+    isLocalLinkActive(current, {
+      pathname: "/path",
+      search: "?tag=bla",
+      hash: "#other",
+    })
+  ).toBe(false);
   expect(
     isLocalLinkActive(
       { pathname: "/path", search: "?tag=bla", hash: "" },
       current
     )
-  ).toBe(true);
+  ).toBe(false);
 });
 
 test("local link matching is case-sensitive like concrete URLs", () => {

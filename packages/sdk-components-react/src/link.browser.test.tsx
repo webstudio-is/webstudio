@@ -88,6 +88,27 @@ test("local link preserves exact pathname behavior", () => {
   ]);
 });
 
+test("only the matching section link is current", () => {
+  const markup = renderToStaticMarkup(
+    <ReactSdkContext.Provider value={sdkContext}>
+      <LinkCurrentUrlContext.Provider value="https://example.com/faq#one">
+        <Link href="/faq">Page</Link>
+        <Link href="/faq#one">Section one</Link>
+        <Link href="/faq#two">Section two</Link>
+      </LinkCurrentUrlContext.Provider>
+    </ReactSdkContext.Provider>
+  );
+  document.body.innerHTML = markup;
+  const links = Array.from(document.querySelectorAll("a"));
+
+  expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+    "page",
+    "page",
+    null,
+  ]);
+  expect(links.map((link) => link.className)).toEqual(["active", "active", ""]);
+});
+
 test("external and asset links render as plain anchors", () => {
   const markup = renderToStaticMarkup(
     <ReactSdkContext.Provider value={sdkContext}>

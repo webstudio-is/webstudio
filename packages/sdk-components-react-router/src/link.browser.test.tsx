@@ -131,6 +131,34 @@ test("local link preserves exact pathname behavior", async () => {
   ]);
 });
 
+test("only the matching section link is current", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/faq",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="/faq">Page</Link>
+            <Link href="/faq#one">Section one</Link>
+            <Link href="/faq#two">Section two</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/faq#one"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+  const links = Array.from(document.querySelectorAll("a"));
+
+  expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+    "page",
+    "page",
+    null,
+  ]);
+  expect(links.map((link) => link.className)).toEqual(["active", "active", ""]);
+});
+
 test("external link renders as plain anchor without router context", async () => {
   await render(
     <Link
