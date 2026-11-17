@@ -17,11 +17,12 @@ export const selectTab = async (name: string) => {
 export const selectStaticDestination = async () => {
   const destination = await vi.waitFor(
     () => {
-      const element = Array.from(
-        document.body.querySelectorAll<HTMLButtonElement>(
-          'button[role="combobox"]'
-        )
-      ).find((button) => button.textContent?.trim() === "Docker");
+      const label = Array.from(
+        document.body.querySelectorAll<HTMLElement>("div")
+      ).find((element) => element.textContent?.trim() === "Destination");
+      const element = label?.parentElement?.querySelector<HTMLButtonElement>(
+        'button[role="combobox"]'
+      );
       expect(element).toBeDefined();
       return element!;
     },
