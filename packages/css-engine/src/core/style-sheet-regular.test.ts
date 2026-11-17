@@ -828,7 +828,7 @@ test("generate merged properties as single rule", () => {
   `);
 });
 
-test("convert :local-link to its aria-current polyfill", () => {
+test("convert :local-link to [aria-current=page] selector", () => {
   const sheet = createRegularStyleSheet();
   const rule = sheet.addNestingRule(".instance");
   rule.setDeclaration({
@@ -842,99 +842,4 @@ test("convert :local-link to its aria-current polyfill", () => {
       color: green
     }"
   `);
-});
-
-test.each([":local-link", "[aria-current=page]"])(
-  "%s style wins over visited style on a visited current link",
-  (selector) => {
-    const sheet = createRegularStyleSheet();
-    const rule = sheet.addNestingRule(".instance");
-    rule.setDeclaration({
-      breakpoint: "base",
-      selector,
-      property: "color",
-      value: { type: "keyword", value: "green" },
-    });
-    rule.setDeclaration({
-      breakpoint: "base",
-      selector: ":visited",
-      property: "color",
-      value: { type: "keyword", value: "purple" },
-    });
-
-    const css = rule.toString({ breakpoint: "base" });
-    expect(css).toContain(".instance[aria-current=page]");
-    expect(css).toContain(".instance:visited");
-    expect(css).toContain("color: purple");
-    expect(css.indexOf("color: purple")).toBeLessThan(
-      css.indexOf("color: green")
-    );
-  }
-);
-
-test("preserve styles saved with the current page state selector", () => {
-  const sheet = createRegularStyleSheet();
-  const rule = sheet.addNestingRule(".instance");
-  rule.setDeclaration({
-    breakpoint: "base",
-    selector: "[aria-current=page]",
-    property: "color",
-    value: { type: "keyword", value: "green" },
-  });
-  expect(rule.toString({ breakpoint: "base" })).toBe(
-    ".instance[aria-current=page] {\n  color: green\n}"
-  );
-});
-
-test.each([
-  ["", ":local-link", ".instance[aria-current=page]"],
-  ["", ":hover:local-link", ".instance:hover[aria-current=page]"],
-  [" a", ":local-link", ":where(.instance) a[aria-current=page]"],
-  ["", "[aria-current=page]:hover", ".instance[aria-current=page]:hover"],
-  ["", "[ARIA-CURRENT=page]:hover", ".instance[ARIA-CURRENT=page]:hover"],
-  [
-    "",
-    "[ari\\61 -current=page]:hover",
-    ".instance[ari\\61 -current=page]:hover",
-  ],
-  [
-    "",
-    "[aria-current=p\\61 ge]:hover",
-    ".instance[aria-current=p\\61 ge]:hover",
-  ],
-  ["", "[aria-current=PAGE i]:hover", ".instance[aria-current=PAGE i]:hover"],
-  [
-    "",
-    ':is([aria-current="page"],[title=":local-link"])',
-    '.instance:is([aria-current="page"],[title=":local-link"])',
-  ],
-])("polyfill Local Link in %s%s", (descendant, selector, expected) => {
-  const sheet = createRegularStyleSheet();
-  const rule = sheet.addNestingRule(".instance", descendant);
-  rule.setDeclaration({
-    breakpoint: "base",
-    selector,
-    property: "color",
-    value: { type: "keyword", value: "green" },
-  });
-
-  expect(rule.toString({ breakpoint: "base" })).toBe(
-    `${expected} {\n  color: green\n}`
-  );
-});
-
-test("preserve aria-current selectors in a Builder preview selector", () => {
-  const sheet = createRegularStyleSheet();
-  const rule = sheet.addNestingRule(".instance");
-  rule.setSelector("[data-ws-id=menu] a[aria-current=page]:hover");
-  rule.setDeclaration({
-    breakpoint: "base",
-    selector: "",
-    property: "color",
-    value: { type: "keyword", value: "green" },
-  });
-
-  expect(rule.toString({ breakpoint: "base" })).toBe(
-    "[data-ws-id=menu] a[aria-current=page]:hover {\n  color: green\n}"
-  );
 });

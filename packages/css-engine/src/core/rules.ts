@@ -1,6 +1,3 @@
-/// <reference path="../../../../@types/css-tree.d.ts" />
-
-import { parse, walk, type CssNode } from "css-tree";
 import type { StyleValue } from "../schema";
 import { toValue, type TransformValue } from "./to-value";
 import { hyphenateProperty } from "./to-property";
@@ -99,41 +96,6 @@ type DeclarationKey = Omit<Declaration, "value">;
 const getDeclarationKey = (declaraionKey: DeclarationKey) => {
   const { breakpoint, selector, property } = declaraionKey;
   return `${breakpoint}:${selector}:${property}`;
-};
-
-const currentPageSelector = "[aria-current=page]";
-
-const polyfillLocalLink = (selector: string) => {
-  if (!selector.includes("local-link") && !selector.includes("\\")) {
-    return [selector, selector];
-  }
-  let ast: CssNode;
-  try {
-    ast = parse(selector, { context: "selectorList", positions: true });
-  } catch {
-    return [selector, selector];
-  }
-
-  let end = 0;
-  let rendered = "";
-  let sortSelector = "";
-  walk(ast, (node) => {
-    if (
-      node.type !== "PseudoClassSelector" ||
-      node.name !== "local-link" ||
-      node.children !== null ||
-      !node.loc
-    ) {
-      return;
-    }
-
-    const unmodified = selector.slice(end, node.loc.start.offset);
-    rendered += `${unmodified}${currentPageSelector}`;
-    sortSelector += `${unmodified}${currentPageSelector}`;
-    end = node.loc.end.offset;
-  });
-  const rest = selector.slice(end);
-  return [rendered + rest, sortSelector + rest];
 };
 
 /**
@@ -290,42 +252,39 @@ export class NestingRule {
     ) {
       return cached.generated;
     }
-    const styleBySelector = new Map<
-      string,
-      { style: StyleMap; sortSelector: string }
-    >();
+    const styleBySelector = new Map<string, StyleMap>();
     for (const declaration of this.getMergedDeclarations()) {
       // generate declarations only for specified breakpoint
       if (declaration.breakpoint !== breakpoint) {
         continue;
       }
+      let nestedSelector = declaration.selector;
+      // polyfill :local-link with framework specific logic
+      if (nestedSelector === ":local-link") {
+        nestedSelector = "[aria-current=page]";
+      }
       const isDescendant =
         this.#descendantSuffix.startsWith(" ") ||
-        declaration.selector.startsWith(" ");
+        nestedSelector.startsWith(" ");
       const baseSelector =
         isDescendant && this.#selector
           ? `:where(${this.#selector})`
           : this.#selector;
-      const [selector, sortSelector] = polyfillLocalLink(
-        baseSelector + this.#descendantSuffix + declaration.selector
-      );
-      let entry = styleBySelector.get(selector);
-      if (entry === undefined) {
-        entry = {
-          style: new Map(),
-          sortSelector,
-        };
-        styleBySelector.set(selector, entry);
+      const selector = baseSelector + this.#descendantSuffix + nestedSelector;
+      let style = styleBySelector.get(selector);
+      if (style === undefined) {
+        style = new Map();
+        styleBySelector.set(selector, style);
       }
-      entry.style.set(declaration.property, declaration.value);
+      style.set(declaration.property, declaration.value);
     }
     const spaces = " ".repeat(indent);
     // sort by selector to put values without nested selector first
     const generated = Array.from(styleBySelector)
-      .sort(([, left], [, right]) =>
-        left.sortSelector.localeCompare(right.sortSelector)
+      .sort(([leftSelector], [rightSelector]) =>
+        leftSelector.localeCompare(rightSelector)
       )
-      .map(([selector, { style }]) => {
+      .map(([selector, style]) => {
         const content = generateStyleMap(prefixStyles(style), {
           indent: indent + 2,
           transformValue,

@@ -280,7 +280,7 @@ test("generate merged properties as single rule", () => {
     `);
 });
 
-test("convert :local-link to its aria-current polyfill", () => {
+test("convert :local-link to [aria-current=page] selector", () => {
   const sheet = createRegularStyleSheet();
   const rule = sheet.addNestingRule(".instance");
   sheet.addMediaRule("x");

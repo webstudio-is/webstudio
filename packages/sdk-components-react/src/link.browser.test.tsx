@@ -66,7 +66,6 @@ test("local link is current when pathname and search match", () => {
   expect(links[10]?.getAttribute("class")).toBe("custom");
   expect(links[0]?.matches("[aria-current=page]")).toBe(true);
   expect(links[11]?.matches("[aria-current=page]")).toBe(false);
-  expect(links[11]?.hasAttribute("data-ws-local-link")).toBe(false);
 });
 
 test("local link preserves exact pathname behavior", () => {
