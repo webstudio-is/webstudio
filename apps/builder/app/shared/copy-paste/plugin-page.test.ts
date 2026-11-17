@@ -282,6 +282,42 @@ test("copies the selected page root from the copy plugin", async () => {
   expect(await pageText.onCopy?.()).toContain('"name":"Selected Page"');
 });
 
+test("pastes a same-project page repeatedly without reusing its source grant", async () => {
+  const pages = setupProjectWithRootStyle({
+    projectId: "same-project",
+    pageId: "source-page",
+    rootInstanceId: "source-body",
+    styleSourceId: "source-local",
+    color: "red",
+  });
+  const clipboard = JSON.parse((await copyPageData("source-page")) ?? "");
+  clipboard["@webstudio/page/v0.1"].sourceGrant = "expired-after-first-paste";
+  clipboard["@webstudio/page/v0.1"].sourceRevision = {
+    buildId: "source-build",
+    version: 4,
+  };
+  const transferPage = vi.fn(transferBuilderPage);
+  const initialPageCount = pages.pages.size;
+
+  expect(
+    await handlePastePage(
+      JSON.stringify(clipboard),
+      ROOT_FOLDER_ID,
+      transferPage
+    )
+  ).toEqual(pasteHandled);
+  expect(
+    await handlePastePage(
+      JSON.stringify(clipboard),
+      ROOT_FOLDER_ID,
+      transferPage
+    )
+  ).toEqual(pasteHandled);
+
+  expect($pages.get()?.pages.size).toBe(initialPageCount + 2);
+  expect(transferPage).not.toHaveBeenCalled();
+});
+
 test("copies the edited folder from the copy plugin", async () => {
   $project.set({ id: "source-project" } as Project);
   resetBuildStores();

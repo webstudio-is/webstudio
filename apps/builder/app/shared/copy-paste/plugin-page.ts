@@ -499,6 +499,7 @@ export const handlePastePage = async (
     if (projectId === undefined) {
       return pasteHandled;
     }
+    const isSameProject = sourceProjectId === projectId;
     const sourcePageItems = collectPageTransferItems(item);
     if (sourceOrigin !== undefined) {
       const assetIds = new Set(
@@ -547,6 +548,7 @@ export const handlePastePage = async (
     }
     if (
       item.type === "page" &&
+      isSameProject === false &&
       (sourceGrant !== undefined ||
         sourcePageItems.some(
           ({ rootFragment, bodyFragment }) =>
