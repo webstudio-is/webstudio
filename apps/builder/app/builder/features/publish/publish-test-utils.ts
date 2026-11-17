@@ -1,4 +1,5 @@
 import { FetchInterceptor } from "@mswjs/interceptors/fetch";
+import { userEvent } from "@vitest/browser/context";
 import { act } from "react-dom/test-utils";
 import { expect, vi } from "vitest";
 
@@ -25,7 +26,7 @@ export const selectStaticDestination = async () => {
     },
     { timeout: 10_000 }
   );
-  await act(async () => destination.click());
+  await act(async () => userEvent.click(destination));
   const staticOption = await vi.waitFor(
     () => {
       const element = Array.from(
@@ -36,7 +37,7 @@ export const selectStaticDestination = async () => {
     },
     { timeout: 10_000 }
   );
-  await act(async () => staticOption.click());
+  await act(async () => userEvent.click(staticOption));
 };
 
 export const deferred = <T>() => {
