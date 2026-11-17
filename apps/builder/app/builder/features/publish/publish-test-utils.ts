@@ -26,9 +26,8 @@ export const selectStaticDestination = async () => {
     { timeout: 10_000 }
   );
   await act(async () => {
-    destination.focus();
     destination.dispatchEvent(
-      new KeyboardEvent("keydown", { bubbles: true, key: "ArrowDown" })
+      new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
     );
   });
   const staticOption = await vi.waitFor(
@@ -41,12 +40,7 @@ export const selectStaticDestination = async () => {
     },
     { timeout: 10_000 }
   );
-  await act(async () => {
-    staticOption.focus();
-    staticOption.dispatchEvent(
-      new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
-    );
-  });
+  await act(async () => staticOption.click());
 };
 
 export const deferred = <T>() => {
