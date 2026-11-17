@@ -94,7 +94,10 @@ export const createLink = ({
 }: {
   Link: ComponentType<RouterLinkComponentProps>;
   useLocation: () => UrlParts;
-  useResolvedPath: (href: string) => UrlParts;
+  useResolvedPath: (
+    href: string,
+    options: Pick<LinkProps, "relative">
+  ) => UrlParts;
 }): LinkComponent => {
   const RouterLink = forwardRef<
     HTMLAnchorElement,
@@ -105,7 +108,7 @@ export const createLink = ({
     const { linkProps, currentLinkProps } = getCurrentLinkProps(
       props,
       location,
-      useResolvedPath(props.href)
+      useResolvedPath(props.href, { relative: props.relative })
     );
 
     return (

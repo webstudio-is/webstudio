@@ -245,19 +245,25 @@ const completeChecks = async (fail: boolean) => {
 };
 
 const openErrors = async (target: "site" | "static") => {
-  if (target === "site") {
-    const issues = Array.from(
+  const findIssues = () =>
+    Array.from(
       document.body.querySelectorAll<HTMLButtonElement>("button")
     ).find((button) => button.textContent?.trim() === "See issues");
+  if (target === "static") {
+    await vi.waitFor(async () => {
+      await act(async () => {});
+      expect(findIssues()).toBeDefined();
+    });
+  }
+  const issues = findIssues();
+  if (issues !== undefined) {
+    await act(async () => userEvent.click(issues));
+  } else if (target === "site") {
     const status = document.body.querySelector<HTMLButtonElement>(
       'button[aria-label^="Publish log:"]'
     );
-    expect(issues ?? status).toBeDefined();
-    if (issues !== undefined) {
-      await act(async () => userEvent.click(issues));
-    } else {
-      await act(async () => status?.click());
-    }
+    expect(status).not.toBeNull();
+    await act(async () => status?.click());
   }
   const findErrors = () =>
     Array.from(
@@ -324,6 +330,27 @@ test.each([
     }
   }
 );
+
+test("static audit rejection notifies after Export closes", async () => {
+  await mount("static");
+  await clickPublish("static");
+  await completeChecks(false);
+  await act(async () => publishDialog.set("none"));
+  await act(async () => {
+    dispatch.resolve({
+      success: false,
+      auditFindings: [{ severity: "error", message: "server rejection" }],
+    });
+    await dispatch.promise;
+  });
+  await vi.waitFor(async () => {
+    await act(async () => {});
+    expect(toast.error).toHaveBeenCalledExactlyOnceWith("server rejection");
+  });
+  await mount("static");
+  const errors = await openErrors("static");
+  expect(errors?.textContent).toContain("server rejection");
+});
 
 test("closing Publish clears a completed validation", async () => {
   stores.$pages.set({
@@ -394,10 +421,6 @@ test.each([
     if (order === "server-first") {
       await completeChecks(false);
     }
-    const status = document.body.querySelector<HTMLButtonElement>(
-      'button[aria-label="Publish log: Static export"]'
-    );
-    await act(async () => status?.click());
     const errors = await openErrors("static");
     expect(errors?.textContent).toContain(message);
   }
@@ -449,18 +472,8 @@ test.each(["request", "transport"] as const)(
       }
       await dispatch.promise.catch(() => {});
     });
-    await act(async () =>
-      vi.waitFor(() =>
-        expect(toast.error).toHaveBeenCalledWith(
-          failure === "request" ? "static rejection" : "static transport"
-        )
-      )
-    );
-    const staticStatus = document.body.querySelector<HTMLButtonElement>(
-      'button[aria-label="Publish log: Static export"]'
-    );
-    expect(staticStatus).toBeDefined();
-    await act(async () => staticStatus?.click());
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(document.body.querySelector('[role="alert"]')).not.toBeNull();
     const staticErrors = await openErrors("static");
     expect(staticErrors?.textContent).toContain(
       failure === "request" ? "static rejection" : "static transport"
@@ -578,6 +591,23 @@ test.each(["site", "static"] as const)(
     }
   }
 );
+
+test("static check failure stays in the Export alert without a toast", async () => {
+  await mount("static");
+  await clickPublish("static");
+  await completeChecks(true);
+  expect(toast.error).not.toHaveBeenCalled();
+  await act(async () => {
+    dispatch.resolve({
+      success: false,
+      auditFindings: [{ severity: "error", message: "server rejection" }],
+    });
+    await dispatch.promise;
+  });
+  const errors = await openErrors("static");
+  expect(errors?.textContent).toContain("server rejection");
+  expect(toast.error).not.toHaveBeenCalled();
+});
 
 test("an accepted site failure links to its own publish log", async () => {
   await mount("site");
@@ -716,15 +746,17 @@ test.each([
       });
       await dispatch.promise;
     });
-    await act(async () =>
-      vi.waitFor(() =>
-        expect(
-          document.body.querySelector<HTMLButtonElement>(
-            'button[aria-label^="Publish log:"]'
-          )
-        ).not.toBeNull()
-      )
-    );
+    if (target === "site") {
+      await act(async () =>
+        vi.waitFor(() =>
+          expect(
+            document.body.querySelector<HTMLButtonElement>(
+              'button[aria-label^="Publish log:"]'
+            )
+          ).not.toBeNull()
+        )
+      );
+    }
     checks = deferred<unknown>();
     dispatch = deferred<unknown>();
     await mount(target);
@@ -746,12 +778,6 @@ test.each([
       await dispatch.promise.catch(() => {});
     });
     await completeChecks(false);
-    if (target === "static") {
-      const status = document.body.querySelector<HTMLButtonElement>(
-        'button[aria-label="Publish log: Static export"]'
-      );
-      await act(async () => status?.click());
-    }
     const errors = await openErrors(target);
     expect(errors?.textContent).toContain(message);
     expect(errors?.textContent).not.toContain("older build issue");

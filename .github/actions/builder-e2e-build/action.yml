@@ -20,8 +20,6 @@ runs:
         submodules-ssh-key: ${{ inputs.submodules-ssh-key }}
 
     - uses: ./.github/actions/ci-setup
-      with:
-        run-scripts: "true"
 
     - name: Discover shards
       id: shards
@@ -30,20 +28,49 @@ runs:
         shards=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)
         SHARDS="$shards" node -e '
           const shards = JSON.parse(process.env.SHARDS);
-          if (shards.length !== 10 || shards.some(({ shard, partition }, index) =>
+          if (shards.length !== 5 || shards.some(({ shard, partition }, index) =>
             shard !== `shard-${index + 1}` || partition !== "")) {
             throw new Error("Builder E2E shard matrix changed; update the workflow matrix before running CI.");
           }
         '
         echo "value=$shards" >> "$GITHUB_OUTPUT"
 
+    - name: Identify Builder build inputs
+      id: build-key
+      shell: bash
+      run: |
+        hash=$(bash .github/actions/builder-e2e-build/build-input-hash.sh)
+        echo "hash=$hash" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Builder build
+      id: build-cache
+      uses: actions/cache@v5
+      with:
+        path: |
+          apps/builder/build/server
+          apps/builder/build/client/assets
+          packages/*/lib
+        key: builder-e2e-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.build-key.outputs.hash }}
+
     - name: Build Builder
+      if: steps.build-cache.outputs.cache-hit != 'true'
       shell: bash
       run: pnpm --filter @webstudio-is/builder build
 
     - name: Build generated React Router components
+      if: steps.build-cache.outputs.cache-hit != 'true'
       shell: bash
       run: pnpm --filter @webstudio-is/sdk-components-react-router build
+
+    - name: Check Builder build
+      shell: bash
+      env:
+        BUILD_INPUT_HASH: ${{ steps.build-key.outputs.hash }}
+      run: |
+        test -d apps/builder/build/server
+        test -d apps/builder/build/client/assets
+        test -f packages/sdk-components-react-router/lib/components.js
+        printf '%s\n' "$BUILD_INPUT_HASH" > apps/builder/build/e2e-build-input-hash
 
     - name: Identify schema snapshot
       id: schema
@@ -53,28 +80,13 @@ runs:
         source apps/builder/backend/lib.sh
         echo "fingerprint=$(builder_backend_schema_fingerprint)" >> "$GITHUB_OUTPUT"
 
-    - name: Restore schema snapshot
-      id: schema-cache
-      uses: actions/cache/restore@v5
-      with:
-        path: .cache/builder-e2e/schema-${{ steps.schema.outputs.fingerprint }}.sql
-        key: builder-e2e-schema-v1-${{ runner.os }}-${{ steps.schema.outputs.fingerprint }}
-
-    - name: Generate schema snapshot
-      if: steps.schema-cache.outputs.cache-hit != 'true'
-      shell: bash
-      run: pnpm --filter @webstudio-is/builder e2e:schema-cache
-
     - name: Check schema snapshot
       shell: bash
-      run: test -s ".cache/builder-e2e/schema-${{ steps.schema.outputs.fingerprint }}.sql"
-
-    - name: Save schema snapshot
-      if: steps.schema-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v5
-      with:
-        path: .cache/builder-e2e/schema-${{ steps.schema.outputs.fingerprint }}.sql
-        key: builder-e2e-schema-v1-${{ runner.os }}-${{ steps.schema.outputs.fingerprint }}
+      run: |
+        test -s "apps/builder/e2e/schema/schema-${{ steps.schema.outputs.fingerprint }}.sql" || {
+          echo "Generate and commit the Builder E2E schema with pnpm e2e:builder:refresh-schema-cache" >&2
+          exit 1
+        }
 
     - name: Upload prerequisites
       uses: actions/upload-artifact@v6
@@ -82,7 +94,7 @@ runs:
         name: builder-e2e-build
         retention-days: 7
         path: |
+          apps/builder/build/e2e-build-input-hash
           apps/builder/build/server
           apps/builder/build/client/assets
           packages/*/lib
-          .cache/builder-e2e/schema-*.sql

@@ -1,12 +1,9 @@
-import type { Frame, Page } from "@playwright/test";
+import type { Frame, Page, Request, Response } from "@playwright/test";
 import { getProjectBuilderUrl } from "../test";
+import { measure } from "../perf";
 
 const delay = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-const builderNetworkIdleTimeout =
-  Number.parseInt(process.env.E2E_BUILDER_NETWORK_IDLE_TIMEOUT_MS ?? "", 10) ||
-  5_000;
 
 export const getCanvasInstanceSelector = (instanceSelector: string[]) =>
   `[data-ws-selector="${instanceSelector.join(",")}"]`;
@@ -110,6 +107,54 @@ export const waitForCanvasTextHidden = async ({
   });
 };
 
+const openBuilderPage = async (page: Page, url: string): Promise<Frame> => {
+  const startedAt = Date.now();
+  let dataRequestAt: number | undefined;
+  let dataResponseAt: number | undefined;
+  let dataFinishedAt: number | undefined;
+  const isDataRequest = (request: Request) =>
+    new URL(request.url()).pathname.includes("build.loadData");
+  const onRequest = (request: Request) => {
+    if (isDataRequest(request)) {
+      dataRequestAt ??= Date.now();
+    }
+  };
+  const onResponse = (response: Response) => {
+    if (isDataRequest(response.request())) {
+      dataResponseAt ??= Date.now();
+    }
+  };
+  const onRequestFinished = (request: Request) => {
+    if (isDataRequest(request)) {
+      dataFinishedAt = Date.now();
+    }
+  };
+  page.on("request", onRequest);
+  page.on("response", onResponse);
+  page.on("requestfinished", onRequestFinished);
+  try {
+    await measure("builder page navigation", () => page.goto(url));
+    const navigationEndedAt = Date.now();
+    const canvas = await measure("builder canvas iframe attached", () =>
+      waitForCanvasFrame({ page })
+    );
+    const iframeAttachedAt = Date.now();
+    console.info(
+      `[e2e:load] navigation=${navigationEndedAt - startedAt}ms data_request=${dataRequestAt === undefined ? "none" : dataRequestAt - startedAt + "ms"} data_response=${dataResponseAt === undefined ? "none" : dataResponseAt - startedAt + "ms"} data_finished=${dataFinishedAt === undefined ? "none" : dataFinishedAt - startedAt + "ms"} iframe_attached=${iframeAttachedAt - startedAt}ms`
+    );
+    await measure("builder loading indicator hidden", () =>
+      page
+        .getByRole("progressbar")
+        .waitFor({ state: "hidden", timeout: 30_000 })
+    );
+    return canvas;
+  } finally {
+    page.off("request", onRequest);
+    page.off("response", onResponse);
+    page.off("requestfinished", onRequestFinished);
+  }
+};
+
 export const openProjectBuilder = async ({
   page,
   projectId,
@@ -131,15 +176,7 @@ export const openProjectBuilder = async ({
   if (pageId !== undefined) {
     url.searchParams.set("pageId", pageId);
   }
-  await page.goto(url.href);
-  await page
-    .waitForLoadState("networkidle", { timeout: builderNetworkIdleTimeout })
-    .catch(() => undefined);
-  const canvas = await waitForCanvasFrame({ page });
-  await page
-    .getByRole("progressbar")
-    .waitFor({ state: "hidden", timeout: 30_000 });
-  return canvas;
+  return await openBuilderPage(page, url.href);
 };
 
 export const openBuilderUrl = async ({
@@ -149,13 +186,5 @@ export const openBuilderUrl = async ({
   page: Page;
   url: string;
 }): Promise<Frame> => {
-  await page.goto(url);
-  await page
-    .waitForLoadState("networkidle", { timeout: builderNetworkIdleTimeout })
-    .catch(() => undefined);
-  const canvas = await waitForCanvasFrame({ page });
-  await page
-    .getByRole("progressbar")
-    .waitFor({ state: "hidden", timeout: 30_000 });
-  return canvas;
+  return await openBuilderPage(page, url);
 };

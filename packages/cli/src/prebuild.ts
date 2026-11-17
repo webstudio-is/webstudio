@@ -565,13 +565,27 @@ const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
       throw new Error(error);
     }
   );
-  const content = JSON.stringify(
-    merge(JSON.parse(destinationJson), JSON.parse(sourceJson), {
+  const mergedJson = merge(
+    JSON.parse(destinationJson),
+    JSON.parse(sourceJson),
+    {
       arrayMerge: (_target, source) => source,
-    }),
-    null,
-    "  "
+    }
   );
+  if (basename(destinationPath) === "package.json") {
+    const packageJson = mergedJson as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    for (const [dependency, specifier] of Object.entries(
+      packageJson.dependencies ?? {}
+    )) {
+      if (packageJson.devDependencies?.[dependency] === specifier) {
+        delete packageJson.devDependencies[dependency];
+      }
+    }
+  }
+  const content = JSON.stringify(mergedJson, null, "  ");
 
   await writeFile(destinationPath, content, "utf8");
 };

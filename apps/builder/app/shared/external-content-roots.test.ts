@@ -42,6 +42,7 @@ import {
   selectPage,
 } from "./nano-states";
 import {
+  $externalContentAssetStatuses,
   findExternalContentRoot,
   getExternalContentRoots,
   resolveExternalContentOccurrence,
@@ -2162,6 +2163,9 @@ test("finishes a queued canvas save after its external root is released", async 
   });
 
   release();
+  expect($externalContentAssetStatuses.get().get('["project","asset"]')).toBe(
+    "pending"
+  );
   continueUpdate?.();
   await blockingUpdate;
   await flushExternalContentAsset({ projectId: "project", assetId: asset.id });
@@ -2169,6 +2173,9 @@ test("finishes a queued canvas save after its external root is released", async 
 
   expect(statuses).not.toContain("failed");
   expect(writes).toEqual(["# Stale update\n"]);
+  expect($externalContentAssetStatuses.get().has('["project","asset"]')).toBe(
+    false
+  );
 });
 
 test("retains a failed queued update when project teardown cannot drain it", async () => {
@@ -2225,6 +2232,11 @@ test("retains a failed queued update when project teardown cannot drain it", asy
       update,
     })
   ).rejects.toThrow("Temporary serialization failure");
+  expect(
+    $externalContentAssetStatuses
+      .get()
+      .get('["teardown-project","teardown-asset"]')
+  ).toBe("failed");
   await expect(
     disposeExternalContentProject({
       projectId: teardownAsset.projectId!,
@@ -2247,6 +2259,11 @@ test("retains a failed queued update when project teardown cannot drain it", asy
     projectId: teardownAsset.projectId!,
     session,
   });
+  expect(
+    $externalContentAssetStatuses
+      .get()
+      .has('["teardown-project","teardown-asset"]')
+  ).toBe(false);
 });
 
 test("retains pending content when the repository write fails during teardown", async () => {

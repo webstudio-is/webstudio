@@ -68,7 +68,6 @@ import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
   ActivityIcon,
   AlertIcon,
-  CheckCircleIcon,
   CopyIcon,
   GearIcon,
   UpgradeIcon,
@@ -618,19 +617,13 @@ const PublishStatic = ({
 
   const { status, statusContent } =
     project.latestStaticBuild == null
-      ? { status: "LOADED" as const, statusContent: "Not published" }
+      ? { status: "LOADED" as const, statusContent: undefined }
       : getStaticPublishStatusDisplay(project.latestStaticBuild);
   const latestPublish = publishes.find((item) => item.target === "static");
-  const logStatus =
-    staticFailureFinding !== undefined
-      ? "FAILED"
-      : latestPublish?.status === "pending"
-        ? "PENDING"
-        : latestPublish?.status === "failed"
-          ? "FAILED"
-          : latestPublish?.status === "success"
-            ? "PUBLISHED"
-            : status;
+  const hasSessionFailure =
+    staticFailureFinding !== undefined || latestPublish?.status === "failed";
+  const persistedFailure = latestPublish === undefined && status === "FAILED";
+  const hasFailed = hasSessionFailure || persistedFailure;
 
   const isPublishInProgress =
     isPublishing ||
@@ -641,40 +634,35 @@ const PublishStatic = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
-      {latestPublish?.status === "success" &&
+      {hasFailed && (
+        <PanelBanner variant="error" role="alert">
+          <Flex align="center" justify="between" gap={2}>
+            <Text css={{ flex: 1, minWidth: 0 }}>
+              {staticFailureFinding?.title ??
+                (persistedFailure ? statusContent : "Publish failed")}
+            </Text>
+            {hasSessionFailure && (
+              <Button
+                type="button"
+                color="ghost"
+                css={{ flexShrink: 0 }}
+                onClick={() => onOpenReport("errors")}
+              >
+                See issues
+              </Button>
+            )}
+          </Flex>
+        </PanelBanner>
+      )}
+      {!hasFailed &&
+        latestPublish?.status === "success" &&
         latestPublish.staticName !== undefined &&
-        !isPublishInProgress &&
-        staticFailureFinding === undefined && (
+        !isPublishInProgress && (
           <PublishSuccessBanner
             message="Downloaded"
             onOpen={() => onOpenReport("publish")}
           />
         )}
-      <Flex gap={2} align="center">
-        <Tooltip
-          content={
-            staticFailureFinding?.title ??
-            (latestPublish?.status === "failed"
-              ? "Publish failed"
-              : statusContent)
-          }
-        >
-          <IconButton
-            type="button"
-            aria-label="Publish log: Static export"
-            onClick={() => onOpenReport()}
-          >
-            {logStatus === "FAILED" ? (
-              <AlertIcon />
-            ) : logStatus === "PUBLISHED" ? (
-              <CheckCircleIcon />
-            ) : (
-              <InfoCircleIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-      </Flex>
-
       <Tooltip
         content={isPublishInProgress ? "Preparing static site" : undefined}
       >

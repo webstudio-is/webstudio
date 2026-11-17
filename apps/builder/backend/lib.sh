@@ -58,7 +58,7 @@ builder_backend_schema_fingerprint() {
 }
 
 builder_backend_init_schema_snapshot() {
-  SCHEMA_SNAPSHOT="${SCHEMA_SNAPSHOT:-$ROOT_DIR/.cache/builder-e2e/schema-$(builder_backend_schema_fingerprint).sql}"
+  SCHEMA_SNAPSHOT="${SCHEMA_SNAPSHOT:-$ROOT_DIR/apps/builder/e2e/schema/schema-$(builder_backend_schema_fingerprint).sql}"
 }
 
 builder_compose() {

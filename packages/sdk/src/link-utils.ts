@@ -33,23 +33,36 @@ export const resolveLocalLinkUrl = (
     return {
       pathname: location.pathname,
       search: location.search,
-      hash: href === "#" ? "" : href,
+      hash: new URL(href, "https://webstudio.local/").hash,
     };
   }
 
   return resolvedPath;
 };
 
+const serializeUrl = ({ pathname, search, hash }: UrlParts) => {
+  const url = new URL("https://webstudio.local/");
+  // Assign the parts directly to preserve trailing spaces and query order.
+  url.pathname = pathname;
+  url.search = search;
+  url.hash = hash;
+  return url;
+};
+
 /**
  * Webstudio's local link styles target the concrete URL, not just the matched
- * route. This intentionally preserves the old NavLink end/exact behavior while
- * also requiring query string and fragment equality.
+ * route. Without a current fragment, all links to the same path and query
+ * match. With a fragment, page links and links to that section match.
  */
 export const isLocalLinkActive = (current: UrlParts, target: UrlParts) => {
+  const currentUrl = serializeUrl(current);
+  const targetUrl = serializeUrl(target);
   return (
-    current.pathname === target.pathname &&
-    current.search === target.search &&
-    current.hash === target.hash
+    currentUrl.pathname === targetUrl.pathname &&
+    currentUrl.search === targetUrl.search &&
+    (currentUrl.hash === "" ||
+      targetUrl.hash === "" ||
+      currentUrl.hash === targetUrl.hash)
   );
 };
 

@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import type { Page } from "@playwright/test";
 import { selectCanvasTextInstance } from "./canvas-selection";
-import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
+import { waitForChangeToBeSaved } from "./sync-status";
 
 const getVariableForm = (page: Page) =>
   page
@@ -9,14 +9,20 @@ const getVariableForm = (page: Page) =>
     .filter({ has: page.locator('input[name="name"]') })
     .last();
 
-const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
-  const save = waitForChangeToBeSaved({ page });
+const closeNewVariablePanel = async ({
+  page,
+  name,
+}: {
+  page: Page;
+  name: string;
+}) => {
   await page.getByRole("button", { name: "Close" }).last().click();
-  await save;
   await page
     .getByText("New variable", { exact: true })
     .waitFor({ state: "hidden" });
-  await waitForSyncStatus({ page, status: "idle" });
+  await page
+    .getByRole("button", { name: `Variable ${name}`, exact: true })
+    .waitFor({ state: "visible" });
 };
 
 const openNewVariablePanel = async ({ page }: { page: Page }) => {
@@ -50,8 +56,14 @@ const fillVariableName = async ({
   await getVariableForm(page).locator('input[name="name"]').fill(name);
 };
 
-export const selectContentInstance = async ({ page }: { page: Page }) => {
-  await selectCanvasTextInstance({ page, text: "Initial content" });
+export const selectContentInstance = async ({
+  page,
+  text = "Initial content",
+}: {
+  page: Page;
+  text?: string;
+}) => {
+  await selectCanvasTextInstance({ page, text });
   await page
     .getByText("No instance selected", { exact: true })
     .waitFor({ state: "hidden" });
@@ -95,8 +107,22 @@ export const bindSelectedTextContentToExpression = async ({
       { cause: error }
     );
   }
-  await waitForSyncStatus({ page, status: "idle" });
   await page.keyboard.press("Escape");
+};
+
+export const createStringVariable = async ({
+  page,
+  name,
+  value,
+}: {
+  page: Page;
+  name: string;
+  value: string;
+}) => {
+  await openNewVariablePanel({ page });
+  await fillVariableName({ page, name });
+  await page.getByLabel("Value").last().fill(value);
+  await closeNewVariablePanel({ page, name });
 };
 
 export const createHttpResourceVariable = async ({
@@ -112,7 +138,7 @@ export const createHttpResourceVariable = async ({
   await fillVariableName({ page, name });
   await selectVariableType({ page, next: "REST resource" });
   await page.getByRole("textbox", { name: "URL" }).fill(url);
-  await closeVariablePanelAndWaitForSave({ page });
+  await closeNewVariablePanel({ page, name });
 };
 
 export const createGraphqlResourceVariable = async ({
@@ -131,7 +157,7 @@ export const createGraphqlResourceVariable = async ({
   await selectVariableType({ page, next: "GraphQL resource" });
   await page.getByRole("textbox", { name: "URL" }).fill(url);
   await page.getByRole("textbox", { name: "Query" }).fill(query);
-  await closeVariablePanelAndWaitForSave({ page });
+  await closeNewVariablePanel({ page, name });
 };
 
 export const createSystemResourceVariable = async ({
@@ -146,7 +172,7 @@ export const createSystemResourceVariable = async ({
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
   await selectVariableType({ page, next: resource });
-  await closeVariablePanelAndWaitForSave({ page });
+  await closeNewVariablePanel({ page, name });
 };
 
 export const startJsonResourceServer = async ({ title }: { title: string }) => {

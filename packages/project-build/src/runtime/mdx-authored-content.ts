@@ -1865,10 +1865,25 @@ const assertSupportedNamespaces = ({
   deletedTemplateRootIds: ReadonlySet<string>;
 }) => {
   for (const namespace of unsupportedNamespaces) {
-    if (namespace === "assets" && root.assetReferenceValues !== undefined) {
+    if (namespace === "assets") {
       const originalById = new Map(
         root.fragment.assets.map((asset) => [asset.id, asset])
       );
+      const authoredAssetPropIds = new Set(
+        root.provenance.nodes.flatMap((node) =>
+          node.type === "template"
+            ? [
+                ...node.assetProps.map(({ assetId }) => assetId),
+                ...node.overlaidDescendants.flatMap((descendant) =>
+                  descendant.assetProps.map(({ assetId }) => assetId)
+                ),
+              ]
+            : node.assetProps.map(({ assetId }) => assetId)
+        )
+      );
+      const isKnownAsset = (assetId: string) =>
+        root.assetReferenceValues?.has(assetId) === true ||
+        authoredAssetPropIds.has(assetId);
       const referencedAssetIds = new Set(
         fragment.props.flatMap((prop) =>
           prop.type === "asset" ? [prop.value] : []
@@ -1877,12 +1892,15 @@ const assertSupportedNamespaces = ({
       const assetIds = new Set<string>();
       for (const asset of fragment.assets) {
         const original = originalById.get(asset.id);
+        // Template assets can be referenced by styles or data sources too.
         if (
           assetIds.has(asset.id) ||
           (original === undefined
-            ? referencedAssetIds.has(asset.id) === false ||
-              root.assetReferenceValues.has(asset.id) === false
-            : equal(original, asset) === false)
+            ? isKnownAsset(asset.id) === false
+            : equal(
+                JSON.parse(JSON.stringify(original)),
+                JSON.parse(JSON.stringify(asset))
+              ) === false)
         ) {
           throw new Error(
             "Changes to assets cannot be represented losslessly in MDX"
@@ -1892,7 +1910,8 @@ const assertSupportedNamespaces = ({
       }
       if (
         Array.from(referencedAssetIds).some(
-          (assetId) => assetIds.has(assetId) === false
+          (assetId) =>
+            assetIds.has(assetId) === false && isKnownAsset(assetId) === false
         )
       ) {
         throw new Error(

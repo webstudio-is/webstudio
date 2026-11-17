@@ -1,3 +1,4 @@
+import { mkdir, writeFile } from "node:fs/promises";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect } from "@playwright/test";
@@ -25,8 +26,11 @@ import {
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
+import { createLocalBundleFromDevBuild } from "../flows/generated-app";
+import { authorManagedForm } from "./mcp-managed-form-author";
 
 const commands = new Set([
+  "create-page",
   "set-text-content",
   "insert-fragment",
   "insert-component",
@@ -56,21 +60,11 @@ const operations: PublicMcpOperation[] = runtimeOperationContracts
     requiresConfirm: contract.requiresConfirm,
   }));
 
-const projectId = process.argv[2];
-const receiverUrl = process.argv[3];
-if (projectId === undefined || receiverUrl === undefined) {
-  throw new Error("Expected the disposable E2E project ID");
-}
-
-const author = async () => {
+const author = async (projectId: string, receiverUrl: string) => {
   let build = await loadDevBuild({ projectId: projectId });
   const parse = <Value>(field: keyof typeof build) =>
     JSON.parse(String(build[field])) as Value;
   const pages = migratePages(parse("pages"));
-  const home = pages.pages.get(pages.homePageId);
-  if (home === undefined) {
-    throw new Error("Expected a home page in the E2E fixture");
-  }
   const initialState = createBuilderStateFromBuildData({
     pages,
     instances: parse("instances"),
@@ -243,10 +237,14 @@ const author = async () => {
   };
 
   try {
+    const navigationPage = await call("create-page", {
+      name: "Form navigation",
+      path: "/search",
+    });
     // Inserting the public Form template creates connected Email Resources.
     // Removing every Action through MCP must switch that same Form to navigation.
     const inserted = await call("insert-component", {
-      parentInstanceId: home.rootInstanceId,
+      parentInstanceId: navigationPage.rootInstanceId,
       component: "form",
     });
     const formId = (inserted.rootInstanceIds as string[])[0];
@@ -283,13 +281,13 @@ const author = async () => {
         url: receiverUrl,
         headers: [],
       },
-      scopeInstanceId: home.rootInstanceId,
+      scopeInstanceId: navigationPage.rootInstanceId,
       dataSourceName: "searchResults",
       exposeAsDataSource: true,
     });
     await call("update-resource", {
       resourceId: resource.resourceId,
-      scopeInstanceId: home.rootInstanceId,
+      scopeInstanceId: navigationPage.rootInstanceId,
       exposeAsDataSource: true,
       values: {
         searchParams: [
@@ -302,7 +300,7 @@ const author = async () => {
       },
     });
     const output = await call("insert-fragment", {
-      parentInstanceId: home.rootInstanceId,
+      parentInstanceId: navigationPage.rootInstanceId,
       fragment: '<Text id="navigation-search-results">Waiting</Text>',
     });
     const [outputInstanceId] = output.rootInstanceIds as string[];
@@ -322,11 +320,29 @@ const author = async () => {
         expect.objectContaining({ name: "action", type: "json", value: [] }),
       ])
     );
-    process.stdout.write(`${JSON.stringify({ formId })}\n`);
+    return formId;
   } finally {
     await client.close();
     await server.close();
   }
 };
 
-await author();
+export const preparePreviewBundle = async (
+  projectId: string,
+  receiverUrl: string,
+  ...formatModes: string[]
+) => {
+  const formatForms = [];
+  for (const mode of formatModes) {
+    const { formId } = await authorManagedForm(projectId, { mode });
+    formatForms.push({ mode, formId });
+  }
+  const navigationFormId = await author(projectId, receiverUrl);
+  const build = await loadDevBuild({ projectId });
+  await mkdir(".webstudio", { recursive: true });
+  await writeFile(
+    ".webstudio/data.json",
+    `${JSON.stringify(createLocalBundleFromDevBuild(build))}\n`
+  );
+  return { formatForms, navigationFormId };
+};

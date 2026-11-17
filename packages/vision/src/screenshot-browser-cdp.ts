@@ -2442,6 +2442,7 @@ const submitFormWithBrowserRuntime = async (
   const submissionRequestIds = new Set<string>();
   const completedRequestIds = new Set<string>();
   let navigationObserved = false;
+  let navigatedUrl: string | undefined;
   let mainFrameId: string | undefined;
   let sawPending = false;
   const redactUrl = (value: string) => {
@@ -2527,6 +2528,20 @@ const submitFormWithBrowserRuntime = async (
               : undefined;
         if (frameId === mainFrameId) {
           navigationObserved = true;
+          const url =
+            event === "Page.navigatedWithinDocument"
+              ? "url" in params
+                ? params.url
+                : undefined
+              : "frame" in params &&
+                  typeof params.frame === "object" &&
+                  params.frame !== null &&
+                  "url" in params.frame
+                ? params.frame.url
+                : undefined;
+          if (typeof url === "string") {
+            navigatedUrl = url;
+          }
         }
       });
     }
@@ -2743,9 +2758,12 @@ const submitFormWithBrowserRuntime = async (
         continue;
       }
       const current = observed.result?.value;
-      pageUrl = redactUrl(current?.pageUrl ?? initialPageUrl);
-      didNavigate =
-        current?.pageUrl !== undefined && current.pageUrl !== initialPageUrl;
+      const destinationUrl =
+        current?.pageUrl !== undefined && current.pageUrl !== initialPageUrl
+          ? current.pageUrl
+          : (navigatedUrl ?? current?.pageUrl ?? initialPageUrl);
+      pageUrl = redactUrl(destinationUrl);
+      didNavigate = destinationUrl !== initialPageUrl;
       formState = current?.formState ?? "unknown";
       terminalTransition =
         (formState === "success" || formState === "error") &&

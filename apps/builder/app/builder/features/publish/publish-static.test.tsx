@@ -1,10 +1,12 @@
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
-import { userEvent } from "@vitest/browser/context";
 import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { createTrpcInterceptor } from "./publish-test-utils";
+import {
+  createTrpcInterceptor,
+  selectStaticDestination,
+} from "./publish-test-utils";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -62,7 +64,7 @@ beforeAll(async () => {
         ...projectStore.get(),
         latestStaticBuild:
           publishRequests === 0
-            ? null
+            ? (projectStore.get()?.latestStaticBuild ?? null)
             : {
                 buildId: "static-1",
                 updatedAt: new Date().toISOString(),
@@ -119,6 +121,15 @@ const staticButton = () =>
     (button) => button.textContent?.startsWith("Build and download static site")
   );
 
+const waitFor = <T,>(assertion: () => T | Promise<T>) =>
+  vi.waitFor(
+    async () => {
+      await act(async () => {});
+      await assertion();
+    },
+    { timeout: 10_000 }
+  );
+
 const render = async (open: boolean, projectId = "project-a") => {
   nanoStates.$authTokenPermissions.set({
     canClone: true,
@@ -143,30 +154,19 @@ const render = async (open: boolean, projectId = "project-a") => {
     );
   });
   if (open && staticButton() === undefined) {
-    await act(async () =>
-      document.body
-        .querySelector<HTMLButtonElement>('button[role="combobox"]')
-        ?.dispatchEvent(
-          new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
-        )
-    );
-    const option = Array.from(
-      document.body.querySelectorAll<HTMLElement>('[role="option"]')
-    ).find((option) => option.textContent?.trim() === "Static");
-    expect(option).toBeDefined();
-    await act(async () => option?.click());
+    await selectStaticDestination(container);
   }
 };
 
 test("reopening an active static publish keeps one status owner and one download", async () => {
-  vi.useFakeTimers();
   buildStatus = "PENDING";
   projectStore.set(createProject());
   await render(true);
+  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   const button = staticButton();
   expect(button).toBeDefined();
   await act(async () => button?.click());
-  await act(async () => vi.waitFor(() => expect(jobRequests).toBe(1)));
+  await waitFor(() => expect(jobRequests).toBe(1));
   expect(publishRequests).toBe(1);
   expect(jobRequests).toBe(1);
   expect(downloads).not.toHaveBeenCalled();
@@ -180,31 +180,50 @@ test("reopening an active static publish keeps one status owner and one download
   ).toBeNull();
   getJobStatus = "success";
   await act(async () => vi.advanceTimersByTimeAsync(15_000));
-  await vi.waitFor(async () => {
+  await waitFor(async () => {
     await act(async () => {});
     expect(downloads).toHaveBeenCalledOnce();
   });
   expect(downloads).toHaveBeenCalledExactlyOnceWith("/cgi/static/ssg/site.zip");
   expect(staticButton()?.dataset.state).not.toBe("pending");
   expect(staticButton()?.disabled).toBe(false);
+  expect(document.body.querySelector('[role="status"]')).not.toBeNull();
   expect(document.body.textContent).toContain("Downloaded");
   expect(publishRequests).toBe(1);
   expect(jobRequests).toBe(2);
+}, 30_000);
+
+test("a persisted static failure remains visible without session diagnostics", async () => {
+  projectStore.set({
+    ...createProject(),
+    latestStaticBuild: {
+      buildId: "previous-static-build",
+      projectId: "project-a",
+      updatedAt: new Date().toISOString(),
+      publishStatus: "FAILED",
+    },
+  });
+  await render(true);
+  expect(document.body.querySelector('[role="alert"]')).not.toBeNull();
+  expect(document.body.textContent).toContain("Download failed");
+  expect(
+    Array.from(document.body.querySelectorAll("button")).some(
+      (button) => button.textContent === "See issues"
+    )
+  ).toBe(false);
 });
 
 test("project navigation suppresses an old static download and error toast", async () => {
-  vi.useFakeTimers();
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   projectStore.set(createProject());
   await render(true);
+  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   const button = staticButton();
   expect(button).toBeDefined();
   await act(async () => button?.click());
-  await act(async () => vi.waitFor(() => expect(jobRequests).toBe(1)));
-  await act(async () =>
-    vi.waitFor(() =>
-      expect(projectStore.get()?.latestStaticBuild?.buildId).toBe("static-1")
-    )
+  await waitFor(() => expect(jobRequests).toBe(1));
+  await waitFor(() =>
+    expect(projectStore.get()?.latestStaticBuild?.buildId).toBe("static-1")
   );
   act(() => projectStore.set(createProject("project-b")));
   await render(false, "project-b");
@@ -218,18 +237,16 @@ test("project navigation suppresses an old static download and error toast", asy
 });
 
 test("a failed static runner clears progress without starting a download", async () => {
-  vi.useFakeTimers();
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   projectStore.set(createProject());
   await render(true);
+  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   const button = staticButton();
   expect(button).toBeDefined();
   await act(async () => button?.click());
-  await act(async () => vi.waitFor(() => expect(jobRequests).toBe(1)));
-  await act(async () =>
-    vi.waitFor(() =>
-      expect(projectStore.get()?.latestStaticBuild?.buildId).toBe("static-1")
-    )
+  await waitFor(() => expect(jobRequests).toBe(1));
+  await waitFor(() =>
+    expect(projectStore.get()?.latestStaticBuild?.buildId).toBe("static-1")
   );
   act(() =>
     projectStore.set({
@@ -246,26 +263,29 @@ test("a failed static runner clears progress without starting a download", async
   await act(async () => vi.advanceTimersByTimeAsync(15_100));
   expect(jobRequests).toBe(2);
   expect(downloads).not.toHaveBeenCalled();
-  expect(errorToast).toHaveBeenCalledOnce();
+  expect(errorToast).not.toHaveBeenCalled();
   expect(staticButton()?.dataset.state).not.toBe("pending");
   expect(staticButton()?.disabled).toBe(false);
+  expect(document.body.querySelector('[role="alert"]')).not.toBeNull();
   await act(async () =>
-    document.body
-      .querySelector<HTMLButtonElement>(
-        'button[aria-label="Publish log: Static export"]'
-      )
+    Array.from(document.body.querySelectorAll<HTMLButtonElement>("button"))
+      .find((button) => button.textContent === "See issues")
       ?.click()
   );
   const errors = Array.from(
     document.body.querySelectorAll<HTMLElement>('[role="tab"]')
   ).find((tab) => tab.textContent === "Errors");
   expect(errors).toBeDefined();
-  await act(async () => userEvent.click(errors!));
+  await act(async () =>
+    errors?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    )
+  );
   const showLogs = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
   ).find((button) => button.textContent?.trim() === "show logs");
   expect(showLogs).toBeDefined();
-  await act(async () => userEvent.click(showLogs!));
+  await act(async () => showLogs?.click());
   expect(
     document.body.querySelector('[role="tab"][aria-selected="true"]')
       ?.textContent
@@ -277,45 +297,52 @@ test("a failed static runner clears progress without starting a download", async
   ).not.toBeNull();
 });
 
-test("the static status reopens an audit rejection instead of an older successful publish", async () => {
+test("the static failure alert opens an audit rejection instead of an older successful publish", async () => {
   getJobStatus = "success";
   projectStore.set(createProject());
   await render(true);
   const publish = staticButton()!;
   await act(async () => publish.click());
-  await vi.waitFor(async () => {
+  await waitFor(async () => {
     await act(async () => {});
     expect(downloads).toHaveBeenCalledOnce();
     expect(staticButton()?.dataset.state).not.toBe("pending");
+    expect(staticButton()?.disabled).toBe(false);
   });
   staticResponse = {
     success: false,
     auditFindings: [{ severity: "error", message: "audit-rejection" }],
   };
   await act(async () => staticButton()?.click());
+  await waitFor(() => expect(publishRequests).toBe(2));
   const activeTab = () =>
     document.body.querySelector('[role="tab"][aria-selected="true"]')
       ?.textContent;
-  await vi.waitFor(async () => {
+  await waitFor(async () => {
     await act(async () => {});
-    expect(activeTab()).toBe("Errors");
+    expect(document.body.querySelector('[role="alert"]')).not.toBeNull();
   });
+  expect(activeTab()).toBeUndefined();
+  await act(async () =>
+    Array.from(document.body.querySelectorAll<HTMLButtonElement>("button"))
+      .find((button) => button.textContent === "See issues")
+      ?.click()
+  );
+  expect(activeTab()).toBe("Errors");
   await act(async () =>
     document.body
       .querySelector<HTMLButtonElement>('button[aria-label="Close"]')
       ?.click()
   );
-  await vi.waitFor(async () => {
+  await waitFor(async () => {
     await act(async () => {});
     expect(document.body.querySelector('[role="dialog"]')).toBeNull();
   });
   await render(true);
   await act(async () =>
-    document.body
-      .querySelector<HTMLButtonElement>(
-        'button[aria-label="Publish log: Static export"]'
-      )
+    Array.from(document.body.querySelectorAll<HTMLButtonElement>("button"))
+      .find((button) => button.textContent === "See issues")
       ?.click()
   );
   expect(activeTab()).toBe("Errors");
-});
+}, 30_000);

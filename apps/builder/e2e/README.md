@@ -15,9 +15,13 @@ pnpm e2e:builder
 The local command builds Builder and the generated React Router components
 used by Preview tests.
 
-The first run after migrations change applies the regular migration pipeline
-and writes an ignored schema cache under `.cache/builder-e2e`. Refresh it
-explicitly with:
+In CI, the build job caches those compiled files. A later E2E-only change can
+restore them after dependency setup; changes outside `apps/builder/e2e` still
+compile Builder before the five shards download the build artifact.
+
+The schema snapshot is generated from the regular migration pipeline and
+committed at `e2e/schema/schema-<fingerprint>.sql`. When a migration or backend
+input changes, refresh the snapshot and commit the new file:
 
 ```sh
 pnpm e2e:builder:refresh-schema-cache
@@ -35,7 +39,7 @@ Pass normal Playwright Test arguments after `--`. For example:
 
 ```sh
 pnpm e2e:builder -- --grep "Builder can copy, duplicate, and delete a page"
-pnpm e2e:builder -- 'apps/builder/e2e/tests/pages-actions.[shard-3].e2e.ts'
+pnpm e2e:builder -- 'pages-actions'
 pnpm e2e:builder -- --debug --grep "Builder can copy"
 ```
 
@@ -91,19 +95,17 @@ each invocation.
 - Keep tests in a file independent even though Playwright runs them in
   declaration order by default.
 
-CI discovers isolated Playwright shards from filename tags. Each shard uses
-two workers, except shard 5 uses one to avoid overlapping MCP browser launches.
-Files are assigned by measured CI duration to keep the slowest job short:
+CI runs five isolated Playwright shards with four workers each. Files have a
+fixed assignment based on measured CI duration to keep the slowest job short:
 
 ```txt
 pages-actions.[shard-3].e2e.ts
 ```
 
-Every E2E filename must contain at least one unique shard tag. CI derives its
-matrix from those tags, so adding or removing a shard does not require editing
-the workflow. Files with multiple tags are partitioned across those shards. All
-files selected by a shard must use the same set of tags. Rebalance by changing
-filename tags when measured job durations drift.
+Every E2E filename in CI must contain one shard tag. The build job checks that
+the tags match the five shards in the workflow. Rebalance by changing filename
+tags when measured job durations drift.
+
 Suites may opt into parallel mode only when every worker creates uniquely named
 setup data and the tests do not depend on each other's mutations.
 
@@ -115,10 +117,11 @@ services, and `compose.<mode>.yaml` defines only the differences for a named
 mode. Backend commands resolve these files by convention; callers do not pass
 Compose filenames.
 
-The schema-cache fingerprint discovers migration sources and non-test backend
+The snapshot fingerprint discovers migration sources and non-test backend
 files automatically. Adding a database image, initialization script, Compose
-override, or migration therefore invalidates the cache without updating a
-filename registry.
+override, or migration therefore requires a new snapshot. CI checks that the
+matching snapshot is committed, and the Supabase migration job still checks
+the complete migration chain.
 
 ## Failures
 

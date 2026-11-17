@@ -3,7 +3,7 @@ import { enableMapSet, setAutoFreeze } from "immer";
 import { useEffect } from "react";
 import { batched } from "nanostores";
 import { createId } from "@webstudio-is/sdk";
-import { $project } from "./data-stores";
+import { $project, $publisherHost } from "./data-stores";
 import {
   $selectedPageHash,
   $selectedInstanceSizes,
@@ -88,7 +88,10 @@ import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
-import { $externalContentRoots } from "../external-content-mutations";
+import {
+  $externalContentRoots,
+  $externalContentAssetStatuses,
+} from "../external-content-mutations";
 import { $externalContentHistory } from "../external-content-history";
 
 enableMapSet();
@@ -342,6 +345,7 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("temporaryInstances", $temporaryInstances),
 
     new NanostoresSyncObject("project", $project),
+    new NanostoresSyncObject("publisherHost", $publisherHost),
     new NanostoresSyncObject("dataSourceVariables", $dataSourceVariables),
     new NanostoresSyncObject("resourcesCache", $resourcesCache),
     new NanostoresSyncObject("resourcesState", $resourcesState),
@@ -417,6 +421,10 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),
     new NanostoresSyncObject("systemDataByPage", $systemDataByPage),
     new NanostoresSyncObject("externalContentRoots", $externalContentRoots),
+    new NanostoresSyncObject(
+      "externalContentAssetStatuses",
+      $externalContentAssetStatuses
+    ),
     new NanostoresSyncObject("externalContentHistory", $externalContentHistory),
   ]);
 };

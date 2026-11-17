@@ -1,7 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { expectLocatorHidden, expectTextHidden } from "./assertions";
 import { waitForCanvasText } from "./builder";
-import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
+import { waitForChangeToBeSaved, waitForSyncComplete } from "./sync-status";
 
 const getPageSettingsControl = ({
   page,
@@ -41,11 +41,9 @@ export const fillAllowedPageSettings = async ({
     content: string;
   };
 }) => {
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
+  await waitForSyncComplete({ page, timeout: 3_000 }).catch(() => undefined);
 
-  let save = waitForChangeToBeSaved({ page });
+  const save = waitForChangeToBeSaved({ page });
   for (const field of [
     { label: "Page name", value: name },
     { label: "Path", value: path },
@@ -64,47 +62,47 @@ export const fillAllowedPageSettings = async ({
   const socialImageInput = page.getByPlaceholder("https://www.url.com").first();
   await socialImageInput.fill(socialImage);
   await socialImageInput.blur();
+  await fillMetadataInputs({ page, ...metadata });
   await save;
-  await waitForSyncStatus({ page, status: "idle" });
-
-  await fillCustomMetadata({ page, metadata });
-};
-
-export const fillCustomMetadata = async ({
-  page,
-  metadata,
-}: {
-  page: Page;
-  metadata: {
-    property: string;
-    content: string;
-  };
-}) => {
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
-  const metadataGroup = getCustomMetadataGroup(page);
-  let save = waitForChangeToBeSaved({ page });
-  await metadataGroup
-    .getByLabel("Content", { exact: true })
-    .first()
-    .fill(metadata.content);
-  await save;
-  await waitForSyncStatus({ page, status: "idle" });
-
-  save = waitForChangeToBeSaved({ page });
-  await metadataGroup
-    .getByLabel("Property", { exact: true })
-    .first()
-    .fill(metadata.property);
-  await save;
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 
   await expectCustomMetadataValue({
     page,
     property: metadata.property,
     content: metadata.content,
   });
+};
+
+const fillMetadataInputs = async ({
+  page,
+  property,
+  content,
+}: {
+  page: Page;
+  property: string;
+  content: string;
+}) => {
+  const metadataGroup = getCustomMetadataGroup(page);
+  await metadataGroup
+    .getByLabel("Content", { exact: true })
+    .first()
+    .fill(content);
+  await metadataGroup
+    .getByLabel("Property", { exact: true })
+    .first()
+    .fill(property);
+};
+
+export const fillCustomMetadata = async (
+  values: Parameters<typeof fillMetadataInputs>[0]
+) => {
+  const { page } = values;
+  await waitForSyncComplete({ page });
+  const save = waitForChangeToBeSaved({ page });
+  await fillMetadataInputs(values);
+  await save;
+  await waitForSyncComplete({ page });
+  await expectCustomMetadataValue(values);
 };
 
 export const openPagesPanel = async ({ page }: { page: Page }) => {
@@ -206,7 +204,7 @@ export const openPage = async ({
   await openPagesPanel({ page });
   await page.getByText(pageName, { exact: true }).first().click();
   await waitForCanvasText({ page, text: canvasText });
-  await waitForSyncStatus({ page, status: "idle" });
+  await waitForSyncComplete({ page });
 };
 
 export const createFolder = async ({
@@ -229,7 +227,6 @@ export const createFolder = async ({
   await page
     .getByRole("group", { name: `Folder ${folderName}`, exact: true })
     .waitFor();
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 export const createPageFromTemplate = async ({
@@ -256,7 +253,6 @@ export const createPageFromTemplate = async ({
   await save;
 
   await waitForCanvasText({ page, text: canvasText });
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 export const choosePageSettingsSocialImageAsset = async ({
@@ -268,9 +264,7 @@ export const choosePageSettingsSocialImageAsset = async ({
   filename: string;
   label?: string;
 }) => {
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
+  await waitForSyncComplete({ page, timeout: 3_000 }).catch(() => undefined);
   await page.getByRole("button", { name: "Choose image from assets" }).click();
   const save = waitForChangeToBeSaved({ page });
   await page.getByAltText(label, { exact: true }).click();

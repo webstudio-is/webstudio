@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { measure } from "../perf";
 
 type SyncStatusDotStatus = "idle" | "pending" | "saved" | "error";
 
@@ -38,7 +39,19 @@ export const waitForSyncStatus = async ({
   await getSyncStatusDotByStatus({ page, status }).waitFor({ timeout });
 };
 
-export const waitForChangeToBeSaved = async ({
+export const waitForSyncComplete = async ({
+  page,
+  timeout = 10_000,
+}: {
+  page: Page;
+  timeout?: number;
+}) => {
+  await getSyncStatusDotByStatus({ page, status: "idle" })
+    .or(getSyncStatusDotByStatus({ page, status: "saved" }))
+    .waitFor({ timeout });
+};
+
+const waitForChangeToBeSavedUnmeasured = async ({
   page,
   timeout = 10_000,
 }: {
@@ -106,3 +119,10 @@ export const waitForChangeToBeSaved = async ({
     );
   }
 };
+
+export const waitForChangeToBeSaved = (
+  options: Parameters<typeof waitForChangeToBeSavedUnmeasured>[0]
+) =>
+  measure("builder save completion", () =>
+    waitForChangeToBeSavedUnmeasured(options)
+  );

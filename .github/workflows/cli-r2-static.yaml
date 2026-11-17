@@ -59,7 +59,9 @@ jobs:
       # Despite being listed as a dependency, @remix-run/dev does not install the remix cli.
       # TODO: Minimize artefact size due to frequent downloads on each publish.
       - name: pnpm deploy
-        run: pnpm --filter 'ssg-cloudflare-pages' deploy "${{ github.workspace }}/../ssg-template"
+        run: |
+          pnpm --filter 'ssg-cloudflare-pages' deploy "${{ github.workspace }}/../ssg-template"
+          touch "${{ github.workspace }}/../ssg-template/.webstudio-cli-sync-build-v1"
 
       - name: Verify optional Assets build dependency is omitted
         run: test ! -e node_modules/@webstudio-is/content-engine/package.json

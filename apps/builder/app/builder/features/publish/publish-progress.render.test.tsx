@@ -641,7 +641,7 @@ test.each(["validation", "publish"] as const)(
     await toggle("publish");
     expect(banner()).toBeDefined();
     const report = await openReport("Warnings");
-    expect(report?.querySelector("button")).not.toBeNull();
+    expect(report?.textContent?.trim()).toBeTruthy();
   }
 );
 
@@ -665,7 +665,7 @@ test("an older validation cannot replace a newer report", async () => {
   expect(banner()).toBeDefined();
   expect(button("Validated")).toBeDefined();
   const report = await openReport("Warnings");
-  expect(report?.querySelector("button")).not.toBeNull();
+  expect(report?.textContent?.trim()).toBeTruthy();
 });
 
 test("older publish diagnostics cannot replace a newer operation", async () => {
@@ -685,7 +685,7 @@ test("older publish diagnostics cannot replace a newer operation", async () => {
   await act(async () => old.resolve(checks));
   expect(banner()).toBeDefined();
   const report = await openReport("Warnings");
-  expect(report?.querySelector("button")).not.toBeNull();
+  expect(report?.textContent?.trim()).toBeTruthy();
 });
 
 test("reopening restores validated domains and publishes only those domains", async () => {
@@ -785,19 +785,14 @@ test.each(["site", "static"] as const)(
     );
     await waitFor(() => {
       if (first === "static") {
-        expect(document.body.querySelector('[role="tablist"]')).not.toBeNull();
+        expect(button("See issues")).toBeDefined();
       } else {
         expect(banner()).toBeDefined();
         expect(button("Publish")?.disabled).toBe(false);
       }
     });
     if (first === "static") {
-      // Close the report before returning to the other publish target.
-      const close = document.body.querySelector<HTMLButtonElement>(
-        '[role="dialog"] button[aria-label="Close"]'
-      );
-      expect(close).not.toBeNull();
-      await act(async () => close?.click());
+      await toggle("none");
     }
     target = first === "site" ? "static" : "site";
     if (target === "static") {
@@ -814,16 +809,8 @@ test.each(["site", "static"] as const)(
       ).toHaveLength(2)
     );
     if (target === "static") {
-      await waitFor(() =>
-        expect(document.body.querySelector('[role="tablist"]')).not.toBeNull()
-      );
-      await act(async () =>
-        document.body
-          .querySelector<HTMLButtonElement>(
-            '[role="dialog"] button[aria-label="Close"]'
-          )
-          ?.click()
-      );
+      await waitFor(() => expect(button("See issues")).toBeDefined());
+      await toggle("none");
     }
     if (first === "site") {
       await toggle("publish");
@@ -832,18 +819,8 @@ test.each(["site", "static"] as const)(
       expect(report?.textContent).not.toContain("static diagnostic");
     } else {
       await selectStatic();
-      const reportButton = document.body.querySelector<HTMLButtonElement>(
-        'button[aria-label="Publish log: Static export"]'
-      );
-      expect(reportButton).not.toBeNull();
-      await act(async () => reportButton?.click());
-      await waitFor(() =>
-        expect(document.body.querySelector('[role="tablist"]')).not.toBeNull()
-      );
-      expect(
-        document.body.querySelector('[role="tabpanel"][data-state="active"]')
-          ?.textContent
-      ).toContain("static diagnostic");
+      const report = await openReport("Errors");
+      expect(report.textContent).toContain("static diagnostic");
     }
   }
 );

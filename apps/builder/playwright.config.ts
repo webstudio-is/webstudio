@@ -17,7 +17,9 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: process.env.CI !== undefined,
   retries: 0,
-  reporter: process.env.CI ? [["line"], ["html", { open: "never" }]] : "line",
+  reporter: process.env.CI
+    ? [["line"], ["html", { open: "never" }], ["./e2e/timing-reporter.ts"]]
+    : "line",
   use: {
     ...browserContextOptions,
     actionTimeout: 20_000,
@@ -25,7 +27,7 @@ export default defineConfig({
     launchOptions: getBrowserLaunchOptions(),
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    video: process.env.CI !== undefined ? "off" : "retain-on-failure",
   },
   projects: [
     {
@@ -42,8 +44,11 @@ export default defineConfig({
   webServer:
     process.env.E2E_BUILDER_URL === undefined
       ? {
-          command:
-            "pnpm exec tsx --conditions=webstudio ./e2e/serve-built-remix.ts",
+          // The server loads prebuilt JavaScript bundles. Use Node's type
+          // stripping for the launcher when available.
+          command: process.features.typescript
+            ? "node --enable-source-maps --conditions=webstudio ./e2e/serve-built-remix.ts"
+            : "pnpm exec tsx --conditions=webstudio ./e2e/serve-built-remix.ts",
           url: builderUrl,
           reuseExistingServer: false,
           ignoreHTTPSErrors: true,

@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
@@ -9,6 +10,7 @@ import type {
   ProjectSessionPreviewSubmitFormResult,
 } from "@webstudio-is/project-build/mcp";
 import { closeChildProcessInput } from "../process";
+import { measure } from "../perf";
 
 const runnerPath = fileURLToPath(
   new URL("../fixtures/mcp-preview-submit-client.ts", import.meta.url)
@@ -86,6 +88,13 @@ const startClient = () => {
 let client: ReturnType<typeof startClient> | undefined;
 let queue = Promise.resolve();
 
+export const startPreviewFormMcpClient = async () => {
+  if (client === undefined) {
+    client = startClient();
+    await once(client.child, "spawn");
+  }
+};
+
 export const closePreviewFormMcpClient = async () => {
   await queue;
   const activeClient = client;
@@ -155,7 +164,9 @@ const submit = async ({ url, input }: SubmitRequest) => {
 export const submitPreviewFormViaMcp = (
   request: SubmitRequest
 ): Promise<{ ok: true; data: ProjectSessionPreviewSubmitFormResult }> => {
-  const result = queue.then(() => submit(request));
+  const result = queue.then(() =>
+    measure("MCP preview form submission", () => submit(request))
+  );
   queue = result.then(
     () => undefined,
     () => undefined
