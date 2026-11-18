@@ -234,8 +234,9 @@ const setPaid = async (allowPublishLogs: boolean) => {
   );
 };
 const publish = async () => {
-  await act(async () => publishDialog.set("none"));
-  await act(async () => publishDialog.set("publish"));
+  if (publishDialog.get() !== "publish") {
+    await act(async () => publishDialog.set("publish"));
+  }
   const domain = document.body.querySelector<HTMLInputElement>(
     'input[name="domainToPublish[]"]'
   );
