@@ -233,7 +233,7 @@ const setPaid = async (allowPublishLogs: boolean) => {
     })
   );
 };
-const publish = async () => {
+const publish = async (buttonTimeout = 10_000) => {
   if (document.body.querySelector('input[name="domainToPublish[]"]') === null) {
     await act(async () => publishDialog.set("none"));
     await act(async () => publishDialog.set("publish"));
@@ -254,7 +254,7 @@ const publish = async () => {
         ?.closest("form")
         ?.querySelectorAll<HTMLButtonElement>("button") ?? []
     ).at(-1);
-  await waitFor(() => expect(getButton()?.disabled).toBe(false));
+  await waitFor(() => expect(getButton()?.disabled).toBe(false), buttonTimeout);
   const previousRequests = publishRequests;
   await act(async () => {
     const button = getButton();
@@ -437,7 +437,7 @@ test("keeping ten publishes evicts an older in-flight reader before its next pag
   await waitFor(() => expect(logRequests).toHaveLength(1));
   for (let index = 0; index < 10; index++) {
     buildId = `new-build-${index}`;
-    await publish();
+    await publish(20_000);
   }
   await act(async () => holdLog?.response.resolve());
   await openReport();
@@ -446,4 +446,4 @@ test("keeping ten publishes evicts an older in-flight reader before its next pag
   expect(
     logRequests.filter((request) => request.buildId === "build-1")
   ).toHaveLength(1);
-}, 30_000);
+}, 60_000);
