@@ -128,21 +128,28 @@ const toPrePublishDiagnosticFinding = (
   };
 };
 
-const getPrePublishAuditFindings = (): DiagnosticFinding[] =>
-  runPrePublishAudit({
-    pages: $pages.get(),
-    instances: $instances.get(),
-    props: $props.get(),
-    dataSources: $dataSources.get(),
-    resources: $resources.get(),
-    assets: $assets.get(),
-    metas: $registeredComponentMetas.get(),
-  })
+export const getPublishAuditFindings = (
+  findings: readonly PrePublishAuditFinding[]
+): DiagnosticFinding[] =>
+  findings
     .filter(
       (finding): finding is DiagnosticPrePublishAuditFinding =>
         finding.severity === "error" || finding.severity === "warning"
     )
     .map(toPrePublishDiagnosticFinding);
+
+const getPrePublishAuditFindings = (): DiagnosticFinding[] =>
+  getPublishAuditFindings(
+    runPrePublishAudit({
+      pages: $pages.get(),
+      instances: $instances.get(),
+      props: $props.get(),
+      dataSources: $dataSources.get(),
+      resources: $resources.get(),
+      assets: $assets.get(),
+      metas: $registeredComponentMetas.get(),
+    })
+  );
 
 export const runPublishDiagnostics = async (
   projectId: Project["id"],
@@ -244,13 +251,3 @@ export const reportPublishValidationFailure = (
     },
   ]);
 };
-
-export const getServerPublishFindings = (
-  findings: readonly PrePublishAuditFinding[]
-): DiagnosticFinding[] =>
-  findings
-    .filter(
-      (finding): finding is DiagnosticPrePublishAuditFinding =>
-        finding.severity === "error" || finding.severity === "warning"
-    )
-    .map(toPrePublishDiagnosticFinding);

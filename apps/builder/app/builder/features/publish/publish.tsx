@@ -53,7 +53,7 @@ import {
   runPublishDiagnostics,
   runPublishValidation,
   reportPublishValidationFailure,
-  getServerPublishFindings,
+  getPublishAuditFindings,
 } from "./publish-validation";
 import { runPublishAfterBestEffortChecks } from "./publish-preflight";
 import { getPublishStatusDisplay } from "./publish-status";
@@ -958,7 +958,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
           if ("auditFindings" in publishResult) {
             diagnostics.finish((findings) => [
               ...findings,
-              ...getServerPublishFindings(publishResult.auditFindings),
+              ...getPublishAuditFindings(publishResult.auditFindings),
             ]);
             return;
           }
@@ -1011,7 +1011,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
           logHandle: publishResult.logHandle,
           target: "site",
           domains,
-          findings: getServerPublishFindings(publishResult.findings),
+          findings: getPublishAuditFindings(publishResult.findings),
         });
         const outcome = await waitForCompletion(accepted, previousBuildId);
         reportPublishResult({
@@ -1064,7 +1064,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
           if ("auditFindings" in publishResult) {
             diagnostics.finish((findings) => [
               ...findings,
-              ...getServerPublishFindings(publishResult.auditFindings),
+              ...getPublishAuditFindings(publishResult.auditFindings),
             ]);
             if ($publishDialog.get() !== "export") {
               toast.error(
@@ -1089,7 +1089,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
           logHandle: publishResult.logHandle,
           target: "static",
           domains: [],
-          findings: getServerPublishFindings(publishResult.findings),
+          findings: getPublishAuditFindings(publishResult.findings),
           staticName: "name" in publishResult ? publishResult.name : undefined,
         });
         if (accepted?.staticName == null) {

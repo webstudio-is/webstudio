@@ -179,7 +179,7 @@ beforeEach(() => {
     allowPublishLogs: true,
   });
   stores.$project.set(project("project-1"));
-  publishDialog.set("publish");
+  publishDialog.set("none");
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
