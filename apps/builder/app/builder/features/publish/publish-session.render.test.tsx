@@ -233,7 +233,7 @@ const setPaid = async (allowPublishLogs: boolean) => {
     })
   );
 };
-const publish = async (buttonTimeout = 10_000) => {
+const publish = async (timeout = 10_000) => {
   if (document.body.querySelector('input[name="domainToPublish[]"]') === null) {
     await act(async () => publishDialog.set("none"));
     await act(async () => publishDialog.set("publish"));
@@ -254,14 +254,17 @@ const publish = async (buttonTimeout = 10_000) => {
         ?.closest("form")
         ?.querySelectorAll<HTMLButtonElement>("button") ?? []
     ).at(-1);
-  await waitFor(() => expect(getButton()?.disabled).toBe(false), buttonTimeout);
+  await waitFor(() => expect(getButton()?.disabled).toBe(false), timeout);
   const previousRequests = publishRequests;
   await act(async () => {
     const button = getButton();
     expect(button).toBeDefined();
     button?.click();
   });
-  await waitFor(() => expect(publishRequests).toBe(previousRequests + 1));
+  await waitFor(
+    () => expect(publishRequests).toBe(previousRequests + 1),
+    timeout
+  );
 };
 const openReport = async () => {
   await act(async () =>
