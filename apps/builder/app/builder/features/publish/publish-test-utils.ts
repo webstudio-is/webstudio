@@ -2,6 +2,16 @@ import { FetchInterceptor } from "@mswjs/interceptors/fetch";
 import { act } from "react-dom/test-utils";
 import { expect, vi } from "vitest";
 
+export const createPublishAuditFinding = (
+  message: string,
+  severity: "error" | "warning" = "error"
+) => ({
+  ruleId: "test-rule",
+  severity,
+  message,
+  location: {},
+});
+
 export const selectTab = async (name: string) => {
   const tab = Array.from(
     document.body.querySelectorAll<HTMLElement>('[role="tab"]')
