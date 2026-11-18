@@ -42,7 +42,6 @@ import {
   type RefObject,
   type ReactNode,
   useRef,
-  useCallback,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import {
@@ -201,10 +200,6 @@ const TextFieldBase: ForwardRefRenderFunction<
 
   const { focusWithinProps } = useFocusWithin({ onBlurWithin: onBlur });
 
-  const onClickCapture = useCallback(() => {
-    internalInputRef.current?.focus();
-  }, [internalInputRef]);
-
   const { stylesByStyleSourceId } = useStore($stylesIndex);
   const hasStylesMap = getHasStylesMap(value, stylesByStyleSourceId);
   const focusOrder = [
@@ -256,11 +251,17 @@ const TextFieldBase: ForwardRefRenderFunction<
   return (
     <TextFieldContainer
       {...focusWithinProps}
-      onClickCapture={onClickCapture}
-      // Setting tabIndex to -1 to allow this element to be focused via JavaScript.
-      // This is used when we need to hide the caret but want to:
-      //   1. keep the visual focused state of the component
-      //   2. keep focus somewhere insisde the component to not trigger some focus-trap logic
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          event.preventDefault();
+        }
+      }}
+      onFocus={(event) => {
+        if (event.target === event.currentTarget) {
+          internalInputRef.current?.focus();
+        }
+      }}
+      // Allow keyboard navigation to focus this container and move focus to the input.
       tabIndex={-1}
       ref={mergeRefs(forwardedRef, containerRef ?? null, sortableRefCallback)}
       css={css}
