@@ -17,7 +17,7 @@ import { StyleSourceMenu } from "./style-source-menu";
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-test("clicking a style source keeps focus on its button", () => {
+test("clicks preserve focus while focusing the container moves focus to the input", async () => {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -50,8 +50,13 @@ test("clicking a style source keeps focus on its button", () => {
     act(() => sourceButton.click());
     expect(document.activeElement).toBe(sourceButton);
 
-    act(() => input.closest<HTMLElement>('[tabindex="-1"]')!.click());
+    const field = input.closest<HTMLElement>('[tabindex="-1"]')!;
+    await act(async () => userEvent.click(field, { position: { x: 1, y: 1 } }));
+    expect(document.activeElement).toBe(sourceButton);
+
+    act(() => field.focus());
     expect(document.activeElement).toBe(input);
+    await act(async () => userEvent.keyboard("{Shift}"));
   } finally {
     act(() => root.unmount());
     container.remove();

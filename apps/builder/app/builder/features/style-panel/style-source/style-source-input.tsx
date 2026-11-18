@@ -251,19 +251,17 @@ const TextFieldBase: ForwardRefRenderFunction<
   return (
     <TextFieldContainer
       {...focusWithinProps}
-      onClickCapture={(event) => {
-        if (
-          event.target instanceof Element &&
-          event.target.closest("[data-id]")
-        ) {
-          return;
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          event.preventDefault();
         }
-        internalInputRef.current?.focus();
       }}
-      // Setting tabIndex to -1 to allow this element to be focused via JavaScript.
-      // This is used when we need to hide the caret but want to:
-      //   1. keep the visual focused state of the component
-      //   2. keep focus somewhere insisde the component to not trigger some focus-trap logic
+      onFocus={(event) => {
+        if (event.target === event.currentTarget) {
+          internalInputRef.current?.focus();
+        }
+      }}
+      // Allow keyboard navigation to focus this container and move focus to the input.
       tabIndex={-1}
       ref={mergeRefs(forwardedRef, containerRef ?? null, sortableRefCallback)}
       css={css}
