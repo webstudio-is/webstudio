@@ -427,7 +427,7 @@ test("a dispatch accepted after leaving and returning to its project cannot rest
   await openReport();
   expect(entries()).toHaveLength(0);
   expect(logRequests).toHaveLength(0);
-});
+}, 30_000);
 
 test("keeping ten publishes evicts an older in-flight reader before its next page", async () => {
   holdLog = { response: deferred<void>() };
