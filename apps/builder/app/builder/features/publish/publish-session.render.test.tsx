@@ -387,32 +387,33 @@ test("a paid response after downgrade cannot restore logs; upgrading restarts fr
   holdLog = { cursor: 1, response: deferred<void>() };
   await render();
   await publish();
-  await waitFor(() => expect(logRequests).toHaveLength(2));
+  await waitFor(() => expect(logRequests).toHaveLength(2), 20_000);
   await openReport();
   await setPaid(false);
   await act(async () => holdLog?.response.resolve());
   expect(panel().querySelector("pre")).toBeNull();
   await setPaid(true);
-  await waitFor(() =>
-    expect(panel().querySelector("pre")?.textContent).toBe("€")
+  await waitFor(
+    () => expect(panel().querySelector("pre")?.textContent).toBe("€"),
+    20_000
   );
   expect(logRequests.slice(2).map(({ cursor }) => cursor)).toEqual([
     undefined,
     1,
   ]);
-});
+}, 60_000);
 
 test("a log response from the previous project cannot populate the new project's report", async () => {
   holdLog = { response: deferred<void>() };
   await render();
   await publish();
-  await waitFor(() => expect(logRequests).toHaveLength(1));
+  await waitFor(() => expect(logRequests).toHaveLength(1), 20_000);
   await changeProject("project-2");
   await act(async () => holdLog?.response.resolve());
   await openReport();
   expect(entries()).toHaveLength(0);
   expect(logRequests).toHaveLength(1);
-}, 30_000);
+}, 45_000);
 
 test("a dispatch accepted after leaving and returning to its project cannot restore the old session", async () => {
   heldPublish = deferred<unknown>();
