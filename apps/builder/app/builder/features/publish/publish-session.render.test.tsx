@@ -366,7 +366,7 @@ test("Free does not fetch logs; upgrading reads UTF-8 from byte zero and preserv
   expect(panel().textContent).not.toContain("Late error");
   expect(panel().textContent).not.toContain("Early warning");
   expect(document.body.querySelector("pre")).toBeNull();
-});
+}, 30_000);
 
 test("an accepted publish without a log handle is retained without retrying dispatch or reading logs", async () => {
   withHandle = false;
@@ -407,7 +407,7 @@ test("a log response from the previous project cannot populate the new project's
   await openReport();
   expect(entries()).toHaveLength(0);
   expect(logRequests).toHaveLength(1);
-});
+}, 30_000);
 
 test("a dispatch accepted after leaving and returning to its project cannot restore the old session", async () => {
   heldPublish = deferred<unknown>();

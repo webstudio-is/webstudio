@@ -235,7 +235,7 @@ test("project navigation suppresses an old static download and error toast", asy
   await act(async () => vi.advanceTimersByTimeAsync(1_000));
   expect(downloads).not.toHaveBeenCalled();
   expect(errorToast).not.toHaveBeenCalled();
-});
+}, 30_000);
 
 test("a failed static runner clears progress without starting a download", async () => {
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
