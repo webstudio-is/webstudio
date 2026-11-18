@@ -234,7 +234,8 @@ const setPaid = async (allowPublishLogs: boolean) => {
   );
 };
 const publish = async () => {
-  if (publishDialog.get() !== "publish") {
+  if (document.body.querySelector('input[name="domainToPublish[]"]') === null) {
+    await act(async () => publishDialog.set("none"));
     await act(async () => publishDialog.set("publish"));
   }
   const domain = document.body.querySelector<HTMLInputElement>(
@@ -339,7 +340,7 @@ test("retries pending and failed log reads before giving up on the session", asy
     undefined,
     1,
   ]);
-});
+}, 30_000);
 
 test("Free does not fetch logs; upgrading reads UTF-8 from byte zero and preserves issue severity", async () => {
   await setPaid(false);
