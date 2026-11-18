@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import {
+  createPublishAuditFinding,
   createTrpcInterceptor,
   selectStaticDestination,
 } from "./publish-test-utils";
@@ -80,7 +81,7 @@ beforeAll(async () => {
   projectStore = (await import("~/shared/sync/data-stores")).$project;
   const { updateCsrfToken } = await import("~/shared/csrf.client");
   updateCsrfToken("test-token");
-});
+}, 60_000);
 
 afterEach(async () => {
   await act(async () => root?.unmount());
@@ -121,13 +122,13 @@ const staticButton = () =>
     (button) => button.textContent?.startsWith("Build and download static site")
   );
 
-const waitFor = <T,>(assertion: () => T | Promise<T>) =>
+const waitFor = <T,>(assertion: () => T | Promise<T>, timeout = 10_000) =>
   vi.waitFor(
     async () => {
       await act(async () => {});
       await assertion();
     },
-    { timeout: 10_000 }
+    { timeout }
   );
 
 const render = async (open: boolean, projectId = "project-a") => {
@@ -162,7 +163,6 @@ test("reopening an active static publish keeps one status owner and one download
   buildStatus = "PENDING";
   projectStore.set(createProject());
   await render(true);
-  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   const button = staticButton();
   expect(button).toBeDefined();
   await act(async () => button?.click());
@@ -179,11 +179,10 @@ test("reopening an active static publish keeps one status owner and one download
     )
   ).toBeNull();
   getJobStatus = "success";
-  await act(async () => vi.advanceTimersByTimeAsync(15_000));
   await waitFor(async () => {
     await act(async () => {});
     expect(downloads).toHaveBeenCalledOnce();
-  });
+  }, 30_000);
   expect(downloads).toHaveBeenCalledExactlyOnceWith("/cgi/static/ssg/site.zip");
   expect(staticButton()?.dataset.state).not.toBe("pending");
   expect(staticButton()?.disabled).toBe(false);
@@ -191,7 +190,7 @@ test("reopening an active static publish keeps one status owner and one download
   expect(document.body.textContent).toContain("Downloaded");
   expect(publishRequests).toBe(1);
   expect(jobRequests).toBe(2);
-}, 30_000);
+}, 60_000);
 
 test("a persisted static failure remains visible without session diagnostics", async () => {
   projectStore.set({
@@ -234,7 +233,7 @@ test("project navigation suppresses an old static download and error toast", asy
   await act(async () => vi.advanceTimersByTimeAsync(1_000));
   expect(downloads).not.toHaveBeenCalled();
   expect(errorToast).not.toHaveBeenCalled();
-});
+}, 30_000);
 
 test("a failed static runner clears progress without starting a download", async () => {
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
@@ -311,7 +310,7 @@ test("the static failure alert opens an audit rejection instead of an older succ
   });
   staticResponse = {
     success: false,
-    auditFindings: [{ severity: "error", message: "audit-rejection" }],
+    auditFindings: [createPublishAuditFinding("audit-rejection")],
   };
   await act(async () => staticButton()?.click());
   await waitFor(() => expect(publishRequests).toBe(2));

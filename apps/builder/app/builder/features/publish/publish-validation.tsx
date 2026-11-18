@@ -5,6 +5,7 @@ import {
   findPageAndSelectorByInstanceId,
   formatPrePublishAuditFinding,
   runPrePublishAudit,
+  type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
 import {
   $registeredComponentMetas,
@@ -92,53 +93,63 @@ const PrePublishInstanceLink = ({
   );
 };
 
-const getPrePublishAuditFindings = (): DiagnosticFinding[] => {
-  const findings = runPrePublishAudit({
-    pages: $pages.get(),
-    instances: $instances.get(),
-    props: $props.get(),
-    dataSources: $dataSources.get(),
-    resources: $resources.get(),
-    assets: $assets.get(),
-    metas: $registeredComponentMetas.get(),
-  });
-  return findings.flatMap((finding) => {
-    if (finding.severity !== "error" && finding.severity !== "warning") {
-      return [];
-    }
-    const context = Object.entries(finding.location)
-      .filter(
-        ([key, value]) => key !== "instanceSelector" && value !== undefined
-      )
-      .map(([key, value]) => `${key}: ${value}`);
-    const reportText = [
-      `${finding.severity.toUpperCase()}: ${formatPrePublishAuditFinding(
-        finding
-      )}`,
+type DiagnosticPrePublishAuditFinding = PrePublishAuditFinding & {
+  severity: "error" | "warning";
+};
+
+const toPrePublishDiagnosticFinding = (
+  finding: DiagnosticPrePublishAuditFinding
+): DiagnosticFinding => {
+  const title = formatPrePublishAuditFinding(finding);
+  const context = Object.entries(finding.location)
+    .filter(([key, value]) => key !== "instanceSelector" && value !== undefined)
+    .map(([key, value]) => `${key}: ${value}`);
+  return {
+    severity: finding.severity,
+    source: "audit",
+    title,
+    summary: title.slice(0, 160),
+    link:
+      finding.location.instanceId === undefined ? undefined : (
+        <PrePublishInstanceLink
+          instanceId={finding.location.instanceId}
+          pageId={finding.location.pageId}
+          instanceSelector={finding.location.instanceSelector}
+        >
+          Show element
+        </PrePublishInstanceLink>
+      ),
+    details: context.length === 0 ? undefined : context.join(" · "),
+    reportText: [
+      `${finding.severity.toUpperCase()}: ${title}`,
       `Rule: ${finding.ruleId}`,
       ...context,
-    ].join("\n");
-    return [
-      {
-        severity: finding.severity,
-        title: formatPrePublishAuditFinding(finding),
-        summary: formatPrePublishAuditFinding(finding).slice(0, 160),
-        link:
-          finding.location.instanceId === undefined ? undefined : (
-            <PrePublishInstanceLink
-              instanceId={finding.location.instanceId}
-              pageId={finding.location.pageId}
-              instanceSelector={finding.location.instanceSelector}
-            >
-              Show element
-            </PrePublishInstanceLink>
-          ),
-        details: context.length === 0 ? undefined : context.join(" · "),
-        reportText,
-      },
-    ];
-  });
+    ].join("\n"),
+  };
 };
+
+export const getPublishAuditFindings = (
+  findings: readonly PrePublishAuditFinding[]
+): DiagnosticFinding[] =>
+  findings
+    .filter(
+      (finding): finding is DiagnosticPrePublishAuditFinding =>
+        finding.severity === "error" || finding.severity === "warning"
+    )
+    .map(toPrePublishDiagnosticFinding);
+
+const getPrePublishAuditFindings = (): DiagnosticFinding[] =>
+  getPublishAuditFindings(
+    runPrePublishAudit({
+      pages: $pages.get(),
+      instances: $instances.get(),
+      props: $props.get(),
+      dataSources: $dataSources.get(),
+      resources: $resources.get(),
+      assets: $assets.get(),
+      metas: $registeredComponentMetas.get(),
+    })
+  );
 
 export const runPublishDiagnostics = async (
   projectId: Project["id"],
@@ -240,22 +251,3 @@ export const reportPublishValidationFailure = (
     },
   ]);
 };
-
-export const getServerPublishFindings = (
-  findings: readonly {
-    severity: "error" | "warning" | "info";
-    message: string;
-  }[]
-): DiagnosticFinding[] =>
-  findings.flatMap((finding) =>
-    finding.severity === "info"
-      ? []
-      : [
-          {
-            severity: finding.severity,
-            title: finding.message,
-            summary: finding.message,
-            reportText: `${finding.severity.toUpperCase()}: ${finding.message}`,
-          },
-        ]
-  );
