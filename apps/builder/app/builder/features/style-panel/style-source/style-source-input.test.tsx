@@ -17,6 +17,47 @@ import { StyleSourceMenu } from "./style-source-menu";
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
+test("clicking a style source keeps focus on its button", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  try {
+    act(() =>
+      root.render(
+        <TooltipProvider>
+          <StyleSourceInput
+            inputRef={() => {}}
+            selectedItemSelector={undefined}
+            value={[
+              {
+                id: "token",
+                label: "Token",
+                source: "token",
+                disabled: false,
+                locked: false,
+                states: [],
+              },
+            ]}
+          />
+        </TooltipProvider>
+      )
+    );
+    const input = container.querySelector<HTMLInputElement>("input")!;
+    const sourceButton = container.querySelector<HTMLButtonElement>(
+      '[data-id="token"] button'
+    )!;
+    act(() => sourceButton.focus());
+    act(() => sourceButton.click());
+    expect(document.activeElement).toBe(sourceButton);
+
+    act(() => input.closest<HTMLElement>('[tabindex="-1"]')!.click());
+    expect(document.activeElement).toBe(input);
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+  }
+});
+
 test("pastes copied Tokens and Tag styles while leaving ordinary text to the input", () => {
   const container = document.createElement("div");
   document.body.appendChild(container);
