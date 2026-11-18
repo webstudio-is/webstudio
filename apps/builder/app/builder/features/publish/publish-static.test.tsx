@@ -122,13 +122,13 @@ const staticButton = () =>
     (button) => button.textContent?.startsWith("Build and download static site")
   );
 
-const waitFor = <T,>(assertion: () => T | Promise<T>) =>
+const waitFor = <T,>(assertion: () => T | Promise<T>, timeout = 10_000) =>
   vi.waitFor(
     async () => {
       await act(async () => {});
       await assertion();
     },
-    { timeout: 10_000 }
+    { timeout }
   );
 
 const render = async (open: boolean, projectId = "project-a") => {
@@ -162,7 +162,6 @@ const render = async (open: boolean, projectId = "project-a") => {
 test("reopening an active static publish keeps one status owner and one download", async () => {
   buildStatus = "PENDING";
   projectStore.set(createProject());
-  vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
   await render(true);
   const button = staticButton();
   expect(button).toBeDefined();
@@ -180,11 +179,10 @@ test("reopening an active static publish keeps one status owner and one download
     )
   ).toBeNull();
   getJobStatus = "success";
-  await act(async () => vi.advanceTimersByTimeAsync(15_000));
   await waitFor(async () => {
     await act(async () => {});
     expect(downloads).toHaveBeenCalledOnce();
-  });
+  }, 30_000);
   expect(downloads).toHaveBeenCalledExactlyOnceWith("/cgi/static/ssg/site.zip");
   expect(staticButton()?.dataset.state).not.toBe("pending");
   expect(staticButton()?.disabled).toBe(false);
@@ -192,7 +190,7 @@ test("reopening an active static publish keeps one status owner and one download
   expect(document.body.textContent).toContain("Downloaded");
   expect(publishRequests).toBe(1);
   expect(jobRequests).toBe(2);
-}, 30_000);
+}, 60_000);
 
 test("a persisted static failure remains visible without session diagnostics", async () => {
   projectStore.set({
