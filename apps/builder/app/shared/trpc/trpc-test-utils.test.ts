@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { createTrpcInterceptor } from "./publish-test-utils";
+import { createTrpcInterceptor } from "./trpc-test-utils";
 
 const requestUrl = "/trpc/api.publish.getJob?input=%7B%220%22%3Anull%7D";
 

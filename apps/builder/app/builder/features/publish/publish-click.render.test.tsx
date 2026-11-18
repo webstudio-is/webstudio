@@ -13,9 +13,9 @@ import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { Instance } from "@webstudio-is/sdk";
+import { createTrpcInterceptor } from "~/shared/trpc/trpc-test-utils";
 import {
   createPublishAuditFinding,
-  createTrpcInterceptor,
   selectStaticDestination,
   selectTab,
 } from "./publish-test-utils";

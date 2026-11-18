@@ -3,9 +3,9 @@ import { act } from "react-dom/test-utils";
 import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
+import { createTrpcInterceptor } from "~/shared/trpc/trpc-test-utils";
 import {
   createPublishAuditFinding,
-  createTrpcInterceptor,
   selectStaticDestination,
 } from "./publish-test-utils";
 

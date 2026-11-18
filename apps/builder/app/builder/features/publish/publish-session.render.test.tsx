@@ -11,11 +11,8 @@ import {
 } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import {
-  createTrpcInterceptor,
-  deferred,
-  selectTab,
-} from "./publish-test-utils";
+import { createTrpcInterceptor } from "~/shared/trpc/trpc-test-utils";
+import { deferred, selectTab } from "./publish-test-utils";
 
 const encoded = (bytes: number[]) => btoa(String.fromCharCode(...bytes));
 const logRequests: Array<{

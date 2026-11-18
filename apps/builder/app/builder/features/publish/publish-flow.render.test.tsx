@@ -14,9 +14,9 @@ import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import type { Project } from "@webstudio-is/project";
 import type { Pages } from "@webstudio-is/sdk";
+import { createTrpcInterceptor } from "~/shared/trpc/trpc-test-utils";
 import {
   createPublishAuditFinding,
-  createTrpcInterceptor,
   deferred,
   selectTab,
 } from "./publish-test-utils";

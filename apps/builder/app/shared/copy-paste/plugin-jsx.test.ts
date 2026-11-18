@@ -1,25 +1,21 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime";
 import { inspectWebstudioJsxFragmentSyntax } from "@webstudio-is/project-build/transfer";
-import { isLikelyWebstudioJsx, jsx } from "./plugin-jsx";
 import { $project } from "../sync/data-stores";
-import { pasteHandled, pasteIgnored } from "./copy-paste";
+import { updateCsrfToken } from "../csrf.client";
+import { createTrpcInterceptor } from "../trpc/trpc-test-utils";
 
 const mocks = vi.hoisted(() => ({
-  createJsxFragment: vi.fn(),
   insertWebstudioFragmentAt: vi.fn(),
   toastError: vi.fn(),
-}));
-
-vi.mock("../trpc/trpc-client", async (importOriginal) => ({
-  ...(await importOriginal()),
-  nativeClient: {
-    build: {
-      createJsxFragment: {
-        query: mocks.createJsxFragment,
-      },
-    },
-  },
 }));
 
 vi.mock("../instance-utils/insert", async (importOriginal) => ({
@@ -37,9 +33,32 @@ vi.mock("../builder-api", async (importOriginal) => ({
   },
 }));
 
+let requestInput: unknown;
+let createFragmentResponse: unknown = createEmptyWebstudioFragment();
+let jsx: typeof import("./plugin-jsx").jsx;
+let isLikelyWebstudioJsx: typeof import("./plugin-jsx").isLikelyWebstudioJsx;
+let pasteHandled: typeof import("./copy-paste").pasteHandled;
+let pasteIgnored: typeof import("./copy-paste").pasteIgnored;
+const interceptor = createTrpcInterceptor({
+  "build.createJsxFragment": (input) => {
+    requestInput = input;
+    return createFragmentResponse;
+  },
+});
+
+beforeAll(async () => {
+  interceptor.start();
+  ({ pasteHandled, pasteIgnored } = await import("./copy-paste"));
+  ({ jsx, isLikelyWebstudioJsx } = await import("./plugin-jsx"));
+});
+afterAll(() => interceptor.stop());
+
 describe("jsx paste plugin", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    requestInput = undefined;
+    createFragmentResponse = createEmptyWebstudioFragment();
+    updateCsrfToken("test-token");
     $project.set({ id: "project-id" } as never);
   });
 
@@ -62,15 +81,15 @@ describe("jsx paste plugin", () => {
 
   test("converts and inserts Webstudio JSX", async () => {
     const fragment = createEmptyWebstudioFragment();
-    mocks.createJsxFragment.mockResolvedValue(fragment);
+    createFragmentResponse = fragment;
     mocks.insertWebstudioFragmentAt.mockReturnValue(true);
 
-    await expect(jsx.onPaste?.("<Box />")).resolves.toEqual(pasteHandled);
-
-    expect(mocks.createJsxFragment).toHaveBeenCalledWith({
+    const result = await jsx.onPaste?.("<Box />");
+    expect(requestInput).toEqual({
       projectId: "project-id",
       source: "<Box />",
     });
+    expect(result).toEqual(pasteHandled);
     expect(mocks.insertWebstudioFragmentAt).toHaveBeenCalledWith(
       fragment,
       undefined,
@@ -86,7 +105,7 @@ describe("jsx paste plugin", () => {
       pasteIgnored
     );
 
-    expect(mocks.createJsxFragment).not.toHaveBeenCalled();
+    expect(requestInput).toBeUndefined();
     expect(mocks.insertWebstudioFragmentAt).not.toHaveBeenCalled();
   });
 
@@ -95,12 +114,26 @@ describe("jsx paste plugin", () => {
 
     await expect(jsx.onPaste?.("<Box />")).resolves.toEqual(pasteIgnored);
 
-    expect(mocks.createJsxFragment).not.toHaveBeenCalled();
+    expect(requestInput).toBeUndefined();
     expect(mocks.insertWebstudioFragmentAt).not.toHaveBeenCalled();
   });
 
   test("reports conversion errors and stops paste fallback", async () => {
-    mocks.createJsxFragment.mockRejectedValue(new Error("Invalid JSX"));
+    createFragmentResponse = new Response(
+      JSON.stringify([
+        {
+          error: {
+            message: "Invalid JSX",
+            code: -32600,
+            data: { code: "BAD_REQUEST", httpStatus: 400 },
+          },
+        },
+      ]),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
 
     await expect(jsx.onPaste?.('<Box ws:id="0" />')).resolves.toEqual({
       success: false,
@@ -109,5 +142,9 @@ describe("jsx paste plugin", () => {
 
     expect(mocks.toastError).not.toHaveBeenCalled();
     expect(mocks.insertWebstudioFragmentAt).not.toHaveBeenCalled();
+    expect(requestInput).toEqual({
+      projectId: "project-id",
+      source: '<Box ws:id="0" />',
+    });
   });
 });
