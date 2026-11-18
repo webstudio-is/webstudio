@@ -12,6 +12,7 @@ import {
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import {
   createPublishAuditFinding,
   createTrpcInterceptor,
@@ -499,7 +500,7 @@ test("publish audit warnings keep their instance links in Diagnostics", async ()
           id: instanceId,
           component: "Box",
           children: [],
-        } as never,
+        } satisfies Instance,
       ],
     ])
   );

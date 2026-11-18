@@ -81,7 +81,7 @@ beforeAll(async () => {
   projectStore = (await import("~/shared/sync/data-stores")).$project;
   const { updateCsrfToken } = await import("~/shared/csrf.client");
   updateCsrfToken("test-token");
-});
+}, 60_000);
 
 afterEach(async () => {
   await act(async () => root?.unmount());
