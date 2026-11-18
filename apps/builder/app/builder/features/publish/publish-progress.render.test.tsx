@@ -14,6 +14,7 @@ import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import {
+  createPublishAuditFinding,
   createTrpcInterceptor,
   deferred,
   selectTab,
@@ -769,7 +770,7 @@ test.each(["site", "static"] as const)(
     let target: "site" | "static" = first;
     publish = async () => ({
       success: false,
-      auditFindings: [{ severity: "error", message: `${target} diagnostic` }],
+      auditFindings: [createPublishAuditFinding(`${target} diagnostic`)],
     });
     await mount();
     if (first === "static") {

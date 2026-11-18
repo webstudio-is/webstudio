@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import {
+  createPublishAuditFinding,
   createTrpcInterceptor,
   selectStaticDestination,
 } from "./publish-test-utils";
@@ -311,7 +312,7 @@ test("the static failure alert opens an audit rejection instead of an older succ
   });
   staticResponse = {
     success: false,
-    auditFindings: [{ severity: "error", message: "audit-rejection" }],
+    auditFindings: [createPublishAuditFinding("audit-rejection")],
   };
   await act(async () => staticButton()?.click());
   await waitFor(() => expect(publishRequests).toBe(2));

@@ -11,9 +11,12 @@ import {
 } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
+import { createDefaultPages } from "@webstudio-is/project-build";
 import {
+  createPublishAuditFinding,
   createTrpcInterceptor,
   selectStaticDestination,
+  selectTab,
 } from "./publish-test-utils";
 
 const reactEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
@@ -263,7 +266,7 @@ test("a rejected publish replaces an older success notice with its findings", as
 
   publishResponse = {
     success: false,
-    auditFindings: [{ severity: "error", message: "new audit failure" }],
+    auditFindings: [createPublishAuditFinding("new audit failure")],
   };
   const publishAgain = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
@@ -394,6 +397,8 @@ afterEach(() => {
   act(() => {
     root?.unmount();
     stores.$project.set(undefined);
+    stores.$pages.set(undefined);
+    stores.$instances.set(new Map());
     builderStates.$publishDialog.set("none");
   });
   root = undefined;
@@ -477,6 +482,96 @@ test("keeps Diagnostics visible but disabled before there is anything to show", 
   expect(
     requests.filter(({ path }) => path === "/trpc/project.userPublishCount")
   ).toHaveLength(1);
+});
+
+test("publish audit warnings keep their instance links in Diagnostics", async () => {
+  const instanceId = "publish-warning-instance";
+  const pageId = "publish-warning-page";
+  stores.$pages.set(
+    createDefaultPages({ rootInstanceId: instanceId, homePageId: pageId })
+  );
+  stores.$instances.set(
+    new Map([
+      [
+        instanceId,
+        {
+          type: "instance",
+          id: instanceId,
+          component: "Box",
+          children: [],
+        } as never,
+      ],
+    ])
+  );
+  nanoStates.$planFeatures.set({
+    ...nanoStates.$planFeatures.get(),
+    allowPublishLogs: true,
+  });
+  jobStatus = "success";
+  publishResponse = {
+    success: true,
+    buildId: "build-1",
+    findings: [
+      {
+        ruleId: "html-content-model",
+        severity: "warning",
+        message: "A child does not match the element's content model.",
+        location: {
+          pageId,
+          pageName: "Home",
+          pagePath: "/",
+          instanceId,
+          instanceSelector: [instanceId],
+        },
+      },
+    ],
+  };
+  await mount();
+
+  const domain = document.body.querySelector<HTMLInputElement>(
+    'input[name="domainToPublish[]"]'
+  )!;
+  if (domain.checked === false) {
+    await act(async () =>
+      document.body.querySelector<HTMLElement>('[role="checkbox"]')?.click()
+    );
+  }
+  const publish = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  )
+    .filter((button) => button.textContent?.trim() === "Publish")
+    .at(-1)!;
+  await act(async () => publish.click());
+  await waitFor(() =>
+    expect(document.body.textContent).toContain("Published successfully.")
+  );
+
+  await act(async () =>
+    document.body
+      .querySelector<HTMLButtonElement>('button[aria-label="Publish options"]')
+      ?.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          pointerType: "mouse",
+        })
+      )
+  );
+  await act(async () =>
+    Array.from(document.body.querySelectorAll<HTMLElement>("[role=menuitem]"))
+      .find((item) => item.textContent?.trim() === "Diagnostics")
+      ?.click()
+  );
+  await waitFor(() =>
+    expect(document.body.querySelector('[role="dialog"]')).not.toBeNull()
+  );
+  await selectTab("Warnings");
+  const link = document.body.querySelector<HTMLAnchorElement>(
+    'a[href*="instance=publish-warning-instance"]'
+  );
+  expect(link?.textContent).toBe("Show element");
+  expect(document.body.textContent).toContain(
+    `Publish warning for "Home" (/): A child does not match the element's content model.`
+  );
 });
 
 test.each([

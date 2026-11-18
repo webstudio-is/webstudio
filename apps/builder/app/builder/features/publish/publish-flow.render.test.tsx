@@ -15,6 +15,7 @@ import { createAssetContentSession } from "@webstudio-is/content-engine/asset-co
 import type { Project } from "@webstudio-is/project";
 import type { Pages } from "@webstudio-is/sdk";
 import {
+  createPublishAuditFinding,
   createTrpcInterceptor,
   deferred,
   selectTab,
@@ -308,7 +309,7 @@ test.each([
     await act(async () => {
       dispatch.resolve({
         success: false,
-        auditFindings: [{ severity: "error", message: "server rejection" }],
+        auditFindings: [createPublishAuditFinding("server rejection")],
       });
       await dispatch.promise;
     });
@@ -339,7 +340,7 @@ test("static audit rejection notifies after Export closes", async () => {
   await act(async () => {
     dispatch.resolve({
       success: false,
-      auditFindings: [{ severity: "error", message: "server rejection" }],
+      auditFindings: [createPublishAuditFinding("server rejection")],
     });
     await dispatch.promise;
   });
@@ -600,7 +601,7 @@ test("static check failure stays in the Export alert without a toast", async () 
   await act(async () => {
     dispatch.resolve({
       success: false,
-      auditFindings: [{ severity: "error", message: "server rejection" }],
+      auditFindings: [createPublishAuditFinding("server rejection")],
     });
     await dispatch.promise;
   });
@@ -770,7 +771,7 @@ test.each([
           failure === "audit"
             ? {
                 success: false,
-                auditFindings: [{ severity: "error", message }],
+                auditFindings: [createPublishAuditFinding(message)],
               }
             : { success: false, error: message }
         );
