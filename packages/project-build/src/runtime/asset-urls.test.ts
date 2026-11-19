@@ -123,6 +123,21 @@ test("keeps a CGI alias when a stored asset is duplicated", () => {
   });
 });
 
+test("omits duplicate canonical paths even when their asset URLs match", () => {
+  expect(
+    createAssetUrlsByPath({
+      assets: [
+        asset({ id: "first", name: "app_hash.js", filename: "app" }),
+        asset({ id: "copy", name: "app_hash.js", filename: "app" }),
+      ],
+      assetFolders: new Map(),
+      getUrl: (item) => `/assets/${item.name}`,
+    })
+  ).toEqual({
+    "/cgi/asset/app_hash.js": "/assets/app_hash.js",
+  });
+});
+
 test("rewrites CGI URLs for a custom generated asset base", () => {
   expect(
     createAssetUrlsByPath({
@@ -135,7 +150,7 @@ test("rewrites CGI URLs for a custom generated asset base", () => {
   });
 });
 
-test("keeps a canonical path when it equals the CGI asset path", () => {
+test("keeps a canonical path when another asset's CGI alias matches it", () => {
   const folders: AssetFolders = new Map([
     [
       "cgi",
@@ -167,12 +182,14 @@ test("keeps a canonical path when it equals the CGI asset path", () => {
           filename: "app_hash",
           folderId: "asset",
         }),
+        asset({ id: "other", name: "app_hash.js", filename: "other" }),
       ],
       assetFolders: folders,
-      getUrl: (item) => `/media/${item.name}`,
+      getUrl: (item) => `/media/${item.id}/${item.name}`,
     })
   ).toEqual({
-    "/cgi/asset/app_hash.js": "/media/app_hash.js",
+    "/cgi/asset/app_hash.js": "/media/script/app_hash.js",
+    "/other.js": "/media/other/app_hash.js",
   });
 });
 

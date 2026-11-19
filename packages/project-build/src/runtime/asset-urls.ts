@@ -19,9 +19,10 @@ export const createAssetUrlsByPath = ({
 }) => {
   const hierarchy = createAssetFolderHierarchy(assetFolders);
   const urlsById = new Map<string, string>();
-  const assetUrlPaths = new Set<string>();
+  const canonicalPaths = new Set<string>();
+  const cgiAliases = new Map<string, { id: string; path: string }>();
   const assetIdsByPath = createUniqueAssetIdsByPath(
-    Array.from(assets).flatMap((asset) => {
+    Array.from(assets, (asset) => {
       const url = getUrl(asset);
       urlsById.set(asset.id, url);
       const canonicalAssetPath = createCanonicalAssetPath({
@@ -30,35 +31,31 @@ export const createAssetUrlsByPath = ({
           .map((folder) => folder.name),
         name: formatAssetName(asset),
       });
+      canonicalPaths.add(canonicalAssetPath);
       const cgiAssetPath = createCanonicalAssetPath({
         folderNames: ["cgi", "asset"],
         name: asset.name,
       });
       const targetUrl = new URL(url, "https://webstudio.invalid");
-      const assetPaths = [
-        {
-          id: asset.id,
-          path: canonicalAssetPath,
-        },
-      ];
       if (
         isResizableImageFileName(asset.name) === false &&
-        canonicalAssetPath !== cgiAssetPath &&
         (targetUrl.pathname !== `/${cgiAssetPath}` ||
           targetUrl.origin !== "https://webstudio.invalid")
       ) {
-        assetPaths.push({ id: asset.id, path: cgiAssetPath });
+        cgiAliases.set(`${cgiAssetPath}\0${url}`, {
+          id: asset.id,
+          path: cgiAssetPath,
+        });
       }
-      return assetPaths.filter(({ path }) => {
-        const assetUrlPath = `${path}\0${url}`;
-        if (assetUrlPaths.has(assetUrlPath)) {
-          return false;
-        }
-        assetUrlPaths.add(assetUrlPath);
-        return true;
-      });
+      return { id: asset.id, path: canonicalAssetPath };
     })
   );
+  for (const [path, id] of createUniqueAssetIdsByPath(cgiAliases.values())) {
+    // Ambiguous canonical paths still reserve the path.
+    if (canonicalPaths.has(path) === false) {
+      assetIdsByPath.set(path, id);
+    }
+  }
   return Object.fromEntries(
     Array.from(assetIdsByPath, ([path, assetId]) => {
       return [`/${path}`, urlsById.get(assetId)!];
