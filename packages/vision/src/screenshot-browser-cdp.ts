@@ -451,7 +451,6 @@ const getJavascriptErrorLocation = (params: unknown) => {
   }
   const { url, lineNumber } = params as Record<string, unknown>;
   if (
-    typeof url !== "string" ||
     typeof lineNumber !== "number" ||
     Number.isSafeInteger(lineNumber) === false ||
     lineNumber < 0 ||
@@ -459,17 +458,21 @@ const getJavascriptErrorLocation = (params: unknown) => {
   ) {
     return;
   }
-  try {
-    const scriptUrl = new URL(url);
-    if (
-      (scriptUrl.protocol === "http:" || scriptUrl.protocol === "https:") &&
-      isGeneratedStaticScriptPath(scriptUrl.pathname)
-    ) {
-      return { pathname: scriptUrl.pathname, line: lineNumber + 1 };
+  const line = lineNumber + 1;
+  if (typeof url === "string") {
+    try {
+      const scriptUrl = new URL(url);
+      if (
+        (scriptUrl.protocol === "http:" || scriptUrl.protocol === "https:") &&
+        isGeneratedStaticScriptPath(scriptUrl.pathname)
+      ) {
+        return { pathname: scriptUrl.pathname, line };
+      }
+    } catch {
+      // Keep a safe line number when the source URL cannot be exposed.
     }
-  } catch {
-    return;
   }
+  return { line };
 };
 
 const navigateAndWaitForLifecycle = async (
@@ -821,7 +824,7 @@ export type BrowserScreenshotNavigation = {
   redirects: string[];
   documentReadyState: string;
   javascriptErrorPresent?: boolean;
-  javascriptErrorLocation?: { pathname: string; line: number };
+  javascriptErrorLocation?: { pathname?: string; line: number };
   pageMetadata?: BrowserScreenshotPageMetadata;
   layoutStable: boolean;
 };

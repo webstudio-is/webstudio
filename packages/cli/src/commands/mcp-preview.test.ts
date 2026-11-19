@@ -1940,69 +1940,80 @@ test("reports an interior route HTTP failure instead of a wrong-site error", asy
   });
 });
 
-test("reports a safe script location and saved PNG through MCP error serialization", async () => {
-  const capturePage = vi.fn().mockResolvedValueOnce([
-    {
-      output: "/tmp/builder.png",
-      navigation: {
-        generatedSiteRootPresent: true,
-        javascriptErrorPresent: true,
-        javascriptErrorLocation: {
-          pathname: "/assets/app.js",
-          line: 42,
+test.each([
+  {
+    name: "a safe script location",
+    navigation: {
+      javascriptErrorLocation: { pathname: "/assets/app.js", line: 42 },
+    },
+    message:
+      "The page reported a JavaScript error during screenshot capture at /assets/app.js:42.",
+    issue: { file: "/assets/app.js", line: 42 },
+  },
+  {
+    name: "a line without a safe script path",
+    navigation: { javascriptErrorLocation: { line: 42 } },
+    message: "The page reported a JavaScript error during screenshot capture.",
+    issue: { line: 42 },
+  },
+])(
+  "reports $name and saved PNG through MCP error serialization",
+  async ({ navigation, message, issue }) => {
+    const capturePage = vi.fn().mockResolvedValueOnce([
+      {
+        output: "/tmp/builder.png",
+        navigation: {
+          generatedSiteRootPresent: true,
+          javascriptErrorPresent: true,
+          ...navigation,
         },
       },
-    },
-  ]);
-  const handlers = createMcpPreviewHandlers({
-    preview: {
-      status: vi.fn(() => ({
-        url: "http://127.0.0.1:5173/",
-        running: true,
-        mode: "iterative" as const,
-      })),
-      startAndWait: vi.fn(),
-      resolveUrl: vi.fn(() => "http://127.0.0.1:5173/"),
-    },
-    isStale: () => false,
-    createCaptureSession: vi.fn(() => ({
-      capture: vi.fn(),
-      capturePage,
-      close: vi.fn(),
-    })) as never,
-  });
+    ]);
+    const handlers = createMcpPreviewHandlers({
+      preview: {
+        status: vi.fn(() => ({
+          url: "http://127.0.0.1:5173/",
+          running: true,
+          mode: "iterative" as const,
+        })),
+        startAndWait: vi.fn(),
+        resolveUrl: vi.fn(() => "http://127.0.0.1:5173/"),
+      },
+      isStale: () => false,
+      createCaptureSession: vi.fn(() => ({
+        capture: vi.fn(),
+        capturePage,
+        close: vi.fn(),
+      })) as never,
+    });
 
-  const input = [
-    {
-      path: "/",
-      source: "session" as const,
-      viewport: { width: 1280, height: 720 },
-    },
-  ];
-  const error = await handlers
-    .capturePageScreenshots(input)
-    .catch((error) => error);
-  const serialized = mcpTesting.createMcpSingleOpCallErrorPayload({
-    error,
-    elapsedMs: 1,
-  });
-  expect(
-    serialized.error.message.startsWith(
-      "The page reported a JavaScript error during screenshot capture at /assets/app.js:42."
-    )
-  ).toBe(true);
-  expect(serialized).toMatchObject({
-    error: {
-      code: "SCREENSHOT_JAVASCRIPT_ERROR",
-      issues: [
-        {
-          code: "screenshot_javascript_error",
-          file: "/assets/app.js",
-          line: 42,
-          reference: "/tmp/builder.png",
-          constraint: "javascript_runtime_error",
-        },
-      ],
-    },
-  });
-});
+    const input = [
+      {
+        path: "/",
+        source: "session" as const,
+        viewport: { width: 1280, height: 720 },
+      },
+    ];
+    const error = await handlers
+      .capturePageScreenshots(input)
+      .catch((error) => error);
+    const serialized = mcpTesting.createMcpSingleOpCallErrorPayload({
+      error,
+      elapsedMs: 1,
+    });
+    expect(serialized.error.message.startsWith(message)).toBe(true);
+    expect(serialized).toMatchObject({
+      error: {
+        code: "SCREENSHOT_JAVASCRIPT_ERROR",
+        issues: [
+          {
+            code: "screenshot_javascript_error",
+            reference: "/tmp/builder.png",
+            constraint: "javascript_runtime_error",
+            ...issue,
+          },
+        ],
+      },
+    });
+  }
+);

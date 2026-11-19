@@ -2675,7 +2675,7 @@ test.each([
   );
 
   expect(layout.navigation?.javascriptErrorPresent).toBe(true);
-  expect(layout.navigation?.javascriptErrorLocation).toBeUndefined();
+  expect(layout.navigation?.javascriptErrorLocation).toEqual({ line: 7 });
   expect(JSON.stringify(layout.navigation)).not.toContain(
     new URL(url).pathname
   );
