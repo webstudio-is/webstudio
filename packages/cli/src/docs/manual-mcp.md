@@ -421,7 +421,8 @@ terms, agents can:
 - Read, add, update, delete, and replace local styles.
 - Update selected style-source styles.
 - List and edit global Tag styles.
-- List, create, update, attach, detach, extract, duplicate, rename, lock, unlock, reorder, clear, and delete design tokens and style sources.
+- Manage design tokens and style sources: list, create, update, attach, detach, extract, duplicate, rename, lock, unlock, reorder, and clear them.
+- Use `delete-style-source` to delete an entire token or another style source. Use `delete-design-token-styles` only to remove declarations from a token.
 - List, define, rename, delete, and rewrite CSS variables.
 - List, create, update, and delete static data variables.
 - Create string, number, boolean, and JSON variables. Arrays use JSON.
