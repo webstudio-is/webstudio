@@ -19,6 +19,7 @@ import {
   createProjectSession,
 } from "@webstudio-is/project-build/project-session";
 import {
+  applyBuilderPatchTransactions,
   createBuilderStateFromSnapshot,
   createBuilderStateFreshness,
 } from "@webstudio-is/project-build/state";
@@ -398,6 +399,150 @@ afterEach(async () => {
     tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
   );
 });
+
+test.each(["single-op-call", "run"])(
+  "preserves omitted custom page metadata and clears an explicit empty list through MCP %s",
+  async (mode) => {
+    const operation = publicApiOperations.find(
+      ({ command }) => command === "update-page"
+    );
+    if (operation === undefined) {
+      throw new Error("Expected update-page MCP operation");
+    }
+    const directory = await mkdtemp(path.join(tmpdir(), "webstudio-mcp-page-"));
+    tempDirs.push(directory);
+    const custom = [{ property: "og:type", content: '"website"' }];
+    let state = createBuilderStateFromSnapshot({
+      pages: {
+        homePageId: "home",
+        rootFolderId: "root",
+        pages: new Map([
+          [
+            "home",
+            {
+              id: "home",
+              name: "Home",
+              path: "",
+              title: '"Home"',
+              rootInstanceId: "body",
+              meta: { custom },
+            },
+          ],
+        ]),
+        folders: new Map([
+          ["root", { id: "root", name: "Root", slug: "", children: ["home"] }],
+        ]),
+      },
+      instances: [
+        [
+          "body",
+          { id: "body", type: "instance", component: "Body", children: [] },
+        ],
+      ],
+      dataSources: [],
+    });
+    let version = 1;
+    const session = createProjectSession({
+      projectId: "project-1",
+      storage: createCliProjectSessionStorage(
+        path.join(directory, "session.json")
+      ),
+      runtimeContext: { createId: () => crypto.randomUUID() },
+      transport: {
+        async fetchNamespaces() {
+          return { projectId: "project-1", buildId: "build-1", version, state };
+        },
+        async commitPatch({ baseVersion, transactions }) {
+          state = applyBuilderPatchTransactions(state, transactions).state;
+          version = baseVersion + 1;
+          return { version };
+        },
+        async commitRestorePoint() {
+          throw new Error("Page updates must use patch commits");
+        },
+      },
+    });
+    const core = createProjectSessionMcpCore({
+      operations: [operation],
+      createProjectSession: () => session,
+      executeOperation: ({ input, dryRun }) =>
+        session.mutate("pages.update", input, { dryRun }),
+    });
+    const tool = operation.command;
+    const input = {
+      pageId: "home",
+      values: { meta: { excludePageFromSearch: true } },
+    };
+    const clearInput = { pageId: "home", values: { meta: { custom: [] } } };
+    const calls = [
+      { tool, input, dryRun: true },
+      { tool, input, dryRun: false },
+      { tool, input: clearInput, dryRun: false },
+    ];
+    const [preview, commit, clear] =
+      mode === "run"
+        ? await parseMcpRunInput(JSON.stringify({ calls }))
+        : calls;
+    const execute = async (
+      call: ReturnType<typeof parseMcpRunCalls>[number]
+    ) => {
+      if (mode === "run") {
+        const { result } = await executeMcpRunCall({
+          core,
+          call,
+          scope: { projectRoot: directory },
+        });
+        return result.structuredContent;
+      }
+      const input = await parseMcpSingleOpCallInput({
+        input: JSON.stringify(call.input),
+      });
+      validateSingleOpCallInput(tool, input);
+      const result = await core.callTool({
+        name: tool,
+        input,
+        dryRun: call.dryRun,
+      });
+      return result.structuredContent;
+    };
+
+    const previewResult = await execute(preview);
+    expect(previewResult).toMatchObject({
+      ok: true,
+      meta: { session: { committed: false } },
+    });
+    expect(previewResult.meta.session?.transaction?.payload).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "add",
+            path: ["pages", "home", "meta", "excludePageFromSearch"],
+            value: "true",
+          },
+        ],
+      },
+    ]);
+    expect(version).toBe(1);
+    expect(await execute(commit)).toMatchObject({
+      ok: true,
+      meta: { session: { committed: true } },
+    });
+    expect(state.pages?.pages.get("home")?.meta).toEqual({
+      custom,
+      excludePageFromSearch: "true",
+    });
+
+    expect(await execute(clear)).toMatchObject({
+      ok: true,
+      meta: { session: { committed: true } },
+    });
+    expect(state.pages?.pages.get("home")?.meta).toEqual({
+      custom: [],
+      excludePageFromSearch: "true",
+    });
+  }
+);
 
 test("confirms a resource deletion across persisted CLI sessions only for the unchanged plan", async () => {
   const operation = publicApiOperations.find(

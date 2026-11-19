@@ -902,10 +902,12 @@ const bindPageFieldsExpressionInputs = <Input extends PageFieldsPatchInput>({
       meta[name] = bindExpressionInput(state, rootInstanceId, value);
     }
   }
-  meta.custom = meta.custom?.map((customMeta) => ({
-    ...customMeta,
-    content: bindExpressionInput(state, rootInstanceId, customMeta.content),
-  }));
+  if (meta.custom !== undefined) {
+    meta.custom = meta.custom.map((customMeta) => ({
+      ...customMeta,
+      content: bindExpressionInput(state, rootInstanceId, customMeta.content),
+    }));
+  }
   bound.meta = meta;
   return bound;
 };

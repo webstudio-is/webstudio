@@ -8,7 +8,6 @@ import {
   expectContentModePageSettingsRestrictions,
   expectCustomMetadataValue,
   fillAllowedPageSettings,
-  fillCustomMetadata,
   getPageSettingsPathInput,
   openPage,
   openPageSettings,
@@ -123,7 +122,6 @@ test("Editor can create a styled page, edit allowed settings, and reload it in c
       filename: fixture.assetTemplateImageName,
       label: fixture.assetTemplateImageAlt,
     });
-    await fillCustomMetadata({ page, ...metadata });
   });
 
   await measure("content mode reload created page and settings", async () => {
