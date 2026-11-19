@@ -138,6 +138,10 @@
   "/cat_silhouette.png": "/assets/cat_silhouette_BDpTbUFSpVbfUWQZNxbBG.png",
   "/small-avif-kitty.webp": "/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp",
   "/video_QamtUWsD-ShifhzZLoNIv.mp4": "/assets/video_QamtUWsD-ShifhzZLoNIv_ald_1xtyEb3uHhFb7nCQa.mp4",
-  "/_937084ed-a798-49fe-8664-df93a2af605e.jpeg": "/assets/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg"
+  "/_937084ed-a798-49fe-8664-df93a2af605e.jpeg": "/assets/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg",
+  "/cgi/asset/e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3": "/assets/e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3",
+  "/cgi/asset/cabinsketch-bold_TLCbytfxf8ENHwZ6ze3Jj.ttf": "/assets/cabinsketch-bold_TLCbytfxf8ENHwZ6ze3Jj.ttf",
+  "/cgi/asset/webm-example_2r_6VmRBjhAy3ldaqz0gk.webm": "/assets/webm-example_2r_6VmRBjhAy3ldaqz0gk.webm",
+  "/cgi/asset/video_QamtUWsD-ShifhzZLoNIv_ald_1xtyEb3uHhFb7nCQa.mp4": "/assets/video_QamtUWsD-ShifhzZLoNIv_ald_1xtyEb3uHhFb7nCQa.mp4"
 };
     
