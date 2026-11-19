@@ -106,14 +106,16 @@ export const validatePublish = async ({
   ctx,
   input,
 }: {
-  auth: PublishAuthorization;
+  auth?: PublishAuthorization;
   ctx: AppContext;
   input: z.infer<typeof publishValidationInput>;
 }) => {
   const project = await loadById(input.projectId, ctx);
   const domains =
     input.domains ?? getDefaultPublishDomains(project, input.target);
-  assertPublishDomains({ auth, domains, project });
+  if (auth !== undefined) {
+    assertPublishDomains({ auth, domains, project });
+  }
   if (domains.length === 0) {
     throwApiError("BAD_REQUEST", "Select at least one domain to publish.");
   }

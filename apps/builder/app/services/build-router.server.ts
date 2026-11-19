@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import {
   AuthorizationError,
   authorizeProject,
@@ -320,7 +319,7 @@ export const buildRouter = router({
       if (
         ctx.apiClient.type !== "browser" ||
         (await authorizeProject.hasProjectPermit(
-          { projectId: input.projectId, permit: "edit" },
+          { projectId: input.projectId, permit: "view" },
           ctx
         )) === false
       ) {
@@ -329,24 +328,7 @@ export const buildRouter = router({
           message: "You don't have access to this project",
         });
       }
-      if (ctx.authorization.type === "token") {
-        const token = await authDb.getTokenInfo(
-          ctx.authorization.authToken,
-          ctx
-        );
-        if (token.projectId !== input.projectId) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Authorization token is not valid for project",
-          });
-        }
-        return await validatePublish({
-          ctx,
-          input,
-          auth: { type: "token", token },
-        });
-      }
-      return await validatePublish({ ctx, input, auth: { type: "user" } });
+      return await validatePublish({ ctx, input });
     }),
 
   contentDatabasePublishDiagnostics: procedure

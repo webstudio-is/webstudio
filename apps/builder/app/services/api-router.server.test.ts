@@ -1574,27 +1574,128 @@ describe("api router permits", () => {
     });
   });
 
+  test.each(["viewers", "builders", "owner"] as const)(
+    "validates a custom domain in Builder for %s without API access",
+    async (role) => {
+      const projectId = `validation-project-${role}`;
+      const context =
+        role === "owner"
+          ? createContext(false, {
+              type: "user",
+              userId: "owner-1",
+              sessionCreatedAt: 0,
+              isLoggedInToBuilder: async () => true,
+            })
+          : createContext(false);
+      server.use(
+        postgrestDb.get("Project", ({ request }) => {
+          const { searchParams } = new URL(request.url);
+          if (searchParams.get("id") !== `eq.${projectId}`) {
+            return json([]);
+          }
+          if (searchParams.has("userId")) {
+            return json(
+              searchParams.get("userId") === "eq.owner-1"
+                ? [{ id: projectId }]
+                : []
+            );
+          }
+          return json([
+            {
+              id: projectId,
+              userId: "owner-1",
+              domain: "project.wstd.dev",
+              domainsVirtual: [
+                {
+                  domain: "custom.example.com",
+                  status: "ACTIVE",
+                  verified: true,
+                },
+              ],
+              latestStaticBuild: [],
+            },
+          ]);
+        }),
+        postgrestDb.get("AuthorizationToken", ({ request }) => {
+          const { searchParams } = new URL(request.url);
+          const relations = searchParams
+            .get("relation")
+            ?.slice(4, -1)
+            .split(",");
+          return json(
+            searchParams.get("projectId") === `eq.${projectId}` &&
+              relations?.includes(role)
+              ? [{ token: "secret-token" }]
+              : []
+          );
+        }),
+        postgrestDb.get("User", () => json({ id: "owner-1" })),
+        postgrestDb.get("Asset", () => json([])),
+        postgrestDb.get("AssetFolder", () => json([]))
+      );
+      vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue({
+        ...createEditableContentBuild(),
+        projectId,
+      });
+      const caller = buildRouter.createCaller({
+        ...context,
+        apiClient: { ...context.apiClient, type: "browser" },
+      });
+      const input = {
+        projectId,
+        target: "staging" as const,
+        domains: ["custom.example.com"],
+      };
+
+      await expect(caller.validatePublish(input)).resolves.toMatchObject({
+        valid: true,
+        domains: input.domains,
+        diagnostics: { mdxOmissions: [], mdxErrors: [] },
+      });
+      await expect(
+        caller.validatePublish({ ...input, domains: ["unknown.example.com"] })
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    }
+  );
+
   test.each([
-    { type: "cli", canEdit: true, projectId: "project-1" },
-    { type: "browser", canEdit: false, projectId: "project-1" },
-    { type: "browser", canEdit: true, projectId: "another-project" },
+    { scenario: "cli", type: "cli", tokenProjectId: "validation-project-cli" },
+    { scenario: "missing-grant", type: "browser", tokenProjectId: undefined },
+    {
+      scenario: "cross-project",
+      type: "browser",
+      tokenProjectId: "another-project",
+    },
   ] as const)(
-    "denies Builder validation before reading a project ($type, edit $canEdit, token for $projectId)",
-    async ({ type, canEdit, projectId }) => {
-      vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(canEdit);
-      vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
-        createToken({
-          projectId,
-          relation: "administrators",
-          canPublish: true,
-          canUseApi: false,
+    "denies Builder validation before reading a project ($scenario)",
+    async ({ scenario, type, tokenProjectId }) => {
+      const projectId = `validation-project-${scenario}`;
+      const authToken = `validation-token-${scenario}`;
+      const projectFilters: (string | null)[] = [];
+      server.use(
+        postgrestDb.get("AuthorizationToken", ({ request }) => {
+          const { searchParams } = new URL(request.url);
+          const projectFilter = searchParams.get("projectId");
+          projectFilters.push(projectFilter);
+          return json(
+            tokenProjectId !== undefined &&
+              searchParams.get("token") === `eq.${authToken}` &&
+              (projectFilter === null ||
+                projectFilter === `eq.${tokenProjectId}`)
+              ? [{ token: authToken }]
+              : []
+          );
         })
       );
       const loadProject = vi.spyOn(projectApi, "loadById").mockResolvedValue({
         domain: "project.wstd.dev",
         domainsVirtual: [],
       } as never);
-      const context = createContext(true);
+      const context = createContext(true, {
+        type: "token",
+        authToken,
+        ownerId: "user-1",
+      });
       const caller = buildRouter.createCaller({
         ...context,
         apiClient: { ...context.apiClient, type },
@@ -1602,44 +1703,15 @@ describe("api router permits", () => {
 
       await expect(
         caller.validatePublish({
-          projectId: "project-1",
+          projectId,
           target: "staging",
           domains: ["project.wstd.dev"],
         })
       ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      expect(projectFilters).toEqual(type === "cli" ? [] : [`eq.${projectId}`]);
       expect(loadProject).not.toHaveBeenCalled();
     }
   );
-
-  test("denies Builder validation for a custom domain when the share link cannot publish there", async () => {
-    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
-    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
-      createToken({ canUseApi: false })
-    );
-    vi.spyOn(projectApi, "loadById").mockResolvedValue({
-      domain: "project.wstd.dev",
-      domainsVirtual: [
-        { domain: "custom.example.com", status: "ACTIVE", verified: true },
-      ],
-    } as never);
-    const loadBuild = vi
-      .spyOn(projectBuild, "loadDevBuildByProjectId")
-      .mockResolvedValue(createEditableContentBuild());
-    const context = createContext(true);
-    const caller = buildRouter.createCaller({
-      ...context,
-      apiClient: { ...context.apiClient, type: "browser" },
-    });
-
-    await expect(
-      caller.validatePublish({
-        projectId: "project-1",
-        target: "staging",
-        domains: ["custom.example.com"],
-      })
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
-    expect(loadBuild).not.toHaveBeenCalled();
-  });
 
   test("warns before publishing when generated CSS cannot build", async () => {
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
