@@ -115,6 +115,18 @@ const verifyPageCopyGrant = async (
 export const readPageCopyGrant = (grant: string | undefined) =>
   verifyPageCopyGrant(grant, false);
 
+export const isPageCopyGrantExpired = async (
+  grant: string,
+  assetIds: readonly string[]
+) => {
+  const verified = await verifyPageCopyGrant(grant, true);
+  return (
+    verified !== undefined &&
+    verified.exp <= Math.floor(Date.now() / 1000) &&
+    assetIds.every((id) => verified.assetIds.includes(id))
+  );
+};
+
 // Call only after re-authorizing source view access and check the exact
 // signed revisions against current storage before issuing another grant.
 export const readPageCopyGrantForRenewal = (grant: string) =>

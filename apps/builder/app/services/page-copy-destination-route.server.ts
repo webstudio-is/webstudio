@@ -42,6 +42,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import {
   getPageCopyStorageScope,
   isCurrentPageCopyGrant,
+  isPageCopyGrantExpired,
   matchesGrantedAssetRevisions,
   readPageCopyGrant,
 } from "~/services/page-copy-grant.server";
@@ -141,6 +142,7 @@ const destinationDependencies = {
   loadAssets: loadAssetDataByProject,
   loadFolders: loadAssetFoldersByProjectWithClient,
   readGrant: readPageCopyGrant,
+  isGrantExpired: isPageCopyGrantExpired,
   isCurrentGrant: isCurrentPageCopyGrant,
   assertCapacity: assertAssetCapacity,
   createAssetStore: createAssetClient,
@@ -284,8 +286,17 @@ export const createPageCopyDestinationAction =
         );
       }
       const grant = await dependencies.readGrant(input.grant);
+      if (grant === undefined) {
+        const assetIds = input.assets.map(({ sourceId }) => sourceId);
+        if (await dependencies.isGrantExpired(input.grant, assetIds)) {
+          return json(
+            { code: "PAGE_COPY_GRANT_EXPIRED" },
+            { status: 403, headers: privateNoStoreResponseHeaders }
+          );
+        }
+        return new Response(null, { status: 403 });
+      }
       if (
-        grant === undefined ||
         input.assets.some(({ sourceId }) => !grant.assetIds.includes(sourceId))
       ) {
         return new Response(null, { status: 403 });

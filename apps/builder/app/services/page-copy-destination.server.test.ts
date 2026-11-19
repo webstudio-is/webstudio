@@ -8,7 +8,13 @@ import {
 import { AssetUploadCountLimitError } from "@webstudio-is/asset-uploader/server";
 import type { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { getGrantedAssetRevisions } from "./page-copy-grant.server";
+import env from "~/env/env.server";
+import {
+  getGrantedAssetRevisions,
+  isPageCopyGrantExpired,
+  readPageCopyGrant,
+  signPageCopyGrant,
+} from "./page-copy-grant.server";
 import type { loadRawBuildById } from "@webstudio-is/project-build/server";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
@@ -106,16 +112,23 @@ const fixture = ({
         ? { assets: [sourceAsset], assetFolders: [sourceFolder] }
         : { assets: [], assetFolders: [destinationFolder] },
     loadFolders: async () => [destinationFolder],
-    readGrant: async () => ({
-      projectId: "source",
-      pageId: "page",
-      buildId: "source-build",
-      version: 4,
-      assetIds: [sourceAsset.id],
-      assetRevisions: getGrantedAssetRevisions([sourceAsset], [sourceFolder]),
-      purpose: "webstudio.page-copy.read.v2",
-      exp: 2_000_000_000,
-    }),
+    readGrant: async (grant) =>
+      grant !== "source-grant"
+        ? readPageCopyGrant(grant)
+        : {
+            projectId: "source",
+            pageId: "page",
+            buildId: "source-build",
+            version: 4,
+            assetIds: [sourceAsset.id],
+            assetRevisions: getGrantedAssetRevisions(
+              [sourceAsset],
+              [sourceFolder]
+            ),
+            purpose: "webstudio.page-copy.read.v2",
+            exp: 2_000_000_000,
+          },
+    isGrantExpired: isPageCopyGrantExpired,
     isCurrentGrant: async () => true,
     assertCapacity: async () => {
       if (blockCapacity) {
@@ -135,7 +148,11 @@ const fixture = ({
       },
     }),
   });
-  const transfer = (folderId = destinationFolder.id, expectedVersion = 8) =>
+  const transfer = (
+    folderId = destinationFolder.id,
+    expectedVersion = 8,
+    grant = "source-grant"
+  ) =>
     action({
       params: {},
       context: {},
@@ -149,7 +166,7 @@ const fixture = ({
           },
           body: JSON.stringify({
             kind: "relink",
-            grant: "source-grant",
+            grant,
             expectedVersion,
             assets: [
               {
@@ -181,6 +198,44 @@ test("links the existing File only into a destination-owned folder", async () =>
       folderId: destinationFolder.id,
     }),
   ]);
+});
+
+test("reports relink grant expiry before inserting aliases and keeps unrelated failures generic", async () => {
+  const { insert, transfer } = fixture();
+  const oldSecret = env.AUTH_SECRET;
+  env.AUTH_SECRET = "page-copy-test-secret";
+  const now = vi.spyOn(Date, "now").mockReturnValue(1_800_000_000_000);
+  try {
+    const source = {
+      projectId: "source",
+      pageId: "page",
+      buildId: "source-build",
+      version: 4,
+    };
+    const [scoped, unscoped] = await Promise.all([
+      signPageCopyGrant({
+        ...source,
+        assetRevisions: getGrantedAssetRevisions([asset], [sourceFolder]),
+      }),
+      signPageCopyGrant({ ...source, assetRevisions: {} }),
+    ]);
+    expect(scoped).toBeDefined();
+    expect(unscoped).toBeDefined();
+    now.mockReturnValue(1_800_000_301_000);
+    const expired = await transfer(undefined, undefined, scoped);
+    expect(expired.status).toBe(403);
+    expect(await expired.json()).toEqual({ code: "PAGE_COPY_GRANT_EXPIRED" });
+
+    for (const grant of [unscoped, "invalid-grant"]) {
+      const denied = await transfer(undefined, undefined, grant);
+      expect(denied.status).toBe(403);
+      expect(await denied.text()).toBe("");
+    }
+    expect(insert).not.toHaveBeenCalled();
+  } finally {
+    now.mockRestore();
+    env.AUTH_SECRET = oldSecret;
+  }
 });
 
 test("rejects a same-storage alias when the destination has exhausted its capacity", async () => {

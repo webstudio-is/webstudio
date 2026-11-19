@@ -5,11 +5,13 @@ import type {
 } from "@remix-run/server-runtime";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { Asset } from "@webstudio-is/sdk";
+import env from "~/env/env.server";
 import { loader } from "../routes/rest.page-copy.content";
 import { createPageCopyContentAction } from "./page-copy-content-route.server";
 import {
   getGrantedAssetRevisions,
   isCurrentPageCopyGrant,
+  signPageCopyGrant,
 } from "./page-copy-grant.server";
 
 const source = {
@@ -44,6 +46,45 @@ test("answers a credentialless JSON grant preflight", () => {
     "Content-Type"
   );
   expect(response.headers.has("access-control-allow-credentials")).toBe(false);
+});
+
+test("reports expiry only for a signed grant", async () => {
+  const oldSecret = env.AUTH_SECRET;
+  env.AUTH_SECRET = "page-copy-test-secret";
+  const now = vi.spyOn(Date, "now").mockReturnValue(1_800_000_000_000);
+  try {
+    const grant = await signPageCopyGrant({
+      projectId: source.projectId,
+      pageId: source.pageId,
+      buildId: source.buildId,
+      version: source.version,
+      assetRevisions: {},
+    });
+    expect(grant).toBeDefined();
+    now.mockReturnValue(1_800_000_301_000);
+    const action = createPageCopyContentAction();
+    const request = (token: string) =>
+      action(
+        routeArgs(
+          new Request("https://source.example/rest/page-copy/content", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ kind: "manifest", grant: token }),
+          })
+        ) as ActionFunctionArgs
+      );
+    const expired = await request(grant!);
+    expect(expired.status).toBe(403);
+    expect(await expired.json()).toEqual({ code: "PAGE_COPY_GRANT_EXPIRED" });
+
+    const [header, payload] = grant!.split(".");
+    const invalid = await request(`${header}.${payload}.YWJj`);
+    expect(invalid.status).toBe(403);
+    expect(await invalid.text()).toBe("");
+  } finally {
+    now.mockRestore();
+    env.AUTH_SECRET = oldSecret;
+  }
 });
 
 test.each(["manifest", "asset"] as const)(
@@ -99,6 +140,7 @@ test.each(["manifest", "asset"] as const)(
         grant === "scoped-grant"
           ? { ...source, assetRevisions: scopedRevisions }
           : undefined,
+      isGrantExpired: async () => false,
       isCurrent: isCurrentPageCopyGrant,
       getClient: () => client,
       loadAssets,

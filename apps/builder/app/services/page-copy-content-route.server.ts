@@ -16,6 +16,7 @@ import { readAssetRestJson } from "~/services/asset-rest.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import {
   getPageCopyStorageScope,
+  isPageCopyGrantExpired,
   isCurrentPageCopyGrant,
   pageCopyGrantRequestBytes,
   matchesGrantedAssetRevisions,
@@ -49,6 +50,7 @@ export const loadPageCopyRoute = ({ request }: LoaderFunctionArgs) =>
 
 const contentDependencies = {
   readGrant: readPageCopyGrant,
+  isGrantExpired: isPageCopyGrantExpired,
   isCurrent: isCurrentPageCopyGrant,
   getClient: () => createClient(env.POSTGREST_URL, env.POSTGREST_API_KEY),
   loadAssets: loadAssetsByProjectWithClient,
@@ -77,6 +79,13 @@ export const createPageCopyContentAction =
       );
       const source = await dependencies.readGrant(data.grant);
       if (source === undefined) {
+        const assetIds = data.kind === "asset" ? [data.assetId] : [];
+        if (await dependencies.isGrantExpired(data.grant, assetIds)) {
+          return json(
+            { code: "PAGE_COPY_GRANT_EXPIRED" },
+            { status: 403, headers: corsHeaders }
+          );
+        }
         return new Response(null, { status: 403, headers: corsHeaders });
       }
       // The signed grant supplies the source project. This route does not use

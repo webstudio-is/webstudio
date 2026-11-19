@@ -165,17 +165,55 @@ export const copyMcpPage = async ({
       return contents;
     },
   });
-  const grantInfo = await httpClient.issuePageCopySourceGrant(source, {
+  const issueGrant = async (
+    input: Parameters<typeof httpClient.issuePageCopySourceGrant>[1]
+  ) => {
+    const grantInfo = await httpClient.issuePageCopySourceGrant(source, input);
+    if (
+      grantInfo.version !== sourceInfo.version ||
+      grantInfo.buildId !== sourceInfo.buildId ||
+      grantInfo.storageScope !== sourceInfo.storageScope ||
+      typeof grantInfo.grant !== "string" ||
+      grantInfo.grant.length === 0
+    ) {
+      throw pageCopyError("PAGE_COPY_SOURCE_STALE");
+    }
+    return grantInfo.grant;
+  };
+  let sourceGrant = await issueGrant({
     pageId: page.id,
     assetIds: plan.assets.map(({ source }) => source.id),
   });
-  if (
-    grantInfo.version !== sourceInfo.version ||
-    grantInfo.buildId !== sourceInfo.buildId ||
-    grantInfo.storageScope !== sourceInfo.storageScope
-  ) {
-    throw pageCopyError("PAGE_COPY_SOURCE_STALE");
-  }
+  const withSourceGrant = <Result>(
+    request: (grant: string) => Promise<Result>,
+    onGrantExpired?: () => void
+  ) => {
+    const attempt = async (canRenew: boolean): Promise<Result> => {
+      try {
+        return await request(sourceGrant);
+      } catch (error) {
+        if (
+          httpClient.getErrorStatus(error) !== 403 ||
+          typeof error !== "object" ||
+          error === null ||
+          !("code" in error) ||
+          error.code !== "PAGE_COPY_GRANT_EXPIRED"
+        ) {
+          throw error;
+        }
+        onGrantExpired?.();
+        if (canRenew === false) {
+          throw error;
+        }
+      }
+      sourceGrant = await issueGrant({
+        pageId: page.id,
+        renewGrant: sourceGrant,
+      });
+      return attempt(false);
+    };
+    return attempt(true);
+  };
   const scopedAssets = plan.assets.map(({ source }) => source);
   const sourceHierarchy = createAssetFolderHierarchy(sourceData.assetFolders);
   const scopedFolders = new Map(
@@ -186,9 +224,8 @@ export const copyMcpPage = async ({
     )
   );
   const validateSource = async () => {
-    const current = await httpClient.readPageCopySourceManifest(
-      source.origin,
-      grantInfo.grant
+    const current = await withSourceGrant((grant) =>
+      httpClient.readPageCopySourceManifest(source.origin, grant)
     );
     const assetsById = new Map(
       current.assets.map((asset) => [asset.id, asset])
@@ -201,6 +238,7 @@ export const copyMcpPage = async ({
       current.source.buildId !== sourceInfo.buildId ||
       current.source.projectId !== source.projectId ||
       current.source.pageId !== page.id ||
+      current.storageScope !== sourceInfo.storageScope ||
       current.assets.length !== scopedAssets.length ||
       current.folders.length !== scopedFolders.size ||
       scopedAssets.some(
@@ -239,7 +277,9 @@ export const copyMcpPage = async ({
   const artifacts = createPageCopyArtifacts();
   let pendingPageId: string | undefined;
   const readAsset = (asset: (typeof plan.assets)[number]["source"]) =>
-    httpClient.readPageCopySourceAsset(source.origin, grantInfo.grant, asset);
+    withSourceGrant((grant) =>
+      httpClient.readPageCopySourceAsset(source.origin, grant, asset)
+    );
   try {
     return await executePageTransfer({
       plan,
@@ -261,20 +301,26 @@ export const copyMcpPage = async ({
           plans,
           sameStorage,
           relink: async (plans) => {
-            artifacts.unconfirmedAssetIds.push(
-              ...plans.map(({ target }) => target.id)
-            );
-            const { created, reused } = await httpClient.relinkPageCopyAssets(
-              destination,
-              {
-                grant: grantInfo.grant,
-                expectedVersion: destinationSnapshot.version,
-                assets: plans.map(({ source, target }) => ({
-                  sourceId: source.id,
-                  expectedName: source.name,
-                  targetId: target.id,
-                  folderId: target.folderId,
-                })),
+            const assets = plans.map(({ source, target }) => ({
+              sourceId: source.id,
+              expectedName: source.name,
+              targetId: target.id,
+              folderId: target.folderId,
+            }));
+            const { created, reused } = await withSourceGrant(
+              (grant) => {
+                artifacts.unconfirmedAssetIds = assets.map(
+                  ({ targetId }) => targetId
+                );
+                return httpClient.relinkPageCopyAssets(destination, {
+                  grant,
+                  expectedVersion: destinationSnapshot.version,
+                  assets,
+                });
+              },
+              () => {
+                // The relink route reports grant expiry before writing aliases.
+                artifacts.unconfirmedAssetIds = [];
               }
             );
             artifacts.unconfirmedAssetIds = [];
