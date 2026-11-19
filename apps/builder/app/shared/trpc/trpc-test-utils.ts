@@ -1,7 +1,9 @@
 import { FetchInterceptor } from "@mswjs/interceptors/fetch";
 
+type Handlers = Record<string, (input: unknown) => unknown>;
+
 export const createTrpcInterceptor = (
-  handlers: Record<string, (input: unknown) => unknown | Promise<unknown>>,
+  { GET = {}, POST = {} }: { GET?: Handlers; POST?: Handlers },
   onRequest?: (route: string, input: unknown) => void
 ) => {
   const interceptor = new FetchInterceptor();
@@ -11,10 +13,31 @@ export const createTrpcInterceptor = (
     if (url.origin !== location.origin || !url.pathname.startsWith("/trpc/")) {
       return;
     }
-    if (request.method !== "GET" && request.method !== "POST") {
-      const message = `Unexpected request method: ${request.method} ${url.pathname}`;
+    const rejectRequest = (message: string) => {
       unexpectedRequests.push(message);
       controller.errorWith(new Error(message));
+    };
+    if (url.searchParams.get("batch") !== "1") {
+      rejectRequest(`Unexpected request batch: ${url.pathname}`);
+      return;
+    }
+    if (request.method !== "GET" && request.method !== "POST") {
+      rejectRequest(
+        `Unexpected request method: ${request.method} ${url.pathname}`
+      );
+      return;
+    }
+    const handlers = request.method === "GET" ? GET : POST;
+    const routes = url.pathname.slice("/trpc/".length).split(",");
+    for (const route of routes) {
+      if (Object.hasOwn(handlers, route)) {
+        continue;
+      }
+      if (Object.hasOwn(GET, route) || Object.hasOwn(POST, route)) {
+        rejectRequest(`Unexpected request method: ${request.method} ${route}`);
+        return;
+      }
+      rejectRequest(`Unexpected request: ${route}`);
       return;
     }
     let input: Record<string, unknown>;
@@ -37,14 +60,6 @@ export const createTrpcInterceptor = (
       controller.errorWith(error);
       return;
     }
-    const routes = url.pathname.slice("/trpc/".length).split(",");
-    const missingRoute = routes.find((route) => handlers[route] === undefined);
-    if (missingRoute !== undefined) {
-      const message = `Unexpected request: ${missingRoute}`;
-      unexpectedRequests.push(message);
-      controller.errorWith(new Error(message));
-      return;
-    }
     try {
       const results = await Promise.all(
         routes.map(async (route, index) => {
@@ -56,9 +71,7 @@ export const createTrpcInterceptor = (
       const response = results.find((result) => result instanceof Response);
       if (response !== undefined) {
         if (results.length !== 1) {
-          const message = `Unexpected batched HTTP response: ${url.pathname}`;
-          unexpectedRequests.push(message);
-          controller.errorWith(new Error(message));
+          rejectRequest(`Unexpected batched HTTP response: ${url.pathname}`);
           return;
         }
         controller.respondWith(response);

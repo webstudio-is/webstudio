@@ -19,16 +19,18 @@ const requests: Array<{ path: string; input: unknown }> = [];
 let addMemberResult: unknown = { success: true };
 const interceptor = createTrpcInterceptor(
   {
-    "workspace.listMembers": () => ({
-      success: true,
-      data: {
-        owner: { email: "owner@example.com" },
-        members: [],
-        pendingInvites: [],
-        maxSeats: 5,
-      },
-    }),
-    "workspace.addMember": () => addMemberResult,
+    GET: {
+      "workspace.listMembers": () => ({
+        success: true,
+        data: {
+          owner: { email: "owner@example.com" },
+          members: [],
+          pendingInvites: [],
+          maxSeats: 5,
+        },
+      }),
+    },
+    POST: { "workspace.addMember": () => addMemberResult },
   },
   (path, input) => requests.push({ path, input })
 );

@@ -42,54 +42,58 @@ beforeAll(async () => {
   ).IS_REACT_ACT_ENVIRONMENT = true;
   vi.resetModules();
   interceptor = createTrpcInterceptor({
-    "domain.publish": () => {
-      publishRequests += 1;
-      return dispatch.promise;
-    },
-    "api.publish.getJob": () => ({
-      status: "failed",
-      code: "BUILD_FAILED",
-    }),
-    "api.publish.getLog": () => ({
-      availability: "available",
-      log: {
-        encoding: "base64url",
-        chunk: btoa("older publish output"),
-        complete: true,
-        issues: [{ severity: "error", message: "older build issue" }],
+    POST: {
+      "domain.publish": () => {
+        publishRequests += 1;
+        return dispatch.promise;
       },
-    }),
-    "domain.project": () => ({
-      success: true,
-      project: stores.$project.get(),
-    }),
-    "domain.countTotalDomains": () => ({ success: true, data: 0 }),
-    "project.userPublishCount": () => ({
-      success: true,
-      data: 0,
-      limit: 100,
-    }),
-    "api.publish.validate": async () => {
-      checkRequests += 1;
-      try {
-        const result = await checks.promise;
-        checksRead += 1;
-        return result;
-      } catch (error) {
-        checksRead += 1;
-        throw error;
-      }
     },
-    "build.contentDatabasePublishDiagnostics": async () => {
-      checkRequests += 1;
-      try {
-        const result = await checks.promise;
-        checksRead += 1;
-        return result;
-      } catch (error) {
-        checksRead += 1;
-        throw error;
-      }
+    GET: {
+      "api.publish.getJob": () => ({
+        status: "failed",
+        code: "BUILD_FAILED",
+      }),
+      "api.publish.getLog": () => ({
+        availability: "available",
+        log: {
+          encoding: "base64url",
+          chunk: btoa("older publish output"),
+          complete: true,
+          issues: [{ severity: "error", message: "older build issue" }],
+        },
+      }),
+      "domain.project": () => ({
+        success: true,
+        project: stores.$project.get(),
+      }),
+      "domain.countTotalDomains": () => ({ success: true, data: 0 }),
+      "project.userPublishCount": () => ({
+        success: true,
+        data: 0,
+        limit: 100,
+      }),
+      "api.publish.validate": async () => {
+        checkRequests += 1;
+        try {
+          const result = await checks.promise;
+          checksRead += 1;
+          return result;
+        } catch (error) {
+          checksRead += 1;
+          throw error;
+        }
+      },
+      "build.contentDatabasePublishDiagnostics": async () => {
+        checkRequests += 1;
+        try {
+          const result = await checks.promise;
+          checksRead += 1;
+          return result;
+        } catch (error) {
+          checksRead += 1;
+          throw error;
+        }
+      },
     },
   });
   interceptor.start();

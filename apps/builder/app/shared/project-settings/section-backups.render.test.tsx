@@ -18,17 +18,19 @@ const requests: Array<{ path: string; input: unknown }> = [];
 let restoreResult: unknown = { success: false, error: "Restore failed" };
 const interceptor = createTrpcInterceptor(
   {
-    "project.publishedBuilds": () => ({
-      success: true,
-      data: [
-        {
-          buildId: "build-1",
-          createdAt: "2026-11-17T10:00:00.000Z",
-          domains: "example.com",
-        },
-      ],
-    }),
-    "project.restoreDevelopmentBuild": () => restoreResult,
+    GET: {
+      "project.publishedBuilds": () => ({
+        success: true,
+        data: [
+          {
+            buildId: "build-1",
+            createdAt: "2026-11-17T10:00:00.000Z",
+            domains: "example.com",
+          },
+        ],
+      }),
+    },
+    POST: { "project.restoreDevelopmentBuild": () => restoreResult },
   },
   (path, input) => requests.push({ path, input })
 );
@@ -87,12 +89,40 @@ const waitForRequest = async (path: string) => {
   });
 };
 
-const chooseBackup = async () => {
+const restoreBackup = async () => {
   await act(async () => page.getByRole("combobox").click());
   await act(async () =>
     page.getByRole("option", { name: /example\.com/ }).click()
   );
+  await act(async () => page.getByRole("button", { name: "Restore" }).click());
+  await act(async () =>
+    page.getByRole("dialog").getByRole("button", { name: "Restore" }).click()
+  );
 };
+
+test("reloads the page after a successful restore", async () => {
+  restoreResult = { success: true };
+  const onReload = vi.fn();
+  // Observe the real reload without navigating away from the test runner.
+  const interceptReload = (event: NavigateEvent) => {
+    if (event.navigationType === "reload") {
+      event.preventDefault();
+      onReload();
+    }
+  };
+  window.navigation.addEventListener("navigate", interceptReload);
+  try {
+    await render();
+    await restoreBackup();
+    await vi.waitFor(() => expect(onReload).toHaveBeenCalledOnce());
+    expect(requests).toContainEqual({
+      path: "project.restoreDevelopmentBuild",
+      input: { projectId: "project-1", fromBuildId: "build-1" },
+    });
+  } finally {
+    window.navigation.removeEventListener("navigate", interceptReload);
+  }
+});
 
 test("loads backups and reports a failed restore request", async () => {
   const showError = vi.spyOn(toast, "error");
@@ -102,11 +132,7 @@ test("loads backups and reports a failed restore request", async () => {
     path: "project.publishedBuilds",
     input: { projectId: "project-1" },
   });
-  await chooseBackup();
-  await act(async () => page.getByRole("button", { name: "Restore" }).click());
-  await act(async () =>
-    page.getByRole("dialog").getByRole("button", { name: "Restore" }).click()
-  );
+  await restoreBackup();
   await waitForRequest("project.restoreDevelopmentBuild");
 
   await vi.waitFor(() =>

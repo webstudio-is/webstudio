@@ -46,46 +46,50 @@ beforeAll(async () => {
   vi.resetModules();
   interceptor = createTrpcInterceptor(
     {
-      "domain.publish": () => {
-        didPublish = (publishResponse as { success: boolean }).success;
-        return publishResponse;
+      POST: {
+        "domain.publish": () => {
+          didPublish = (publishResponse as { success: boolean }).success;
+          return publishResponse;
+        },
       },
-      "api.publish.getJob": () => {
-        return { status: jobStatus, code: "BUILD_FAILED" };
-      },
-      "domain.project": () => {
-        return {
+      GET: {
+        "api.publish.getJob": () => {
+          return { status: jobStatus, code: "BUILD_FAILED" };
+        },
+        "domain.project": () => {
+          return {
+            success: true,
+            project: {
+              id: "project-1",
+              domain: "example",
+              domainsVirtual: [],
+              latestBuildVirtual: didPublish
+                ? {
+                    domain: "example",
+                    buildId: "build-1",
+                    createdAt: new Date().toISOString(),
+                    publishStatus:
+                      jobStatus === "success" ? "PUBLISHED" : "FAILED",
+                  }
+                : null,
+            },
+          };
+        },
+        "domain.countTotalDomains": () => ({ success: true, data: 0 }),
+        "project.userPublishCount": () => ({
           success: true,
-          project: {
-            id: "project-1",
-            domain: "example",
-            domainsVirtual: [],
-            latestBuildVirtual: didPublish
-              ? {
-                  domain: "example",
-                  buildId: "build-1",
-                  createdAt: new Date().toISOString(),
-                  publishStatus:
-                    jobStatus === "success" ? "PUBLISHED" : "FAILED",
-                }
-              : null,
-          },
-        };
+          data: 0,
+          limit: 100,
+        }),
+        "api.publish.validate": () => ({
+          diagnostics: { mdxErrors: [], mdxOmissions: [] },
+          cssValid: true,
+        }),
+        "build.contentDatabasePublishDiagnostics": () => ({
+          mdxErrors: [],
+          mdxOmissions: [],
+        }),
       },
-      "domain.countTotalDomains": () => ({ success: true, data: 0 }),
-      "project.userPublishCount": () => ({
-        success: true,
-        data: 0,
-        limit: 100,
-      }),
-      "api.publish.validate": () => ({
-        diagnostics: { mdxErrors: [], mdxOmissions: [] },
-        cssValid: true,
-      }),
-      "build.contentDatabasePublishDiagnostics": () => ({
-        mdxErrors: [],
-        mdxOmissions: [],
-      }),
     },
     (route, input) =>
       requests.push({ path: `/trpc/${route}`, input: { "0": input } })

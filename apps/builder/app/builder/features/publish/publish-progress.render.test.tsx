@@ -68,20 +68,22 @@ beforeAll(async () => {
   vi.resetModules();
   interceptor = createTrpcInterceptor(
     {
-      "domain.project": () => refresh(),
-      "domain.publish": () => publish(),
-      "api.publish.validate": () => validate(),
-      "build.contentDatabasePublishDiagnostics": () => validate(),
-      "api.publish.getJob": () => job(),
-      "domain.countTotalDomains": () => ({
-        success: true,
-        data: 0,
-      }),
-      "project.userPublishCount": () => ({
-        success: true,
-        data: 0,
-        limit: 100,
-      }),
+      POST: { "domain.publish": () => publish() },
+      GET: {
+        "domain.project": () => refresh(),
+        "api.publish.validate": () => validate(),
+        "build.contentDatabasePublishDiagnostics": () => validate(),
+        "api.publish.getJob": () => job(),
+        "domain.countTotalDomains": () => ({
+          success: true,
+          data: 0,
+        }),
+        "project.userPublishCount": () => ({
+          success: true,
+          data: 0,
+          limit: 100,
+        }),
+      },
     },
     (route, input) => requests.push({ route, input })
   );

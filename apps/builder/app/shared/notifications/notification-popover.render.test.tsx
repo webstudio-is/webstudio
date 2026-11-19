@@ -16,8 +16,10 @@ import { createTrpcInterceptor } from "~/shared/trpc/trpc-test-utils";
 const requests: Array<{ path: string; input: unknown }> = [];
 const interceptor = createTrpcInterceptor(
   {
-    "notification.accept": () => ({ success: true }),
-    "notification.decline": () => ({ success: true }),
+    POST: {
+      "notification.accept": () => ({ success: true }),
+      "notification.decline": () => ({ success: true }),
+    },
   },
   (path, input) => requests.push({ path, input })
 );

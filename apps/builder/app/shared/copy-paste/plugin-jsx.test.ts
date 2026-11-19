@@ -40,9 +40,11 @@ let isLikelyWebstudioJsx: typeof import("./plugin-jsx").isLikelyWebstudioJsx;
 let pasteHandled: typeof import("./copy-paste").pasteHandled;
 let pasteIgnored: typeof import("./copy-paste").pasteIgnored;
 const interceptor = createTrpcInterceptor({
-  "build.createJsxFragment": (input) => {
-    requestInput = input;
-    return createFragmentResponse;
+  GET: {
+    "build.createJsxFragment": (input) => {
+      requestInput = input;
+      return createFragmentResponse;
+    },
   },
 });
 
