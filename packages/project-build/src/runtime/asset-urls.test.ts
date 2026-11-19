@@ -58,8 +58,6 @@ test("creates runtime URLs keyed by root-relative asset paths", () => {
   ).toEqual({
     "/Hero%20image.png": "/cgi/asset/hero_hash.png",
     "/Custom%20scripts/test.js": "/cgi/asset/test_hash.js",
-    "/cgi/asset/hero_hash.png": "/cgi/asset/hero_hash.png",
-    "/cgi/asset/test_hash.js": "/cgi/asset/test_hash.js",
   });
 });
 
@@ -79,6 +77,87 @@ test("resolves published CGI asset URLs by the stored asset name", () => {
   ).toMatchObject({
     "/cgi/asset/dashboard_hash.js": "/assets/dashboard_hash.js",
   });
+});
+
+test("keeps a CGI alias when a stored asset is duplicated", () => {
+  expect(
+    createAssetUrlsByPath({
+      assets: [
+        asset({ id: "first", name: "app_hash.js", filename: "app" }),
+        asset({ id: "copy", name: "app_hash.js", filename: "app copy" }),
+      ],
+      assetFolders: new Map(),
+      getUrl: (item) => `/assets/${item.name}`,
+    })
+  ).toMatchObject({
+    "/cgi/asset/app_hash.js": "/assets/app_hash.js",
+  });
+});
+
+test("rewrites CGI URLs for a custom generated asset base", () => {
+  expect(
+    createAssetUrlsByPath({
+      assets: [asset({ id: "script", name: "app_hash.js", filename: "app" })],
+      assetFolders: new Map(),
+      getUrl: (item) => `/media/${item.name}`,
+    })
+  ).toMatchObject({
+    "/cgi/asset/app_hash.js": "/media/app_hash.js",
+  });
+});
+
+test("keeps a canonical path when it equals the CGI asset path", () => {
+  const folders: AssetFolders = new Map([
+    [
+      "cgi",
+      {
+        id: "cgi",
+        projectId: "project",
+        name: "cgi",
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+    [
+      "asset",
+      {
+        id: "asset",
+        projectId: "project",
+        name: "asset",
+        parentId: "cgi",
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+  ]);
+
+  expect(
+    createAssetUrlsByPath({
+      assets: [
+        asset({
+          id: "script",
+          name: "app_hash.js",
+          filename: "app_hash",
+          folderId: "asset",
+        }),
+      ],
+      assetFolders: folders,
+      getUrl: (item) => `/media/${item.name}`,
+    })
+  ).toEqual({
+    "/cgi/asset/app_hash.js": "/media/app_hash.js",
+  });
+});
+
+test("omits a CGI path that points to different asset URLs", () => {
+  const assetUrlsByPath = createAssetUrlsByPath({
+    assets: [
+      asset({ id: "first", name: "app_hash.js", filename: "first" }),
+      asset({ id: "second", name: "app_hash.js", filename: "second" }),
+    ],
+    assetFolders: new Map(),
+    getUrl: (item) => `/${item.id}/${item.name}`,
+  });
+
+  expect(assetUrlsByPath).not.toHaveProperty("/cgi/asset/app_hash.js");
 });
 
 test("omits ambiguous canonical paths but keeps unique CGI URLs", () => {

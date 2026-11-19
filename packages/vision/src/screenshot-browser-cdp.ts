@@ -475,6 +475,14 @@ const getJavascriptErrorLocation = (params: unknown) => {
   return { line };
 };
 
+const preferJavascriptErrorLocation = (
+  current: BrowserScreenshotNavigation["javascriptErrorLocation"],
+  next: BrowserScreenshotNavigation["javascriptErrorLocation"]
+) =>
+  current?.pathname === undefined && next?.pathname !== undefined
+    ? next
+    : (current ?? next);
+
 const navigateAndWaitForLifecycle = async (
   cdp: CdpSession,
   waitUntil: ScreenshotWaitUntil,
@@ -1771,11 +1779,17 @@ const capturePageWithBrowserRuntime = async (
           if (navigationExecutionContextFrames !== undefined) {
             navigationErrorsByContextId.set(
               executionContextId,
-              navigationErrorsByContextId.get(executionContextId) ?? location
+              preferJavascriptErrorLocation(
+                navigationErrorsByContextId.get(executionContextId),
+                location
+              )
             );
           } else if (activeExecutionContextIds.has(executionContextId)) {
             javascriptErrorPresent = true;
-            javascriptErrorLocation ??= location;
+            javascriptErrorLocation = preferJavascriptErrorLocation(
+              javascriptErrorLocation,
+              location
+            );
           }
         };
         cdp.on("Runtime.executionContextCreated", (params) => {
@@ -1934,8 +1948,10 @@ const capturePageWithBrowserRuntime = async (
             for (const executionContextId of activeExecutionContextIds) {
               if (navigationErrorsByContextId.has(executionContextId)) {
                 javascriptErrorPresent = true;
-                javascriptErrorLocation ??=
-                  navigationErrorsByContextId.get(executionContextId);
+                javascriptErrorLocation = preferJavascriptErrorLocation(
+                  javascriptErrorLocation,
+                  navigationErrorsByContextId.get(executionContextId)
+                );
               }
             }
             navigationExecutionContextFrames = undefined;

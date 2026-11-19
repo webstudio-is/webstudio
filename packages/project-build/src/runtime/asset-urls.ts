@@ -18,27 +18,43 @@ export const createAssetUrlsByPath = ({
 }) => {
   const hierarchy = createAssetFolderHierarchy(assetFolders);
   const urlsById = new Map<string, string>();
+  const assetUrlPaths = new Set<string>();
   const assetIdsByPath = createUniqueAssetIdsByPath(
     Array.from(assets).flatMap((asset) => {
-      urlsById.set(asset.id, getUrl(asset));
-      return [
+      const url = getUrl(asset);
+      urlsById.set(asset.id, url);
+      const canonicalAssetPath = createCanonicalAssetPath({
+        folderNames: hierarchy
+          .getPath(asset.folderId)
+          .map((folder) => folder.name),
+        name: formatAssetName(asset),
+      });
+      const cgiAssetPath = createCanonicalAssetPath({
+        folderNames: ["cgi", "asset"],
+        name: asset.name,
+      });
+      const targetUrl = new URL(url, "https://webstudio.invalid");
+      const assetPaths = [
         {
           id: asset.id,
-          path: createCanonicalAssetPath({
-            folderNames: hierarchy
-              .getPath(asset.folderId)
-              .map((folder) => folder.name),
-            name: formatAssetName(asset),
-          }),
-        },
-        {
-          id: asset.id,
-          path: createCanonicalAssetPath({
-            folderNames: ["cgi", "asset"],
-            name: asset.name,
-          }),
+          path: canonicalAssetPath,
         },
       ];
+      if (
+        canonicalAssetPath !== cgiAssetPath &&
+        (targetUrl.pathname !== `/${cgiAssetPath}` ||
+          targetUrl.origin !== "https://webstudio.invalid")
+      ) {
+        assetPaths.push({ id: asset.id, path: cgiAssetPath });
+      }
+      return assetPaths.filter(({ path }) => {
+        const assetUrlPath = `${path}\0${url}`;
+        if (assetUrlPaths.has(assetUrlPath)) {
+          return false;
+        }
+        assetUrlPaths.add(assetUrlPath);
+        return true;
+      });
     })
   );
   return Object.fromEntries(

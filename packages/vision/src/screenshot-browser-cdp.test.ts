@@ -64,6 +64,7 @@ class FakeWebSocket {
   readonly runtimeErrorScenario?:
     | "console-error"
     | "exception-error"
+    | "exception-error-with-late-safe-path"
     | "stale-outgoing-error"
     | "hash-navigation-error";
   readonly exceptionUrl?: string;
@@ -447,32 +448,43 @@ class FakeWebSocket {
         const shouldLogError =
           this.runtimeErrorScenario === "console-error" ||
           this.runtimeErrorScenario === "exception-error" ||
+          this.runtimeErrorScenario === "exception-error-with-late-safe-path" ||
           ((this.runtimeErrorScenario === "stale-outgoing-error" ||
             sameDocumentNavigation) &&
             navigationNumber === 2);
         if (shouldLogError) {
           const isException = this.runtimeErrorScenario !== "console-error";
-          this.emit("message", {
-            data: JSON.stringify({
-              method: isException
-                ? "Runtime.exceptionThrown"
-                : "Runtime.consoleAPICalled",
-              params: isException
-                ? {
-                    exceptionDetails: {
-                      executionContextId:
-                        this.runtimeErrorScenario === "exception-error"
-                          ? executionContextId
-                          : 1,
-                      url:
-                        this.exceptionUrl ??
-                        "https://user:pass@example.com/assets/exception.js?token=private#fragment",
-                      lineNumber: 6,
-                    },
-                  }
-                : { type: "error", executionContextId },
-            }),
-          });
+          const urls =
+            this.runtimeErrorScenario === "exception-error-with-late-safe-path"
+              ? [
+                  "https://example.com/private/customer-123.js",
+                  "https://example.com/assets/app.js?token=private",
+                ]
+              : [
+                  this.exceptionUrl ??
+                    "https://user:pass@example.com/assets/exception.js?token=private#fragment",
+                ];
+          for (const url of urls) {
+            this.emit("message", {
+              data: JSON.stringify({
+                method: isException
+                  ? "Runtime.exceptionThrown"
+                  : "Runtime.consoleAPICalled",
+                params: isException
+                  ? {
+                      exceptionDetails: {
+                        executionContextId:
+                          this.runtimeErrorScenario === "exception-error"
+                            ? executionContextId
+                            : 1,
+                        url,
+                        lineNumber: 6,
+                      },
+                    }
+                  : { type: "error", executionContextId },
+              }),
+            });
+          }
         }
         for (const frameId of sameDocumentNavigation
           ? []
@@ -2643,6 +2655,37 @@ test("reports a page exception script path and one-based line without its URL qu
   expect(JSON.stringify(layout.navigation)).not.toContain("token=private");
   expect(JSON.stringify(layout.navigation)).not.toContain("user:pass");
   expect(JSON.stringify(layout.navigation)).not.toContain("fragment");
+});
+
+test("prefers a safe script path over an earlier line-only error", async () => {
+  const layout = await captureBrowserScreenshot(
+    {
+      url: "https://example.com",
+      output: "/tmp/page-exception.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "networkidle",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        "exception-error-with-late-safe-path"
+      ),
+    })
+  );
+
+  expect(layout.navigation?.javascriptErrorLocation).toEqual({
+    pathname: "/assets/app.js",
+    line: 7,
+  });
 });
 
 test.each([
