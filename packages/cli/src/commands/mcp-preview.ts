@@ -565,7 +565,7 @@ export const createMcpPreviewHandlers = ({
     }
     if (result.navigation?.javascriptErrorPresent === true) {
       const location = result.navigation.javascriptErrorLocation;
-      const message = location
+      const message = location?.pathname
         ? `The page reported a JavaScript error during screenshot capture at ${location.pathname}:${location.line}.`
         : "The page reported a JavaScript error during screenshot capture.";
       throw Object.assign(new Error(message), {
@@ -576,9 +576,10 @@ export const createMcpPreviewHandlers = ({
             path: [],
             message,
             constraint: "javascript_runtime_error",
-            ...(location === undefined
+            ...(location?.pathname === undefined
               ? {}
-              : { file: location.pathname, line: location.line }),
+              : { file: location.pathname }),
+            ...(location === undefined ? {} : { line: location.line }),
             ...(result.output === undefined
               ? {}
               : { reference: result.output }),

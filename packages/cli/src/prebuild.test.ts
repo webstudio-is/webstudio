@@ -2759,7 +2759,10 @@ sitemap.map((page) => page.path);`
     expect(assetsModule).toContain('"url": "/assets/audio.mp3"');
     expect(assetsModule).toContain("export const assetUrlsByPath");
     expect(assetsModule).toContain('"/audio.mp3": "/assets/audio.mp3"');
-    expect(assetsModule).not.toContain("/cgi/");
+    expect(assetsModule).toContain(
+      '"/cgi/asset/audio.mp3": "/assets/audio.mp3"'
+    );
+    expect(assetsModule).not.toContain('": "/cgi/');
 
     const route = await readFile("app/routes/_index.tsx", "utf8");
     expect(route).toContain("assetUrlsByPath");
