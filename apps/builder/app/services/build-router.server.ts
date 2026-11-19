@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import {
   AuthorizationError,
   authorizeProject,
@@ -51,6 +53,10 @@ import {
 } from "./api-build.server";
 import { assertApiProjectPermit } from "./api-permits.server";
 import { loadContentDatabasePublishDiagnostics } from "./content-database-publish-diagnostics.server";
+import {
+  publishValidationInput,
+  validatePublish,
+} from "./publish-validation.server";
 
 const projectBundleInput = z.object({
   projectId: z.string(),
@@ -306,6 +312,41 @@ export const buildRouter = router({
         ctx,
         await loadPublishedProjectBundleByProjectId(input.projectId, ctx)
       );
+    }),
+
+  validatePublish: procedure
+    .input(publishValidationInput)
+    .mutation(async ({ ctx, input }) => {
+      if (
+        ctx.apiClient.type !== "browser" ||
+        (await authorizeProject.hasProjectPermit(
+          { projectId: input.projectId, permit: "edit" },
+          ctx
+        )) === false
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to this project",
+        });
+      }
+      if (ctx.authorization.type === "token") {
+        const token = await authDb.getTokenInfo(
+          ctx.authorization.authToken,
+          ctx
+        );
+        if (token.projectId !== input.projectId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Authorization token is not valid for project",
+          });
+        }
+        return await validatePublish({
+          ctx,
+          input,
+          auth: { type: "token", token },
+        });
+      }
+      return await validatePublish({ ctx, input, auth: { type: "user" } });
     }),
 
   contentDatabasePublishDiagnostics: procedure

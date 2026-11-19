@@ -24,10 +24,13 @@ import {
 import { $publishDialog } from "~/builder/shared/nano-states";
 import { getInstanceLink } from "~/shared/instance-utils/link";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
-import { nativeClient } from "~/shared/trpc/trpc-client";
+import { createNativeClient, nativeClient } from "~/shared/trpc/trpc-client";
 import { getContentDatabasePublishFindings } from "./content-database-publish-warning";
 import { getPublishValidationErrorMessage } from "./publish-error";
 import type { DiagnosticFinding } from "./diagnostics";
+
+// Diagnostics can outlast publish dispatch. Give them a separate tRPC batch.
+const publishValidationClient = createNativeClient();
 
 const getPrePublishInstanceTarget = (
   instanceId: string,
@@ -161,7 +164,7 @@ export const runPublishDiagnostics = async (
   const validation =
     domains === undefined
       ? undefined
-      : await nativeClient.api.publish.validate.query({
+      : await publishValidationClient.build.validatePublish.mutate({
           projectId,
           target: "staging",
           domains,

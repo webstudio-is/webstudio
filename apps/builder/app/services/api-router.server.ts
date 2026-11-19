@@ -13,14 +13,11 @@ import {
   setMarketplaceApprovalStatus,
 } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
-import { hasCssSyntaxError } from "@webstudio-is/css-data";
-import { parseGeneratedStyleDeclaration } from "@webstudio-is/project-build/persistence";
 import { singlePlayerVersionMismatchError } from "@webstudio-is/project/build-patch-core.server";
 import {
   createProjectDomain,
   deleteProjectDomain,
   getDefaultPublishDomains,
-  getVerifiedPublishDomains,
   getProjectPublishJob,
   getProjectPublishLog,
   listProjectDomains,
@@ -35,8 +32,6 @@ import {
 import { PrePublishAuditError } from "@webstudio-is/project-build/runtime";
 import {
   getBuilderRuntimeOperationInputSchema,
-  getBuildIntegrityIssues,
-  formatBuildIntegrityError,
   paginateOutput,
   paginatedOutputInputSchema,
 } from "@webstudio-is/project-build/runtime";
@@ -70,8 +65,6 @@ import {
 } from "./api-permits.server";
 import { componentMetas } from "~/shared/component-metas.server";
 import {
-  generateCss,
-  getStyleDeclKey,
   templates as templateSchema,
   type Asset,
   type AssetFolder,
@@ -110,35 +103,11 @@ import { createAssetClient } from "../shared/asset-client";
 import { previewProjectAssetQuery } from "./asset-query-preview.server";
 import { simulateFormSubmission } from "./simulate-form.server";
 import { publishConfiguredIssueReport } from "./github-issue-report.server";
-import { loadContentDatabasePublishDiagnostics } from "./content-database-publish-diagnostics.server";
-
-const assertApiPublishDomains = ({
-  auth,
-  domains,
-  project,
-}: {
-  auth: Awaited<ReturnType<typeof assertApiProjectPermit>>;
-  domains: string[];
-  project: { domain: string };
-}) => {
-  if (auth.type === "user") {
-    return;
-  }
-  const { token } = auth;
-  if (token.canPublish === true) {
-    return;
-  }
-  if (
-    token.relation === "builders" &&
-    domains.length > 0 &&
-    domains.every((domain) => domain === project.domain)
-  ) {
-    return;
-  }
-  throw new AuthorizationError(
-    "Authorization token does not have publish permission"
-  );
-};
+import {
+  assertPublishDomains,
+  publishValidationInput,
+  validatePublish,
+} from "./publish-validation.server";
 
 const projectIdInput = z.object({ projectId: z.string() });
 
@@ -609,47 +578,6 @@ const loadRuntimeAssetData = async (ctx: AppContext, projectId: string) => {
   return loadAssetDataByProject(projectId, ctx, {
     skipPermissionsCheck: true,
   });
-};
-
-const canPublishBuildCss = async (build: CompactBuild, assets: Asset[]) => {
-  const usedComponents = new Set(
-    build.instances.map((instance) => instance.component)
-  );
-  const { cssText } = generateCss({
-    assets: new Map(assets.map((asset) => [asset.id, asset])),
-    instances: new Map(
-      build.instances.map((instance) => [instance.id, instance])
-    ),
-    props: new Map(build.props.map((prop) => [prop.id, prop])),
-    breakpoints: new Map(
-      build.breakpoints.map((breakpoint) => [breakpoint.id, breakpoint])
-    ),
-    styles: new Map(
-      build.styles
-        .filter(
-          (style) => parseGeneratedStyleDeclaration(style).errors.length === 0
-        )
-        .map((style) => [getStyleDeclKey(style), style])
-    ),
-    styleSources: new Map(
-      build.styleSources.map((source) => [source.id, source])
-    ),
-    styleSourceSelections: new Map(
-      build.styleSourceSelections.map((selection) => [
-        selection.instanceId,
-        selection,
-      ])
-    ),
-    componentMetas: new Map(
-      [...componentMetas].filter(([name]) => usedComponents.has(name))
-    ),
-    assetBaseUrl: "",
-    atomic:
-      build.projectSettings?.compiler?.atomicStyles ??
-      build.pages?.compiler?.atomicStyles ??
-      true,
-  });
-  return hasCssSyntaxError(cssText) === false;
 };
 
 const createServerContentBlockApplication = ({
@@ -1188,59 +1116,10 @@ export const apiRouter = router({
   }),
 
   publish: router({
-    validate: projectQuery(
-      projectIdInput.extend({
-        target: z.enum(["staging", "production"]),
-        domains: z.array(z.string()).optional(),
-      }),
-      "edit",
-      async ({ auth, ctx, input }) => {
-        const project = await loadById(input.projectId, ctx);
-        const domains =
-          input.domains ?? getDefaultPublishDomains(project, input.target);
-        assertApiPublishDomains({ auth, domains, project });
-        if (domains.length === 0) {
-          throwApiError(
-            "BAD_REQUEST",
-            "Select at least one domain to publish."
-          );
-        }
-        const verifiedDomains = getVerifiedPublishDomains(project, domains);
-        const invalidDomains = domains.filter(
-          (domain) => verifiedDomains.includes(domain) === false
-        );
-        if (invalidDomains.length > 0) {
-          throwApiError(
-            "BAD_REQUEST",
-            `Publish domains must belong to this project and be active and verified: ${invalidDomains.join(", ")}`
-          );
-        }
-        const build = await loadDevBuildByProjectId(ctx, input.projectId);
-        const issues = getBuildIntegrityIssues(build);
-        if (issues[0] !== undefined) {
-          throwApiError(
-            "BAD_REQUEST",
-            formatBuildIntegrityError(issues[0], "Cannot publish"),
-            { issues }
-          );
-        }
-        const diagnostics = await loadContentDatabasePublishDiagnostics(
-          input.projectId,
-          ctx,
-          { build }
-        );
-        const { assets } = await loadRuntimeAssetData(ctx, input.projectId);
-        const cssValid = await canPublishBuildCss(build, assets);
-        return {
-          valid: true,
-          target: input.target,
-          domains,
-          diagnostics,
-          cssValid,
-        };
-      },
-      { command: "validate-publish", client: "validatePublish" }
-    ),
+    validate: projectQuery(publishValidationInput, "edit", validatePublish, {
+      command: "validate-publish",
+      client: "validatePublish",
+    }),
 
     list: projectQuery(
       paginatedProjectInput,
@@ -1297,7 +1176,7 @@ export const apiRouter = router({
           const project = await loadById(input.projectId, ctx);
           const domains =
             input.domains ?? getDefaultPublishDomains(project, input.target);
-          assertApiPublishDomains({ auth, domains, project });
+          assertPublishDomains({ auth, domains, project });
           const result = await publishProject(
             { project, domains, target: input.target },
             ctx
@@ -1371,7 +1250,7 @@ export const apiRouter = router({
         const project = await loadById(input.projectId, ctx);
         const domains =
           input.domains ?? getDefaultPublishDomains(project, input.target);
-        assertApiPublishDomains({ auth, domains, project });
+        assertPublishDomains({ auth, domains, project });
         await unpublishProjectDomains(
           { projectId: input.projectId, domains },
           ctx
@@ -1439,7 +1318,3 @@ export const apiRouter = router({
     ),
   }),
 });
-
-export const __testing__ = {
-  assertApiPublishDomains,
-};

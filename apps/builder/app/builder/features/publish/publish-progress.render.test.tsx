@@ -68,10 +68,12 @@ beforeAll(async () => {
   vi.resetModules();
   interceptor = createTrpcInterceptor(
     {
-      POST: { "domain.publish": () => publish() },
+      POST: {
+        "domain.publish": () => publish(),
+        "build.validatePublish": () => validate(),
+      },
       GET: {
         "domain.project": () => refresh(),
-        "api.publish.validate": () => validate(),
         "build.contentDatabasePublishDiagnostics": () => validate(),
         "api.publish.getJob": () => job(),
         "domain.countTotalDomains": () => ({

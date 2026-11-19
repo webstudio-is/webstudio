@@ -47,6 +47,10 @@ beforeAll(async () => {
   interceptor = createTrpcInterceptor(
     {
       POST: {
+        "build.validatePublish": () => ({
+          diagnostics: { mdxErrors: [], mdxOmissions: [] },
+          cssValid: true,
+        }),
         "domain.publish": () => {
           didPublish = (publishResponse as { success: boolean }).success;
           return publishResponse;
@@ -80,10 +84,6 @@ beforeAll(async () => {
           success: true,
           data: 0,
           limit: 100,
-        }),
-        "api.publish.validate": () => ({
-          diagnostics: { mdxErrors: [], mdxOmissions: [] },
-          cssValid: true,
         }),
         "build.contentDatabasePublishDiagnostics": () => ({
           mdxErrors: [],

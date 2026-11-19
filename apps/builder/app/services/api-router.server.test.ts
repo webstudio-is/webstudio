@@ -38,7 +38,9 @@ import { DocumentSourceDiagnosticsError } from "@webstudio-is/content-engine/com
 import * as assetUploader from "@webstudio-is/asset-uploader/server";
 import * as apiRuntime from "./api-runtime.server";
 import * as issueReportService from "./github-issue-report.server";
-import { apiRouter, __testing__ } from "./api-router.server";
+import { apiRouter } from "./api-router.server";
+import { buildRouter } from "./build-router.server";
+import { assertPublishDomains } from "./publish-validation.server";
 import * as assetQueryPreview from "./asset-query-preview.server";
 import * as formSimulation from "./simulate-form.server";
 import * as db from "~/shared/db";
@@ -57,7 +59,6 @@ const servicesDir = new URL(".", import.meta.url);
 const server = createTestServer();
 
 import { assertContentOrBuildTransactions } from "./api-content-permissions.server";
-const { assertApiPublishDomains } = __testing__;
 
 const createContext = (
   allowAdditionalPermissions: boolean,
@@ -1375,19 +1376,18 @@ describe("api router permits", () => {
     const project = { domain: "project.wstd.dev" };
 
     expect(() =>
-      assertApiPublishDomains({
-        auth: { type: "user", permits: ["edit"] },
+      assertPublishDomains({
+        auth: { type: "user" },
         domains: ["custom.example.com"],
         project,
       })
     ).not.toThrow();
 
     expect(() =>
-      assertApiPublishDomains({
+      assertPublishDomains({
         auth: {
           type: "token",
           token: createToken({ relation: "editors", canPublish: false }),
-          permits: ["view", "edit", "api"],
         },
         domains: ["project.wstd.dev"],
         project,
@@ -1395,11 +1395,10 @@ describe("api router permits", () => {
     ).toThrow("Authorization token does not have publish permission");
 
     expect(() =>
-      assertApiPublishDomains({
+      assertPublishDomains({
         auth: {
           type: "token",
           token: createToken({ relation: "editors", canPublish: true }),
-          permits: ["view", "edit", "api"],
         },
         domains: ["custom.example.com"],
         project,
@@ -1407,11 +1406,10 @@ describe("api router permits", () => {
     ).not.toThrow();
 
     expect(() =>
-      assertApiPublishDomains({
+      assertPublishDomains({
         auth: {
           type: "token",
           token: createToken({ relation: "builders", canPublish: false }),
-          permits: ["view", "edit", "build", "api"],
         },
         domains: ["project.wstd.dev"],
         project,
@@ -1419,11 +1417,10 @@ describe("api router permits", () => {
     ).not.toThrow();
 
     expect(() =>
-      assertApiPublishDomains({
+      assertPublishDomains({
         auth: {
           type: "token",
           token: createToken({ relation: "builders", canPublish: false }),
-          permits: ["view", "edit", "build", "api"],
         },
         domains: ["custom.example.com"],
         project,
@@ -1431,14 +1428,13 @@ describe("api router permits", () => {
     ).toThrow("Authorization token does not have publish permission");
 
     expect(() =>
-      assertApiPublishDomains({
+      assertPublishDomains({
         auth: {
           type: "token",
           token: createToken({
             relation: "administrators",
             canPublish: true,
           }),
-          permits: ["view", "edit", "build", "admin", "api"],
         },
         domains: ["custom.example.com"],
         project,
@@ -1521,6 +1517,129 @@ describe("api router permits", () => {
       );
     }
   );
+
+  test("lets an admin share link validate in Builder with API access disabled", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({
+        relation: "administrators",
+        canPublish: true,
+        canUseApi: false,
+      })
+    );
+    vi.spyOn(projectApi, "loadById").mockResolvedValue({
+      domain: "project.wstd.dev",
+      domainsVirtual: [
+        { domain: "custom.example.com", status: "ACTIVE", verified: true },
+      ],
+    } as never);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(
+      createEditableContentBuild()
+    );
+    vi.spyOn(assetUploader, "loadAssetDataByProject").mockResolvedValue({
+      assets: [],
+      assetFolders: [],
+    });
+    vi.spyOn(db, "loadProjectBundleByProjectId").mockResolvedValue(
+      createPublishedProjectBundleFixture()
+    );
+    const context = createContext(true);
+    const input = {
+      projectId: "project-1",
+      target: "staging" as const,
+      domains: ["custom.example.com"],
+    };
+    const browserContext = {
+      ...context,
+      apiClient: { ...context.apiClient, type: "browser" as const },
+    };
+    const cliContext = {
+      ...context,
+      apiClient: { ...context.apiClient, type: "cli" as const },
+    };
+
+    await expect(
+      createCaller(cliContext).publish.validate(input)
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      cause: { webstudioCode: "API_ACCESS_DISABLED" },
+    });
+    await expect(
+      buildRouter.createCaller(browserContext).validatePublish(input)
+    ).resolves.toMatchObject({
+      valid: true,
+      domains: input.domains,
+      diagnostics: { mdxOmissions: [], mdxErrors: [] },
+      cssValid: true,
+    });
+  });
+
+  test.each([
+    { type: "cli", canEdit: true, projectId: "project-1" },
+    { type: "browser", canEdit: false, projectId: "project-1" },
+    { type: "browser", canEdit: true, projectId: "another-project" },
+  ] as const)(
+    "denies Builder validation before reading a project ($type, edit $canEdit, token for $projectId)",
+    async ({ type, canEdit, projectId }) => {
+      vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(canEdit);
+      vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+        createToken({
+          projectId,
+          relation: "administrators",
+          canPublish: true,
+          canUseApi: false,
+        })
+      );
+      const loadProject = vi.spyOn(projectApi, "loadById").mockResolvedValue({
+        domain: "project.wstd.dev",
+        domainsVirtual: [],
+      } as never);
+      const context = createContext(true);
+      const caller = buildRouter.createCaller({
+        ...context,
+        apiClient: { ...context.apiClient, type },
+      });
+
+      await expect(
+        caller.validatePublish({
+          projectId: "project-1",
+          target: "staging",
+          domains: ["project.wstd.dev"],
+        })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      expect(loadProject).not.toHaveBeenCalled();
+    }
+  );
+
+  test("denies Builder validation for a custom domain when the share link cannot publish there", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ canUseApi: false })
+    );
+    vi.spyOn(projectApi, "loadById").mockResolvedValue({
+      domain: "project.wstd.dev",
+      domainsVirtual: [
+        { domain: "custom.example.com", status: "ACTIVE", verified: true },
+      ],
+    } as never);
+    const loadBuild = vi
+      .spyOn(projectBuild, "loadDevBuildByProjectId")
+      .mockResolvedValue(createEditableContentBuild());
+    const context = createContext(true);
+    const caller = buildRouter.createCaller({
+      ...context,
+      apiClient: { ...context.apiClient, type: "browser" },
+    });
+
+    await expect(
+      caller.validatePublish({
+        projectId: "project-1",
+        target: "staging",
+        domains: ["custom.example.com"],
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(loadBuild).not.toHaveBeenCalled();
+  });
 
   test("warns before publishing when generated CSS cannot build", async () => {
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
@@ -1707,7 +1826,7 @@ describe("api router permits", () => {
         target: "production",
         domains: ["custom.example.com"],
       })
-    ).rejects.toThrow("Authorization token does not have publish permission");
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(loadBundle).not.toHaveBeenCalled();
   });
 

@@ -43,6 +43,17 @@ beforeAll(async () => {
   vi.resetModules();
   interceptor = createTrpcInterceptor({
     POST: {
+      "build.validatePublish": async () => {
+        checkRequests += 1;
+        try {
+          const result = await checks.promise;
+          checksRead += 1;
+          return result;
+        } catch (error) {
+          checksRead += 1;
+          throw error;
+        }
+      },
       "domain.publish": () => {
         publishRequests += 1;
         return dispatch.promise;
@@ -72,17 +83,6 @@ beforeAll(async () => {
         data: 0,
         limit: 100,
       }),
-      "api.publish.validate": async () => {
-        checkRequests += 1;
-        try {
-          const result = await checks.promise;
-          checksRead += 1;
-          return result;
-        } catch (error) {
-          checksRead += 1;
-          throw error;
-        }
-      },
       "build.contentDatabasePublishDiagnostics": async () => {
         checkRequests += 1;
         try {
@@ -450,6 +450,18 @@ test.each(["checks-first", "server-first"] as const)(
     expect(errors?.textContent).toContain("site transport failure");
   }
 );
+
+test("a site publish response appears while validation is still pending", async () => {
+  await mount("site");
+  await clickPublish("site");
+  await act(async () => {
+    dispatch.resolve({ success: false, error: "site request failure" });
+    await dispatch.promise;
+  });
+  const errors = await openErrors("site");
+  expect(errors?.textContent).toContain("site request failure");
+  await completeChecks(false);
+});
 
 test.each(["request", "transport"] as const)(
   "a static %s failure does not replace an earlier site failure",
