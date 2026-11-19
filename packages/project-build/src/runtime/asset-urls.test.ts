@@ -89,6 +89,25 @@ test("resolves published CGI asset URLs by the stored asset name", () => {
   });
 });
 
+test("maps video assets that use the CGI asset route", () => {
+  expect(
+    createAssetUrlsByPath({
+      assets: [
+        asset({
+          id: "video",
+          name: "clip_hash.mp4",
+          filename: "clip",
+          type: "video",
+        }),
+      ],
+      assetFolders: new Map(),
+      getUrl: (item) => `/assets/${item.name}`,
+    })
+  ).toMatchObject({
+    "/cgi/asset/clip_hash.mp4": "/assets/clip_hash.mp4",
+  });
+});
+
 test("keeps a CGI alias when a stored asset is duplicated", () => {
   expect(
     createAssetUrlsByPath({

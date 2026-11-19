@@ -3,6 +3,7 @@ import { createCanonicalAssetPath } from "@webstudio-is/content-engine/mdx";
 import {
   createAssetFolderHierarchy,
   formatAssetName,
+  isResizableImageFileName,
   type Asset,
   type AssetFolders,
 } from "@webstudio-is/sdk";
@@ -41,7 +42,7 @@ export const createAssetUrlsByPath = ({
         },
       ];
       if (
-        asset.type === "file" &&
+        isResizableImageFileName(asset.name) === false &&
         canonicalAssetPath !== cgiAssetPath &&
         (targetUrl.pathname !== `/${cgiAssetPath}` ||
           targetUrl.origin !== "https://webstudio.invalid")
