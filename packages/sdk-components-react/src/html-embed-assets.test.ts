@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import { resolveHtmlEmbedAssetUrls } from "./html-embed-assets";
 
 const assetUrlsByPath = {
+  "/cgi/asset/test_hash.js": "/assets/test_hash.js",
   "/test.js": "/cgi/asset/test_hash.js?format=raw",
   "/site.css": "/cgi/asset/site_hash.css?format=raw",
   "/hero.png": "/cgi/image/hero_hash.png?format=raw",
@@ -9,6 +10,15 @@ const assetUrlsByPath = {
   "/hero%26cover.png": "/cgi/image/hero_cover_hash.png?format=raw",
   "/hero%402x.png": "/cgi/image/hero_2x_hash.png?format=raw",
 };
+
+test("rewrites a published CGI asset URL to its generated preview URL", () => {
+  expect(
+    resolveHtmlEmbedAssetUrls(
+      `<script src="/cgi/asset/test_hash.js"></script>`,
+      assetUrlsByPath
+    )
+  ).toBe(`<script src="/assets/test_hash.js"></script>`);
+});
 
 test("rewrites asset attributes without reformatting embed markup", () => {
   const code = `<SCRIPT defer SRC='/test.js#ready'></SCRIPT>

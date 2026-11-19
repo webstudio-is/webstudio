@@ -58,10 +58,30 @@ test("creates runtime URLs keyed by root-relative asset paths", () => {
   ).toEqual({
     "/Hero%20image.png": "/cgi/asset/hero_hash.png",
     "/Custom%20scripts/test.js": "/cgi/asset/test_hash.js",
+    "/cgi/asset/hero_hash.png": "/cgi/asset/hero_hash.png",
+    "/cgi/asset/test_hash.js": "/cgi/asset/test_hash.js",
   });
 });
 
-test("omits ambiguous asset paths", () => {
+test("resolves published CGI asset URLs by the stored asset name", () => {
+  expect(
+    createAssetUrlsByPath({
+      assets: [
+        asset({
+          id: "script",
+          name: "dashboard_hash.js",
+          filename: "dashboard",
+        }),
+      ],
+      assetFolders: new Map(),
+      getUrl: (item) => `/assets/${item.name}`,
+    })
+  ).toMatchObject({
+    "/cgi/asset/dashboard_hash.js": "/assets/dashboard_hash.js",
+  });
+});
+
+test("omits ambiguous canonical paths but keeps unique CGI URLs", () => {
   const assets = [
     asset({ id: "first", name: "first_hash.js", filename: "test" }),
     asset({ id: "second", name: "second_hash.js", filename: "test" }),
@@ -73,5 +93,8 @@ test("omits ambiguous asset paths", () => {
       assetFolders: new Map(),
       getUrl: (item) => `/assets/${item.name}`,
     })
-  ).toEqual({});
+  ).toEqual({
+    "/cgi/asset/first_hash.js": "/assets/first_hash.js",
+    "/cgi/asset/second_hash.js": "/assets/second_hash.js",
+  });
 });

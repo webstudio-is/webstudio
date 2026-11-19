@@ -19,17 +19,26 @@ export const createAssetUrlsByPath = ({
   const hierarchy = createAssetFolderHierarchy(assetFolders);
   const urlsById = new Map<string, string>();
   const assetIdsByPath = createUniqueAssetIdsByPath(
-    Array.from(assets, (asset) => {
+    Array.from(assets).flatMap((asset) => {
       urlsById.set(asset.id, getUrl(asset));
-      return {
-        id: asset.id,
-        path: createCanonicalAssetPath({
-          folderNames: hierarchy
-            .getPath(asset.folderId)
-            .map((folder) => folder.name),
-          name: formatAssetName(asset),
-        }),
-      };
+      return [
+        {
+          id: asset.id,
+          path: createCanonicalAssetPath({
+            folderNames: hierarchy
+              .getPath(asset.folderId)
+              .map((folder) => folder.name),
+            name: formatAssetName(asset),
+          }),
+        },
+        {
+          id: asset.id,
+          path: createCanonicalAssetPath({
+            folderNames: ["cgi", "asset"],
+            name: asset.name,
+          }),
+        },
+      ];
     })
   );
   return Object.fromEntries(
