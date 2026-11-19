@@ -7,11 +7,13 @@ const asset = ({
   name,
   filename,
   folderId,
+  type = "file",
 }: {
   id: string;
   name: string;
   filename?: string;
   folderId?: string;
+  type?: Asset["type"];
 }) =>
   ({
     id,
@@ -19,7 +21,7 @@ const asset = ({
     filename,
     folderId,
     projectId: "project",
-    type: "file",
+    type,
     size: 1,
     format: name.slice(name.lastIndexOf(".") + 1),
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -40,7 +42,12 @@ test("creates runtime URLs keyed by root-relative asset paths", () => {
     ],
   ]);
   const assets = [
-    asset({ id: "hero", name: "hero_hash.png", filename: "Hero image" }),
+    asset({
+      id: "hero",
+      name: "hero_hash.png",
+      filename: "Hero image",
+      type: "image",
+    }),
     asset({
       id: "script",
       name: "test_hash.js",
@@ -53,11 +60,14 @@ test("creates runtime URLs keyed by root-relative asset paths", () => {
     createAssetUrlsByPath({
       assets,
       assetFolders: folders,
-      getUrl: (item) => `/cgi/asset/${item.name}`,
+      getUrl: (item) =>
+        item.type === "image"
+          ? `/cgi/image/${item.name}?format=raw`
+          : `/cgi/asset/${item.name}?format=raw`,
     })
   ).toEqual({
-    "/Hero%20image.png": "/cgi/asset/hero_hash.png",
-    "/Custom%20scripts/test.js": "/cgi/asset/test_hash.js",
+    "/Hero%20image.png": "/cgi/image/hero_hash.png?format=raw",
+    "/Custom%20scripts/test.js": "/cgi/asset/test_hash.js?format=raw",
   });
 });
 

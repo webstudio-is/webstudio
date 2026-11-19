@@ -41,6 +41,7 @@ export const createAssetUrlsByPath = ({
         },
       ];
       if (
+        asset.type === "file" &&
         canonicalAssetPath !== cgiAssetPath &&
         (targetUrl.pathname !== `/${cgiAssetPath}` ||
           targetUrl.origin !== "https://webstudio.invalid")
