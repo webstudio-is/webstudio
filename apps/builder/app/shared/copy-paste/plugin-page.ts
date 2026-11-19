@@ -3,6 +3,7 @@ import { fetch as builderFetch } from "../fetch.client";
 import { draftPersistence } from "../sync/draft-persistence";
 import {
   getPageClipboardGrant,
+  hasPageCopyAssetsQuery,
   transferBuilderPage,
 } from "./transfer-page.client";
 import {
@@ -36,6 +37,7 @@ import {
   createClipboardAssetPaths,
   createPageTransferItem,
   createPageCopyArtifacts,
+  pageCopyError,
   pageCopyFailure,
   includePageTransferMetaAssets,
   hasDynamicContentBlockSource,
@@ -61,6 +63,7 @@ import {
 
 const invalidPasteDataMessage =
   "Could not paste Webstudio page data. The clipboard data appears to be incomplete or invalid.";
+const dynamicDependencyUnsupported = "PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED";
 
 const stringify = (
   data: PageTransferItem,
@@ -68,6 +71,7 @@ const stringify = (
   source?: {
     projectId: string;
     grant?: string;
+    grantError?: typeof dynamicDependencyUnsupported;
     revision?: { buildId: string; version: number };
   }
 ) => {
@@ -84,6 +88,7 @@ const stringify = (
       sourceOrigin: window.location.origin,
       sourceProjectId: source?.projectId,
       sourceGrant: source?.grant,
+      sourceGrantError: source?.grantError,
       sourceRevision: source?.revision,
       assetPaths: createClipboardAssetPaths(
         Array.from(assets.values()),
@@ -415,17 +420,24 @@ export const copyPageData = async (
   if (ready && canAuthorize) {
     canAuthorize = await waitForSourceDraft(projectId);
   }
+  let grantError: typeof dynamicDependencyUnsupported | undefined;
   const authorized =
     canAuthorize && projectId !== undefined
-      ? await getPageClipboardGrant(
+      ? await getPageClipboardGrant({
           projectId,
           item,
-          undefined,
           request,
-          revision === undefined
-            ? undefined
-            : { buildId: revision.buildId, version: revision.version }
-        ).catch(() => undefined)
+          expectedRevision:
+            revision === undefined
+              ? undefined
+              : { buildId: revision.buildId, version: revision.version },
+          sourceCatalog: data,
+        }).catch<undefined>((error: unknown) => {
+          const { code } = pageCopyFailure(error, createPageCopyArtifacts());
+          if (code === dynamicDependencyUnsupported) {
+            grantError = code;
+          }
+        })
       : undefined;
   if ($project.get()?.id !== projectId) {
     throw new Error("PAGE_COPY_SOURCE_STALE");
@@ -433,6 +445,7 @@ export const copyPageData = async (
   return stringify(item, data.assetFolders, {
     projectId,
     grant: authorized?.grant,
+    grantError,
     revision:
       authorized === undefined
         ? undefined
@@ -501,6 +514,7 @@ export const handlePastePage = async (
     assetPaths,
     sourceProjectId,
     sourceGrant,
+    sourceGrantError,
     sourceRevision,
     ...transferItem
   } = transferData.data;
@@ -522,7 +536,8 @@ export const handlePastePage = async (
     if (projectId === undefined) {
       return pasteHandled;
     }
-    const isSameProject = sourceProjectId === projectId;
+    const isSameProject =
+      sourceProjectId === projectId && sourceOrigin === window.location.origin;
     const sourcePageItems = collectPageTransferItems(item);
     if (sourceOrigin !== undefined) {
       const assetIds = new Set(
@@ -573,12 +588,15 @@ export const handlePastePage = async (
       item.type === "page" &&
       isSameProject === false &&
       (sourceGrant !== undefined ||
-        sourcePageItems.some(
-          ({ rootFragment, bodyFragment }) =>
-            rootFragment.assets.length > 0 || bodyFragment.assets.length > 0
-        ))
+        sourceGrantError !== undefined ||
+        item.rootFragment.assets.length > 0 ||
+        item.bodyFragment.assets.length > 0 ||
+        hasPageCopyAssetsQuery(item))
     ) {
       try {
+        if (sourceGrantError !== undefined) {
+          throw pageCopyError(sourceGrantError);
+        }
         const result = await transferPage({
           item,
           sourceOrigin,

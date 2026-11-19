@@ -974,7 +974,7 @@ const hasUnsupportedAssetQueryDataLookup = (
   return false;
 };
 
-const getStaticAssetResourceDependencies = (
+export const getStaticAssetResourceDependencies = (
   fragments: readonly WebstudioFragment[],
   assets: readonly Asset[]
 ) => {

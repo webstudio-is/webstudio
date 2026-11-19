@@ -12,13 +12,14 @@ import {
   pageCopyError,
   pageCopyFailure,
   createPageCopyArtifacts,
+  getStaticAssetResourceDependencies,
   planPageTransfer,
   previewPageTransfer,
   projectPageCopyAssets,
   trackPageCopyFolder,
   type PageTransferData,
 } from "@webstudio-is/project-build/transfer";
-import { createId, type Asset } from "@webstudio-is/sdk";
+import { createId, hasAssetsResourceUrl, type Asset } from "@webstudio-is/sdk";
 import { fetch as builderFetch } from "../fetch.client";
 import { getWebstudioData } from "../instance-utils/data";
 import {
@@ -29,34 +30,75 @@ import { $project } from "../sync/data-stores";
 import { draftPersistence } from "../sync/draft-persistence";
 import { externalContentSyncStore } from "../sync/sync-stores";
 import { invalidateAssets } from "../resources";
+import { includeMdxAssetDependencies } from "./content-block-fragment";
 
 const sourceFetch = globalThis.fetch;
-const getSourceAssetIds = (item: PageTransferData) =>
-  Array.from(
-    new Set(
-      [item.rootFragment, item.bodyFragment].flatMap(({ assets }) =>
-        assets.map(({ id }) => id)
-      )
-    )
+export const hasPageCopyAssetsQuery = (item: PageTransferData) =>
+  [item.rootFragment, item.bodyFragment].some(({ resources }) =>
+    resources.some(hasAssetsResourceUrl)
   );
 
-export const getPageClipboardGrant = (
-  projectId: string,
-  item: PageTransferData,
-  renewGrant?: string,
+export const getPageClipboardGrant = async ({
+  projectId,
+  item,
+  renewGrant,
   request = builderFetch,
-  expectedRevision?: { buildId: string; version: number }
-) =>
-  httpClient.issuePageCopySourceGrant(
-    { origin: window.location.origin, projectId, request },
-    renewGrant === undefined
-      ? {
-          pageId: item.page.id,
-          assetIds: getSourceAssetIds(item),
-          expectedRevision,
-        }
-      : { pageId: item.page.id, renewGrant }
+  expectedRevision,
+  sourceCatalog,
+}: {
+  projectId: string;
+  item: PageTransferData;
+  renewGrant?: string;
+  request?: typeof fetch;
+  expectedRevision?: { buildId: string; version: number };
+  sourceCatalog?: Pick<
+    ReturnType<typeof getWebstudioData>,
+    "assets" | "assetFolders"
+  >;
+}) => {
+  const connection = { origin: window.location.origin, projectId, request };
+  const pageId = item.page.id;
+  if (renewGrant !== undefined) {
+    return httpClient.issuePageCopySourceGrant(connection, {
+      pageId,
+      renewGrant,
+    });
+  }
+  const fragments = [item.rootFragment, item.bodyFragment];
+  const assetIds = new Set(
+    fragments.flatMap(({ assets }) => assets.map(({ id }) => id))
   );
+  if (hasPageCopyAssetsQuery(item)) {
+    if (sourceCatalog === undefined) {
+      // The clipboard alone cannot determine the results of a source query.
+      throw pageCopyError("PAGE_COPY_RECOPY_REQUIRED");
+    }
+    const { assets, assetFolders } = sourceCatalog;
+    const queries = getStaticAssetResourceDependencies(fragments, [
+      ...assets.values(),
+    ]);
+    const dependencies = await includeMdxAssetDependencies({
+      fragment: {
+        ...item.bodyFragment,
+        assets: [...queries.values()].flatMap(({ assets }) => assets),
+      },
+      projectId,
+      assets,
+      assetFolders,
+    });
+    if (dependencies.skippedAssetIds.length > 0) {
+      throw pageCopyError("PAGE_COPY_RECOPY_REQUIRED");
+    }
+    for (const { id } of dependencies.fragment.assets) {
+      assetIds.add(id);
+    }
+  }
+  return httpClient.issuePageCopySourceGrant(connection, {
+    pageId,
+    assetIds: [...assetIds],
+    expectedRevision,
+  });
+};
 
 export const transferBuilderPage = async ({
   item,
@@ -108,7 +150,12 @@ export const transferBuilderPage = async ({
     if (origin !== destinationOrigin || candidate === undefined) {
       throw pageCopyError("PAGE_COPY_RECOPY_REQUIRED");
     }
-    return await getPageClipboardGrant(candidate, item, current, request);
+    return await getPageClipboardGrant({
+      projectId: candidate,
+      item,
+      renewGrant: current,
+      request,
+    });
   };
   if (sourceGrant === undefined) {
     const authorized = await renewSource();

@@ -89,6 +89,9 @@ const pageClipboardTransferItemInput = pageTransferItemInput.and(
     sourceOrigin: z.string().url().optional(),
     sourceProjectId: z.string().optional(),
     sourceGrant: z.string().optional(),
+    sourceGrantError: z
+      .literal("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED")
+      .optional(),
     sourceRevision: z
       .object({
         buildId: z.string(),

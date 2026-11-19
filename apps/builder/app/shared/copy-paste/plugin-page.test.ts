@@ -1,11 +1,15 @@
 import { afterAll, afterEach, expect, test, vi } from "vitest";
 import { enableMapSet } from "immer";
+import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { PageTransferItem } from "@webstudio-is/project-build/transfer";
 import {
   blockComponent,
   blockTemplateComponent,
+  createDefaultStructuredAssetQueryResourceConfiguration,
+  createStructuredAssetQueryResourceBody,
   encodeDataSourceVariable,
+  parseStructuredAssetQueryResourceBody,
   ROOT_FOLDER_ID,
   ROOT_INSTANCE_ID,
   type Asset,
@@ -46,6 +50,10 @@ import {
 } from "./plugin-page";
 import { pasteHandled, pasteIgnored } from "./copy-paste";
 import { __testing__ as builderApiTesting } from "../builder-api";
+import {
+  __testing__ as assetContentBridgeTesting,
+  createAssetContentBridge,
+} from "../asset-content-bridge.client";
 
 enableMapSet();
 registerContainers();
@@ -463,7 +471,7 @@ test("copies page data across projects", async () => {
   expect($dataSources.get().has("source-variable")).toBe(false);
 });
 
-test("requires a grant for cross-origin page assets and inserts after authenticated upload", async () => {
+const checkCrossOriginPageAssets = async (targetProjectId: string) => {
   $project.set({ id: "source-project" } as Project);
   resetBuildStores();
 
@@ -485,7 +493,7 @@ test("requires a grant for cross-origin page assets and inserts after authentica
   const importedAsset = {
     ...sourceAsset,
     id: "imported-asset",
-    projectId: "target-project",
+    projectId: targetProjectId,
   } satisfies Asset;
   const sourcePage = sourcePages.pages.get("source-page");
   if (sourcePage === undefined) {
@@ -519,7 +527,7 @@ test("requires a grant for cross-origin page assets and inserts after authentica
   clipboardData["@webstudio/page/v0.1"].sourceOrigin =
     "https://source.example.com";
 
-  $project.set({ id: "target-project" } as Project);
+  $project.set({ id: targetProjectId } as Project);
   resetBuildStores();
   const targetPages = createDefaultPages({
     homePageId: "target-page",
@@ -633,7 +641,7 @@ test("requires a grant for cross-origin page assets and inserts after authentica
     throw new Error(`Unexpected transfer request: ${path}`);
   };
 
-  draftPersistence.reset("target-project");
+  draftPersistence.reset(targetProjectId);
   const unsubscribe = serverSyncStore.subscribe((id, payload) => {
     if (payload.some(({ namespace }) => namespace === "pages")) {
       stepOrder.push("commit");
@@ -677,6 +685,319 @@ test("requires a grant for cross-origin page assets and inserts after authentica
   expect(stepOrder).toEqual(["reserve", "upload", "commit"]);
   expect(reads).toBe(1);
   expect($assets.get().has(sourceAsset.id)).toBe(false);
+};
+
+test.each(["target-project", "source-project"])(
+  "requires a grant to upload cross-origin page assets to %s",
+  checkCrossOriginPageAssets
+);
+
+test("copies the fixed Assets query results and their document dependencies", async () => {
+  resetBuildStores();
+  const sourceProjectId = "query-source";
+  const targetProjectId = "query-target";
+  $project.set({ id: sourceProjectId } as Project);
+  $pages.set(
+    createDefaultPages({ homePageId: "source-page", rootInstanceId: "root" })
+  );
+  const query = {
+    id: "query-data",
+    type: "resource",
+    name: "Article",
+    resourceId: "article-query",
+    scopeInstanceId: "root",
+  } satisfies DataSource;
+  $instances.set(
+    new Map([
+      [
+        "root",
+        {
+          id: "root",
+          type: "instance",
+          component: "Body",
+          children: [
+            {
+              type: "expression",
+              value: `${encodeDataSourceVariable(query.id)}.data.title`,
+            },
+          ],
+        },
+      ],
+    ])
+  );
+  $dataSources.set(new Map([[query.id, query]]));
+  $resources.set(
+    new Map([
+      [
+        query.resourceId,
+        {
+          id: query.resourceId,
+          name: "Article",
+          method: "post",
+          url: '"/$resources/assets"',
+          control: "system",
+          headers: [],
+          body: createStructuredAssetQueryResourceBody({
+            ...createDefaultStructuredAssetQueryResourceConfiguration(),
+            result: "one",
+            where: { field: ["name"], operator: "eq", value: '"article.md"' },
+          }),
+        },
+      ],
+    ])
+  );
+  const documents = new Map([
+    [
+      "article",
+      "---\ntitle: Article\nauthor:\n  $ref: ./author.md#frontmatter\n---\n",
+    ],
+    ["author", "---\navatar: ./hero.png\n---\n"],
+  ]);
+  const files = [...documents].map(
+    ([id, contents]): Asset => ({
+      id,
+      projectId: sourceProjectId,
+      name: `${id}.md`,
+      format: "md",
+      size: contents.length,
+      type: "file",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      meta: {},
+    })
+  );
+  const hero: Asset = {
+    ...files[0],
+    id: "hero",
+    name: "hero.png",
+    format: "png",
+    type: "image",
+    meta: { width: 16, height: 16 },
+  };
+  const catalog = new Map([...files, hero].map((asset) => [asset.id, asset]));
+  $assets.set(catalog);
+  const session = createAssetContentSession({
+    repository: {
+      readContent: async ({ assetId }) => ({
+        asset: catalog.get(assetId)!,
+        data: (async function* () {
+          yield new TextEncoder().encode(documents.get(assetId)!);
+        })(),
+      }),
+      updateContent: async () => {
+        throw new Error("Unexpected write to a source document");
+      },
+    },
+    authorize: () => true,
+  });
+  assetContentBridgeTesting.initBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload: () => {},
+      getContentSession: () => session,
+    })
+  );
+
+  const sourceRevision = { buildId: "source-build", version: 4 };
+  let grantedIds: string[] = [];
+  let pastedAssets: Asset[] = [];
+  const request: typeof fetch = async (url, init) => {
+    switch (new URL(String(url)).pathname) {
+      case "/rest/page-copy/grant":
+        grantedIds = JSON.parse(String(init?.body)).assetIds;
+        return Response.json({ grant: "grant", ...sourceRevision });
+      case "/rest/page-copy/content": {
+        const body = JSON.parse(String(init?.body));
+        expect(body.grant).toBe("grant");
+        if (body.kind === "asset") {
+          expect(grantedIds).toContain(body.assetId);
+          return new Response(documents.get(body.assetId));
+        }
+        return Response.json({
+          source: {
+            projectId: sourceProjectId,
+            pageId: "source-page",
+            ...sourceRevision,
+          },
+          storageScope: "shared",
+          assets: grantedIds.map((id) => catalog.get(id)),
+          folders: [],
+        });
+      }
+      case "/rest/page-copy/destination": {
+        if (init?.method !== "POST") {
+          return Response.json({
+            buildId: "target-build",
+            version: 5,
+            contractVersion: "copy",
+            storageScope: "shared",
+          });
+        }
+        const body = JSON.parse(String(init.body));
+        expect(body.kind).toBe("relink");
+        pastedAssets = body.assets.map(
+          ({ sourceId, targetId }: { sourceId: string; targetId: string }) => ({
+            ...catalog.get(sourceId)!,
+            id: targetId,
+            projectId: targetProjectId,
+          })
+        );
+        return Response.json({ created: pastedAssets, reused: [] });
+      }
+      case "/rest/assets":
+        return Response.json({ assets: pastedAssets });
+      case "/rest/assets/folders":
+        return Response.json({ folders: [] });
+      default:
+        throw new Error(`Unexpected page copy request: ${url}`);
+    }
+  };
+  const unsubscribe = serverSyncStore.subscribe((id, changes) => {
+    if (changes.some(({ namespace }) => namespace === "pages")) {
+      reportTransactionCompletion(id, true);
+    }
+  });
+  try {
+    const clipboard = await copyPageData("source-page", request);
+    resetBuildStores();
+    $project.set({ id: targetProjectId } as Project);
+    $pages.set(
+      createDefaultPages({ homePageId: "target-page", rootInstanceId: "body" })
+    );
+    $instances.set(
+      new Map([
+        [
+          "body",
+          { id: "body", type: "instance", component: "Body", children: [] },
+        ],
+      ])
+    );
+    draftPersistence.reset(targetProjectId);
+
+    const paste = (data: string) =>
+      handlePastePage(data, ROOT_FOLDER_ID, (input) =>
+        transferBuilderPage({ ...input, request, readSourceRequest: request })
+      );
+    await expect(paste(clipboard ?? "")).resolves.toEqual(pasteHandled);
+
+    const [pastedQuery] = $resources.get().values();
+    expect(
+      parseStructuredAssetQueryResourceBody(pastedQuery?.body)?.where
+    ).toEqual({
+      field: ["id"],
+      operator: "eq",
+      value: '"article"',
+    });
+    expect([...$assets.get().keys()].sort()).toEqual([
+      "article",
+      "author",
+      "hero",
+    ]);
+
+    const unscoped = JSON.parse(clipboard ?? "");
+    delete unscoped["@webstudio/page/v0.1"].sourceGrant;
+    await expect(paste(JSON.stringify(unscoped))).resolves.toMatchObject({
+      success: false,
+      transfer: { code: "PAGE_COPY_RECOPY_REQUIRED" },
+    });
+  } finally {
+    unsubscribe();
+    draftPersistence.reset();
+    assetContentBridgeTesting.clearBridge();
+    session.dispose();
+  }
+});
+
+test("pastes a dynamic Assets query only in its source project and reports why", async () => {
+  resetBuildStores();
+  $project.set({ id: "query-source" } as Project);
+  $pages.set(
+    createDefaultPages({ homePageId: "source-page", rootInstanceId: "root" })
+  );
+  const articleName: DataSource = {
+    id: "article-name",
+    name: "Article name",
+    scopeInstanceId: "root",
+    type: "variable",
+    value: { type: "string", value: "article.md" },
+  };
+  const article: DataSource = {
+    id: "article",
+    name: "Article",
+    scopeInstanceId: "root",
+    type: "resource",
+    resourceId: "article-query",
+  };
+  const queryBody = createStructuredAssetQueryResourceBody({
+    ...createDefaultStructuredAssetQueryResourceConfiguration(),
+    result: "one",
+    where: {
+      field: ["name"],
+      operator: "eq",
+      value: encodeDataSourceVariable(articleName.id),
+    },
+  });
+  $instances.set(
+    new Map([
+      [
+        "root",
+        {
+          id: "root",
+          type: "instance",
+          component: "Body",
+          children: [
+            {
+              type: "expression",
+              value: `${encodeDataSourceVariable(article.id)}.data.title`,
+            },
+          ],
+        },
+      ],
+    ])
+  );
+  $dataSources.set(
+    new Map<string, DataSource>([
+      [articleName.id, articleName],
+      [article.id, article],
+    ])
+  );
+  $resources.set(
+    new Map([
+      [
+        article.resourceId,
+        {
+          id: article.resourceId,
+          name: "Article",
+          method: "post",
+          url: '"/$resources/assets"',
+          control: "system",
+          headers: [],
+          body: queryBody,
+        },
+      ],
+    ])
+  );
+  const clipboard = (await copyPageData("source-page")) ?? "";
+
+  await expect(handlePastePage(clipboard, ROOT_FOLDER_ID)).resolves.toEqual(
+    pasteHandled
+  );
+  expect($pages.get()?.pages.size).toBe(2);
+  expect($resources.get().size).toBe(2);
+
+  resetBuildStores();
+  $project.set({ id: "query-target" } as Project);
+  $pages.set(
+    createDefaultPages({ homePageId: "target-page", rootInstanceId: "body" })
+  );
+  await expect(
+    handlePastePage(clipboard, ROOT_FOLDER_ID)
+  ).resolves.toMatchObject({
+    success: false,
+    transfer: { code: "PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED" },
+  });
+  expect($pages.get()?.pages.size).toBe(1);
 });
 
 test("preserves legacy page metadata assets that exist in the destination", async () => {
