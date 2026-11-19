@@ -1,3 +1,4 @@
+import { parse as parseJavaScript, parseExpressionAt } from "acorn";
 import {
   createCanonicalAssetPath,
   discoverNamedMdxAssetReferences,
@@ -13,6 +14,10 @@ import {
   rewriteJsonAssetReferences,
 } from "@webstudio-is/content-engine";
 import {
+  parseDirectPathExpression,
+  parseJsonExpression,
+} from "@webstudio-is/expression";
+import {
   createWebstudioDataFromFragment,
   extractWebstudioFragment,
   mergeWebstudioFragments,
@@ -21,18 +26,25 @@ import {
 import {
   blockComponent,
   blockTemplateComponent,
+  collectionComponent,
   createAssetFolderHierarchy,
   createId,
+  createStructuredAssetQueryResourceBody,
   formatAssetName,
   getAssetFolderSiblingKey,
   findContentBlockBodyContainers,
   getContentBlockSource,
   getStaticContentBlockSourceAssetId,
+  decodeDataVariableId,
+  isAssetsResource,
   isMdxFileAsset,
   hasAssetsResourceUrl,
+  parseStructuredAssetQueryResourceBodyResult,
   type Asset,
   type AssetFolder,
   type AssetFolders,
+  type StructuredAssetQueryResourceConfiguration,
+  type StructuredAssetQueryWhereBinding,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
 
@@ -379,6 +391,816 @@ const getTransferNamedAssets = ({ assets, folders }: PageCopyCatalog) => {
   }));
 };
 
+const matchesStaticAssetWhere = (
+  where: StructuredAssetQueryWhereBinding,
+  asset: Asset
+): boolean => {
+  if ("all" in where) {
+    return where.all.every((child) => matchesStaticAssetWhere(child, asset));
+  }
+  if ("any" in where) {
+    return where.any.some((child) => matchesStaticAssetWhere(child, asset));
+  }
+  const value = parseJsonExpression(where.value);
+  if (
+    (where.field[0] !== "id" &&
+      where.field[0] !== "folderId" &&
+      where.field[0] !== "name") ||
+    where.field.length !== 1 ||
+    (where.operator !== "eq" && where.operator !== "in") ||
+    (typeof value !== "string" &&
+      !(
+        Array.isArray(value) && value.every((item) => typeof item === "string")
+      ))
+  ) {
+    throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+  }
+  const assetValue =
+    where.field[0] === "id"
+      ? asset.id
+      : where.field[0] === "folderId"
+        ? asset.folderId
+        : formatAssetName(asset);
+  if (assetValue === undefined) {
+    return false;
+  }
+  return where.operator === "eq"
+    ? assetValue === value
+    : Array.isArray(value) && value.includes(assetValue);
+};
+
+const validateStaticAssetWhere = (where: StructuredAssetQueryWhereBinding) => {
+  if ("all" in where || "any" in where) {
+    const children = "all" in where ? where.all : where.any;
+    if (children.length === 0) {
+      throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+    }
+    for (const child of children) {
+      validateStaticAssetWhere(child);
+    }
+    return;
+  }
+  const value = parseJsonExpression(where.value);
+  if (
+    (where.field[0] !== "id" &&
+      where.field[0] !== "folderId" &&
+      where.field[0] !== "name") ||
+    where.field.length !== 1 ||
+    (where.operator !== "eq" && where.operator !== "in") ||
+    (typeof value !== "string" &&
+      !(
+        Array.isArray(value) && value.every((item) => typeof item === "string")
+      ))
+  ) {
+    throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+  }
+};
+
+const includesAssetId = (
+  output: StructuredAssetQueryResourceConfiguration["output"]
+) =>
+  output.includeMetadata ||
+  (output.mode === "fields" &&
+    output.fields.some((field) => field.length === 1 && field[0] === "id"));
+
+const hasAssetQueryFilter = (where: StructuredAssetQueryWhereBinding) =>
+  "field" in where ||
+  ("all" in where
+    ? where.all.some(hasAssetQueryFilter)
+    : where.any.some(hasAssetQueryFilter));
+
+const hasUnsupportedAssetQueryDataLookup = (
+  fragments: readonly WebstudioFragment[],
+  page: PageTransferData["page"],
+  dependencies: ReturnType<typeof getStaticAssetResourceDependencies>,
+  targetIds: ReadonlyMap<string, string>
+) => {
+  const dataSourceToAssetIds = new Map<string, Set<string>>();
+  const comparisonDataSourceToAssetIds = new Map<string, Set<string>>();
+  const assetIdPaths = new Map<string, string[]>();
+  const getStaticPath = (node: unknown): string[] | undefined => {
+    if (typeof node !== "object" || node === null) {
+      return;
+    }
+    const value = node as Record<string, unknown>;
+    if (value.type === "Identifier" && typeof value.name === "string") {
+      return [value.name];
+    }
+    if (value.type === "ChainExpression") {
+      return getStaticPath(value.expression);
+    }
+    if (value.type !== "MemberExpression") {
+      return;
+    }
+    const objectPath = getStaticPath(value.object);
+    if (objectPath === undefined) {
+      return;
+    }
+    const property = value.property as Record<string, unknown> | undefined;
+    const propertyName = value.computed
+      ? property?.type === "Literal" &&
+        (typeof property.value === "string" ||
+          typeof property.value === "number")
+        ? String(property.value)
+        : undefined
+      : property?.type === "Identifier" && typeof property.name === "string"
+        ? property.name
+        : undefined;
+    return propertyName === undefined
+      ? undefined
+      : [...objectPath, propertyName];
+  };
+  const getCollectionDataPaths = (
+    node: unknown,
+    includeData = false
+  ): string[][] => {
+    if (typeof node !== "object" || node === null) {
+      return [];
+    }
+    const path = getStaticPath(node);
+    if (path?.length === 2 && path[1] === "data") {
+      return [path];
+    }
+    const value = node as Record<string, unknown>;
+    if (value.type === "MemberExpression") {
+      const property = value.property as Record<string, unknown> | undefined;
+      const propertyName = value.computed
+        ? property?.type === "Literal" && typeof property.value === "string"
+          ? property.value
+          : undefined
+        : property?.type === "Identifier" && typeof property.name === "string"
+          ? property.name
+          : undefined;
+      if (propertyName === "data" || propertyName === undefined) {
+        return getCollectionDataPaths(value.object, true);
+      }
+    }
+    if (includeData && path?.length === 1) {
+      return [[...path, "data"]];
+    }
+    const branches =
+      value.type === "ConditionalExpression"
+        ? [value.consequent, value.alternate]
+        : value.type === "LogicalExpression"
+          ? [value.left, value.right]
+          : value.type === "SequenceExpression" &&
+              Array.isArray(value.expressions)
+            ? [value.expressions.at(-1)]
+            : value.type === "ChainExpression" ||
+                value.type === "ParenthesizedExpression"
+              ? [value.expression]
+              : [];
+    return branches.flatMap((branch) =>
+      getCollectionDataPaths(branch, includeData)
+    );
+  };
+  for (const fragment of fragments) {
+    const data = createWebstudioDataFromFragment(fragment);
+    const dataSources = [...data.dataSources.values()];
+    for (const dataSource of dataSources) {
+      if (dataSource.type !== "resource") {
+        continue;
+      }
+      const dependency = dependencies.get(dataSource.resourceId);
+      if (dependency === undefined) {
+        continue;
+      }
+      const assetIds = new Set(dependency.assets.map(({ id }) => id));
+      comparisonDataSourceToAssetIds.set(dataSource.id, assetIds);
+      assetIdPaths.set(dataSource.id, ["data", "id"]);
+      if (dependency.query.result !== "many") {
+        continue;
+      }
+      dataSourceToAssetIds.set(dataSource.id, assetIds);
+    }
+    for (const instance of data.instances.values()) {
+      if (instance.component !== collectionComponent) {
+        continue;
+      }
+      const props = [...data.props.values()].filter(
+        (prop) => prop.instanceId === instance.id
+      );
+      const collectionData = props.find((prop) => prop.name === "data");
+      if (collectionData?.type !== "expression") {
+        continue;
+      }
+      let expression: unknown;
+      try {
+        expression = parseExpressionAt(collectionData.value, 0, {
+          ecmaVersion: "latest",
+        });
+      } catch {
+        continue;
+      }
+      const collectionDataPaths = getCollectionDataPaths(expression);
+      const dependenciesForCollection = collectionDataPaths.flatMap(
+        ([dataSourceName]) => {
+          const dataSourceId = decodeDataVariableId(dataSourceName);
+          const dataSource =
+            dataSourceId === undefined
+              ? undefined
+              : data.dataSources.get(dataSourceId);
+          const dependency =
+            dataSource?.type === "resource"
+              ? dependencies.get(dataSource.resourceId)
+              : undefined;
+          return dependency?.query.result === "many" ? [dependency] : [];
+        }
+      );
+      if (dependenciesForCollection.length === 0) {
+        continue;
+      }
+      const assetIds = new Set(
+        dependenciesForCollection.flatMap(({ assets }) =>
+          assets.map(({ id }) => id)
+        )
+      );
+      const itemAssetIds = new Set(
+        dependenciesForCollection
+          .filter(({ query }) => includesAssetId(query.output))
+          .flatMap(({ assets }) => assets.map(({ id }) => id))
+      );
+      const collectionItem = props.find((prop) => prop.name === "item");
+      const collectionItemKey = props.find((prop) => prop.name === "itemKey");
+      if (collectionItem?.type === "parameter") {
+        const dataSource = data.dataSources.get(collectionItem.value);
+        if (
+          dataSource?.type === "parameter" &&
+          dataSource.name === "collectionItem" &&
+          itemAssetIds.size > 0
+        ) {
+          comparisonDataSourceToAssetIds.set(dataSource.id, itemAssetIds);
+          assetIdPaths.set(dataSource.id, ["id"]);
+        }
+      }
+      if (collectionItemKey?.type === "parameter") {
+        const dataSource = data.dataSources.get(collectionItemKey.value);
+        if (
+          dataSource?.type === "parameter" &&
+          dataSource.name === "collectionItemKey"
+        ) {
+          comparisonDataSourceToAssetIds.set(dataSource.id, assetIds);
+          assetIdPaths.set(dataSource.id, []);
+        }
+      }
+    }
+  }
+  const referencesChangedAssetId = (node: unknown, key: string) => {
+    const path = getStaticPath(node);
+    if (path === undefined) {
+      return false;
+    }
+    const dataSourceId = decodeDataVariableId(path[0]);
+    const assetIds =
+      dataSourceId === undefined
+        ? undefined
+        : comparisonDataSourceToAssetIds.get(dataSourceId);
+    const expectedPath =
+      dataSourceId === undefined ? undefined : assetIdPaths.get(dataSourceId);
+    return (
+      assetIds !== undefined &&
+      expectedPath !== undefined &&
+      path.length === expectedPath.length + 1 &&
+      expectedPath.every((part, index) => path[index + 1] === part) &&
+      assetIds.has(key) &&
+      targetIds.get(key) !== key
+    );
+  };
+  if (
+    dataSourceToAssetIds.size === 0 &&
+    comparisonDataSourceToAssetIds.size === 0
+  ) {
+    return false;
+  }
+  const expressions: Array<{ value: string; isAction?: boolean }> = [];
+  for (const fragment of fragments) {
+    expressions.push(
+      ...fragment.children.flatMap((child) =>
+        child.type === "expression" ? [{ value: child.value }] : []
+      ),
+      ...fragment.instances.flatMap((instance) =>
+        instance.children.flatMap((child) =>
+          child.type === "expression" ? [{ value: child.value }] : []
+        )
+      ),
+      ...fragment.props.flatMap((prop) =>
+        prop.type === "expression"
+          ? [{ value: prop.value }]
+          : prop.type === "action"
+            ? prop.value.map(({ code }) => ({ value: code, isAction: true }))
+            : []
+      ),
+      ...fragment.resources.flatMap((resource) => [
+        { value: resource.url },
+        ...(resource.body === undefined ? [] : [{ value: resource.body }]),
+        ...resource.headers.map(({ value }) => ({ value })),
+        ...(resource.searchParams?.map(({ value }) => ({ value })) ?? []),
+        ...Object.values(resource.email ?? {}).flatMap((value) =>
+          typeof value === "string" ? [{ value }] : []
+        ),
+      ])
+    );
+  }
+  expressions.push(
+    { value: page.title },
+    ...Object.values(page.meta).flatMap((value) => {
+      if (typeof value === "string") {
+        return [{ value }];
+      }
+      return Array.isArray(value)
+        ? value.flatMap((entry) =>
+            typeof entry.content === "string" ? [{ value: entry.content }] : []
+          )
+        : [];
+    })
+  );
+
+  let hasLookup = false;
+  const hasChangedAssetResource = (node: unknown, key?: string): boolean => {
+    if (typeof node !== "object" || node === null) {
+      return false;
+    }
+    const path = getStaticPath(node);
+    const dataSourceId = path && decodeDataVariableId(path[0]);
+    const assetIds =
+      dataSourceId === undefined
+        ? undefined
+        : dataSourceToAssetIds.get(dataSourceId);
+    if (path?.length === 1 && assetIds !== undefined) {
+      return key === undefined
+        ? [...assetIds].some((id) => targetIds.get(id) !== id)
+        : assetIds.has(key) && targetIds.get(key) !== key;
+    }
+    const value = node as Record<string, unknown>;
+    const branches =
+      value.type === "ConditionalExpression"
+        ? [value.consequent, value.alternate]
+        : value.type === "LogicalExpression"
+          ? [value.left, value.right]
+          : value.type === "SequenceExpression" &&
+              Array.isArray(value.expressions)
+            ? [value.expressions.at(-1)]
+            : value.type === "ChainExpression" ||
+                value.type === "ParenthesizedExpression"
+              ? [value.expression]
+              : [];
+    return branches.some((branch) => hasChangedAssetResource(branch, key));
+  };
+  const hasChangedAssetMap = (node: unknown, key?: string): boolean => {
+    if (typeof node !== "object" || node === null) {
+      return false;
+    }
+    const path = getStaticPath(node);
+    const dataSourceId = path && decodeDataVariableId(path[0]);
+    const assetIds =
+      dataSourceId === undefined
+        ? undefined
+        : dataSourceToAssetIds.get(dataSourceId);
+    if (path?.length === 2 && path[1] === "data" && assetIds !== undefined) {
+      return key === undefined
+        ? [...assetIds].some((id) => targetIds.get(id) !== id)
+        : assetIds.has(key) && targetIds.get(key) !== key;
+    }
+    const value = node as Record<string, unknown>;
+    if (value.type === "MemberExpression") {
+      const property = value.property as Record<string, unknown> | undefined;
+      const propertyName = value.computed
+        ? property?.type === "Literal" &&
+          (typeof property.value === "string" ||
+            typeof property.value === "number")
+          ? String(property.value)
+          : undefined
+        : property?.type === "Identifier" && typeof property.name === "string"
+          ? property.name
+          : undefined;
+      if (propertyName === "data") {
+        return hasChangedAssetResource(value.object, key);
+      }
+      if (propertyName === undefined) {
+        return hasChangedAssetResource(value.object, key);
+      }
+    }
+    const branches =
+      value.type === "ConditionalExpression"
+        ? [value.consequent, value.alternate]
+        : value.type === "LogicalExpression"
+          ? [value.left, value.right]
+          : value.type === "SequenceExpression" &&
+              Array.isArray(value.expressions)
+            ? [value.expressions.at(-1)]
+            : value.type === "AssignmentExpression"
+              ? [value.right]
+              : value.type === "ChainExpression" ||
+                  value.type === "ParenthesizedExpression"
+                ? [value.expression]
+                : [];
+    return branches.some((branch) => hasChangedAssetMap(branch, key));
+  };
+  const carriesChangedAssetMap = (node: unknown): boolean => {
+    if (typeof node !== "object" || node === null) {
+      return false;
+    }
+    const value = node as Record<string, unknown>;
+    const path = getStaticPath(node);
+    const dataSourceId = path && decodeDataVariableId(path[0]);
+    const assetIds =
+      dataSourceId === undefined
+        ? undefined
+        : dataSourceToAssetIds.get(dataSourceId);
+    if (
+      assetIds !== undefined &&
+      (path?.length === 1 || (path?.length === 2 && path[1] === "data"))
+    ) {
+      return [...assetIds].some((id) => targetIds.get(id) !== id);
+    }
+    if (value.type === "MemberExpression") {
+      const property = value.property as Record<string, unknown> | undefined;
+      const propertyName = value.computed
+        ? property?.type === "Literal" &&
+          (typeof property.value === "string" ||
+            typeof property.value === "number")
+          ? String(property.value)
+          : undefined
+        : property?.type === "Identifier" && typeof property.name === "string"
+          ? property.name
+          : undefined;
+      if (propertyName === "data") {
+        return hasChangedAssetResource(value.object);
+      }
+      if (propertyName === undefined) {
+        return hasChangedAssetResource(value.object);
+      }
+    }
+    if (path !== undefined) {
+      return false;
+    }
+    const branches =
+      value.type === "ConditionalExpression"
+        ? [value.consequent, value.alternate]
+        : value.type === "LogicalExpression"
+          ? [value.left, value.right]
+          : value.type === "SequenceExpression" &&
+              Array.isArray(value.expressions)
+            ? [value.expressions.at(-1)]
+            : value.type === "AssignmentExpression"
+              ? [value.right]
+              : value.type === "ArrayExpression" &&
+                  Array.isArray(value.elements)
+                ? value.elements
+                : value.type === "ObjectExpression" &&
+                    Array.isArray(value.properties)
+                  ? value.properties
+                  : value.type === "Property"
+                    ? [value.value]
+                    : value.type === "SpreadElement"
+                      ? [value.argument]
+                      : value.type === "CallExpression" &&
+                          Array.isArray(value.arguments)
+                        ? value.arguments
+                        : value.type === "ChainExpression" ||
+                            value.type === "ParenthesizedExpression"
+                          ? [value.expression ?? value.argument]
+                          : [];
+    return branches.some(carriesChangedAssetMap);
+  };
+  const visit = (node: unknown) => {
+    if (typeof node !== "object" || node === null) {
+      return;
+    }
+    const value = node as Record<string, unknown>;
+    if (
+      value.type === "BinaryExpression" &&
+      ["==", "===", "!=", "!=="].includes(String(value.operator))
+    ) {
+      const left = value.left as Record<string, unknown> | undefined;
+      const right = value.right as Record<string, unknown> | undefined;
+      const leftLiteral = left?.type === "Literal" ? left.value : undefined;
+      const rightLiteral = right?.type === "Literal" ? right.value : undefined;
+      if (
+        (typeof leftLiteral === "string" &&
+          referencesChangedAssetId(value.right, leftLiteral)) ||
+        (typeof rightLiteral === "string" &&
+          referencesChangedAssetId(value.left, rightLiteral))
+      ) {
+        hasLookup = true;
+      }
+    }
+    if (
+      value.type === "CallExpression" &&
+      Array.isArray(value.arguments) &&
+      value.arguments.length > 0
+    ) {
+      const argument = value.arguments[0];
+      const callee = value.callee as Record<string, unknown> | undefined;
+      const property = callee?.property as Record<string, unknown> | undefined;
+      const propertyName =
+        property?.type === "Identifier"
+          ? property.name
+          : property?.type === "Literal"
+            ? property.value
+            : undefined;
+      const list = callee?.object as Record<string, unknown> | undefined;
+      const elements =
+        callee?.type === "MemberExpression" &&
+        propertyName === "includes" &&
+        list?.type === "ArrayExpression" &&
+        Array.isArray(list.elements)
+          ? list.elements
+          : undefined;
+      if (
+        elements?.some((element) => {
+          const literal = element as Record<string, unknown> | undefined;
+          return (
+            literal?.type === "Literal" &&
+            typeof literal.value === "string" &&
+            referencesChangedAssetId(argument, literal.value)
+          );
+        })
+      ) {
+        hasLookup = true;
+      }
+    }
+    if (value.type === "MemberExpression") {
+      const property = value.property as Record<string, unknown> | undefined;
+      const propertyKey =
+        value.computed === true &&
+        property?.type === "Literal" &&
+        (typeof property.value === "string" ||
+          typeof property.value === "number")
+          ? String(property.value)
+          : value.computed !== true &&
+              property?.type === "Identifier" &&
+              typeof property.name === "string"
+            ? property.name
+            : undefined;
+      if (hasChangedAssetMap(value.object, propertyKey)) {
+        hasLookup = true;
+      }
+    }
+    if (
+      (value.type === "AssignmentExpression" ||
+        value.type === "VariableDeclarator") &&
+      carriesChangedAssetMap(
+        value.type === "AssignmentExpression" ? value.right : value.init
+      )
+    ) {
+      hasLookup = true;
+    }
+    for (const [key, child] of Object.entries(value)) {
+      if (key !== "start" && key !== "end" && key !== "loc") {
+        if (Array.isArray(child)) {
+          child.forEach(visit);
+        } else {
+          visit(child);
+        }
+      }
+    }
+  };
+
+  for (const { value, isAction } of expressions) {
+    try {
+      visit(
+        isAction
+          ? parseJavaScript(value, { ecmaVersion: "latest" })
+          : parseExpressionAt(value, 0, { ecmaVersion: "latest" })
+      );
+    } catch {
+      continue;
+    }
+    if (hasLookup) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const getStaticAssetResourceDependencies = (
+  fragments: readonly WebstudioFragment[],
+  assets: readonly Asset[]
+) => {
+  const dependencies = new Map<
+    string,
+    {
+      assets: Asset[];
+      query: StructuredAssetQueryResourceConfiguration;
+    }
+  >();
+  for (const resource of fragments.flatMap(({ resources }) => resources)) {
+    if (
+      hasAssetsResourceUrl(resource) &&
+      isAssetsResource(resource) === false
+    ) {
+      throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+    }
+    if (isAssetsResource(resource) === false) {
+      continue;
+    }
+    const parsed = parseStructuredAssetQueryResourceBodyResult(resource.body);
+    if (
+      parsed.success === false ||
+      hasAssetQueryFilter(parsed.value.where) === false
+    ) {
+      throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+    }
+    validateStaticAssetWhere(parsed.value.where);
+    const limit = parseJsonExpression(parsed.value.limit);
+    const offset = parseJsonExpression(parsed.value.offset);
+    if (
+      !Number.isSafeInteger(limit) ||
+      Number(limit) < 0 ||
+      !Number.isSafeInteger(offset) ||
+      Number(offset) !== 0
+    ) {
+      throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+    }
+    const matches = assets.filter((asset) =>
+      matchesStaticAssetWhere(parsed.value.where, asset)
+    );
+    if (
+      matches.length > Number(limit) ||
+      ((parsed.value.result === "one" ||
+        parsed.value.result === "first" ||
+        parsed.value.result === "last") &&
+        matches.length > 1)
+    ) {
+      throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+    }
+    dependencies.set(resource.id, { assets: matches, query: parsed.value });
+  }
+  return dependencies;
+};
+
+const hasTransferableDynamicContentBlockSource = (
+  fragment: WebstudioFragment,
+  assetResourceDependencies: ReturnType<
+    typeof getStaticAssetResourceDependencies
+  >
+) => {
+  const data = createWebstudioDataFromFragment(fragment);
+  const dynamicSources = [...data.instances.values()]
+    .filter((instance) => instance.component === blockComponent)
+    .map((instance) =>
+      getContentBlockSource({
+        blockInstanceId: instance.id,
+        props: data.props.values(),
+      })
+    )
+    .filter(
+      (source) =>
+        source?.type === "expression" &&
+        getStaticContentBlockSourceAssetId(source) === undefined
+    );
+  const getAssetResourceDataSource = (expression: string) => {
+    const path = parseDirectPathExpression(expression)?.path;
+    const dataSourceId =
+      path === undefined ? undefined : decodeDataVariableId(path[0]);
+    const dataSource =
+      dataSourceId === undefined
+        ? undefined
+        : data.dataSources.get(dataSourceId);
+    const dependency =
+      dataSource?.type === "resource"
+        ? assetResourceDependencies.get(dataSource.resourceId)
+        : undefined;
+    return dependency === undefined
+      ? undefined
+      : { dataSource, dependency, path };
+  };
+  return (
+    dynamicSources.length > 0 &&
+    dynamicSources.every((source) => {
+      if (source?.type !== "expression") {
+        return false;
+      }
+      const sourcePath = parseDirectPathExpression(source.value)?.path;
+      if (sourcePath === undefined) {
+        return false;
+      }
+      const dataSourceId = decodeDataVariableId(sourcePath[0]);
+      const dataSource =
+        dataSourceId === undefined
+          ? undefined
+          : data.dataSources.get(dataSourceId);
+      if (dataSource?.type === "resource") {
+        const dependency = assetResourceDependencies.get(dataSource.resourceId);
+        return (
+          sourcePath.at(-1) === "id" &&
+          dependency !== undefined &&
+          (dependency.query.result === "one" ||
+            dependency.query.result === "first" ||
+            dependency.query.result === "last") &&
+          sourcePath.length === 3 &&
+          sourcePath[1] === "data" &&
+          sourcePath[2] === "id"
+        );
+      }
+      if (
+        dataSource?.type !== "parameter" ||
+        (dataSource.name !== "collectionItem" &&
+          dataSource.name !== "collectionItemKey") ||
+        dataSource.scopeInstanceId === undefined ||
+        data.instances.get(dataSource.scopeInstanceId)?.component !==
+          collectionComponent
+      ) {
+        return false;
+      }
+      const collectionData = [...data.props.values()].find(
+        (prop) =>
+          prop.instanceId === dataSource.scopeInstanceId &&
+          prop.name === "data" &&
+          prop.type === "expression"
+      );
+      const collectionItemProp = [...data.props.values()].find(
+        (prop) =>
+          prop.instanceId === dataSource.scopeInstanceId &&
+          prop.name === "item" &&
+          prop.type === "parameter"
+      );
+      const collectionItemKeyProp = [...data.props.values()].find(
+        (prop) =>
+          prop.instanceId === dataSource.scopeInstanceId &&
+          prop.name === "itemKey" &&
+          prop.type === "parameter"
+      );
+      const itemDataSource =
+        collectionItemProp?.type === "parameter"
+          ? data.dataSources.get(collectionItemProp.value)
+          : undefined;
+      const itemKeyDataSource =
+        collectionItemKeyProp?.type === "parameter"
+          ? data.dataSources.get(collectionItemKeyProp.value)
+          : undefined;
+      const collectionDataSource =
+        collectionData?.type === "expression"
+          ? getAssetResourceDataSource(collectionData.value)
+          : undefined;
+      return (
+        collectionData?.type === "expression" &&
+        collectionDataSource !== undefined &&
+        collectionDataSource.path !== undefined &&
+        collectionDataSource.path.length === 2 &&
+        collectionDataSource.path[1] === "data" &&
+        collectionDataSource.dependency.query.result === "many" &&
+        ((dataSource.name === "collectionItem" &&
+          itemDataSource?.id === dataSource.id &&
+          sourcePath.length === 2 &&
+          sourcePath[1] === "id" &&
+          includesAssetId(collectionDataSource.dependency.query.output)) ||
+          (dataSource.name === "collectionItemKey" &&
+            itemKeyDataSource?.id === dataSource.id &&
+            sourcePath.length === 1))
+      );
+    })
+  );
+};
+
+const remapFragmentAssetResourceQueries = (
+  fragment: WebstudioFragment,
+  assets: ReadonlyMap<string, Asset>,
+  assetResourceSourceIds: ReadonlyMap<string, readonly string[]>
+) => {
+  const remapped = remapFragmentAssets(fragment, assets);
+  return {
+    ...remapped,
+    resources: remapped.resources.map((resource) => {
+      if (
+        assetResourceSourceIds.has(resource.id) === false ||
+        isAssetsResource(resource) === false
+      ) {
+        return resource;
+      }
+      const parsed = parseStructuredAssetQueryResourceBodyResult(resource.body);
+      if (parsed.success === false) {
+        throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+      }
+      const copiedIds = assetResourceSourceIds
+        .get(resource.id)!
+        .flatMap((id) => {
+          const targetId = assets.get(id)?.id;
+          return targetId === undefined ? [] : [targetId];
+        });
+      const idFilter: StructuredAssetQueryWhereBinding = {
+        field: ["id"],
+        operator: copiedIds.length === 1 ? "eq" : "in",
+        value: JSON.stringify(
+          copiedIds.length === 1 ? copiedIds[0] : copiedIds
+        ),
+      };
+      const body = createStructuredAssetQueryResourceBody({
+        ...parsed.value,
+        where: idFilter,
+      });
+      if (parseStructuredAssetQueryResourceBodyResult(body).success === false) {
+        throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+      }
+      return {
+        ...resource,
+        body,
+      };
+    }),
+  };
+};
+
 const findTransferDocumentReferences = async (
   asset: Asset,
   source: string,
@@ -425,14 +1247,23 @@ const getRelativeTransferPath = (from: string, to: string) => {
 
 const remapPageTransfer = (
   item: PageTransferData,
-  assets: ReadonlyMap<string, Asset>
+  assets: ReadonlyMap<string, Asset>,
+  assetResourceSourceIds: ReadonlyMap<string, readonly string[]>
 ): PageTransferData => {
   const mapId = (id: string | undefined) =>
     id === undefined ? undefined : (assets.get(id)?.id ?? id);
   return {
     ...item,
-    rootFragment: remapFragmentAssets(item.rootFragment, assets),
-    bodyFragment: remapFragmentAssets(item.bodyFragment, assets),
+    rootFragment: remapFragmentAssetResourceQueries(
+      item.rootFragment,
+      assets,
+      assetResourceSourceIds
+    ),
+    bodyFragment: remapFragmentAssetResourceQueries(
+      item.bodyFragment,
+      assets,
+      assetResourceSourceIds
+    ),
     page: {
       ...item.page,
       meta: {
@@ -472,12 +1303,22 @@ export const planPageTransfer = async ({
   createAssetId?: () => string;
 }) => {
   const fragments = [item.rootFragment, item.bodyFragment];
+  const assetResourceDependencies = sameProject
+    ? new Map<
+        string,
+        { assets: Asset[]; query: StructuredAssetQueryResourceConfiguration }
+      >()
+    : getStaticAssetResourceDependencies(fragments, source.assets);
   if (
-    (!hasRenderedScope && fragments.some(hasDynamicContentBlockSource)) ||
-    (!sameProject &&
-      fragments.some((fragment) =>
-        fragment.resources.some(hasAssetsResourceUrl)
-      ))
+    fragments.some(
+      (fragment) =>
+        !hasRenderedScope &&
+        hasDynamicContentBlockSource(fragment) &&
+        hasTransferableDynamicContentBlockSource(
+          fragment,
+          assetResourceDependencies
+        ) === false
+    )
   ) {
     throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
   }
@@ -503,6 +1344,11 @@ export const planPageTransfer = async ({
   };
   for (const fragment of fragments) {
     for (const asset of fragment.assets) {
+      includeAsset(asset.id);
+    }
+  }
+  for (const { assets } of assetResourceDependencies.values()) {
+    for (const asset of assets) {
       includeAsset(asset.id);
     }
   }
@@ -626,6 +1472,22 @@ export const planPageTransfer = async ({
   const targetIds = new Map(
     assets.map(({ source, target }) => [source.id, target.id])
   );
+  if (
+    hasUnsupportedAssetQueryDataLookup(
+      fragments,
+      item.page,
+      assetResourceDependencies,
+      targetIds
+    )
+  ) {
+    throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+  }
+  const assetResourceSourceIds = new Map(
+    [...assetResourceDependencies].map(([resourceId, dependency]) => [
+      resourceId,
+      dependency.assets.map(({ id }) => id),
+    ])
+  );
   const namedTargetAssets = getTransferNamedAssets(after);
   for (const asset of assets) {
     const document = documents.get(asset.source.id);
@@ -674,16 +1536,24 @@ export const planPageTransfer = async ({
       throw pageCopyError("PAGE_COPY_ASSET_CONFLICT");
     }
   }
-  return { item, folders, assets, target, documents };
+  return {
+    item,
+    folders,
+    assets,
+    target,
+    documents,
+    assetResourceSourceIds,
+  };
 };
 
 export const previewPageTransfer = (
   plan: Awaited<ReturnType<typeof planPageTransfer>>
-) =>
-  remapPageTransfer(
-    plan.item,
-    new Map(plan.assets.map(({ source, target }) => [source.id, target]))
+) => {
+  const assets = new Map(
+    plan.assets.map(({ source, target }) => [source.id, target])
   );
+  return remapPageTransfer(plan.item, assets, plan.assetResourceSourceIds);
+};
 
 export const executePageTransfer = async <Result extends { pageId: string }>({
   plan,
@@ -778,7 +1648,10 @@ export const executePageTransfer = async <Result extends { pageId: string }>({
       throw pageCopyError("PAGE_COPY_ASSET_CONFLICT");
     }
   }
-  return await commit(remapPageTransfer(plan.item, assets), revision);
+  return await commit(
+    remapPageTransfer(plan.item, assets, plan.assetResourceSourceIds),
+    revision
+  );
 };
 
 export const projectPageCopyAssets = async ({
