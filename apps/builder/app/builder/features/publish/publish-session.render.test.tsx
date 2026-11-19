@@ -11,11 +11,8 @@ import {
 } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import {
-  createTrpcInterceptor,
-  deferred,
-  selectTab,
-} from "./publish-test-utils";
+import { createTrpcInterceptor } from "~/shared/trpc/trpc-test-utils";
+import { deferred, selectTab } from "./publish-test-utils";
 
 const encoded = (bytes: number[]) => btoa(String.fromCharCode(...bytes));
 const logRequests: Array<{
@@ -56,85 +53,89 @@ beforeAll(async () => {
   });
   vi.resetModules();
   interceptor = createTrpcInterceptor({
-    "domain.project": () => ({
-      success: true,
-      project: {
-        ...stores.$project.get(),
-        latestBuildVirtual: {
-          domain: "example",
-          buildId: acceptedBuildId,
-          createdAt: new Date().toISOString(),
-          publishStatus: "PUBLISHED",
-        },
+    POST: {
+      "domain.publish": async () => {
+        publishRequests += 1;
+        const data = heldPublish
+          ? await heldPublish.promise
+          : {
+              success: true,
+              buildId,
+              ...(withHandle ? { logHandle: "handle" } : {}),
+              findings: [],
+            };
+        acceptedBuildId = (data as { buildId: string }).buildId;
+        return data;
       },
-    }),
-    "domain.countTotalDomains": () => ({ success: true, data: 0 }),
-    "project.userPublishCount": () => ({
-      success: true,
-      data: 0,
-      limit: 100,
-    }),
-    "domain.publish": async () => {
-      publishRequests += 1;
-      const data = heldPublish
-        ? await heldPublish.promise
-        : {
-            success: true,
-            buildId,
-            ...(withHandle ? { logHandle: "handle" } : {}),
-            findings: [],
-          };
-      acceptedBuildId = (data as { buildId: string }).buildId;
-      return data;
     },
-    "api.publish.getJob": () =>
-      heldJob ? heldJob.promise : { status: "success" },
-    "api.publish.getLog": async (value) => {
-      const input = value as (typeof logRequests)[number];
-      logRequests.push(input);
-      if (pendingLogResponses > 0) {
-        pendingLogResponses -= 1;
-        return { availability: "pending" };
-      }
-      if (failedLogResponses > 0) {
-        failedLogResponses -= 1;
-        throw new Error("Temporary log failure");
-      }
-      const first = input.cursor === undefined;
-      if (
-        input.buildId === "build-1" &&
-        holdLog &&
-        holdLog.cursor === input.cursor
-      ) {
-        await holdLog.response.promise;
-      }
-      return {
-        availability: "available",
-        startedAt: "2026-11-13T10:00:00.000Z",
-        completedAt: "2026-11-13T10:00:03.000Z",
-        log: {
-          encoding: "base64url",
-          chunk: first ? encoded([0xe2]) : encoded([0x82, 0xac]),
-          complete: !first,
-          nextCursor: first ? 1 : undefined,
-          issues: [
-            {
-              severity: first ? "warning" : "error",
-              message: first ? "Early warning" : "Late error",
-            },
-          ],
-          issuesOmitted: first ? 1 : 0,
+    GET: {
+      "domain.project": () => ({
+        success: true,
+        project: {
+          ...stores.$project.get(),
+          latestBuildVirtual: {
+            domain: "example",
+            buildId: acceptedBuildId,
+            createdAt: new Date().toISOString(),
+            publishStatus: "PUBLISHED",
+          },
         },
-      };
+      }),
+      "domain.countTotalDomains": () => ({ success: true, data: 0 }),
+      "project.userPublishCount": () => ({
+        success: true,
+        data: 0,
+        limit: 100,
+      }),
+      "api.publish.getJob": () =>
+        heldJob ? heldJob.promise : { status: "success" },
+      "api.publish.getLog": async (value) => {
+        const input = value as (typeof logRequests)[number];
+        logRequests.push(input);
+        if (pendingLogResponses > 0) {
+          pendingLogResponses -= 1;
+          return { availability: "pending" };
+        }
+        if (failedLogResponses > 0) {
+          failedLogResponses -= 1;
+          throw new Error("Temporary log failure");
+        }
+        const first = input.cursor === undefined;
+        if (
+          input.buildId === "build-1" &&
+          holdLog &&
+          holdLog.cursor === input.cursor
+        ) {
+          await holdLog.response.promise;
+        }
+        return {
+          availability: "available",
+          startedAt: "2026-11-13T10:00:00.000Z",
+          completedAt: "2026-11-13T10:00:03.000Z",
+          log: {
+            encoding: "base64url",
+            chunk: first ? encoded([0xe2]) : encoded([0x82, 0xac]),
+            complete: !first,
+            nextCursor: first ? 1 : undefined,
+            issues: [
+              {
+                severity: first ? "warning" : "error",
+                message: first ? "Early warning" : "Late error",
+              },
+            ],
+            issuesOmitted: first ? 1 : 0,
+          },
+        };
+      },
+      "build.contentDatabasePublishDiagnostics": () => ({
+        mdxErrors: [],
+        mdxOmissions: [],
+      }),
+      "api.publish.validate": () => ({
+        diagnostics: { mdxErrors: [], mdxOmissions: [] },
+        cssValid: true,
+      }),
     },
-    "build.contentDatabasePublishDiagnostics": () => ({
-      mdxErrors: [],
-      mdxOmissions: [],
-    }),
-    "api.publish.validate": () => ({
-      diagnostics: { mdxErrors: [], mdxOmissions: [] },
-      cssValid: true,
-    }),
   });
   interceptor.start();
   PublishButton = (await import("./publish")).PublishButton;

@@ -3,9 +3,9 @@ import { act } from "react-dom/test-utils";
 import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
+import { createTrpcInterceptor } from "~/shared/trpc/trpc-test-utils";
 import {
   createPublishAuditFinding,
-  createTrpcInterceptor,
   selectStaticDestination,
 } from "./publish-test-utils";
 
@@ -47,32 +47,36 @@ beforeAll(async () => {
   window.navigation.addEventListener("navigate", interceptDownload);
   vi.resetModules();
   interceptor = createTrpcInterceptor({
-    "build.contentDatabasePublishDiagnostics": () => ({
-      mdxErrors: [],
-      mdxOmissions: [],
-    }),
-    "domain.publish": () => {
-      publishRequests += 1;
-      return staticResponse;
-    },
-    "api.publish.getJob": () => {
-      jobRequests += 1;
-      return { status: getJobStatus };
-    },
-    "domain.project": () => ({
-      success: true,
-      project: {
-        ...projectStore.get(),
-        latestStaticBuild:
-          publishRequests === 0
-            ? (projectStore.get()?.latestStaticBuild ?? null)
-            : {
-                buildId: "static-1",
-                updatedAt: new Date().toISOString(),
-                publishStatus: buildStatus,
-              },
+    POST: {
+      "domain.publish": () => {
+        publishRequests += 1;
+        return staticResponse;
       },
-    }),
+    },
+    GET: {
+      "build.contentDatabasePublishDiagnostics": () => ({
+        mdxErrors: [],
+        mdxOmissions: [],
+      }),
+      "api.publish.getJob": () => {
+        jobRequests += 1;
+        return { status: getJobStatus };
+      },
+      "domain.project": () => ({
+        success: true,
+        project: {
+          ...projectStore.get(),
+          latestStaticBuild:
+            publishRequests === 0
+              ? (projectStore.get()?.latestStaticBuild ?? null)
+              : {
+                  buildId: "static-1",
+                  updatedAt: new Date().toISOString(),
+                  publishStatus: buildStatus,
+                },
+        },
+      }),
+    },
   });
   interceptor.start();
   publishModule = await import("./publish");
