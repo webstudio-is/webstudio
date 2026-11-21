@@ -43,6 +43,12 @@ beforeAll(async () => {
   vi.resetModules();
   interceptor = createTrpcInterceptor({
     POST: {
+      "domain.publish": () => {
+        publishRequests += 1;
+        return dispatch.promise;
+      },
+    },
+    GET: {
       "build.validatePublish": async () => {
         checkRequests += 1;
         try {
@@ -54,12 +60,6 @@ beforeAll(async () => {
           throw error;
         }
       },
-      "domain.publish": () => {
-        publishRequests += 1;
-        return dispatch.promise;
-      },
-    },
-    GET: {
       "api.publish.getJob": () => ({
         status: "failed",
         code: "BUILD_FAILED",

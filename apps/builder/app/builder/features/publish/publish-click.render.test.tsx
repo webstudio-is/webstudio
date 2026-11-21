@@ -47,16 +47,16 @@ beforeAll(async () => {
   interceptor = createTrpcInterceptor(
     {
       POST: {
-        "build.validatePublish": () => ({
-          diagnostics: { mdxErrors: [], mdxOmissions: [] },
-          cssValid: true,
-        }),
         "domain.publish": () => {
           didPublish = (publishResponse as { success: boolean }).success;
           return publishResponse;
         },
       },
       GET: {
+        "build.validatePublish": () => ({
+          diagnostics: { mdxErrors: [], mdxOmissions: [] },
+          cssValid: true,
+        }),
         "api.publish.getJob": () => {
           return { status: jobStatus, code: "BUILD_FAILED" };
         },

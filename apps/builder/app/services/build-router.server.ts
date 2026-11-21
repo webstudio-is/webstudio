@@ -315,7 +315,7 @@ export const buildRouter = router({
 
   validatePublish: procedure
     .input(publishValidationInput)
-    .mutation(async ({ ctx, input }) => {
+    .query(async ({ ctx, input }) => {
       if (
         ctx.apiClient.type !== "browser" ||
         (await authorizeProject.hasProjectPermit(

@@ -54,10 +54,6 @@ beforeAll(async () => {
   vi.resetModules();
   interceptor = createTrpcInterceptor({
     POST: {
-      "build.validatePublish": () => ({
-        diagnostics: { mdxErrors: [], mdxOmissions: [] },
-        cssValid: true,
-      }),
       "domain.publish": async () => {
         publishRequests += 1;
         const data = heldPublish
@@ -73,6 +69,10 @@ beforeAll(async () => {
       },
     },
     GET: {
+      "build.validatePublish": () => ({
+        diagnostics: { mdxErrors: [], mdxOmissions: [] },
+        cssValid: true,
+      }),
       "domain.project": () => ({
         success: true,
         project: {
