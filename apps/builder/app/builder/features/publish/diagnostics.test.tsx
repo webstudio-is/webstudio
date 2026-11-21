@@ -721,8 +721,9 @@ test("Show instance closes the diagnostics dialog on ordinary navigation", async
     ],
     { open: true, initialTab: "errors", onOpenChange }
   );
-  const link =
-    document.body.querySelector<HTMLAnchorElement>('a[href="#instance"]');
+  const link = document.body.querySelector<HTMLAnchorElement>(
+    'a[href="#instance"]'
+  );
   expect(link).not.toBeNull();
   expect(document.body.textContent).toContain("Invalid instance");
   expect(
@@ -749,8 +750,9 @@ test.each(["metaKey", "ctrlKey", "shiftKey", "altKey"] as const)(
       ],
       { open: true, initialTab: "errors", onOpenChange }
     );
-    const link =
-      document.body.querySelector<HTMLAnchorElement>('a[href="#instance"]');
+    const link = document.body.querySelector<HTMLAnchorElement>(
+      'a[href="#instance"]'
+    );
     expect(link).not.toBeNull();
     act(() => {
       link?.dispatchEvent(
