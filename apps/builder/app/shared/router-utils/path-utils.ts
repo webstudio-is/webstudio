@@ -14,6 +14,15 @@ const searchParams = (params: Record<string, string | undefined | null>) => {
   return asString === "" ? "" : `?${asString}`;
 };
 
+export type BuilderView = "settings" | "settings/variables";
+
+export const getBuilderView = (searchParams: URLSearchParams) => {
+  const view = searchParams.get("view");
+  if (view === "settings" || view === "settings/variables") {
+    return view;
+  }
+};
+
 export type BuilderLinkParams = {
   pageId?: string;
   instanceSelector?: readonly string[];
@@ -21,6 +30,7 @@ export type BuilderLinkParams = {
   pageHash?: string;
   mode?: BuilderMode;
   safemode?: boolean;
+  view?: BuilderView;
 };
 
 export const builderPath = ({
@@ -30,6 +40,7 @@ export const builderPath = ({
   pageHash,
   mode,
   safemode = false,
+  view,
 }: BuilderLinkParams = {}) => {
   return `/${searchParams({
     pageId,
@@ -38,6 +49,7 @@ export const builderPath = ({
     pageHash,
     mode,
     safemode: safemode ? "true" : undefined,
+    view,
   })}`;
 };
 
@@ -184,6 +196,7 @@ export const areBuilderDataUrlsEqual = (currentUrl: URL, nextUrl: URL) => {
     "instanceId",
     "mode",
     "pageHash",
+    "view",
   ]) {
     current.searchParams.delete(param);
     next.searchParams.delete(param);

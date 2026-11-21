@@ -13,7 +13,11 @@ import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import type { Instance } from "@webstudio-is/sdk";
+import {
+  formatBuildIntegrityError,
+  getBuildIntegrityIssues,
+} from "@webstudio-is/project-build/runtime";
+import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
 import {
   createTemplateComponentFixture,
   renderData,
@@ -441,6 +445,10 @@ afterEach(() => {
     stores.$project.set(undefined);
     stores.$pages.set(undefined);
     stores.$instances.set(new Map());
+    stores.$dataSources.set(new Map());
+    nanoStates.selectInstance(undefined);
+    builderStates.$activeInspectorPanel.set("style");
+    builderStates.$variablesSectionRequested.set(false);
     builderStates.$publishDialog.set("none");
   });
   root = undefined;
@@ -500,7 +508,7 @@ test("static export reaches the server without waiting for diagnostics", async (
   });
   expect(
     Array.from(document.body.querySelectorAll("a, button")).some(
-      (element) => element.textContent?.trim() === "Show element"
+      (element) => element.textContent?.trim() === "Show instance"
     )
   ).toBe(false);
 }, 30_000);
@@ -610,17 +618,46 @@ test("publish audit warnings keep their instance links in Diagnostics", async ()
   const link = document.body.querySelector<HTMLAnchorElement>(
     'a[href*="instance=publish-warning-instance"]'
   );
-  expect(link?.textContent).toBe("Show element");
+  expect(link?.textContent).toBe("Show instance");
+  expect(new URL(link!.href).searchParams.get("view")).toBe("settings");
+  expect(document.body.textContent).not.toContain("Audit");
   expect(document.body.textContent).toContain(
     `Publish warning for "Home" (/): A child does not match the element's content model.`
   );
+  await act(async () => link!.click());
+  expect(nanoStates.$selectedInstanceSelector.get()).toEqual([instanceId]);
+  expect(builderStates.$activeInspectorPanel.get()).toBe("settings");
+  expect(builderStates.$variablesSectionRequested.get()).toBe(false);
 });
 
-test("validation keeps audit warnings and links scoped resource errors", async () => {
+const scopes = [
+  {
+    scope: "date-card",
+    label: "Date card",
+    prefix: 'Cannot publish for "Home" (/)',
+    selector: "date-card,validation-instance",
+  },
+  {
+    scope: "validation-instance",
+    label: "Body",
+    prefix: 'Cannot publish for "Home" (/)',
+    selector: "validation-instance",
+  },
+  {
+    scope: ROOT_INSTANCE_ID,
+    label: "Global root",
+    prefix: "Cannot publish",
+    selector: ROOT_INSTANCE_ID,
+  },
+];
+
+test.each(scopes)("links currentDate on $label", async (scopeCase) => {
+  const { scope, label, prefix, selector } = scopeCase;
   const pageId = "validation-page";
   const instanceId = "validation-instance";
   const { instances, props } = renderData(
     <Body ws:id={instanceId}>
+      <ws.element ws:id="date-card" ws:label="Date card" />
       <ws.element ws:tag="button">
         <Heading ws:id="invalid-heading" ws:tag="h3">
           Heading in button
@@ -641,9 +678,9 @@ test("validation keeps audit warnings and links scoped resource errors", async (
         {
           type: "resource",
           id: "missing-resource-variable",
-          name: "get countries",
+          name: "currentDate",
           resourceId: "missing-resource",
-          scopeInstanceId: instanceId,
+          scopeInstanceId: scope,
         },
       ],
     ])
@@ -653,7 +690,7 @@ test("validation keeps audit warnings and links scoped resource errors", async (
       {
         error: {
           message:
-            'Cannot publish: resource variable "get countries" (missing-resource-variable) references missing resource "missing-resource".',
+            'Cannot publish: resource variable "currentDate" (missing-resource-variable) references missing resource "missing-resource".',
           code: -32600,
           data: {
             code: "BAD_REQUEST",
@@ -664,7 +701,7 @@ test("validation keeps audit warnings and links scoped resource errors", async (
                 type: "missingResource",
                 source: "dataSource",
                 dataSourceId: "missing-resource-variable",
-                dataSourceName: "get countries",
+                dataSourceName: "currentDate",
                 resourceId: "missing-resource",
               },
             ],
@@ -702,11 +739,27 @@ test("validation keeps audit warnings and links scoped resource errors", async (
   ).find((button) => button.textContent?.trim() === "See issues");
   await act(async () => seeIssues?.click());
 
-  expect(
-    document.body.querySelector<HTMLAnchorElement>(
-      'a[href*="instance=validation-instance"]'
-    )?.textContent
-  ).toBe("Show element");
+  const link = Array.from(
+    document.body.querySelectorAll<HTMLAnchorElement>("a")
+  ).find((link) => link.textContent === "Show instance");
+  expect(link).toBeDefined();
+  const params = new URL(link!.href).searchParams;
+  expect(params.get("pageId")).toBe(pageId);
+  expect(params.get("instance")).toBe(selector);
+  expect(params.get("view")).toBe("settings/variables");
+  expect(params.has("variableId")).toBe(false);
+  expect(document.body.textContent).toContain(
+    `${prefix}: Resource variable "currentDate" on "${label}" references a missing resource.`
+  );
+  for (const id of [
+    pageId,
+    instanceId,
+    "missing-resource",
+    "missing-resource-variable",
+  ]) {
+    expect(document.body.textContent).not.toContain(id);
+  }
+  expect(document.body.textContent).not.toContain("Audit");
   expect(
     document.body.querySelector('[role="tablist"]')?.textContent
   ).toContain("Warnings");
@@ -715,6 +768,127 @@ test("validation keeps audit warnings and links scoped resource errors", async (
   ).toContain("Errors");
   await selectTab("Warnings");
   expect(document.body.textContent).toContain("Publish warning");
+  await selectTab("Errors");
+  await act(async () =>
+    document.body
+      .querySelector<HTMLAnchorElement>('a[href*="settings%2Fvariables"]')
+      ?.click()
+  );
+  expect(nanoStates.$selectedPageId.get()).toBe(pageId);
+  expect(nanoStates.$selectedInstanceSelector.get()).toEqual(
+    selector.split(",")
+  );
+  expect(builderStates.$activeInspectorPanel.get()).toBe("settings");
+  expect(builderStates.$variablesSectionRequested.get()).toBe(true);
+});
+
+test("missing resources beyond the audit limit keep server IDs in the copied report", async () => {
+  const writeText = vi
+    .spyOn(navigator.clipboard, "writeText")
+    .mockResolvedValue(undefined);
+  const { instances, props } = renderData(<Body ws:id="body" />);
+  stores.$pages.set(createDefaultPages({ rootInstanceId: "body" }));
+  stores.$instances.set(instances);
+  stores.$props.set(props);
+  stores.$resources.set(new Map());
+  const dataSources = Array.from({ length: 501 }, (_, index) => ({
+    type: "resource" as const,
+    id: `source-id-${index}`,
+    name: `variable${index}`,
+    resourceId: `resource-id-${index}`,
+    scopeInstanceId: "body",
+  }));
+  stores.$dataSources.set(
+    new Map(dataSources.map((source) => [source.id, source]))
+  );
+  const issues = getBuildIntegrityIssues({
+    dataSources,
+    props: props.values(),
+    instances: instances.values(),
+    resources: [],
+  });
+  const message = formatBuildIntegrityError(issues[0], "Cannot publish");
+  validationResponse = Response.json(
+    [
+      {
+        error: {
+          message,
+          code: -32600,
+          data: {
+            code: "BAD_REQUEST",
+            httpStatus: 400,
+            path: "build.validatePublish",
+            issues,
+          },
+        },
+      },
+    ],
+    { status: 400 }
+  );
+  nanoStates.$planFeatures.set({
+    ...nanoStates.$planFeatures.get(),
+    allowPublishLogs: true,
+  });
+
+  await mount();
+  const domain = document.body.querySelector<HTMLInputElement>(
+    'input[name="domainToPublish[]"]'
+  );
+  if (domain?.checked === false) {
+    await act(async () =>
+      document.body.querySelector<HTMLElement>('[role="checkbox"]')?.click()
+    );
+  }
+  const validate = Array.from(document.body.querySelectorAll("button")).find(
+    (button) => button.textContent?.trim() === "Validate"
+  );
+  await act(async () => validate?.click());
+  await waitFor(() =>
+    expect(document.body.textContent).toContain("See issues")
+  );
+  const seeIssues = Array.from(document.body.querySelectorAll("button")).find(
+    (button) => button.textContent?.trim() === "See issues"
+  );
+  await act(async () => seeIssues?.click());
+
+  const visibleText = document.body.textContent ?? "";
+  expect(visibleText.includes("Unable to complete publish validation")).toBe(
+    true
+  );
+  expect(visibleText.includes('Resource variable "variable0"')).toBe(true);
+  expect(visibleText.includes("source-id-0")).toBe(false);
+  expect(visibleText.includes("resource-id-0")).toBe(false);
+
+  const copy = document.body.querySelector<HTMLButtonElement>(
+    'button[aria-label="Copy all reports"]'
+  );
+  await act(async () => copy?.click());
+  expect(writeText.mock.calls[0]?.[0]).toContain(
+    `ERROR: Unable to complete publish validation\n${message}`
+  );
+});
+
+test("an unmatched missing-resource failure sends only the validation summary to the toast", async () => {
+  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
+  const { reportPublishValidationFailure } =
+    await import("./publish-validation");
+  reportPublishValidationFailure(
+    Object.assign(new Error('Resource variable references "resource-id".'), {
+      data: {
+        issues: [
+          {
+            type: "missingResource",
+            dataSourceId: "source-id",
+            resourceId: "resource-id",
+          },
+        ],
+      },
+    }),
+    () => {}
+  );
+  expect(errorToast).toHaveBeenCalledWith(
+    "Unable to complete publish validation"
+  );
 });
 
 test.each([

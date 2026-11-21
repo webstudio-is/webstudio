@@ -878,7 +878,7 @@ export const auditRules = {
   "unused-design-token": rule(
     "styles",
     "info",
-    "The design token is not assigned to any element.",
+    "The design token is not assigned to any instance.",
     "Apply the token or remove it."
   ),
   "unused-css-variable": rule(
@@ -890,7 +890,7 @@ export const auditRules = {
   "unused-local-style-source": rule(
     "styles",
     "info",
-    "The local style source has declarations but no element assignment.",
+    "The local style source has declarations but is not assigned to any instance.",
     "Assign the style source or remove it."
   ),
   "unused-breakpoint": rule(

@@ -61,7 +61,7 @@ searches asset metadata, not asset binaries or document contents.
 
 For a short end-consumer summary of what MCP can do, see
 `manual mcp` / `webstudio man mcp`. The MCP inventory describes the same
-project, page, element, style, data, asset, publish, domain, and visual
+project, page, instance, style, data, asset, publish, domain, and visual
 verification capabilities without internal command names.
 
 ### Top-Level Commands
@@ -125,8 +125,8 @@ Supported namespaces:
 
 - pages: redirects, page records, and folders
 - projectSettings: project-wide metadata and compiler settings
-- instances: element instances and children, including text/expression children
-- props: element props, bindings, page references, resource bindings
+- instances: component instances and children, including text/expression children
+- props: instance props, bindings, page references, resource bindings
 - styles: CSS declarations keyed by style declaration key
 - styleSources: local style sources and reusable design tokens
 - styleSourceSelections: instance-to-style-source connections
@@ -258,7 +258,7 @@ Update page title metadata:
 }
 ]
 
-Update a text child on an element:
+Update a text child on an instance:
 
 [
 {

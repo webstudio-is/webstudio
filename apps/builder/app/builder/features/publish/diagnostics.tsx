@@ -113,9 +113,9 @@ const FindingList = ({
       {findings.map((finding, index) => (
         <Fragment key={`${finding.severity}-${index}`}>
           <Flex direction="column" gap={2}>
-            {finding.source !== "publish" && (
+            {finding.source === "build" && (
               <Text color="subtle" variant="labels">
-                {finding.source === "build" ? "Build" : "Audit"}
+                Build
               </Text>
             )}
             {finding.source === "publish" ? (

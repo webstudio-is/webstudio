@@ -46,7 +46,7 @@ The recipient needs access to the project. If you opened the Builder through a
 share link, the copied URL keeps that share link’s access token.
 
 You can also copy the browser URL, which tracks the selected page and instance.
-Webstudio also uses these links for actions such as **Show element** in pre-publish
+Webstudio also uses these links for actions such as **Show instance** in pre-publish
 findings. If the instance was removed before the link is opened, the Builder
 still opens the requested page.
 

@@ -82,7 +82,7 @@ const getItemRootInstanceId = (fragment: WebstudioFragment) => {
   ) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
-      "Collection itemFragment must contain exactly one root instance. Wrap repeated sibling elements in one lowercase HTML element or registered component."
+      "Collection itemFragment must contain exactly one root instance. Wrap repeated sibling instances in one lowercase HTML element or registered component."
     );
   }
   const instances = new Map(
