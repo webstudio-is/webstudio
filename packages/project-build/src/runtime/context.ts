@@ -3,6 +3,7 @@ import type { ContentBlockApplication } from "./content-block-application";
 
 export type BuilderRuntimeContext = {
   createId: () => string;
+  createPageId?: () => string;
   projectId?: string;
   projectVersion?: number;
   allowLegacyContentModelWarnings?: boolean;

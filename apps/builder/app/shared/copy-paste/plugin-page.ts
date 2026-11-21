@@ -1,3 +1,11 @@
+import { getPageCopySource } from "@webstudio-is/http-client";
+import { fetch as builderFetch } from "../fetch.client";
+import { draftPersistence } from "../sync/draft-persistence";
+import {
+  getPageClipboardGrant,
+  hasPageCopyAssetsQuery,
+  transferBuilderPage,
+} from "./transfer-page.client";
 import {
   executeRuntimeMutation,
   getWebstudioData,
@@ -26,6 +34,13 @@ import {
   createTemplateCopyData,
 } from "@webstudio-is/project-build/runtime";
 import {
+  createClipboardAssetPaths,
+  createPageTransferItem,
+  createPageCopyArtifacts,
+  pageCopyError,
+  pageCopyFailure,
+  includePageTransferMetaAssets,
+  hasDynamicContentBlockSource,
   pageTransferDataVersion,
   parsePageTransferData,
   collectPageTransferItems,
@@ -42,18 +57,23 @@ import { transferFragmentAssets } from "./asset-transfer-utils";
 import { builderApi } from "../builder-api";
 import { rewriteTransferredDocumentAssetReferences } from "./mdx-asset-transfer";
 import {
-  createClipboardAssetPaths,
-  hasDynamicContentBlockSource,
   includeMdxAssetDependencies,
   prepareConnectedContentBlockFragment,
 } from "./content-block-fragment";
 
 const invalidPasteDataMessage =
   "Could not paste Webstudio page data. The clipboard data appears to be incomplete or invalid.";
+const dynamicDependencyUnsupported = "PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED";
 
 const stringify = (
   data: PageTransferItem,
-  assetFolders: ReturnType<typeof $assetFolders.get>
+  assetFolders: ReturnType<typeof $assetFolders.get>,
+  source?: {
+    projectId: string;
+    grant?: string;
+    grantError?: typeof dynamicDependencyUnsupported;
+    revision?: { buildId: string; version: number };
+  }
 ) => {
   const assets = new Map(
     collectPageTransferItems(data).flatMap((item) =>
@@ -66,6 +86,10 @@ const stringify = (
     [pageTransferDataVersion]: {
       ...data,
       sourceOrigin: window.location.origin,
+      sourceProjectId: source?.projectId,
+      sourceGrant: source?.grant,
+      sourceGrantError: source?.grantError,
+      sourceRevision: source?.revision,
       assetPaths: createClipboardAssetPaths(
         Array.from(assets.values()),
         assetFolders
@@ -116,11 +140,20 @@ const preparePageTransferItemRecursive = async ({
       projectId,
       assets,
     }),
-    bodyFragment: prepareConnectedContentBlockFragment({
-      fragment: item.bodyFragment,
-      projectId,
-      assets,
-    }),
+    bodyFragment: includePageTransferMetaAssets(
+      prepareConnectedContentBlockFragment({
+        fragment: item.bodyFragment,
+        projectId,
+        assets,
+      }),
+      item.type === "page"
+        ? [
+            item.page.meta.socialImageAssetId,
+            item.page.marketplace?.thumbnailAssetId,
+          ]
+        : [item.template.meta.socialImageAssetId],
+      assets
+    ),
   };
   if (projectId === undefined) {
     return prepared;
@@ -220,45 +253,12 @@ const mergeWebstudioFragments = (
   } satisfies WebstudioFragment;
 };
 
-const includeMetaAssets = (
-  fragment: WebstudioFragment,
-  assetIds: Array<string | undefined>,
-  assets: ReturnType<typeof getWebstudioData>["assets"]
-) => {
-  const fragmentAssets = new Map(
-    fragment.assets.map((asset) => [asset.id, asset])
-  );
-  for (const assetId of assetIds) {
-    const asset = assetId === undefined ? undefined : assets.get(assetId);
-    if (asset !== undefined) {
-      fragmentAssets.set(asset.id, asset);
-    }
-  }
-  return { ...fragment, assets: Array.from(fragmentAssets.values()) };
-};
-
-const addPageType = (
-  data: ReturnType<typeof createPageCopyData>,
-  assets: ReturnType<typeof getWebstudioData>["assets"]
-): PageTransferData => ({
-  ...data,
-  bodyFragment: includeMetaAssets(
-    data.bodyFragment,
-    [
-      data.page.meta.socialImageAssetId,
-      data.page.marketplace?.thumbnailAssetId,
-    ],
-    assets
-  ),
-  type: "page",
-});
-
 const addTemplateType = (
   data: ReturnType<typeof createTemplateCopyData>,
   assets: ReturnType<typeof getWebstudioData>["assets"]
 ): TemplateTransferData => ({
   ...data,
-  bodyFragment: includeMetaAssets(
+  bodyFragment: includePageTransferMetaAssets(
     data.bodyFragment,
     [data.template.meta.socialImageAssetId],
     assets
@@ -275,7 +275,7 @@ const addFolderType = (
   children: data.children.map((child) =>
     "folder" in child
       ? addFolderType(child, assets)
-      : addPageType(child, assets)
+      : createPageTransferItem(child, assets)
   ),
 });
 
@@ -287,7 +287,10 @@ const getPageCopyData = (
   if (page === undefined) {
     return;
   }
-  return addPageType(createPageCopyData({ data, page }), data.assets);
+  return createPageTransferItem(
+    createPageCopyData({ data, page }),
+    data.assets
+  );
 };
 
 const remapPageTransferAssets = (
@@ -359,21 +362,98 @@ const handleCopyPage = () => {
   }
 };
 
-export const copyPageData = async (pageId: Page["id"]) => {
+export const copyPageData = async (
+  pageId: Page["id"],
+  request = builderFetch
+) => {
+  const projectId = $project.get()?.id;
+  const ready = projectId !== undefined && draftPersistence.isActive(projectId);
+  const waitForSourceDraft = async (projectId: string) => {
+    try {
+      await draftPersistence.wait(projectId, {
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch {
+      if ($project.get()?.id !== projectId) {
+        throw new Error("PAGE_COPY_SOURCE_STALE");
+      }
+      return false;
+    }
+    if ($project.get()?.id !== projectId) {
+      throw new Error("PAGE_COPY_SOURCE_STALE");
+    }
+    return true;
+  };
+  let revision;
+  let canAuthorize = true;
+  if (ready) {
+    canAuthorize = await waitForSourceDraft(projectId);
+    if (canAuthorize) {
+      try {
+        revision = await getPageCopySource({
+          projectId,
+          origin: window.location.origin,
+          request,
+        });
+      } catch {
+        if ($project.get()?.id !== projectId) {
+          throw new Error("PAGE_COPY_SOURCE_STALE");
+        }
+        canAuthorize = false;
+      }
+    }
+  }
   const data = getWebstudioData();
   const pageData = getPageCopyData(data, pageId);
   if (pageData === undefined) {
     return;
   }
-  return stringify(
-    await preparePageTransferItem({
-      item: pageData,
-      projectId: $project.get()?.id,
-      assets: data.assets,
-      assetFolders: data.assetFolders,
-    }),
-    data.assetFolders
-  );
+  const item = await preparePageTransferItem({
+    item: pageData,
+    projectId,
+    assets: data.assets,
+    assetFolders: data.assetFolders,
+  });
+  if (projectId === undefined || item.type !== "page") {
+    return stringify(item, data.assetFolders);
+  }
+  if (ready && canAuthorize) {
+    canAuthorize = await waitForSourceDraft(projectId);
+  }
+  let grantError: typeof dynamicDependencyUnsupported | undefined;
+  const authorized =
+    canAuthorize && projectId !== undefined
+      ? await getPageClipboardGrant({
+          projectId,
+          item,
+          request,
+          expectedRevision:
+            revision === undefined
+              ? undefined
+              : { buildId: revision.buildId, version: revision.version },
+          sourceCatalog: data,
+        }).catch<undefined>((error: unknown) => {
+          const { code } = pageCopyFailure(error, createPageCopyArtifacts());
+          if (code === dynamicDependencyUnsupported) {
+            grantError = code;
+          }
+        })
+      : undefined;
+  if ($project.get()?.id !== projectId) {
+    throw new Error("PAGE_COPY_SOURCE_STALE");
+  }
+  return stringify(item, data.assetFolders, {
+    projectId,
+    grant: authorized?.grant,
+    grantError,
+    revision:
+      authorized === undefined
+        ? undefined
+        : {
+            buildId: authorized.buildId,
+            version: authorized.version,
+          },
+  });
 };
 
 export const copyTemplateData = async (templateId: PageTemplate["id"]) => {
@@ -415,7 +495,8 @@ export const copyFolderData = async (folderId: Folder["id"]) => {
 
 export const handlePastePage = async (
   clipboardData: string,
-  targetFolderId?: Folder["id"]
+  targetFolderId?: Folder["id"],
+  transferPage = transferBuilderPage
 ) => {
   const transferData = parsePageTransferData(clipboardData);
   if (transferData.owned === false) {
@@ -428,7 +509,15 @@ export const handlePastePage = async (
         "error" in transferData ? transferData.error : invalidPasteDataMessage,
     } as const;
   }
-  const { sourceOrigin, assetPaths, ...transferItem } = transferData.data;
+  const {
+    sourceOrigin,
+    assetPaths,
+    sourceProjectId,
+    sourceGrant,
+    sourceGrantError,
+    sourceRevision,
+    ...transferItem
+  } = transferData.data;
   let item: PageTransferItem = transferItem;
 
   const pages = $pages.get();
@@ -447,6 +536,8 @@ export const handlePastePage = async (
     if (projectId === undefined) {
       return pasteHandled;
     }
+    const isSameProject =
+      sourceProjectId === projectId && sourceOrigin === window.location.origin;
     const sourcePageItems = collectPageTransferItems(item);
     if (sourceOrigin !== undefined) {
       const assetIds = new Set(
@@ -492,6 +583,50 @@ export const handlePastePage = async (
           });
     if (rootStyleConflictResolution === "cancel") {
       return pasteHandled;
+    }
+    if (
+      item.type === "page" &&
+      isSameProject === false &&
+      (sourceGrant !== undefined ||
+        sourceGrantError !== undefined ||
+        item.rootFragment.assets.length > 0 ||
+        item.bodyFragment.assets.length > 0 ||
+        hasPageCopyAssetsQuery(item))
+    ) {
+      try {
+        if (sourceGrantError !== undefined) {
+          throw pageCopyError(sourceGrantError);
+        }
+        const result = await transferPage({
+          item,
+          sourceOrigin,
+          sourceGrant,
+          sourceProjectId,
+          sourceRevision,
+          projectId,
+          targetFolderId: folderId,
+          conflictResolution,
+          rootStyleConflictResolution,
+        });
+        if (result.status !== "committed") {
+          return {
+            success: false,
+            error: invalidPasteDataMessage,
+            transfer: result,
+          } as const;
+        }
+        if (result.didReachBreakpointLimit) {
+          toast.warn(breakpointPasteLimitWarning);
+        }
+        toast.success("Page pasted");
+        return pasteHandled;
+      } catch (error) {
+        return {
+          success: false,
+          error: invalidPasteDataMessage,
+          transfer: pageCopyFailure(error, createPageCopyArtifacts()),
+        } as const;
+      }
     }
     const transferred = await transferFragmentAssets({
       sourceOrigin: sourceOrigin ?? window.location.origin,

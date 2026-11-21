@@ -1,14 +1,10 @@
 import path, { resolve } from "node:path";
-import { defineConfig, loadEnv, type CorsOptions } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { vercelPreset } from "@vercel/remix/vite";
-import type { IncomingMessage } from "node:http";
 import pc from "picocolors";
 
-import {
-  getAuthorizationServerOrigin,
-  isBuilderUrl,
-} from "./app/shared/router-utils/origins";
+import { builderDevCors } from "./dev/cors";
 import { readFileSync, existsSync } from "node:fs";
 import fg from "fast-glob";
 
@@ -148,39 +144,7 @@ export default defineConfig(({ mode }) => {
         key: readFileSync("../../https/privkey.pem"),
         cert: readFileSync("../../https/fullchain.pem"),
       },
-      cors: ((
-        req: IncomingMessage,
-        callback: (error: Error | null, options: CorsOptions | null) => void
-      ) => {
-        // Handle CORS preflight requests in development to mimic Remix production behavior
-        if (req.method === "OPTIONS" || req.method === "POST") {
-          if (req.headers.origin != null && req.url != null) {
-            const url = new URL(req.url, `https://${req.headers.host}`);
-
-            // Allow CORS for /builder-logout path when requested from the authorization server
-            if (url.pathname === "/builder-logout" && isBuilderUrl(url.href)) {
-              return callback(null, {
-                origin: getAuthorizationServerOrigin(url.href),
-                preflightContinue: false,
-                credentials: true,
-              });
-            }
-          }
-
-          if (req.method === "OPTIONS") {
-            // Respond with method not allowed for other preflight requests
-            return callback(null, {
-              preflightContinue: false,
-              optionsSuccessStatus: 405,
-            });
-          }
-        }
-
-        // Disable CORS for all other requests
-        return callback(null, {
-          origin: false,
-        });
-      }) as never,
+      cors: builderDevCors as never,
     },
     envPrefix: ["GITHUB_", "PUBLIC_"],
   };

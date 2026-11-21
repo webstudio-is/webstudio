@@ -10568,3 +10568,47 @@ describe("project session mcp adapter", () => {
     }
   });
 });
+
+test("copy-page dispatches a serializable source and dry-run to the host", async () => {
+  const copyPage = vi.fn(async () => ({
+    status: "indeterminate",
+    code: "PAGE_COPY_COMMIT_UNKNOWN",
+    pageId: "unconfirmed-page",
+    artifacts: { assetIds: ["staged-asset"] },
+  }));
+  const adapter = createProjectSessionMcpCore({
+    operations: publicMcpOperations,
+    createProjectSession: createSessionFactory(),
+    executeOperation: createExecuteOperation(async () => {
+      throw new Error("Map-backed runtime operation must stay private");
+    }),
+    copyPage,
+  });
+  const input = {
+    sourceProjectId: "source",
+    sourcePage: "/",
+    targetFolderId: "folder",
+  };
+  expect(
+    adapter.listTools().filter(({ name }) => name === "copy-page")
+  ).toHaveLength(1);
+  const result = await adapter.callTool({
+    name: "copy-page",
+    input: { ...input, dryRun: true },
+  });
+  expect(copyPage).toHaveBeenCalledWith(input, { dryRun: true });
+  expect(result.isError).toBe(true);
+  expect(result.structuredContent).toMatchObject({
+    ok: false,
+    error: {
+      code: "PAGE_COPY_COMMIT_UNKNOWN",
+      details: { pageId: "unconfirmed-page" },
+    },
+    data: {
+      status: "indeterminate",
+      code: "PAGE_COPY_COMMIT_UNKNOWN",
+      pageId: "unconfirmed-page",
+      artifacts: { assetIds: ["staged-asset"] },
+    },
+  });
+});

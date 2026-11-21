@@ -44,7 +44,7 @@ const canAccessAssetContent = ({
       asset.type === "file" &&
       ["md", "mdx"].includes(asset.format.toLowerCase());
 
-type ToastHandler = (message: string) => void;
+type ToastHandler = (message: string, options?: { copyText?: string }) => void;
 
 const isSafeMode = (() => {
   if (typeof window === "undefined") {

@@ -41,6 +41,35 @@ Use `copy-design-token` with `tokenId` to get a transfer payload. Pass that payl
 
 The same commands transfer all three style source types. Call `copy-design-token` with `styleSourceId` and `sourceType` set to `token`, `tag`, or `local`. The older `tokenId` input still copies a Token. Pass the returned `data` to `paste-design-token`; the payload identifies its source type. A Tag style merges into the matching global tag. A Local style merges into the Local source of the supplied `instanceId`, creating that source if needed. Pasted declarations replace matching properties, states, and breakpoints; other styles remain.
 
+### Copy a page between projects
+
+Link the source project in a separate directory using a share link with view
+and API access. Use `copy-page` from the destination project with build and API
+access. Pass the linked `sourceProjectId` and the `sourcePage` ID or path.
+
+Use `dryRun:true` to check conflicts and compatibility before copying. The
+command reads source documents to discover dependencies. It writes no
+destination data and uploads no files during dry-run. Projects that share
+storage reuse existing files. Copies across storage systems use authenticated
+file reads and uploads. Both deployments must support page copy.
+
+The command supports references in Markdown, MDX, and JSON. Assets queries with
+literal `eq` or `in` filters on asset IDs, folder IDs, or file names transfer
+their matching files when the result fits within the query limit and the offset
+is zero. The copied query is restricted to those files so destination-only
+assets do not appear in it. A `first` or `last` query with multiple matches,
+direct lookups by old asset ID, dynamic query values, and nonzero offsets can
+block copying. Content Blocks can use a fixed single-result query or Collection
+items when the query exposes asset IDs; live canvas data and unsupported
+expressions can block copying. If a copy fails after staging, it can leave
+assets or folders. If the result is indeterminate, inspect the returned page
+ID before retrying.
+
+The destination checks its Asset catalog again before inserting the page.
+Another writer can still change the catalog between that check and the page
+write. Simultaneous transfers can also race on Asset quota or path collisions.
+After either conflict, inspect the destination before copying again.
+
 ### Native Form actions
 
 A native Form (`ResourceForm`) selects Resources through a data source. Create

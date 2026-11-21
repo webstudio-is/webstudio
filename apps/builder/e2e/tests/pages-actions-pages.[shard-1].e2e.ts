@@ -90,17 +90,24 @@ const waitForCopiedPageTransferData = async ({
   type: "page" | "folder" | "template";
   name: string;
 }) => {
-  await page.waitForFunction(
-    async ({ marker, type, name }) => {
-      try {
-        const data = JSON.parse(await navigator.clipboard.readText())[marker];
-        return data?.type === type && data[type]?.name === name;
-      } catch {
-        return false;
-      }
-    },
-    { marker: copiedPageTransferMarker, type, name }
-  );
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          async ({ marker, type, name }) => {
+            try {
+              const text = await navigator.clipboard.readText();
+              const data = JSON.parse(text)[marker];
+              return data?.type === type && data[type]?.name === name;
+            } catch {
+              return false;
+            }
+          },
+          { marker: copiedPageTransferMarker, type, name }
+        ),
+      { message: `Expected clipboard to contain the copied ${type} "${name}"` }
+    )
+    .toBe(true);
 };
 
 const getDataResourceCounts = (

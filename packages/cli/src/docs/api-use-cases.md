@@ -331,6 +331,19 @@ Notes:
 - Variable substitutions are keyed by copied source-variable name and use typed variable values. The operation rejects missing or ambiguous names without committing a partial duplicate.
 - Existing expressions and cloned variable/resource references keep their remapped ids.
 
+## Copy a page from another project
+
+Link the source project in a separate directory using a share link with view and API access.
+Run the copy from the destination, which needs build and API access.
+
+Commands:
+
+- MCP tool: copy-page {"sourceProjectId":"<linkedSourceProjectId>","sourcePage":"/pricing","dryRun":true}
+
+Notes:
+
+Omit `dryRun` to copy the page. Use `targetFolderId` to choose a destination folder.
+
 ## List page templates
 
 Commands:

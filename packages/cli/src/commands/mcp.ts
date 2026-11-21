@@ -1,3 +1,5 @@
+import { pageCopyNamespaces } from "@webstudio-is/project-build/contracts";
+import { copyMcpPage } from "./mcp-page-copy";
 import { cwd, stdin, stdout, stderr } from "node:process";
 import { randomUUID } from "node:crypto";
 import {
@@ -1626,6 +1628,11 @@ const getMcpRunError = (error: unknown) => {
         : (getStableErrorCode(error) ?? "MCP_TOOL_FAILED"),
       message: getCliErrorMessage(error),
       ...(issues === undefined ? {} : { issues }),
+      ...(typeof error.code === "string" &&
+      error.code.startsWith("PAGE_COPY_") &&
+      isPlainRecord(error.details)
+        ? { details: error.details }
+        : {}),
     };
   }
   const code = isMissingApiAccessError(error)
@@ -2431,6 +2438,28 @@ const createCliMcpHost = async ({
         return result;
       },
     },
+    async copyPage(args, { dryRun }) {
+      const result = await copyMcpPage({
+        args,
+        dryRun,
+        destination: apiConnection,
+        source: {
+          ...(await resolveApiConnection(
+            undefined,
+            projectRoot,
+            args.sourceProjectId
+          )),
+          headers: apiCompatibilityHeaders,
+        },
+      });
+      if ("pageId" in result && !("status" in result)) {
+        previewFreshness.markStale();
+        await session
+          .refresh([...pageCopyNamespaces, "assetFolders"])
+          .catch(() => undefined);
+      }
+      return result;
+    },
     async importProject(input) {
       importErrorMessage = "Project import failed.";
       try {
@@ -2698,6 +2727,10 @@ const assertMcpToolServerSupport = (
   contract: CliServerApiContract,
   dryRun = false
 ) => {
+  if (tool === "copy-page") {
+    // This name is a host workflow. Its handler preflights both connections.
+    return;
+  }
   const operation = publicApiOperationByCommand.get(tool as PublicApiCommand);
   if (operation === undefined) {
     return;

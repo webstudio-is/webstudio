@@ -110,6 +110,7 @@ const availableSchemaTopics = ["api", "mcp"] as const;
 
 const mcpToolSchema = listProjectSessionMcpTools(publicApiOperations, {
   includeImport: true,
+  includeCopyPage: true,
   includeScreenshot: true,
   includeScreenshotDiff: true,
   includeInstallOcr: true,

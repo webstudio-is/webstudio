@@ -1,3 +1,5 @@
+import { fetch as builderFetch } from "../fetch.client";
+import { refreshPageCopyCatalog } from "./page-copy-catalog.client";
 import type { Project } from "@webstudio-is/project";
 import { createId } from "@webstudio-is/sdk";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
@@ -76,13 +78,31 @@ export const createMultiplayerSyncClient = ({
     }),
     clientId,
     url: relayUrl,
-    onReload: async () => {
-      try {
-        const reloaded = await loadBuilderData({ projectId, signal });
-        applyBuilderData(reloaded);
-      } catch (error) {
-        console.error("[builder-sync] multiplayer reload failed:", error);
-      }
+    refreshPageCopyCatalog: (catalog, refreshSignal) => {
+      const origin = window.location.origin;
+      return refreshPageCopyCatalog(
+        {
+          origin,
+          requestOrigin: origin,
+          projectId,
+          authToken,
+          request: builderFetch,
+        },
+        catalog,
+        refreshSignal
+      );
+    },
+    onReload: async (_message, reloadSignal) => {
+      signal.throwIfAborted();
+      const reloaded = await loadBuilderData({
+        projectId,
+        signal: reloadSignal,
+        silent: true,
+      });
+      signal.throwIfAborted();
+      reloadSignal.throwIfAborted();
+      applyBuilderData(reloaded);
+      return reloaded.version;
     },
     onUserMessage: (message) => {
       toast.error(message, { id: "multiplayer-sync-message" });

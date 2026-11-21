@@ -45,6 +45,7 @@ const getDocumentedCommands = () => {
 const createMetadataOnlyMcpAdapter = () =>
   createProjectSessionMcpCore({
     operations: publicApiOperations.map(toMcpPublishOperation),
+    copyPage: async () => ({}),
     createProjectSession: () => {
       throw new Error(
         "MCP metadata reads must not initialize a ProjectSession."

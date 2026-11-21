@@ -7,9 +7,12 @@ import type {
 } from "@webstudio-is/project-build";
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import {
+  commitGuardedPageCopy,
   createSyncChangesFromBuilderPatchPayload,
   createTransactionFromBuilderPatchPayload,
 } from "./builder-patch";
+import { rejectGuardedPageCopy } from "./page-copy-guards";
+import { reportTransactionCompletion } from "./project-queue";
 import { registerContainers, serverSyncStore } from "./sync-stores";
 import {
   $assets,
@@ -368,4 +371,37 @@ describe("builder patch sync adapter", () => {
     serverSyncStore.redo();
     expect($styleSourceSelections.get()).toEqual(new Map());
   });
+});
+
+test("reverting a rejected optimistic copy removes the page and its undo entry", async () => {
+  const data = createData();
+  setupStores(data);
+  const source = data.pages.pages.get(data.pages.homePageId)!;
+  const saving = commitGuardedPageCopy({
+    data,
+    transactionId: "copy-test",
+    guard: {
+      buildId: "build",
+      baseVersion: 1,
+      assetCatalogRevision: "0".repeat(64),
+    },
+    payload: [
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "add",
+            path: ["pages", "copied-page"],
+            value: { ...source, id: "copied-page", path: "/copy" },
+          },
+        ],
+      },
+    ],
+  });
+  expect($pages.get()?.pages.has("copied-page")).toBe(true);
+  expect(rejectGuardedPageCopy("copy-test")).toBe(true);
+  reportTransactionCompletion("copy-test", false);
+  await expect(saving).resolves.toBe(false);
+  expect($pages.get()?.pages.has("copied-page")).toBe(false);
+  expect(serverSyncStore.transactionManager.currentStack).toHaveLength(0);
 });

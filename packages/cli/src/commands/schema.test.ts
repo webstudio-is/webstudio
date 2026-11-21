@@ -140,6 +140,7 @@ test("prints compact mcp tool summaries as json by default", () => {
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   const expectedTools = listProjectSessionMcpTools(publicApiOperations, {
     includeImport: true,
+    includeCopyPage: true,
     includeScreenshot: true,
     includeScreenshotDiff: true,
     includeInstallOcr: true,
@@ -158,16 +159,16 @@ test("prints compact mcp tool summaries as json by default", () => {
       inputSchema,
     })
   );
-  // Publish validation and execution occupy about 1.5k characters; keep the old
-  // budget for all other tools and a tight overall handshake budget.
-  expect(JSON.stringify(handshakePayload).length).toBeLessThan(226_000);
+  // Publish validation and execution occupy about 1.5k characters. The copy
+  // tool adds its focused cross-project inputs to the overall handshake.
+  expect(JSON.stringify(handshakePayload).length).toBeLessThan(226_500);
   expect(
     JSON.stringify(
       handshakePayload.filter(
         ({ name }) => name !== "validate-publish" && name !== "get-publish-log"
       )
     ).length
-  ).toBeLessThan(224_500);
+  ).toBeLessThan(225_500);
   const screenshotTool = expectedTools.find(
     ({ name }) => name === "screenshot"
   );

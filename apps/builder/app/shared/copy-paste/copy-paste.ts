@@ -1,3 +1,4 @@
+import type { pageCopyFailure } from "@webstudio-is/project-build/transfer";
 import { toastError } from "../error/toast-error";
 import {
   $authTokenPermissions,
@@ -105,7 +106,11 @@ export type Plugin = {
 export type PasteResult =
   | { success: true; data: { handled: false } }
   | { success: true; data: { handled: true } }
-  | { success: false; error: string };
+  | {
+      success: false;
+      error: string;
+      transfer?: ReturnType<typeof pageCopyFailure>;
+    };
 
 export const pasteIgnored: PasteResult = {
   success: true,
@@ -121,9 +126,16 @@ const isPasteHandled = (result: PasteResult) =>
   result.success === false || result.data.handled;
 
 const reportPasteResult = (result: PasteResult) => {
-  if (result.success === false) {
-    builderApi.toast.error(result.error);
+  if (result.success) {
+    return;
   }
+  if (result.transfer === undefined) {
+    builderApi.toast.error(result.error);
+    return;
+  }
+  builderApi.toast.error(result.error, {
+    copyText: JSON.stringify(result.transfer),
+  });
 };
 
 const textMimeType = "text/plain";
@@ -490,7 +502,12 @@ export const pasteStyleSource = async (data: string) => {
 };
 
 export const copyPage = (pageId: string) => {
-  return writeClipboardText(copyPageData(pageId));
+  return writeClipboardText(copyPageData(pageId)).catch(() => {
+    builderApi.toast.error(
+      "Could not prepare the selected content for copying."
+    );
+    return false;
+  });
 };
 
 export const copyFolder = (folderId: string) => {

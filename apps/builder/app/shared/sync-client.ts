@@ -1,3 +1,4 @@
+import { onGuardedPageCopyRollback } from "./sync/page-copy-guards";
 import { createNanoEvents } from "nanoevents";
 import { createId } from "@webstudio-is/sdk";
 import type { Change, Store } from "immerhin";
@@ -52,6 +53,9 @@ export class ImmerhinSyncObject implements SyncObject {
   transformOnSend?: (changes: Change[]) => Change[];
   transformOnReceive?: (changes: Change[]) => Change[];
   onRevert?: (changes: Change[]) => void;
+  decorateTransaction?: (
+    transaction: Transaction<Change[]>
+  ) => Transaction<Change[]>;
   constructor(
     name: string,
     store: Store,
@@ -59,6 +63,7 @@ export class ImmerhinSyncObject implements SyncObject {
       onSend?: (changes: Change[]) => Change[];
       onReceive?: (changes: Change[]) => Change[];
       onRevert?: (changes: Change[]) => void;
+      decorateTransaction?: ImmerhinSyncObject["decorateTransaction"];
     }
   ) {
     this.name = name;
@@ -66,6 +71,7 @@ export class ImmerhinSyncObject implements SyncObject {
     this.transformOnSend = transform?.onSend;
     this.transformOnReceive = transform?.onReceive;
     this.onRevert = transform?.onRevert;
+    this.decorateTransaction = transform?.decorateTransaction;
   }
   getState() {
     const state = new Map<string, unknown>();
@@ -100,6 +106,9 @@ export class ImmerhinSyncObject implements SyncObject {
     const revertedChanges = this.store.transactionManager.currentStack
       .find(({ id }) => id === transaction.id)
       ?.getChanges();
+    if (revertedChanges === undefined) {
+      return;
+    }
     this.store.revertTransaction(transaction.id);
     if (revertedChanges !== undefined) {
       this.onRevert?.(revertedChanges);
@@ -116,7 +125,8 @@ export class ImmerhinSyncObject implements SyncObject {
       const outgoing = this.transformOnSend
         ? this.transformOnSend(payload)
         : payload;
-      sendTransaction({ id, object: this.name, payload: outgoing });
+      const transaction = { id, object: this.name, payload: outgoing };
+      sendTransaction(this.decorateTransaction?.(transaction) ?? transaction);
     });
     signal.addEventListener("abort", unsubscribe);
   }
@@ -255,6 +265,16 @@ export class SyncClient {
   }
 
   connect({ signal, onReady }: { signal: AbortSignal; onReady?: () => void }) {
+    if (this.role === "leader") {
+      const unsubscribe = onGuardedPageCopyRollback((id) => {
+        this.emitter.emit({
+          clientId: this.clientId,
+          type: "revert",
+          transaction: { id, object: "server" },
+        });
+      });
+      signal.addEventListener("abort", unsubscribe);
+    }
     const off = this.emitter.on((message) => {
       // ignore own messages
       if (this.clientId === message.clientId) {

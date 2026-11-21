@@ -1,3 +1,4 @@
+import { pageCopyGuards } from "./page-copy-guards";
 import { Store, type Change } from "immerhin";
 import { enableMapSet, setAutoFreeze } from "immer";
 import { useEffect } from "react";
@@ -332,6 +333,14 @@ export const __testing__ = {
 export const createObjectPool = () => {
   return new SyncObjectPool([
     new ImmerhinSyncObject("server", serverSyncStore, {
+      decorateTransaction: (transaction) => {
+        const pageCopyGuard = pageCopyGuards.get(transaction.id);
+        if (pageCopyGuard === undefined) {
+          return transaction;
+        }
+        pageCopyGuards.delete(transaction.id);
+        return { ...transaction, pageCopyGuard };
+      },
       onRevert: (changes) => {
         for (const listener of serverSyncRevertListeners) {
           listener(changes);

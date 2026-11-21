@@ -42,6 +42,9 @@ export const createDraftPersistence = () => {
         projectId === undefined ? undefined : { projectId, pending: new Set() };
     },
     invalidate,
+    isActive(projectId: string) {
+      return session?.projectId === projectId;
+    },
     begin(projectId: string, transactionId: string) {
       if (session?.projectId === projectId) {
         session.pending.add(transactionId);
