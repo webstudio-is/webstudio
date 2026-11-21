@@ -334,105 +334,127 @@ test("cross-storage copies include and remap assets selected by a fixed Assets q
   });
 });
 
-test("cross-storage copies reject fixed Assets queries whose result order changes", async () => {
-  const firstFolder = {
-    id: "a-source-folder",
-    projectId: "source",
-    name: "First",
-    createdAt: image.createdAt,
-  };
-  const secondFolder = {
-    ...firstFolder,
-    id: "b-source-folder",
-    name: "Second",
-  };
-  const first: Asset = {
-    ...image,
-    id: "a-source",
-    name: "first_storage.png",
-    filename: "first",
-    folderId: firstFolder.id,
-  };
-  const second: Asset = {
-    ...image,
-    id: "b-source",
-    name: "second_storage.png",
-    filename: "second",
-    folderId: secondFolder.id,
-  };
-  const configuration =
-    createDefaultStructuredAssetQueryResourceConfiguration();
-  const resource = {
-    id: "ordered-gallery-resource",
-    name: "Ordered gallery assets",
-    control: "system" as const,
-    method: "post" as const,
-    url: '"/$resources/assets"',
-    headers: [],
-    body: createStructuredAssetQueryResourceBody({
-      ...configuration,
-      where: {
-        field: ["id"],
-        operator: "in",
-        value: JSON.stringify([first.id, second.id]),
-      },
-      sort: [{ field: ["folderId"], direction: "asc" }],
-    }),
-  };
+test.each([
+  { field: "folderId", stagedIds: new Map() },
+  {
+    field: "size",
+    stagedIds: new Map([
+      ["a-source", "z-target"],
+      ["b-source", "a-target"],
+    ]),
+  },
+] as const)(
+  "cross-storage copies reject changed fixed-query order when sorted by $field",
+  async ({ field, stagedIds }) => {
+    const firstFolder = {
+      id: "a-source-folder",
+      projectId: "source",
+      name: "First",
+      createdAt: image.createdAt,
+    };
+    const secondFolder = {
+      ...firstFolder,
+      id: "b-source-folder",
+      name: "Second",
+    };
+    const first: Asset = {
+      ...image,
+      id: "a-source",
+      name: "first_storage.png",
+      filename: "first",
+      folderId: firstFolder.id,
+    };
+    const second: Asset = {
+      ...image,
+      id: "b-source",
+      name: "second_storage.png",
+      filename: "second",
+      folderId: secondFolder.id,
+    };
+    const configuration =
+      createDefaultStructuredAssetQueryResourceConfiguration();
+    const resource = {
+      id: "ordered-gallery-resource",
+      name: "Ordered gallery assets",
+      control: "system" as const,
+      method: "post" as const,
+      url: '"/$resources/assets"',
+      headers: [],
+      body: createStructuredAssetQueryResourceBody({
+        ...configuration,
+        where: {
+          field: ["id"],
+          operator: "in",
+          value: JSON.stringify([first.id, second.id]),
+        },
+        sort: [{ field: [field], direction: "asc" }],
+      }),
+    };
 
-  const plan = await planPageTransfer({
-    ...fixture,
-    item: {
-      ...item,
-      page: {
-        ...item.page,
-        meta: { ...item.page.meta, socialImageAssetId: undefined },
+    const plan = await planPageTransfer({
+      ...fixture,
+      item: {
+        ...item,
+        page: {
+          ...item.page,
+          meta: { ...item.page.meta, socialImageAssetId: undefined },
+        },
+        bodyFragment: { ...fragment, resources: [resource] },
       },
-      bodyFragment: { ...fragment, resources: [resource] },
-    },
-    sameStorage: false,
-    source: {
-      assets: [first, second],
-      folders: [firstFolder, secondFolder],
-    },
-    createAssetId: (() => {
-      const ids = [
-        "planned-first-folder",
-        "planned-first-asset",
-        "planned-second-folder",
-        "planned-second-asset",
-      ];
-      return () => ids.shift()!;
-    })(),
-  });
-  const commit = vi.fn(async (item: PageTransferData) => ({
-    pageId: item.page.id,
-  }));
-  let stagedAssets: Asset[] = [];
-  const actualFolders: AssetFolder[] = [];
-  const transfer = executePageTransfer({
-    plan,
-    createFolder: async (folder) => {
-      const created = {
-        ...folder,
-        id: folder.name === "First" ? "z-folder" : "a-folder",
-      };
-      actualFolders.push(created);
-      return created;
-    },
-    stageAssets: async (plans) => {
-      stagedAssets = plans.map(({ target }) => target);
-      return new Map(plans.map(({ source, target }) => [source.id, target]));
-    },
-    readTarget: async () => ({ assets: stagedAssets, folders: actualFolders }),
-    commit,
-  });
+      sameStorage: false,
+      source: {
+        assets: [first, second],
+        folders: [firstFolder, secondFolder],
+      },
+      createAssetId: (() => {
+        const ids = [
+          "planned-first-folder",
+          "planned-first-asset",
+          "planned-second-folder",
+          "planned-second-asset",
+        ];
+        return () => ids.shift()!;
+      })(),
+    });
+    const commit = vi.fn(async (item: PageTransferData) => ({
+      pageId: item.page.id,
+    }));
+    let stagedAssets: Asset[] = [];
+    const actualFolders: AssetFolder[] = [];
+    const transfer = executePageTransfer({
+      plan,
+      createFolder: async (folder) => {
+        const created = {
+          ...folder,
+          id: folder.name === "First" ? "z-folder" : "a-folder",
+        };
+        actualFolders.push(created);
+        return created;
+      },
+      stageAssets: async (plans) => {
+        const staged = plans.map(
+          ({ source, target }) =>
+            [
+              source.id,
+              { ...target, id: stagedIds.get(source.id) ?? target.id },
+            ] as const
+        );
+        stagedAssets = staged.map(([, asset]) => asset);
+        return new Map(staged);
+      },
+      readTarget: async () => ({
+        assets: stagedAssets,
+        folders: actualFolders,
+      }),
+      commit,
+    });
 
-  await expect(transfer).rejects.toMatchObject({
-    code: "PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED",
-  });
-  expect(commit).not.toHaveBeenCalled();
-});
+    await expect(transfer).rejects.toMatchObject({
+      code: "PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED",
+    });
+    expect(commit).not.toHaveBeenCalled();
+  }
+);
 
 test("same-storage copies preserve fixed-query order by Markdown properties", async () => {
   const first: Asset = {

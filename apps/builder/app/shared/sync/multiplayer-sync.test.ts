@@ -531,7 +531,7 @@ test("a transient catalog read failure does not stop later peer or local edits",
   }
 });
 
-test("a relay revert removes a guarded copy before its acknowledgment", async () => {
+test("a relay revert drops a guarded copy and releases following edits before acknowledgment", async () => {
   const relay = createTransportFactory();
   const received: SyncMessage[] = [];
   draftPersistence.reset("project");
@@ -564,28 +564,39 @@ test("a relay revert removes a guarded copy before its acknowledgment", async ()
         },
       },
     });
+    const edit = { id: "remote-edit", object: "server" as const, payload: [] };
+    relay.callbacks.onBroadcast({
+      type: "broadcast",
+      seq: 2,
+      originClientId: "remote",
+      actorId: "remote",
+      clientSeq: 2,
+      relayTs: 2,
+      transaction: edit,
+    });
+    expect(received).toEqual([]);
     const waiting = draftPersistence.wait("project", {
       signal: new AbortController().signal,
     });
-    relay.emitSyncMessage({
+    const revert: SyncMessage = {
       type: "revert",
       clientId: "remote",
       transaction: { id: "rejected-copy", object: "server" },
-    });
-    relay.callbacks.onAck(1, 4);
+    };
+    relay.emitSyncMessage(revert);
     await Promise.resolve();
+    const receivedBeforeAck = [...received];
+    relay.callbacks.onAck(2, 4);
     await waiting;
     await draftPersistence.wait("project", {
       signal: new AbortController().signal,
     });
 
-    expect(received).toEqual([
-      {
-        type: "revert",
-        clientId: "remote",
-        transaction: { id: "rejected-copy", object: "server" },
-      },
+    expect(receivedBeforeAck).toEqual([
+      revert,
+      { type: "apply", clientId: "remote", transaction: edit },
     ]);
+    expect(received).toEqual(receivedBeforeAck);
   } finally {
     emitter.close();
     draftPersistence.reset();

@@ -322,13 +322,19 @@ const waitForClipboardTextIncludes = async ({
   page: Page;
   text: string;
 }) => {
-  await page.waitForFunction(async (text) => {
-    try {
-      return (await navigator.clipboard.readText()).includes(text as string);
-    } catch {
-      return false;
-    }
-  }, text);
+  await expect
+    .poll(
+      () =>
+        page.evaluate(async (text) => {
+          try {
+            return (await navigator.clipboard.readText()).includes(text);
+          } catch {
+            return false;
+          }
+        }, text),
+      { message: `Expected clipboard text to include "${text}"` }
+    )
+    .toBe(true);
 };
 
 const pasteClipboardData = async ({

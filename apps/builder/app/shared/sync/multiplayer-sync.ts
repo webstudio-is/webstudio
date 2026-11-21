@@ -343,6 +343,9 @@ export const createMultiplayerSyncEmitter = ({
         draftPersistence.complete(projectId, message.transaction.id, true);
       }
       events.emit("message", message);
+      if (index === 0) {
+        void flushBroadcasts();
+      }
     });
   };
 
