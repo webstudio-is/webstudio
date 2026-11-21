@@ -19,11 +19,10 @@ that could make the generated site fail or behave unexpectedly.
   Diagnostics, and the server may reject the publish.
 - **Warnings** appear immediately but do not prevent publishing.
 
-On paid plans, when a finding identifies a component, choose **Show element** to
-select the affected instance. Free plans show a
-short error or warning without full details or element navigation. Fix the
-problem, then publish again. Draft pages are excluded because they are not part
-of the generated site.
+On paid plans, choose **Show instance** to select the affected instance and open
+**Settings**. For a missing Resource used by a variable, this also opens
+**Variables** at the variable’s scope. Free plans show a short error or warning.
+Fix the problem, then publish again. Draft pages are excluded from the generated site.
 
 ## Publish details
 

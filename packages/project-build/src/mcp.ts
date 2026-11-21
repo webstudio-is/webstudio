@@ -1069,7 +1069,7 @@ const getUnsupportedInputFieldHint = ({
     return " Use get-page/get-page-by-path for page metadata, list-instances to inspect page root contents, and inspect-instance for props, styles, children, bindings, or sources.";
   }
   if (command === "list-instances" && field === "instanceId") {
-    return " Use rootInstanceId to list a subtree, or inspect-instance to inspect one element.";
+    return " Use rootInstanceId to list a subtree, or inspect-instance to inspect one instance.";
   }
   return "";
 };
@@ -4572,7 +4572,7 @@ const capabilityAreas = [
   },
   {
     area: "content",
-    goal: "Inspect and edit element instances, text, props, bindings, and page content.",
+    goal: "Inspect and edit instances, text, props, bindings, and page content.",
     tools: [
       "list-instances",
       "inspect-instance",
@@ -5627,7 +5627,7 @@ const animationComponentGuidanceByComponent = new Map<string, string>([
       'Each animation needs keyframes; timing is optional and defaults to {}. In keyframes[].styles, use CSS property names with raw CSS strings such as transform:"translateX(-75%)"; update-props parses them into Webstudio style data. Timing can use rangeStart/rangeEnd, fill, easing, duration, delay, and iterations. Duration makes Range End unnecessary because duration defines when the animation ends.',
       'Use fill:"backwards" for in animations from animation styles to canvas styles, and fill:"forwards" for out animations from canvas styles to animation styles.',
       "Direct child animations expose --index and --total to support staggered formulas such as calc(var(--index) * 20%).",
-      "For polished pages, design the element's normal canvas styles as the final state, then set the Animation Group keyframes to the starting or ending animated state.",
+      "For polished pages, design the instance's normal canvas styles as the final state, then set the Animation Group keyframes to the starting or ending animated state.",
     ].join(" "),
   ],
   [
@@ -7198,7 +7198,7 @@ const metaGoalGuides = [
       "Do not call meta.index after this guide. If an exact mutation schema is still needed, make at most one meta.get-more-tools call listing all immediately required authoring tools rather than rediscovering them one at a time.",
       "Never place credentials, service-role keys, refresh tokens, private session values, or authenticated response bodies in project data, command output, screenshots, agent instructions, or error reports. Ask the user to configure secrets in the provider/server environment.",
       "Keep all four auth states in the editable component structure even when bindings select only one at runtime. Give each state a visible label using the exact terms signed-out, loading, signed-in, and failed-auth so authors can inspect and verify every state. Use page basic auth only when the user asks for Webstudio's fixed login/password gate; it is not Supabase or Firebase authentication.",
-      "Use focused resources and variables for public client configuration and session-shaped data. Keep authorization enforcement and privileged provider calls server-side; a hidden Builder element is not an authorization boundary.",
+      "Use focused resources and variables for public client configuration and session-shaped data. Keep authorization enforcement and privileged provider calls server-side; a hidden Builder instance is not an authorization boundary.",
       "When fixture/session data must feed a resource, create the page and scoped fixture variables there. Use create-page's returned rootInstanceId directly instead of listing instances to rediscover it. Call list-variables after creation only when a resource expression actually needs the returned encoded name. Do not repeat list-variables when the fixture variable is not referenced, as in the expression-free state gallery, and do not guess or reference variables before they exist.",
       "Create resources only after their scope and referenced variables exist. When reusing the discovered /api/auth/session convention, pass recipe.createResourceInput directly as the entire create-resource tool input, unchanged except for its account root id placeholder. Do not wrap it in another resource object. Keep every request field nested under resource. resource.url is the HTTP request target, not a provider call or session-state expression. Use literal wrappers only for fixed header, search-parameter, and body text.",
       "Keep the server-mediated session resource as provider-convention evidence, but use only non-secret scoped fixture variables to drive local auth-state visibility. Do not bind that server-only resource into local preview rendering: its endpoint is intentionally absent locally and can recurse through the generated route.",
@@ -7271,7 +7271,7 @@ const metaGoalGuides = [
       "Before the first mutation, call inspect-design-context exactly once instead of calling list-pages, list-breakpoints, list-design-tokens, list-assets, or list-variables separately. Use one list-instances call only when needed to inspect a representative existing page pattern. Do not call get-styles: the bounded design context and optional focused instance result provide the reusable design-system evidence needed here without risking an oversized style dump. Reuse exact existing values, breakpoint ids, and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
       "Call create-page exactly once and use its returned rootInstanceId as the insertion parent. Insert the complete semantic page in one fragment when practical, and use the insertion result's instanceIds for follow-up token attachments. Do not call list-instances after the first mutation to rediscover ids already returned by mutations.",
       "After insertion, call attach-design-token at least once with an exact existing style source id returned by inspect-design-context. Attach it where the shared typography, color, or other token is intended. Reusing only the token's current raw value creates a disconnected local copy.",
-      "Create semantic editable structure with insert-fragment-verified using only lowercase HTML elements and literal text. Do not include inline styles or ws:style in the fragment; apply fixed CSS with update-styles after insertion. Do not improvise component names, expression syntax, or object-valued style expressions. Use assets for real imagery and text or controls for real content; do not flatten the design into one image or absolute-position every element.",
+      "Create semantic editable structure with insert-fragment-verified using only lowercase HTML elements and literal text. Do not include inline styles or ws:style in the fragment; apply fixed CSS with update-styles after insertion. Do not improvise component names, expression syntax, or object-valued style expressions. Use assets for real imagery and text or controls for real content; do not flatten the design into one image or absolute-position every instance.",
       "Implement responsive behavior inside the project's actual breakpoint ranges.",
       'Represent literal CSS values as {"type":"keyword","value":"..."}, including lengths such as "48px" and colors such as "#fff". Do not invent value types such as "length"; use {"type":"unit","value":48,"unit":"px"} only when numeric structure is specifically needed.',
       "Each update-styles updates item is flat: include instanceId, property, value, and optional breakpoint directly on every item. Do not group properties under styles or declarations.",

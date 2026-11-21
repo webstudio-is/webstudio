@@ -69,6 +69,10 @@ beforeAll(async () => {
       },
     },
     GET: {
+      "build.validatePublish": () => ({
+        diagnostics: { mdxErrors: [], mdxOmissions: [] },
+        cssValid: true,
+      }),
       "domain.project": () => ({
         success: true,
         project: {
@@ -130,10 +134,6 @@ beforeAll(async () => {
       "build.contentDatabasePublishDiagnostics": () => ({
         mdxErrors: [],
         mdxOmissions: [],
-      }),
-      "api.publish.validate": () => ({
-        diagnostics: { mdxErrors: [], mdxOmissions: [] },
-        cssValid: true,
       }),
     },
   });

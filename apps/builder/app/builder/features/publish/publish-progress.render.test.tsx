@@ -71,7 +71,7 @@ beforeAll(async () => {
       POST: { "domain.publish": () => publish() },
       GET: {
         "domain.project": () => refresh(),
-        "api.publish.validate": () => validate(),
+        "build.validatePublish": () => validate(),
         "build.contentDatabasePublishDiagnostics": () => validate(),
         "api.publish.getJob": () => job(),
         "domain.countTotalDomains": () => ({

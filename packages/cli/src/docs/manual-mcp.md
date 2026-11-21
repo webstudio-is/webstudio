@@ -230,7 +230,7 @@ For an editable MDX article, use the resource to select the Content Block's sour
 
 ### Content Block completion checklist
 
-For every Content Block creation, migration, or repair—with or without MDX—treat Content-mode editability as a delivery requirement for all content the user expects editors to change. Before implementation, inventory each value, its intended UI control, and its write destination. Choose controls by meaning: date/calendar controls for dates, image pickers for image replacement, and direct text or number controls for reading time. Keep fixed punctuation and units outside a directly bound value element; never mix literal and expression children there. Preserve the existing stored type and wording: if `readTime` already stores `4 min read`, bind that whole string directly instead of assuming it stores only a number. Distinguish protected layout/templates from editable content explicitly. Test each field through Content mode, check the saved project data or source file, reload, restore test values, and record passed/failed/not tested. Testing one heading, inspecting bindings, or successfully writing through MCP does not cover the remaining fields. Report missing controls and unsupported writes as unfinished requirements, not successful delivery.
+For every Content Block creation, migration, or repair—with or without MDX—treat Content-mode editability as a delivery requirement for all content the user expects editors to change. Before implementation, inventory each value, its intended UI control, and its write destination. Choose controls by meaning: date/calendar controls for dates, image pickers for image replacement, and direct text or number controls for reading time. Keep fixed punctuation and units outside a directly bound value instance; never mix literal and expression children there. Preserve the existing stored type and wording: if `readTime` already stores `4 min read`, bind that whole string directly instead of assuming it stores only a number. Distinguish protected layout/templates from editable content explicitly. Test each field through Content mode, check the saved project data or source file, reload, restore test values, and record passed/failed/not tested. Testing one heading, inspecting bindings, or successfully writing through MCP does not cover the remaining fields. Report missing controls and unsupported writes as unfinished requirements, not successful delivery.
 
 ### Complete article editability is required
 
@@ -245,7 +245,7 @@ Before handoff:
 
 **Image replacement is not shared metadata editing.** For frontmatter such as `featureImage: { $ref: "./images/hero.png" }`, bind the Image source directly to `document.frontmatter.featureImage.src` with `binding.mode:"readwrite"` using `bind-props`. In Content mode, **Choose source** replaces the article’s `featureImage.$ref`; it does not overwrite the shared Asset’s resolved `.src`. The resolved URL field stays read-only. Verify the picker, saved reference, and reload—do not infer support from the displayed image alone. Bind alternative text to `.description` to use the shared Asset description; edit it through **Choose source → asset actions → Settings → Description**, which affects every use of that Asset. Do not treat a missing write mode as a platform limitation, and do not defer image replacement over a separate shared-description question.
 
-Keep intended editable values separate from display formatting. For reading time, use three inline sibling text elements: static `— `, one value element bound directly to `document.frontmatter.readingTime` with `expressionBindingMode:"readwrite"`, and static ` min read`. The value element must contain only that binding, not mixed literal and expression children. Preserve whitespace and the stored field type. Do not concatenate labels or units, use template literals, or add fallbacks/formatting calls to an editable binding. Prefer component formatting controls with a directly bound value. Explain unsupported cases and ask before making an intended editable field read-only; do not trade away editability just to match the display.
+Keep intended editable values separate from display formatting. For reading time, use three inline sibling text instances: static `— `, one instance bound directly to `document.frontmatter.readingTime` with `expressionBindingMode:"readwrite"`, and static ` min read`. The bound instance must contain only that binding, not mixed literal and expression children. Preserve whitespace and the stored field type. Do not concatenate labels or units, use template literals, or add fallbacks/formatting calls to an editable binding. Prefer component formatting controls with a directly bound value. Explain unsupported cases and ask before making an intended editable field read-only; do not trade away editability just to match the display.
 
 If an edit in a long-lived MCP session reports a revision conflict after another client saved the Asset, call `reload-content-block-source`, inspect the latest source, reapply the requested change, and retry. One-shot CLI calls refresh before each operation and normally cannot reproduce a stale session. Never overwrite the newer revision blindly. Use `disconnect-content-block-source` to remove the connection while leaving the Asset unchanged.
 
@@ -408,15 +408,15 @@ terms, agents can:
 - Read and update marketplace product metadata.
 - List, create, update, delete, and replace redirects.
 - List, create, update, and delete responsive breakpoints.
-- List and inspect page elements.
+- List and inspect instances on a page.
 - Insert registered components.
 - Insert styled JSX fragments.
-- Move, reparent, clone, duplicate, wrap, unwrap, convert, rename, retag, and delete elements.
+- Move, reparent, clone, duplicate, wrap, unwrap, convert, rename, retag, and delete instances.
 - Fill grid cells.
 - List and update text children.
 - Update plain text and expression text.
 - Update structured rich text.
-- Add, update, delete, and bind element props.
+- Add, update, delete, and bind instance props.
 - Bind props to expressions, resources, actions, and runtime system values.
 - Read, add, update, delete, and replace local styles.
 - Update selected style-source styles.

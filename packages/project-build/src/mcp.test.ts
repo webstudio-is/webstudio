@@ -2617,7 +2617,7 @@ describe("project session mcp adapter", () => {
         input: { instanceId: "body" },
       })
     ).rejects.toThrow(
-      "list-instances input.instanceId is not supported. Expected one of: rootInstanceId, maxDepth. Did you mean rootInstanceId? Use rootInstanceId to list a subtree, or inspect-instance to inspect one element."
+      "list-instances input.instanceId is not supported. Expected one of: rootInstanceId, maxDepth. Did you mean rootInstanceId? Use rootInstanceId to list a subtree, or inspect-instance to inspect one instance."
     );
 
     expect(executeOperation).not.toHaveBeenCalled();

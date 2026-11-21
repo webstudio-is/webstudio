@@ -552,7 +552,7 @@ export const analyzeProject = (
         declarationCount: token.declarationCount,
         usageCount: token.usageCount,
         ...(input.query === undefined
-          ? { message: "Design token has no element assignments." }
+          ? { message: "Design token is not used by any instances." }
           : {}),
       });
     }
@@ -635,7 +635,7 @@ export const analyzeProject = (
           styleSourceId: styleSource.id,
           declarationCount,
           message:
-            "Local style source has declarations but is not assigned to any element.",
+            "Local style source has declarations but is not assigned to any instance.",
         });
       }
 

@@ -5,6 +5,10 @@ import { afterEach, expect, test, vi } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
 import {
+  $variablesSectionRequested,
+  openBuilderView,
+} from "~/builder/shared/nano-states";
+import {
   $selectedInstanceSelector,
   $selectedPageId,
   selectInstance,
@@ -35,6 +39,7 @@ afterEach(() => {
   document.body.innerHTML = "";
   $variableToFocus.set(undefined);
   $variableToOpen.set(undefined);
+  $variablesSectionRequested.set(false);
   selectInstance(undefined);
   $pages.set(undefined);
   $props.set(new Map());
@@ -86,6 +91,35 @@ const setup = () => {
   root = createRoot(container);
   return { container, local };
 };
+
+test("opening the Variables view expands and scrolls the section without opening a variable", async () => {
+  const { container } = setup();
+  $pages.set(createDefaultPages({ rootInstanceId: "parent" }));
+  $selectedPageId.set("home");
+  selectInstance(["child", "parent"]);
+  const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView");
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <VariablesSection />
+      </TooltipProvider>
+    )
+  );
+  const trigger = container.querySelector<HTMLButtonElement>(
+    'button[aria-expanded="true"][aria-controls]'
+  )!;
+  await act(async () => trigger.click());
+  expect(trigger.getAttribute("aria-expanded")).toBe("false");
+
+  await act(async () => openBuilderView("settings/variables"));
+  expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  expect(scrollIntoView).toHaveBeenCalledOnce();
+  expect(scrollIntoView.mock.instances[0]).toBe(trigger);
+  expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+
+  await act(async () => trigger.click());
+  expect(trigger.getAttribute("aria-expanded")).toBe("false");
+});
 
 test("Option-click local variable label opens Delete confirmation without editing", async () => {
   const { container, local } = setup();

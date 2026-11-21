@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import {
   AuthorizationError,
   authorizeProject,
@@ -51,6 +52,10 @@ import {
 } from "./api-build.server";
 import { assertApiProjectPermit } from "./api-permits.server";
 import { loadContentDatabasePublishDiagnostics } from "./content-database-publish-diagnostics.server";
+import {
+  publishValidationInput,
+  validatePublish,
+} from "./publish-validation.server";
 
 const projectBundleInput = z.object({
   projectId: z.string(),
@@ -306,6 +311,24 @@ export const buildRouter = router({
         ctx,
         await loadPublishedProjectBundleByProjectId(input.projectId, ctx)
       );
+    }),
+
+  validatePublish: procedure
+    .input(publishValidationInput)
+    .query(async ({ ctx, input }) => {
+      if (
+        ctx.apiClient.type !== "browser" ||
+        (await authorizeProject.hasProjectPermit(
+          { projectId: input.projectId, permit: "view" },
+          ctx
+        )) === false
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to this project",
+        });
+      }
+      return await validatePublish({ ctx, input });
     }),
 
   contentDatabasePublishDiagnostics: procedure
