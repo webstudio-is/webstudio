@@ -119,37 +119,48 @@ const checkBuildIntegrity: PrePublishAuditCheck = ({
     resources: resources.values(),
     instances: instances.values(),
     assets: assets.values(),
-  }).map((issue) => ({
-    ruleId:
-      issue.type === "missingResource"
-        ? "resource-integrity"
-        : issue.type === "slotInContentBlockTemplates"
-          ? "content-block-template-integrity"
-          : "content-block-source-integrity",
-    severity: "error",
-    message: formatBuildIntegrityIssue(issue),
-    location: {
-      ...(issue.type === "missingResource"
-        ? {
-            ...(issue.source === "dataSource"
-              ? { dataSourceId: issue.dataSourceId }
-              : { propId: issue.propId }),
-            resourceId: issue.resourceId,
-          }
-        : issue.type === "slotInContentBlockTemplates"
-          ? { instanceId: issue.instanceId }
-          : {
-              instanceId: issue.blockInstanceId,
-              ...(issue.type === "duplicateContentBlockSource"
-                ? { propId: issue.propIds[0] }
+  }).map((issue) => {
+    const instanceId =
+      issue.type !== "missingResource"
+        ? undefined
+        : issue.source === "dataSource"
+          ? dataSources.get(issue.dataSourceId)?.scopeInstanceId
+          : props.get(issue.propId)?.instanceId;
+    return {
+      ruleId:
+        issue.type === "missingResource"
+          ? "resource-integrity"
+          : issue.type === "slotInContentBlockTemplates"
+            ? "content-block-template-integrity"
+            : "content-block-source-integrity",
+      severity: "error",
+      message: formatBuildIntegrityIssue(issue),
+      location: {
+        ...(issue.type === "missingResource"
+          ? {
+              ...(issue.source === "dataSource"
+                ? { dataSourceId: issue.dataSourceId }
                 : { propId: issue.propId }),
-              ...(issue.type === "missingContentBlockSourceAsset" ||
-              issue.type === "incompatibleContentBlockSourceAsset"
-                ? { assetId: issue.assetId }
+              resourceId: issue.resourceId,
+              ...(instanceId !== undefined && instances.has(instanceId)
+                ? { instanceId }
                 : {}),
-            }),
-    },
-  }));
+            }
+          : issue.type === "slotInContentBlockTemplates"
+            ? { instanceId: issue.instanceId }
+            : {
+                instanceId: issue.blockInstanceId,
+                ...(issue.type === "duplicateContentBlockSource"
+                  ? { propId: issue.propIds[0] }
+                  : { propId: issue.propId }),
+                ...(issue.type === "missingContentBlockSourceAsset" ||
+                issue.type === "incompatibleContentBlockSourceAsset"
+                  ? { assetId: issue.assetId }
+                  : {}),
+              }),
+      },
+    };
+  });
 
 const checkJsonPropValues: PrePublishAuditCheck = ({ props, instances }) =>
   [...props.values()]

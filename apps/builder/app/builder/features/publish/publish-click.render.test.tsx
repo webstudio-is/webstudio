@@ -10,9 +10,16 @@ import {
   vi,
 } from "vitest";
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
+import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { Instance } from "@webstudio-is/sdk";
+import {
+  createTemplateComponentFixture,
+  renderData,
+  ws,
+} from "@webstudio-is/template";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { createTrpcInterceptor } from "~/shared/trpc/trpc-test-utils";
 import {
   createPublishAuditFinding,
@@ -21,6 +28,8 @@ import {
 } from "./publish-test-utils";
 
 const reactEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
+const Body = createTemplateComponentFixture("Body");
+const Heading = createTemplateComponentFixture("Heading");
 const originalActEnvironment = reactEnvironment.IS_REACT_ACT_ENVIRONMENT;
 const originalScrollIntoView = Object.getOwnPropertyDescriptor(
   Element.prototype,
@@ -32,8 +41,14 @@ let publishModule: typeof import("./publish");
 let stores: typeof import("~/shared/sync/data-stores");
 let nanoStates: typeof import("~/shared/nano-states");
 let builderStates: typeof import("~/builder/shared/nano-states");
+let assetBridge: typeof import("~/shared/asset-content-bridge.client");
+let contentSession: ReturnType<typeof createAssetContentSession>;
 const requests: Array<{ path: string; input: unknown }> = [];
 let publishResponse: unknown = { success: false, error: "Publish blocked" };
+let validationResponse: unknown = {
+  diagnostics: { mdxErrors: [], mdxOmissions: [] },
+  cssValid: true,
+};
 let jobStatus: "failed" | "success" = "failed";
 let didPublish = false;
 let interceptor: ReturnType<typeof createTrpcInterceptor>;
@@ -53,6 +68,7 @@ beforeAll(async () => {
         },
       },
       GET: {
+        "build.validatePublish": () => validationResponse,
         "api.publish.getJob": () => {
           return { status: jobStatus, code: "BUILD_FAILED" };
         },
@@ -81,10 +97,6 @@ beforeAll(async () => {
           data: 0,
           limit: 100,
         }),
-        "api.publish.validate": () => ({
-          diagnostics: { mdxErrors: [], mdxOmissions: [] },
-          cssValid: true,
-        }),
         "build.contentDatabasePublishDiagnostics": () => ({
           mdxErrors: [],
           mdxOmissions: [],
@@ -99,6 +111,7 @@ beforeAll(async () => {
   stores = await import("~/shared/sync/data-stores");
   nanoStates = await import("~/shared/nano-states");
   builderStates = await import("~/builder/shared/nano-states");
+  assetBridge = await import("~/shared/asset-content-bridge.client");
   const { updateCsrfToken } = await import("~/shared/csrf.client");
   updateCsrfToken("test-token");
 });
@@ -106,9 +119,33 @@ beforeAll(async () => {
 beforeEach(() => {
   reactEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   publishResponse = { success: false, error: "Publish blocked" };
+  validationResponse = {
+    diagnostics: { mdxErrors: [], mdxOmissions: [] },
+    cssValid: true,
+  };
   requests.length = 0;
   jobStatus = "failed";
   didPublish = false;
+  contentSession = createAssetContentSession({
+    authorize: () => true,
+    repository: {
+      readContent: async () => {
+        throw new Error("No assets in this project");
+      },
+      updateContent: async () => {
+        throw new Error("No assets in this project");
+      },
+    },
+  });
+  assetBridge.__testing__.initBridge(
+    assetBridge.createAssetContentBridge({
+      origin: location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload: () => {},
+      getContentSession: () => contentSession,
+    })
+  );
   nanoStates.$planFeatures.set({
     ...nanoStates.$planFeatures.get(),
     allowPublishLogs: false,
@@ -577,6 +614,107 @@ test("publish audit warnings keep their instance links in Diagnostics", async ()
   expect(document.body.textContent).toContain(
     `Publish warning for "Home" (/): A child does not match the element's content model.`
   );
+});
+
+test("validation keeps audit warnings and links scoped resource errors", async () => {
+  const pageId = "validation-page";
+  const instanceId = "validation-instance";
+  const { instances, props } = renderData(
+    <Body ws:id={instanceId}>
+      <ws.element ws:tag="button">
+        <Heading ws:id="invalid-heading" ws:tag="h3">
+          Heading in button
+        </Heading>
+      </ws.element>
+    </Body>
+  );
+  stores.$pages.set(
+    createDefaultPages({ rootInstanceId: instanceId, homePageId: pageId })
+  );
+  stores.$instances.set(instances);
+  stores.$props.set(props);
+  nanoStates.$registeredComponentMetas.set(componentMetas);
+  stores.$dataSources.set(
+    new Map([
+      [
+        "missing-resource-variable",
+        {
+          type: "resource",
+          id: "missing-resource-variable",
+          name: "get countries",
+          resourceId: "missing-resource",
+          scopeInstanceId: instanceId,
+        },
+      ],
+    ])
+  );
+  validationResponse = Response.json(
+    [
+      {
+        error: {
+          message:
+            'Cannot publish: resource variable "get countries" (missing-resource-variable) references missing resource "missing-resource".',
+          code: -32600,
+          data: {
+            code: "BAD_REQUEST",
+            httpStatus: 400,
+            path: "build.validatePublish",
+            issues: [
+              {
+                type: "missingResource",
+                source: "dataSource",
+                dataSourceId: "missing-resource-variable",
+                dataSourceName: "get countries",
+                resourceId: "missing-resource",
+              },
+            ],
+          },
+        },
+      },
+    ],
+    { status: 400 }
+  );
+  nanoStates.$planFeatures.set({
+    ...nanoStates.$planFeatures.get(),
+    allowPublishLogs: true,
+  });
+
+  await mount();
+  const domain = document.body.querySelector<HTMLInputElement>(
+    'input[name="domainToPublish[]"]'
+  );
+  if (domain?.checked === false) {
+    await act(async () =>
+      document.body.querySelector<HTMLElement>('[role="checkbox"]')?.click()
+    );
+  }
+  const validate = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent?.trim() === "Validate");
+  await act(async () => validate?.click());
+  await waitFor(() =>
+    expect(document.body.textContent).toContain("See issues")
+  );
+  expect(document.body.textContent).toContain("1 error · 1 warning");
+
+  const seeIssues = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent?.trim() === "See issues");
+  await act(async () => seeIssues?.click());
+
+  expect(
+    document.body.querySelector<HTMLAnchorElement>(
+      'a[href*="instance=validation-instance"]'
+    )?.textContent
+  ).toBe("Show element");
+  expect(
+    document.body.querySelector('[role="tablist"]')?.textContent
+  ).toContain("Warnings");
+  expect(
+    document.body.querySelector('[role="tablist"]')?.textContent
+  ).toContain("Errors");
+  await selectTab("Warnings");
+  expect(document.body.textContent).toContain("Publish warning");
 });
 
 test.each([

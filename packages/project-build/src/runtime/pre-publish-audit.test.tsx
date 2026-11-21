@@ -485,6 +485,13 @@ test("blocks publishing when required audit input is unavailable", () => {
 
 test("includes existing resource integrity checks in the audit pipeline", () => {
   const { instances, props } = renderData(<Body ws:id="body"></Body>);
+  props.set("resource-prop", {
+    id: "resource-prop",
+    instanceId: "body",
+    name: "data",
+    type: "resource",
+    value: "missing-prop-resource",
+  });
   const findings = runPrePublishAudit({
     pages: createPages(marketEdgePage),
     instances,
@@ -514,7 +521,19 @@ test("includes existing resource integrity checks in the audit pipeline", () => 
         'resource variable "Products" (resource-variable) references missing resource "missing-resource".',
       location: {
         dataSourceId: "resource-variable",
+        instanceId: "body",
         resourceId: "missing-resource",
+      },
+    },
+    {
+      ruleId: "resource-integrity",
+      severity: "error",
+      message:
+        'prop "data" (resource-prop) references missing resource "missing-prop-resource".',
+      location: {
+        propId: "resource-prop",
+        resourceId: "missing-prop-resource",
+        instanceId: "body",
       },
     },
   ]);

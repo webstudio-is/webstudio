@@ -138,18 +138,70 @@ export const getPublishAuditFindings = (
     )
     .map(toPrePublishDiagnosticFinding);
 
-const getPrePublishAuditFindings = (): DiagnosticFinding[] =>
-  getPublishAuditFindings(
-    runPrePublishAudit({
-      pages: $pages.get(),
-      instances: $instances.get(),
-      props: $props.get(),
-      dataSources: $dataSources.get(),
-      resources: $resources.get(),
-      assets: $assets.get(),
-      metas: $registeredComponentMetas.get(),
-    })
+const getPrePublishAudit = () =>
+  runPrePublishAudit({
+    pages: $pages.get(),
+    instances: $instances.get(),
+    props: $props.get(),
+    dataSources: $dataSources.get(),
+    resources: $resources.get(),
+    assets: $assets.get(),
+    metas: $registeredComponentMetas.get(),
+  });
+
+const getMissingResourceIssueSources = (error: unknown) => {
+  if (typeof error !== "object" || error === null || !("data" in error)) {
+    return [];
+  }
+  const data = error.data;
+  if (typeof data !== "object" || data === null || !("issues" in data)) {
+    return [];
+  }
+  const issues = data.issues;
+  if (Array.isArray(issues) === false) {
+    return [];
+  }
+  const issueSources = issues.flatMap(
+    (
+      issue
+    ): { source: "dataSource" | "prop"; id: string; resourceId: string }[] => {
+      if (
+        typeof issue !== "object" ||
+        issue === null ||
+        !("type" in issue) ||
+        issue.type !== "missingResource"
+      ) {
+        return [];
+      }
+      if (
+        "dataSourceId" in issue &&
+        typeof issue.dataSourceId === "string" &&
+        "resourceId" in issue &&
+        typeof issue.resourceId === "string"
+      ) {
+        return [
+          {
+            source: "dataSource",
+            id: issue.dataSourceId,
+            resourceId: issue.resourceId,
+          },
+        ];
+      }
+      if (
+        "propId" in issue &&
+        typeof issue.propId === "string" &&
+        "resourceId" in issue &&
+        typeof issue.resourceId === "string"
+      ) {
+        return [
+          { source: "prop", id: issue.propId, resourceId: issue.resourceId },
+        ];
+      }
+      return [];
+    }
   );
+  return issueSources.length === issues.length ? issueSources : [];
+};
 
 export const runPublishDiagnostics = async (
   projectId: Project["id"],
@@ -157,15 +209,38 @@ export const runPublishDiagnostics = async (
 ) => {
   const cssBuildWarningText =
     "Some project styles cannot be processed for publishing. Publishing can continue using base and font styles.";
-  const auditFindings = getPrePublishAuditFindings();
-  const validation =
-    domains === undefined
-      ? undefined
-      : await nativeClient.api.publish.validate.query({
-          projectId,
-          target: "staging",
-          domains,
-        });
+  const audit = getPrePublishAudit();
+  const auditFindings = getPublishAuditFindings(audit);
+  let validation;
+  try {
+    validation =
+      domains === undefined
+        ? undefined
+        : await nativeClient.build.validatePublish.query({
+            projectId,
+            target: "staging",
+            domains,
+          });
+  } catch (error) {
+    const issueSources = getMissingResourceIssueSources(error);
+    if (
+      issueSources.length > 0 &&
+      issueSources.every(({ source, id, resourceId }) =>
+        audit.some(
+          (finding) =>
+            finding.severity === "error" &&
+            finding.ruleId === "resource-integrity" &&
+            finding.location.resourceId === resourceId &&
+            (source === "dataSource"
+              ? finding.location.dataSourceId === id
+              : finding.location.propId === id)
+        )
+      )
+    ) {
+      return { passed: false, findings: auditFindings };
+    }
+    throw error;
+  }
   const diagnostics =
     validation?.diagnostics ??
     (await nativeClient.build.contentDatabasePublishDiagnostics.query({
@@ -240,6 +315,7 @@ export const reportPublishValidationFailure = (
       </>
     );
   setFindings([
+    ...getPublishAuditFindings(getPrePublishAudit()),
     {
       severity: "error",
       title: publishingContinues
