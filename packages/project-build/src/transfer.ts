@@ -10,7 +10,10 @@ import {
   rewriteMarkdownAssetReferences,
 } from "@webstudio-is/content-engine/markdown-assets";
 import {
+  compareAssetQueryDocuments,
   discoverNamedJsonAssetReferences,
+  extractAssetQueryProperties,
+  type AssetRuntimeData,
   rewriteJsonAssetReferences,
 } from "@webstudio-is/content-engine";
 import {
@@ -34,6 +37,7 @@ import {
   getAssetFolderSiblingKey,
   findContentBlockBodyContainers,
   getContentBlockSource,
+  getMimeTypeByFilename,
   getStaticContentBlockSourceAssetId,
   decodeDataVariableId,
   isAssetsResource,
@@ -1030,6 +1034,186 @@ export const getStaticAssetResourceDependencies = (
   return dependencies;
 };
 
+type TransferAssetProperties = Awaited<
+  ReturnType<typeof extractAssetQueryProperties>
+>["properties"];
+
+const getTransferAssetQueryDocument = (
+  asset: Asset,
+  id: string,
+  path: string,
+  properties: TransferAssetProperties = {}
+) => {
+  const name = formatAssetName(asset);
+  const extensionSeparator = name.lastIndexOf(".");
+  return {
+    _id: id,
+    name,
+    description: asset.description ?? undefined,
+    path,
+    key: extensionSeparator <= 0 ? name : name.slice(0, extensionSeparator),
+    folderId: asset.folderId,
+    extension:
+      extensionSeparator === -1
+        ? ""
+        : name.slice(extensionSeparator + 1).toLowerCase(),
+    mimeType: getMimeTypeByFilename(name),
+    size: asset.size,
+    createdAt: asset.createdAt,
+    properties,
+  };
+};
+
+const getTransferAssetRuntimeData = (asset: Asset): AssetRuntimeData => ({
+  url: "",
+  ...("width" in asset.meta ? { width: asset.meta.width } : {}),
+  ...("height" in asset.meta ? { height: asset.meta.height } : {}),
+});
+
+const getTransferAssetIdentity = (asset: Asset) =>
+  `${asset.projectId}\u0000${asset.id}`;
+
+const compareTransferAssetQueryDocuments = (
+  left: Asset,
+  right: Asset,
+  sort: StructuredAssetQueryResourceConfiguration["sort"],
+  paths: Record<string, string>,
+  properties: ReadonlyMap<string, TransferAssetProperties>
+) =>
+  compareAssetQueryDocuments(
+    getTransferAssetQueryDocument(
+      left,
+      left.id,
+      paths[left.id],
+      properties.get(getTransferAssetIdentity(left))
+    ),
+    getTransferAssetQueryDocument(
+      right,
+      right.id,
+      paths[right.id],
+      properties.get(getTransferAssetIdentity(right))
+    ),
+    sort,
+    {
+      [left.id]: getTransferAssetRuntimeData(left),
+      [right.id]: getTransferAssetRuntimeData(right),
+    }
+  );
+
+const getAssetQuerySourceOrder = (
+  assets: Asset[],
+  query: StructuredAssetQueryResourceConfiguration,
+  queryAssets: ReadonlyMap<string, Asset>,
+  paths: Record<string, string>,
+  properties: ReadonlyMap<string, TransferAssetProperties>
+) =>
+  [...assets]
+    .sort((left, right) =>
+      compareTransferAssetQueryDocuments(
+        queryAssets.get(left.id)!,
+        queryAssets.get(right.id)!,
+        query.sort,
+        paths,
+        properties
+      )
+    )
+    .map(({ id }) => id);
+
+const hasChangedAssetResourceQueryOrder = async (
+  dependencies: ReturnType<typeof getStaticAssetResourceDependencies>,
+  targetAssets: ReadonlyMap<string, Asset>,
+  sourcePaths: Record<string, string>,
+  targetPaths: Record<string, string>,
+  sameStorage: boolean,
+  documents: ReadonlyMap<string, { source: string }>
+): Promise<boolean> => {
+  const properties = new Map<string, TransferAssetProperties>();
+  for (const { assets, query } of dependencies.values()) {
+    if (assets.length < 2) {
+      continue;
+    }
+    if (
+      query.sort.some(({ field }) =>
+        ["url", "revision", "excerpt"].includes(field[0])
+      ) &&
+      (!sameStorage ||
+        assets.some((asset) => {
+          const target = targetAssets.get(asset.id);
+          return (
+            target === undefined ||
+            target.id !== asset.id ||
+            sourcePaths[asset.id] !== targetPaths[target.id]
+          );
+        }))
+    ) {
+      return true;
+    }
+    if (query.sort.some(({ field }) => field[0] === "properties")) {
+      if (!sameStorage) {
+        return true;
+      }
+      for (const asset of assets) {
+        const source = documents.get(asset.id)?.source;
+        if (
+          source === undefined &&
+          ["md", "mdx", "json"].includes(asset.format.toLowerCase())
+        ) {
+          return true;
+        }
+        try {
+          const assetProperties =
+            source === undefined
+              ? {}
+              : (await extractAssetQueryProperties(asset.format, source))
+                  .properties;
+          if (
+            typeof assetProperties !== "object" ||
+            assetProperties === null ||
+            Array.isArray(assetProperties)
+          ) {
+            throw new Error("Invalid asset properties");
+          }
+          properties.set(getTransferAssetIdentity(asset), assetProperties);
+          const target = targetAssets.get(asset.id);
+          if (target === undefined) {
+            return true;
+          }
+          properties.set(getTransferAssetIdentity(target), assetProperties);
+        } catch {
+          properties.set(getTransferAssetIdentity(asset), {});
+          const target = targetAssets.get(asset.id);
+          if (target === undefined) {
+            return true;
+          }
+          properties.set(getTransferAssetIdentity(target), {});
+        }
+      }
+    }
+    const sortedSourceIds = getAssetQuerySourceOrder(
+      assets,
+      query,
+      new Map(assets.map((asset) => [asset.id, asset])),
+      sourcePaths,
+      properties
+    );
+    const sortedTargetSourceIds = getAssetQuerySourceOrder(
+      assets,
+      query,
+      targetAssets,
+      targetPaths,
+      properties
+    );
+    if (
+      sortedSourceIds.some(
+        (sourceId, index) => sourceId !== sortedTargetSourceIds[index]
+      )
+    ) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const hasTransferableDynamicContentBlockSource = (
   fragment: WebstudioFragment,
   assetResourceDependencies: ReturnType<
@@ -1310,6 +1494,18 @@ export const planPageTransfer = async ({
       >()
     : getStaticAssetResourceDependencies(fragments, source.assets);
   if (
+    !sameStorage &&
+    [...assetResourceDependencies.values()].some(
+      ({ assets, query }) =>
+        assets.length > 1 &&
+        query.sort.some(({ field }) =>
+          ["url", "revision", "excerpt", "properties"].includes(field[0])
+        )
+    )
+  ) {
+    throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+  }
+  if (
     fragments.some(
       (fragment) =>
         !hasRenderedScope &&
@@ -1540,8 +1736,11 @@ export const planPageTransfer = async ({
     item,
     folders,
     assets,
-    target,
+    assetResourceDependencies,
     documents,
+    target,
+    sourcePaths,
+    sameStorage,
     assetResourceSourceIds,
   };
 };
@@ -1615,6 +1814,18 @@ export const executePageTransfer = async <Result extends { pageId: string }>({
   }
 
   const current = await readTarget();
+  if (
+    await hasChangedAssetResourceQueryOrder(
+      plan.assetResourceDependencies,
+      assets,
+      plan.sourcePaths,
+      getAssetCatalogPaths(current),
+      plan.sameStorage,
+      plan.documents
+    )
+  ) {
+    throw pageCopyError("PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED");
+  }
   const [expectedRevision, revision] = await Promise.all([
     getPageCopyAssetCatalogRevision([...expected.values()], targetFolders),
     getPageCopyAssetCatalogRevision(

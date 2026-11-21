@@ -40,6 +40,8 @@ import { getDocumentFormatByContentType } from "./document-graph/document-format
 import { appendAssetFieldPath } from "./canonical";
 import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
 import { getUtf8ByteLength } from "./byte-stream";
+import { extractJsonProperties } from "./json";
+import { extractMarkdownFrontmatter } from "./frontmatter";
 import type { MarkdownAssetReferences } from "./markdown-references";
 import {
   getRuntimeAssetUrls,
@@ -634,8 +636,36 @@ const compareAssetQueryDocumentsWithRuntime = ({
 export const compareAssetQueryDocuments = (
   left: ContentDatabaseDocument,
   right: ContentDatabaseDocument,
-  sort: AssetQuery["sort"]
-) => compareAssetQueryDocumentsWithRuntime({ left, right, sort });
+  sort: AssetQuery["sort"],
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>
+) =>
+  compareAssetQueryDocumentsWithRuntime({ left, right, sort, runtimeAssets });
+
+export const extractAssetQueryProperties = async (
+  format: string,
+  source: string
+): Promise<{
+  properties: NonNullable<ContentDatabaseDocument["properties"]>;
+}> => {
+  const normalizedFormat = format.toLowerCase();
+  if (normalizedFormat === "md" || normalizedFormat === "mdx") {
+    const { properties } = await extractMarkdownFrontmatter(source);
+    return {
+      properties: properties as NonNullable<
+        ContentDatabaseDocument["properties"]
+      >,
+    };
+  }
+  if (normalizedFormat === "json") {
+    const { properties } = await extractJsonProperties(source);
+    return {
+      properties: properties as NonNullable<
+        ContentDatabaseDocument["properties"]
+      >,
+    };
+  }
+  return { properties: {} };
+};
 
 const selectProperties = (
   document: ContentDatabaseDocument,

@@ -12,6 +12,7 @@ import {
   createStructuredAssetQueryResourceBody,
   parseStructuredAssetQueryResourceBody,
   type Asset,
+  type AssetFolder,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
 
@@ -258,6 +259,260 @@ test("cross-storage copies include and remap assets selected by a fixed Assets q
     value: JSON.stringify(
       plan.assets.find(({ source }) => source.id === queriedAsset.id)?.target.id
     ),
+  });
+});
+
+test("cross-storage copies reject fixed Assets queries whose result order changes", async () => {
+  const firstFolder = {
+    id: "a-source-folder",
+    projectId: "source",
+    name: "First",
+    createdAt: image.createdAt,
+  };
+  const secondFolder = {
+    ...firstFolder,
+    id: "b-source-folder",
+    name: "Second",
+  };
+  const first: Asset = {
+    ...image,
+    id: "a-source",
+    name: "first_storage.png",
+    filename: "first",
+    folderId: firstFolder.id,
+  };
+  const second: Asset = {
+    ...image,
+    id: "b-source",
+    name: "second_storage.png",
+    filename: "second",
+    folderId: secondFolder.id,
+  };
+  const configuration =
+    createDefaultStructuredAssetQueryResourceConfiguration();
+  const resource = {
+    id: "ordered-gallery-resource",
+    name: "Ordered gallery assets",
+    control: "system" as const,
+    method: "post" as const,
+    url: '"/$resources/assets"',
+    headers: [],
+    body: createStructuredAssetQueryResourceBody({
+      ...configuration,
+      where: {
+        field: ["id"],
+        operator: "in",
+        value: JSON.stringify([first.id, second.id]),
+      },
+      sort: [{ field: ["folderId"], direction: "asc" }],
+    }),
+  };
+
+  const plan = await planPageTransfer({
+    ...fixture,
+    item: {
+      ...item,
+      page: {
+        ...item.page,
+        meta: { ...item.page.meta, socialImageAssetId: undefined },
+      },
+      bodyFragment: { ...fragment, resources: [resource] },
+    },
+    sameStorage: false,
+    source: {
+      assets: [first, second],
+      folders: [firstFolder, secondFolder],
+    },
+    createAssetId: (() => {
+      const ids = [
+        "planned-first-folder",
+        "planned-first-asset",
+        "planned-second-folder",
+        "planned-second-asset",
+      ];
+      return () => ids.shift()!;
+    })(),
+  });
+  const commit = vi.fn(async (item: PageTransferData) => ({
+    pageId: item.page.id,
+  }));
+  let stagedAssets: Asset[] = [];
+  const actualFolders: AssetFolder[] = [];
+  const transfer = executePageTransfer({
+    plan,
+    createFolder: async (folder) => {
+      const created = {
+        ...folder,
+        id: folder.name === "First" ? "z-folder" : "a-folder",
+      };
+      actualFolders.push(created);
+      return created;
+    },
+    stageAssets: async (plans) => {
+      stagedAssets = plans.map(({ target }) => target);
+      return new Map(plans.map(({ source, target }) => [source.id, target]));
+    },
+    readTarget: async () => ({ assets: stagedAssets, folders: actualFolders }),
+    commit,
+  });
+
+  await expect(transfer).rejects.toMatchObject({
+    code: "PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED",
+  });
+  expect(commit).not.toHaveBeenCalled();
+});
+
+test("same-storage copies preserve fixed-query order by Markdown properties", async () => {
+  const first: Asset = {
+    ...image,
+    id: "a-source",
+    name: "first_storage.png",
+    filename: "first",
+    type: "file",
+    format: "md",
+    meta: {},
+  };
+  const second: Asset = {
+    ...image,
+    id: "b-source",
+    name: "second_storage.png",
+    filename: "second",
+    type: "file",
+    format: "md",
+    meta: {},
+  };
+  const targetAssets = [
+    { ...first, id: "z-target", projectId: "destination" },
+    { ...second, id: "a-target", projectId: "destination" },
+  ];
+  const configuration =
+    createDefaultStructuredAssetQueryResourceConfiguration();
+  const resource = {
+    id: "ordered-gallery-resource",
+    name: "Ordered gallery assets",
+    control: "system" as const,
+    method: "post" as const,
+    url: '"/$resources/assets"',
+    headers: [],
+    body: createStructuredAssetQueryResourceBody({
+      ...configuration,
+      where: {
+        field: ["id"],
+        operator: "in",
+        value: JSON.stringify([first.id, second.id]),
+      },
+      sort: [{ field: ["properties", "title"], direction: "asc" }],
+    }),
+  };
+
+  const plan = await planPageTransfer({
+    ...fixture,
+    item: {
+      ...item,
+      page: {
+        ...item.page,
+        meta: { ...item.page.meta, socialImageAssetId: undefined },
+      },
+      bodyFragment: { ...fragment, resources: [resource] },
+    },
+    source: { assets: [first, second], folders: [] },
+    target: { assets: targetAssets, folders: [] },
+    readDocument: async (asset) =>
+      asset.id === first.id
+        ? "---\ntitle: Alpha\n---\n"
+        : "---\ntitle: Beta\n---\n",
+  });
+  const commit = vi.fn(async (item: PageTransferData) => ({
+    pageId: item.page.id,
+  }));
+  const result = await executePageTransfer({
+    plan,
+    createFolder: async () => {
+      throw new Error("Unexpected folder");
+    },
+    stageAssets: async (plans) =>
+      new Map(plans.map(({ source, target }) => [source.id, target])),
+    readTarget: async () => ({ assets: targetAssets, folders: [] }),
+    commit,
+  });
+  expect(result.pageId).toBe(item.page.id);
+  expect(commit).toHaveBeenCalledOnce();
+});
+
+test("same-storage JSON property limits use the runtime query fallback", async () => {
+  const first: Asset = {
+    ...image,
+    id: "a-source",
+    name: "first_storage.json",
+    filename: "first",
+    type: "file",
+    format: "json",
+    meta: {},
+  };
+  const second: Asset = {
+    ...first,
+    id: "b-source",
+    name: "second_storage.json",
+    filename: "second",
+  };
+  const targetAssets = [
+    { ...first, id: "z-target", projectId: "destination" },
+    { ...second, id: "a-target", projectId: "destination" },
+  ];
+  const configuration =
+    createDefaultStructuredAssetQueryResourceConfiguration();
+  const resource = {
+    id: "ordered-json-resource",
+    name: "Ordered JSON assets",
+    control: "system" as const,
+    method: "post" as const,
+    url: '"/$resources/assets"',
+    headers: [],
+    body: createStructuredAssetQueryResourceBody({
+      ...configuration,
+      where: {
+        field: ["id"],
+        operator: "in",
+        value: JSON.stringify([first.id, second.id]),
+      },
+      sort: [{ field: ["properties", "title"], direction: "asc" }],
+    }),
+  };
+  const plan = await planPageTransfer({
+    ...fixture,
+    item: {
+      ...item,
+      page: {
+        ...item.page,
+        meta: { ...item.page.meta, socialImageAssetId: undefined },
+      },
+      bodyFragment: { ...fragment, resources: [resource] },
+    },
+    source: { assets: [first, second], folders: [] },
+    target: { assets: targetAssets, folders: [] },
+    readDocument: async () =>
+      JSON.stringify(
+        Object.fromEntries(
+          Array.from({ length: 257 }, (_, index) => [`field${index}`, index])
+        )
+      ),
+  });
+
+  await expect(
+    executePageTransfer({
+      plan,
+      createFolder: async () => {
+        throw new Error("Unexpected folder");
+      },
+      stageAssets: async (plans) =>
+        new Map(plans.map(({ source, target }) => [source.id, target])),
+      readTarget: async () => ({ assets: targetAssets, folders: [] }),
+      commit: vi.fn(async (item: PageTransferData) => ({
+        pageId: item.page.id,
+      })),
+    })
+  ).rejects.toMatchObject({
+    code: "PAGE_COPY_DYNAMIC_DEPENDENCY_UNSUPPORTED",
   });
 });
 

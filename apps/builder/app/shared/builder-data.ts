@@ -59,9 +59,11 @@ const hydrateMap = <Item, Key>(items: Item[], getKey: (item: Item) => Key) =>
 export const loadBuilderData = async ({
   projectId,
   signal,
+  silent = false,
 }: {
   projectId: string;
   signal: AbortSignal;
+  silent?: boolean;
 }): Promise<LoadedBuilderData> => {
   try {
     const data = await nativeClient.build.loadData.query(
@@ -96,7 +98,7 @@ export const loadBuilderData = async ({
     const message =
       error instanceof Error ? error.message : JSON.stringify(error);
 
-    if (signal.aborted === false) {
+    if (signal.aborted === false && silent === false) {
       // No toasts available in this context
       alert(`Unable to load builder data. ${message}`);
     }

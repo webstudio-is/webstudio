@@ -78,7 +78,7 @@ export const createMultiplayerSyncClient = ({
     }),
     clientId,
     url: relayUrl,
-    refreshPageCopyCatalog: (catalog) => {
+    refreshPageCopyCatalog: (catalog, refreshSignal) => {
       const origin = window.location.origin;
       return refreshPageCopyCatalog(
         {
@@ -89,16 +89,20 @@ export const createMultiplayerSyncClient = ({
           request: builderFetch,
         },
         catalog,
-        signal
+        refreshSignal
       );
     },
-    onReload: async () => {
-      try {
-        const reloaded = await loadBuilderData({ projectId, signal });
-        applyBuilderData(reloaded);
-      } catch (error) {
-        console.error("[builder-sync] multiplayer reload failed:", error);
-      }
+    onReload: async (_message, reloadSignal) => {
+      signal.throwIfAborted();
+      const reloaded = await loadBuilderData({
+        projectId,
+        signal: reloadSignal,
+        silent: true,
+      });
+      signal.throwIfAborted();
+      reloadSignal.throwIfAborted();
+      applyBuilderData(reloaded);
+      return reloaded.version;
     },
     onUserMessage: (message) => {
       toast.error(message, { id: "multiplayer-sync-message" });
