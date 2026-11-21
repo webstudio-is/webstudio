@@ -30,6 +30,7 @@ import {
   blockComponent,
   blockTemplateComponent,
   collectionComponent,
+  contentBlockSourceProp,
   createAssetFolderHierarchy,
   createId,
   createStructuredAssetQueryResourceBody,
@@ -37,6 +38,7 @@ import {
   getAssetFolderSiblingKey,
   findContentBlockBodyContainers,
   getContentBlockSource,
+  getContentBlockSources,
   getMimeTypeByFilename,
   getStaticContentBlockSourceAssetId,
   decodeDataVariableId,
@@ -1338,14 +1340,29 @@ const hasTransferableDynamicContentBlockSource = (
   );
 };
 
-const remapFragmentAssetResourceQueries = (
+const remapPageTransferFragment = (
   fragment: WebstudioFragment,
   assets: ReadonlyMap<string, Asset>,
   assetResourceSourceIds: ReadonlyMap<string, readonly string[]>
 ) => {
   const remapped = remapFragmentAssets(fragment, assets);
+  const blockSources = getContentBlockSources(fragment);
   return {
     ...remapped,
+    props: remapped.props.map((prop) => {
+      if (prop.name !== contentBlockSourceProp || prop.type !== "expression") {
+        return prop;
+      }
+      const source = blockSources.get(prop.instanceId);
+      if (source?.type !== "expression") {
+        return prop;
+      }
+      const sourceId = getStaticContentBlockSourceAssetId(source);
+      const target = sourceId === undefined ? undefined : assets.get(sourceId);
+      return target === undefined || target.id === sourceId
+        ? prop
+        : { ...prop, value: JSON.stringify(target.id) };
+    }),
     resources: remapped.resources.map((resource) => {
       if (
         assetResourceSourceIds.has(resource.id) === false ||
@@ -1438,12 +1455,12 @@ const remapPageTransfer = (
     id === undefined ? undefined : (assets.get(id)?.id ?? id);
   return {
     ...item,
-    rootFragment: remapFragmentAssetResourceQueries(
+    rootFragment: remapPageTransferFragment(
       item.rootFragment,
       assets,
       assetResourceSourceIds
     ),
-    bodyFragment: remapFragmentAssetResourceQueries(
+    bodyFragment: remapPageTransferFragment(
       item.bodyFragment,
       assets,
       assetResourceSourceIds

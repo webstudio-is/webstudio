@@ -8,6 +8,8 @@ import {
   type PageTransferData,
 } from "./transfer";
 import {
+  blockComponent,
+  contentBlockSourceProp,
   createDefaultStructuredAssetQueryResourceConfiguration,
   createStructuredAssetQueryResourceBody,
   parseStructuredAssetQueryResourceBody,
@@ -95,6 +97,76 @@ test("a same-storage copy stages an alias with no binary upload", async () => {
     projectId: "destination",
     name: image.name,
   });
+});
+
+test("a cross-storage copy points a literal Content Block source at the uploaded document", async () => {
+  const sourceDocument: Asset = {
+    ...image,
+    id: "source-document",
+    name: "article_storage.mdx",
+    filename: "article",
+    type: "file",
+    format: "mdx",
+    meta: {},
+  };
+  const source = {
+    id: "block-source",
+    instanceId: "block",
+    name: contentBlockSourceProp,
+    type: "expression" as const,
+    value: JSON.stringify(sourceDocument.id),
+  };
+  const unrelated = { ...source, id: "image-source", instanceId: "image" };
+  const plan = await planPageTransfer({
+    ...fixture,
+    item: {
+      ...item,
+      page,
+      bodyFragment: {
+        ...fragment,
+        children: [
+          { type: "id", value: "block" },
+          { type: "id", value: "image" },
+        ],
+        instances: [
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [],
+          },
+          { type: "instance", id: "image", component: "Image", children: [] },
+        ],
+        assets: [sourceDocument],
+        props: [source, unrelated],
+      },
+    },
+    sameStorage: false,
+    source: { assets: [sourceDocument], folders: [] },
+    readDocument: async () => "# Article",
+    createAssetId: () => "planned-document",
+  });
+  const uploaded = { ...plan.assets[0].target, id: "uploaded-document" };
+  const result = await executePageTransfer({
+    plan,
+    createFolder: async () => {
+      throw new Error("Unexpected folder");
+    },
+    stageAssets: async () => new Map([[sourceDocument.id, uploaded]]),
+    readTarget: async () => ({ assets: [uploaded], folders: [] }),
+    commit: async ({ page, bodyFragment }) => ({
+      pageId: page.id,
+      props: bodyFragment.props,
+    }),
+  });
+  expect(result.props).toEqual([
+    { ...source, value: JSON.stringify(uploaded.id) },
+    unrelated,
+  ]);
+  expect(previewPageTransfer(plan).bodyFragment.props).toEqual([
+    { ...source, value: '"planned-document"' },
+    unrelated,
+  ]);
 });
 
 test("a change to the destination asset catalog prevents page insertion", async () => {
