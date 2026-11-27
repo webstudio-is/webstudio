@@ -253,7 +253,7 @@ test("Free shows the actual short error without details, navigation, or report c
         title: "article.mdx:2:3",
         summary: "Invalid MDX element nesting",
         details: "Private long diagnostic context",
-        link: <button>Show element</button>,
+        link: <button>Show instance</button>,
         reportText: "Private long diagnostic context",
       },
     ],
@@ -264,7 +264,7 @@ test("Free shows the actual short error without details, navigation, or report c
   expect(document.body.textContent).not.toContain(
     "Private long diagnostic context"
   );
-  expect(document.body.textContent).not.toContain("Show element");
+  expect(document.body.textContent).not.toContain("Show instance");
   expect(
     document.body.querySelector('[aria-label="Copy all reports"]')
   ).toBeNull();
@@ -708,23 +708,24 @@ test("Free audit summaries do not expose long cached details", () => {
   expect(document.body.textContent).not.toContain(longSummary);
 });
 
-test("Show element closes the diagnostics dialog on ordinary navigation", async () => {
+test("Show instance closes the diagnostics dialog on ordinary navigation", async () => {
   const onOpenChange = vi.fn();
   render(
     [
       {
         severity: "error",
-        title: "Invalid element",
-        link: <a href="#element">Show element</a>,
-        reportText: "Invalid element",
+        title: "Invalid instance",
+        link: <a href="#instance">Show instance</a>,
+        reportText: "Invalid instance",
       },
     ],
     { open: true, initialTab: "errors", onOpenChange }
   );
-  const link =
-    document.body.querySelector<HTMLAnchorElement>('a[href="#element"]');
+  const link = document.body.querySelector<HTMLAnchorElement>(
+    'a[href="#instance"]'
+  );
   expect(link).not.toBeNull();
-  expect(document.body.textContent).toContain("Invalid element");
+  expect(document.body.textContent).toContain("Invalid instance");
   expect(
     Array.from(document.body.querySelectorAll("button")).some(
       (button) => button.textContent === "Show more"
@@ -735,22 +736,23 @@ test("Show element closes the diagnostics dialog on ordinary navigation", async 
 });
 
 test.each(["metaKey", "ctrlKey", "shiftKey", "altKey"] as const)(
-  "Show element leaves diagnostics open on %s-click",
+  "Show instance leaves diagnostics open on %s-click",
   (modifier) => {
     const onOpenChange = vi.fn();
     render(
       [
         {
           severity: "error",
-          title: "Invalid element",
-          link: <a href="#element">Show element</a>,
-          reportText: "Invalid element",
+          title: "Invalid instance",
+          link: <a href="#instance">Show instance</a>,
+          reportText: "Invalid instance",
         },
       ],
       { open: true, initialTab: "errors", onOpenChange }
     );
-    const link =
-      document.body.querySelector<HTMLAnchorElement>('a[href="#element"]');
+    const link = document.body.querySelector<HTMLAnchorElement>(
+      'a[href="#instance"]'
+    );
     expect(link).not.toBeNull();
     act(() => {
       link?.dispatchEvent(

@@ -14,8 +14,9 @@ import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import type { Project } from "@webstudio-is/project";
 import type { Pages } from "@webstudio-is/sdk";
+import { createTrpcInterceptor } from "~/shared/trpc/trpc-test-utils";
 import {
-  createTrpcInterceptor,
+  createPublishAuditFinding,
   deferred,
   selectTab,
 } from "./publish-test-utils";
@@ -41,54 +42,58 @@ beforeAll(async () => {
   ).IS_REACT_ACT_ENVIRONMENT = true;
   vi.resetModules();
   interceptor = createTrpcInterceptor({
-    "domain.publish": () => {
-      publishRequests += 1;
-      return dispatch.promise;
-    },
-    "api.publish.getJob": () => ({
-      status: "failed",
-      code: "BUILD_FAILED",
-    }),
-    "api.publish.getLog": () => ({
-      availability: "available",
-      log: {
-        encoding: "base64url",
-        chunk: btoa("older publish output"),
-        complete: true,
-        issues: [{ severity: "error", message: "older build issue" }],
+    POST: {
+      "domain.publish": () => {
+        publishRequests += 1;
+        return dispatch.promise;
       },
-    }),
-    "domain.project": () => ({
-      success: true,
-      project: stores.$project.get(),
-    }),
-    "domain.countTotalDomains": () => ({ success: true, data: 0 }),
-    "project.userPublishCount": () => ({
-      success: true,
-      data: 0,
-      limit: 100,
-    }),
-    "api.publish.validate": async () => {
-      checkRequests += 1;
-      try {
-        const result = await checks.promise;
-        checksRead += 1;
-        return result;
-      } catch (error) {
-        checksRead += 1;
-        throw error;
-      }
     },
-    "build.contentDatabasePublishDiagnostics": async () => {
-      checkRequests += 1;
-      try {
-        const result = await checks.promise;
-        checksRead += 1;
-        return result;
-      } catch (error) {
-        checksRead += 1;
-        throw error;
-      }
+    GET: {
+      "build.validatePublish": async () => {
+        checkRequests += 1;
+        try {
+          const result = await checks.promise;
+          checksRead += 1;
+          return result;
+        } catch (error) {
+          checksRead += 1;
+          throw error;
+        }
+      },
+      "api.publish.getJob": () => ({
+        status: "failed",
+        code: "BUILD_FAILED",
+      }),
+      "api.publish.getLog": () => ({
+        availability: "available",
+        log: {
+          encoding: "base64url",
+          chunk: btoa("older publish output"),
+          complete: true,
+          issues: [{ severity: "error", message: "older build issue" }],
+        },
+      }),
+      "domain.project": () => ({
+        success: true,
+        project: stores.$project.get(),
+      }),
+      "domain.countTotalDomains": () => ({ success: true, data: 0 }),
+      "project.userPublishCount": () => ({
+        success: true,
+        data: 0,
+        limit: 100,
+      }),
+      "build.contentDatabasePublishDiagnostics": async () => {
+        checkRequests += 1;
+        try {
+          const result = await checks.promise;
+          checksRead += 1;
+          return result;
+        } catch (error) {
+          checksRead += 1;
+          throw error;
+        }
+      },
     },
   });
   interceptor.start();
@@ -308,7 +313,7 @@ test.each([
     await act(async () => {
       dispatch.resolve({
         success: false,
-        auditFindings: [{ severity: "error", message: "server rejection" }],
+        auditFindings: [createPublishAuditFinding("server rejection")],
       });
       await dispatch.promise;
     });
@@ -339,7 +344,7 @@ test("static audit rejection notifies after Export closes", async () => {
   await act(async () => {
     dispatch.resolve({
       success: false,
-      auditFindings: [{ severity: "error", message: "server rejection" }],
+      auditFindings: [createPublishAuditFinding("server rejection")],
     });
     await dispatch.promise;
   });
@@ -445,6 +450,18 @@ test.each(["checks-first", "server-first"] as const)(
     expect(errors?.textContent).toContain("site transport failure");
   }
 );
+
+test("a site publish response appears while validation is still pending", async () => {
+  await mount("site");
+  await clickPublish("site");
+  await act(async () => {
+    dispatch.resolve({ success: false, error: "site request failure" });
+    await dispatch.promise;
+  });
+  const errors = await openErrors("site");
+  expect(errors?.textContent).toContain("site request failure");
+  await completeChecks(false);
+});
 
 test.each(["request", "transport"] as const)(
   "a static %s failure does not replace an earlier site failure",
@@ -600,7 +617,7 @@ test("static check failure stays in the Export alert without a toast", async () 
   await act(async () => {
     dispatch.resolve({
       success: false,
-      auditFindings: [{ severity: "error", message: "server rejection" }],
+      auditFindings: [createPublishAuditFinding("server rejection")],
     });
     await dispatch.promise;
   });
@@ -770,7 +787,7 @@ test.each([
           failure === "audit"
             ? {
                 success: false,
-                auditFindings: [{ severity: "error", message }],
+                auditFindings: [createPublishAuditFinding(message)],
               }
             : { success: false, error: message }
         );

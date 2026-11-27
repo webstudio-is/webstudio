@@ -13,8 +13,9 @@ import {
 import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
+import { createTrpcInterceptor } from "~/shared/trpc/trpc-test-utils";
 import {
-  createTrpcInterceptor,
+  createPublishAuditFinding,
   deferred,
   selectTab,
 } from "./publish-test-utils";
@@ -67,20 +68,22 @@ beforeAll(async () => {
   vi.resetModules();
   interceptor = createTrpcInterceptor(
     {
-      "domain.project": () => refresh(),
-      "domain.publish": () => publish(),
-      "api.publish.validate": () => validate(),
-      "build.contentDatabasePublishDiagnostics": () => validate(),
-      "api.publish.getJob": () => job(),
-      "domain.countTotalDomains": () => ({
-        success: true,
-        data: 0,
-      }),
-      "project.userPublishCount": () => ({
-        success: true,
-        data: 0,
-        limit: 100,
-      }),
+      POST: { "domain.publish": () => publish() },
+      GET: {
+        "domain.project": () => refresh(),
+        "build.validatePublish": () => validate(),
+        "build.contentDatabasePublishDiagnostics": () => validate(),
+        "api.publish.getJob": () => job(),
+        "domain.countTotalDomains": () => ({
+          success: true,
+          data: 0,
+        }),
+        "project.userPublishCount": () => ({
+          success: true,
+          data: 0,
+          limit: 100,
+        }),
+      },
     },
     (route, input) => requests.push({ route, input })
   );
@@ -769,7 +772,7 @@ test.each(["site", "static"] as const)(
     let target: "site" | "static" = first;
     publish = async () => ({
       success: false,
-      auditFindings: [{ severity: "error", message: `${target} diagnostic` }],
+      auditFindings: [createPublishAuditFinding(`${target} diagnostic`)],
     });
     await mount();
     if (first === "static") {

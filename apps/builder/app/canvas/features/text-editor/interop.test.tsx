@@ -130,7 +130,7 @@ test("convert legacy instances to lexical", async () => {
   );
 });
 
-test("convert element instances to lexical", async () => {
+test("convert ws:element instances to Lexical", async () => {
   const refs: Refs = new Map();
   const editor = createHeadlessEditor({
     nodes: [LinkNode],
@@ -211,7 +211,7 @@ test("keeps explicit line break instances while editing", async () => {
   ]);
 });
 
-test("convert lexical to element instances updates", async () => {
+test("convert Lexical to ws:element instance updates", async () => {
   const refs: Refs = new Map();
   let nextId = 0;
   const createId = () => `generated-${++nextId}`;

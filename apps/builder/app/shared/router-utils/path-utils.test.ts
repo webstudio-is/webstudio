@@ -4,6 +4,7 @@ import {
   builderUrl,
   restAssetsUploadPath,
   areBuilderDataUrlsEqual,
+  getBuilderView,
 } from "./path-utils";
 
 test("includes an instance deep link in builder paths", () => {
@@ -49,10 +50,23 @@ test("instance navigation preserves Builder data but access changes do not", () 
     builderPath({
       instanceSelector: ["second", "body"],
       authToken: "share-token",
+      view: "settings",
     }),
     current
   );
   expect(areBuilderDataUrlsEqual(current, next)).toBe(true);
   next.searchParams.set("authToken", "other-token");
   expect(areBuilderDataUrlsEqual(current, next)).toBe(false);
+});
+
+test("round-trips supported Builder views and ignores unknown section paths", () => {
+  const url = new URL(
+    builderPath({ view: "settings/variables" }),
+    "https://wstd.dev"
+  );
+  expect(getBuilderView(url.searchParams)).toBe("settings/variables");
+  url.searchParams.set("view", "settings");
+  expect(getBuilderView(url.searchParams)).toBe("settings");
+  url.searchParams.set("view", "settings/unknown");
+  expect(getBuilderView(url.searchParams)).toBeUndefined();
 });

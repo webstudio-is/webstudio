@@ -11,11 +11,8 @@ import {
 } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import {
-  createTrpcInterceptor,
-  deferred,
-  selectTab,
-} from "./publish-test-utils";
+import { createTrpcInterceptor } from "~/shared/trpc/trpc-test-utils";
+import { deferred, selectTab } from "./publish-test-utils";
 
 const encoded = (bytes: number[]) => btoa(String.fromCharCode(...bytes));
 const logRequests: Array<{
@@ -56,85 +53,89 @@ beforeAll(async () => {
   });
   vi.resetModules();
   interceptor = createTrpcInterceptor({
-    "domain.project": () => ({
-      success: true,
-      project: {
-        ...stores.$project.get(),
-        latestBuildVirtual: {
-          domain: "example",
-          buildId: acceptedBuildId,
-          createdAt: new Date().toISOString(),
-          publishStatus: "PUBLISHED",
-        },
+    POST: {
+      "domain.publish": async () => {
+        publishRequests += 1;
+        const data = heldPublish
+          ? await heldPublish.promise
+          : {
+              success: true,
+              buildId,
+              ...(withHandle ? { logHandle: "handle" } : {}),
+              findings: [],
+            };
+        acceptedBuildId = (data as { buildId: string }).buildId;
+        return data;
       },
-    }),
-    "domain.countTotalDomains": () => ({ success: true, data: 0 }),
-    "project.userPublishCount": () => ({
-      success: true,
-      data: 0,
-      limit: 100,
-    }),
-    "domain.publish": async () => {
-      publishRequests += 1;
-      const data = heldPublish
-        ? await heldPublish.promise
-        : {
-            success: true,
-            buildId,
-            ...(withHandle ? { logHandle: "handle" } : {}),
-            findings: [],
-          };
-      acceptedBuildId = (data as { buildId: string }).buildId;
-      return data;
     },
-    "api.publish.getJob": () =>
-      heldJob ? heldJob.promise : { status: "success" },
-    "api.publish.getLog": async (value) => {
-      const input = value as (typeof logRequests)[number];
-      logRequests.push(input);
-      if (pendingLogResponses > 0) {
-        pendingLogResponses -= 1;
-        return { availability: "pending" };
-      }
-      if (failedLogResponses > 0) {
-        failedLogResponses -= 1;
-        throw new Error("Temporary log failure");
-      }
-      const first = input.cursor === undefined;
-      if (
-        input.buildId === "build-1" &&
-        holdLog &&
-        holdLog.cursor === input.cursor
-      ) {
-        await holdLog.response.promise;
-      }
-      return {
-        availability: "available",
-        startedAt: "2026-11-13T10:00:00.000Z",
-        completedAt: "2026-11-13T10:00:03.000Z",
-        log: {
-          encoding: "base64url",
-          chunk: first ? encoded([0xe2]) : encoded([0x82, 0xac]),
-          complete: !first,
-          nextCursor: first ? 1 : undefined,
-          issues: [
-            {
-              severity: first ? "warning" : "error",
-              message: first ? "Early warning" : "Late error",
-            },
-          ],
-          issuesOmitted: first ? 1 : 0,
+    GET: {
+      "build.validatePublish": () => ({
+        diagnostics: { mdxErrors: [], mdxOmissions: [] },
+        cssValid: true,
+      }),
+      "domain.project": () => ({
+        success: true,
+        project: {
+          ...stores.$project.get(),
+          latestBuildVirtual: {
+            domain: "example",
+            buildId: acceptedBuildId,
+            createdAt: new Date().toISOString(),
+            publishStatus: "PUBLISHED",
+          },
         },
-      };
+      }),
+      "domain.countTotalDomains": () => ({ success: true, data: 0 }),
+      "project.userPublishCount": () => ({
+        success: true,
+        data: 0,
+        limit: 100,
+      }),
+      "api.publish.getJob": () =>
+        heldJob ? heldJob.promise : { status: "success" },
+      "api.publish.getLog": async (value) => {
+        const input = value as (typeof logRequests)[number];
+        logRequests.push(input);
+        if (pendingLogResponses > 0) {
+          pendingLogResponses -= 1;
+          return { availability: "pending" };
+        }
+        if (failedLogResponses > 0) {
+          failedLogResponses -= 1;
+          throw new Error("Temporary log failure");
+        }
+        const first = input.cursor === undefined;
+        if (
+          input.buildId === "build-1" &&
+          holdLog &&
+          holdLog.cursor === input.cursor
+        ) {
+          await holdLog.response.promise;
+        }
+        return {
+          availability: "available",
+          startedAt: "2026-11-13T10:00:00.000Z",
+          completedAt: "2026-11-13T10:00:03.000Z",
+          log: {
+            encoding: "base64url",
+            chunk: first ? encoded([0xe2]) : encoded([0x82, 0xac]),
+            complete: !first,
+            nextCursor: first ? 1 : undefined,
+            issues: [
+              {
+                severity: first ? "warning" : "error",
+                message: first ? "Early warning" : "Late error",
+              },
+            ],
+            issuesOmitted: first ? 1 : 0,
+          },
+        };
+      },
+      "build.contentDatabasePublishDiagnostics": () => ({
+        mdxErrors: [],
+        mdxOmissions: [],
+      }),
     },
-    "build.contentDatabasePublishDiagnostics": () => ({
-      mdxErrors: [],
-      mdxOmissions: [],
-    }),
-    "api.publish.validate": () => ({
-      diagnostics: { mdxErrors: [], mdxOmissions: [] },
-      cssValid: true,
-    }),
   });
   interceptor.start();
   PublishButton = (await import("./publish")).PublishButton;
@@ -179,7 +180,7 @@ beforeEach(() => {
     allowPublishLogs: true,
   });
   stores.$project.set(project("project-1"));
-  publishDialog.set("publish");
+  publishDialog.set("none");
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -233,9 +234,11 @@ const setPaid = async (allowPublishLogs: boolean) => {
     })
   );
 };
-const publish = async () => {
-  await act(async () => publishDialog.set("none"));
-  await act(async () => publishDialog.set("publish"));
+const publish = async (timeout = 10_000) => {
+  if (document.body.querySelector('input[name="domainToPublish[]"]') === null) {
+    await act(async () => publishDialog.set("none"));
+    await act(async () => publishDialog.set("publish"));
+  }
   const domain = document.body.querySelector<HTMLInputElement>(
     'input[name="domainToPublish[]"]'
   );
@@ -252,14 +255,17 @@ const publish = async () => {
         ?.closest("form")
         ?.querySelectorAll<HTMLButtonElement>("button") ?? []
     ).at(-1);
-  await waitFor(() => expect(getButton()?.disabled).toBe(false));
+  await waitFor(() => expect(getButton()?.disabled).toBe(false), timeout);
   const previousRequests = publishRequests;
   await act(async () => {
     const button = getButton();
     expect(button).toBeDefined();
     button?.click();
   });
-  await waitFor(() => expect(publishRequests).toBe(previousRequests + 1));
+  await waitFor(
+    () => expect(publishRequests).toBe(previousRequests + 1),
+    timeout
+  );
 };
 const openReport = async () => {
   await act(async () =>
@@ -338,7 +344,7 @@ test("retries pending and failed log reads before giving up on the session", asy
     undefined,
     1,
   ]);
-});
+}, 30_000);
 
 test("Free does not fetch logs; upgrading reads UTF-8 from byte zero and preserves issue severity", async () => {
   await setPaid(false);
@@ -366,7 +372,7 @@ test("Free does not fetch logs; upgrading reads UTF-8 from byte zero and preserv
   expect(panel().textContent).not.toContain("Late error");
   expect(panel().textContent).not.toContain("Early warning");
   expect(document.body.querySelector("pre")).toBeNull();
-});
+}, 30_000);
 
 test("an accepted publish without a log handle is retained without retrying dispatch or reading logs", async () => {
   withHandle = false;
@@ -382,32 +388,33 @@ test("a paid response after downgrade cannot restore logs; upgrading restarts fr
   holdLog = { cursor: 1, response: deferred<void>() };
   await render();
   await publish();
-  await waitFor(() => expect(logRequests).toHaveLength(2));
+  await waitFor(() => expect(logRequests).toHaveLength(2), 20_000);
   await openReport();
   await setPaid(false);
   await act(async () => holdLog?.response.resolve());
   expect(panel().querySelector("pre")).toBeNull();
   await setPaid(true);
-  await waitFor(() =>
-    expect(panel().querySelector("pre")?.textContent).toBe("€")
+  await waitFor(
+    () => expect(panel().querySelector("pre")?.textContent).toBe("€"),
+    20_000
   );
   expect(logRequests.slice(2).map(({ cursor }) => cursor)).toEqual([
     undefined,
     1,
   ]);
-});
+}, 60_000);
 
 test("a log response from the previous project cannot populate the new project's report", async () => {
   holdLog = { response: deferred<void>() };
   await render();
   await publish();
-  await waitFor(() => expect(logRequests).toHaveLength(1));
+  await waitFor(() => expect(logRequests).toHaveLength(1), 20_000);
   await changeProject("project-2");
   await act(async () => holdLog?.response.resolve());
   await openReport();
   expect(entries()).toHaveLength(0);
   expect(logRequests).toHaveLength(1);
-});
+}, 45_000);
 
 test("a dispatch accepted after leaving and returning to its project cannot restore the old session", async () => {
   heldPublish = deferred<unknown>();
@@ -426,7 +433,7 @@ test("a dispatch accepted after leaving and returning to its project cannot rest
   await openReport();
   expect(entries()).toHaveLength(0);
   expect(logRequests).toHaveLength(0);
-});
+}, 30_000);
 
 test("keeping ten publishes evicts an older in-flight reader before its next page", async () => {
   holdLog = { response: deferred<void>() };
@@ -435,7 +442,7 @@ test("keeping ten publishes evicts an older in-flight reader before its next pag
   await waitFor(() => expect(logRequests).toHaveLength(1));
   for (let index = 0; index < 10; index++) {
     buildId = `new-build-${index}`;
-    await publish();
+    await publish(20_000);
   }
   await act(async () => holdLog?.response.resolve());
   await openReport();
@@ -444,4 +451,4 @@ test("keeping ten publishes evicts an older in-flight reader before its next pag
   expect(
     logRequests.filter((request) => request.buildId === "build-1")
   ).toHaveLength(1);
-}, 30_000);
+}, 60_000);

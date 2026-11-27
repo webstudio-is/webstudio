@@ -55,6 +55,7 @@ import {
   $isCloneDialogOpen,
   $isUiHidden,
   $loadingState,
+  openBuilderView,
 } from "./shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
 import { CloneProjectDialog } from "~/shared/clone-project";
@@ -331,7 +332,10 @@ export const Builder = (props: BuilderProps) => {
   });
 
   const dataLoadingState = useStore($dataLoadingState);
-  useSyncPageUrl({ isDataLoaded: dataLoadingState === "loaded" });
+  useSyncPageUrl({
+    isDataLoaded: dataLoadingState === "loaded",
+    onView: openBuilderView,
+  });
 
   const [publish, publishRef] = usePublish();
   useEffect(() => {

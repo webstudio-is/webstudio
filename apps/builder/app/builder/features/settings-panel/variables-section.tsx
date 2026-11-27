@@ -24,6 +24,7 @@ import {
 } from "@webstudio-is/design-system";
 import { AlertIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { ROOT_INSTANCE_ID, type DataSource } from "@webstudio-is/sdk";
+import { $variablesSectionRequested } from "~/builder/shared/nano-states";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
 import {
@@ -463,12 +464,25 @@ const VariablesList = ({ isOpen }: { isOpen: boolean }) => {
 const label = "Variables";
 
 export const VariablesSection = () => {
+  const sectionRequested = useStore($variablesSectionRequested);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const variableToFocus = useStore($variableToFocus);
   const variableToOpen = useStore($variableToOpen);
   const availableVariables = useStore($availableVariables);
   const selectedInstance = useStore($selectedInstance);
   const selectedScopeId = selectedInstance?.id ?? ROOT_INSTANCE_ID;
   const [isOpen, setIsOpen] = useOpenState(label);
+  useEffect(() => {
+    if (sectionRequested === false) {
+      return;
+    }
+    if (isOpen === false) {
+      setIsOpen(true);
+      return;
+    }
+    triggerRef.current?.scrollIntoView({ block: "nearest" });
+    $variablesSectionRequested.set(false);
+  }, [isOpen, sectionRequested, setIsOpen]);
   useEffect(() => {
     if (
       variableToOpen !== undefined &&
@@ -514,6 +528,7 @@ export const VariablesSection = () => {
         onOpenChange={setIsOpen}
         trigger={
           <SectionTitle
+            ref={triggerRef}
             suffix={
               <Flex align="center">
                 <VariablePopoverTrigger>

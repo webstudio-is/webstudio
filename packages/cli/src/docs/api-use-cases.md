@@ -100,7 +100,7 @@ MCP lets agents work on one configured Webstudio project. Agents can:
 - Update page metadata, SEO fields, auth settings, and marketplace metadata.
 - Insert components and styled JSX sections.
 - Create data-driven lists, grids, cards, and similar repeated UI from array or object data in one Collection operation.
-- Move, copy, wrap, unwrap, convert, rename, retag, and delete elements.
+- Move, copy, wrap, unwrap, convert, rename, retag, and delete instances.
 - Update text, rich text, props, bindings, and actions.
 - Create and update local styles, design tokens, style sources, and CSS variables.
 - Create static data variables and JSON variables.
@@ -406,13 +406,13 @@ Commands:
 
 - MCP tool: delete-folder {"folderId":"<folderId>"}
 
-## List element instances
+## List instances
 
 Commands:
 
 - MCP tool: list-instances {"pagePath":"/","maxDepth":3}
 
-## Inspect one element instance
+## Inspect one instance
 
 Commands:
 
@@ -457,7 +457,7 @@ Notes:
 - When a page will be handed to a Content-mode editor, wrap every region they should be able to edit in a Content Block (`ws:block`). Content-mode editors can edit text and supported props only in Content Block descendants. Content outside those blocks remains read-only, even when it looks like ordinary editable text.
 - Put reusable insertable options inside exactly one direct `ws:block-template` child. A missing or second template container makes the Content Block invalid. A template is source material, not editor content: editors cannot edit or delete it directly. When an editor inserts a template, its copy becomes a direct child of the Content Block and is editable.
 - Before implementation, inventory every editor-owned field and its intended control and write destination, whether or not the block uses MDX. Check that templates contain the required styling, but do not treat containment or a successful text edit as proof that the whole block is editable. Test every field through Content mode, inspect its saved project data or source file, reload, and restore the original value. Report passed, failed, or not tested for each field; missing or read-only required controls are unfinished requirements.
-- Use controls that match the content: a calendar for dates and an image picker for image replacement. Keep fixed punctuation and units out of directly bound value elements. Preserve stored types and wording: when reading time is already a complete string such as `4 min read`, bind that string directly rather than assuming it is a number.
+- Use controls that match the content: a calendar for dates and an image picker for image replacement. Keep fixed punctuation and units out of directly bound value instances. Preserve stored types and wording: when reading time is already a complete string such as `4 min read`, bind that string directly rather than assuming it is a number.
 - For MDX-backed blocks, containment alone is not enough: the MDX body is editable through its source mapping, but the designed shell needs writable document-frontmatter bindings. Follow the binding recipe below rather than binding editable article fields to query results.
 
 ## Store Content Block content in MDX
@@ -514,7 +514,7 @@ Notes:
 - Create writable bindings explicitly; the default is read-only. Merely moving a heading or Link inside the Content Block does not make its query-bound text editable.
 - The MDX body uses its source mapping. Static designed content outside that body remains protected unless its text or supported props bind to writable frontmatter fields. Do not apply these generic instance tools to MDX-generated instances.
 - Use direct static paths. Property access is already safe. Fallbacks and formatted expressions, such as `document.frontmatter.title ?? "Untitled"`, remain read-only.
-- Keep every intended editable value in its own text element with a single direct read-write binding. For reading time, use three inline siblings: static `— `, the bound reading-time value, and static ` min read`. Preserve whitespace and the stored field type. Do not combine them into a template literal or concatenate strings, and do not put literal siblings inside the value element itself. Keep fixed wording protected in the designed shell.
+- Keep every intended editable value in its own text instance with a single direct read-write binding. For reading time, use three inline siblings: static `— `, the bound reading-time value, and static ` min read`. Preserve whitespace and the stored field type. Do not combine them into a template literal or concatenate strings, and do not put literal siblings inside the bound instance. Keep fixed wording protected in the designed shell.
 - Prefer component formatting controls, such as Date Time formatting with a directly bound date prop, over transforming the expression. Do not silently sacrifice editability for formatting or a fallback; explain unsupported cases and ask before making an intended editable field read-only.
 - A direct writable binding such as `document.frontmatter.author.name` can edit a shared author loaded through `../authors/acme.md#frontmatter`. The edit saves to the author file and affects every article using it; preserve the article's `$ref` marker.
 - Before handoff, inventory every article-owned field, including header text, author details, dates, reading time, categories, hero and inline image sources, alternative text, captions, links, and custom-component content. For each field, inspect its binding and source, edit it through the Content-mode UI, verify the saved MDX or referenced file, reload, and restore the test value. Record passed, failed, or not tested for each field. A correct preview, a successful MCP write, and one representative text edit do not prove the whole article is editable. Do not claim completion while required fields fail or remain untested.
@@ -538,7 +538,7 @@ Notes:
 - If the picker is missing or disabled, inspect the source mode, document scope, loaded reference, and permissions before claiming a product limitation.
 - Verify through Content mode with an approved temporary replacement. Check the saved `$ref`, unchanged unrelated MDX and original shared Asset, reload persistence, and restoration. If that test is not authorized, report it as not tested, not passed.
 
-## Move elements
+## Move instances
 
 Commands:
 
@@ -550,13 +550,13 @@ Notes:
 - A numeric `insertIndex` addresses the target parent's children before the moved instance is removed. Use it for exact placement; do not calculate the last index to append.
 - Moves in one `moves` array are applied sequentially in array order.
 
-## Clone element subtree
+## Clone an instance subtree
 
 Commands:
 
 - MCP tool: clone-instance {"sourceInstanceId":"<instanceId>","targetParentInstanceId":"<targetParentId>"}
 
-## Delete element subtree
+## Delete an instance subtree
 
 Commands:
 

@@ -451,7 +451,6 @@ const getJavascriptErrorLocation = (params: unknown) => {
   }
   const { url, lineNumber } = params as Record<string, unknown>;
   if (
-    typeof url !== "string" ||
     typeof lineNumber !== "number" ||
     Number.isSafeInteger(lineNumber) === false ||
     lineNumber < 0 ||
@@ -459,18 +458,30 @@ const getJavascriptErrorLocation = (params: unknown) => {
   ) {
     return;
   }
-  try {
-    const scriptUrl = new URL(url);
-    if (
-      (scriptUrl.protocol === "http:" || scriptUrl.protocol === "https:") &&
-      isGeneratedStaticScriptPath(scriptUrl.pathname)
-    ) {
-      return { pathname: scriptUrl.pathname, line: lineNumber + 1 };
+  const line = lineNumber + 1;
+  if (typeof url === "string") {
+    try {
+      const scriptUrl = new URL(url);
+      if (
+        (scriptUrl.protocol === "http:" || scriptUrl.protocol === "https:") &&
+        isGeneratedStaticScriptPath(scriptUrl.pathname)
+      ) {
+        return { pathname: scriptUrl.pathname, line };
+      }
+    } catch {
+      // Keep a safe line number when the source URL cannot be exposed.
     }
-  } catch {
-    return;
   }
+  return { line };
 };
+
+const preferJavascriptErrorLocation = (
+  current: BrowserScreenshotNavigation["javascriptErrorLocation"],
+  next: BrowserScreenshotNavigation["javascriptErrorLocation"]
+) =>
+  current?.pathname === undefined && next?.pathname !== undefined
+    ? next
+    : (current ?? next);
 
 const navigateAndWaitForLifecycle = async (
   cdp: CdpSession,
@@ -821,7 +832,7 @@ export type BrowserScreenshotNavigation = {
   redirects: string[];
   documentReadyState: string;
   javascriptErrorPresent?: boolean;
-  javascriptErrorLocation?: { pathname: string; line: number };
+  javascriptErrorLocation?: { pathname?: string; line: number };
   pageMetadata?: BrowserScreenshotPageMetadata;
   layoutStable: boolean;
 };
@@ -1768,11 +1779,17 @@ const capturePageWithBrowserRuntime = async (
           if (navigationExecutionContextFrames !== undefined) {
             navigationErrorsByContextId.set(
               executionContextId,
-              navigationErrorsByContextId.get(executionContextId) ?? location
+              preferJavascriptErrorLocation(
+                navigationErrorsByContextId.get(executionContextId),
+                location
+              )
             );
           } else if (activeExecutionContextIds.has(executionContextId)) {
             javascriptErrorPresent = true;
-            javascriptErrorLocation ??= location;
+            javascriptErrorLocation = preferJavascriptErrorLocation(
+              javascriptErrorLocation,
+              location
+            );
           }
         };
         cdp.on("Runtime.executionContextCreated", (params) => {
@@ -1931,8 +1948,10 @@ const capturePageWithBrowserRuntime = async (
             for (const executionContextId of activeExecutionContextIds) {
               if (navigationErrorsByContextId.has(executionContextId)) {
                 javascriptErrorPresent = true;
-                javascriptErrorLocation ??=
-                  navigationErrorsByContextId.get(executionContextId);
+                javascriptErrorLocation = preferJavascriptErrorLocation(
+                  javascriptErrorLocation,
+                  navigationErrorsByContextId.get(executionContextId)
+                );
               }
             }
             navigationExecutionContextFrames = undefined;

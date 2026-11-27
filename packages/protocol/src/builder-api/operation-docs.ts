@@ -299,13 +299,13 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "list-instances",
     description:
-      "List element instances in the build tree, including parent id and index when known",
+      "List instances in the build tree, including parent id and index when known",
     examples: ["webstudio list-instances --path / --max-depth 2 --json"],
   },
   {
     command: "inspect-instance",
     description:
-      "Show one element with its classes and custom attributes by default. Include styles, children, bindings, sources, and ancestors as needed",
+      "Show one instance with its classes and custom attributes by default. Include styles, children, bindings, sources, and ancestors as needed",
     requiredOptions: ["instance", "json"],
     examples: [
       "webstudio inspect-instance --instance instance-id --include props,styles,children,ancestors --json",
@@ -387,14 +387,14 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "move-instance",
-    description: "Move element instances to another parent or position",
+    description: "Move instances to another parent or position",
     examples: [
       'MCP tool: move-instance {"moves":[{"instanceId":"instance-id","parentInstanceId":"parent-id","insertIndex":0}]}',
     ],
   },
   {
     command: "clone-instance",
-    description: "Clone an element instance subtree",
+    description: "Clone an instance subtree",
     requiredOptions: ["source", "json"],
     examples: [
       "webstudio clone-instance --source instance-id --parent parent-id --json",
@@ -402,28 +402,28 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "delete-instance",
-    description: "Delete element instance subtrees",
+    description: "Delete instance subtrees",
     requiredOptions: ["instance", "json"],
     examples: ["webstudio delete-instance --instance instance-id --json"],
   },
   {
     command: "update-props",
     description:
-      'Create or update direct element prop values; match value to type, for example textarea placeholder uses { "name": "placeholder", "type": "string", "value": "..." }. Use this for fixed strings, numbers, booleans, JSON, assets, and pages. Parameters are internal scoped runtime values, not a public authoring surface. Editor tokens are limited to content-mode props',
+      'Create or update direct instance prop values; match value to type, for example textarea placeholder uses { "name": "placeholder", "type": "string", "value": "..." }. Use this for fixed strings, numbers, booleans, JSON, assets, and pages. Parameters are internal scoped runtime values, not a public authoring surface. Editor tokens are limited to content-mode props',
     requiredOptions: ["input", "json"],
     examples: ["webstudio update-props --input props.json --json"],
   },
   {
     command: "delete-props",
     description:
-      "Delete element props by instance and prop name; editor tokens are limited to content-mode props",
+      "Delete props by instance and prop name; editor tokens are limited to content-mode props",
     requiredOptions: ["input", "json"],
     examples: ["webstudio delete-props --input props.json --json"],
   },
   {
     command: "bind-props",
     description:
-      "Bind element props to dynamic expressions, resources, actions, or existing scoped runtime context such as system. Do not create parameter records, and do not use bindings for fixed string values; use update-props instead",
+      "Bind instance props to dynamic expressions, resources, actions, or existing scoped runtime context such as system. Do not create parameter records, and do not use bindings for fixed string values; use update-props instead",
     requiredOptions: ["input", "json"],
     examples: ["webstudio bind-props --input bindings.json --json"],
   },
@@ -435,7 +435,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-text",
     description:
-      'Update a text or expression child on an element instance; mode must be "text" or "expression" when provided, never "replace"; editor tokens are limited to content-mode text',
+      'Update a text or expression child on an instance; mode must be "text" or "expression" when provided, never "replace"; editor tokens are limited to content-mode text',
     requiredOptions: ["instance", "child-index", "text", "json"],
     examples: [
       'webstudio update-text --instance instance-id --child-index 0 --text "Launch faster" --mode text --json',
@@ -445,7 +445,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "set-text-content",
     description:
-      'Replace all text content on an element instance with operation "set", or remove it with operation "reset"',
+      'Replace all text content on an instance with operation "set", or remove it with operation "reset"',
     examples: [
       'MCP tool: set-text-content {"operation":"set","instanceId":"instance-id","text":"Launch faster","mode":"text"}',
       'MCP tool: set-text-content {"operation":"reset","instanceId":"instance-id"}',
@@ -556,7 +556,7 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "attach-design-token",
-    description: "Attach a reusable style token to element instances",
+    description: "Attach a reusable style token to instances",
     requiredOptions: ["design-token", "input", "json"],
     examples: [
       "webstudio attach-design-token --design-token token-id --input instances.json --json",
@@ -564,7 +564,7 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "detach-design-token",
-    description: "Detach a reusable style token from element instances",
+    description: "Detach a reusable style token from instances",
     requiredOptions: ["design-token", "input", "json"],
     examples: [
       "webstudio detach-design-token --design-token token-id --input instances.json --json",
@@ -615,7 +615,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "create-variable",
     description:
-      "Create a data variable scoped to an element instance. Use string, number, boolean, string[], or json values.",
+      "Create a data variable scoped to an instance. Use string, number, boolean, string[], or json values.",
     requiredOptions: ["scope-instance", "name", "value-type", "value", "json"],
     examples: [
       'webstudio create-variable --scope-instance body-id --name title --value-type string --value "Hello" --json',

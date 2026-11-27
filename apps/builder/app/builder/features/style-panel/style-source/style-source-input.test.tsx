@@ -581,3 +581,48 @@ test("keeps menu arrow keys from toggling the outer combobox", () => {
     container.remove();
   }
 });
+
+test("clicks preserve focus while focusing the container moves focus to the input", async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  try {
+    act(() =>
+      root.render(
+        <TooltipProvider>
+          <StyleSourceInput
+            inputRef={() => {}}
+            selectedItemSelector={undefined}
+            value={[
+              {
+                id: "token",
+                label: "Token",
+                source: "token",
+                disabled: false,
+                locked: false,
+                states: [],
+              },
+            ]}
+          />
+        </TooltipProvider>
+      )
+    );
+    const input = container.querySelector<HTMLInputElement>("input")!;
+    const sourceButton = container.querySelector<HTMLButtonElement>(
+      '[data-id="token"] button'
+    )!;
+    act(() => sourceButton.focus());
+    act(() => sourceButton.click());
+    expect(document.activeElement).toBe(sourceButton);
+
+    const field = input.closest<HTMLElement>('[tabindex="-1"]')!;
+    await act(async () => userEvent.click(field, { position: { x: 1, y: 1 } }));
+    expect(document.activeElement).toBe(sourceButton);
+
+    act(() => field.focus());
+    expect(document.activeElement).toBe(input);
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+  }
+});

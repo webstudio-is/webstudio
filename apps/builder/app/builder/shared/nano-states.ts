@@ -1,11 +1,13 @@
 import { atom, computed } from "nanostores";
 import {
   $isPreviewMode,
+  $isDesignMode,
   $selectedInstanceRenderState,
 } from "~/shared/nano-states/misc";
 import { $canvasIframeState } from "~/shared/nano-states/canvas";
 import type { SidebarPanelName } from "~/builder/sidebar-left/types";
 import { $settings, getSetting } from "./client-settings";
+import type { BuilderView } from "~/shared/router-utils/path-utils";
 
 export const $isShareDialogOpen = atom<boolean>(false);
 
@@ -79,6 +81,17 @@ export const $clampingRect = computed(
 );
 
 export const $activeInspectorPanel = atom<"style" | "settings">("style");
+export const $variablesSectionRequested = atom(false);
+
+export const openBuilderView = (view: BuilderView) => {
+  if ($isPreviewMode.get()) {
+    return;
+  }
+  $activeInspectorPanel.set("settings");
+  $variablesSectionRequested.set(
+    view === "settings/variables" && $isDesignMode.get()
+  );
+};
 
 export const $dataLoadingState = atom<"idle" | "loading" | "loaded">("idle");
 

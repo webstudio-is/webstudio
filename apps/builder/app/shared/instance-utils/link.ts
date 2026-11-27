@@ -1,6 +1,8 @@
 import {
   getAllPages,
   isPageTemplate,
+  ROOT_INSTANCE_ID,
+  getPageById,
   type Instances,
   type Pages,
 } from "@webstudio-is/sdk";
@@ -11,11 +13,13 @@ import {
   $canOpenPageTemplates,
 } from "../nano-states";
 import { builderUrl } from "../router-utils";
+import type { BuilderView } from "../router-utils/path-utils";
 import { $instances, $pages, $project } from "../sync/data-stores";
 import { canResolveInstanceSelector } from "./selection";
 
 export const getInstanceLink = (
-  instanceSelector: InstanceSelector | undefined
+  instanceSelector: InstanceSelector | undefined,
+  { pageId, view }: { pageId?: string; view?: BuilderView } = {}
 ) => {
   const pages = $pages.get();
   const project = $project.get();
@@ -24,6 +28,7 @@ export const getInstanceLink = (
   }
   const selection = getDeepLinkedInstanceSelection({
     instanceSelector,
+    pageId,
     pages,
     instances: $instances.get(),
     canOpenPageTemplates: $canOpenPageTemplates.get(),
@@ -38,6 +43,7 @@ export const getInstanceLink = (
     origin: window.location.origin,
     authToken: $authToken.get(),
     mode: mode === "design" ? undefined : mode,
+    view,
     safemode:
       new URLSearchParams(window.location.search).get("safemode") === "true",
   });
@@ -48,11 +54,13 @@ export const getInstanceSelectorFromUrl = (searchParams: URLSearchParams) =>
 
 export const getDeepLinkedInstanceSelection = ({
   instanceSelector,
+  pageId,
   canOpenPageTemplates,
   pages,
   instances,
 }: {
   instanceSelector: InstanceSelector | undefined;
+  pageId?: string;
   canOpenPageTemplates: boolean;
   pages: Pages;
   instances: Instances;
@@ -62,18 +70,22 @@ export const getDeepLinkedInstanceSelection = ({
   }
 
   const instanceId = instanceSelector[0];
+  const isGlobalRoot =
+    instanceSelector.length === 1 && instanceId === ROOT_INSTANCE_ID;
   if (
     instanceId === undefined ||
-    instances.has(instanceId) === false ||
+    (!isGlobalRoot && instances.has(instanceId) === false) ||
     canResolveInstanceSelector(instanceSelector, instances) === false
   ) {
     return;
   }
 
-  const rootInstanceId = instanceSelector.at(-1);
-  const page = getAllPages(pages).find(
-    (page) => page.rootInstanceId === rootInstanceId
-  );
+  const page =
+    isGlobalRoot && pageId !== undefined
+      ? (getPageById(pages, pageId) ?? pages.pageTemplates?.get(pageId))
+      : getAllPages(pages).find(
+          (page) => page.rootInstanceId === instanceSelector.at(-1)
+        );
   if (
     page === undefined ||
     (isPageTemplate(page) && canOpenPageTemplates === false)
